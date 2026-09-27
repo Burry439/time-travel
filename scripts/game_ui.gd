@@ -22,6 +22,9 @@ var talk_status: Label
 var talk_waiting := false
 var encounter_view: Dictionary = {} # The encounter as last seen (kept to show how it ended).
 var encounter_over := false
+var round_playing := false
+const DID_WORDS := {"listen": "listened", "attack": "attacked", "shout_for_help": "called for help",
+	"whistle": "whistled", "flee": "ran off", "leave": "left", "interject": "cut in"}
 const CAPABILITY_NOTES := {"expected": "", "untested": "  (untested)", "observed": "  (seen working)",
 	"failed": "  (didn't work when tried)"}
 const OUTCOME_TITLES := {
@@ -188,17 +191,22 @@ func _process(delta: float) -> void:
 	prompt.visible = not prompt.text.is_empty() and not modal.visible and not game.victory_panel.visible
 	if modal_kind == "working" and is_instance_valid(working_label):
 		working_clock += delta
-		working_label.text = "You set to work" + ".".repeat(1 + int(working_clock * 2.0) % 3)
-	if modal_kind == "encounter" and talk_waiting and is_instance_valid(talk_status):
+		var stage: String = ["You look over what you have", "You set to work", "You work at it", "You test what you've done",
+			"Still at it"][mini(4, int(working_clock / 2.5))]
+		working_label.text = "%s%s  (%d s)" % [stage, ".".repeat(1 + int(working_clock * 2.0) % 3), int(working_clock)]
+	if modal_kind == "encounter" and talk_waiting and not round_playing and is_instance_valid(talk_status):
 		working_clock += delta
-		talk_status.text = "Everyone acts at once" + ".".repeat(1 + int(working_clock * 2.0) % 3)
+		var acting: PackedStringArray = []
+		for id in _encounter().get("participants", [talk_npc]):
+			acting.append(str(npc_record(str(id)).get("name", "")))
+		talk_status.text = "You and " + " and ".join(acting) + " act at the same moment" + ".".repeat(1 + int(working_clock * 2.0) % 3)
 
 func notify(text: String) -> void:
 	toast.text = text
 	toast_time = 4.5
 
 func close_modal() -> void:
-	if game.request_busy or modal_kind == "death":
+	if game.request_busy or modal_kind == "death" or round_playing:
 		return
 	if modal_kind == "encounter" and not encounter_over and not _encounter().is_empty():
 		game.encounter_act("leave", "", "") # Closing the panel face to face with someone is walking away.
@@ -351,7 +359,7 @@ func _encounter() -> Dictionary:
 	return current if typeof(current) == TYPE_DICTIONARY else {}
 
 
-func open_encounter(target := "", prefill := "") -> void:
+func open_encounter(target := "", prefill := "", playing: Dictionary = {}) -> void:
 	if game.run_state.is_empty() or not game.gameplay_active:
 		return
 	var current := _encounter()
@@ -376,6 +384,8 @@ func open_encounter(target := "", prefill := "") -> void:
 	for id in people:
 		names.append(str(npc_record(str(id)).get("name", "?")))
 	var body := begin_modal(" & ".join(names) if not names.is_empty() else "Nobody", "encounter")
+	var did: Dictionary = playing.get("did", {}) if not playing.is_empty() else \
+		(game.run_state.get("last_round", {}).get("did", {}) if typeof(game.run_state.get("last_round")) == TYPE_DICTIONARY else {})
 	if not encounter_over:
 		for child in modal_box.get_child(0).get_children(): # "Walk away" is the way out, not "Close".
 			if child is Button:
@@ -388,8 +398,10 @@ func open_encounter(target := "", prefill := "") -> void:
 		var health := float(npc.get("health", 100))
 		var state_word := "dead" if not npc.get("alive", true) else "unhurt" if health >= 100 else \
 			"wounded" if health > 30 else "badly wounded"
-		var chip := button("%s · %s · %s" % [npc.get("name", "?"), str(npc.get("role", "")).to_lower(), state_word],
-			_address.bind(str(id)))
+		var chip_text := "%s · %s · %s" % [npc.get("name", "?"), str(npc.get("role", "")).to_lower(), state_word]
+		if did.has(str(id)):
+			chip_text += " · " + str(DID_WORDS.get(str(did[str(id)]), did[str(id)]))
+		var chip := button(chip_text, _address.bind(str(id)))
 		chip.toggle_mode = true
 		chip.button_pressed = str(id) == talk_npc
 		chip.add_theme_font_size_override("font_size", 14)
@@ -406,27 +418,40 @@ func open_encounter(target := "", prefill := "") -> void:
 				turn.who != "stranger", true)
 		paragraph(body, "%s looks you over. Say something." % npc_record(talk_npc).get("name", ""))
 	var shown_round := -1
+	var fresh: Array = playing.get("entries", [])
+	var hidden: Array = [] # Lines of the round being played back, shown one by one.
 	for entry in log:
 		if int(entry.get("round", 0)) != shown_round:
 			shown_round = int(entry.get("round", 0))
 			var heading := label("ROUND %d" % shown_round, 11)
 			heading.add_theme_color_override("font_color", Color(0.86, 0.77, 0.56, 0.6))
 			body.add_child(heading)
+		var node: Label
 		if entry.get("kind") == "cue": # How someone's view of you shifted, as they show it.
-			var cue := label("(" + str(entry.text) + ")", 14)
-			cue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			cue.add_theme_color_override("font_color", Color(0.72, 0.80, 0.70, 0.85))
-			body.add_child(cue)
-			continue
-		_log_line(body, str(entry.text), str(entry.get("who", "")) != "player", false)
+			node = label("(" + str(entry.text) + ")", 14)
+			node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			node.add_theme_color_override("font_color", Color(0.72, 0.80, 0.70, 0.85))
+			body.add_child(node)
+		else:
+			node = _log_line(body, str(entry.text), str(entry.get("who", "")) != "player", false)
+		if entry in fresh:
+			node.visible = false
+			hidden.append([node, entry])
 	talk_status = label("", 15)
 	talk_status.add_theme_color_override("font_color", GOLD)
 	talk_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_child(talk_status)
 	if encounter_over:
-		paragraph(body, "It's over." if game.run_state["player"].get("alive", true) else "")
-		body.add_child(button("Continue", close_modal))
-		_scroll_to_end.call_deferred(body)
+		var closing := label("It's over." if game.run_state["player"].get("alive", true) else "", 17)
+		body.add_child(closing)
+		var done := button("Continue", close_modal)
+		body.add_child(done)
+		if not hidden.is_empty():
+			closing.visible = false
+			done.visible = false
+			_play_lines(body, hidden, [closing, done])
+		else:
+			_scroll_to_end.call_deferred(body)
 		return
 	talk_input = LineEdit.new()
 	talk_input.placeholder_text = "Say something to %s, or describe what you do…" % npc_record(talk_npc).get("name", "them")
@@ -452,11 +477,41 @@ func open_encounter(target := "", prefill := "") -> void:
 			painted.play_gesture("greet")
 	talk_input.text = prefill
 	talk_input.caret_column = prefill.length()
-	talk_input.grab_focus.call_deferred()
-	_scroll_to_end.call_deferred(body)
+	if not hidden.is_empty():
+		_play_lines(body, hidden, [])
+	else:
+		talk_input.grab_focus.call_deferred()
+		_scroll_to_end.call_deferred(body)
 
 
-func _log_line(body: VBoxContainer, text: String, theirs: bool, faded: bool) -> void:
+## Play a round back: each line appears in turn with its moment in the world.
+func _play_lines(body: VBoxContainer, lines: Array, then_show: Array) -> void:
+	round_playing = true
+	talk_waiting = true
+	if is_instance_valid(talk_input):
+		talk_input.editable = false
+	for pair in lines:
+		await get_tree().create_timer(0.45).timeout
+		if not is_instance_valid(pair[0]):
+			break
+		pair[0].visible = true
+		game.round_beat(pair[1])
+		_scroll_to_end(body)
+	for node in then_show:
+		if is_instance_valid(node):
+			node.visible = true
+	round_playing = false
+	talk_waiting = false
+	if is_instance_valid(talk_input):
+		talk_input.editable = true
+		talk_input.grab_focus()
+	if is_instance_valid(talk_status):
+		talk_status.text = ""
+	_scroll_to_end(body)
+	game.round_played()
+
+
+func _log_line(body: VBoxContainer, text: String, theirs: bool, faded: bool) -> Label:
 	var line := label(text, 16)
 	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -465,13 +520,22 @@ func _log_line(body: VBoxContainer, text: String, theirs: bool, faded: bool) -> 
 	if faded:
 		line.modulate.a = 0.6
 	body.add_child(line)
+	return line
 
 
 ## The encounter has finished (they left, you walked away, the gate opened): show the last round.
-func encounter_ended() -> void:
+func encounter_ended(playing: Dictionary = {}) -> void:
 	if modal_kind == "encounter" and not encounter_over:
 		encounter_over = true
-		open_encounter()
+		var log: Array = encounter_view.get("log", []).duplicate()
+		for entry in playing.get("entries", []): # The last round happened after the encounter we last saw.
+			if not entry in log:
+				log.append(entry)
+		encounter_view = encounter_view.duplicate()
+		encounter_view["log"] = log
+		open_encounter("", "", playing)
+	elif not playing.is_empty():
+		game.round_played()
 
 
 func _address(id: String) -> void:

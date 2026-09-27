@@ -1,0 +1,20 @@
+
+=== FIGHT AT THE SMITHY ===
+  TRY: shove Jory hard
+    [success] You shove Jory hard in the chest; he staggers back, bruised but still on his feet.
+  (nobody came to face the stranger)
+
+=== HALTED AT THE GATE ===
+  Encounter: halt with npc_bren_marr
+    · Bren: “Halt! State your business at the gate.”
+  ROUND 1 — you: say “Good day. I'm Ash, a traveller looking for honest work in the city.”  (2.5 s)
+    · You: “Good day. I'm Ash, a traveller looking for honest work in the city.”
+    · Bren: “Ash, is it? What sort of work are you after?”
+  ROUND 2 — you: say “Who should I speak to about getting in?”  (3.9 s)
+    · You: “Who should I speak to about getting in?”
+    · Bren: “Only Captain Roderic can let anyone through. We guards just stop people and ask questions—what sort of work are you after?”
+  ROUND 3 — you: leave   (1.2 s)
+    · You turn and walk away.
+    (the encounter is over)
+
+Rounds: 3 · median 2.5 s · max 3.9 s

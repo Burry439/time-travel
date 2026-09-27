@@ -1120,18 +1120,12 @@ func encounter_act(kind: String, text: String, target: String) -> void:
 			_start_fall(entry)
 		request_busy = false
 		_sync_display()
-		_react_to_round(round)
-		if did:
-			_reveal_new_objects(entry)
-			_play_harm(entry)
-			if entry.category in ["success", "partial_success"]:
-				player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
-		if not run_state["player"].get("alive", true):
-			return # _react_to_round shows the death screen.
+		played_action = entry if did else {}
+		# The panel plays the round back line by line; round_beat() gives each line its moment in the world.
 		if in_encounter():
-			ui.open_encounter(target if not target.is_empty() else "")
+			ui.open_encounter(target if not target.is_empty() else "", "", round)
 		else:
-			ui.encounter_ended()
+			ui.encounter_ended(round)
 		return
 	request_busy = false
 	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
@@ -1143,15 +1137,31 @@ func encounter_act(kind: String, text: String, target: String) -> void:
 	ui.talk_error(problem)
 
 
-## Blows, gestures and words from a round (the same reactions as world events, all at once).
-func _react_to_round(round: Dictionary) -> void:
-	for entry in round.get("entries", []):
-		var who := str(entry.get("who", ""))
-		var actor := get_node_or_null("NPCs/%s/PaintedActor" % who)
-		if actor and entry.kind in ["strike", "reply", "shout_for_help", "whistle", "attack"]:
-			actor.play_gesture("gesture")
-		if entry.kind == "strike" and not "misses" in str(entry.text):
-			player_visual.hurt(1.0)
+var played_action: Dictionary = {} # The stranger's Try Something in the round being played back.
+
+
+## One line of a round, as it happens in the world: a blow lands, someone gestures as they speak.
+func round_beat(entry: Dictionary) -> void:
+	var who := str(entry.get("who", ""))
+	if who == "player":
+		if entry.get("kind") == "do" and not played_action.is_empty():
+			_reveal_new_objects(played_action)
+			_play_harm(played_action)
+			if played_action.category in ["success", "partial_success"]:
+				effects.pickup_sound.play()
+				player_visual.play_gesture("pickup" if played_action.get("action") == "take" else "gesture")
+		return
+	var actor := get_node_or_null("NPCs/%s/PaintedActor" % who)
+	if actor and entry.get("kind") in ["strike", "reply", "interject", "shout_for_help", "whistle", "attack", "arrive"]:
+		actor.play_gesture("gesture")
+	if entry.get("kind") == "strike" and not "misses" in str(entry.text):
+		var npc_actor := get_node_or_null("NPCs/" + who) as Node2D
+		player_visual.hurt(1.0 if npc_actor == null or npc_actor.position.x <= player.position.x else -1.0)
+
+
+## After the round has played out: the death screen if the stranger fell.
+func round_played() -> void:
+	played_action = {}
 	if not run_state["player"].get("alive", true) and gameplay_active:
 		gameplay_active = false
 		move_queue.clear()

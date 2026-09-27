@@ -7,6 +7,7 @@ import os
 import re
 import sqlite3
 import threading
+import time
 import copy
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -251,6 +252,7 @@ def _round_payload(before: dict, after: dict, record: dict) -> dict:
         payload["admitted"] = after["admitted"]
     payload["round"] = {key: record.get(key) for key in (
         "round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk")}
+    payload["round"]["did"] = {npc_id: intent["action"] for npc_id, intent in (record.get("intents") or {}).items()}
     return payload
 
 
@@ -809,6 +811,7 @@ def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[s
 
 
 def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
+    started, timing = time.perf_counter(), {}
     request_json = json.dumps({"kind": request.kind, "text": request.text, "target_id": request.target_id,
                                "selected_ids": request.selected_ids}, sort_keys=True)
     with _lock, db() as connection:
@@ -846,6 +849,8 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
             judge_job = pool.submit(_judge, context, calls_used) if context else None
             intent_call = intent_job.result() if intent_job else None
             judged = judge_job.result() if judge_job else None
+        timing["intents_ms"] = intent_call.latency_ms if intent_call else 0
+        timing["judge_ms"] = judged.latency_ms if judged else 0
         intents = {n: minds.answers_for(intent_call.answers, asking[2][n]) for n in missing} \
             if intent_call and intent_call.ok else {}
         with _lock, db() as connection:
@@ -859,6 +864,7 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
             reply_ask = talk.request(draft, replier, text, happened) if replier else None
         # The person addressed replies to what actually happened; someone else may cut in after them.
         allowed = calls_used < ai_config.max_calls_per_run()
+        speaking = time.perf_counter()
         main = _speak(draft, replier, text, happened, reply_ask, run_id, allowed) if reply_ask else None
         decided = main["decided"] if main else None
         spoken = main["spoken"] if main else None
@@ -867,6 +873,9 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
         if cutting_in:
             heard = " ".join(filter(None, [happened, f"{replier['name']} just said: “{spoken.text}”" if spoken else None]))
             side = _speak(draft, cutting_in, "", heard, talk.request(draft, cutting_in, "", heard), run_id, allowed)
+        timing["reply_decide_ms"] = main["decided"].latency_ms if main else 0
+        timing["reply_voice_ms"] = main["spoken"].latency_ms if main and main["spoken"] else 0
+        timing["speaking_ms"] = round((time.perf_counter() - speaking) * 1000)
         with _lock, db() as connection:
             run, state = load_run(connection, run_id)
             for call in (intent_call, decided, side["decided"] if side else None):
@@ -936,14 +945,16 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
                            "situation": asking[0] if asking else "(Everyone's intents were decided earlier, while the "
                                                                  "stranger was choosing.)",
                            "questions": asking[1] if asking else {},
-                           "call": intent_call.as_dict() if intent_call else {}}
+                           "call": intent_call.as_dict() if intent_call else {},
+                           "timing": dict(timing, total_ms=round((time.perf_counter() - started) * 1000))}
             for trace in (talk_trace, round_trace):
                 if trace:
                     connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
                                        (run_id, state["event_seq"], trace["npc_id"], json.dumps(trace)))
     finally:
         _crafting_runs.discard(run_id)
-    response = {"state": state, "duplicate": False, "round": state["last_round"]}
+    timing["total_ms"] = round((time.perf_counter() - started) * 1000)
+    response = {"state": state, "duplicate": False, "round": state["last_round"], "timing": timing}
     if run["mode"] == "developer":
         response["trace"] = talk_trace or craft_trace
         response["craft_trace"] = craft_trace

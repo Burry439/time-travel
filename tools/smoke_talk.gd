@@ -51,8 +51,8 @@ func walk_to(x: int, y: int) -> bool:
 ## Wait for the request in flight (a round) to finish.
 func settle() -> bool:
 	await process_frame
-	for i in 150:
-		if not scene.request_busy:
+	for i in 200:
+		if not scene.request_busy and not scene.ui.round_playing:
 			return true
 		await create_timer(0.1).timeout
 	return false
@@ -85,10 +85,7 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.talk_waiting, "No thinking indicator while waiting"):
 		return
-	for i in 80:
-		if not scene.request_busy:
-			break
-		await create_timer(0.1).timeout
+	await settle()
 	var hessa: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	var turns: Array = hessa.get("mind", {}).get("talk", [])
 	if not check(turns.size() == 2 and turns[0].text == "Good day. Is this your inn?", "Exchange not recorded: " + str(turns)):

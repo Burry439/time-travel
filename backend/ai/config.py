@@ -47,7 +47,7 @@ def voice_model() -> str:
 
 
 def voice_reasoning() -> str:
-    return _env("VOICE_REASONING", "low")
+    return _env("VOICE_REASONING", "none")  # It only phrases a decided reply (D-30: same quality, faster).
 
 
 def image_model() -> str:
