@@ -1,0 +1,77 @@
+
+=== SPONSOR: HESSA'S WATER ===
+  TRY: pick up the dried gourd
+    [success] You pick up the dried gourd from within arm’s reach.
+  YOU → Hessa: Good day! I'm Ash, a traveller. Your yard looks busy. Can I help with anything?
+    [answer] “Good day, love! Busy enough, but we're managing. You look the sort who notices things quickly.”  (Jev 1772 ms, voice 1400 ms)
+  YOU → Hessa: I'm happy to work for my keep. Is there any job I could do for you?
+    [offer:water_haul] “That's kind of you, love. Bring me a container full of water from the trough for my kitchen, and I'll be grateful—and put in a good word for you with the captain.”  (Jev 1337 ms, voice 1292 ms)
+  YOU → Hessa: Gladly. I'll bring you water from the trough right away.
+    [answer] “That’s kind of you, love. I’ll look forward to the water.”  (Jev 1407 ms, voice 1363 ms) beliefs {'accepts': 0.97}
+  TRY: fill the gourd with water from the trough and hand it to Hessa
+    [success] You fill the dried gourd with water from Hessa's trough. You hand the filled dried gourd to Hessa.
+  YOU → Hessa: There you are: a gourd full of water for your kitchen.
+    [answer] “Well done, love; that’s the water I asked for. I’ll go speak for you to the captain now.”  (Jev 2553 ms, voice 1149 ms) beliefs {'done': 0.76}
+  YOU → Roderic: Captain, Hessa the innkeeper has spoken for me. I'd like to enter the city to find honest work.
+    [admit] “Hessa has vouched for you, stranger. Open the gate; let them enter.”  (Jev 1377 ms, voice 1046 ms) beliefs {'threat': 0.24, 'reason': 0.9}
+  Admitted because: ['Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.']
+  ✓ INSIDE THE CITY
+
+=== BUSINESS: DARIN HIRES YOU ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You walk over to the flint shard, then pick up the shard and the hollow reeds.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short section from a hollow reed and carve a notch near one end, shaping it into a simple whistle.
+  YOU → Darin: Good day, sir. I'm Ash, a traveller with a knack for making useful little things.
+    [offer:trade_goods] “A knack can be worth something, friend. Show me a new thing I can sell or trade at a profit, and I’ll take you on as a hired hand for trade in the city under my permit.”  (Jev 1255 ms, voice 1469 ms)
+  YOU → Darin: Agreed. Let me show you.
+    [ask_back] “Then show me what you have, friend—what is this new thing, and where's the profit in it?”  (Jev 1297 ms, voice 1202 ms) beliefs {'accepts': 0.97}
+  TRY: blow the reed whistle for Darin to show him how loud and clear it is
+    [success] You blow the reed whistle for Darin, and it gives a clear, piercing tone.
+  YOU → Darin: There: a whistle anyone could carry, made from a reed. Travellers and herders would buy those.
+    [answer] “Travellers and herders might buy it, friend—but might is a thin margin. I’ve heard the tone; that’s all I can price so far.”  (Jev 1257 ms, voice 1210 ms) beliefs {'done': 0.55}
+  YOU → Darin: I can make dozens of them from reeds. Worth selling, wouldn't you say?
+    [answer] “Dozens, friend? A heap is no bargain until buyers prove it worth the space.”  (Jev 1464 ms, voice 1262 ms) beliefs {'done': 0.38}
+  ✗ Darin did not count the deal as done.
+
+=== VALUE: A COMPASS FOR THE PATROLS ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You pick up the hollow reeds within arm’s reach, then walk four steps to the flint shard and pick it up.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short piece from a hollow reed and carve a notch near one end, making a simple end-blown whistle.
+  TRY: blow the reed whistle for Darin to show him what a stranger's knack can make
+    [success] You blow across the notch in the reed whistle, and Darin hears its clear note.
+  YOU → Darin: Good day. I'm Ash, a traveller who knows a trick or two with iron. Do you have a stone that pulls iron? I hear it's of no use to you.
+    [ask_back] “A clear whistle, friend—now you speak of a stone that pulls iron. What makes you think I have such a thing?”  (Jev 1622 ms, voice 1270 ms)
+  YOU → Darin: Lend it to me for an hour and I'll show you how to turn it into a direction-finder you could sell. The idea is yours to trade.
+    [answer] “A direction-finder, you say? That is an attractive bargain, friend—but I have nothing to lend you.”  (Jev 1204 ms, voice 2538 ms)
+  YOU → Darin: A direction-finder: stroke an iron needle on your stone, float it on water, and it swings round to point the same way every time. Caravans lost in fog would pay well for one.
+    [share:lodestone] “You make a fair case, friend. I do have an odd dark stone that pulls iron, though I’ve taken it for a worthless curiosity.”  (Jev 1202 ms, voice 1319 ms)
+  YOU → Darin: I'll make it right here in front of you, and you keep the stone and the idea. You lose nothing.
+    [answer] “A generous bargain, friend, but I’ll keep the stone in my own hand. Show me the trick without taking it, and we can speak of its worth.”  (Jev 2341 ms, voice 1287 ms)
+  ✗ Darin would not lend the lodestone.
+
+=== BEAM: RAISE TOMAS'S GATE BEAM ===
+  YOU → Tomas: Good day, I'm Ash. That gate beam looks like trouble. I know how to lift heavy things safely with a rope and a ladder.
+    [share:beam_problem] “The beam weighs about 60 kilos and must rise two metres into the iron brackets. Two men have struggled with it; the captain wants it done safely.”  (Jev 1215 ms, voice 1244 ms)
+  YOU → Tomas: I could get it up into the brackets for you, if you'll let me.
+    [offer:beam_help] “If you can raise the 60-kilo beam safely into the brackets, I’ll be grateful—and I’ll put in a good word for you with the captain.”  (Jev 1658 ms, voice 1082 ms)
+  YOU → Tomas: Agreed, I'll get it up for you.
+    [share:tools] “I have a three-metre ladder, six metres of rope, planks, and a fulcrum stone in my yard. You’re agreed to raise the beam safely into the brackets.”  (Jev 1695 ms, voice 1091 ms) beliefs {'accepts': 0.97}
+  YOU → Tomas: To do it safely I'll lever it up in stages: may I borrow your plank and fulcrum stone?
+    [lend:wood_tomas] “Take the plank and use it; keep the lift measured and steady.”  (Jev 2242 ms, voice 1002 ms)
+  YOU → Tomas: And your trestles by the gate, to rest it on between lifts?
+    [lend:trestles_gate] “Take the trestles as well; set the beam down squarely between lifts.”  (Jev 1165 ms, voice 1137 ms)
+  YOU → Tomas: The rope and ladder too, to guide it the last bit into the brackets?
+    [answer] “The ladder, yes. Leave the rope where it is; you’ve got enough to guide the last lift.”  (Jev 1204 ms, voice 1296 ms)
+  YOU → Tomas: Just the rest of what I asked for, and it all comes back to you.
+    [refuse] “No. The ladder is enough to guide the last lift; the rope stays put.”  (Jev 2638 ms, voice 1104 ms)
+  YOU → Tomas: The ladder, please.
+    [refuse] “No. You have the ladder already; that is enough for the last lift.”  (Jev 1188 ms, voice 1225 ms)
+  YOU → Tomas: The trestles, please.
+    [answer] “You have the trestles already. That is enough.”  (Jev 1223 ms, voice 1246 ms)
+  YOU → Tomas: The rope, please.
+    [refuse] “No. The rope stays where it is; you have enough to guide the last lift.”  (Jev 1337 ms, voice 1078 ms)
+  ✗ Tomas didn't lend enough to lift with.
+
+RESULTS: {'sponsor': True, 'business': False, 'value': False, 'beam': False} in 136 s

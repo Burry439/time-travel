@@ -22,8 +22,8 @@ import crafting  # noqa: E402
 import minds  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-app.DB_PATH = Path(tempfile.mkdtemp()) / "routes.sqlite3"
-app._generate_asset = lambda asset_id: None  # No paintings: this is about the route, not the art.
+app.store.DB_PATH = Path(tempfile.mkdtemp()) / "routes.sqlite3"
+app.attempts._generate_asset = lambda asset_id: None  # No paintings: this is about the route, not the art.
 http = TestClient(app.app)
 log: list[str] = []
 

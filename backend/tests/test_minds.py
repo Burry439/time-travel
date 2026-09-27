@@ -128,8 +128,8 @@ def test_routine_people_ignore_jobs_they_do_not_have():
 
 @pytest.fixture
 def scripted(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "minds.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "minds.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script = []
 
     def fake_decide(situation, questions):

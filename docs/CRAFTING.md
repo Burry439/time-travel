@@ -9,6 +9,8 @@ Press **T** (or Enter) in the world and describe, in your own words, what you wa
 - **Fill** a container with water: "fill the gourd at the trough". Water is conserved; the troughs are at Hessa's inn and by the gate.
 - **Show** what something does: "float the needle in the bowl and show Darin". The judge says what onlookers actually see, and the object's abilities become *seen working* or *didn't work*. Showing beats describing: people remember what they saw.
 - **Give** something you carry to someone: "give Hessa the gourd of water".
+- **Raise or fit** something into place: "lever the gate beam up in stages and ease it into the brackets". Heavy things need real help (a lever and fulcrum, something to crib it up on, a pulley you make, a ladder), and the judge is honest about whether it works. If it works, the beam really stays up.
+- **Offer a trade**: "offer Darin my whistle for his lodestone". They answer when you next talk. People who trust you may also simply give you their things.
 - **Cut, break or fell** something: "cut down the young birch with the flint shard".
   - The tree falls over and leaves pieces (trunk, branches, stump). Each gets its own picture. Anything up to 20 kg can be picked up.
   - A felled map tree no longer blocks the path.
@@ -26,7 +28,8 @@ Code always checks:
 - **The south road start:** branches, cord, stones, flint, flat stone, dry grass, reeds, vine, bark, resin, hazel rod, pine cones and a birch sapling.
 - **The rest of the map:** feathers, wool, a bone, a gourd, wet clay, a pot shard, straw, leather, a **bent iron nail** and a **rusty horseshoe** (iron!), charcoal, chalk, bramble, burdock leaves, birch bark, a heavy log, and two more saplings.
 - **Everywhere:** all 19 big trees.
-- **Owned by NPCs:** Hessa's bucket, bowl and cup; Tomas's plank; Darin's **lodestone**, linen, cordage and bronze mirror; Mara's **iron needles** and nails (new journeys only).
+- **Owned by NPCs:** Hessa's bucket, bowl and cup; Tomas's plank, rope, ladder, fulcrum stone and trestles; Darin's **lodestone**, linen, cordage and bronze mirror; Mara's **iron needles** and nails.
+- **At the gate:** the replacement **gate beam** (60 kg), the **iron brackets** it belongs in, some empty crates and a water trough.
 
 To add your own, edit `data/content/world_objects.json`. Then run:
 
@@ -34,9 +37,13 @@ To add your own, edit `data/content/world_objects.json`. Then run:
 backend/.venv/Scripts/python.exe tools/generate_material_art.py
 ```
 
-Start a **new journey** to see new content; existing journeys keep their original world.
+Start a **new journey** to see new content; existing journeys keep their original world. Journeys from much older versions (before the materials across the map) can't be resumed.
 
 ## Talking and getting into the city
+
+Your **journal's Leads** list what people have told you, where they've pointed you and what they've asked of you, and mark each one done when it is. When someone's view of you shifts, you'll see a small sign ("Darin looks more interested"), never numbers.
+
+If the guards catch you, **Yield** is usually wiser than fighting: they take back anything you stole, march you down the south road, and keep you from the gate for a while. You can still get in later; only real violence closes the gate for good.
 
 Walk up to someone and press **E** to talk; when someone comes up to *you* (a guard halting you, someone confronting or attacking you) the same panel opens by itself. It works in **rounds**: each round you **Say it**, **Do it** (any action, like "hand him the plank" or "swing the spear at her"), **Wait**, or **Walk away**, and everyone else acts at the same moment: they decided their move before seeing yours, so a blow can land while someone is mid-sentence. Time only moves round by round while you're face to face; walking away from a fight gives an attacker a swing and they may chase you.
 

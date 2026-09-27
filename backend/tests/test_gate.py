@@ -109,8 +109,8 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "gate.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "gate.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, rulings = [], []
 
     def fake_decide(situation, questions):
@@ -125,7 +125,7 @@ def world(tmp_path, monkeypatch):
         status="ok", text=fallback, model="fake"))
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
-    monkeypatch.setattr(service, "_generate_asset", lambda asset_id: None)
+    monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), script=script, rulings=rulings)
 
 

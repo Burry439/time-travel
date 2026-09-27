@@ -147,8 +147,8 @@ def test_intents_come_from_code_and_turning_on_the_stranger_makes_it_a_fight():
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "enc.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "enc.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     replies, intents, rulings = [], [], []
 
     def fake_decide(situation, questions):
@@ -164,7 +164,7 @@ def world(tmp_path, monkeypatch):
         status="ok", text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120], model="fake"))
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
-    monkeypatch.setattr(service, "_generate_asset", lambda asset_id: None)
+    monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), replies=replies, intents=intents, rulings=rulings)
 
 

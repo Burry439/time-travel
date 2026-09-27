@@ -1195,11 +1195,11 @@ func _quick_action(verb: String, id: String) -> void:
 	if sync_error:
 		request_busy = false
 		return
-	var body := {"text": verb + " " + id.replace("_", " "), "selected_ids": [id],
-		"expected_version": run_state.event_seq, "request_id": _request_id(verb)}
-	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/actions", body)
+	var body := {"verb": verb, "object_id": id, "expected_version": run_state.event_seq,
+		"request_id": _request_id(verb)}
+	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/quick", body)
 	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500):
-		reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/actions", body)
+		reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/quick", body)
 	request_busy = false
 	if reply.ok:
 		run_state = reply.data.state

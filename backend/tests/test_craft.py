@@ -44,8 +44,8 @@ def spear(**changes):
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "craft.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "craft.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     monkeypatch.setattr(service.ai_config, "images_enabled", lambda: True)
     painted = []
 
@@ -113,15 +113,19 @@ def test_success_creates_a_persistent_object_with_provenance_and_sprite(world):
     # Idempotent retry returns the same result without calling the judge again.
     retry = craft(http, {"run_id": state["run_id"], "event_seq": 0}, "lash the flint to the branch with the vine", "spear")
     assert retry.json()["duplicate"] and retry.json()["state"] == state and len(world.contexts) == 1
-    # The created object works with ordinary quick actions.
-    dropped = http.post(f"/runs/{state['run_id']}/actions", json={
-        "text": f"drop {made['id']}", "selected_ids": [made["id"]], "expected_version": state["event_seq"],
+    # The created object works with the quick actions (decided in code, no model).
+    dropped = http.post(f"/runs/{state['run_id']}/quick", json={
+        "verb": "drop", "object_id": made["id"], "expected_version": state["event_seq"],
         "request_id": "drop"}).json()["state"]
     assert dropped["objects"][made["id"]]["holder_id"] is None
-    taken = http.post(f"/runs/{state['run_id']}/actions", json={
-        "text": f"take {made['id']}", "selected_ids": [made["id"]], "expected_version": dropped["event_seq"],
+    assert (dropped["objects"][made["id"]]["x"], dropped["objects"][made["id"]]["y"]) == \
+        (dropped["player"]["x"], dropped["player"]["y"])
+    taken = http.post(f"/runs/{state['run_id']}/quick", json={
+        "verb": "take", "object_id": made["id"], "expected_version": dropped["event_seq"],
         "request_id": "take"}).json()["state"]
     assert taken["objects"][made["id"]]["holder_id"] == "player"
+    assert http.get(f"/runs/{state['run_id']}").json() == taken
+    assert len(world.contexts) == 1  # Neither quick action asked the judge.
     traces = http.get(f"/runs/{state['run_id']}/traces").json()
     assert traces["traces"][0]["request_id"] == "spear" and traces["assets"][0]["status"] == "ready"
 
@@ -176,11 +180,11 @@ def test_disabled_ai_is_honest_and_older_journeys_are_refused(world, monkeypatch
     after = craft(http, state, "make a spear", "offline").json()["state"]
     assert after["last_action"]["category"] == "unresolved"
     assert "OPENAI_API_KEY" in after["last_action"]["reason"] and after["objects"] == state["objects"]
+    assert http.get(f"/runs/{state['run_id']}/traces").status_code == 403
     with service.db() as connection:
         connection.execute("UPDATE runs SET seed_version=3 WHERE id=?", (state["run_id"],))
-    old = http.get(f"/runs/{state['run_id']}").json()
-    assert craft(http, old, "make a spear", "old").status_code == 409
-    assert http.get(f"/runs/{state['run_id']}/traces").status_code == 403
+    retired = http.get(f"/runs/{state['run_id']}")
+    assert retired.status_code == 410 and "Start a new journey" in retired.json()["detail"]
 
 
 def test_new_road_materials_are_reachable_and_described():
@@ -193,8 +197,8 @@ def test_new_road_materials_are_reachable_and_described():
 
 
 def test_stub_mode_runs_the_real_pipeline_without_a_model(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "stub.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "stub.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     monkeypatch.setenv("AI_MODE", "stub")
     http = TestClient(service.app)
     assert http.get("/health").json()["ai"]["mode"] == "stub"

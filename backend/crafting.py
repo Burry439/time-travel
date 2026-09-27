@@ -186,6 +186,7 @@ def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **ex
     base = {"category": category, "reason": reason, "effort_seconds": effort, "notes": notes, "action": "other",
             "consumed_ids": [], "tool_ids": [], "new_spec": None, "take_ids": [], "transform": None,
             "harm": None, "fill": None, "demonstration": None, "give": None, "install": None, "offer_trade": None,
+            "drop_ids": [],
             "property": [], "precedent_key": None,
             "walk": []}
     base.update(extra)
@@ -272,7 +273,8 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
     handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill,
-                "demonstrate": _demonstrate, "give": _give, "install": _install, "offer_trade": _offer_trade}
+                "demonstrate": _demonstrate, "give": _give, "install": _install, "offer_trade": _offer_trade,
+                "drop": _drop}
     if action not in handlers:
         return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
@@ -396,6 +398,26 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     return _verdict("success", reason, notes, effort, action="make", consumed_ids=consumes, tool_ids=tools,
                     new_spec=new_spec, precedent_key=key,
                     property=_property(state, consumes, "used up") + _property(state, tools_not_ours, "used"))
+
+
+def quick(state: dict, verb: str, object_id: str) -> dict:
+    """A judge-shaped proposal for the deterministic quick actions (E to pick up, Put down): no model involved."""
+    obj = state["objects"].get(object_id)
+    if obj is None:
+        return {"clarifying_question": None, "precedent_key": f"quick:{verb}", "steps": [{
+            "action": "other", "outcome": "blocked", "reason": "There's nothing like that here.", "effort_seconds": 0,
+            "new_object": None, "take_ids": [], "transformation": None, "harm": None}]}
+    step = {"action": verb, "outcome": "success", "effort_seconds": 2, "new_object": None, "transformation": None,
+            "harm": None, "take_ids": [object_id] if verb == "take" else [], "drop_ids": [object_id] if verb == "drop" else [],
+            "reason": f"You pick up the {obj['name']}." if verb == "take" else f"You put down the {obj['name']}."}
+    return {"clarifying_question": None, "precedent_key": f"quick:{verb}", "steps": [step]}
+
+
+def _drop(state, judged, available, notes, reason, effort, key) -> dict:
+    ids = [i for i in _dedupe(judged.get("drop_ids") or []) if state["objects"].get(i, {}).get("holder_id") == "player"]
+    if not ids:
+        return _verdict("blocked", "You aren't carrying that.", notes, action="drop", precedent_key=key)
+    return _verdict("success", reason, notes, effort, action="drop", precedent_key=key, drop_ids=ids)
 
 
 def _take(state, judged, available, notes, reason, effort, key) -> dict:
@@ -736,6 +758,8 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         spilled = round(held - kept, 3)
     elif verdict["action"] == "take":
         taken = verdict["take_ids"]
+    elif verdict["action"] == "drop":
+        moved = [{"id": i, "x": px, "y": py} for i in verdict["drop_ids"]]  # At the stranger's feet.
     elif verdict["action"] == "transform":
         plan = verdict["transform"]
         target = state["objects"][plan["target_id"]]

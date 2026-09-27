@@ -737,6 +737,17 @@ Model calls run **outside** database transactions. Results are revalidated again
 
 ### 8.5 Repository layout (target)
 
+> **Built backend (D-33):**
+>
+> - `app.py` only assembles the routes.
+> - `store.py`: the event log, replay, checkpoints, staleness.
+> - `routes_world.py`: journeys, walking, the clock, rewind, the developer gate.
+> - `routes_craft.py`: Try Something, the code-only `/quick` pick up and put down, sprites, traces.
+> - `attempts.py`: the judge call, traces and painting, shared with rounds.
+> - `rounds.py`: `/say` and `/encounter/act`.
+> - `routes_minds.py`: `/think`.
+> - The simulation lives in `crafting.py`, `minds.py`, `talk.py`, `encounter.py`, `m2.py` (the world seed) and `npc_sim.py`.
+
 ```
 GDD.md                   ← this document
 AGENTS.md                ← agent instructions (points here)
@@ -1106,6 +1117,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-33 | 2026-09-28 | **Housekeeping.**<br><br>**Split:** `app.py` is split into store, route and round modules (§8.5).<br><br>**Retired:** the Milestone 2 phrase parser and `/actions`. Picking up and putting down go through `/quick`, a proposal made by code, not a model, and committed through the same pipeline as Try Something, so witnesses still see a theft. Journeys begun before seed 5 get an honest "start a new journey" (HTTP 410, GDD D-04), and their legacy branches are gone. Seed 5–7 saves that contain old quick-action events still replay. | Review: the backend had grown into one 1,200-line file carrying three generations of rules. |
 | D-32 | 2026-09-28 | **Effects that really change the world** (seed 7, `judge_v7`).<br><br>**The beam:** `gate_beam` (60 kg) and `gate_brackets` (a fixture), plus Tomas's rope, ladder, fulcrum stone and trestles, and empty crates at the gate. **Install** lifts or fits an object into a fixture; code requires aids for anything too heavy to lift by hand, and the judge rules on whether they're enough. It really moves the object, and anyone in sight sees it clearly. Tomas's deal can only be done once the beam is up (`done_when`), and he goes and checks.<br><br>**Barter and gifts:** **offer_trade** makes an offer the person can accept in conversation, and ownership swaps. People can **give** you their things once they trust you (0.45).<br><br>**Conversations:** walking off ends a conversation for anyone it leaves more than 6 cells behind, and people left more than 8 cells away drop out of an encounter. | Review: some effects were only memories, and people couldn't give or trade. Live: Tomas now offers the job and lends his gear. The judge is strict about the lift (a rope over a bracket gives no advantage; two crates don't reach 2 m), so raising the beam is a real invention puzzle, like the compass. |
 | D-31 | 2026-09-28 | **Arrest instead of death.**<br><br>**Seizing:** guards can seize the stranger in an encounter, unless the stranger slipped away first. Other people's things go back, the stranger is marched to the south road and barred from the gate for 10 sim-minutes, and the captain remembers it. **Yield** stops non-guards mid-swing, and a guard takes you.<br><br>**Admission:** only a known act of violence (severity 2 or more) rules it out for good; theft and arrests weigh on regard.<br><br>**Gentler fights:** kill chances dropped to 0–6%, with at most 2 extra blows. | Review: trouble tended to end in death rather than consequences. |
 | D-30 | 2026-09-28 | **Speed and the feel of a round.**<br><br>**Voice:** reasoning is off by default (`VOICE_REASONING=none`): same eval results (12/12), and slightly faster.<br><br>**Round traces:** they record time per stage (intents, judge, reply decision, voice, total).<br><br>**Playback:** rounds play back line by line (0.45 s apart), each with its moment in the world: blows land, people gesture as they speak, and the stranger's action shows as it happens. Each person's chip shows what they just did (listened, attacked, called for help). The wait says who is acting, and invention waits narrate stages and elapsed seconds. | Review: waiting and playback felt flat. Measured live: a Say round takes about 2.5 s once intents are prepared while typing. |

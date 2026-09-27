@@ -5,7 +5,7 @@ import app as service
 
 
 def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "lanes.sqlite3")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "lanes.sqlite3")
     return TestClient(service.app)
 
 

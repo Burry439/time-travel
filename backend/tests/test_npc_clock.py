@@ -7,7 +7,7 @@ import npc_sim
 
 
 def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progress(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "living.sqlite3")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "living.sqlite3")
     http = TestClient(service.app)
     initial = http.post("/runs", json={}).json()
     run_id = initial["run_id"]
@@ -39,20 +39,17 @@ def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progres
     assert http.get(f"/runs/{run_id}").json() == move
 
 
-def test_legacy_journey_keeps_movement_time_and_original_cast(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "legacy.sqlite3")
+def test_journeys_from_retired_versions_are_refused_honestly(tmp_path, monkeypatch):
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "legacy.sqlite3")
     http = TestClient(service.app)
     created = http.post("/runs", json={}).json()
     with service.db() as connection:
         connection.execute("UPDATE runs SET seed_version=2,geometry_version=2 WHERE id=?",
                            (created["run_id"],))
-    old = http.get(f"/runs/{created['run_id']}").json()
-    assert len(old["npcs"]) == 8
-    assert http.post(f"/runs/{created['run_id']}/explore", json={
-        "elapsed_ms": 500, "expected_version": 0, "request_id": "not-available"}).status_code == 409
-    moved = http.post(f"/runs/{created['run_id']}/move", json={
-        "x": 48, "y": 67, "expected_version": 0, "request_id": "legacy-step"}).json()["state"]
-    assert moved["sim_time_ms"] == 139
+    for reply in (http.get(f"/runs/{created['run_id']}"),
+                  http.post(f"/runs/{created['run_id']}/move", json={
+                      "x": 48, "y": 67, "expected_version": 0, "request_id": "legacy-step"})):
+        assert reply.status_code == 410 and "Start a new journey" in reply.json()["detail"]
 
 
 def test_full_npc_routines_stay_on_open_cells_and_guards_patrol():

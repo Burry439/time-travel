@@ -88,8 +88,8 @@ def test_talk_memories_never_push_out_serious_ones():
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "talk.sqlite3")
-    monkeypatch.setattr(service, "ASSET_DIR", tmp_path / "assets")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "talk.sqlite3")
+    monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, heard = [], []
 
     def fake_decide(situation, questions):

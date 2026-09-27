@@ -4,7 +4,7 @@ import app as service
 
 
 def test_building_and_tree_geometry_rejects_moves_without_mutating_save(tmp_path, monkeypatch):
-    monkeypatch.setattr(service, "DB_PATH", tmp_path / "feel.sqlite3")
+    monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "feel.sqlite3")
     http = TestClient(service.app)
     state = http.post("/runs", json={}).json()
     assert state["geometry_version"] == 3
