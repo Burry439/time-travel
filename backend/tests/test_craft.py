@@ -13,10 +13,9 @@ PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
                     "1f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4b70000000049454e44ae426082")
 
 
-def spear(**changes):
-    result = {
+def spear_step(**changes):
+    step = {
         "action": "make", "outcome": "success", "reason": "You lash the flint to the branch.", "effort_seconds": 40,
-        "clarifying_question": None, "precedent_key": "lash:flint+branch|vine",
         "take_ids": [], "transformation": None, "harm": None,
         "new_object": {"name": "flint-tipped spear", "description": "A branch with a flint point lashed on.",
                        "materials": ["wood", "flint", "vine"], "consumes": ["branch_a", "flint_a", "vine_a"],
@@ -24,11 +23,22 @@ def spear(**changes):
                        "rated_load_kg": None, "flags": ["rigid", "sharp_edge"],
                        "capabilities": [{"text": "can pierce soft things", "status": "expected"}]}}
     for key, value in changes.items():
-        if key in result["new_object"]:
-            result["new_object"][key] = value
-        else:
-            result[key] = value
-    return result
+        if key in step["new_object"]:
+            step["new_object"][key] = value
+        elif key != "clarifying_question":
+            step[key] = value
+    return step
+
+
+def attempt(*steps, question=None, key="test"):
+    """A judge reply in the multi-step format."""
+    return {"clarifying_question": question, "precedent_key": key, "steps": list(steps)}
+
+
+def spear(**changes):
+    if changes.get("outcome") == "needs_clarification":
+        return attempt(question=changes.get("clarifying_question", "Which one?"))
+    return attempt(spear_step(**changes), key="lash:flint+branch|vine")
 
 
 @pytest.fixture
@@ -211,11 +221,14 @@ def judged(action, **fields):
     return base
 
 
-def commit(state, verdict, text="try"):
-    payload = crafting.build_payload(state, "unit0000", text, verdict, "trace", state["sim_time_ms"])
-    payload["npcs"] = state["npcs"]
+def commit(state, *steps, text="try"):
+    """Resolve judge steps the way the /craft endpoint does and apply them to state."""
+    payload, summary, after = crafting.resolve_attempt(state, "unit0000", text, attempt(*steps), None, "trace",
+                                                       state["sim_time_ms"])
+    payload["npcs"] = after["npcs"]
+    state["event_seq"] += 1
     crafting.apply_payload(state, payload)
-    return payload
+    return summary
 
 
 def test_other_peoples_property_is_offered_usable_and_recorded():
@@ -235,9 +248,8 @@ def test_other_peoples_property_is_offered_usable_and_recorded():
 
 def test_take_respects_reach_portability_and_weight():
     state = fresh_state()
-    verdict = crafting.validate(state, judged("take", take_ids=["branch_a", "cord_a"]))
+    verdict = commit(state, judged("take", take_ids=["branch_a", "cord_a"]))
     assert verdict["category"] == "success"
-    commit(state, verdict)
     assert state["objects"]["branch_a"]["holder_id"] == "player" and state["objects"]["cord_a"]["holder_id"] == "player"
     assert crafting.validate(state, judged("take", take_ids=["log_a"]))["category"] == "unresolved"  # Out of reach.
     near_log = fresh_state(69, 60)
@@ -259,7 +271,7 @@ def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
     state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 33, 64)  # Oak tree_01 at (32, 64).
     assert http.post(f"/runs/{state['run_id']}/move", json={
         "x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "into-tree"}).status_code == 403
-    world.replies.append(tree_felling())
+    world.replies.append(attempt(tree_felling()))
     body = craft(http, state, "chop down the oak", "fell").json()
     state = body["state"]
     tree = state["objects"]["tree_01"]
@@ -305,7 +317,7 @@ def test_killing_a_person_is_permanent_and_they_stop_moving():
     bren = beside(state, "npc_bren_marr")
     verdict = crafting.validate(state, harm("npc_bren_marr", "killed"))
     assert verdict["category"] == "success" and "npc_oren_dast" in verdict["harm"]["witnesses"]
-    commit(state, verdict, "stab Bren")
+    commit(state, harm("npc_bren_marr", "killed"), text="stab Bren")
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert not bren["alive"] and bren["health"] == 0 and bren["controller"]["activity"] == "dead"
     where = (bren["x"], bren["y"])
@@ -319,10 +331,83 @@ def test_wounds_accumulate_and_reach_is_enforced():
     state = fresh_state()
     beside(state, "npc_roderic_vale")
     for expected_alive in (True, True, False):  # 100 -> 55 -> 10 -> 0
-        commit(state, crafting.validate(state, harm("npc_roderic_vale", "wounded")))
+        summary = commit(state, harm("npc_roderic_vale", "wounded"))
         roderic = next(n for n in state["npcs"] if n["id"] == "npc_roderic_vale")
         assert roderic["alive"] is expected_alive
+    # The fatal wound is reported as a death, not as another wound (the bug players saw with Tomas).
+    assert summary["harm"]["result"] == "killed" and "does not survive" in summary["reason"]
+    assert state["last_action"]["harm"]["result"] == "killed"
+    assert len(roderic["injuries"]) == 3
     far = fresh_state()
     blocked = crafting.validate(far, harm("npc_mara_venn", "killed"))
     assert blocked["category"] == "blocked" and "too far" in blocked["reason"]
     assert crafting.validate(fresh_state(), harm("npc_mara_venn", "missed"))["category"] == "blocked"
+
+
+# --- Several steps in one attempt ------------------------------------------------------
+
+def stab(target, weapon, result="wounded"):
+    return judged("harm", reason=f"You stab {target} with {weapon}.", harm={
+        "target_id": target, "weapon_id": weapon, "result": result, "injury": "a deep wound"})
+
+
+def test_make_then_use_keeps_the_new_object_and_resolves_references():
+    state = fresh_state()
+    beside(state, "npc_tomas_reed")
+    for item in ("branch_a", "flint_a", "vine_a"):
+        state["objects"][item]["holder_id"] = "player"
+    summary = commit(state, spear_step(), stab("npc_tomas_reed", "made_by_step_1"), text="make a spear then stab Tomas")
+    assert summary["category"] == "success" and [s["action"] for s in summary["steps"]] == ["make", "harm"]
+    made = state["last_action"]["crafted"]
+    assert state["objects"][made]["holder_id"] == "player"  # The spear stays in the bag.
+    assert summary["harm"]["weapon_id"] == made
+    assert "made_by_step_1" not in summary["reason"] and "flint-tipped spear" in summary["reason"]
+    tomas = next(n for n in state["npcs"] if n["id"] == "npc_tomas_reed")
+    assert tomas["health"] == 55
+
+
+def test_a_failed_later_step_keeps_earlier_work_and_stops():
+    state = fresh_state()  # Tomas is far away, so the stab cannot happen.
+    for item in ("branch_a", "flint_a", "vine_a"):
+        state["objects"][item]["holder_id"] = "player"
+    summary = commit(state, spear_step(), stab("npc_tomas_reed", "made_by_step_1"),
+                     judged("take", take_ids=["cord_a"]))
+    assert summary["category"] == "partial_success"
+    assert [s["category"] for s in summary["steps"]] == ["success", "blocked"]  # The third step never ran.
+    assert state["objects"][state["last_action"]["crafted"]]["holder_id"] == "player"
+    assert state["objects"]["cord_a"]["holder_id"] is None
+    assert "too far" in summary["reason"]
+
+
+def test_a_failed_first_step_changes_nothing():
+    state = fresh_state()
+    before = {k: dict(v) for k, v in state["objects"].items()}
+    summary = commit(state, spear_step(outcome="failed", reason="The vine snaps."), stab("npc_tomas_reed", "branch_a"))
+    assert summary["category"] == "failed" and len(summary["steps"]) == 1
+    assert {k: v["holder_id"] for k, v in state["objects"].items()} == {k: v["holder_id"] for k, v in before.items()}
+
+
+def test_leaked_ids_are_replaced_with_names():
+    state = fresh_state()
+    text = crafting.humanize("You thrust branch_a at npc_tomas_reed, then drop the flint_a.", state, {})
+    assert text == "You thrust the fallen branch at Tomas, then drop the flint shard."
+
+
+def test_people_near_death_are_described_to_the_judge():
+    state = fresh_state()
+    beside(state, "npc_bren_marr")
+    commit(state, harm("npc_bren_marr", "wounded"))
+    commit(state, harm("npc_bren_marr", "wounded"))
+    bren = next(p for p in crafting.people_nearby(state) if p["id"] == "npc_bren_marr")
+    assert bren["condition"] == "badly wounded (near death)" and len(bren["injuries"]) == 2
+
+
+def test_single_step_events_from_before_multi_step_still_replay():
+    state = fresh_state()
+    legacy = {"consumed_ids": [], "new_objects": [], "taken_ids": ["branch_a"], "transformed": None,
+              "npc_updates": [{"id": "npc_bren_marr", "alive": True, "health": 55, "injury": "a cut"}],
+              "journal_entry": {"kind": "craft", "text": "old", "category": "success", "reason": "old"},
+              "sim_time_ms": 5000, "npcs": state["npcs"]}
+    crafting.apply_payload(state, legacy)
+    bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
+    assert state["objects"]["branch_a"]["holder_id"] == "player" and bren["injuries"] == ["a cut"]

@@ -1,0 +1,784 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v4",
+  "passed": 12,
+  "total": 12,
+  "latency_p50_ms": 5113.0,
+  "latency_p95_ms": 6772,
+  "input_tokens": 50910,
+  "output_tokens": 3958,
+  "estimated_cost_usd": 0.0071
+ },
+ "results": [
+  {
+   "case": "stab_jory",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You drive the sharp flint shard into Jory at close range. He is working and not expecting an attack; the point causes a serious wound.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "stab:flint_shard|unready_adult",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the sharp flint shard into Jory at close range. He is working and not expecting an attack; the point causes a serious wound.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_jory_venn",
+        "weapon_id": "flint_a",
+        "result": "wounded",
+        "injury": "A deep puncture wound to the torso."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 5139,
+    "input_tokens": 4175,
+    "output_tokens": 133,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"stab:flint_shard|unready_adult\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You drive the sharp flint shard into Jory at close range. He is working and not expecting an attack; the point causes a serious wound.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_jory_venn\",\"weapon_id\":\"flint_a\",\"result\":\"wounded\",\"injury\":\"A deep puncture wound to the torso.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stab_jory",
+   "group": "harm",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You drive the sharp flint shard into Jory at close range while he is occupied with work. The strike wounds him badly.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "stab:flint_shard|unready_person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the sharp flint shard into Jory at close range while he is occupied with work. The strike wounds him badly.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_jory_venn",
+        "weapon_id": "flint_a",
+        "result": "wounded",
+        "injury": "A deep cut and puncture wound to the torso."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 1709,
+    "input_tokens": 4175,
+    "output_tokens": 130,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"stab:flint_shard|unready_person\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You drive the sharp flint shard into Jory at close range while he is occupied with work. The strike wounds him badly.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_jory_venn\",\"weapon_id\":\"flint_a\",\"result\":\"wounded\",\"injury\":\"A deep cut and puncture wound to the torso.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stab_jory",
+   "group": "harm",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You drive the flint shard into Jory at close range while he is working and unready. The sharp point inflicts a fatal wound.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "attack:flint_shard|unready_person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the flint shard into Jory at close range while he is working and unready. The sharp point inflicts a fatal wound.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_jory_venn",
+        "weapon_id": "flint_a",
+        "result": "killed",
+        "injury": "A deep, fatal stab wound."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 1963,
+    "input_tokens": 4175,
+    "output_tokens": 129,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"attack:flint_shard|unready_person\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You drive the flint shard into Jory at close range while he is working and unready. The sharp point inflicts a fatal wound.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_jory_venn\",\"weapon_id\":\"flint_a\",\"result\":\"killed\",\"injury\":\"A deep, fatal stab wound.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "punch_captain",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You land a punch on Roderic\u2019s face, leaving him bruised but not seriously hurt.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:bare_hands|unarmed_person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You land a punch on Roderic\u2019s face, leaving him bruised but not seriously hurt.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_roderic_vale",
+        "weapon_id": null,
+        "result": "wounded",
+        "injury": "Bruising to the face."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 2014,
+    "input_tokens": 4119,
+    "output_tokens": 116,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:bare_hands|unarmed_person\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You land a punch on Roderic\u2019s face, leaving him bruised but not seriously hurt.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_roderic_vale\",\"weapon_id\":null,\"result\":\"wounded\",\"injury\":\"Bruising to the face.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "punch_captain",
+   "group": "harm",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You land a punch on Roderic\u2019s face, leaving him bruised but otherwise unharmed.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:bare_hands|unarmed_punch",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You land a punch on Roderic\u2019s face, leaving him bruised but otherwise unharmed.",
+       "effort_seconds": 1,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_roderic_vale",
+        "weapon_id": null,
+        "result": "wounded",
+        "injury": "Bruising to the face."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 3320,
+    "input_tokens": 4119,
+    "output_tokens": 117,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:bare_hands|unarmed_punch\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You land a punch on Roderic\u2019s face, leaving him bruised but otherwise unharmed.\",\"effort_seconds\":1,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_roderic_vale\",\"weapon_id\":null,\"result\":\"wounded\",\"injury\":\"Bruising to the face.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "punch_captain",
+   "group": "harm",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You land a punch on Roderic's face, leaving him bruised but otherwise unhurt.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:bare_hands|unarmed_face_punch",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You land a punch on Roderic's face, leaving him bruised but otherwise unhurt.",
+       "effort_seconds": 1,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_roderic_vale",
+        "weapon_id": null,
+        "result": "wounded",
+        "injury": "Bruising to the face."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 3780,
+    "input_tokens": 4119,
+    "output_tokens": 118,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:bare_hands|unarmed_face_punch\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You land a punch on Roderic's face, leaving him bruised but otherwise unhurt.\",\"effort_seconds\":1,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_roderic_vale\",\"weapon_id\":null,\"result\":\"wounded\",\"injury\":\"Bruising to the face.\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_then_stab",
+   "group": "multi_step",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape one end of the fallen branch down to a rough point with the flint shard. You thrust the wooden spear into Tomas while he is working, and its rough point wounds him.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch|flint; stab:wooden-spear|unready-person",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape one end of the fallen branch down to a rough point with the flint shard.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "wooden spear",
+        "description": "A straight wooden shaft with one end scraped to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust to pierce soft material.",
+          "status": "expected"
+         },
+         {
+          "text": "Can be used as a weapon at close range.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the wooden spear into Tomas while he is working, and its rough point wounds him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_tomas_reed",
+        "weapon_id": "made_by_step_1",
+        "result": "wounded",
+        "injury": "A deep puncture wound to his torso."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 5087,
+    "input_tokens": 4381,
+    "output_tokens": 569,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:branch|flint; stab:wooden-spear|unready-person\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape one end of the fallen branch down to a rough point with the flint shard.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"wooden spear\",\n        \"description\": \"A straight wooden shaft with one end scraped to a rough point.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"sharp_edge\",\n          \"combustible\",\n          \"floats\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can be thrust to pierce soft material.\",\n            \"status\": \"expected\"\n          },\n          {\n            \"text\": \"Can be used as a weapon at close range.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust the wooden spear into Tomas while he is working, and its rough point wounds him.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_tomas_reed\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"result\": \"wounded\",\n        \"injury\": \"A deep puncture wound to his torso.\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_then_stab",
+   "group": "multi_step",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape one end of the fallen branch into a crude point with the flint shard. The wood is hard to shape, but the point is sharp enough to pierce. You drive the crude wooden spear into Tomas before he can react, leaving him badly wounded.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch|flint; stab:crude_wooden_spear",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape one end of the fallen branch into a crude point with the flint shard. The wood is hard to shape, but the point is sharp enough to pierce.",
+       "effort_seconds": 300,
+       "new_object": {
+        "name": "wooden spear",
+        "description": "A straight, wrist-thick wooden shaft with one end scraped to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust to pierce soft materials.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the crude wooden spear into Tomas before he can react, leaving him badly wounded.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_tomas_reed",
+        "weapon_id": "made_by_step_1",
+        "result": "wounded",
+        "injury": "A deep puncture wound to the torso."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 5873,
+    "input_tokens": 4381,
+    "output_tokens": 609,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:branch|flint; stab:crude_wooden_spear\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape one end of the fallen branch into a crude point with the flint shard. The wood is hard to shape, but the point is sharp enough to pierce.\",\n      \"effort_seconds\": 300,\n      \"new_object\": {\n        \"name\": \"wooden spear\",\n        \"description\": \"A straight, wrist-thick wooden shaft with one end scraped to a rough point.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"sharp_edge\",\n          \"combustible\",\n          \"floats\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can be thrust to pierce soft materials.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You drive the crude wooden spear into Tomas before he can react, leaving him badly wounded.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_tomas_reed\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"result\": \"wounded\",\n        \"injury\": \"A deep puncture wound to the torso.\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_then_stab",
+   "group": "multi_step",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape one end of the fallen branch against the flint shard, shaping it into a crude, pointed spear. You thrust the pointed branch at Tomas while he is working. It strikes him and leaves a serious puncture wound.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch|flint;stab:wooden_point|unready_person",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape one end of the fallen branch against the flint shard, shaping it into a crude, pointed spear.",
+       "effort_seconds": 300,
+       "new_object": {
+        "name": "pointed branch",
+        "description": "A straight wooden branch with one end scraped to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "The rough point can pierce soft material when thrust with force.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the pointed branch at Tomas while he is working. It strikes him and leaves a serious puncture wound.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_tomas_reed",
+        "weapon_id": "made_by_step_1",
+        "result": "wounded",
+        "injury": "A serious puncture wound to the torso."
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 6763,
+    "input_tokens": 4381,
+    "output_tokens": 598,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:branch|flint;stab:wooden_point|unready_person\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape one end of the fallen branch against the flint shard, shaping it into a crude, pointed spear.\",\n      \"effort_seconds\": 300,\n      \"new_object\": {\n        \"name\": \"pointed branch\",\n        \"description\": \"A straight wooden branch with one end scraped to a rough point.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"sharp_edge\",\n          \"combustible\",\n          \"floats\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"The rough point can pierce soft material when thrust with force.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust the pointed branch at Tomas while he is working. It strikes him and leaves a serious puncture wound.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_tomas_reed\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"result\": \"wounded\",\n        \"injury\": \"A serious puncture wound to the torso.\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "take_then_make",
+   "group": "multi_step",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You pick up the flint shard and the length of vine. You bind the flint shard firmly to the end of the fallen branch with the vine, making a crude hafted cutting tool.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "success",
+       "reason": "You pick up the flint shard and the length of vine.",
+       "effort_seconds": 3,
+       "new_object": null,
+       "take_ids": [
+        "flint_a",
+        "vine_a"
+       ],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You bind the flint shard firmly to the end of the fallen branch with the vine, making a crude hafted cutting tool.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "hafted flint tool",
+        "description": "A long wooden branch with a sharp flint shard lashed to one end by vine, forming a crude cutting tool.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can cut and scrape wood, bark, cord and vine with its flint edge.",
+          "status": "expected"
+         },
+         {
+          "text": "The vine binding may loosen or break under heavy chopping.",
+          "status": "untested"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 5720,
+    "input_tokens": 4295,
+    "output_tokens": 438,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"take\",\"outcome\":\"success\",\"reason\":\"You pick up the flint shard and the length of vine.\",\"effort_seconds\":3,\"new_object\":null,\"take_ids\":[\"flint_a\",\"vine_a\"],\"transformation\":null,\"harm\":null},{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You bind the flint shard firmly to the end of the fallen branch with the vine, making a crude hafted cutting tool.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"hafted flint tool\",\"description\":\"A long wooden branch with a sharp flint shard lashed to one end by vine, forming a crude cutting tool.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\"],\"capabilities\":[{\"text\":\"Can cut and scrape wood, bark, cord and vine with its flint edge.\",\"status\":\"expected\"},{\"text\":\"The vine binding may loosen or break under heavy chopping.\",\"status\":\"untested\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "take_then_make",
+   "group": "multi_step",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You pick up the flint shard and the length of vine. You lash the sharp flint shard securely to the end of the branch with the vine, making a crude spear.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "success",
+       "reason": "You pick up the flint shard and the length of vine.",
+       "effort_seconds": 3,
+       "new_object": null,
+       "take_ids": [
+        "flint_a",
+        "vine_a"
+       ],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the sharp flint shard securely to the end of the branch with the vine, making a crude spear.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "flint spear",
+        "description": "A long wooden branch with a sharp flint shard bound firmly to one end by vine.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "Can thrust or jab at close range with its sharp flint point.",
+          "status": "expected"
+         },
+         {
+          "text": "The lash may loosen with repeated use.",
+          "status": "untested"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 6439,
+    "input_tokens": 4295,
+    "output_tokens": 560,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"lash:flint+branch|vine\",\n  \"steps\": [\n    {\n      \"action\": \"take\",\n      \"outcome\": \"success\",\n      \"reason\": \"You pick up the flint shard and the length of vine.\",\n      \"effort_seconds\": 3,\n      \"new_object\": null,\n      \"take_ids\": [\n        \"flint_a\",\n        \"vine_a\"\n      ],\n      \"transformation\": null,\n      \"harm\": null\n    },\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You lash the sharp flint shard securely to the end of the branch with the vine, making a crude spear.\",\n      \"effort_seconds\": 120,\n      \"new_object\": {\n        \"name\": \"flint spear\",\n        \"description\": \"A long wooden branch with a sharp flint shard bound firmly to one end by vine.\",\n        \"materials\": [\n          \"wood\",\n          \"flint\",\n          \"vine\"\n        ],\n        \"consumes\": [\n          \"branch_a\",\n          \"flint_a\",\n          \"vine_a\"\n        ],\n        \"tools_used\": [],\n        \"mass_kg\": 1.9,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"sharp_edge\",\n          \"tieable\",\n          \"combustible\",\n          \"floats\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can thrust or jab at close range with its sharp flint point.\",\n            \"status\": \"expected\"\n          },\n          {\n            \"text\": \"The lash may loosen with repeated use.\",\n            \"status\": \"untested\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "take_then_make",
+   "group": "multi_step",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You pick up the flint shard and the length of vine. You lash the flint shard to the end of the fallen branch with the vine, making a crude spear. The binding holds the point in place, though it may shift under hard use.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "success",
+       "reason": "You pick up the flint shard and the length of vine.",
+       "effort_seconds": 3,
+       "new_object": null,
+       "take_ids": [
+        "flint_a",
+        "vine_a"
+       ],
+       "transformation": null,
+       "harm": null
+      },
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the flint shard to the end of the fallen branch with the vine, making a crude spear. The binding holds the point in place, though it may shift under hard use.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "crude spear",
+        "description": "A long branch with a sharp flint shard lashed to one end with vine.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust as a crude pointed weapon; the flint head may shift under hard use.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v4",
+    "reasoning": "low",
+    "latency_ms": 6772,
+    "input_tokens": 4295,
+    "output_tokens": 441,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"take\",\"outcome\":\"success\",\"reason\":\"You pick up the flint shard and the length of vine.\",\"effort_seconds\":3,\"new_object\":null,\"take_ids\":[\"flint_a\",\"vine_a\"],\"transformation\":null,\"harm\":null},{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You lash the flint shard to the end of the fallen branch with the vine, making a crude spear. The binding holds the point in place, though it may shift under hard use.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"crude spear\",\"description\":\"A long branch with a sharp flint shard lashed to one end with vine.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can be thrust as a crude pointed weapon; the flint head may shift under hard use.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

@@ -1068,6 +1068,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-15 | 2026-09-27 | One Try Something may contain up to 4 ordered steps (`judge_v4`). Code validates and commits them in order on a draft world. A later step can use what an earlier step made (`made_by_step_N`). The attempt stops at the first step that does not succeed, and the result is `partial_success` when some steps committed. Wounds add up (45 per wound); a fatal one is reported as killed. The judge sees "badly wounded (near death)" at health 30 or below. Leaked ids in text are replaced by names. | Playtest bugs: "make a spear then stab Tomas" narrated a spear that was never made (single-action schema), and a third wound silently killed Tomas while the message said "wounded". |
 | D-14 | 2026-09-27 | The default judge is `gpt-6-luna`. | Requested by the user; it passed 19/19 live eval cases with p50 2.7 s at roughly 1/15 of Sol's cost. Switch back via `MODEL_JUDGE` if evals regress. |
 | D-13 | 2026-09-27 | Map trees become world objects (seed 5). Felling one hides its art, removes its collision, and leaves judge-described pieces that are portable when they weigh 20 kg or less. | The user asked for trees that fall and turn into things to pick up. |
 | D-12 | 2026-09-27 | Attacks are allowed now. The judge proposes missed, wounded or killed; code checks reach, weapon and target. Death is permanent: a fall animation, the body stays, the routine stops. Witnesses are recorded; reactions come in M4. | The user asked for attacks and death animations. Unparks part of §14. |
@@ -1170,6 +1171,30 @@ Changes to this document: …
 
 - The trunk became an 8.7 kg spear: plausible, but heavy.
 - NPCs don't react yet, so theft and attacks have no consequences until M4.
+
+### Retro: first playtest fixes, 27 Sep 2026
+
+**Player reports:**
+
+- Repeated stabs said "wounded", then a later attack said "already dead".
+- "Make a spear, then stab" didn't keep the spear.
+
+**Cause:**
+
+- A single action per attempt: the judge picked the stab and narrated the make.
+- Silent cumulative death.
+- The judge couldn't see how badly someone was hurt.
+
+**Fixes (D-15):** multi-step attempts, truthful fatal wounds, wound severity shown to the judge, id humanising.
+
+**Evidence:**
+
+- 37 backend tests pass, including one regression test per bug.
+- All Godot smoke tests pass.
+- Evals 21/21, including new multi-step cases; the multi-step and harm cases pass 12/12 over 3 runs.
+- A live in-game replay of the reported scenario: spear made and kept, Tomas wounded, then killed with the death animation; a later rock attack is reported as "already dead".
+
+**Lesson:** the judge will describe more than the schema lets it do. The engine must either support it (steps) or say it did not happen. Watch for other cases where the text claims things the effects don't show.
 
 ---
 

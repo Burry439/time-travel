@@ -1,6 +1,6 @@
 # Try Something
 
-Press **T** (or Enter) in the world and describe, in your own words, what you want to do with what you carry and whatever or whoever is within reach. The chips show them; clicking one is optional. There are no command words. The AI judge decides what happens, and code checks the result before anything changes.
+Press **T** (or Enter) in the world and describe, in your own words, what you want to do with what you carry and whatever or whoever is within reach. You can describe several things in one go ("sharpen the branch into a spear with the flint, then stab Tomas with it"): they happen in order, and if one fails the rest do not happen. The chips show them; clicking one is optional. There are no command words. The AI judge decides what happens, and code checks the result before anything changes.
 
 ## What you can do
 

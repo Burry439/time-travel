@@ -6,8 +6,10 @@ Actions: make an object, take items, transform (cut, break, fell) one thing, har
 """
 from __future__ import annotations
 
+import copy
 import json
 import math
+import re
 from pathlib import Path
 
 import m2
@@ -16,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTENT = json.loads((ROOT / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 MAX_EFFORT_SECONDS = 14_400  # Felling a large tree by hand can take hours.
 MAX_PIECES = 8
+MAX_STEPS = 4
 PRIOR_RULINGS = 10
 PEOPLE_RADIUS = 8.0  # Cells within which the judge is told about people.
 WITNESS_RADIUS = 10.0  # Cells within which people are recorded as witnesses (reactions come in M4).
@@ -60,7 +63,9 @@ def people_nearby(state: dict) -> list[dict]:
             people.append({
                 "id": npc["id"], "name": npc["name"], "role": npc["role"], "distance_cells": round(distance, 1),
                 "within_reach": distance <= m2.REACH_CELLS,
-                "condition": "dead" if not npc.get("alive", True) else "wounded" if health < 100 else "unhurt",
+                "condition": ("dead" if not npc.get("alive", True) else "unhurt" if health >= 100
+                              else "wounded" if health > 30 else "badly wounded (near death)"),
+                "injuries": npc.get("injuries", []),
                 "activity": (npc.get("controller") or {}).get("activity", "standing")})
     return people
 
@@ -368,13 +373,12 @@ def _object(new_id: str, run_id: str, spec: dict, x: int, y: int, owner, holder,
             "placeholder": placeholder_category(spec["materials"])}
 
 
-def build_payload(state: dict, run_id: str, text: str, verdict: dict, trace_id: str,
-                  sim_time_ms: int) -> dict:
-    """Event payload holding only deltas; apply_payload replays it."""
-    event_id = state["event_seq"] + 1
+def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
+    """World changes for one validated step; ids stay unique across the steps of one attempt."""
+    suffix = "" if number == 1 else f"_{number}"
     px, py = state["player"]["x"], state["player"]["y"]
-    new_objects, consumed, taken, transformed, npc_updates, harm = [], [], [], None, [], None
-    if verdict["category"] == "success" and verdict["action"] == "make":
+    new_objects, consumed, taken, transformed, npc_updates = [], [], [], None, []
+    if verdict["action"] == "make":
         spec = verdict["new_spec"]
         consumed = verdict["consumed_ids"]
         carried_consumed = sum(state["objects"][i]["mass_kg"] + state["objects"][i]["water_l"]
@@ -382,36 +386,36 @@ def build_payload(state: dict, run_id: str, text: str, verdict: dict, trace_id: 
         fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= m2.CARRY_LIMIT_KG
         if not fits:
             verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
-        new_objects.append(_object(f"made_{event_id}", run_id, spec, px, py, "player", "player" if fits else None,
-                                   text, event_id, consumed, verdict["tool_ids"]))
-    elif verdict["category"] == "success" and verdict["action"] == "take":
+        new_objects.append(_object(f"made_{event_id}{suffix}", run_id, spec, px, py, "player",
+                                   "player" if fits else None, text, event_id, consumed, verdict["tool_ids"]))
+    elif verdict["action"] == "take":
         taken = verdict["take_ids"]
-    elif verdict["category"] == "success" and verdict["action"] == "transform":
+    elif verdict["action"] == "transform":
         plan = verdict["transform"]
         target = state["objects"][plan["target_id"]]
         cleared = cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
         in_hand = target["holder_id"] == "player"
         load = m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)
         total = sum(p["count"] for p in plan["pieces"])
-        cells = iter(_open_cells_near(state, target["x"] if not in_hand else px,
-                                      target["y"] if not in_hand else py, cleared, total))
+        cells = iter(_open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"],
+                                      cleared, total))
         index = 0
         for piece in plan["pieces"]:
             asset_id = None
             for _ in range(piece["count"]):
                 index += 1
-                new_id = f"piece_{event_id}_{index}"
                 keep = in_hand and load + piece["mass_kg"] <= m2.CARRY_LIMIT_KG
                 load += piece["mass_kg"] if keep else 0
                 x, y = next(cells)
-                obj = _object(new_id, run_id, piece, x, y, target["owner_id"] if target["owner_id"] != "player"
-                              else "player", "player" if keep else None, text, event_id, [plan["target_id"]],
+                obj = _object(f"piece_{event_id}{suffix}_{index}", run_id, piece, x, y,
+                              "player" if target["owner_id"] == "player" else target["owner_id"],
+                              "player" if keep else None, text, event_id, [plan["target_id"]],
                               verdict["tool_ids"], asset_id)
                 asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
                 new_objects.append(obj)
         transformed = {"id": plan["target_id"], "result_state": plan["result_state"],
                        "into": [o["id"] for o in new_objects]}
-    elif verdict["category"] == "success" and verdict["action"] == "harm":
+    elif verdict["action"] == "harm":
         harm = verdict["harm"]
         npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
         health = npc.get("health", 100)
@@ -419,50 +423,155 @@ def build_payload(state: dict, run_id: str, text: str, verdict: dict, trace_id: 
             health = 0
         elif harm["result"] == "wounded":
             health = max(0, health - WOUND_DAMAGE)
-        npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health,
-                            "injury": harm["injury"] if harm["result"] != "missed" else None})
-    made = new_objects
-    entry = {"kind": "craft", "action": verdict["action"], "text": text, "category": verdict["category"],
-             "reason": verdict["reason"],
-             "step": {"step_id": "step_1", "operation_key": "craft", "actor_id": "player",
-                      "input_refs": [{"existing_entity_id": i} for i in
-                                     consumed + verdict["tool_ids"] + taken +
-                                     ([transformed["id"]] if transformed else [])],
-                      "output_bindings": [o["id"] for o in made], "depends_on": [], "required_capabilities": [],
-                      "required_skill": None, "effort_seconds": verdict["effort_seconds"], "risk_tags": [],
-                      "status": "completed" if verdict["category"] == "success" else verdict["category"]},
-             "player_cell": [px, py], "event_id": event_id,
-             "made": made[0]["id"] if made else None, "made_name": made[0]["name"] if made else None,
-             "made_ids": [o["id"] for o in made], "taken_ids": taken, "transformed": transformed,
-             "harm": harm, "property": verdict["property"],
-             "precedent_key": verdict["precedent_key"], "trace_id": trace_id}
+            if health == 0:
+                # Wounds add up: say so, rather than reporting a wound and quietly killing.
+                harm["result"] = "killed"
+                verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
+                verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
+        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] != "missed" else [])
+        npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries})
     return {"consumed_ids": consumed, "new_objects": new_objects, "taken_ids": taken, "transformed": transformed,
-            "npc_updates": npc_updates, "journal_entry": entry, "sim_time_ms": sim_time_ms}
+            "npc_updates": npc_updates}
 
 
-def apply_payload(state: dict, payload: dict) -> None:
-    new_objects = payload.get("new_objects") or ([payload["new_object"]] if payload.get("new_object") else [])
+def _apply_step(state: dict, deltas: dict) -> None:
+    new_objects = deltas.get("new_objects") or ([deltas["new_object"]] if deltas.get("new_object") else [])
     if new_objects:
-        for item_id in payload["consumed_ids"]:
+        for item_id in deltas["consumed_ids"]:
             state["objects"][item_id]["holder_id"] = f"in:{new_objects[0]['id']}"
         for obj in new_objects:
             state["objects"][obj["id"]] = obj
-    for item_id in payload.get("taken_ids", []):
+    for item_id in deltas.get("taken_ids", []):
         state["objects"][item_id]["holder_id"] = "player"
-    transformed = payload.get("transformed")
+    transformed = deltas.get("transformed")
     if transformed:
         target = state["objects"][transformed["id"]]
         target.update(condition=transformed["result_state"], holder_id=f"into:{transformed['into'][0]}",
                       became=transformed["into"])
-    state["journal"].append(payload["journal_entry"])
-    state["last_action"] = payload["journal_entry"]
-    state["sim_time_ms"] = payload["sim_time_ms"]
-    if "npcs" in payload:
-        state["npcs"] = payload["npcs"]
-    for update in payload.get("npc_updates", []):
+    for update in deltas.get("npc_updates", []):
         npc = next(n for n in state["npcs"] if n["id"] == update["id"])
         npc.update(alive=update["alive"], health=update["health"])
-        if update["injury"]:
+        if "injuries" in update:
+            npc["injuries"] = list(update["injuries"])
+        elif update.get("injury"):  # Seed-5 payloads before multi-step recorded one injury at a time.
             npc.setdefault("injuries", []).append(update["injury"])
         if not update["alive"] and npc.get("controller"):
             npc["controller"].update(activity="dead", path=[], source="dead")
+
+
+_REFERENCE = re.compile(r"^made_by_step_(\d+)$")
+
+
+def _resolve_references(step: dict, made_by_step: dict[int, str]) -> dict:
+    """Point 'made_by_step_N' at the object that step actually made."""
+    def swap(value):
+        match = _REFERENCE.match(value) if isinstance(value, str) else None
+        return made_by_step.get(int(match.group(1)), value) if match else value
+    step = copy.deepcopy(step)
+    if step.get("new_object"):
+        step["new_object"]["consumes"] = [swap(i) for i in step["new_object"]["consumes"]]
+        step["new_object"]["tools_used"] = [swap(i) for i in step["new_object"]["tools_used"]]
+    step["take_ids"] = [swap(i) for i in step.get("take_ids") or []]
+    if step.get("transformation"):
+        step["transformation"]["target_id"] = swap(step["transformation"]["target_id"])
+        step["transformation"]["tools_used"] = [swap(i) for i in step["transformation"]["tools_used"]]
+    if step.get("harm"):
+        step["harm"]["weapon_id"] = swap(step["harm"]["weapon_id"])
+    return step
+
+
+def humanize(text: str, state: dict, made_by_step: dict[int, str]) -> str:
+    """Replace any id that leaked into player-facing text with the thing's name."""
+    names = {oid: ("the ", o["name"]) for oid, o in state["objects"].items()}
+    names.update({f"made_by_step_{n}": ("the ", state["objects"][oid]["name"]) for n, oid in made_by_step.items()})
+    names.update({n["id"]: ("", n["name"]) for n in state["npcs"]})
+    pattern = re.compile(r"\b(the |your |a |an )?(" + "|".join(
+        re.escape(key) for key in sorted(names, key=len, reverse=True)) + r")\b")
+
+    def swap(match):
+        article = match.group(1)
+        default, name = names[match.group(2)]
+        return ((article or default) if default else "") + name
+    return pattern.sub(swap, text)
+
+
+def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, service_error: str | None,
+                    trace_id: str, now_ms: int) -> tuple[dict, dict, dict]:
+    """Validate and apply the judge's steps in order on a draft world; stop at the first that fails.
+
+    Returns (event payload, summary verdict for the trace, draft state after the committed steps).
+    """
+    event_id = state["event_seq"] + 1
+    draft = copy.deepcopy(state)
+    verdicts, deltas, made_by_step = [], [], {}
+    if judged is None:
+        verdicts.append(validate(draft, None, service_error))
+    elif judged.get("clarifying_question"):
+        verdicts.append(_verdict("needs_clarification", judged["clarifying_question"], []))
+    elif not judged.get("steps"):
+        verdicts.append(_unresolved([], "the judge returned no steps"))
+    else:
+        for number, step in enumerate(judged["steps"][:MAX_STEPS], 1):
+            verdict = validate(draft, _resolve_references(step, made_by_step))
+            verdicts.append(verdict)
+            if verdict["category"] != "success":
+                break
+            step_deltas = _step_deltas(draft, run_id, text, verdict, event_id, number)
+            _apply_step(draft, step_deltas)
+            deltas.append(step_deltas)
+            if step_deltas["new_objects"]:
+                made_by_step[number] = step_deltas["new_objects"][0]["id"]
+        if len(judged["steps"]) > MAX_STEPS and verdicts[-1]["category"] == "success":
+            verdicts[-1]["notes"].append(f"Only the first {MAX_STEPS} steps were attempted.")
+    for verdict in verdicts:
+        verdict["reason"] = humanize(verdict["reason"], draft, made_by_step)
+    committed = [v for v in verdicts if v["category"] == "success"]
+    last = verdicts[-1]
+    category = "success" if last["category"] == "success" else "partial_success" if committed else last["category"]
+    made_ids = [o["id"] for d in deltas for o in d["new_objects"]]
+    crafted = next((d["new_objects"][0]["id"] for d, v in zip(deltas, committed) if v["action"] == "make"), None)
+    harm = next((v["harm"] for v in reversed(committed) if v["harm"]), None)
+    summary = {
+        "category": category, "action": last["action"],
+        "reason": " ".join(v["reason"] for v in verdicts),
+        "effort_seconds": sum(v["effort_seconds"] for v in verdicts),
+        "notes": [n for v in verdicts for n in v["notes"]] if len(verdicts) == 1 else
+                 [f"Step {i}: {n}" for i, v in enumerate(verdicts, 1) for n in v["notes"]],
+        "consumed_ids": [i for v in committed for i in v["consumed_ids"]],
+        "tool_ids": [i for v in committed for i in v["tool_ids"]],
+        "new_spec": next((v["new_spec"] for v in committed if v["new_spec"]), None),
+        "take_ids": [i for v in committed for i in v["take_ids"]],
+        "transform": next((v["transform"] for v in reversed(committed) if v["transform"]), None),
+        "harm": harm, "property": [c for v in committed for c in v["property"]],
+        "precedent_key": (judged or {}).get("precedent_key"),
+        "steps": [{"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
+                  for v in verdicts]}
+    transformed = next((d["transformed"] for d in reversed(deltas) if d["transformed"]), None)
+    px, py = state["player"]["x"], state["player"]["y"]
+    entry = {"kind": "craft", "action": summary["action"], "text": text, "category": category,
+             "reason": summary["reason"], "steps": summary["steps"],
+             "step": {"step_id": "step_1", "operation_key": "craft", "actor_id": "player",
+                      "input_refs": [{"existing_entity_id": i} for i in summary["consumed_ids"] +
+                                     summary["tool_ids"] + summary["take_ids"] +
+                                     ([transformed["id"]] if transformed else [])],
+                      "output_bindings": made_ids, "depends_on": [], "required_capabilities": [],
+                      "required_skill": None, "effort_seconds": summary["effort_seconds"], "risk_tags": [],
+                      "status": "completed" if category == "success" else category},
+             "player_cell": [px, py], "event_id": event_id,
+             "made": crafted or (made_ids[0] if made_ids else None), "crafted": crafted,
+             "made_name": draft["objects"][crafted or made_ids[0]]["name"] if made_ids else None,
+             "made_ids": made_ids, "taken_ids": summary["take_ids"], "transformed": transformed, "harm": harm,
+             "property": summary["property"], "precedent_key": summary["precedent_key"], "trace_id": trace_id}
+    payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}
+    return payload, summary, draft
+
+
+def apply_payload(state: dict, payload: dict) -> None:
+    # People first, so wounds and deaths recorded by the steps are applied on top of their movement.
+    if "npcs" in payload:
+        state["npcs"] = payload["npcs"]
+    for deltas in payload["steps"] if "steps" in payload else [payload]:  # Older events are one step.
+        _apply_step(state, deltas)
+    state["journal"].append(payload["journal_entry"])
+    state["last_action"] = payload["journal_entry"]
+    state["sim_time_ms"] = payload["sim_time_ms"]

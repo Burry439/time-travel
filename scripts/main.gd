@@ -712,10 +712,10 @@ func _try_something(text: String, selected_ids: Array) -> void:
 		_sync_display()
 		_reveal_new_objects(entry)
 		_play_harm(entry)
-		if entry.category == "success":
+		if entry.category in ["success", "partial_success"]:
 			effects.pickup_sound.play()
 			player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
-			if str(entry.get("action", "")) in ["transform", "harm"]:
+			if typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY:
 				# Let the fall or the blow play out in view before the result card covers it.
 				ui.modal.hide()
 				ui.modal_kind = ""

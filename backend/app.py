@@ -462,22 +462,23 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
                 telemetry.record(connection, run_id, "judge", judged.model, judged.prompt_version, judged.latency_ms,
                                  judged.status == "ok", judged.error, judged.input_tokens, judged.output_tokens,
                                  judged.attempts)
-            # Validation runs against the state as it is now, not the snapshot the judge saw.
-            verdict = crafting.validate(state, judged.result, _service_message(judged))
-            effort_ms = verdict["effort_seconds"] * 1000
-            sim_time_ms = state["sim_time_ms"] + effort_ms
-            payload = crafting.build_payload(state, run_id, request.text, verdict, request.request_id, sim_time_ms)
-            payload["npcs"] = npc_sim.advance_npcs(state["npcs"], effort_ms, state["sim_time_ms"], WORLD_GEOMETRY)
-            append(connection, state, "craft", payload, request.request_id, sim_time_ms // 1000)
+            # Validation runs against the state as it is now, not the snapshot the judge saw,
+            # one step at a time, stopping at the first step that does not succeed.
+            payload, verdict, after = crafting.resolve_attempt(
+                state, run_id, request.text, judged.result, _service_message(judged), request.request_id,
+                state["sim_time_ms"])
+            payload["npcs"] = npc_sim.advance_npcs(after["npcs"], verdict["effort_seconds"] * 1000,
+                                                   state["sim_time_ms"], WORLD_GEOMETRY)
+            append(connection, state, "craft", payload, request.request_id, payload["sim_time_ms"] // 1000)
             crafting.apply_payload(state, payload)
             connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                                (run_id, request.request_id, state["event_seq"], request_json))
-            new_objects = payload["new_objects"]
+            new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]
             trace = {"request_id": request.request_id, "event_seq": state["event_seq"], "text": request.text,
                      "selected_ids": request.selected_ids, "context": context, "judge": judged.as_dict(),
                      "validator": {key: verdict[key] for key in (
                          "category", "action", "reason", "effort_seconds", "notes", "consumed_ids", "tool_ids",
-                         "new_spec", "take_ids", "transform", "harm", "property")},
+                         "new_spec", "take_ids", "transform", "harm", "property", "steps")},
                      "made": new_objects[0]["id"] if new_objects else None,
                      "made_ids": [o["id"] for o in new_objects]}
             connection.execute("INSERT INTO craft_traces (run_id,request_id,trace_json) VALUES (?,?,?)",

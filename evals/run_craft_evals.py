@@ -44,7 +44,11 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
         problems.append(f"category {verdict['category']} not in {case['expect']}")
     spec = verdict["new_spec"] or {}
     consumed = set(verdict["consumed_ids"])
-    proposed = (judged.result or {}).get("new_object") or {}
+    steps = (judged.result or {}).get("steps") or []
+    objects = [st["new_object"] for st in steps if st.get("new_object")]
+    proposed = {"consumes": [i for o in objects for i in o["consumes"]],
+                "flags": [f for o in objects for f in o["flags"]],
+                "materials": [m for o in objects for m in o["materials"]]}
     for item in case.get("must_not_consume", []):
         if item in consumed or item in proposed.get("consumes", []):
             problems.append(f"consumed {item}")
@@ -66,6 +70,12 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
     harm = verdict.get("harm") or {}
     if harm.get("result") in case.get("forbid_harm_results", []):
         problems.append(f"harm result {harm['result']} is not plausible here")
+    wanted_steps = case.get("require_step_actions")
+    if wanted_steps and [st["action"] for st in verdict.get("steps", [])] != wanted_steps:
+        problems.append(f"steps {[st['action'] for st in verdict.get('steps', [])]} are not {wanted_steps}")
+    if case.get("require_crafted_weapon") and verdict["category"] == "success":
+        if not harm or not str(harm.get("weapon_id", "")).startswith("made_"):
+            problems.append(f"the attack did not use the object made earlier (weapon {harm.get('weapon_id')})")
     return problems
 
 
@@ -86,8 +96,8 @@ def main() -> int:
             state = world_with(case)
             context = crafting.build_context(state, case["text"], [])
             judged = judge.judge_craft(context)
-            verdict = crafting.validate(copy.deepcopy(state), judged.result,
-                                        judged.error if judged.status != "ok" else None)
+            _, verdict, _ = crafting.resolve_attempt(copy.deepcopy(state), "eval0000", case["text"], judged.result,
+                                                     judged.error if judged.status != "ok" else None, "eval", 0)
             problems = check(case, judged, verdict)
             passes += not problems
             latencies.append(judged.latency_ms)

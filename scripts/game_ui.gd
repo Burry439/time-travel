@@ -19,7 +19,7 @@ var working_clock := 0.0
 const OUTCOME_TITLES := {
 	"success": "You made something", "failed": "It didn't work", "blocked": "Something is missing",
 	"needs_clarification": "One question", "unsupported": "Beyond this world's rules",
-	"unresolved": "Nothing was decided",
+	"unresolved": "Nothing was decided", "partial_success": "Partly done",
 }
 const FLAG_WORDS := {
 	"rigid": "rigid", "flexible": "flexible", "sharp_edge": "sharp", "tieable": "can be tied",
@@ -478,19 +478,37 @@ func show_working(text: String) -> void:
 	paragraph(body, "The world is working out whether this can be done. Time stands still while you wait.")
 
 
+## The object a make step produced; older journal entries only record "made".
+func _crafted(entry: Dictionary):
+	if entry.has("crafted"):
+		return entry.crafted
+	return entry.get("made") if str(entry.get("action", "make")) == "make" else null
+
+
 func _result_title(entry: Dictionary) -> String:
 	var category := str(entry.category)
 	if category != "success":
 		return str(OUTCOME_TITLES.get(category, "Result"))
-	match str(entry.get("action", "make")):
-		"take": return "Taken"
-		"transform": return "It's done"
-		"harm":
-			var harm = entry.get("harm")
-			var result := str(harm.result) if typeof(harm) == TYPE_DICTIONARY else ""
-			return {"killed": "Killed", "wounded": "Wounded", "missed": "You missed"}.get(result, "Done")
-		"other": return "Done"
-	return str(OUTCOME_TITLES.success)
+	# Several steps can succeed at once; title the most striking outcome.
+	var harm = entry.get("harm")
+	if typeof(harm) == TYPE_DICTIONARY:
+		return {"killed": "Killed", "wounded": "Wounded", "missed": "You missed"}.get(str(harm.result), "Done")
+	if _crafted(entry) != null:
+		return str(OUTCOME_TITLES.success)
+	if typeof(entry.get("transformed")) == TYPE_DICTIONARY:
+		return "It's done"
+	if not entry.get("taken_ids", []).is_empty():
+		return "Taken"
+	return "Done"
+
+
+## "a deep cut to the arm" -> "A deep cut to the arm." (String.capitalize() would title-case every word.)
+func _sentence(text: String) -> String:
+	text = text.strip_edges()
+	if text.is_empty():
+		return text
+	text = text.left(1).to_upper() + text.substr(1)
+	return text if text.right(1) in [".", "!", "?"] else text + "."
 
 
 func _object_rows(body: VBoxContainer, ids: Array) -> void:
@@ -534,22 +552,23 @@ func show_craft_result(entry: Dictionary, trace) -> void:
 		var note := label("The %s belongs to %s (%s)." % [claim.name, owner, str(claim.how).replace("_", " ")], 15)
 		note.add_theme_color_override("font_color", GOLD)
 		body.add_child(note)
-	if category == "success" and entry.get("action") == "take":
-		_object_rows(body, entry.get("taken_ids", []))
-	if category == "success" and entry.get("action") == "transform":
-		_object_rows(body, entry.get("made_ids", []))
+	# Everything a committed step changed is shown, even when a later step failed.
+	_object_rows(body, entry.get("taken_ids", []))
+	var transformed = entry.get("transformed")
+	if typeof(transformed) == TYPE_DICTIONARY:
+		_object_rows(body, transformed.get("into", []))
 	var harm = entry.get("harm")
-	if category == "success" and typeof(harm) == TYPE_DICTIONARY:
+	if typeof(harm) == TYPE_DICTIONARY:
 		var victim := str(harm.target_id)
 		for npc in game.run_state.npcs:
 			if npc.id == harm.target_id:
 				victim = str(npc.name)
 		paragraph(body, {"killed": "%s is dead.", "wounded": "%s is wounded.", "missed": "%s is unhurt."}.get(
-			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + str(harm.injury).capitalize() + "."))
+			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + _sentence(str(harm.injury))))
 		if not harm.get("witnesses", []).is_empty():
 			paragraph(body, "Others nearby may have seen it. (People don't react yet; they will in a later version.)")
-	var made = entry.get("made")
-	if made != null and game.run_state.objects.has(made) and entry.get("action", "make") == "make":
+	var made = _crafted(entry)
+	if made != null and game.run_state.objects.has(made):
 		var obj: Dictionary = game.run_state.objects[made]
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)

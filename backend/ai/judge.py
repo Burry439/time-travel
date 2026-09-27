@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v3"
+PROMPT_VERSION = "judge_v4"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -70,17 +70,21 @@ class Harm(BaseModel):
     injury: str
 
 
-class JudgeResult(BaseModel):
+class Step(BaseModel):
     action: Literal["make", "take", "transform", "harm", "other"]
-    outcome: Literal["success", "failed", "blocked", "needs_clarification", "unsupported"]
+    outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str
     effort_seconds: int
-    clarifying_question: str | None
-    precedent_key: str
     new_object: NewObject | None
     take_ids: list[str]
     transformation: Transformation | None
     harm: Harm | None
+
+
+class JudgeResult(BaseModel):
+    clarifying_question: str | None  # When set, nothing is attempted.
+    precedent_key: str
+    steps: list[Step]  # In order; the engine stops at the first step that does not succeed.
 
 
 @dataclass
@@ -156,18 +160,18 @@ def _stub_judgement(context: dict) -> JudgeCall:
     chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
     empty = {"take_ids": [], "transformation": None, "harm": None}
     if not chosen:
-        result = JudgeResult(action="make", outcome="blocked", reason="You have nothing to work with.",
-                             effort_seconds=0, clarifying_question=None, precedent_key="stub:none",
-                             new_object=None, **empty)
+        step = Step(action="make", outcome="blocked", reason="You have nothing to work with.",
+                    effort_seconds=0, new_object=None, **empty)
     else:
-        result = JudgeResult(
+        step = Step(
             action="make", outcome="success", reason="(Stub judge) You bind the pieces into one bundle.",
-            effort_seconds=10, clarifying_question=None, precedent_key="stub:bundle", **empty,
+            effort_seconds=10, **empty,
             new_object=NewObject(
                 name="stub bundle", description="A test bundle of " + ", ".join(i["name"] for i in chosen) + ".",
                 materials=sorted({m for i in chosen for m in i["materials"]}), consumes=[i["id"] for i in chosen],
                 tools_used=[], mass_kg=sum(i["mass_kg"] for i in chosen), length_m=None, capacity_l=None,
                 rated_load_kg=None, flags=[], capabilities=[Capability(text="exists for testing", status="expected")]))
+    result = JudgeResult(clarifying_question=None, precedent_key="stub:bundle", steps=[step])
     return JudgeCall(status="ok", result=result.model_dump(), model="stub", raw_output=result.model_dump_json(),
                      attempts=1)
 

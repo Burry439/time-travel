@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "notes": "Each case places items in the player's hands on a fresh world (optionally moving the player to 'player_at' [x, y] or beside a person with 'beside'), sends the text to the live judge, then applies the real validator. 'expect' lists acceptable committed categories.",
  "cases": [
   {
@@ -302,6 +302,43 @@
    ],
    "forbid_harm_results": [
     "killed"
+   ]
+  },
+  {
+   "id": "make_then_stab",
+   "group": "multi_step",
+   "text": "sharpen the branch into a spear with the flint, then stab Tomas with it",
+   "carry": [
+    "branch_a",
+    "flint_a"
+   ],
+   "beside": "npc_tomas_reed",
+   "expect": [
+    "success"
+   ],
+   "require_step_actions": [
+    "make",
+    "harm"
+   ],
+   "require_crafted_weapon": true
+  },
+  {
+   "id": "take_then_make",
+   "group": "multi_step",
+   "text": "pick up the flint shard and the vine, then lash the flint to the branch with the vine",
+   "carry": [
+    "branch_a"
+   ],
+   "player_at": [
+    45,
+    67
+   ],
+   "expect": [
+    "success"
+   ],
+   "require_step_actions": [
+    "take",
+    "make"
    ]
   }
  ]
