@@ -271,6 +271,16 @@ def _describe(state: dict, entry: dict) -> list[dict]:
                                 "severity": 1},
                       "vague": {"summary": "The stranger was showing people something; it was hard to see what.",
                                 "short": "was showing something", "severity": 0}})
+    placed = entry.get("install")
+    if isinstance(placed, dict):
+        aids = f" using the {' and the '.join(placed['aid_names'])}" if placed["aid_names"] else ""
+        views.append({"kind": "demonstration", "victim": None, "item": placed["object_name"], "think": False,
+                      "works": True, "audience": [], "clear_cells": SIGHT_CELLS,  # A beam going up: anyone can see it.
+                      "clear": {"summary": f"The stranger got the {placed['object_name']} up into the "
+                                           f"{placed['into_name']}{aids}.",
+                                "short": f"put the {placed['object_name']} in place", "severity": 1},
+                      "vague": {"summary": "The stranger was heaving something heavy into place.",
+                                "short": "was working on something heavy", "severity": 0}})
     give = entry.get("give")
     if isinstance(give, dict):
         things = " and ".join(give["names"])
@@ -307,7 +317,7 @@ def perceive(state: dict, entry: dict) -> list[dict]:
             close = npc["id"] in involved
             if not (close or views):
                 continue
-            clarity = "clear" if close or min(views) <= CLEAR_VIEW_CELLS else "vague"
+            clarity = "clear" if close or min(views) <= seen.get("clear_cells", CLEAR_VIEW_CELLS) else "vague"
             source = (SOURCES.get(seen["kind"], "shown") if npc["id"] == seen["victim"] else
                       "shown" if close else "witnessed")
             memory = {"kind": seen["kind"], "victim": seen["victim"], "item": seen.get("item"), **seen[clarity],

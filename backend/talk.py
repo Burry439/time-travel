@@ -29,7 +29,8 @@ TALK_SECONDS = 5  # GDD 4.6: one conversation turn.
 TALK_WATCH_MS = 20_000  # The person stays and faces the stranger this long after each exchange.
 TURNS_KEPT = 8
 MAX_TEXT = 300
-SHARE_TRUST = 0.45  # Facts marked "trusted" are only told to someone trusted at least this much.
+SHARE_TRUST = 0.45
+GIVE_TRUST = 0.45  # Someone gives a stranger their things only once they trust them this much.  # Facts marked "trusted" are only told to someone trusted at least this much.
 TALK_GOODWILL = 0.14  # How far words alone can raise trust (or lower suspicion) with one person.
 EVIDENCE_GOODWILL = 0.3  # Each new piece of evidence they hold about the stranger allows this much more.
 SHIFTS = [-0.15, -0.07, 0.0, 0.07, 0.15]
@@ -123,6 +124,24 @@ def can_admit(state: dict, npc: dict) -> bool:
         and not knows_a_crime(npc) and not barred(state)
 
 
+def open_trades(state: dict, npc: dict) -> list[dict]:
+    """Trades the stranger has offered this person that could still happen."""
+    objects = state["objects"]
+    return [t for t in (state.get("trades") or {}).values()
+            if t["recipient_id"] == npc["id"] and t["status"] == "offered"
+            and all(objects[i]["holder_id"] == "player" for i in t["give_ids"])
+            and all(objects[i]["owner_id"] == npc["id"] and objects[i]["holder_id"] in (None, npc["id"])
+                    for i in t["want_ids"])]
+
+
+def deal_possible(state: dict, deal: dict) -> bool:
+    """A deal with a world condition (the beam in its brackets) can only be done once that holds."""
+    offer = next((o for o in minds.card(minds.find(state["npcs"], deal["issuer"])).get("offers", [])
+                  if o["id"] == deal.get("template")), {})
+    placed = (offer.get("done_when") or {}).get("installed")
+    return not placed or bool(state["objects"].get(placed, {}).get("installed_in"))
+
+
 def lendable(state: dict, npc: dict) -> list[dict]:
     """Things of this person's the stranger could be allowed to use (at most four, nearest first)."""
     things = [o for o in state["objects"].values() if o["owner_id"] == npc["id"] and o.get("lent_to") != "player"
@@ -166,6 +185,14 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
     for obj in lendable(state, npc):
         options[f"lend:{obj['id']}"] = option("lend", f"{name} lets the stranger take and use their {obj['name']}.",
                                               obj["id"])
+    if trust >= GIVE_TRUST:
+        for obj in lendable(state, npc)[:3]:
+            options[f"give:{obj['id']}"] = option("give", f"{name} gives the stranger their {obj['name']} to keep.",
+                                                  obj["id"])
+    for trade in open_trades(state, npc):
+        options[f"accept_trade:{trade['id']}"] = option(
+            "accept_trade", f"{name} accepts the stranger's trade: their {' and '.join(trade['give_names'])} for "
+                            f"{name}'s {' and '.join(trade['want_names'])}.", trade["id"])
     captain = minds.find(state["npcs"], CAPTAIN)
     if npc["id"] != CAPTAIN and captain and captain.get("alive", True) and trust >= VOUCH_TRUST \
             and not my_mind.get("vouched"):
@@ -203,6 +230,9 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
              f"On {name}'s mind: {minds.card(npc).get('concerns', 'nothing in particular')}"]
     if minds.card(npc).get("decides"):
         lines.append(f"How {name} decides who may enter the city: {minds.card(npc)['decides']}")
+    for trade in open_trades(state, npc):
+        lines.append(f"The stranger is offering {name} a trade: their {' and '.join(trade['give_names'])} for "
+                     f"{name}'s {' and '.join(trade['want_names'])}.")
     told = [knowledge(npc)[f]["text"] for f in minds.mind(npc).get("shared", []) if f in knowledge(npc)]
     if told:
         lines.append(f"{name} has already told the stranger: " + " ".join(told))
@@ -248,6 +278,14 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
             f"{name} trusts has vouched for them, they are bound to honest business (such as working for a merchant "
             f"with a trade permit), or {name} has seen them show something of clear value to the city or garrison? "
             f"The stranger's own claims do not count.")}
+    accepted = [d for d in accepted if deal_possible(state, d)]
+    for deal in accepted:  # A change in the world they asked for is something they go and look at.
+        placed = next((o.get("done_when", {}).get("installed") for o in minds.card(npc).get("offers", [])
+                       if o["id"] == deal.get("template")), None)
+        if placed:
+            thing = state["objects"][placed]
+            fixture = state["objects"].get(thing["installed_in"], {}).get("name", "its place")
+            lines.append(f"{name} has gone and checked: the {thing['name']} is now up in the {fixture}.")
     if accepted:
         questions["done"] = {"type": "noul", "instructions": f"{accepted[0]['check']} Judge only from what {name} "
                                                              f"has seen or been given, never from the stranger's word."}
@@ -333,6 +371,10 @@ def fallback_line(state: dict, npc: dict, key: str) -> str:
         return f"Go and talk to {other['name']}."
     if act == "call_guard" and other:
         return f"Right. I'm fetching {other['name']}."
+    if act == "give" and target in state["objects"]:
+        return f"Here. Take my {state['objects'][target]['name']}; it's yours."
+    if act == "accept_trade":
+        return "A fair trade. Done."
     if act == "lend" and target in state["objects"]:
         return f"Go on, then. You can use my {state['objects'][target]['name']}. Mind you bring it back."
     offer = next((o for o in minds.card(npc).get("offers", []) if o["id"] == target), None)
@@ -398,7 +440,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     del history[:-TURNS_KEPT]
     my_mind["said"] = {"text": line, "at": now, "key": f"{npc_id}:talk:{event_id}"}
     learned, lent, agreements = [], [], state.setdefault("agreements", {})
-    proposed, accepted = deals(state, npc_id, "proposed"), deals(state, npc_id, "accepted")
+    proposed = deals(state, npc_id, "proposed")
+    accepted = [d for d in deals(state, npc_id, "accepted") if deal_possible(state, d)]
     if proposed and _yes(answers, "accepts"):
         proposed[0].update(status="accepted", accepted_event=event_id)
     reward_job = None
@@ -443,6 +486,24 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         lent.append({"id": target, "holder_id": thing["holder_id"]})
         learned.append({"npc_id": npc_id, "name": name, "said": line, "lend": target, "event_id": event_id,
                         "lead": f"{name} lent you their {thing['name']}."})
+    elif act == "give":
+        thing = state["objects"][target]
+        thing.update(holder_id="player", owner_id="player")
+        lent.append({"id": target, "holder_id": "player", "owner_id": "player"})
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "gift": target, "event_id": event_id,
+                        "lead": f"{name} gave you their {thing['name']}."})
+    elif act == "accept_trade":
+        trade = state["trades"][target]
+        for item_id in trade["give_ids"]:
+            state["objects"][item_id].update(holder_id=npc_id, owner_id=npc_id)
+            lent.append({"id": item_id, "holder_id": npc_id, "owner_id": npc_id})
+        for item_id in trade["want_ids"]:
+            state["objects"][item_id].update(holder_id="player", owner_id="player")
+            lent.append({"id": item_id, "holder_id": "player", "owner_id": "player"})
+        trade.update(status="accepted", accepted_event=event_id)
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "trade": target, "event_id": event_id,
+                        "lead": f"You traded your {' and '.join(trade['give_names'])} for {name}'s "
+                                f"{' and '.join(trade['want_names'])}."})
     elif act == "refer":
         my_mind.setdefault("referred", []).append(target)
         other = minds.find(state["npcs"], target)
@@ -472,7 +533,7 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
              "reason": (f"You to {name}: “{clean(text)}”  " if text.strip() else "") + f"{name}: “{line}”",
              "event_id": event_id, "walk": walk}
     return {"npc_id": npc_id, "walk": walk, "learned": learned, "journal_entry": entry, "regard_change": change,
-            "agreements": agreements, "admission": admission, "lent": lent,
+            "agreements": agreements, "admission": admission, "lent": lent, "trades": state.get("trades") or {},
             "sim_time_ms": now + TALK_SECONDS * 1000}
 
 
@@ -484,7 +545,12 @@ def apply_payload(state: dict, payload: dict) -> None:
     if "agreements" in payload:
         state["agreements"] = payload["agreements"]
     for thing in payload.get("lent", []):
-        state["objects"][thing["id"]].update(lent_to="player", holder_id=thing["holder_id"])
+        if "owner_id" in thing:  # Given or traded: it changes hands for good.
+            state["objects"][thing["id"]].update(holder_id=thing["holder_id"], owner_id=thing["owner_id"])
+        else:
+            state["objects"][thing["id"]].update(lent_to="player", holder_id=thing["holder_id"])
+    if "trades" in payload:
+        state["trades"] = payload["trades"]
     if payload.get("admission"):
         state.update(admitted=payload["admission"], gate_open=True)
     state["journal"].append(payload["journal_entry"])

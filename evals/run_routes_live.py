@@ -228,8 +228,86 @@ def value() -> bool:
                         "heading every time. My name is Ash, and I can make more for the garrison."])
 
 
+def act(route: Route, kind: str, text: str = "", target: str | None = None) -> dict:
+    """The stranger's part of an encounter round."""
+    body = {"kind": kind, "text": text, "expected_version": route.state["event_seq"], "request_id": f"r{time.time_ns()}"}
+    if target:
+        body["target_id"] = target
+    reply = http.post(f"/runs/{route.run}/encounter/act", json=body)
+    if reply.status_code != 200:
+        note(f"  !! {reply.status_code} {reply.json().get('detail')}")
+        return {}
+    route.state = reply.json()["state"]
+    shown = reply.json()["round"]
+    note(f"  ROUND ({kind}{': ' + text if text else ''})")
+    for entry in shown["entries"]:
+        note(f"    · {entry['text']}")
+    return shown
+
+
+def lent(route: Route, *ids: str) -> bool:
+    return all(route.state["objects"][i].get("lent_to") == "player" for i in ids)
+
+
+def beam() -> bool:
+    route = Route("beam: raise Tomas's gate beam")
+    tomas = "npc_tomas_reed"
+    if not route.ask_until(tomas, ["Good day, I'm Ash. That gate beam looks like trouble. I know how to lift heavy "
+                                   "things safely with a rope and a ladder.",
+                                   "I could get it up into the brackets for you, if you'll let me.",
+                                   "Honestly, I've done this before. Rope over the bracket, ladder to guide it."],
+                           lambda: route.deal(tomas, "proposed") or route.deal(tomas, "accepted")):
+        note("  ✗ Tomas never offered the job.")
+        return False
+    route.ask_until(tomas, ["Agreed, I'll get it up for you.", "Yes, it's a deal."],
+                    lambda: route.deal(tomas, "accepted"))
+    wanted = ("wood_tomas", "fulcrum_tomas", "trestles_gate", "rope_tomas", "ladder_tomas")
+    asks = ["To do it safely I'll lever it up in stages: may I borrow your plank and fulcrum stone?",
+            "And your trestles by the gate, to rest it on between lifts?",
+            "The rope and ladder too, to guide it the last bit into the brackets?",
+            "Just the rest of what I asked for, and it all comes back to you.",
+            "The ladder, please.", "The trestles, please.", "The rope, please."]
+    route.ask_until(tomas, asks, lambda: lent(route, *wanted))
+    aids = [i for i in wanted if lent(route, i) and i != "trestles_gate"]
+    if not (lent(route, "wood_tomas", "fulcrum_tomas") or lent(route, "rope_tomas", "ladder_tomas")):
+        note("  ✗ Tomas didn't lend enough to lift with.")
+        return False
+    route.attempt("pick up the " + " and the ".join(route.state["objects"][i]["name"] for i in aids))
+    route.walk(54, 12)
+    route.settle(lambda: bool(route.state.get("encounter")), 6)  # A guard may come to ask what's going on.
+    if route.state.get("encounter"):
+        act(route, "say", "I'm working for Tomas the carpenter: I'm here to raise the new gate beam.")
+    if lent(route, "wood_tomas", "fulcrum_tomas"):
+        method = ("lever each end of the gate beam up in turn using the plank over the fulcrum stone, and after each "
+                  "lift crib it up: first on the empty crates, then on the trestles set up beside it, stacking higher "
+                  "each time, until it is at chest height; then " +
+                  ("loop the rope over the iron brackets and, from the ladder, haul and guide the beam up the last "
+                   "stretch into them" if lent(route, "rope_tomas", "ladder_tomas") else
+                   "climb up and ease each end up the last stretch into the brackets"))
+        if lent(route, "ladder_tomas"):
+            method += ", guiding it from the ladder"
+    else:
+        method = ("loop the rope over the iron brackets, tie it to the beam, and raise one end at a time, resting it "
+                  "on the ladder rungs between pulls, then guide it into the brackets")
+    route.attempt(method)
+    if route.state.get("encounter"):
+        act(route, "leave")
+    if not route.state["objects"]["gate_beam"].get("installed_in"):
+        note("  ✗ The beam didn't go up.")
+        return False
+    note("  (the beam is up in its brackets)")
+    if not route.ask_until(tomas, ["The beam is up in its brackets, safe and sound.",
+                                   "Go and look: the gate beam is in place."],
+                           lambda: route.deal(tomas, "fulfilled")):
+        note("  ✗ Tomas did not count the deal as done.")
+        return False
+    route.settle(lambda: any(m["kind"] == "vouch" for m in minds.mind(route.person("npc_roderic_vale"))["memories"]), 150)
+    return route.enter(["Captain, Tomas has spoken for me: I raised the new gate beam into its brackets.",
+                        "My name is Ash. I'd work honestly in the city."])
+
+
 if __name__ == "__main__":
-    wanted = sys.argv[1:] or ["sponsor", "business", "value"]
+    wanted = sys.argv[1:] or ["sponsor", "business", "value", "beam"]
     started = time.perf_counter()
     results = {name: globals()[name]() for name in wanted}
     note(f"\nRESULTS: {results} in {time.perf_counter() - started:.0f} s")

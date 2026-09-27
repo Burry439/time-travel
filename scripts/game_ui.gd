@@ -662,7 +662,7 @@ func open_journal() -> void:
 
 ## Whether what a lead points to has happened: a deal done, a loan returned, a person met.
 func _lead_done(claim: Dictionary) -> bool:
-	if claim.has("fulfilled"):
+	if claim.has("fulfilled") or claim.has("gift") or claim.has("trade"):
 		return true
 	if claim.has("offer"):
 		return str(game.run_state.get("agreements", {}).get(str(claim.offer), {}).get("status", "")) == "fulfilled"
@@ -896,6 +896,10 @@ func _result_title(entry: Dictionary) -> String:
 		return "You showed it" if shown.works else "It didn't work"
 	if typeof(entry.get("give")) == TYPE_DICTIONARY:
 		return "Given"
+	if typeof(entry.get("install")) == TYPE_DICTIONARY:
+		return "It's in place"
+	if typeof(entry.get("offer_trade")) == TYPE_DICTIONARY:
+		return "You made an offer"
 	if typeof(entry.get("fill")) == TYPE_DICTIONARY:
 		return "Filled"
 	if not entry.get("taken_ids", []).is_empty():
@@ -979,6 +983,13 @@ func show_craft_result(entry: Dictionary, trace) -> void:
 	var given = entry.get("give")
 	if typeof(given) == TYPE_DICTIONARY:
 		paragraph(body, "%s now has the %s." % [given.recipient_name, " and the ".join(given.names)])
+	var placed = entry.get("install")
+	if typeof(placed) == TYPE_DICTIONARY:
+		paragraph(body, "The %s is up in the %s." % [placed.object_name, placed.into_name])
+	var offered = entry.get("offer_trade")
+	if typeof(offered) == TYPE_DICTIONARY:
+		paragraph(body, "%s will think it over: your %s for their %s. Talk to them to hear their answer." % [
+			offered.recipient_name, " and ".join(offered.give_names), " and ".join(offered.want_names)])
 	var filled = entry.get("fill")
 	if typeof(filled) == TYPE_DICTIONARY and game.run_state.objects.has(filled.container_id):
 		var container: Dictionary = game.run_state.objects[filled.container_id]

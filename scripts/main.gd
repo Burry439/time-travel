@@ -507,6 +507,8 @@ func _sync_display_now() -> void:
 			_apply_object_texture(sprite, obj)
 		sprite.visible = obj["holder_id"] == null
 		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
+		if obj.get("installed_in") != null:
+			sprite.position.y -= 36.0 # Up in its fixture, not on the ground.
 	_apply_world_features()
 	if float(run_state["player"].get("health", 100)) < 100.0 and run_state["player"].get("alive", true):
 		hud.text += "\nYou are wounded"

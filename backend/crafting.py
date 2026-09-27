@@ -185,7 +185,8 @@ def build_context(state: dict, text: str, selected_ids: list[str]) -> dict:
 def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **extra) -> dict:
     base = {"category": category, "reason": reason, "effort_seconds": effort, "notes": notes, "action": "other",
             "consumed_ids": [], "tool_ids": [], "new_spec": None, "take_ids": [], "transform": None,
-            "harm": None, "fill": None, "demonstration": None, "give": None, "property": [], "precedent_key": None,
+            "harm": None, "fill": None, "demonstration": None, "give": None, "install": None, "offer_trade": None,
+            "property": [], "precedent_key": None,
             "walk": []}
     base.update(extra)
     return base
@@ -255,7 +256,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     effort = max(0, min(MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
     key = judged.get("precedent_key")
     proposed_change = any(judged.get(field) for field in ("new_object", "take_ids", "transformation", "harm", "fill",
-                                                          "demonstration", "give"))
+                                                          "demonstration", "give", "install", "offer_trade"))
     if outcome != "success" and proposed_change:
         notes.append(f"Ignored proposed changes because outcome is '{outcome}'.")
     if outcome == "needs_clarification":
@@ -271,7 +272,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
     handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill,
-                "demonstrate": _demonstrate, "give": _give}
+                "demonstrate": _demonstrate, "give": _give, "install": _install, "offer_trade": _offer_trade}
     if action not in handlers:
         return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
@@ -305,6 +306,8 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
         ids = [judged["transformation"]["target_id"]] + judged["transformation"]["tools_used"]
     elif action == "fill" and judged.get("fill"):
         ids = [judged["fill"]["container_id"]]
+    elif action == "install" and judged.get("install"):
+        ids = [judged["install"]["object_id"], judged["install"]["into_id"]] + judged["install"]["aid_ids"]
     elif action == "demonstrate" and judged.get("demonstration"):
         ids = [judged["demonstration"]["object_id"]] + judged["demonstration"]["used_ids"]
     harm = judged.get("harm") if action == "harm" else None
@@ -317,7 +320,8 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
         cells.append((source["x"], source["y"]))
     if action == "demonstrate":  # Showing something in a trough or other water source: go to it.
         cells += [(o["x"], o["y"]) for i in ids if (o := state["objects"].get(i)) and "water_source" in o["capabilities"]]
-    recipient = (judged.get("give") or {}).get("recipient_id") if action == "give" else None
+    recipient = (judged.get("give") or {}).get("recipient_id") if action == "give" else \
+        (judged.get("offer_trade") or {}).get("recipient_id") if action == "offer_trade" else None
     npc = next((n for n in state["npcs"] if n["id"] == recipient), None) if recipient else None
     if npc is not None:
         cells.append((npc["x"], npc["y"]))
@@ -598,6 +602,62 @@ def _give(state, judged, available, notes, reason, effort, key) -> dict:
                     property=_property(state, others, "given away"))
 
 
+def _install(state, judged, available, notes, reason, effort, key) -> dict:
+    plan = judged.get("install")
+    if not plan:
+        return _unresolved(notes, "action 'install' without an install")
+    obj, into = available.get(plan["object_id"]), available.get(plan["into_id"])
+    if obj is None or into is None:
+        return _unresolved(notes, f"install needs the object and the fixture at hand: {plan['object_id']}, {plan['into_id']}")
+    if into.get("feature") != "fixture":
+        return _verdict("blocked", f"The {obj['name']} can't be fitted into the {into['name']}.", notes,
+                        action="install", precedent_key=key)
+    if obj.get("installed_in"):
+        return _verdict("blocked", f"The {obj['name']} is already in place.", notes, action="install", precedent_key=key)
+    aids = [i for i in _dedupe(plan["aid_ids"]) if i not in (obj["id"], into["id"])]
+    missing = [i for i in aids if i not in available]
+    if missing:
+        return _unresolved(notes, f"aids that are not at hand: {missing}")
+    if obj["mass_kg"] > m2.CARRY_LIMIT_KG and not aids:
+        return _verdict("blocked", f"The {obj['name']} is far too heavy to lift into place by hand.",
+                        notes + ["Blocked by code: heavier than one person can lift, and no aids."],
+                        action="install", precedent_key=key)
+    install = {"object_id": obj["id"], "object_name": obj["name"], "into_id": into["id"], "into_name": into["name"],
+               "aid_ids": aids, "aid_names": [available[i]["name"] for i in aids]}
+    # Putting something where it belongs isn't taking it; borrowing someone's tools to do it is.
+    not_ours = [i for i in aids if available[i]["holder_id"] != "player"]
+    return _verdict("success", reason, notes, effort, action="install", install=install, precedent_key=key,
+                    property=_property(state, not_ours, "used"))
+
+
+def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
+    plan = judged.get("offer_trade")
+    if not plan:
+        return _unresolved(notes, "action 'offer_trade' without an offer_trade")
+    npc = next((n for n in state["npcs"] if n["id"] == plan["recipient_id"]), None)
+    if npc is None:
+        return _unresolved(notes, f"trade partner is not a person: {plan['recipient_id']}")
+    if not npc.get("alive", True):
+        return _verdict("blocked", f"{npc['name']} is dead.", notes, action="offer_trade", precedent_key=key)
+    give, want = _dedupe(plan["give_ids"]), _dedupe(plan["want_ids"])
+    mine = [i for i in give if (o := state["objects"].get(i)) and o["holder_id"] == "player"
+            and o["owner_id"] in (None, "player")]
+    if not give or len(mine) != len(give):
+        return _verdict("blocked", "You can only trade things that are yours and in your hands.", notes,
+                        action="offer_trade", precedent_key=key)
+    theirs = [i for i in want if (o := state["objects"].get(i)) and o["owner_id"] == npc["id"]
+              and o["holder_id"] in (None, npc["id"]) and "carry" in o["capabilities"]]
+    if not want or len(theirs) != len(want):
+        return _unresolved(notes, f"can only ask for {npc['name']}'s own portable things: {want}")
+    if _distance(state, npc["x"], npc["y"]) > 5:
+        return _verdict("blocked", f"{npc['name']} is too far away to bargain with.", notes, action="offer_trade",
+                        precedent_key=key)
+    offer = {"recipient_id": npc["id"], "recipient_name": npc["name"], "give_ids": give, "want_ids": want,
+             "give_names": [state["objects"][i]["name"] for i in give],
+             "want_names": [state["objects"][i]["name"] for i in want]}
+    return _verdict("success", reason, notes, effort, action="offer_trade", offer_trade=offer, precedent_key=key)
+
+
 def _known_after(obj: dict, results: list[dict], event_id: int) -> list[dict]:
     """The object's capabilities with what a demonstration showed: matching ones updated, new ones added."""
     known = [dict(c) for c in obj.get("known_capabilities", [])]
@@ -658,7 +718,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     walk = verdict.get("walk") or []
     px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
     new_objects, consumed, taken, transformed, npc_updates, moved = [], [], [], None, [], []
-    water, known, given, spilled = [], None, None, 0.0
+    water, known, given, spilled, installed, trade = [], None, None, 0.0, None, None
     if verdict["action"] == "make":
         spec = verdict["new_spec"]
         consumed = verdict["consumed_ids"]
@@ -729,6 +789,13 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         shown = verdict["demonstration"]
         known = {"id": shown["object_id"],
                  "known_capabilities": _known_after(state["objects"][shown["object_id"]], shown["results"], event_id)}
+    elif verdict["action"] == "install":
+        plan = verdict["install"]
+        into = state["objects"][plan["into_id"]]
+        installed = {"id": plan["object_id"], "into": plan["into_id"], "x": into["x"], "y": into["y"]}
+    elif verdict["action"] == "offer_trade":
+        trade = {**verdict["offer_trade"], "id": f"trade_{event_id}{suffix}", "status": "offered",
+                 "offered_event": event_id}
     elif verdict["action"] == "give":
         give = verdict["give"]
         # A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs.
@@ -739,7 +806,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
               "npc_updates": npc_updates, "moved": moved, "walk": walk,
               "player_to": [px, py] if walk else None}
     deltas.update({k: v for k, v in (("water", water), ("capabilities", known), ("given", given),
-                                     ("spilled_l", spilled)) if v})
+                                     ("spilled_l", spilled), ("installed", installed), ("trade", trade)) if v})
     return deltas
 
 
@@ -763,6 +830,12 @@ def _apply_step(state: dict, deltas: dict) -> None:
         state["water_spilled_l"] = round(state.get("water_spilled_l", 0.0) + deltas["spilled_l"], 3)
     if deltas.get("capabilities"):
         state["objects"][deltas["capabilities"]["id"]]["known_capabilities"] = deltas["capabilities"]["known_capabilities"]
+    if deltas.get("installed"):
+        placed = deltas["installed"]
+        state["objects"][placed["id"]].update(installed_in=placed["into"], x=placed["x"], y=placed["y"],
+                                              holder_id=None, condition="installed")
+    if deltas.get("trade"):
+        state.setdefault("trades", {})[deltas["trade"]["id"]] = dict(deltas["trade"])
     given = deltas.get("given")
     for item_id in (given or {}).get("ids", []):
         state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id])
@@ -869,6 +942,8 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
         "fill": next((v["fill"] for v in reversed(committed) if v["fill"]), None),
         "demonstration": next((v["demonstration"] for v in reversed(committed) if v["demonstration"]), None),
         "give": next((v["give"] for v in reversed(committed) if v["give"]), None),
+        "install": next((v["install"] for v in reversed(committed) if v["install"]), None),
+        "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
         "precedent_key": (judged or {}).get("precedent_key"),
         "steps": [{"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
                   for v in verdicts]}
@@ -888,6 +963,7 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
              "made_name": draft["objects"][crafted or made_ids[0]]["name"] if made_ids else None,
              "made_ids": made_ids, "taken_ids": summary["take_ids"], "transformed": transformed, "harm": harm,
              "fill": summary["fill"], "demonstration": summary["demonstration"], "give": summary["give"],
+             "install": summary["install"], "offer_trade": summary["offer_trade"],
              "walk": [cell for d in deltas for cell in d.get("walk", [])],
              "property": summary["property"], "precedent_key": summary["precedent_key"], "trace_id": trace_id}
     payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}

@@ -1,0 +1,34 @@
+
+=== BEAM: RAISE TOMAS'S GATE BEAM ===
+  YOU → Tomas: Good day, I'm Ash. That gate beam looks like trouble. I know how to lift heavy things safely with a rope and a ladder.
+    [share:beam_problem] “Good day, Ash. The replacement beam weighs about 60 kilos and must rise two metres into the iron brackets. Two men have struggled with it; the captain wants it done safely.”  (Jev 1782 ms, voice 4052 ms)
+  YOU → Tomas: I could get it up into the brackets for you, if you'll let me.
+    [offer:beam_help] “If you can raise that sixty-kilo beam safely into the brackets, I’ll be grateful—and I’ll put in a good word for you with the captain.”  (Jev 1196 ms, voice 1976 ms)
+  YOU → Tomas: Agreed, I'll get it up for you.
+    [answer] “Agreed, then. The sixty-kilo beam must be raised safely into the iron brackets.”  (Jev 1244 ms, voice 1051 ms) beliefs {'accepts': 0.97}
+  YOU → Tomas: To do it safely I'll lever it up in stages: may I borrow your plank and fulcrum stone?
+    [lend:wood_tomas] “Take the plank, then. Keep each lift measured and steady.”  (Jev 1228 ms, voice 1060 ms)
+  YOU → Tomas: And your trestles by the gate, to rest it on between lifts?
+    [lend:trestles_gate] “Take the pair, then. Set them firm before you rest the beam on them.”  (Jev 1242 ms, voice 1059 ms)
+  YOU → Tomas: The rope and ladder too, to guide it the last bit into the brackets?
+    [share:tools] “There’s a three-metre ladder and six metres of rope in my yard, along with the planks and fulcrum stone.”  (Jev 1306 ms, voice 1062 ms)
+  YOU → Tomas: Just the rest of what I asked for, and it all comes back to you.
+    [answer] “You have the plank and trestles. The ladder and rope are in my yard; mind that they come back.”  (Jev 1229 ms, voice 1153 ms)
+  YOU → Tomas: The ladder, please.
+    [lend:ladder_tomas] “Take the three-metre ladder. Use it steadily, and bring it back.”  (Jev 2267 ms, voice 1213 ms)
+  YOU → Tomas: The trestles, please.
+    [answer] “You have the pair already. Set them firm before the beam rests on them.”  (Jev 1234 ms, voice 1046 ms)
+  YOU → Tomas: The rope, please.
+    [lend:rope_tomas] “Take the six metres of rope. Keep it clear of the beam, and bring it back.”  (Jev 1247 ms, voice 1104 ms)
+  TRY: pick up the wood plank and the coil of rope and the wooden ladder
+    [success] You walk over and gather the wood plank, the coil of rope, and the wooden ladder. Tomas lent them to you.
+  ROUND (say: I'm working for Tomas the carpenter: I'm here to raise the new gate beam.)
+    · You: “I'm working for Tomas the carpenter: I'm here to raise the new gate beam.”
+    · Oren: “Tomas, is it? Who are you, and what exactly do you mean to do here?”
+  TRY: loop the rope over the iron brackets, tie it to the beam, and raise one end at a time, resting it on the ladder rungs between pulls, then guide it into the brackets
+    [failed] You walk to the brackets and try to haul the beam up one end at a time, but the rope gives you no lifting advantage and the ladder rungs are not a secure support for the heavy timber. Tomas’s beam stays on the ground.
+  ROUND (leave)
+    · You turn and walk away.
+  ✗ The beam didn't go up.
+
+RESULTS: {'beam': False} in 63 s

@@ -492,6 +492,137 @@
    "feature": "water",
    "water_l": 60.0,
    "capacity_l": 60.0
+  },
+  {
+   "id": "gate_beam",
+   "name": "replacement gate beam",
+   "x": 54,
+   "y": 13,
+   "mass_kg": 60.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A squared oak beam about 3 m long and heavy, meant to sit in iron brackets across the gate.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "stable_support"
+   ],
+   "owner_id": "npc_tomas_reed",
+   "since_seed": 7,
+   "feature": "beam",
+   "length_m": 3.0
+  },
+  {
+   "id": "gate_brackets",
+   "name": "iron gate brackets",
+   "x": 54,
+   "y": 9,
+   "mass_kg": 20.0,
+   "materials": [
+    "iron"
+   ],
+   "description": "A pair of heavy iron brackets bolted to the gate two metres up, waiting for a beam.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "owner_id": null,
+   "since_seed": 7,
+   "feature": "fixture"
+  },
+  {
+   "id": "rope_tomas",
+   "name": "coil of rope",
+   "x": 61,
+   "y": 27,
+   "mass_kg": 1.5,
+   "materials": [
+    "plant fiber"
+   ],
+   "description": "Six metres of stout hemp rope, good for about 150 kg.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "owner_id": "npc_tomas_reed",
+   "since_seed": 7,
+   "length_m": 6.0
+  },
+  {
+   "id": "ladder_tomas",
+   "name": "wooden ladder",
+   "x": 62,
+   "y": 27,
+   "mass_kg": 8.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A sturdy wooden ladder, three metres long.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_tomas_reed",
+   "since_seed": 7,
+   "length_m": 3.0
+  },
+  {
+   "id": "fulcrum_tomas",
+   "name": "fulcrum stone",
+   "x": 66,
+   "y": 27,
+   "mass_kg": 6.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A squat, rounded stone Tomas uses as a pivot for levers.",
+   "flags": [
+    "rigid",
+    "fulcrum",
+    "stable_support"
+   ],
+   "owner_id": "npc_tomas_reed",
+   "since_seed": 7
+  },
+  {
+   "id": "trestles_gate",
+   "name": "pair of trestles",
+   "x": 56,
+   "y": 13,
+   "mass_kg": 14.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Two sturdy wooden trestles, about knee height, for resting heavy timber on while working.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "combustible"
+   ],
+   "owner_id": "npc_tomas_reed",
+   "since_seed": 7
+  },
+  {
+   "id": "crates_gate",
+   "name": "empty crates",
+   "x": 52,
+   "y": 13,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Two empty wooden crates by the gate, solid enough to stand on or stack.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "container",
+    "combustible"
+   ],
+   "owner_id": null,
+   "since_seed": 7,
+   "capacity_l": 40.0
   }
  ],
  "trees": {

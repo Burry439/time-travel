@@ -223,3 +223,32 @@ def test_speaking_to_someone_is_an_encounter_you_can_simply_walk_away_from(world
     assert state["encounter"]["reason"] == "talk" and not encounter.hostile(state)
     post(world, state, "move", {"cells": [[state["player"]["x"], state["player"]["y"] + 1]]})  # Not held.
     assert post(world, state, "encounter/act", {"kind": "wait"}, status=409)["detail"]["reason"] == "stale_state"
+
+
+def test_people_left_behind_drop_out_when_someone_else_joins():
+    state = unit_state()
+    face_to_face(state, "npc_tomas_reed", reason="talk")
+    state["player"].update(x=48, y=15)  # The stranger walked off to the gate...
+    guard = npc(state, "npc_bren_marr")
+    guard.update(x=48, y=16)
+    encounter.join(state, guard, "halt", "Halt!", state["sim_time_ms"])  # ...where a guard stops them.
+    encounter.prune(state)
+    assert state["encounter"]["participants"] == ["npc_bren_marr"]  # Tomas, back in his yard, isn't in it.
+
+
+def test_walking_off_ends_a_conversation_and_replays(world):
+    state = world.http.post("/runs", json={"mode": "developer"}).json()
+    person = npc(state, "npc_kade_east")
+    cells, (x, y) = [], (state["player"]["x"], state["player"]["y"])
+    while max(abs(x - person["x"]), abs(y - person["y"] - 1)) > 0:
+        x += (person["x"] > x) - (person["x"] < x)
+        y += (person["y"] + 1 > y) - (person["y"] + 1 < y)
+        cells.append([x, y])
+    for i in range(0, len(cells), 20):
+        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+    world.replies.append(said("answer"))
+    state = post(world, state, "say", {"npc_id": "npc_kade_east", "text": "Evening."})["state"]
+    away = [[state["player"]["x"], state["player"]["y"] + n] for n in range(1, 9)]
+    state = post(world, state, "move", {"cells": away})["state"]
+    assert state["encounter"] is None
+    assert world.http.get(f"/runs/{state['run_id']}").json() == state

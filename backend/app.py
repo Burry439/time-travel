@@ -35,8 +35,9 @@ WORLD_GEOMETRY_V2 = json.loads((ROOT / "data" / "world_geometry_v2.json").read_t
 GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # 4 adds loose road materials and material data for crafting; 5 adds materials across the map,
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
-# needles, Hessa's bowls) and the gate trough.
-SEED_VERSION = 6
+# needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
+# ladder and fulcrum stone.
+SEED_VERSION = 7
 MOVE_SPEED_CELLS_PER_SECOND = 7.1875
 RUN_SPEED_CELLS_PER_SECOND = 11.5
 NPCS = [
@@ -188,6 +189,8 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
     if event["kind"] == "move":
         state["player"].update(x=payload["x"], y=payload["y"])
         state["sim_time_ms"] = payload["sim_time_ms"]
+        if "encounter" in payload:  # Walked away from a conversation.
+            state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
     elif event["kind"] == "explore":
         state["sim_time_ms"] = payload["sim_time_ms"]
         state["npcs"] = payload["npcs"]
@@ -241,11 +244,12 @@ def _apply_people(state: dict, payload: dict) -> None:
 # A round changes many things at once (anything a Try Something can, a reply, people moving on),
 # so its event carries the resulting fields rather than deltas.
 ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "pending_minds", "agreements", "sim_time_ms",
-                "water_spilled_l", "last_action", "gate_open", "barred_until")
+                "water_spilled_l", "last_action", "gate_open", "barred_until", "trades")
 
 
 def _round_payload(before: dict, after: dict, record: dict) -> dict:
     payload = {key: after.get(key) for key in ROUND_FIELDS}
+    payload["trades"] = after.get("trades") or {}
     payload["journal_added"] = after["journal"][len(before["journal"]):]
     payload["learned_added"] = after.get("learned", [])[len(before.get("learned", [])):]
     if after.get("admitted") and not before.get("admitted"):
@@ -1132,11 +1136,20 @@ def move(run_id: str, request: Move):
         sim_time_ms = state["sim_time_ms"] + travel_ms  # New runs use the exploration clock instead.
         tick = sim_time_ms // 1000  # One simulation tick is one second.
         payload = {"x": x, "y": y, "running": request.running, "sim_time_ms": sim_time_ms}
+        if encounter.active(state):  # A conversation doesn't follow the stranger: walking off ends it for them.
+            moved = copy.deepcopy(state)
+            moved["player"].update(x=x, y=y)
+            encounter.prune(moved)
+            if moved.get("encounter") != state.get("encounter"):
+                payload.update(encounter=moved.get("encounter"), npcs=moved["npcs"],
+                               pending_minds=moved.get("pending_minds", []))
         if len(accepted) > 1:
             payload["path"] = accepted
         append(connection, state, "move", payload, request.request_id, tick)
         state["sim_time_ms"] = sim_time_ms
         state["player"].update(x=x, y=y)
+        if "encounter" in payload:
+            state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
         if y <= 3 and not state["inside_city"]:
             append(connection, state, "objective_complete", {"location": "loc_city_interior"},
                    f"objective:{request.request_id}", tick)

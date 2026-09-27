@@ -1,0 +1,22 @@
+
+=== BEAM: RAISE TOMAS'S GATE BEAM ===
+  YOU → Tomas: Good day, I'm Ash. That gate beam looks like trouble. I know how to lift heavy things safely with a rope and a ladder.
+    [share:beam_problem] “The replacement beam is about 60 kilograms; it has to rise two metres into iron brackets. Two men have struggled with it, and the captain wants it done safely.”  (Jev 1424 ms, voice 3907 ms)
+  YOU → Tomas: I could get it up into the brackets for you, if you'll let me.
+    [offer:beam_help] “Lift the 60-kilogram beam safely into its iron brackets, and I’ll be grateful—and put in a good word with the captain.”  (Jev 1242 ms, voice 1304 ms)
+  YOU → Tomas: Agreed, I'll get it up for you.
+    [share:tools] “Good. I have a 3-metre ladder, 6 metres of rope, planks, and a fulcrum stone in my yard.”  (Jev 1212 ms, voice 1733 ms) beliefs {'accepts': 0.97}
+  YOU → Tomas: I'll need your rope and your ladder to do it safely. May I borrow them?
+    [lend:rope_tomas] “Take the rope, then. Use it carefully.”  (Jev 1295 ms, voice 1472 ms)
+  YOU → Tomas: Just the rope and the ladder, and I'll bring them back.
+    [lend:ladder_tomas] “Take the ladder as well. Use it carefully.”  (Jev 1305 ms, voice 1182 ms)
+  TRY: pick up the coil of rope and the wooden ladder
+    [success] You walk a few steps to the coil of rope and pick it up along with the wooden ladder. Both were lent to you by Tomas.
+  ROUND (say: I'm working for Tomas the carpenter: I'm here to raise the new gate beam.)
+    · You: “I'm working for Tomas the carpenter: I'm here to raise the new gate beam.”
+    · Tomas: “Then you know the work: sixty kilos, two metres up into the iron brackets. Keep it steady.”
+  TRY: throw the rope over the iron gate brackets, tie it to the gate beam, and haul the beam up into the brackets while steadying it from the ladder
+    [failed] You walk one step to the iron brackets, loop the rope over them, tie it to the beam, and try to haul while steadying the beam from the ladder. The beam is too heavy for you to lift and control safely by yourself; the beam, rope, and ladder were lent to you by Tomas.
+  ✗ The beam didn't go up.
+
+RESULTS: {'beam': False} in 40 s

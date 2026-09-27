@@ -98,9 +98,10 @@ def prune(state: dict) -> None:
         if npc is None or not npc.get("alive", True):
             continue
         job = (npc.get("mind") or {}).get("job") or {}
-        if encounter["reason"] == "talk" and (job.get("kind") not in (None, "watch", "encounter")
-                                              or math.dist(minds._cell(npc), here) > 6):
-            continue  # Went off to do something else.
+        away = math.dist(minds._cell(npc), here) > (6 if encounter["reason"] == "talk" else 8)
+        if job.get("kind") != "encounter" and (away or (encounter["reason"] == "talk"
+                                                        and job.get("kind") not in (None, "watch"))):
+            continue  # Went off to do something else, or the stranger walked away from them.
         keep.append(npc_id)
     encounter["participants"] = keep
     encounter["intents"] = {k: v for k, v in encounter["intents"].items() if k in keep}

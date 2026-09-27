@@ -56,6 +56,9 @@ def test_a_deal_is_offered_accepted_done_and_rewarded_once():
     talk.exchange(state, "npc_tomas_reed", "Deal.", answers("answer", accepts=0.9), "answer", "Good.", [])
     assert deal["status"] == "accepted"
     _, questions = talk.request(state, npc(state, "npc_tomas_reed"), "It's done.")
+    assert "done" not in questions  # The beam isn't up yet: no words can make it done.
+    state["objects"]["gate_beam"]["installed_in"] = "gate_brackets"
+    _, questions = talk.request(state, npc(state, "npc_tomas_reed"), "It's done.")
     assert "done" in questions and "never from the stranger's word" in questions["done"]["instructions"]
     state["event_seq"] += 1
     talk.exchange(state, "npc_tomas_reed", "Trust me, it's done.", answers("answer", done=0.2), "answer", "Is it?", [])
