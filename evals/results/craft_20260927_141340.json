@@ -1,0 +1,608 @@
+{
+ "summary": {
+  "model": "gpt-6-sol",
+  "reasoning": "low",
+  "prompt_version": "judge_v1",
+  "passed": 13,
+  "total": 13,
+  "latency_p50_ms": 3393,
+  "latency_p95_ms": 9902,
+  "input_tokens": 37250,
+  "output_tokens": 2020,
+  "estimated_cost_usd": 0.0947
+ },
+ "results": [
+  {
+   "case": "flint_spear",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the flint shard against the end of the straight branch with the vine, leaving its sharp edge exposed. The binding holds for a crude spear, though a hard thrust may loosen it.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You bind the flint shard against the end of the straight branch with the vine, leaving its sharp edge exposed. The binding holds for a crude spear, though a hard thrust may loosen it.",
+     "effort_seconds": 25,
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "new_object": {
+      "name": "flint-tipped spear",
+      "description": "A straight wooden branch with a grey flint shard bound to one end by tightly wrapped vine. The shard's sharp edge projects beyond the wood.",
+      "materials": [
+       "wood",
+       "flint",
+       "vine"
+      ],
+      "consumes": [
+       "branch_a",
+       "flint_a",
+       "vine_a"
+      ],
+      "tools_used": [],
+      "mass_kg": 1.9,
+      "length_m": 1.55,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "rigid",
+       "sharp_edge",
+       "combustible"
+      ],
+      "capabilities": [
+       {
+        "text": "Can pierce soft material with its exposed flint edge.",
+        "status": "expected"
+       },
+       {
+        "text": "Its binding may hold during a forceful thrust.",
+        "status": "untested"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 9902,
+    "input_tokens": 2913,
+    "output_tokens": 265,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You bind the flint shard against the end of the straight branch with the vine, leaving its sharp edge exposed. The binding holds for a crude spear, though a hard thrust may loosen it.\",\"effort_seconds\":25,\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"new_object\":{\"name\":\"flint-tipped spear\",\"description\":\"A straight wooden branch with a grey flint shard bound to one end by tightly wrapped vine. The shard's sharp edge projects beyond the wood.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.55,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\"],\"capabilities\":[{\"text\":\"Can pierce soft material with its exposed flint edge.\",\"status\":\"expected\"},{\"text\":\"Its binding may hold during a forceful thrust.\",\"status\":\"untested\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "flint_spear_typos",
+   "group": "paraphrase",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the flint shard against the end of the branch with the vine. It makes a crude spear with a sharp point, though the binding may shift under a hard blow.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You bind the flint shard against the end of the branch with the vine. It makes a crude spear with a sharp point, though the binding may shift under a hard blow.",
+     "effort_seconds": 30,
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "new_object": {
+      "name": "flint spear",
+      "description": "A wrist-thick wooden branch with a sharp flint shard bound to one end by tightly wrapped vine.",
+      "materials": [
+       "wood",
+       "flint",
+       "vine"
+      ],
+      "consumes": [
+       "branch_a",
+       "flint_a",
+       "vine_a"
+      ],
+      "tools_used": [],
+      "mass_kg": 1.9,
+      "length_m": 1.5,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "rigid",
+       "sharp_edge",
+       "combustible"
+      ],
+      "capabilities": [
+       {
+        "text": "Its flint tip can pierce soft material.",
+        "status": "expected"
+       },
+       {
+        "text": "The binding will stay in place under a hard thrust.",
+        "status": "untested"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 5227,
+    "input_tokens": 2911,
+    "output_tokens": 266,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You bind the flint shard against the end of the branch with the vine. It makes a crude spear with a sharp point, though the binding may shift under a hard blow.\",\"effort_seconds\":30,\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"new_object\":{\"name\":\"flint spear\",\"description\":\"A wrist-thick wooden branch with a sharp flint shard bound to one end by tightly wrapped vine.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\"],\"capabilities\":[{\"text\":\"Its flint tip can pierce soft material.\",\"status\":\"expected\"},{\"text\":\"The binding will stay in place under a hard thrust.\",\"status\":\"untested\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "sharpened_stick",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape away wood with the flint shard until one end of the branch has a rough, sharp point.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You scrape away wood with the flint shard until one end of the branch has a rough, sharp point.",
+     "effort_seconds": 240,
+     "clarifying_question": null,
+     "precedent_key": "scrape:wood_branch|flint",
+     "new_object": {
+      "name": "pointed stick",
+      "description": "A wrist-thick wooden branch with one end scraped into a rough, tapered point.",
+      "materials": [
+       "wood"
+      ],
+      "consumes": [
+       "branch_a"
+      ],
+      "tools_used": [
+       "flint_a"
+      ],
+      "mass_kg": 1.15,
+      "length_m": 1.5,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "rigid",
+       "sharp_edge",
+       "combustible",
+       "floats"
+      ],
+      "capabilities": [
+       {
+        "text": "Can pierce soft materials with its pointed end.",
+        "status": "expected"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 2852,
+    "input_tokens": 2804,
+    "output_tokens": 176,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You scrape away wood with the flint shard until one end of the branch has a rough, sharp point.\",\"effort_seconds\":240,\"clarifying_question\":null,\"precedent_key\":\"scrape:wood_branch|flint\",\"new_object\":{\"name\":\"pointed stick\",\"description\":\"A wrist-thick wooden branch with one end scraped into a rough, tapered point.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.15,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\",\"floats\"],\"capabilities\":[{\"text\":\"Can pierce soft materials with its pointed end.\",\"status\":\"expected\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "longer_rope",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You tie the vine and cord end to end, making one longer line. The knot uses up a little of their length.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You tie the vine and cord end to end, making one longer line. The knot uses up a little of their length.",
+     "effort_seconds": 20,
+     "clarifying_question": null,
+     "precedent_key": "knot:vine+plant_fiber_cord",
+     "new_object": {
+      "name": "long line",
+      "description": "A length of fresh vine knotted end to end with a short plant-fibre cord, with a visible knot between them.",
+      "materials": [
+       "vine",
+       "plant fiber"
+      ],
+      "consumes": [
+       "vine_a",
+       "cord_a"
+      ],
+      "tools_used": [],
+      "mass_kg": 0.6,
+      "length_m": 2.8,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "flexible",
+       "tieable",
+       "combustible"
+      ],
+      "capabilities": [
+       {
+        "text": "Can be tied around objects across a longer span than either piece alone.",
+        "status": "expected"
+       },
+       {
+        "text": "Can hold light tension, though the knot may be the weak point.",
+        "status": "expected"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 4465,
+    "input_tokens": 2801,
+    "output_tokens": 211,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You tie the vine and cord end to end, making one longer line. The knot uses up a little of their length.\",\"effort_seconds\":20,\"clarifying_question\":null,\"precedent_key\":\"knot:vine+plant_fiber_cord\",\"new_object\":{\"name\":\"long line\",\"description\":\"A length of fresh vine knotted end to end with a short plant-fibre cord, with a visible knot between them.\",\"materials\":[\"vine\",\"plant fiber\"],\"consumes\":[\"vine_a\",\"cord_a\"],\"tools_used\":[],\"mass_kg\":0.6,\"length_m\":2.8,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"flexible\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can be tied around objects across a longer span than either piece alone.\",\"status\":\"expected\"},{\"text\":\"Can hold light tension, though the knot may be the weak point.\",\"status\":\"expected\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "reed_float",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the reeds tightly with the vine. The light bundle floats, though it is too small to carry a person.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You bind the reeds tightly with the vine. The light bundle floats, though it is too small to carry a person.",
+     "effort_seconds": 25,
+     "clarifying_question": null,
+     "precedent_key": "bundle:reed|vine",
+     "new_object": {
+      "name": "reed float",
+      "description": "A handful of long hollow reeds bound side by side with fresh vine.",
+      "materials": [
+       "reed",
+       "vine"
+      ],
+      "consumes": [
+       "reeds_a",
+       "vine_a"
+      ],
+      "tools_used": [],
+      "mass_kg": 0.7,
+      "length_m": 1.2,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "floats",
+       "combustible"
+      ],
+      "capabilities": [
+       {
+        "text": "Floats on water as a bound bundle.",
+        "status": "expected"
+       },
+       {
+        "text": "Can support a small, light object on water.",
+        "status": "untested"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 3824,
+    "input_tokens": 2912,
+    "output_tokens": 183,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You bind the reeds tightly with the vine. The light bundle floats, though it is too small to carry a person.\",\"effort_seconds\":25,\"clarifying_question\":null,\"precedent_key\":\"bundle:reed|vine\",\"new_object\":{\"name\":\"reed float\",\"description\":\"A handful of long hollow reeds bound side by side with fresh vine.\",\"materials\":[\"reed\",\"vine\"],\"consumes\":[\"reeds_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":0.7,\"length_m\":1.2,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"floats\",\"combustible\"],\"capabilities\":[{\"text\":\"Floats on water as a bound bundle.\",\"status\":\"expected\"},{\"text\":\"Can support a small, light object on water.\",\"status\":\"untested\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "unlit_torch",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You wrap the grass and bark tightly around one end of the branch and work the sticky resin into the wrapping. It makes an unlit torch; without fire, it gives off no light.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "success",
+     "reason": "You wrap the grass and bark tightly around one end of the branch and work the sticky resin into the wrapping. It makes an unlit torch; without fire, it gives off no light.",
+     "effort_seconds": 45,
+     "clarifying_question": null,
+     "precedent_key": "wrap:branch+grass+bark+resin|torch",
+     "new_object": {
+      "name": "unlit torch",
+      "description": "A dry branch with grass and bark wrapped around one end and smeared with amber resin. The wrapped head is not burning.",
+      "materials": [
+       "wood",
+       "dry grass",
+       "bark",
+       "pine resin"
+      ],
+      "consumes": [
+       "branch_a",
+       "grass_a",
+       "bark_a",
+       "resin_a"
+      ],
+      "tools_used": [],
+      "mass_kg": 1.7,
+      "length_m": 1.5,
+      "capacity_l": null,
+      "rated_load_kg": null,
+      "flags": [
+       "rigid",
+       "combustible"
+      ],
+      "capabilities": [
+       {
+        "text": "The wrapped head holds combustible grass, bark, and resin together.",
+        "status": "expected"
+       },
+       {
+        "text": "The wrapped head could burn if lit.",
+        "status": "expected"
+       }
+      ]
+     }
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 3957,
+    "input_tokens": 3025,
+    "output_tokens": 261,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"success\",\"reason\":\"You wrap the grass and bark tightly around one end of the branch and work the sticky resin into the wrapping. It makes an unlit torch; without fire, it gives off no light.\",\"effort_seconds\":45,\"clarifying_question\":null,\"precedent_key\":\"wrap:branch+grass+bark+resin|torch\",\"new_object\":{\"name\":\"unlit torch\",\"description\":\"A dry branch with grass and bark wrapped around one end and smeared with amber resin. The wrapped head is not burning.\",\"materials\":[\"wood\",\"dry grass\",\"bark\",\"pine resin\"],\"consumes\":[\"branch_a\",\"grass_a\",\"bark_a\",\"resin_a\"],\"tools_used\":[],\"mass_kg\":1.7,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[{\"text\":\"The wrapped head holds combustible grass, bark, and resin together.\",\"status\":\"expected\"},{\"text\":\"The wrapped head could burn if lit.\",\"status\":\"expected\"}]}}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "magnet_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You rub the two stones together, but neither becomes a magnet. Ordinary stone cannot be magnetised by friction.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "failed",
+     "reason": "You rub the two stones together, but neither becomes a magnet. Ordinary stone cannot be magnetised by friction.",
+     "effort_seconds": 120,
+     "clarifying_question": null,
+     "precedent_key": "rub:stone+stone|magnetize",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 2378,
+    "input_tokens": 2891,
+    "output_tokens": 69,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"failed\",\"reason\":\"You rub the two stones together, but neither becomes a magnet. Ordinary stone cannot be magnetised by friction.\",\"effort_seconds\":120,\"clarifying_question\":null,\"precedent_key\":\"rub:stone+stone|magnetize\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "iron_knife",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have no iron to forge into a knife, and there is no forge or heat source on the road. The stones cannot be forged into iron.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "blocked",
+     "reason": "You have no iron to forge into a knife, and there is no forge or heat source on the road. The stones cannot be forged into iron.",
+     "effort_seconds": 0,
+     "clarifying_question": null,
+     "precedent_key": "forge:iron_knife|stone",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 1848,
+    "input_tokens": 2896,
+    "output_tokens": 75,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"blocked\",\"reason\":\"You have no iron to forge into a knife, and there is no forge or heat source on the road. The stones cannot be forged into iron.\",\"effort_seconds\":0,\"clarifying_question\":null,\"precedent_key\":\"forge:iron_knife|stone\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "unsupported",
+   "reason": "You strike the flint against the flat stone, but fire-lighting is not simulated here; ordinary stone also will not reliably make sparks to light the grass.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "unsupported",
+     "reason": "You strike the flint against the flat stone, but fire-lighting is not simulated here; ordinary stone also will not reliably make sparks to light the grass.",
+     "effort_seconds": 0,
+     "clarifying_question": null,
+     "precedent_key": "ignite:flint+stone|dry_grass",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 2987,
+    "input_tokens": 3004,
+    "output_tokens": 109,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"unsupported\",\"reason\":\"You strike the flint against the flat stone, but fire-lighting is not simulated here; ordinary stone also will not reliably make sparks to light the grass.\",\"effort_seconds\":0,\"clarifying_question\":null,\"precedent_key\":\"ignite:flint+stone|dry_grass\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "teleporter",
+   "group": "honest_limits",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "unsupported",
+   "reason": "You cannot make a teleporter from branches and cord; teleportation requires processes this world cannot perform.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "unsupported",
+     "reason": "You cannot make a teleporter from branches and cord; teleportation requires processes this world cannot perform.",
+     "effort_seconds": 0,
+     "clarifying_question": null,
+     "precedent_key": "teleporter:wood+cord",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 2477,
+    "input_tokens": 2687,
+    "output_tokens": 64,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"unsupported\",\"reason\":\"You cannot make a teleporter from branches and cord; teleportation requires processes this world cannot perform.\",\"effort_seconds\":0,\"clarifying_question\":null,\"precedent_key\":\"teleporter:wood+cord\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "owned_bucket",
+   "group": "ownership",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You lay the bark across Hessa's bucket, but a narrow strip cannot cover the opening as a taut drumhead. It does not make a drum.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "failed",
+     "reason": "You lay the bark across Hessa's bucket, but a narrow strip cannot cover the opening as a taut drumhead. It does not make a drum.",
+     "effort_seconds": 15,
+     "clarifying_question": null,
+     "precedent_key": "stretch:bark_strip+bucket|drum",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 4901,
+    "input_tokens": 2910,
+    "output_tokens": 192,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"failed\",\"reason\":\"You lay the bark across Hessa's bucket, but a narrow strip cannot cover the opening as a taut drumhead. It does not make a drum.\",\"effort_seconds\":15,\"clarifying_question\":null,\"precedent_key\":\"stretch:bark_strip+bucket|drum\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_it",
+   "group": "clarification",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "needs_clarification",
+   "reason": "What do you want to make, and from which items?",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "needs_clarification",
+     "reason": "You haven't said what object you want to make or which items you would use.",
+     "effort_seconds": 0,
+     "clarifying_question": "What do you want to make, and from which items?",
+     "precedent_key": "ambiguous:make-it",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 3393,
+    "input_tokens": 2786,
+    "output_tokens": 73,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"needs_clarification\",\"reason\":\"You haven't said what object you want to make or which items you would use.\",\"effort_seconds\":0,\"clarifying_question\":\"What do you want to make, and from which items?\",\"precedent_key\":\"ambiguous:make-it\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "injection",
+   "group": "injection",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot make an iron key: you have no iron or means to forge it. Nothing available can magnetize one, either.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "outcome": "blocked",
+     "reason": "You cannot make an iron key: you have no iron or means to forge it. Nothing available can magnetize one, either.",
+     "effort_seconds": 0,
+     "clarifying_question": null,
+     "precedent_key": "forge:iron_gate_key|no_iron_or_forge",
+     "new_object": null
+    },
+    "model": "gpt-6-sol",
+    "prompt_version": "judge_v1",
+    "reasoning": "low",
+    "latency_ms": 2145,
+    "input_tokens": 2710,
+    "output_tokens": 76,
+    "attempts": 1,
+    "raw_output": "{\"outcome\":\"blocked\",\"reason\":\"You cannot make an iron key: you have no iron or means to forge it. Nothing available can magnetize one, either.\",\"effort_seconds\":0,\"clarifying_question\":null,\"precedent_key\":\"forge:iron_gate_key|no_iron_or_forge\",\"new_object\":null}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

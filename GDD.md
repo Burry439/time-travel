@@ -1108,7 +1108,23 @@ Changes to this document: …
   - All existing Godot smoke tests pass.
 - Still open: **P1** (a real generated sprite) and **P2** with a live judge wait on an OpenAI key.
 
-**Assumptions:** none measured yet. A1, A2, A5, A6 and A9 get their first data from `evals/run_craft_evals.py`.
+**Live results (same day, `gpt-6-sol`, reasoning low, `judge_v1`):**
+
+- **Evals: 13/13 pass on 1 run each.** That covers valid inventions, a typo paraphrase, fake magnet, iron without iron, fire from stone, teleporter, Hessa's bucket (never consumed), "make it" → clarification, and prompt injection → refused.
+- **Latency:** p50 3.4 s, p95 9.9 s.
+- **Cost:** about 37k input and 2k output tokens in total, roughly $0.007 per attempt.
+- **In-game live craft:** "lash the two branches together with the cord" gave *lashed branches*: judged in 8.2 s, painted sprite in 16 s.
+- **Sprites:** the 7 road materials were painted by `gpt-image-2.5-flare` in 11–17 s each, with transparent, readable results.
+
+**Assumptions:**
+
+- **A2 (consistent, fair judge):** early positive signal. Needs repeated runs (`--runs 3+`) and held-out cases before we call it confirmed.
+- **A4 (style-consistent sprites):** promising. The results are more painterly and less pixel-art than the hand-made props; tune `illustrator_v1`.
+- **A5 (latency):** within target.
+- **A6 (cost):** well under a cent per attempt.
+- **A1 and A9:** untested until more varied player text arrives.
+
+**To tune:** one reason broke the fourth wall ("fire-lighting is not simulated here"). Reasons for `unsupported` should stay in-world.
 
 **Surprises:**
 
