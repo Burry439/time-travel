@@ -1,86 +1,271 @@
 {
-  "version": 1,
-  "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard' and 'weapon' to decide what actions are legal and how fights go.",
-  "npcs": {
-    "npc_roderic_vale": {
-      "name": "Roderic", "age": 46, "role": "captain of the city gate", "guard": true,
-      "weapon": "sword", "combat": "a trained, experienced fighter",
-      "personality": "Dutiful, cautious and traditional; brief and formal; values evidence and responsibility; dislikes rambling.",
-      "values": "order, competence, protecting the gate, not looking foolish",
-      "fears": "letting a threat into the city, losing authority, disorder",
-      "authority": "The only person who can admit anyone to the city; commands the guards and can detain people."
-    },
-    "npc_bren_marr": {
-      "name": "Bren", "age": 31, "role": "gate guard", "guard": true,
-      "weapon": "spear", "combat": "a trained guard",
-      "personality": "Sociable, fair and dutiful, with dry humour; asks follow-up questions; Hessa the innkeeper is his sister.",
-      "values": "doing the job properly, being fair, family reputation",
-      "fears": "being tricked publicly, the captain's discipline",
-      "authority": "Can stop, question, warn and hold people, and call the captain."
-    },
-    "npc_oren_dast": {
-      "name": "Oren", "age": 27, "role": "gate guard", "guard": true,
-      "weapon": "spear", "combat": "a trained guard, quick to act",
-      "personality": "Cautious, sceptical and quick to challenge inconsistencies; anxious to look decisive; privately in debt to Darin.",
-      "values": "keeping his position, appearing decisive, paying his debts",
-      "fears": "his debt being exposed, the captain thinking him weak",
-      "authority": "Can stop, question, warn and hold people, and call the captain."
-    },
-    "npc_hessa_marr": {
-      "name": "Hessa", "age": 35, "role": "innkeeper", "guard": false,
-      "weapon": null, "combat": "no fighter",
-      "personality": "Warm, very sociable and quick to read people; protective of her inn and of her brother Bren the guard.",
-      "values": "reputation, paying customers, family, keeping the peace",
-      "fears": "violence at her inn, Bren getting into trouble",
-      "authority": "Controls the inn and its yard; respected enough to vouch for someone."
-    },
-    "npc_mara_venn": {
-      "name": "Mara", "age": 39, "role": "blacksmith", "guard": false,
-      "weapon": "smith's hammer", "combat": "strong and unafraid, but no trained fighter",
-      "personality": "Practical, curious and blunt; dislikes nonsense; fiercely protective of her nephew Jory.",
-      "values": "competence, useful ideas, fair exchange, protecting Jory",
-      "fears": "wasting metal, fire in the forge, being conned",
-      "authority": "Controls the forge and her metal stock."
-    },
-    "npc_jory_venn": {
-      "name": "Jory", "age": 18, "role": "blacksmith's apprentice", "guard": false,
-      "weapon": null, "combat": "a nervous youth, no fighter",
-      "personality": "Very curious, talkative and impulsive; admires his aunt Mara.",
-      "values": "learning, novelty, earning Mara's respect",
-      "fears": "breaking tools, disappointing Mara",
-      "authority": "None beyond handling scrap at the smithy."
-    },
-    "npc_tomas_reed": {
-      "name": "Tomas", "age": 36, "role": "carpenter", "guard": false,
-      "weapon": "carpenter's hammer", "combat": "sturdy but no fighter",
-      "personality": "Methodical and proud of his craft; likes clear explanations; wary of thieves around his tools.",
-      "values": "good workmanship, efficiency, respect for skill",
-      "fears": "tool theft, unsafe structures being blamed on him",
-      "authority": "Owns his tools and timber; does repair work at the gate."
-    },
-    "npc_darin_ko": {
-      "name": "Darin", "age": 51, "role": "travelling merchant", "guard": false,
-      "weapon": "knife", "combat": "prefers to talk or run rather than fight",
-      "personality": "Polished, probing and self-interested; frames everything as a bargain; calculates risk before acting.",
-      "values": "profit, leverage, information, reputation for good deals",
-      "fears": "being cheated, confiscation, damaged goods",
-      "authority": "Controls his goods and money; can sponsor trade entry to the city."
-    },
-    "npc_elin_west": {
-      "name": "Elin", "age": 24, "role": "watch scout", "guard": true,
-      "weapon": "short spear", "combat": "a trained scout, fast on her feet",
-      "personality": "Observant and terse; reports what she saw, not what she thinks; wants to be useful and right.",
-      "values": "being useful, being right",
-      "fears": "missing something important",
-      "authority": "Watches the road and reports to the captain; can stop and question people."
-    },
-    "npc_kade_east": {
-      "name": "Kade", "age": 43, "role": "patrol guard", "guard": true,
-      "weapon": "spear", "combat": "a veteran guard",
-      "personality": "Gruff, traditional and unimpressed by novelty; few words; distrusts strangers.",
-      "values": "routine, seniority, order",
-      "fears": "young guards making mistakes",
-      "authority": "Can warn, question, hold and escort people away from the gate."
-    }
+ "version": 2,
+ "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard' and 'weapon' to decide what actions are legal and how fights go. skill: 0 (no fighter) to 3 (veteran) for fights resolved by code. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'.",
+ "npcs": {
+  "npc_roderic_vale": {
+   "name": "Roderic",
+   "age": 46,
+   "role": "captain of the city gate",
+   "guard": true,
+   "weapon": "sword",
+   "combat": "a trained, experienced fighter",
+   "personality": "Dutiful, cautious and traditional; brief and formal; values evidence and responsibility; dislikes rambling.",
+   "values": "order, competence, protecting the gate, not looking foolish",
+   "fears": "letting a threat into the city, losing authority, disorder",
+   "authority": "The only person who can admit anyone to the city; commands the guards and can detain people.",
+   "skill": 3,
+   "tones": [
+    "official",
+    "angry"
+   ],
+   "relations": {
+    "npc_bren_marr": "his trusted guard Bren",
+    "npc_oren_dast": "Oren, a guard under his command",
+    "npc_elin_west": "his scout Elin",
+    "npc_kade_east": "his veteran guard Kade",
+    "npc_tomas_reed": "Tomas, the carpenter who repairs the gate"
+   },
+   "family": []
+  },
+  "npc_bren_marr": {
+   "name": "Bren",
+   "age": 31,
+   "role": "gate guard",
+   "guard": true,
+   "weapon": "spear",
+   "combat": "a trained guard",
+   "personality": "Sociable, fair and dutiful, with dry humour; asks follow-up questions; Hessa the innkeeper is his sister.",
+   "values": "doing the job properly, being fair, family reputation",
+   "fears": "being tricked publicly, the captain's discipline",
+   "authority": "Can stop, question, warn and hold people, and call the captain.",
+   "skill": 2,
+   "tones": [
+    "official",
+    "angry",
+    "protective"
+   ],
+   "relations": {
+    "npc_hessa_marr": "his sister Hessa",
+    "npc_roderic_vale": "his captain",
+    "npc_oren_dast": "his fellow guard Oren"
+   },
+   "family": [
+    "npc_hessa_marr"
+   ]
+  },
+  "npc_oren_dast": {
+   "name": "Oren",
+   "age": 27,
+   "role": "gate guard",
+   "guard": true,
+   "weapon": "spear",
+   "combat": "a trained guard, quick to act",
+   "personality": "Cautious, sceptical and quick to challenge inconsistencies; anxious to look decisive; privately in debt to Darin.",
+   "values": "keeping his position, appearing decisive, paying his debts",
+   "fears": "his debt being exposed, the captain thinking him weak",
+   "authority": "Can stop, question, warn and hold people, and call the captain.",
+   "skill": 2,
+   "tones": [
+    "official",
+    "angry"
+   ],
+   "relations": {
+    "npc_darin_ko": "Darin, the merchant he owes money",
+    "npc_roderic_vale": "his captain",
+    "npc_bren_marr": "his fellow guard Bren"
+   },
+   "family": []
+  },
+  "npc_hessa_marr": {
+   "name": "Hessa",
+   "age": 35,
+   "role": "innkeeper",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "personality": "Warm, very sociable and quick to read people; protective of her inn and of her brother Bren the guard.",
+   "values": "reputation, paying customers, family, keeping the peace",
+   "fears": "violence at her inn, Bren getting into trouble",
+   "authority": "Controls the inn and its yard; respected enough to vouch for someone.",
+   "skill": 0,
+   "tones": [
+    "frightened",
+    "protective",
+    "angry"
+   ],
+   "relations": {
+    "npc_bren_marr": "her brother Bren"
+   },
+   "family": [
+    "npc_bren_marr"
+   ]
+  },
+  "npc_mara_venn": {
+   "name": "Mara",
+   "age": 39,
+   "role": "blacksmith",
+   "guard": false,
+   "weapon": "smith's hammer",
+   "combat": "strong and unafraid, but no trained fighter",
+   "personality": "Practical, curious and blunt; dislikes nonsense; fiercely protective of her nephew Jory.",
+   "values": "competence, useful ideas, fair exchange, protecting Jory",
+   "fears": "wasting metal, fire in the forge, being conned",
+   "authority": "Controls the forge and her metal stock.",
+   "skill": 1,
+   "tones": [
+    "angry",
+    "protective"
+   ],
+   "relations": {
+    "npc_jory_venn": "her nephew Jory",
+    "npc_tomas_reed": "Tomas, a trusted trading partner"
+   },
+   "family": [
+    "npc_jory_venn"
+   ]
+  },
+  "npc_jory_venn": {
+   "name": "Jory",
+   "age": 18,
+   "role": "blacksmith's apprentice",
+   "guard": false,
+   "weapon": null,
+   "combat": "a nervous youth, no fighter",
+   "personality": "Very curious, talkative and impulsive; admires his aunt Mara.",
+   "values": "learning, novelty, earning Mara's respect",
+   "fears": "breaking tools, disappointing Mara",
+   "authority": "None beyond handling scrap at the smithy.",
+   "skill": 0,
+   "tones": [
+    "frightened",
+    "protective"
+   ],
+   "relations": {
+    "npc_mara_venn": "his aunt Mara"
+   },
+   "family": [
+    "npc_mara_venn"
+   ]
+  },
+  "npc_tomas_reed": {
+   "name": "Tomas",
+   "age": 36,
+   "role": "carpenter",
+   "guard": false,
+   "weapon": "carpenter's hammer",
+   "combat": "sturdy but no fighter",
+   "personality": "Methodical and proud of his craft; likes clear explanations; wary of thieves around his tools.",
+   "values": "good workmanship, efficiency, respect for skill",
+   "fears": "tool theft, unsafe structures being blamed on him",
+   "authority": "Owns his tools and timber; does repair work at the gate.",
+   "skill": 1,
+   "tones": [
+    "angry",
+    "frightened"
+   ],
+   "relations": {
+    "npc_mara_venn": "Mara, a trusted trading partner"
+   },
+   "family": []
+  },
+  "npc_darin_ko": {
+   "name": "Darin",
+   "age": 51,
+   "role": "travelling merchant",
+   "guard": false,
+   "weapon": "knife",
+   "combat": "prefers to talk or run rather than fight",
+   "personality": "Polished, probing and self-interested; frames everything as a bargain; calculates risk before acting.",
+   "values": "profit, leverage, information, reputation for good deals",
+   "fears": "being cheated, confiscation, damaged goods",
+   "authority": "Controls his goods and money; can sponsor trade entry to the city.",
+   "skill": 0,
+   "tones": [
+    "shrewd",
+    "frightened"
+   ],
+   "relations": {
+    "npc_oren_dast": "Oren, a guard who owes him money"
+   },
+   "family": []
+  },
+  "npc_elin_west": {
+   "name": "Elin",
+   "age": 24,
+   "role": "watch scout",
+   "guard": true,
+   "weapon": "short spear",
+   "combat": "a trained scout, fast on her feet",
+   "personality": "Observant and terse; reports what she saw, not what she thinks; wants to be useful and right.",
+   "values": "being useful, being right",
+   "fears": "missing something important",
+   "authority": "Watches the road and reports to the captain; can stop and question people.",
+   "skill": 2,
+   "tones": [
+    "official"
+   ],
+   "relations": {
+    "npc_roderic_vale": "her captain"
+   },
+   "family": []
+  },
+  "npc_kade_east": {
+   "name": "Kade",
+   "age": 43,
+   "role": "patrol guard",
+   "guard": true,
+   "weapon": "spear",
+   "combat": "a veteran guard",
+   "personality": "Gruff, traditional and unimpressed by novelty; few words; distrusts strangers.",
+   "values": "routine, seniority, order",
+   "fears": "young guards making mistakes",
+   "authority": "Can warn, question, hold and escort people away from the gate.",
+   "skill": 3,
+   "tones": [
+    "official",
+    "angry"
+   ],
+   "relations": {
+    "npc_roderic_vale": "his captain"
+   },
+   "family": []
   }
+ },
+ "weapons": {
+  "fists": {
+   "hit": 0.55,
+   "damage": 12,
+   "kill": 0.0
+  },
+  "knife": {
+   "hit": 0.6,
+   "damage": 30,
+   "kill": 0.08
+  },
+  "smith's hammer": {
+   "hit": 0.6,
+   "damage": 35,
+   "kill": 0.1
+  },
+  "carpenter's hammer": {
+   "hit": 0.55,
+   "damage": 30,
+   "kill": 0.06
+  },
+  "spear": {
+   "hit": 0.65,
+   "damage": 40,
+   "kill": 0.12
+  },
+  "short spear": {
+   "hit": 0.65,
+   "damage": 35,
+   "kill": 0.1
+  },
+  "sword": {
+   "hit": 0.7,
+   "damage": 45,
+   "kill": 0.15
+  }
+ }
 }

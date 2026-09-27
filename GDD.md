@@ -1080,6 +1080,9 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-21 | 2026-09-27 | Individual reactions: what a witness saw depends on distance (clear within 5 cells, a vague scuffle beyond). Relationships and family are in the cards, and family can be told as well as guards. New actions: hide, warn others, whistle (guards), threaten, demand payment. Each option carries 1–2 lines from `data/content/lines.json` in voices that suit the person (protective, frightened, angry, official, shrewd), so Jev chooses the action and the line together. Nobody repeats their last line, and victims speak in the first person. | Playtest: every NPC reacted and spoke alike. |
+| D-20 | 2026-09-27 | Jev only at decision points. One Jev request covers everyone deciding in a `/think`, with per-person requests only as fallback. Blows are a seeded code roll on weapon and skill (no model). Ambient behaviour is code only: wary people face the stranger, and frightened people keep their distance. | The user wants Jev used when needed, not all the time. Measured: 2 requests for 3 decisions in the smithy test. |
+| D-19 | 2026-09-27 | Sync in two lanes. The movement lane carries steps (batched) and the clock; the thinking lane carries `/think`. Staleness is judged against the player's own last action (`player_seq`), so NPC thinking never conflicts with the player. The newest world state wins on the client. Slim patch replies were dropped: profiling showed decoding the full state costs about 1.2 ms. | Profiling (`tools/profile_frame.gd`): frames were always fast (2–4 ms). The "FPS drop" was thinking blocking the save loop: 29 frames of frozen movement and 1.57 s without world updates, now 0 frames and 0.4 s. |
 | D-18 | 2026-09-27 | The player can act on anything within about 14 walking steps. Code plans the walk and the player walks there first. Throws: a held item of 5 kg or less within 8 cells; the judge rules on aim (`judge_v5`). | The user asked not to have to stand right next to things. |
 | D-17 | 2026-09-27 | Jev is the NPC decider, reached through defapi.org with the user's `dk-` key (same request and answer format as TypeSafe; `JEV_PROVIDER` overrides). The LLM decider is only a fallback. | The user wants Jev to do the heavy lifting because it is fastest and cheapest. It was measured at about 1.3 s and 1/12 of Luna's cost per decision. |
 | D-16 | 2026-09-27 | NPC minds: code owns perception, legal actions and their effects; Jev only chooses and rates. Death rewinds to the last calm moment as a copy (the original journey is kept). | NPCs react intelligently without the model inventing actions the simulation can't carry out. The user chose rewind over game-over. |
@@ -1240,6 +1243,37 @@ Changes to this document: …
 - Guards have no *arrest* option yet, so they can only confront or attack.
 - Speech lines are templates; the voice role (LLM) could phrase them.
 - No conversations yet.
+
+### Retro: smooth play, Jev when needed, individual voices, 27 Sep 2026
+
+**Profile (`tools/profile_frame.gd`, vsync off):**
+
+- Idle, walking and running: frames p50 2.1–2.5 ms, p95 3.3–4.5 ms.
+- The apparent 100–190 ms "hitches" were the profiler's own reporting between phases.
+
+**While people react and the player runs away:**
+
+| | Before (D-19) | After |
+| --- | --- | --- |
+| Frames with movement frozen | 29 | 0 |
+| Longest gap between world updates | 1,565 ms | 398 ms |
+
+**Live smithy punch (real Jev):**
+
+1. Jory, the victim, went to tell family: *"Mara! The stranger attacked me…"* (first person after the fix).
+2. Mara threatened in her protective voice: *"Come near my nephew again and I'll finish you."*
+3. She reconsidered and attacked: *"Get away from my nephew!"*
+4. Her hammer blows were code rolls: miss, wound, wound, fatal. Death screen and rewind worked.
+5. Jev requests: 2 for 3 decisions, about $0.0001–0.0002 each.
+
+**Loading art:** a spinning ring with "Painting…" in cards and a ring in the world. The art arrived after about 12 s. No borrowed pictures.
+
+**Tests:** 56 backend tests, including batched moves, lane staleness, one request per decision round, perception clarity, voice choice and no-repeat, seeded blows, and first-person victims. All Godot smoke tests pass.
+
+**To watch:**
+
+- Fights still escalate fast when a protective relative is armed.
+- Speech is chosen from the line bank; a Luna voice could add variety later.
 
 ---
 

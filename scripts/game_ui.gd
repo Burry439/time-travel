@@ -353,14 +353,26 @@ func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2(edge, edge)
 	icon.set_meta("object_id", str(obj.id))
+	if icon.texture == null:
+		var waiting := preload("res://scripts/loading_icon.gd").new()
+		waiting.name = "Painting"
+		waiting.missing = game.sprite_status(obj) in ["failed", "none"]
+		icon.add_child(waiting)
 	return icon
 
 
-## Swap placeholder icons in the open panel once a painted sprite arrives.
+## Swap "Painting…" for the picture in the open panel once it arrives.
 func refresh_icons() -> void:
 	for icon in modal_box.find_children("*", "TextureRect", true, false):
 		if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
-			icon.texture = game.texture_for(game.run_state.objects[icon.get_meta("object_id")])
+			var obj: Dictionary = game.run_state.objects[icon.get_meta("object_id")]
+			icon.texture = game.texture_for(obj)
+			var waiting := icon.get_node_or_null("Painting")
+			if waiting and icon.texture != null:
+				icon.remove_child(waiting)
+				waiting.queue_free()
+			elif waiting:
+				waiting.missing = game.sprite_status(obj) in ["failed", "none"]
 
 
 func flag_words(flags: Array) -> String:
@@ -711,9 +723,10 @@ func show_traces(data: Dictionary) -> void:
 		for thought in thoughts:
 			var call: Dictionary = thought.get("call", {})
 			var what := str(thought.get("action", thought.get("result", thought.get("skipped", "-"))))
-			paragraph(body, "%s (%s) → %s\n%s · %s · %d ms · $%s%s" % [
+			paragraph(body, "%s (%s) → %s\n%s · %s · %d ms · $%s%s%s" % [
 				str(thought.npc_id).trim_prefix("npc_"), thought.get("why", ""), what, _shown(call.get("provider")),
 				_shown(call.get("model")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
+				(" · one request for %d people" % int(thought.get("people_in_request", 1))) if thought.get("shared_request", false) else "",
 				("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else ""])
 			reveal(body, "What %s's decider saw" % str(thought.npc_id).trim_prefix("npc_"),
 				str(thought.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +

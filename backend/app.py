@@ -165,8 +165,19 @@ def initial_state(run: sqlite3.Row) -> dict:
     return state
 
 
+# Events the player causes. A request is stale only if the client hasn't seen the latest of
+# these; people thinking or the clock ticking in between never makes the player's request stale.
+PLAYER_KINDS = {"move", "physical_action", "craft", "dev_gate", "objective_complete"}
+
+
+def _is_stale(state: dict, expected_version: int) -> bool:
+    return not state.get("player_seq", 0) <= expected_version <= state["event_seq"]
+
+
 def reduce_event(state: dict, event: sqlite3.Row) -> None:
     payload = json.loads(event["payload"])
+    if event["kind"] in PLAYER_KINDS:
+        state["player_seq"] = event["seq"]
     if event["kind"] == "move":
         state["player"].update(x=payload["x"], y=payload["y"])
         state["sim_time_ms"] = payload["sim_time_ms"]
@@ -206,6 +217,8 @@ def _apply_people(state: dict, payload: dict) -> None:
     and the latest calm moment to rewind to."""
     if "pending_minds" in payload:
         state["pending_minds"] = payload["pending_minds"]
+    if "player" in payload:
+        state["player"] = payload["player"]  # e.g. struck by someone during this time
     state["journal"].extend(payload.get("people_journal", []))
     if "safe_seq" in payload:
         state["safe_seq"] = payload["safe_seq"]
@@ -217,8 +230,8 @@ def _advance_people(state: dict, elapsed_ms: int) -> dict:
         return {"npcs": npc_sim.advance_npcs(state["npcs"], elapsed_ms, state["sim_time_ms"], WORLD_GEOMETRY)}
     probe = dict(state)
     probe["pending_minds"] = list(state.get("pending_minds", []))
-    npcs, heard = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
-    return {"npcs": npcs, "pending_minds": probe["pending_minds"], "people_journal": heard}
+    npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
+    return {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard}
 
 
 def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, dict]:
@@ -255,6 +268,8 @@ def append(connection: sqlite3.Connection, state: dict, kind: str, payload: dict
         (state["run_id"], sequence, tick, kind, json.dumps(payload, sort_keys=True), request_id),
     )
     state["event_seq"] = sequence
+    if kind in PLAYER_KINDS:
+        state["player_seq"] = sequence
     state["tick"] = tick
 
 
@@ -263,8 +278,9 @@ class NewRun(BaseModel):
 
 
 class Move(BaseModel):
-    x: int = Field(ge=0, le=95)
-    y: int = Field(ge=0, le=71)
+    x: int | None = Field(default=None, ge=0, le=95)
+    y: int | None = Field(default=None, ge=0, le=71)
+    cells: list[list[int]] | None = Field(default=None, min_length=1, max_length=24)  # Several steps at once.
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
     running: bool = False
@@ -305,7 +321,7 @@ def check_request(connection: sqlite3.Connection, state: dict, expected_version:
     ).fetchone()
     if prior:
         return int(prior["seq"])
-    if expected_version != state["event_seq"]:
+    if _is_stale(state, expected_version):
         raise HTTPException(409, {"reason": "stale_state", "state": state})
     return None
 
@@ -381,7 +397,7 @@ def physical_action(run_id: str, request: PhysicalAction):
                                              (run_id, request.request_id)).fetchone()
         if event_collision:
             raise HTTPException(409, {"reason": "request_id_conflict"})
-        if request.expected_version != state["event_seq"]:
+        if _is_stale(state, request.expected_version):
             raise HTTPException(409, {"reason": "stale_state", "state": state})
         if state["inside_city"] or not state["player"]["alive"]:
             raise HTTPException(409, "Run is no longer interactive")
@@ -475,7 +491,7 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
         if connection.execute("SELECT 1 FROM events WHERE run_id=? AND request_id=?",
                               (run_id, request.request_id)).fetchone():
             raise HTTPException(409, {"reason": "request_id_conflict"})
-        if request.expected_version != state["event_seq"]:
+        if _is_stale(state, request.expected_version):
             raise HTTPException(409, {"reason": "stale_state", "state": state})
         if state["inside_city"] or not state["player"]["alive"]:
             raise HTTPException(409, "Run is no longer interactive")
@@ -643,45 +659,66 @@ def think(run_id: str, request: ThinkRequest):
     """Let people with something on their mind decide what to do (the decider runs outside the lock)."""
     with _lock, db() as connection:
         run, state = load_run(connection, run_id)
-        prior_seq = check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            return {"state": state_at(connection, run, prior_seq), "duplicate": True}
-        batch = [p for p in state.get("pending_minds", [])
-                 if (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)][:minds.THINK_BATCH]
+        prior = connection.execute("SELECT seq FROM events WHERE run_id=? AND request_id=?",
+                                   (run_id, request.request_id)).fetchone()
+        if prior is not None:
+            return {"state": state_at(connection, run, int(prior["seq"])), "duplicate": True}
+        # Blows are resolved on the clock now; older saves may still hold "resolve_attack" entries.
+        batch = [p for p in state.get("pending_minds", []) if p["kind"] == "decide"
+                 and (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)][:minds.THINK_BATCH]
         if not state.get("pending_minds"):
             return {"state": state, "duplicate": False}
         if run_id in _thinking_runs:
             raise HTTPException(409, {"reason": "in_progress"})
         _thinking_runs.add(run_id)
-        requests = [minds.decision_request(state, pending) for pending in batch]
+        shared = minds.batch_request(state, batch) if batch else None
     try:
-        calls = decider.decide_many(requests)
+        # One request for everyone deciding now; per-person requests only for anyone it left out.
+        calls: dict[str, decider.DeciderCall] = {}
+        answers: dict[str, dict] = {}
+        if shared:
+            text, questions, prefixes = shared
+            batch_call = decider.decide(text, questions)
+            calls["batch"] = batch_call
+            for pending in batch:
+                mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
+                if batch_call.ok and "action" in mine:
+                    answers[pending["npc_id"]] = mine
+        missing = [pending for pending in batch if pending["npc_id"] not in answers]
+        with _lock, db() as connection:
+            _, snapshot = load_run(connection, run_id)
+        for pending, call in zip(missing, decider.decide_many(
+                [minds.decision_request(snapshot, pending) for pending in missing])):
+            calls[pending["npc_id"]] = call
+            if call.ok:
+                answers[pending["npc_id"]] = call.answers
         with _lock, db() as connection:
             run, state = load_run(connection, run_id)
-            working = copy.deepcopy(state)
-            working["pending_minds"] = [p for p in working.get("pending_minds", []) if p not in batch]
-            now, heard, records = working["sim_time_ms"], [], []
-            for index, (pending, call, (situation, questions)) in enumerate(zip(batch, calls, requests)):
+            for call in calls.values():
                 telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                                  call.error or call.fallback_from, call.input_tokens, call.output_tokens)
+            working = copy.deepcopy(state)
+            handled = {(p["npc_id"], p["kind"]) for p in batch}
+            working["pending_minds"] = [p for p in working.get("pending_minds", [])
+                                        if p["kind"] == "decide" and (p["npc_id"], p["kind"]) not in handled]
+            now, heard, records = working["sim_time_ms"], [], []
+            for pending in batch:
                 npc = minds.find(working["npcs"], pending["npc_id"])
+                call = calls.get(pending["npc_id"]) or calls.get("batch")
                 record = {"npc_id": pending["npc_id"], "kind": pending["kind"], "why": pending["why"],
-                          "skipped": None}
+                          "skipped": None, "shared_request": pending["npc_id"] not in calls}
                 if npc is None or not npc.get("alive", True):
                     record["skipped"] = "no longer alive"
-                elif not call.ok:
-                    record["skipped"] = f"decider failed: {call.error}"
-                elif pending["kind"] == "resolve_attack":
-                    if not working["player"].get("alive", True) or \
-                            math.dist((npc["x"], npc["y"]), minds.player_cell(working)) > 2.0:
-                        record["skipped"] = "the stranger is out of reach"
-                    else:
-                        record.update(minds.resolve_attack(working, npc, call.answers,
-                                                           f"{run_id}:{state['event_seq']}:{index}", heard))
+                elif pending["npc_id"] not in answers:
+                    record["skipped"] = f"decider failed: {call.error if call else 'no answer'}"
                 else:
-                    record.update(minds.apply_decision(working, npc, call.answers, now, heard))
+                    record.update(minds.apply_decision(working, npc, answers[pending["npc_id"]], now, heard))
                 records.append(record)
-                trace = {**record, "situation": situation, "questions": questions, "call": call.as_dict()}
+                situation, questions = (shared[0], {k: v for k, v in shared[1].items()
+                                                    if k.startswith(shared[2][pending["npc_id"]])}) \
+                    if record["shared_request"] and shared else minds.decision_request(snapshot, pending)
+                trace = {**record, "situation": situation, "questions": questions,
+                         "call": call.as_dict() if call else {}, "people_in_request": len(batch)}
                 connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
                                    (run_id, state["event_seq"] + 1, pending["npc_id"], json.dumps(trace)))
             payload = {"npcs": working["npcs"], "player": working["player"],
@@ -726,12 +763,11 @@ def move(run_id: str, request: Move):
             ).fetchone()
             end_seq = int(objective["seq"]) if objective else prior_seq
             return {"state": state_at(connection, run, end_seq), "duplicate": True}
-        old_x, old_y = state["player"]["x"], state["player"]["y"]
         if state["inside_city"] or not state["player"]["alive"]:
             raise HTTPException(409, "Run is no longer movable")
-        dx, dy = request.x - old_x, request.y - old_y
-        if max(abs(dx), abs(dy)) != 1:
-            raise HTTPException(422, "Move must cross exactly one adjacent cell")
+        cells = request.cells or ([[request.x, request.y]] if request.x is not None and request.y is not None else [])
+        if not cells or any(len(cell) != 2 for cell in cells):
+            raise HTTPException(422, "Send x and y, or a list of [x, y] cells")
 
         def passable(x: int, y: int) -> bool:
             if not (0 <= x <= 95 and 0 <= y <= 71):
@@ -749,20 +785,37 @@ def move(run_id: str, request: Move):
                         return False
             return True
 
-        if not passable(request.x, request.y):
-            raise HTTPException(403, "A building, city wall, or closed gate blocks the path")
-        if dx and dy and (not passable(old_x + dx, old_y) or not passable(old_x, old_y + dy)):
-            raise HTTPException(403, "Cannot cut diagonally through a blocked corner")
+        # Walk the cells in order; stop at the first illegal step, keeping the legal ones before it.
+        x, y = state["player"]["x"], state["player"]["y"]
+        accepted: list[list[int]] = []
+        travel_ms, problem = 0, None
         speed = RUN_SPEED_CELLS_PER_SECOND if request.running else MOVE_SPEED_CELLS_PER_SECOND
-        travel_ms = round(1000 * math.hypot(dx, dy) / speed) if run["seed_version"] < 3 else 0
+        for nx, ny in cells:
+            dx, dy = nx - x, ny - y
+            if max(abs(dx), abs(dy)) != 1:
+                problem = (422, "Move must cross exactly one adjacent cell")
+            elif not passable(nx, ny):
+                problem = (403, "A building, city wall, or closed gate blocks the path")
+            elif dx and dy and (not passable(x + dx, y) or not passable(x, y + dy)):
+                problem = (403, "Cannot cut diagonally through a blocked corner")
+            if problem:
+                break
+            travel_ms += round(1000 * math.hypot(dx, dy) / speed) if run["seed_version"] < 3 else 0
+            x, y = nx, ny
+            accepted.append([x, y])
+            if y <= 3:
+                break  # Inside the city.
+        if not accepted:
+            raise HTTPException(*problem)
         sim_time_ms = state["sim_time_ms"] + travel_ms  # New runs use the exploration clock instead.
         tick = sim_time_ms // 1000  # One simulation tick is one second.
-        append(connection, state, "move", {"x": request.x, "y": request.y,
-                                           "running": request.running,
-                                           "sim_time_ms": sim_time_ms}, request.request_id, tick)
+        payload = {"x": x, "y": y, "running": request.running, "sim_time_ms": sim_time_ms}
+        if len(accepted) > 1:
+            payload["path"] = accepted
+        append(connection, state, "move", payload, request.request_id, tick)
         state["sim_time_ms"] = sim_time_ms
-        state["player"].update(x=request.x, y=request.y)
-        if request.y <= 3 and not state["inside_city"]:
+        state["player"].update(x=x, y=y)
+        if y <= 3 and not state["inside_city"]:
             append(connection, state, "objective_complete", {"location": "loc_city_interior"},
                    f"objective:{request.request_id}", tick)
             state["inside_city"] = True
@@ -770,6 +823,8 @@ def move(run_id: str, request: Move):
         if state["event_seq"] % 64 == 0:
             connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
                                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))
+    if problem:
+        return JSONResponse({"detail": problem[1], "state": state, "accepted": len(accepted)}, status_code=problem[0])
     return {"state": state, "duplicate": False}
 
 

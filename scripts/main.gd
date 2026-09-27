@@ -44,25 +44,33 @@ var sync_error := false
 var ai_status: Dictionary = {}
 var last_trace = null # Developer runs receive the judge trace with each attempt.
 
-# Created and newly seeded objects have no authored scene node. Until their painted
-# sprite arrives they borrow an existing prop picture chosen by material.
-const PLACEHOLDERS := {
-	"wood": preload("res://assets/generated/prop_branch.png"),
-	"stone": preload("res://assets/generated/prop_stone.png"),
-	"fiber": preload("res://assets/generated/prop_cord.png"),
-	"metal": preload("res://assets/generated/prop_stone.png"),
-	"bundle": preload("res://assets/generated/prop_cord.png"),
-}
+# Objects without authored art show a loading ring until their painting arrives (loading_ring.gd).
 const OBJECT_HEIGHT := 46.0
 const OBJECT_MAX_WIDTH := 60.0
 const REACH_CELLS := 2.5 # Matches backend m2.REACH_CELLS.
 const NEARBY_CELLS := 8.0 # Try Something can involve anything this close; the player walks there first.
 var scripted_walk := false
 var shown_speech: Dictionary = {} # npc id -> key of the last line shown in a bubble
-var thought_last := false
+var thinking_active := false
+## Cheap counters read by tools/profile_frame.gd: key -> [count, total microseconds, total bytes].
+var prof: Dictionary = {}
+
+
+var prof_max: Dictionary = {} # key -> largest single value seen (e.g. ms between world updates)
+var last_state_usec := 0
+
+
+func _prof_max(key: String, value: float) -> void:
+	prof_max[key] = maxf(float(prof_max.get(key, 0.0)), value)
+
+
+func _prof(key: String, started_usec: int, size := 0) -> void:
+	var entry: Array = prof.get(key, [0, 0, 0])
+	var spent := Time.get_ticks_usec() - started_usec
+	prof[key] = [entry[0] + 1, entry[1] + spent, entry[2] + size]
+	_prof_max("slowest " + key + " ms", spent / 1000.0)
 var object_textures: Dictionary = {} # object id -> resolved Texture2D
 var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
-var placeholder_clock := 0.0
 
 
 func _ready() -> void:
@@ -234,7 +242,11 @@ func _animate_npcs(delta: float) -> void:
 			continue
 		var target: Vector2 = npc_targets.get(id, actor.position)
 		var before := actor.position
-		actor.position = actor.position.move_toward(target, maxf(86.0, actor.position.distance_to(target) * 5.0) * delta)
+		var mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
+		var job = mind.get("job") if typeof(mind) == TYPE_DICTIONARY else null
+		var pace := 190.0 if typeof(job) == TYPE_DICTIONARY and job.get("speed") == "run" else 90.0
+		var behind := actor.position.distance_to(target)
+		actor.position = actor.position.move_toward(target, (pace if behind < 128.0 else behind * 3.0) * delta)
 		var travel := actor.position - before
 		var painted := actor.get_node("PaintedActor")
 		var facing := int(npc_facing.get(id, 0))
@@ -247,6 +259,11 @@ func _animate_npcs(delta: float) -> void:
 			mode = str(npc["controller"].get("activity", "idle"))
 			if mode == "wait":
 				mode = "idle"
+			if typeof(mind) == TYPE_DICTIONARY and mind.get("facing_player", false):
+				# Wary people turn to face the stranger (decided by code on the server, not by Jev).
+				var toward := player.position - actor.position
+				facing = (3 if toward.x > 0.0 else 1) if absf(toward.x) > absf(toward.y) else (0 if toward.y > 0.0 else 2)
+				npc_facing[id] = facing
 		painted.set_motion(facing, mode, travel.length(), delta)
 
 
@@ -288,7 +305,9 @@ func _cardinal_fallback(view: int) -> int:
 
 func _physics_process(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * camera_zoom, minf(1.0, delta * 10))
+	var started := Time.get_ticks_usec()
 	_update_target()
+	_prof("update_target", started)
 	if not gameplay_active or request_busy or ui.modal.visible or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
 			return
@@ -296,12 +315,15 @@ func _physics_process(delta: float) -> void:
 		player_sprite.frame = _cardinal_fallback(facing_row) * 3
 		player_visual.set_motion(facing_row, "idle", 0.0, delta)
 		return
+	started = Time.get_ticks_usec()
 	_animate_npcs(delta)
+	_prof("animate_npcs", started)
 	if int(run_state.get("seed_version", 1)) >= 3:
 		clock_pending_ms += delta * 1000.0
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var is_running := Input.is_action_pressed("run")
 	if move_queue.size() >= 16:
+		_prof("movement_stalled_frames", Time.get_ticks_usec())
 		direction = Vector2.ZERO
 		ui.notify("Waiting for your journey to save…")
 	var speed := RUN_SPEED if is_running else WALK_SPEED
@@ -332,50 +354,46 @@ func _physics_process(delta: float) -> void:
 		predicted_cell = cell
 		if not movement_sync_active:
 			_flush_moves()
-	if not movement_sync_active and (_minds_pending() or
-			(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0)):
+	if not movement_sync_active and int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0:
 		_flush_moves()
+	if not thinking_active and _minds_pending():
+		_flush_minds()
 
 
+## Movement lane: the player's steps (batched) and the clock, one request at a time.
+## People's thinking runs separately in _flush_minds, so Jev never holds up walking or time.
 func _flush_moves() -> void:
 	if movement_sync_active:
 		return
 	movement_sync_active = true
-	while gameplay_active and (not move_queue.is_empty() or _minds_pending() or
+	while gameplay_active and (not move_queue.is_empty() or
 		(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0)):
 		var sending_move := not move_queue.is_empty()
 		var elapsed_ms := 0
 		var body: Dictionary
 		var path := "/move"
-		var timeout := 5.0
-		if not sending_move and _minds_pending() and not (thought_last and clock_pending_ms >= 500.0):
-			# People decide what to do; the player can keep moving meanwhile (moves queue up).
-			# After a round of thinking the clock gets a beat first, so thinking can never stop time.
-			path = "/think"
-			timeout = 40.0
-			body = {"expected_version": run_state["event_seq"], "request_id": _request_id("think")}
-		elif sending_move:
-			var step: Dictionary = move_queue.pop_front()
-			var cell: Vector2i = step["cell"]
-			body = {"x": cell.x, "y": cell.y,
-				"expected_version": run_state["event_seq"],
-				"running": bool(step["running"]), "request_id": _request_id("move")}
+		if sending_move:
+			# Every step queued since the last request goes in one batch.
+			var cells := []
+			var running := false
+			while not move_queue.is_empty() and cells.size() < 24:
+				var step: Dictionary = move_queue.pop_front()
+				cells.append([step["cell"].x, step["cell"].y])
+				running = running or bool(step["running"])
+			body = {"cells": cells, "expected_version": run_state["event_seq"], "running": running,
+				"request_id": _request_id("move")}
 		else:
 			elapsed_ms = mini(floori(clock_pending_ms), 1000)
 			clock_pending_ms -= float(elapsed_ms)
 			path = "/explore"
 			body = {"elapsed_ms": elapsed_ms, "expected_version": run_state["event_seq"],
 				"request_id": _request_id("explore")}
-		thought_last = path == "/think"
-		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body, timeout)
+		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body)
 		# Retrying the identical request is safe even when the first response was lost.
 		if not reply["ok"] and (int(reply.status) == 0 or int(reply.status) >= 500):
-			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body, timeout)
+			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body)
 		if reply["ok"]:
-			var before := run_state
-			run_state = reply["data"]["state"]
-			_sync_display()
-			_react_to(before)
+			_accept_state(reply["data"]["state"])
 			if run_state["inside_city"]:
 				gameplay_active = false
 				victory_panel.show()
@@ -383,20 +401,53 @@ func _flush_moves() -> void:
 		else:
 			if not sending_move:
 				clock_pending_ms += float(elapsed_ms)
-			sync_error = true
 			move_queue.clear()
-			var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
-			if fresh.ok:
-				run_state = fresh.data
-				sync_error = false
-				_sync_display()
-			move_queue.clear()
+			var blocked_state = reply.data.get("state") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+			if typeof(blocked_state) == TYPE_DICTIONARY:
+				_accept_state(blocked_state) # The legal steps before the blocked one were kept.
+			else:
+				sync_error = true
+				var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
+				if fresh.ok:
+					_accept_state(fresh.data)
+					sync_error = false
 			predicted_cell = Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"]))
 			player.position = _cell_center(predicted_cell.x, predicted_cell.y)
 			ui.notify("Connection lost. Pause and resume your journey to reconnect." if sync_error else
 				"That path is blocked." if sending_move else "The village clock is reconnecting.")
 			break
 	movement_sync_active = false
+
+
+## Thinking lane: people with something on their mind decide (Jev), alongside the movement lane.
+func _flush_minds() -> void:
+	if thinking_active:
+		return
+	thinking_active = true
+	while _minds_pending():
+		var body := {"expected_version": run_state["event_seq"], "request_id": _request_id("think")}
+		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + "/think", body, 40.0)
+		if not reply["ok"] and (int(reply.status) == 0 or int(reply.status) >= 500):
+			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + "/think", body, 40.0)
+		if not reply["ok"]:
+			await get_tree().create_timer(1.0).timeout # e.g. another think still finishing; try again shortly.
+			continue
+		_accept_state(reply["data"]["state"])
+	thinking_active = false
+
+
+## Replies from the two lanes can arrive in either order; the newest world state wins
+## (the server applies events one at a time, so a later event already includes the earlier ones).
+func _accept_state(new_state: Dictionary) -> void:
+	if int(new_state.get("event_seq", 0)) < int(run_state.get("event_seq", 0)):
+		return
+	if last_state_usec > 0:
+		_prof_max("longest_gap_between_updates_ms", (Time.get_ticks_usec() - last_state_usec) / 1000.0)
+	last_state_usec = Time.get_ticks_usec()
+	var before := run_state
+	run_state = new_state
+	_sync_display()
+	_react_to(before)
 
 
 func _toggle_gate() -> void:
@@ -415,6 +466,12 @@ func _toggle_gate() -> void:
 
 
 func _sync_display() -> void:
+	var started := Time.get_ticks_usec()
+	_sync_display_now()
+	_prof("sync_display", started)
+
+
+func _sync_display_now() -> void:
 	gate_shape.set_deferred("disabled", bool(run_state["gate_open"]))
 	gate_sprite.visible = not bool(run_state["gate_open"])
 	gate_opening.visible = bool(run_state["gate_open"])
@@ -475,6 +532,10 @@ func _react_to(before: Dictionary) -> void:
 	var journal: Array = run_state.get("journal", [])
 	for index in range(old_journal.size(), journal.size()):
 		var entry: Dictionary = journal[index]
+		if entry.get("kind") == "npc":
+			var speaker := get_node_or_null("NPCs/%s/PaintedActor" % entry.npc_id)
+			if speaker:
+				speaker.play_gesture("gesture") # A gesture as they speak.
 		if entry.get("kind") == "npc_attack":
 			var striker := get_node_or_null("NPCs/%s/PaintedActor" % entry.npc_id)
 			if striker:
@@ -661,7 +722,9 @@ func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeou
 	var completed: Array = await request.request_completed
 	request.queue_free()
 	var status := int(completed[1])
+	var parse_started := Time.get_ticks_usec()
 	var data = JSON.parse_string((completed[3] as PackedByteArray).get_string_from_utf8())
+	_prof("parse " + path.get_slice("?", 0).get_file(), parse_started, (completed[3] as PackedByteArray).size())
 	return {"ok": status >= 200 and status < 300 and typeof(data) == TYPE_DICTIONARY,
 		"status": status, "data": data}
 
@@ -695,7 +758,7 @@ func texture_for(obj: Dictionary) -> Texture2D:
 			return object_textures[id]
 	if not asset_id.is_empty() and not sprite_state.has(asset_id):
 		_poll_sprite(id, asset_id)
-	return PLACEHOLDERS.get(str(obj.get("placeholder", "bundle")), PLACEHOLDERS["bundle"])
+	return null # Not painted yet (or it couldn't be): callers show a loading ring, never another object's art.
 
 
 func is_placeholder(obj: Dictionary) -> bool:
@@ -706,10 +769,20 @@ func is_placeholder(obj: Dictionary) -> bool:
 
 
 func sprite_status(obj: Dictionary) -> String:
-	return "ready" if not is_placeholder(obj) else str(sprite_state.get(str(obj.get("sprite_asset_id", "")), "none"))
+	if not is_placeholder(obj):
+		return "ready"
+	var asset_id := str(obj.get("sprite_asset_id", ""))
+	return "none" if asset_id.is_empty() else str(sprite_state.get(asset_id, "polling"))
 
 
 func _trimmed_texture(image: Image) -> Texture2D:
+	var started := Time.get_ticks_usec()
+	var texture := _trimmed_texture_now(image)
+	_prof("trim_texture", started)
+	return texture
+
+
+func _trimmed_texture_now(image: Image) -> Texture2D:
 	if image.is_compressed():
 		image.decompress()
 	var used := image.get_used_rect()
@@ -725,7 +798,20 @@ func _trimmed_texture(image: Image) -> Texture2D:
 
 func _apply_object_texture(sprite: Sprite2D, obj: Dictionary) -> void:
 	var texture := texture_for(obj)
-	sprite.set_meta("placeholder", is_placeholder(obj))
+	var ring := sprite.get_node_or_null("LoadingRing")
+	if texture == null:
+		sprite.texture = null
+		sprite.scale = Vector2.ONE
+		if ring == null:
+			ring = preload("res://scripts/loading_ring.gd").new()
+			ring.name = "LoadingRing"
+			sprite.add_child(ring)
+		ring.missing = sprite_status(obj) in ["failed", "none"]
+		ring.queue_redraw()
+		return
+	if ring:
+		sprite.remove_child(ring)
+		ring.queue_free()
 	if sprite.texture == texture:
 		return
 	sprite.texture = texture
@@ -736,7 +822,6 @@ func _apply_object_texture(sprite: Sprite2D, obj: Dictionary) -> void:
 	sprite.scale = Vector2.ONE * minf(height / size.y, width / size.x)
 	# Tall things stand on their cell (so a tree falls from its base); small items stay centred.
 	sprite.offset = Vector2.ZERO if height == OBJECT_HEIGHT else Vector2(0, -size.y * 0.5 + 12.0 / sprite.scale.y)
-	sprite.modulate = Color.WHITE
 
 
 ## Painting happens on the backend after the object exists; poll until it's ready.
@@ -781,14 +866,6 @@ func _refresh_object_visuals() -> void:
 		return
 	_sync_display()
 	ui.refresh_icons()
-
-
-func _process(delta: float) -> void:
-	placeholder_clock += delta
-	for sprite in $M2Objects.get_children():
-		if sprite.has_meta("placeholder"):
-			var waiting: bool = sprite.get_meta("placeholder")
-			sprite.modulate = Color(0.85, 0.8, 0.7, 0.72 + sin(placeholder_clock * 3.0) * 0.18) if waiting else Color.WHITE
 
 
 ## What a Try Something attempt can involve: carried items, anything intact within reach

@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "notes": "Things people say when they act. Jev picks the action and the line together, so the voice fits the person. Tones: frightened, angry, protective (the victim is family), official (guards), shrewd (merchants and calculating types). Slots: {victim}, {relation} (e.g. 'my nephew'), {guard}, {item}, {owner}, {weapon}. A person never repeats their last line.",
+  "lines": {
+    "flee": {
+      "frightened": ["Stay away from me!", "Gods, no! Keep back!", "I want no part of this!"],
+      "shrewd": ["Not my fight. Not my fight at all.", "I'll be elsewhere, thank you."]
+    },
+    "shout_for_help": {
+      "frightened": ["Help! Someone help! He's hurt {victim}!", "Guards! Guards! Please!"],
+      "angry": ["Guards! Get over here! This one attacked {victim}!", "Murderer! Somebody stop him!"],
+      "protective": ["Help! He's hurt {relation}!", "Get away from {relation}! Help, someone!"],
+      "official": ["Alarm! To me, all of you!", "Guards to the smithy road! Now!"],
+      "theft": ["Thief! Stop that thief!", "That's {owner}'s! Stop him!"]
+    },
+    "warn_others": {
+      "frightened": ["Everyone get inside! He's dangerous!", "Stay back from that one, he hurt {victim}!"],
+      "angry": ["Mind that stranger, he's violent!", "Watch yourselves, that one lashes out!"],
+      "shrewd": ["I'd keep my distance from our new friend if I were you.", "Careful. That stranger is trouble."]
+    },
+    "report": {
+      "frightened": ["{guard}! The stranger {short}! Please, come quick!", "{guard}, you have to come, he {short}!"],
+      "angry": ["{guard}! That stranger {short}! Do something!", "{guard}, the stranger {short}. I saw it myself."],
+      "protective": ["{guard}! The stranger hurt {relation}!", "{guard}, come quick, he went for {relation}!"],
+      "official": ["{guard}, report: the stranger {short}.", "Captain's orders or not, {guard}, the stranger {short}."],
+      "shrewd": ["{guard}, a word. The stranger {short}. Thought you'd want to know.", "{guard}. You'll want to hear this: the stranger {short}."]
+    },
+    "confront": {
+      "angry": ["What do you think you're doing?!", "You! Explain yourself, now!"],
+      "official": ["You there. Stand where you are and explain yourself.", "By order of the gate: account for yourself."],
+      "protective": ["You keep your hands off {relation}!", "What did you do to {relation}?!"],
+      "shrewd": ["Now then. That was unwise. What's your game?", "Interesting. Care to tell me why?"]
+    },
+    "threaten": {
+      "angry": ["Touch anyone else and I'll break your arm.", "One more step and you'll regret it."],
+      "official": ["Drop what you're holding. Now.", "Hands where I can see them, stranger."],
+      "protective": ["Come near {relation} again and I'll finish you.", "Back away from {relation}. I won't say it twice."]
+    },
+    "attack": {
+      "angry": ["You'll pay for that!", "That's enough out of you!"],
+      "official": ["Stop right there!", "In the captain's name, down you go!"],
+      "protective": ["Get away from {relation}!", "Nobody touches {relation}!"]
+    },
+    "demand_payment": {
+      "angry": ["That's my {item}. Give it back or pay for it.", "Thief! Hand over my {item}!"],
+      "shrewd": ["That {item} is mine. Coin, or I call the guard.", "You'll pay for that {item}. With interest."]
+    },
+    "whistle": {
+      "official": ["*a sharp whistle* To me! Trouble on the road!", "*whistles* All guards! Here!"]
+    },
+    "help": {
+      "frightened": ["{victim}! Oh gods, are you all right?", "Easy, {victim}, I've got you."],
+      "protective": ["I'm here, {victim}. Lie still.", "Look at me, {victim}. You'll be all right."],
+      "official": ["Stay down, {victim}. I've got this.", "Where are you hurt, {victim}?"]
+    }
+  }
+}
