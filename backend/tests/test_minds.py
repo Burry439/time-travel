@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app as service
+import encounter
 import minds
 from ai import decider
 
@@ -99,9 +100,21 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     assert "believes" in questions and "Jory told them" in request_text
     state["pending_minds"] = []
     minds.apply_decision(state, bren, answers("attack"), state["sim_time_ms"], journal)
-    # Blows are a seeded roll on weapon and skill, resolved on the clock without asking the decider.
-    assert run_until(state, lambda: state["player"].get("health", 100) < 100, limit_ms=60_000)
-    assert run_until(state, lambda: not state["player"]["alive"], limit_ms=180_000)
+    # Reaching the stranger opens an encounter: no blows on the clock, only in its rounds.
+    assert run_until(state, lambda: bool(state.get("encounter")), limit_ms=60_000)
+    assert state["player"].get("health", 100) == 100
+    assert state["encounter"]["participants"] == ["npc_bren_marr"]
+    assert state["encounter"]["intents"]["npc_bren_marr"]["action"] == "attack"
+    for _ in range(30):  # The stranger just waits; Bren keeps attacking. Blows are a seeded roll on weapon and skill.
+        if not state["player"]["alive"]:
+            break
+        state["event_seq"] += 1
+        state, record = encounter.resolve(state, "mind0000", {"kind": "wait", "text": "", "target_id": None},
+                                          None, None, "t")
+        encounter.finish(state, record, state["sim_time_ms"])
+        if state.get("encounter"):
+            state["encounter"]["intents"]["npc_bren_marr"] = {"action": "attack", "line": None, "line_id": None}
+    assert not state["player"]["alive"] and not state.get("encounter")
     bren = npc(state, "npc_bren_marr")
     assert minds.math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 1.5
     assert bren["mind"]["job"]["kind"] == "watch"  # Attackers stand down once the stranger is dead.
@@ -182,6 +195,13 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     for _ in range(200):  # Hessa punches (fists: no instant kills), so this takes a while.
         if not state["player"]["alive"]:
             break
+        if state.get("encounter"):  # Face to face: the stranger just waits, round after round.
+            scripted.script.extend(answers("attack") for _ in encounter.missing_intents(state))
+            reply = http.post(f"/runs/{state['run_id']}/encounter/act", json={
+                "kind": "wait", "expected_version": state["event_seq"], "request_id": f"round-{state['event_seq']}"})
+            assert reply.status_code == 200, reply.text
+            state = reply.json()["state"]
+            continue
         scripted.script.extend(answers("watch") for _ in state["pending_minds"])
         state = think(http, state)["state"] if state["pending_minds"] else tick(http, state, 1000)
     assert any(e.get("kind") == "npc_attack" and e["npc_id"] == "npc_hessa_marr" for e in state["journal"])

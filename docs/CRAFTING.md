@@ -5,7 +5,10 @@ Press **T** (or Enter) in the world and describe, in your own words, what you wa
 ## What you can do
 
 - **Make** something new: "lash the flint to the branch with the vine to make a spear". The new object goes in your bag with its own history, and a picture is painted for it (a pulsing stand-in shows until it arrives).
-- **Take** things, including other people's: "grab Tomas's plank". It works, but the game records it as theft. People don't react yet; they will in a later version.
+- **Take** things, including other people's: "grab Tomas's plank". It works, but it is theft, and anyone who sees it may react. Things someone has **lent** you are fine to use.
+- **Fill** a container with water: "fill the gourd at the trough". Water is conserved; the troughs are at Hessa's inn and by the gate.
+- **Show** what something does: "float the needle in the bowl and show Darin". The judge says what onlookers actually see, and the object's abilities become *seen working* or *didn't work*. Showing beats describing: people remember what they saw.
+- **Give** something you carry to someone: "give Hessa the gourd of water".
 - **Cut, break or fell** something: "cut down the young birch with the flint shard".
   - The tree falls over and leaves pieces (trunk, branches, stump). Each gets its own picture. Anything up to 20 kg can be picked up.
   - A felled map tree no longer blocks the path.
@@ -23,7 +26,7 @@ Code always checks:
 - **The south road start:** branches, cord, stones, flint, flat stone, dry grass, reeds, vine, bark, resin, hazel rod, pine cones and a birch sapling.
 - **The rest of the map:** feathers, wool, a bone, a gourd, wet clay, a pot shard, straw, leather, a **bent iron nail** and a **rusty horseshoe** (iron!), charcoal, chalk, bramble, burdock leaves, birch bark, a heavy log, and two more saplings.
 - **Everywhere:** all 19 big trees.
-- **Owned by NPCs:** Hessa's bucket and Tomas's plank.
+- **Owned by NPCs:** Hessa's bucket, bowl and cup; Tomas's plank; Darin's **lodestone**, linen, cordage and bronze mirror; Mara's **iron needles** and nails (new journeys only).
 
 To add your own, edit `data/content/world_objects.json`. Then run:
 
@@ -32,6 +35,17 @@ backend/.venv/Scripts/python.exe tools/generate_material_art.py
 ```
 
 Start a **new journey** to see new content; existing journeys keep their original world.
+
+## Talking and getting into the city
+
+Walk up to someone and press **E** to talk; when someone comes up to *you* (a guard halting you, someone confronting or attacking you) the same panel opens by itself. It works in **rounds**: each round you **Say it**, **Do it** (any action, like "hand him the plank" or "swing the spear at her"), **Wait**, or **Walk away**, and everyone else acts at the same moment: they decided their move before seeing yours, so a blow can land while someone is mid-sentence. Time only moves round by round while you're face to face; walking away from a fight gives an attacker a swing and they may chase you.
+
+Type anything. Jev decides what they do (answer, ask you something, tell you what they know, send you to someone, lend you something, offer a deal, speak for you, refuse, send you away, fetch a guard) and Luna says it in their voice. People nearby overhear. Your journal lists what people told you and your deals.
+
+- **Words alone move people only a little.** Showing them something that works, giving them something, or someone speaking for you counts for much more.
+- **Deals:** some people will ask something of you (Tomas, Hessa, Darin, Mara) and, once they see it done, go and speak for you to the captain.
+- **The gate:** guards stop strangers. Only Captain Roderic can let you in, when he believes you're no threat and have a real reason: someone he trusts speaks for you, you work for someone with honest business, or you've shown him something of real value. He won't after a crime he knows about.
+- **Show something** in the talk panel lets you demonstrate a thing to that person and then ask what they think.
 
 ## Set up the AI (once)
 
@@ -59,6 +73,8 @@ Start a **Developer playtest**.
 | --- | --- | --- |
 | `MODEL_JUDGE` | `gpt-6-luna` | `gpt-6-sol` is about 15× the cost; switch only if evals show a need |
 | `JUDGE_REASONING` | `low` | `none`, `low`, `medium`, `high` |
+| `MODEL_VOICE`, `VOICE_REASONING` | `gpt-6-luna`, `low` | Phrases what people say; authored fallback lines if unavailable |
+| `TYPESAFE_API_KEY` | | Jev (defapi `dk-` keys work), who decides what people do |
 | `MODEL_IMAGE` | `gpt-image-2.5-flare` | Falls back to `MODEL_IMAGE_FALLBACK` (`gpt-image-2`) |
 | `IMAGE_QUALITY` | `medium` | |
 | `IMAGES` | `on` | `off` keeps stand-in pictures |
@@ -70,6 +86,8 @@ Start a **Developer playtest**.
 - **Backend:** `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`
 - **Godot flow, no key needed:**
   1. Start the backend with `$env:AI_MODE='stub'; ./tools/run_m0.ps1`.
-  2. Run `Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/smoke_craft.gd`.
+  2. Run `Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/smoke_craft.gd` (and `smoke_talk.gd` for conversations and the gate).
   3. Restart the backend normally afterwards.
 - **Live judge quality** (costs about a cent per run): `backend/.venv/Scripts/python.exe evals/run_craft_evals.py --runs 3`. It runs 19 cases, including bad physics, ownership, felling, attacks and prompt injection, and writes a report to `evals/results/`.
+- **Live conversations** (about a tenth of a cent per exchange): `evals/run_talk_evals.py --runs 2`: pleading, injection, rudeness, knowledge boundaries, deals, evidence and crimes at the gate.
+- **Live routes into the city** (a few cents): `evals/run_routes_live.py` plays the sponsor, business and value routes end to end and reports whether each got in.

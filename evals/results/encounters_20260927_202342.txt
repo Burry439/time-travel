@@ -1,0 +1,30 @@
+
+=== FIGHT AT THE SMITHY ===
+  TRY: shove Jory hard
+    [success] You shove Jory hard in the chest. He staggers back but suffers only a minor bruise.
+  Encounter: threaten with ['npc_mara_venn']
+  ROUND 1 — you: say “I'm sorry! I didn't mean it. I'll go.”  (2.6 s)
+    · You: “I'm sorry! I didn't mean it. I'll go.”
+    · Mara: “Then go. Leave us be.”
+  ROUND 2 — you: wait   (4.5 s)
+    · You wait and say nothing.
+    · Mara: “Go on. Leave us be.”
+  ROUND 3 — you: leave   (1.3 s)
+    · You turn and walk away.
+    (the encounter is over)
+  Player: 100 health, alive=True
+
+=== HALTED AT THE GATE ===
+  Encounter: halt with npc_bren_marr
+    · Bren: “Halt! State your business at the gate.”
+  ROUND 1 — you: say “Good day. I'm Ash, a traveller looking for honest work in the city.”  (2.7 s)
+    · You: “Good day. I'm Ash, a traveller looking for honest work in the city.”
+    · Bren: “Who are you, then, and what work are you seeking?”
+  ROUND 2 — you: say “Who should I speak to about getting in?”  (4.0 s)
+    · You: “Who should I speak to about getting in?”
+    · Bren: “Only Captain Roderic can let anyone through. We guards just stop people and ask questions.”
+  ROUND 3 — you: leave   (2.8 s)
+    · You turn and walk away.
+    (the encounter is over)
+
+Rounds: 6 · median 2.8 s · max 4.5 s

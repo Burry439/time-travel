@@ -33,6 +33,7 @@ var trace_panel: PanelContainer
 var trace_text: Label
 var gate_button: Button
 var victory_panel: PanelContainer
+var victory_route: Label
 var ui: Control
 var effects: Node2D
 var nearby_target := ""
@@ -183,7 +184,7 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	if int(state.get("geometry_version", 1)) < 2:
 		ui.notify("Earlier map restored. Begin a new journey to test building and tree collisions.")
 	if state["inside_city"]:
-		victory_panel.show()
+		_show_victory()
 		gameplay_active = false
 	elif not state["player"].get("alive", true):
 		gameplay_active = false
@@ -308,6 +309,11 @@ func _physics_process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
 	_update_target()
 	_prof("update_target", started)
+	if in_encounter() and gameplay_active and not thinking_active and _minds_pending():
+		_flush_minds() # Everyone's next move is decided while the player chooses theirs.
+	if in_encounter() and gameplay_active and not request_busy and ui.modal_kind != "encounter" \
+			and ui.modal_kind != "death":
+		ui.open_encounter()
 	if not gameplay_active or request_busy or ui.modal.visible or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
 			return
@@ -318,8 +324,8 @@ func _physics_process(delta: float) -> void:
 	started = Time.get_ticks_usec()
 	_animate_npcs(delta)
 	_prof("animate_npcs", started)
-	if int(run_state.get("seed_version", 1)) >= 3:
-		clock_pending_ms += delta * 1000.0
+	if int(run_state.get("seed_version", 1)) >= 3 and not in_encounter():
+		clock_pending_ms += delta * 1000.0 # Face to face, rounds move time instead.
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var is_running := Input.is_action_pressed("run")
 	if move_queue.size() >= 16:
@@ -396,7 +402,7 @@ func _flush_moves() -> void:
 			_accept_state(reply["data"]["state"])
 			if run_state["inside_city"]:
 				gameplay_active = false
-				victory_panel.show()
+				_show_victory()
 				move_queue.clear()
 		else:
 			if not sending_move:
@@ -543,6 +549,12 @@ func _react_to(before: Dictionary) -> void:
 			if entry.result != "missed" and run_state["player"].get("alive", true):
 				player_visual.hurt(1.0)
 			ui.notify(str(entry.reason))
+	# Someone came up to you (a halt, a confrontation, an attack): face them.
+	if in_encounter() and gameplay_active and not request_busy and ui.modal_kind != "encounter" \
+			and ui.modal_kind != "death":
+		ui.open_encounter()
+	elif not in_encounter() and ui.modal_kind == "encounter" and not request_busy:
+		ui.encounter_ended()
 	var was_alive: bool = before.get("player", {}).get("alive", true)
 	if was_alive and not run_state["player"].get("alive", true):
 		gameplay_active = false
@@ -550,6 +562,22 @@ func _react_to(before: Dictionary) -> void:
 		player_visual.die(1.0)
 		await get_tree().create_timer(1.6).timeout
 		ui.show_death(_death_reason())
+
+
+func _show_victory() -> void:
+	var admitted = run_state.get("admitted")
+	var lines := PackedStringArray()
+	if typeof(admitted) == TYPE_DICTIONARY:
+		lines.append("Captain Roderic let you through the gate.")
+		var because: Array = admitted.get("because", [])
+		if not because.is_empty():
+			lines.append("What weighed with him:")
+			for reason in because:
+				lines.append("• " + str(reason))
+	else:
+		lines.append("You found your own way in.")
+	victory_route.text = "\n".join(lines)
+	victory_panel.show()
 
 
 func _death_reason() -> String:
@@ -876,7 +904,7 @@ func try_candidates() -> Array[Dictionary]:
 	var here := Vector2(predicted_cell)
 	for id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state.objects[id]
-		if "water_source" in obj.capabilities or str(obj.condition) != "usable":
+		if str(obj.condition) != "usable":
 			continue
 		if obj.holder_id == "player":
 			carried.append(obj)
@@ -1020,7 +1048,7 @@ func _update_target() -> void:
 			for npc in run_state.npcs:
 				if npc.id == nearby_target:
 					target = npc
-			verb = "Meet" if target.get("alive", true) else "Look at"
+			verb = "Talk to" if target.get("alive", true) else "Look at"
 		elif (target.owner_id != null and target.owner_id != "player") or not "carry" in target.capabilities:
 			verb = "Inspect"
 		var target_actor := get_node_or_null("NPCs/" + nearby_target) as Node2D
@@ -1037,8 +1065,91 @@ func _interact() -> void:
 	var obj: Dictionary = run_state.get("objects", {}).get(nearby_target, {})
 	if not obj.is_empty() and "carry" in obj.capabilities and (obj.owner_id == null or obj.owner_id == "player"):
 		_quick_action("take", nearby_target)
+	elif obj.is_empty() and ui.npc_record(nearby_target).get("alive", false):
+		ui.open_encounter(nearby_target)
 	else:
 		ui.inspect(nearby_target)
+
+
+## One exchange in a conversation: Jev decides the reply on the server and the voice phrases it.
+func say_to(npc_id: String, text: String) -> void:
+	await encounter_act("say", text, npc_id)
+
+
+func in_encounter() -> bool:
+	return typeof(run_state.get("encounter")) == TYPE_DICTIONARY
+
+
+## One round: the stranger says or does something, waits, or walks away; everyone else's committed
+## actions resolve at the same moment on the server. The round is then played back here.
+func encounter_act(kind: String, text: String, target: String) -> void:
+	if request_busy or not gameplay_active or sync_error:
+		return
+	request_busy = true
+	while movement_sync_active:
+		await get_tree().process_frame
+	ui.talk_wait(("You: “%s”" % text) if kind == "say" else text)
+	var path := "/runs/" + str(run_state.run_id) + "/encounter/act"
+	var body := {"kind": kind, "text": text, "selected_ids": [], "expected_version": run_state.event_seq,
+		"request_id": _request_id("round")}
+	if not target.is_empty():
+		body["target_id"] = target
+	var reply := await _api(HTTPClient.METHOD_POST, path, body, 150.0)
+	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500) and int(reply.status) != 503:
+		reply = await _api(HTTPClient.METHOD_POST, path, body, 150.0)
+	if reply.ok:
+		last_trace = reply.data.get("trace")
+		var before_action = run_state.get("last_action")
+		var round: Dictionary = reply.data.get("round", {}) if typeof(reply.data.get("round")) == TYPE_DICTIONARY else {}
+		var walk: Array = round.get("walk", []) if typeof(round.get("walk")) == TYPE_ARRAY else []
+		run_state = reply.data.state
+		if not walk.is_empty(): # Walked over to the person first.
+			await _walk_along(walk)
+		var entry = run_state.get("last_action")
+		var did: bool = kind == "do" and typeof(entry) == TYPE_DICTIONARY and entry != before_action
+		if did:
+			await _walk_along(entry.get("walk", []))
+			_start_fall(entry)
+		request_busy = false
+		_sync_display()
+		_react_to_round(round)
+		if did:
+			_reveal_new_objects(entry)
+			_play_harm(entry)
+			if entry.category in ["success", "partial_success"]:
+				player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
+		if not run_state["player"].get("alive", true):
+			return # _react_to_round shows the death screen.
+		if in_encounter():
+			ui.open_encounter(target if not target.is_empty() else "")
+		else:
+			ui.encounter_ended()
+		return
+	request_busy = false
+	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+	var problem := str(detail.get("message")) if typeof(detail) == TYPE_DICTIONARY and detail.has("message") \
+		else _reply_problem(reply)
+	var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
+	if fresh.ok:
+		_accept_state(fresh.data)
+	ui.talk_error(problem)
+
+
+## Blows, gestures and words from a round (the same reactions as world events, all at once).
+func _react_to_round(round: Dictionary) -> void:
+	for entry in round.get("entries", []):
+		var who := str(entry.get("who", ""))
+		var actor := get_node_or_null("NPCs/%s/PaintedActor" % who)
+		if actor and entry.kind in ["strike", "reply", "shout_for_help", "whistle", "attack"]:
+			actor.play_gesture("gesture")
+		if entry.kind == "strike" and not "misses" in str(entry.text):
+			player_visual.hurt(1.0)
+	if not run_state["player"].get("alive", true) and gameplay_active:
+		gameplay_active = false
+		move_queue.clear()
+		player_visual.die(1.0)
+		await get_tree().create_timer(1.6).timeout
+		ui.show_death(_death_reason())
 
 
 func _quick_action(verb: String, id: String) -> void:

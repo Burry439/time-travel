@@ -42,6 +42,14 @@ def judge_reasoning() -> str:
     return _env("JUDGE_REASONING", "low")
 
 
+def voice_model() -> str:
+    return _env("MODEL_VOICE", "gpt-6-luna")
+
+
+def voice_reasoning() -> str:
+    return _env("VOICE_REASONING", "low")
+
+
 def image_model() -> str:
     return _env("MODEL_IMAGE", "gpt-image-2.5-flare")
 
@@ -68,7 +76,7 @@ def images_enabled() -> bool:
 
 def status() -> dict:
     return {"mode": mode(), "judge": judge_enabled(), "images": images_enabled(),
-            "judge_model": judge_model(), "image_model": image_model()}
+            "judge_model": judge_model(), "voice_model": voice_model(), "image_model": image_model()}
 
 
 @lru_cache(maxsize=1)

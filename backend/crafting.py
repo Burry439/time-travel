@@ -150,7 +150,15 @@ def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
             "description": obj.get("description", ""), "materials": obj.get("materials", []),
             "mass_kg": obj["mass_kg"], "length_m": obj.get("length_m"), "flags": obj.get("flags", []),
             "carried_by_player": obj["holder_id"] == "player", "portable": "carry" in obj["capabilities"],
-            "belongs_to": owner_label(state, obj)}
+            "belongs_to": owner_label(state, obj) + (" (lent to the player)" if obj.get("lent_to") == "player" else ""),
+            **({"capacity_l": obj["capacity_l"], "water_l": obj.get("water_l", 0.0)} if obj.get("capacity_l") else {}),
+            **({"known_capabilities": obj["known_capabilities"]} if obj.get("known_capabilities") else {})}
+
+
+def water_sources(state: dict, costs: dict) -> list[dict]:
+    return [{"id": o["id"], "name": o["name"], "water_l": o["water_l"], "walk_steps": costs[o["id"]],
+             "belongs_to": owner_label(state, o)}
+            for o in state["objects"].values() if "water_source" in o["capabilities"] and o["id"] in costs]
 
 
 def prior_rulings(state: dict) -> list[dict]:
@@ -169,6 +177,7 @@ def build_context(state: dict, text: str, selected_ids: list[str]) -> dict:
             "highlighted_ids": [i for i in selected_ids if i in known],
             "player_cell": [state["player"]["x"], state["player"]["y"]],
             "available_items": [_judge_view(state, o, costs) for o in items],
+            "water_sources": water_sources(state, costs),
             "people_nearby": people,
             "prior_rulings": prior_rulings(state)}
 
@@ -176,7 +185,8 @@ def build_context(state: dict, text: str, selected_ids: list[str]) -> dict:
 def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **extra) -> dict:
     base = {"category": category, "reason": reason, "effort_seconds": effort, "notes": notes, "action": "other",
             "consumed_ids": [], "tool_ids": [], "new_spec": None, "take_ids": [], "transform": None,
-            "harm": None, "property": [], "precedent_key": None, "walk": []}
+            "harm": None, "fill": None, "demonstration": None, "give": None, "property": [], "precedent_key": None,
+            "walk": []}
     base.update(extra)
     return base
 
@@ -231,7 +241,8 @@ def _positive(value) -> float | None:
 
 def _property(state: dict, ids: list[str], how: str) -> list[dict]:
     return [{"id": i, "name": state["objects"][i]["name"], "owner_id": state["objects"][i]["owner_id"], "how": how}
-            for i in ids if state["objects"][i]["owner_id"] not in (None, "player")]
+            for i in ids if state["objects"][i]["owner_id"] not in (None, "player")
+            and state["objects"][i].get("lent_to") != "player"]  # Lent by its owner: theirs, but not theft.
 
 
 def validate(state: dict, judged: dict | None, service_error: str | None = None) -> dict:
@@ -243,7 +254,8 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     outcome, reason = judged["outcome"], judged["reason"].strip() or "Nothing happens."
     effort = max(0, min(MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
     key = judged.get("precedent_key")
-    proposed_change = any(judged.get(field) for field in ("new_object", "take_ids", "transformation", "harm"))
+    proposed_change = any(judged.get(field) for field in ("new_object", "take_ids", "transformation", "harm", "fill",
+                                                          "demonstration", "give"))
     if outcome != "success" and proposed_change:
         notes.append(f"Ignored proposed changes because outcome is '{outcome}'.")
     if outcome == "needs_clarification":
@@ -258,7 +270,8 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     if effort < 1 and action != "other":
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
-    handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm}
+    handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill,
+                "demonstrate": _demonstrate, "give": _give}
     if action not in handlers:
         return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
@@ -290,11 +303,24 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
         ids = judged.get("take_ids") or []
     elif action == "transform" and judged.get("transformation"):
         ids = [judged["transformation"]["target_id"]] + judged["transformation"]["tools_used"]
+    elif action == "fill" and judged.get("fill"):
+        ids = [judged["fill"]["container_id"]]
+    elif action == "demonstrate" and judged.get("demonstration"):
+        ids = [judged["demonstration"]["object_id"]] + judged["demonstration"]["used_ids"]
     harm = judged.get("harm") if action == "harm" else None
     if harm and harm.get("method", "melee") != "thrown" and harm.get("weapon_id"):
         ids = [harm["weapon_id"]]
     cells = [(available[i]["x"], available[i]["y"]) for i in _dedupe(ids)
              if i in available and available[i]["holder_id"] != "player"]
+    source = state["objects"].get((judged.get("fill") or {}).get("source_id") or "") if action == "fill" else None
+    if source is not None:
+        cells.append((source["x"], source["y"]))
+    if action == "demonstrate":  # Showing something in a trough or other water source: go to it.
+        cells += [(o["x"], o["y"]) for i in ids if (o := state["objects"].get(i)) and "water_source" in o["capabilities"]]
+    recipient = (judged.get("give") or {}).get("recipient_id") if action == "give" else None
+    npc = next((n for n in state["npcs"] if n["id"] == recipient), None) if recipient else None
+    if npc is not None:
+        cells.append((npc["x"], npc["y"]))
     if harm and harm.get("method", "melee") != "thrown":
         npc = next((n for n in state["npcs"] if n["id"] == harm["target_id"]), None)
         if npc is not None:
@@ -488,6 +514,104 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
                     take_ids=picked_up, property=_property(state, picked_up, "taken"))
 
 
+def _fill(state, judged, available, notes, reason, effort, key) -> dict:
+    plan = judged.get("fill")
+    if not plan:
+        return _unresolved(notes, "action 'fill' without a fill")
+    container, source = available.get(plan["container_id"]), state["objects"].get(plan["source_id"])
+    if container is None:
+        return _unresolved(notes, f"container is not within reach: {plan['container_id']}")
+    if source is None or "water_source" not in source["capabilities"]:
+        return _unresolved(notes, f"not a water source: {plan['source_id']}")
+    if "container" not in container.get("flags", []) or not container.get("capacity_l"):
+        return _verdict("blocked", f"The {container['name']} can't hold water.", notes, action="fill",
+                        precedent_key=key)
+    if _distance(state, source["x"], source["y"]) > m2.REACH_CELLS:
+        return _verdict("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
+    room = round(container["capacity_l"] - container.get("water_l", 0.0), 3)
+    if room <= 0:
+        return _verdict("blocked", f"The {container['name']} is already full.", notes, action="fill", precedent_key=key)
+    if source["water_l"] <= 0:
+        return _verdict("blocked", f"The {source['name']} is empty.", notes, action="fill", precedent_key=key)
+    requested = float(plan["litres"]) if float(plan["litres"]) > 0 else room
+    litres = round(min(requested, room, source["water_l"]), 3)
+    if litres < requested:
+        notes.append(f"Filled {litres} L, not {requested} L: limited by space or the water available.")
+    if container["holder_id"] == "player" and m2.inventory_mass(state) + litres > m2.CARRY_LIMIT_KG:
+        return _verdict("blocked", "That much water would be more than you can carry.", notes, action="fill",
+                        precedent_key=key)
+    return _verdict("success", reason, notes, effort, action="fill", precedent_key=key,
+                    fill={"container_id": container["id"], "source_id": source["id"], "litres": litres},
+                    property=_property(state, [container["id"], source["id"]], "used"))
+
+
+def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
+    plan = judged.get("demonstration")
+    if not plan:
+        return _unresolved(notes, "action 'demonstrate' without a demonstration")
+    ids = _dedupe([plan["object_id"]] + list(plan["used_ids"]))
+    water = [i for i in ids[1:] if "water_source" in state["objects"].get(i, {}).get("capabilities", [])]
+    missing = [i for i in ids if i not in available and i not in water]
+    if missing:
+        return _unresolved(notes, f"can only show things that are at hand: {missing}")
+    far = [state["objects"][i]["name"] for i in water
+           if _distance(state, state["objects"][i]["x"], state["objects"][i]["y"]) > m2.REACH_CELLS]
+    if far:
+        return _verdict("blocked", f"The {far[0]} is too far away.", notes, action="demonstrate", precedent_key=key)
+    shown = available[plan["object_id"]]
+    living = {n["id"] for n in state["npcs"] if n.get("alive", True)}
+    results = [{"text": " ".join(r["text"].split())[:120], "status": r["status"]} for r in plan["capabilities"][:4]
+               if r["text"].strip() and r["status"] in ("observed", "failed")]
+    demonstration = {"object_id": shown["id"], "object_name": shown["name"], "used_ids": ids[1:],
+                     "audience_ids": [i for i in _dedupe(plan["audience_ids"]) if i in living],
+                     "observed": " ".join(plan["observed"].split())[:300] or f"The stranger showed a {shown['name']}.",
+                     "works": bool(plan["works"]), "results": results}
+    not_ours = [i for i in ids if i in water or available[i]["holder_id"] != "player"]
+    return _verdict("success", reason, notes, effort, action="demonstrate", demonstration=demonstration,
+                    precedent_key=key, property=_property(state, not_ours, "used"))
+
+
+def _give(state, judged, available, notes, reason, effort, key) -> dict:
+    plan = judged.get("give")
+    if not plan:
+        return _unresolved(notes, "action 'give' without a give")
+    npc = next((n for n in state["npcs"] if n["id"] == plan["recipient_id"]), None)
+    if npc is None:
+        return _unresolved(notes, f"give recipient is not a person: {plan['recipient_id']}")
+    if not npc.get("alive", True):
+        return _verdict("blocked", f"{npc['name']} is dead.", notes, action="give", precedent_key=key)
+    ids = _dedupe(plan["item_ids"])
+    loose = [i for i in ids if state["objects"].get(i, {}).get("holder_id") != "player"]
+    if not ids or loose:
+        name = state["objects"].get(loose[0], {}).get("name", "that") if loose else "anything"
+        return _verdict("blocked", f"You aren't carrying {'the ' + name if loose else name} to give.",
+                        notes, action="give", precedent_key=key)
+    if _distance(state, npc["x"], npc["y"]) > m2.REACH_CELLS:
+        return _verdict("blocked", f"{npc['name']} is too far away to hand anything to.", notes, action="give",
+                        precedent_key=key)
+    others = [i for i in ids if state["objects"][i]["owner_id"] not in (None, "player", npc["id"])]
+    return _verdict("success", reason, notes, effort, action="give", precedent_key=key,
+                    give={"item_ids": ids, "recipient_id": npc["id"], "recipient_name": npc["name"],
+                          "names": [state["objects"][i]["name"] + (
+                              f" with {state['objects'][i]['water_l']:g} L of water in it"
+                              if state["objects"][i].get("water_l") else "") for i in ids]},
+                    property=_property(state, others, "given away"))
+
+
+def _known_after(obj: dict, results: list[dict], event_id: int) -> list[dict]:
+    """The object's capabilities with what a demonstration showed: matching ones updated, new ones added."""
+    known = [dict(c) for c in obj.get("known_capabilities", [])]
+    for result in results:
+        match = next((c for c in known if c["text"].casefold() == result["text"].casefold()), None)
+        if match is None:
+            if len(known) >= 6:
+                continue
+            match = {"text": result["text"]}
+            known.append(match)
+        match.update(status=result["status"], event_id=event_id)
+    return known
+
+
 def placeholder_category(materials: list[str]) -> str:
     categories = CONTENT["placeholder_categories"]
     return next((categories[m] for m in materials if m in categories), "bundle")
@@ -534,6 +658,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     walk = verdict.get("walk") or []
     px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
     new_objects, consumed, taken, transformed, npc_updates, moved = [], [], [], None, [], []
+    water, known, given, spilled = [], None, None, 0.0
     if verdict["action"] == "make":
         spec = verdict["new_spec"]
         consumed = verdict["consumed_ids"]
@@ -544,6 +669,11 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
         new_objects.append(_object(f"made_{event_id}{suffix}", run_id, spec, px, py, "player",
                                    "player" if fits else None, text, event_id, consumed, verdict["tool_ids"]))
+        # Water in anything built in stays in the new thing if it holds water; otherwise it spills.
+        held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
+        kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
+        new_objects[-1]["water_l"] = kept
+        spilled = round(held - kept, 3)
     elif verdict["action"] == "take":
         taken = verdict["take_ids"]
     elif verdict["action"] == "transform":
@@ -590,9 +720,27 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         if harm["method"] == "thrown" and harm["weapon_id"]:
             x, y = _open_cells_near(state, npc["x"], npc["y"], cleared_obstacles(state), 1)[0]
             moved.append({"id": harm["weapon_id"], "x": x, "y": y})
-    return {"consumed_ids": consumed, "new_objects": new_objects, "taken_ids": taken, "transformed": transformed,
-            "npc_updates": npc_updates, "moved": moved, "walk": walk,
-            "player_to": [px, py] if walk else None}
+    elif verdict["action"] == "fill":
+        fill = verdict["fill"]
+        container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
+        water = [{"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
+                 {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)}]
+    elif verdict["action"] == "demonstrate":
+        shown = verdict["demonstration"]
+        known = {"id": shown["object_id"],
+                 "known_capabilities": _known_after(state["objects"][shown["object_id"]], shown["results"], event_id)}
+    elif verdict["action"] == "give":
+        give = verdict["give"]
+        # A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs.
+        given = {"ids": give["item_ids"], "to": give["recipient_id"],
+                 "owners": {i: give["recipient_id"] if state["objects"][i]["owner_id"] in (None, "player")
+                            else state["objects"][i]["owner_id"] for i in give["item_ids"]}}
+    deltas = {"consumed_ids": consumed, "new_objects": new_objects, "taken_ids": taken, "transformed": transformed,
+              "npc_updates": npc_updates, "moved": moved, "walk": walk,
+              "player_to": [px, py] if walk else None}
+    deltas.update({k: v for k, v in (("water", water), ("capabilities", known), ("given", given),
+                                     ("spilled_l", spilled)) if v})
+    return deltas
 
 
 def _apply_step(state: dict, deltas: dict) -> None:
@@ -603,11 +751,21 @@ def _apply_step(state: dict, deltas: dict) -> None:
     new_objects = deltas.get("new_objects") or ([deltas["new_object"]] if deltas.get("new_object") else [])
     if new_objects:
         for item_id in deltas["consumed_ids"]:
-            state["objects"][item_id]["holder_id"] = f"in:{new_objects[0]['id']}"
+            # Its water went into the new thing (or spilled): see _step_deltas.
+            state["objects"][item_id].update(holder_id=f"in:{new_objects[0]['id']}", water_l=0.0)
         for obj in new_objects:
             state["objects"][obj["id"]] = obj
     for item_id in deltas.get("taken_ids", []):
         state["objects"][item_id]["holder_id"] = "player"
+    for change in deltas.get("water", []):
+        state["objects"][change["id"]]["water_l"] = change["water_l"]
+    if deltas.get("spilled_l"):
+        state["water_spilled_l"] = round(state.get("water_spilled_l", 0.0) + deltas["spilled_l"], 3)
+    if deltas.get("capabilities"):
+        state["objects"][deltas["capabilities"]["id"]]["known_capabilities"] = deltas["capabilities"]["known_capabilities"]
+    given = deltas.get("given")
+    for item_id in (given or {}).get("ids", []):
+        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id])
     transformed = deltas.get("transformed")
     if transformed:
         target = state["objects"][transformed["id"]]
@@ -708,6 +866,9 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
         "take_ids": [i for v in committed for i in v["take_ids"]],
         "transform": next((v["transform"] for v in reversed(committed) if v["transform"]), None),
         "harm": harm, "property": [c for v in committed for c in v["property"]],
+        "fill": next((v["fill"] for v in reversed(committed) if v["fill"]), None),
+        "demonstration": next((v["demonstration"] for v in reversed(committed) if v["demonstration"]), None),
+        "give": next((v["give"] for v in reversed(committed) if v["give"]), None),
         "precedent_key": (judged or {}).get("precedent_key"),
         "steps": [{"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
                   for v in verdicts]}
@@ -726,6 +887,7 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
              "made": crafted or (made_ids[0] if made_ids else None), "crafted": crafted,
              "made_name": draft["objects"][crafted or made_ids[0]]["name"] if made_ids else None,
              "made_ids": made_ids, "taken_ids": summary["take_ids"], "transformed": transformed, "harm": harm,
+             "fill": summary["fill"], "demonstration": summary["demonstration"], "give": summary["give"],
              "walk": [cell for d in deltas for cell in d.get("walk", [])],
              "property": summary["property"], "precedent_key": summary["precedent_key"], "trace_id": trace_id}
     payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}

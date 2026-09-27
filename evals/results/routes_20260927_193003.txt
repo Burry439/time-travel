@@ -1,0 +1,64 @@
+
+=== SPONSOR: HESSA'S WATER ===
+  TRY: pick up the dried gourd
+    [success] You bend down and pick up the dried gourd.
+  YOU → Hessa: Good day! I'm Ash, a traveller. Your yard looks busy. Can I help with anything?
+    [offer:water_haul] “Good day, Ash. Bring me a container full of water from the trough for my kitchen, and I’ll be grateful and put in a good word for you with the captain.”  (Jev 1591 ms, voice 1201 ms)
+  YOU → Hessa: Gladly. I'll bring you water from the trough right away.
+    [answer] “Good, Ash. I’ll hold you to bringing a container of water from the trough for my kitchen.”  (Jev 1196 ms, voice 1232 ms) beliefs {'accepts': 0.98}
+  TRY: fill the gourd with water from the trough and hand it to Hessa
+    [success] You fill the dried gourd from Hessa’s water trough until it holds a litre. You hand the filled gourd to Hessa.
+  YOU → Hessa: There you are: a gourd full of water for your kitchen.
+    [answer] “Well done, Ash. That’s the water for my kitchen, just as I asked. I’ll go speak for you to the captain now.”  (Jev 1215 ms, voice 1283 ms) beliefs {'done': 0.68}
+  YOU → Roderic: Captain, Hessa the innkeeper has spoken for me. I'd like to enter the city to find honest work.
+    [admit] “Hessa has vouched for you, and you’ve done what she asked. Open the gate; let this one enter.”  (Jev 1331 ms, voice 1101 ms) beliefs {'threat': 0.23, 'reason': 0.9}
+  Admitted because: ['Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.']
+  ✓ INSIDE THE CITY
+
+=== BUSINESS: DARIN HIRES YOU ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You gather the hollow reeds, then walk over and pick up the flint shard.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short length from a hollow reed and scrape a notch near one end. The notched tube should whistle when you blow across it.
+  YOU → Darin: Good day, sir. I'm Ash, a traveller with a knack for making useful little things.
+    [offer:trade_goods] “A useful knack may be worth a bargain, Ash. Show me something new I could sell or trade at a profit, and I’ll take you on as a hired hand for trade in the city, under my permit.”  (Jev 1514 ms, voice 1401 ms)
+  YOU → Darin: Agreed. Let me show you.
+    [answer] “Agreed, then. Show me something new I can sell or trade at a profit.”  (Jev 1259 ms, voice 1367 ms) beliefs {'accepts': 0.97}
+  TRY: blow the reed whistle for Darin to show him how loud and clear it is
+    [success] You blow across the reed whistle’s notch, producing a clear whistle tone for Darin.
+  YOU → Darin: There: a whistle anyone could carry, made from a reed. Travellers and herders would buy those.
+    [answer] “A clear tone, and a sound little trade. You’re hired under my trade permit; I’ll go tell the captain.”  (Jev 1210 ms, voice 1122 ms) beliefs {'done': 0.72}
+  YOU → Roderic: Captain, I'm Darin the merchant's hired hand; he's taking me in under his trade permit.
+    [admit] “Darin has hired you under his trade permit. Open the gate; let this one in.”  (Jev 1246 ms, voice 1158 ms) beliefs {'threat': 0.22, 'reason': 0.81}
+  Admitted because: ["Darin has hired the stranger as a hand for trade in the city, under Darin's trade permit."]
+  ✓ INSIDE THE CITY
+
+=== VALUE: A COMPASS FOR THE PATROLS ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You walk over to the flint shard, then pick it up along with the hollow reeds.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short piece from a hollow reed and scrape a notch into it with the flint. The small whistle is rough, but its hollow bore and notched mouthpiece are intact.
+  TRY: blow the reed whistle for Darin to show him what a stranger's knack can make
+    [success] You blow across the notch in the reed whistle, and Darin hears its clear, high note.
+  YOU → Darin: Good day. I'm Ash, a traveller who knows a trick or two with iron. Do you have a stone that pulls iron? I hear it's of no use to you.
+    [ask_back] “A trick with iron, is it? Then tell me, Ash—what are you after, and what makes you think I have such a stone?”  (Jev 1531 ms, voice 1350 ms)
+  YOU → Darin: Lend it to me for an hour and I'll show you how to turn it into a direction-finder you could sell. The idea is yours to trade.
+    [share:lodestone] “I have an odd dark stone that pulls iron to it. Seems a worthless curiosity to me.”  (Jev 1201 ms, voice 1031 ms)
+  YOU → Darin: A direction-finder: stroke an iron needle on your stone, float it on water, and it swings round to point the same way every time. Caravans lost in fog would pay well for one.
+    [lend:lodestone_darin] “A direction-finder, you say. Take the stone and show me how it works.”  (Jev 1243 ms, voice 1361 ms)
+  TRY: pick up the lodestone
+    [success] You walk over to Darin's lodestone, then pick it up.
+  TRY: pick up the bent iron nail and stroke it many times in one direction with the lodestone to magnetise it
+    [success] You step over to the bent iron nail and pick it up. You stroke the bent iron nail repeatedly in one direction with Darin's lodestone. The nail takes on a weak magnetism.
+  TRY: give the lodestone back to Darin
+    [success] You hand the lodestone back to Darin.
+  TRY: pick up the strip of bark
+    [success] You pick up the strip of bark.
+  TRY: float the magnetised nail on the strip of bark in the gate trough and show Captain Roderic that it always swings back to point the same way, even when I turn it
+    [success] You walk over to Roderic, set the magnetized nail on the strip of bark in the trough, and turn it around. It swings back and settles pointing the same way each time.
+  YOU → Roderic: Captain, that needle always points the same way. With one, your patrols could hold their heading on the moor road in fog.
+    [admit] “The nail does settle the same way. Open the gate; let them through.”  (Jev 1766 ms, voice 3058 ms) beliefs {'threat': 0.23, 'reason': 0.57}
+  Admitted because: ['The stranger floated a magnetized nail on a strip of bark in the trough and turned it around. Each time, the nail swung back and settled pointing the same way.']
+  ✓ INSIDE THE CITY
+
+RESULTS: {'sponsor': True, 'business': True, 'value': True} in 86 s

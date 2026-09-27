@@ -16,6 +16,14 @@ var try_input: TextEdit
 var try_selected: Array[String] = []
 var working_label: Label
 var working_clock := 0.0
+var talk_npc := ""
+var talk_input: LineEdit
+var talk_status: Label
+var talk_waiting := false
+var encounter_view: Dictionary = {} # The encounter as last seen (kept to show how it ended).
+var encounter_over := false
+const CAPABILITY_NOTES := {"expected": "", "untested": "  (untested)", "observed": "  (seen working)",
+	"failed": "  (didn't work when tried)"}
 const OUTCOME_TITLES := {
 	"success": "You made something", "failed": "It didn't work", "blocked": "Something is missing",
 	"needs_clarification": "One question", "unsupported": "Beyond this world's rules",
@@ -163,6 +171,11 @@ func build(owner_game: Node2D) -> void:
 	game.victory_panel.add_child(win_box)
 	win_box.add_child(label("Beyond the gate", 30))
 	win_box.add_child(label("You reached the end of this playable area.", 17))
+	game.victory_route = label("", 16)
+	game.victory_route.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	game.victory_route.custom_minimum_size.x = 480
+	game.victory_route.add_theme_color_override("font_color", GOLD)
+	win_box.add_child(game.victory_route)
 	win_box.add_child(button("Return to title", game._back_to_menu))
 	game.victory_panel.hide()
 	chrome.hide()
@@ -176,6 +189,9 @@ func _process(delta: float) -> void:
 	if modal_kind == "working" and is_instance_valid(working_label):
 		working_clock += delta
 		working_label.text = "You set to work" + ".".repeat(1 + int(working_clock * 2.0) % 3)
+	if modal_kind == "encounter" and talk_waiting and is_instance_valid(talk_status):
+		working_clock += delta
+		talk_status.text = "Everyone acts at once" + ".".repeat(1 + int(working_clock * 2.0) % 3)
 
 func notify(text: String) -> void:
 	toast.text = text
@@ -183,6 +199,9 @@ func notify(text: String) -> void:
 
 func close_modal() -> void:
 	if game.request_busy or modal_kind == "death":
+		return
+	if modal_kind == "encounter" and not encounter_over and not _encounter().is_empty():
+		game.encounter_act("leave", "", "") # Closing the panel face to face with someone is walking away.
 		return
 	modal.hide()
 	modal_kind = ""
@@ -265,7 +284,7 @@ func inspect(id: String) -> void:
 		for npc in game.run_state.npcs:
 			if npc.id == obj.owner_id:
 				owner_name = str(npc.name)
-		paragraph(body, "Belongs to: " + owner_name)
+		paragraph(body, "Belongs to: " + owner_name + (" (lent to you)" if obj.get("lent_to") == "player" else ""))
 		if obj.get("created_by") == "player":
 			paragraph(body, provenance(obj))
 			capability_lines(body, obj)
@@ -296,25 +315,257 @@ func inspect(id: String) -> void:
 					"\nCause: " + str(injuries[-1]) if not injuries.is_empty() else ""))
 			elif not injuries.is_empty():
 				paragraph(body, str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
-			if alive:
-				paragraph(body, "You have not spoken yet. (Conversations are still being built.)")
 			var their_mind = npc.get("mind")
+			if alive:
+				var met: bool = typeof(their_mind) == TYPE_DICTIONARY and their_mind.get("met", false)
+				paragraph(body, "You have spoken before." if met else "You have not spoken yet.")
+				body.add_child(button("Talk  [E]", open_talk.bind(str(id))))
 			if game.run_state.get("mode", "") == "developer" and typeof(their_mind) == TYPE_DICTIONARY:
 				var lines := PackedStringArray()
 				for memory in their_mind.get("memories", []):
 					lines.append("• (%s) %s" % [memory.source, memory.summary])
 				var job = their_mind.get("job")
-				paragraph(body, "DEVELOPER: fear %s · anger %s · doing: %s\n%s" % [
+				var view: Dictionary = their_mind.get("regard", {})
+				paragraph(body, "DEVELOPER: fear %s · anger %s · trust %s · suspicion %s · doing: %s\n%s" % [
 					their_mind.get("feelings", {}).get("fear", 0), their_mind.get("feelings", {}).get("anger", 0),
+					view.get("trust", "-"), view.get("suspicion", "-"),
 					str(job.kind) if typeof(job) == TYPE_DICTIONARY else "routine",
 					"\n".join(lines) if not lines.is_empty() else "No memories of the stranger."])
 			return
+
+func npc_record(id: String) -> Dictionary:
+	for npc in game.run_state.get("npcs", []):
+		if npc.id == id:
+			return npc
+	return {}
+
+
+## The encounter panel: face to face with one or more people, in rounds. Everything you and they
+## do in a round happens at the same moment; the log shows it, round by round.
+func open_talk(id: String, prefill := "") -> void:
+	open_encounter(id, prefill)
+
+
+func _encounter() -> Dictionary:
+	var current = game.run_state.get("encounter")
+	return current if typeof(current) == TYPE_DICTIONARY else {}
+
+
+func open_encounter(target := "", prefill := "") -> void:
+	if game.run_state.is_empty() or not game.gameplay_active:
+		return
+	var current := _encounter()
+	if not current.is_empty():
+		encounter_view = current
+		encounter_over = false
+	elif target != "" and not npc_record(target).get("alive", true):
+		inspect(target)
+		return
+	elif target != "":
+		encounter_view = {}
+		encounter_over = false
+	var people: Array = current.get("participants", []) if not current.is_empty() else \
+		(encounter_view.get("participants", []) if encounter_over else [target])
+	if target != "":
+		talk_npc = target
+	elif not talk_npc in people and not people.is_empty():
+		talk_npc = str(current.get("opened_by", people[0])) if current.get("opened_by", "") in people else str(people[0])
+	var first_open := modal_kind != "encounter"
+	talk_waiting = false
+	var names: PackedStringArray = []
+	for id in people:
+		names.append(str(npc_record(str(id)).get("name", "?")))
+	var body := begin_modal(" & ".join(names) if not names.is_empty() else "Nobody", "encounter")
+	if not encounter_over:
+		for child in modal_box.get_child(0).get_children(): # "Walk away" is the way out, not "Close".
+			if child is Button:
+				child.hide()
+	var cast := HFlowContainer.new()
+	cast.add_theme_constant_override("h_separation", 8)
+	body.add_child(cast)
+	for id in people:
+		var npc := npc_record(str(id))
+		var health := float(npc.get("health", 100))
+		var state_word := "dead" if not npc.get("alive", true) else "unhurt" if health >= 100 else \
+			"wounded" if health > 30 else "badly wounded"
+		var chip := button("%s · %s · %s" % [npc.get("name", "?"), str(npc.get("role", "")).to_lower(), state_word],
+			_address.bind(str(id)))
+		chip.toggle_mode = true
+		chip.button_pressed = str(id) == talk_npc
+		chip.add_theme_font_size_override("font_size", 14)
+		chip.custom_minimum_size.y = 32
+		cast.add_child(chip)
+	if game.run_state.get("mode", "") == "developer" and typeof(game.last_trace) == TYPE_DICTIONARY \
+			and game.last_trace.get("kind") == "talk":
+		talk_trace(body, game.last_trace) # Above the log, so the latest lines stay in view.
+	var log: Array = encounter_view.get("log", [])
+	if log.is_empty():
+		var their_mind = npc_record(talk_npc).get("mind") if typeof(npc_record(talk_npc).get("mind")) == TYPE_DICTIONARY else {}
+		for turn in their_mind.get("talk", []): # Earlier conversations with this person.
+			_log_line(body, ("You: " if turn.who == "stranger" else str(npc_record(talk_npc).name) + ": ") + "“" + str(turn.text) + "”",
+				turn.who != "stranger", true)
+		paragraph(body, "%s looks you over. Say something." % npc_record(talk_npc).get("name", ""))
+	var shown_round := -1
+	for entry in log:
+		if int(entry.get("round", 0)) != shown_round:
+			shown_round = int(entry.get("round", 0))
+			var heading := label("ROUND %d" % shown_round, 11)
+			heading.add_theme_color_override("font_color", Color(0.86, 0.77, 0.56, 0.6))
+			body.add_child(heading)
+		_log_line(body, str(entry.text), str(entry.get("who", "")) != "player", false)
+	talk_status = label("", 15)
+	talk_status.add_theme_color_override("font_color", GOLD)
+	talk_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(talk_status)
+	if encounter_over:
+		paragraph(body, "It's over." if game.run_state["player"].get("alive", true) else "")
+		body.add_child(button("Continue", close_modal))
+		_scroll_to_end.call_deferred(body)
+		return
+	talk_input = LineEdit.new()
+	talk_input.placeholder_text = "Say something to %s, or describe what you do…" % npc_record(talk_npc).get("name", "them")
+	talk_input.max_length = 500
+	talk_input.add_theme_font_size_override("font_size", 17)
+	talk_input.custom_minimum_size.y = 40
+	talk_input.text_submitted.connect(func(_text: String) -> void: _submit_talk())
+	body.add_child(talk_input)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	actions.add_child(button("Say it  [Enter]", _submit_talk))
+	actions.add_child(button("Do it", _submit_do))
+	actions.add_child(button("Wait", _submit_simple.bind("wait")))
+	actions.add_child(button("Walk away  [Esc]", close_modal))
+	body.add_child(actions)
+	var hint := label("Do it: an action, like “hand him the plank” or “swing the spear at her”. Everyone acts at the same moment.", 13)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.6))
+	body.add_child(hint)
+	if first_open and current.get("reason", "talk") == "talk":
+		var painted := game.get_node_or_null("NPCs/" + talk_npc + "/PaintedActor")
+		if painted:
+			painted.play_gesture("greet")
+	talk_input.text = prefill
+	talk_input.caret_column = prefill.length()
+	talk_input.grab_focus.call_deferred()
+	_scroll_to_end.call_deferred(body)
+
+
+func _log_line(body: VBoxContainer, text: String, theirs: bool, faded: bool) -> void:
+	var line := label(text, 16)
+	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if theirs:
+		line.add_theme_color_override("font_color", Color("f3d99a"))
+	if faded:
+		line.modulate.a = 0.6
+	body.add_child(line)
+
+
+## The encounter has finished (they left, you walked away, the gate opened): show the last round.
+func encounter_ended() -> void:
+	if modal_kind == "encounter" and not encounter_over:
+		encounter_over = true
+		open_encounter()
+
+
+func _address(id: String) -> void:
+	talk_npc = id
+	open_encounter(id, talk_input.text if is_instance_valid(talk_input) else "")
+
+
+func _scroll_to_end(body: VBoxContainer) -> void:
+	await get_tree().process_frame
+	var scroll := body.get_parent() as ScrollContainer
+	if is_instance_valid(scroll) and modal_kind == "encounter":
+		scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+
+
+func _submit_talk() -> void:
+	var text := talk_input.text.strip_edges()
+	if text.is_empty() or talk_waiting or game.request_busy:
+		return
+	game.encounter_act("say", text, talk_npc)
+
+
+func _submit_do() -> void:
+	var text := talk_input.text.strip_edges()
+	if text.is_empty():
+		talk_status.text = "Describe what you do first."
+		return
+	if not talk_waiting and not game.request_busy:
+		game.encounter_act("do", text, talk_npc)
+
+
+func _submit_simple(kind: String) -> void:
+	if not talk_waiting and not game.request_busy:
+		game.encounter_act(kind, "", talk_npc)
+
+
+func talk_wait(text: String) -> void:
+	talk_waiting = true
+	working_clock = 0.0
+	if is_instance_valid(talk_input):
+		talk_input.editable = false
+		if not text.is_empty():
+			var said := label(text, 16)
+			said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			talk_status.get_parent().add_child(said)
+			talk_status.get_parent().move_child(said, talk_status.get_index())
+
+
+func talk_error(message: String) -> void:
+	talk_waiting = false
+	if modal_kind != "encounter" or not is_instance_valid(talk_status):
+		notify(message)
+		return
+	talk_status.text = message
+	if is_instance_valid(talk_input):
+		talk_input.editable = true
+		talk_input.grab_focus()
+
+
+## Developer view of the last exchange: what Jev chose, how regard moved, what the voice was given.
+func talk_trace(body: VBoxContainer, trace: Dictionary) -> void:
+	var call: Dictionary = trace.get("call", {})
+	var spoken: Dictionary = trace.get("voice", {})
+	var change: Dictionary = trace.get("regard_change", {})
+	var heading := label("DEVELOPER: LAST EXCHANGE", 12)
+	heading.add_theme_color_override("font_color", GOLD)
+	body.add_child(heading)
+	paragraph(body, "Reply: %s (Jev's top choice: %s)\nTrust %+.2f · suspicion %+.2f\nDecider: %s · %d ms · $%s%s\nVoice: %s · %s · %d ms%s" % [
+		str(trace.get("action")), str(trace.get("jev_choice")), float(change.get("trust", 0)), float(change.get("suspicion", 0)),
+		_shown(call.get("provider")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
+		("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else "",
+		_shown(spoken.get("status")), _shown(spoken.get("model")), int(spoken.get("latency_ms", 0)),
+		("\nVoice error: " + str(spoken.error)) if spoken.get("error") != null else ""])
+	reveal(body, "What the decider saw", str(trace.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
+		JSON.stringify({"questions": trace.get("questions", {}), "answers": call.get("answers", {})}, "  "))
+	reveal(body, "What the voice was given", JSON.stringify(trace.get("voice_context", {}), "  "))
+
 
 func open_journal() -> void:
 	if game.run_state.is_empty() or game.request_busy:
 		return
 	var body := begin_modal("Your journal", "journal")
 	paragraph(body, "GET INSIDE THE CITY\nYou arrived from the future with only your knowledge. Explore, notice what is available, and consider what you could do with it.")
+	var told := PackedStringArray()
+	for claim in game.run_state.get("learned", []):
+		told.append("• %s: “%s”" % [claim.name, claim.said])
+	if not told.is_empty():
+		var people := label("PEOPLE: WHAT YOU'VE BEEN TOLD", 12)
+		people.add_theme_color_override("font_color", GOLD)
+		body.add_child(people)
+		paragraph(body, "\n".join(told))
+	var deals := PackedStringArray()
+	for deal in game.run_state.get("agreements", {}).values():
+		if deal.has("issuer"):
+			var status: String = {"proposed": "offered", "accepted": "you agreed", "fulfilled": "done"}.get(str(deal.status), str(deal.status))
+			deals.append("• %s asked you to %s (%s)" % [npc_record(str(deal.issuer)).get("name", "Someone"), deal.task, status])
+	if not deals.is_empty():
+		var heading := label("DEALS", 12)
+		heading.add_theme_color_override("font_color", GOLD)
+		body.add_child(heading)
+		paragraph(body, "\n".join(deals))
 	var history: Array = game.run_state.get("journal", [])
 	if history.is_empty():
 		paragraph(body, "No discoveries recorded yet.")
@@ -407,7 +658,7 @@ func provenance(obj: Dictionary) -> String:
 func capability_lines(body: VBoxContainer, obj: Dictionary) -> void:
 	var lines: PackedStringArray = []
 	for capability in obj.get("known_capabilities", []):
-		lines.append("• " + str(capability.text) + ("" if capability.status == "expected" else "  (untested)"))
+		lines.append("• " + str(capability.text) + str(CAPABILITY_NOTES.get(str(capability.status), "")))
 	if not lines.is_empty():
 		paragraph(body, "What it might do:\n" + "\n".join(lines))
 
@@ -462,6 +713,8 @@ func _chip_note(obj: Dictionary) -> String:
 	if obj.holder_id == "player":
 		return "  (carried)"
 	var owner: String = game.owner_name(obj)
+	if obj.get("lent_to") == "player":
+		return "  (%s's, lent to you)" % owner
 	return "  (%s's)" % owner if not owner.is_empty() and owner != "you" else ""
 
 
@@ -519,6 +772,13 @@ func _result_title(entry: Dictionary) -> String:
 		return str(OUTCOME_TITLES.success)
 	if typeof(entry.get("transformed")) == TYPE_DICTIONARY:
 		return "It's done"
+	var shown = entry.get("demonstration")
+	if typeof(shown) == TYPE_DICTIONARY:
+		return "You showed it" if shown.works else "It didn't work"
+	if typeof(entry.get("give")) == TYPE_DICTIONARY:
+		return "Given"
+	if typeof(entry.get("fill")) == TYPE_DICTIONARY:
+		return "Filled"
 	if not entry.get("taken_ids", []).is_empty():
 		return "Taken"
 	return "Done"
@@ -589,6 +849,21 @@ func show_craft_result(entry: Dictionary, trace) -> void:
 			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + _sentence(str(harm.injury))))
 		if not harm.get("witnesses", []).is_empty():
 			paragraph(body, "Others nearby saw it.")
+	var shown = entry.get("demonstration")
+	if typeof(shown) == TYPE_DICTIONARY:
+		var seen := label("What people saw: " + str(shown.observed), 16)
+		seen.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		seen.add_theme_color_override("font_color", GOLD)
+		body.add_child(seen)
+		if game.run_state.objects.has(shown.object_id):
+			capability_lines(body, game.run_state.objects[shown.object_id])
+	var given = entry.get("give")
+	if typeof(given) == TYPE_DICTIONARY:
+		paragraph(body, "%s now has the %s." % [given.recipient_name, " and the ".join(given.names)])
+	var filled = entry.get("fill")
+	if typeof(filled) == TYPE_DICTIONARY and game.run_state.objects.has(filled.container_id):
+		var container: Dictionary = game.run_state.objects[filled.container_id]
+		paragraph(body, "The %s holds %s of %s litres." % [container.name, container.water_l, container.capacity_l])
 	var made = _crafted(entry)
 	if made != null and game.run_state.objects.has(made):
 		var obj: Dictionary = game.run_state.objects[made]
@@ -731,6 +1006,12 @@ func show_traces(data: Dictionary) -> void:
 			reveal(body, "What %s's decider saw" % str(thought.npc_id).trim_prefix("npc_"),
 				str(thought.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
 				JSON.stringify({"questions": thought.get("questions", {}), "answers": call.get("answers", {})}, "  "))
+			if thought.get("kind") == "talk":
+				var spoken: Dictionary = thought.get("voice", {})
+				paragraph(body, "You: “%s”\nSaid: “%s”\nVoice: %s · %s · %d ms" % [thought.get("text", ""),
+					thought.get("reply", ""), _shown(spoken.get("status")), _shown(spoken.get("model")),
+					int(spoken.get("latency_ms", 0))])
+				reveal(body, "What the voice was given", JSON.stringify(thought.get("voice_context", {}), "  "))
 		body.add_child(HSeparator.new())
 	var sprites: Array = data.get("assets", [])
 	if not sprites.is_empty():
@@ -752,3 +1033,4 @@ func show_traces(data: Dictionary) -> void:
 				int(entry.input_tokens), int(entry.output_tokens), "ok" if entry.ok else "FAILED"])
 		reveal(body, "Model call log", "\n".join(lines))
 	reveal(body, "Judge system prompt (" + str(data.get("judge_prompt_version", "")) + ")", str(data.get("judge_system_prompt", "")))
+	reveal(body, "Voice system prompt", str(data.get("voice_system_prompt", "")))

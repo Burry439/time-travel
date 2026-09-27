@@ -8,9 +8,10 @@ voice - and rates feelings. Everyone deciding at the same moment shares one Jev 
 Flow: a committed player act -> perceive() gives witnesses memories and queues them in
 state["pending_minds"] -> the client's thinking lane calls /think -> batch_request() -> Jev ->
 apply_decision() starts jobs (flee, hide, shout, warn, whistle, report, confront, threaten,
-demand payment, attack, help) -> advance_world() moves people along their jobs each clock beat,
-resolves blows with a seeded roll, and applies calm ambient rules, which can queue more
-thinking (a guard who has just been told, someone who confronted the stranger).
+demand payment, attack, help) -> advance_world() moves people along their jobs each clock beat
+and applies calm ambient rules. Anyone who reaches the stranger to address them (a halt, a
+confrontation, an attack) opens or joins an encounter (encounter.py), where everything happens
+in simultaneous rounds; blows are a seeded roll there, never on the clock.
 """
 from __future__ import annotations
 
@@ -43,12 +44,18 @@ RUN_STEP_MS = 170
 WALK_STEP_MS = 400
 ATTACK_INTERVAL_MS = 2500
 GIVE_UP_CELLS = 28.0
+GATE_ZONE = (38, 58, 17)  # x from, x to, rows up to: the gate approach, where guards stop strangers.
+HALT_EVERY_MS = 180_000  # A stranger who was stopped isn't stopped again for a while.
+HALT_REACH_CELLS = 14.0
 THINK_BATCH = 6  # People who can think in one /think call (one Jev request); the rest wait for the next.
 ACTIVITY_WORDS = {"work": "working", "look": "keeping watch", "patrol": "patrolling", "wait": "waiting",
                   "walk": "walking", "conversation": "talking", "dead": "lying dead"}
 FEAR_LEVELS = ["Not afraid", "Uneasy", "Afraid", "Terrified"]
 ANGER_LEVELS = ["Calm", "Annoyed", "Angry", "Furious"]
 FAMILY_WORDS = ("sister", "brother", "nephew", "aunt")
+EVIDENCE_KINDS = ("demonstration", "vouch", "help", "gift")  # Good things seen or heard about the stranger.
+CRIME_KINDS = ("violence", "theft")
+EVIDENCE_SHIFT = 0.15  # Regard change for one clear piece of evidence (or, doubled, one crime).
 
 
 # --- Small helpers ---------------------------------------------------------------------------
@@ -120,6 +127,45 @@ def is_family(npc: dict, other_id: str | None) -> bool:
     return (other_id or "") in card(npc).get("family", [])
 
 
+def regard(npc: dict) -> dict:
+    """How this person sees the stranger (GDD 7.2): starts from their card, changes only through events."""
+    start = card(npc).get("regard", {"trust": 0.2, "suspicion": 0.5})
+    return mind(npc).setdefault("regard", {"trust": start["trust"], "suspicion": start["suspicion"],
+                                           "goodwill_used": 0.0})
+
+
+def is_evidence(memory: dict) -> bool:
+    """Seen clearly (or told by someone), and it worked: something real in the stranger's favour."""
+    return memory["kind"] in EVIDENCE_KINDS and memory.get("clarity") != "vague" and memory.get("works", True)
+
+
+def _shift_regard(npc: dict, memory: dict) -> None:
+    """Evidence raises trust and eases suspicion; a crime does the opposite. Once per event."""
+    view = regard(npc)
+    credited = view.setdefault("credited", [])
+    if memory.get("event") is not None and memory.get("event") in credited:
+        return
+    if is_evidence(memory):
+        trust, suspicion = EVIDENCE_SHIFT, -EVIDENCE_SHIFT
+    elif memory["kind"] in CRIME_KINDS and memory.get("clarity") != "vague":
+        trust, suspicion = -2 * EVIDENCE_SHIFT, 2 * EVIDENCE_SHIFT
+    else:
+        return
+    if memory.get("event") is not None:
+        credited.append(memory["event"])
+    view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
+    view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
+
+
+def remember(npc: dict, memory: dict) -> None:
+    """Add a memory (evidence and crimes move regard); past the limit, forget the least serious one."""
+    _shift_regard(npc, memory)
+    memories = mind(npc)["memories"]
+    memories.append(memory)
+    while len(memories) > MEMORY_LIMIT:
+        memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
+
+
 def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -> None:
     pending = state.setdefault("pending_minds", [])
     if not any(p["npc_id"] == npc_id and p["kind"] == kind for p in pending):
@@ -130,26 +176,36 @@ def calm(state: dict) -> bool:
     """No one is reacting to the player: a safe point to rewind to."""
     if state.get("pending_minds") or not state["player"].get("alive", True):
         return False
+    if state.get("encounter") and state["encounter"].get("reason") != "talk":
+        return False
     return not any((npc.get("mind") or {}).get("job") and npc["mind"]["job"]["kind"] in
                    ("attack", "report", "flee", "approach") for npc in state["npcs"])
 
 
-def _say(npc: dict, text: str, now: int, state: dict, journal: list[dict], line_id: str | None = None) -> None:
+def _say(npc: dict, text: str, now: int, state: dict, journal: list[dict], line_id: str | None = None,
+         category: str = "heard") -> None:
     mind(npc)["said"] = {"text": text, "at": now, "key": f"{npc['id']}:{now}:{len(journal)}"}
     if line_id:
         mind(npc)["last_line"] = line_id
     if math.dist(_cell(npc), player_cell(state)) <= HEAR_SHOUT_CELLS:
-        journal.append({"kind": "npc", "npc_id": npc["id"], "category": "heard",
+        journal.append({"kind": "npc", "npc_id": npc["id"], "category": category,
                         "reason": f"{npc['name']}: “{text}”"})
 
 
 # --- Perception --------------------------------------------------------------------------------
 
-def _describe(state: dict, entry: dict) -> dict | None:
-    """What an onlooker could see of a committed attempt, clearly and from afar. None if nothing notable."""
+def _describe(state: dict, entry: dict) -> list[dict]:
+    """What onlookers could see of a committed attempt, clearly and from afar: one view per notable thing.
+
+    Violence and theft make people think about what to do; seeing something shown or given is only
+    remembered (it counts as evidence about the stranger when they next talk).
+    """
     names = {n["id"]: n["name"] for n in state["npcs"]}
+    if entry.get("category") not in ("success", "partial_success"):
+        return []
+    views = []
     harm = entry.get("harm")
-    if entry.get("category") in ("success", "partial_success") and isinstance(harm, dict):
+    if isinstance(harm, dict):
         victim = names.get(harm["target_id"], "someone")
         weapon = state["objects"].get(harm.get("weapon_id") or "", {}).get("name")
         how = f" with a {weapon}" if weapon else " with bare hands"
@@ -159,56 +215,79 @@ def _describe(state: dict, entry: dict) -> dict | None:
         short = {"killed": f"killed {victim}", "wounded": f"attacked {victim}",
                  "missed": f"attacked {victim}"}[harm["result"]]
         severity = {"killed": 3, "wounded": 2, "missed": 1}[harm["result"]]
-        return {"kind": "violence", "victim": harm["target_id"],
-                "clear": {"summary": f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}",
-                          "short": short, "severity": severity},
-                "vague": {"summary": (f"There was a scuffle near the stranger and {victim} went down."
-                                      if harm["result"] == "killed" else
-                                      f"There was a scuffle near the stranger; {victim} cried out."),
-                          "short": f"was in a fight with {victim}", "severity": max(1, severity - 1)}}
+        views.append({"kind": "violence", "victim": harm["target_id"],
+                      "clear": {"summary": f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}",
+                                "short": short, "severity": severity},
+                      "vague": {"summary": (f"There was a scuffle near the stranger and {victim} went down."
+                                            if harm["result"] == "killed" else
+                                            f"There was a scuffle near the stranger; {victim} cried out."),
+                                "short": f"was in a fight with {victim}", "severity": max(1, severity - 1)}})
     claims = entry.get("property") or []
-    if entry.get("category") in ("success", "partial_success") and claims:
+    if claims and not isinstance(harm, dict):  # A weapon grabbed for an attack is part of the attack.
         claim = claims[0]
         owner = names.get(claim["owner_id"], "someone")
-        verb = {"taken": "took", "used up": "used up", "used": "used"}.get(claim["how"], f"{claim['how']}")
-        return {"kind": "theft", "victim": claim["owner_id"], "item": claim["name"],
-                "clear": {"summary": f"The stranger {verb} {owner}'s {claim['name']} without asking.",
-                          "short": f"stole {owner}'s {claim['name']}", "severity": 1},
-                "vague": {"summary": f"The stranger was handling {owner}'s things.",
-                          "short": f"was handling {owner}'s things", "severity": 1}}
-    return None
+        verb = {"taken": "took", "used up": "used up", "used": "used", "given away": "gave away"}.get(
+            claim["how"], f"{claim['how']}")
+        views.append({"kind": "theft", "victim": claim["owner_id"], "item": claim["name"],
+                      "clear": {"summary": f"The stranger {verb} {owner}'s {claim['name']} without asking.",
+                                "short": f"stole {owner}'s {claim['name']}", "severity": 1},
+                      "vague": {"summary": f"The stranger was handling {owner}'s things.",
+                                "short": f"was handling {owner}'s things", "severity": 1}})
+    shown = entry.get("demonstration")
+    if isinstance(shown, dict):
+        views.append({"kind": "demonstration", "victim": None, "item": shown["object_name"],
+                      "audience": shown.get("audience_ids", []), "think": False, "works": shown["works"],
+                      "clear": {"summary": shown["observed"], "short": f"showed off a {shown['object_name']}",
+                                "severity": 1},
+                      "vague": {"summary": "The stranger was showing people something; it was hard to see what.",
+                                "short": "was showing something", "severity": 0}})
+    give = entry.get("give")
+    if isinstance(give, dict):
+        things = " and ".join(give["names"])
+        views.append({"kind": "gift", "victim": give["recipient_id"], "item": things, "think": False,
+                      "clear": {"summary": f"The stranger gave {give['recipient_name']} a {things}.",
+                                "short": f"gave {give['recipient_name']} a {things}", "severity": 1},
+                      "vague": {"summary": f"The stranger handed something to {give['recipient_name']}.",
+                                "short": f"handed something to {give['recipient_name']}", "severity": 0}})
+    return views
+
+
+SOURCES = {"violence": "victim", "theft": "victim", "gift": "received"}
 
 
 def perceive(state: dict, entry: dict) -> list[dict]:
-    """Memories for everyone who could see what the player just did (and for the victim).
+    """Memories for everyone who could see what the player just did (and for the people it involved).
 
-    Close witnesses see what happened; those further off only see a scuffle.
+    Close witnesses see what happened; those further off only see something going on.
     """
-    seen = _describe(state, entry)
-    if seen is None:
-        return []
     here = player_cell(state)
-    victim = find(state["npcs"], seen["victim"])
     perceptions = []
-    for npc in state["npcs"]:
-        if not npc.get("alive", True):
-            continue
-        views = []
-        if math.dist(_cell(npc), here) <= SIGHT_CELLS and line_of_sight(_cell(npc), here):
-            views.append(math.dist(_cell(npc), here))
-        if victim is not None and math.dist(_cell(npc), _cell(victim)) <= SIGHT_CELLS \
-                and line_of_sight(_cell(npc), _cell(victim)):
-            views.append(math.dist(_cell(npc), _cell(victim)))
-        is_victim = npc["id"] == seen["victim"]
-        if not (is_victim or views):
-            continue
-        clarity = "clear" if is_victim or min(views) <= CLEAR_VIEW_CELLS else "vague"
-        memory = {"kind": seen["kind"], "victim": seen["victim"], "item": seen.get("item"), **seen[clarity],
-                  "clarity": clarity, "at": state["sim_time_ms"], "event": entry.get("event_id"),
-                  "source": "victim" if is_victim else "witnessed"}
-        if is_victim:  # Victims tell it in the first person: "attacked me", "stole my wood plank".
-            memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
-        perceptions.append({"npc_id": npc["id"], "memory": memory})
+    for seen in _describe(state, entry):
+        victim = find(state["npcs"], seen["victim"] or "")
+        involved = {seen["victim"], *seen.get("audience", [])} - {None}
+        for npc in state["npcs"]:
+            if not npc.get("alive", True):
+                continue
+            views = []
+            if math.dist(_cell(npc), here) <= SIGHT_CELLS and line_of_sight(_cell(npc), here):
+                views.append(math.dist(_cell(npc), here))
+            if victim is not None and math.dist(_cell(npc), _cell(victim)) <= SIGHT_CELLS \
+                    and line_of_sight(_cell(npc), _cell(victim)):
+                views.append(math.dist(_cell(npc), _cell(victim)))
+            close = npc["id"] in involved
+            if not (close or views):
+                continue
+            clarity = "clear" if close or min(views) <= CLEAR_VIEW_CELLS else "vague"
+            source = (SOURCES.get(seen["kind"], "shown") if npc["id"] == seen["victim"] else
+                      "shown" if close else "witnessed")
+            memory = {"kind": seen["kind"], "victim": seen["victim"], "item": seen.get("item"), **seen[clarity],
+                      "clarity": clarity, "at": state["sim_time_ms"], "event": entry.get("event_id"),
+                      "source": source}
+            if "works" in seen:
+                memory["works"] = seen["works"]
+            if npc["id"] == seen["victim"]:  # They tell it in the first person: "attacked me", "stole my plank".
+                memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
+            perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})
     return perceptions
 
 
@@ -217,11 +296,10 @@ def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
         npc = find(state["npcs"], perception["npc_id"])
         if npc is None or not npc.get("alive", True):
             continue
-        memories = mind(npc)["memories"]
-        memories.append(perception["memory"])
-        del memories[:-MEMORY_LIMIT]
-        mind(npc)["rethinks"] = 0
-        add_pending(state, npc["id"], "decide", perception["memory"]["source"])
+        remember(npc, perception["memory"])
+        if perception.get("think", True):
+            mind(npc)["rethinks"] = 0
+            add_pending(state, npc["id"], "decide", perception["memory"]["source"])
 
 
 # --- Options, lines and deciding ---------------------------------------------------------------
@@ -259,15 +337,23 @@ def _lines(state: dict, npc: dict, action: str, slots: dict) -> list[tuple[str, 
     return choices
 
 
+def slots(state: dict, npc: dict) -> dict:
+    """Words the line bank fills in for this person: who was hurt, what was taken, their weapon."""
+    worst = worst_memory(npc)
+    victim = find(state["npcs"], (worst or {}).get("victim") or "")
+    family = _family_word(relation(npc, victim["id"])) if victim else None
+    return {"victim": victim["name"] if victim else "someone", "relation": family or (victim["name"] if victim else "them"),
+            "short": (worst or {}).get("short", "caused trouble"), "item": (worst or {}).get("item") or "things",
+            "owner": victim["name"] if victim else "someone", "weapon": card(npc).get("weapon") or "fists",
+            "guard": "friend"}
+
+
 def _options(state: dict, npc: dict) -> dict[str, dict]:
     """Every option code can carry out for this person right now: action, target, line, description."""
     name, me = npc["name"], card(npc)
     worst = worst_memory(npc)
     victim = find(state["npcs"], (worst or {}).get("victim") or "")
-    family = _family_word(relation(npc, victim["id"])) if victim else None
-    slots = {"victim": victim["name"] if victim else "someone", "relation": family or (victim["name"] if victim else "them"),
-             "short": (worst or {}).get("short", "caused trouble"), "item": (worst or {}).get("item") or "things",
-             "owner": victim["name"] if victim else "someone", "weapon": me.get("weapon") or "fists", "guard": "friend"}
+    slots_ = slots(state, npc)
     bases: list[tuple[str, str, str | None, str | None]] = [  # (key, description, action for lines, target)
         ("carry_on", f"{name} ignores it and carries on with what they were doing.", None, None),
         ("watch", f"{name} stays where they are and keeps a wary eye on the stranger.", None, None),
@@ -288,7 +374,7 @@ def _options(state: dict, npc: dict) -> dict[str, dict]:
                 bases.append(("threaten", f"{name} walks up to the stranger brandishing their {me['weapon']}, "
                                           "warning them off without striking yet.", "threaten", None))
             if worst and worst["kind"] == "theft" and worst.get("victim") == npc["id"]:
-                bases.append(("demand_payment", f"{name} goes to the stranger and demands their {slots['item']} "
+                bases.append(("demand_payment", f"{name} goes to the stranger and demands their {slots_['item']} "
                                                 "back or payment for it.", "demand_payment", None))
         weapon = f" with their {me['weapon']}" if me.get("weapon") else " with bare hands"
         bases.append(("attack", f"{name} attacks the stranger{weapon} ({me.get('combat', 'no fighter')}).", "attack", None))
@@ -307,7 +393,7 @@ def _options(state: dict, npc: dict) -> dict[str, dict]:
     for key, description, line_action, spoken_to in bases:
         action, _, target = key.partition(":")
         record = {"action": action, "target": target or None, "line": None, "line_id": None}
-        choices = _lines(state, npc, line_action, {**slots, "guard": spoken_to or slots["guard"]}) if line_action else []
+        choices = _lines(state, npc, line_action, {**slots_, "guard": spoken_to or slots_["guard"]}) if line_action else []
         if not choices:
             options[key] = {**record, "description": description}
             continue
@@ -340,10 +426,20 @@ def _situation(state: dict, npc: dict) -> str:
         f"What {me['name']} knows, oldest first:"]
     for memory in my_mind["memories"]:
         source = {"witnessed": "saw from nearby" if memory.get("clarity") != "vague" else "saw from a distance",
-                  "victim": "it happened to them"}.get(memory["source"], memory["source"])
+                  "victim": "it happened to them", "received": "it was given to them",
+                  "shown": "was shown it up close"}.get(memory["source"], memory["source"])
+        kind, _, teller = memory["source"].partition(":")
+        if kind in ("told_by", "heard") and find(state["npcs"], teller):
+            name = find(state["npcs"], teller)["name"]
+            source = ("told by " if kind == "told_by" else "heard ") + (relation(npc, teller) or name)
         doubted = " (they doubt this)" if memory.get("doubted") else ""
         who = relation(npc, memory.get("victim"))
         lines.append(f"- ({source}) {memory['summary']}{doubted}" + (f" [{who}]" if who else ""))
+    for deal in sorted((a for a in state.get("agreements", {}).values() if a.get("issuer") == npc["id"]
+                        and a.get("status") in ("proposed", "accepted", "fulfilled")), key=lambda a: a["id"]):
+        status = {"proposed": "offered, not yet agreed", "accepted": "agreed, not yet done",
+                  "fulfilled": "done"}[deal["status"]]
+        lines.append(f"{me['name']}'s deal with the stranger ({status}): the stranger is to {deal['task']}.")
     feelings = my_mind["feelings"]
     lines.append(f"Feelings toward the stranger: fear {feelings['fear']:.1f} of 1, anger {feelings['anger']:.1f} of 1.")
     others = [f"{n['name']} ({relation(npc, n['id']) or card(n)['role']}, "
@@ -371,10 +467,17 @@ def _questions(state: dict, npc: dict, prefix: str = "") -> dict:
     return questions
 
 
+def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str, dict]:
+    """A person's situation and questions: reacting to what they saw, or their next move face to face."""
+    if pending["kind"] == "round":
+        import encounter
+        return encounter.situation(state, npc), encounter.questions(state, npc, prefix)
+    return _situation(state, npc), _questions(state, npc, prefix)
+
+
 def decision_request(state: dict, pending: dict) -> tuple[str, dict]:
     """One person's request (used when a batched answer is missing)."""
-    npc = find(state["npcs"], pending["npc_id"])
-    return _situation(state, npc), _questions(state, npc)
+    return _brief(state, find(state["npcs"], pending["npc_id"]), pending)
 
 
 def batch_request(state: dict, batch: list[dict]) -> tuple[str, dict, dict[str, str]]:
@@ -387,8 +490,9 @@ def batch_request(state: dict, batch: list[dict]) -> tuple[str, dict, dict[str, 
         npc = find(state["npcs"], pending["npc_id"])
         prefix = npc["id"].split("_")[1] + "__"
         prefixes[npc["id"]] = prefix
-        sections.append(f"=== {npc['name'].upper()} (questions starting '{prefix}') ===\n{_situation(state, npc)}")
-        questions.update(_questions(state, npc, prefix))
+        text, asked = _brief(state, npc, pending, prefix)
+        sections.append(f"=== {npc['name'].upper()} (questions starting '{prefix}') ===\n{text}")
+        questions.update(asked)
     text = ("Several people in a small premodern town are each deciding, independently, how to react to a stranger. "
             "Judge each person only from their own section.\n\n" + "\n\n".join(sections))
     return text, questions, prefixes
@@ -409,7 +513,10 @@ def _set_job(npc: dict, job: dict | None, now: int) -> None:
         controller.update(source="routine", activity="look", path=[], next_at_ms=now + 1500, step_carry_ms=0)
     else:
         controller.update(source="job", path=[], step_carry_ms=0,
-                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack") else "look")
+                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack", "vouch")
+                          else "look")
+        if job["kind"] == "encounter":
+            mind(npc)["facing_player"] = True
 
 
 def _away_goal(state: dict, npc: dict, blocked: set, hidden: bool = False) -> list[int]:
@@ -439,7 +546,7 @@ def _raise_alarm(state: dict, npc: dict, line: str, radius: float, now: int, gua
                   "summary": heard + (f" — {npc['name']} says: {worst['summary']}" if worst else "."),
                   "short": worst["short"] if worst else "caused trouble", "item": (worst or {}).get("item"),
                   "victim": worst["victim"] if worst else None, "at": now, "source": f"heard:{npc['id']}"}
-        mind(other)["memories"] = (mind(other)["memories"] + [memory])[-MEMORY_LIMIT:]
+        remember(other, memory)
         mind(other)["rethinks"] = 0
         add_pending(state, other["id"], "decide", f"heard {npc['name']}")
         if card(other).get("guard"):
@@ -561,9 +668,38 @@ def _deliver_report(state: dict, npc: dict, target: dict, now: int, journal: lis
     memory = {**{k: worst.get(k) for k in ("kind", "severity", "short", "victim", "item")}, "event": worst.get("event"),
               "clarity": "told", "summary": f"{npc['name']} told them: {worst['summary']}", "at": now,
               "source": f"told_by:{npc['id']}"}
-    mind(target)["memories"] = (mind(target)["memories"] + [memory])[-MEMORY_LIMIT:]
+    remember(target, memory)
     mind(target)["rethinks"] = 0
     add_pending(state, target["id"], "decide", f"told by {npc['name']}")
+
+
+def _deliver_vouch(state: dict, npc: dict, captain: dict, now: int, journal: list[dict], job: dict) -> None:
+    """Someone speaks for the stranger to the captain: evidence he weighs when the stranger asks to enter."""
+    choices = _lines(state, npc, "vouch", {"why": job["why"]})
+    line_id, text = choices[0] if choices else (None, f"Captain, I'll speak for the stranger: {job['why']}")
+    _say(npc, text, now, state, journal, line_id)
+    remember(captain, {"kind": "vouch", "severity": 1, "by": npc["id"], "victim": None, "item": None,
+                       "event": job.get("event"), "clarity": "told", "source": f"told_by:{npc['id']}", "at": now,
+                       "summary": job["summary"], "short": f"has {npc['name']}'s word"})
+
+
+def _gate_watch(state: dict, npcs: list[dict], now: int) -> None:
+    """No model involved: the nearest free guard walks up to a stranger at the gate who hasn't been admitted."""
+    x, y = player_cell(state)
+    guards = [g for g in npcs if g.get("alive", True) and card(g).get("guard")]
+    if state.get("admitted") or state.get("inside_city") or not state["player"].get("alive", True)             or not (GATE_ZONE[0] <= x <= GATE_ZONE[1] and y <= GATE_ZONE[2]):
+        for guard in guards:  # The stranger left (or may pass): nobody needs stopping.
+            if ((guard.get("mind") or {}).get("job") or {}).get("then") == "halt":
+                _set_job(guard, None, now)
+        return
+    if any((g.get("mind") or {}).get("halted_at", -10**9) > now - HALT_EVERY_MS
+           or ((g.get("mind") or {}).get("job") or {}).get("then") == "halt" for g in guards):
+        return
+    free = [g for g in guards if not (g.get("mind") or {}).get("job")
+            and math.dist(_cell(g), (x, y)) <= HALT_REACH_CELLS]
+    if free:
+        guard = min(free, key=lambda g: math.dist(_cell(g), (x, y)))
+        _set_job(guard, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "halt"}, now)
 
 
 def _maybe_reconsider(state: dict, npc: dict, why: str) -> None:
@@ -599,10 +735,13 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
 
     Returns (npcs, journal lines, player). May queue thinking in state["pending_minds"].
     """
+    import encounter  # People who reach the stranger start or join an encounter (encounter imports minds).
+
     npcs = npc_sim.advance_npcs(state["npcs"], elapsed_ms, now, crafting.m2._GEOMETRY)
     working = copy.copy(state)
     working["npcs"] = npcs
     working["player"] = copy.deepcopy(state["player"])
+    working["encounter"] = copy.deepcopy(state.get("encounter"))
     journal: list[dict] = []
     blocked = crafting._blocked_cells(state)
     end = now + elapsed_ms
@@ -613,6 +752,10 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
         if not job:
             _ambient(working, npc, end, blocked)
             continue
+        if job["kind"] == "encounter":
+            continue  # Face to face with the stranger: acts in rounds, not on the clock.
+        if job.get("wait_until", 0) > end:
+            continue  # e.g. an attacker the stranger just walked away from, a moment before they give chase.
         if job["kind"] == "watch":
             if end >= job["until"]:
                 _set_job(npc, None, end)
@@ -622,7 +765,7 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
         if goal is None or (job["kind"] == "attack" and math.dist(_cell(npc), goal) > GIVE_UP_CELLS):
             _set_job(npc, None, end)
             continue
-        stop = {"flee": 0.0, "report": 1.5, "attack": 1.5}.get(job["kind"], job.get("stop", 1.5))
+        stop = {"flee": 0.0, "report": 1.5, "attack": 1.5, "vouch": 1.5}.get(job["kind"], job.get("stop", 1.5))
         controller = npc.get("controller") or {}
         carry = controller.get("step_carry_ms", 0) + elapsed_ms
         step_ms = RUN_STEP_MS if job.get("speed") == "run" else WALK_STEP_MS
@@ -643,19 +786,34 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
             if target:
                 _deliver_report(working, npc, target, end, journal, job)
             _set_job(npc, {"kind": "watch", "until": end + 15_000}, end)
-        elif job["kind"] == "approach" and job.get("then") in ("confront", "threaten", "demand_payment"):
-            _say(npc, job.get("line") or "What do you think you're doing?!", end, working, journal, job.get("line_id"))
+        elif job["kind"] == "vouch":
+            captain = find(npcs, job["target"])
+            if captain:
+                _deliver_vouch(working, npc, captain, end, journal, job)
             _set_job(npc, {"kind": "watch", "until": end + 15_000}, end)
-            add_pending(working, npc["id"], "decide", f"{job['then'].replace('_', ' ')} the stranger")
+        elif job["kind"] == "approach" and job.get("then") == "halt":
+            choices = _lines(working, npc, "halt", {})
+            line_id, text = choices[0] if choices else (None, "Halt! State your business.")
+            _say(npc, text, end, working, journal, line_id, category="halt")
+            mind(npc)["halted_at"] = end
+            mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
+            encounter.join(working, npc, "halt", text, end)
+        elif job["kind"] == "approach" and job.get("then") in ("confront", "threaten", "demand_payment"):
+            text = job.get("line") or "What do you think you're doing?!"
+            _say(npc, text, end, working, journal, job.get("line_id"), category="address")
+            mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
+            encounter.join(working, npc, job["then"], text, end)
         elif job["kind"] == "approach":
             if job.get("line"):
                 _say(npc, job["line"], end, working, journal, job.get("line_id"))
             _set_job(npc, {"kind": "watch", "until": end + 20_000}, end)
             controller["activity"] = "work"
             _maybe_reconsider(working, npc, "tending the hurt person")
-        elif job["kind"] == "attack" and end >= job.get("next_at", 0):
-            strike(working, npc, end, journal)
-            if job is mind(npc).get("job"):
-                job["next_at"] = end + ATTACK_INTERVAL_MS
+        elif job["kind"] == "attack":
+            encounter.join(working, npc, "attack", None, end)  # Blows happen in the encounter's rounds.
+    if not working.get("encounter"):
+        _gate_watch(working, npcs, end)  # Nobody needs halting while the stranger is already face to face with someone.
+    encounter.prune(working)
     state["pending_minds"] = working.get("pending_minds", state.get("pending_minds", []))
+    state["encounter"] = working.get("encounter")
     return npcs, journal, working["player"]

@@ -42,7 +42,7 @@ def seed_objects(seed_version: int = 3) -> dict[str, dict]:
             materials, description, flags, length_m = MATERIAL_SEED[oid]
             obj.update(materials=materials, description=description, flags=flags, length_m=length_m)
     if seed_version >= 5:
-        objects.update(_seed5_objects())
+        objects.update(_seed5_objects(seed_version))
     return objects
 
 
@@ -61,14 +61,20 @@ def _object_record(oid: str, name: str, x: int, y: int, mass: float, materials: 
     return record
 
 
-def _seed5_objects() -> dict[str, dict]:
-    """Public materials and saplings from data/content, plus every map tree as a fellable object."""
+def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
+    """Materials, people's stock and saplings from data/content, plus every map tree as a fellable object."""
     objects = {}
     for spec in WORLD_CONTENT["objects"]:
-        objects[spec["id"]] = _object_record(
+        if spec.get("since_seed", 5) > seed_version:
+            continue  # Older journeys replay the world they began with.
+        record = _object_record(
             spec["id"], spec["name"], spec["x"], spec["y"], spec["mass_kg"], spec["materials"],
             spec["description"], spec["flags"], spec.get("length_m"), spec.get("capacity_l", 0.0),
             spec.get("feature"))
+        record["owner_id"] = spec.get("owner_id")
+        if spec.get("water_l"):
+            record.update(water_l=spec["water_l"], capabilities=["water_source"])
+        objects[spec["id"]] = record
     kinds = WORLD_CONTENT["trees"]
     for obstacle in _GEOMETRY["obstacles"]:
         if not obstacle["name"].startswith("Tree"):

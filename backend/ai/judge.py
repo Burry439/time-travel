@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v5"
+PROMPT_VERSION = "judge_v6"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -71,8 +71,33 @@ class Harm(BaseModel):
     injury: str
 
 
+class Fill(BaseModel):
+    container_id: str
+    source_id: str
+    litres: float
+
+
+class Result(BaseModel):
+    text: str
+    status: Literal["observed", "failed"]
+
+
+class Demonstration(BaseModel):
+    object_id: str
+    used_ids: list[str]
+    audience_ids: list[str]
+    observed: str  # What an onlooker sees, starting "The stranger".
+    works: bool
+    capabilities: list[Result]
+
+
+class Give(BaseModel):
+    item_ids: list[str]
+    recipient_id: str
+
+
 class Step(BaseModel):
-    action: Literal["make", "take", "transform", "harm", "other"]
+    action: Literal["make", "take", "transform", "harm", "fill", "demonstrate", "give", "other"]
     outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str
     effort_seconds: int
@@ -80,6 +105,9 @@ class Step(BaseModel):
     take_ids: list[str]
     transformation: Transformation | None
     harm: Harm | None
+    fill: Fill | None
+    demonstration: Demonstration | None
+    give: Give | None
 
 
 class JudgeResult(BaseModel):
@@ -159,7 +187,7 @@ def _stub_judgement(context: dict) -> JudgeCall:
     """
     items = [i for i in context["available_items"] if i["portable"]]
     chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
-    empty = {"take_ids": [], "transformation": None, "harm": None}
+    empty = {"take_ids": [], "transformation": None, "harm": None, "fill": None, "demonstration": None, "give": None}
     if not chosen:
         step = Step(action="make", outcome="blocked", reason="You have nothing to work with.",
                     effort_seconds=0, new_object=None, **empty)

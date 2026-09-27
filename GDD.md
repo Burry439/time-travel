@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.0 · 27 September 2026 · Scope: the first playable demo**
+**Version 1.2 · 27 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -106,7 +106,7 @@ The demo is complete when an unbriefed player can do all four of these:
 | One exterior map: south road, inn, craftsmen's row, merchant wagon, city gate (already built) | City interior beyond the entry point |
 | 10 NPCs: 8 core cast plus 2 patrol guards (already painted and animated) | The other 12 NPCs from the v0.8 GDD (parked) |
 | Free-form intentions, conversations, inventions, agreements | Combat systems, pursuit, healing |
-| Try Something beyond making: take, cut/break/fell, and attack (built; D-11–D-13). Theft and harm are recorded with witnesses; NPC reactions come in M4 | Economy simulation, day/night, weather |
+| Try Something beyond making: take, fill, show, give, cut/break/fell, and attack (built; D-11–D-13, D-24). Theft and harm are recorded with witnesses, and people react (D-16) | Economy simulation, day/night, weather |
 | Text input | Voice |
 | Save/load via event history | Save compatibility between prototype versions (see decision D-04) |
 
@@ -194,6 +194,12 @@ These appear in the result card, the journal, and the developer trace.
 
 ### Talking
 
+> **Built (D-22, D-28).** Talking happens in the **encounter panel**, which opens when you press E on someone and on its own when someone addresses you (a halt, a confrontation, a threat, a demand, an attack). It shows who you are facing and a log, round by round.
+>
+> Each round you **Say** something, **Do** something (a Try Something), **Wait**, or **Walk away**. Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28).
+>
+> Jev decides replies from code-built options, and the voice model says them in 1–3 sentences. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
+
 - E on a person opens the **conversation panel**: the NPC's portrait and name, a scrolling exchange, and a text field.
 - Other NPCs nearby are potential listeners. They join only if they decide to, or if the player addresses them by name.
 - Speech is an event. Anything said can be overheard and repeated, with the original speaker attributed.
@@ -256,6 +262,8 @@ Elin watches the road between the gate and the row. Kade patrols the village app
 
 ### 4.3 Why the gate is closed
 
+> **Built (D-26).** Roderic's card carries this rule (`decides`). In conversation Jev answers two beliefs for him: is the stranger a threat, and has he seen or been told of a legitimate reason. He admits when reason ≥ 0.45 and threat < 0.5, unless his chosen reply is hostile. Code never offers admission while he knows of a crime by the stranger he doesn't doubt. Guards stop an unadmitted stranger in the gate approach.
+
 **Status: CURRENT**
 
 The city runs controlled entry. Unknown travellers need **a credible reason**: a known sponsor, legitimate business, a recognised pass, or the captain's direct approval. It's a social rule enforced by people, not a magic lock. Only **Roderic** can admit someone. The guards can stop, question, warn, report, and call the captain.
@@ -273,6 +281,8 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 How the player satisfies these is open. None of it is a required step.
 
 ### 4.4 Open problems in the world
+
+> **Built (D-25).** Tomas, Hessa, Darin and Mara have authored `offers` in `npc_cards.json`: a task, a reward (speak for you to the captain, or, for Darin, hire you under his trade permit) and a completion check. Jev decides whether and when they offer; nothing is marked as a quest.
 
 **Status: CURRENT**
 
@@ -330,7 +340,7 @@ These are declared simulation assumptions, not real-world engineering data. The 
 
 ### 4.7 Object manifest for the demo
 
-> **Built so far (seed 5).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). Add materials by editing that file; `tools/generate_material_art.py` paints them. The table below is still the target for the NPC-owned stock.
+> **Built so far (seed 6).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). **Seed 6 (D-27)** adds people's own stock: Darin's lodestone, linen, cordage and bronze mirror; Mara's iron needles and nails; Hessa's clay bowl and cup; and the public gate trough (60 L). Entries may carry `owner_id`, `since_seed` (older journeys replay unchanged) and `water_l`. Add materials by editing that file; `tools/generate_material_art.py` paints them. The rest of the table below is still the target.
 
 **Status: CURRENT** (`data/content/objects.json`)
 
@@ -563,6 +573,8 @@ The judge receives the relevant precedents and must stay consistent with them. V
 
 ### 6.6 Agreements and NPC help
 
+> **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are Jev yes/no questions asked in the same conversation request, judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. Not built yet: escort, barter, loans with a return deadline, and breach.
+
 The player often needs things they don't own or skills they don't have. **Agreements** are the typed mechanism for help. A promise in dialogue is not an agreement until it's committed.
 
 - **Types:** `task_for_reward`, `loan`, `barter`, `craft_assistance`, `sponsorship`, `escort`
@@ -590,12 +602,21 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Perception** is code: sight 10 cells with line of sight past buildings; the victim always knows.
 > - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
 > - **Decisions:** one batched Jev request per person, run in parallel. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
-> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think; an attacker in reach triggers a strike.
-> - **Strikes** are sampled from Jev's missed/wounded/killed probabilities.
+> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address or attack them opens an encounter (D-28).
+> - **Blows** are a seeded code roll on weapon and skill (D-20), struck only in encounter rounds (D-28).
 > - **Shouts** carry 30 cells, once per event.
 > - **Reconsidering:** shaken people think again at most twice.
 > - **Thinking** runs through the client's one-at-a-time save loop (`/think`), alternating with clock beats so it can never stop time.
 > - **Player** health, death, and `/rewind` to the last calm moment.
+>
+> **Added in M5 (D-22 to D-26):**
+>
+> - **Conversations** (`backend/talk.py`, `backend/ai/voice.py`): see §3 Talking.
+> - **Regard.** Each person's trust and suspicion of the stranger start from their card. Clear evidence (a demonstration that worked, a gift, a vouch) moves them once per event; a crime they clearly saw moves them the other way.
+> - **Seeing something shown or given** is remembered but raises no alarm.
+> - **Deals and vouching.** A vouch is a walk to the captain that leaves him a memory to weigh.
+> - **The guards' halt** at the gate.
+> - **Memories** past the limit forget the least serious one first.
 
 ### 7.1 Three layers of truth
 
@@ -796,7 +817,8 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Interpreter, voice | `gpt-6-luna` | The judge model |
+| Voice (built, D-22) | `gpt-6-luna`, reasoning `low` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v1`; phrases a decided reply only; authored fallback lines when unavailable | A smaller or faster model if latency matters more than variety |
+| Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
 
@@ -995,6 +1017,8 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 
 ### M4: NPC minds
 
+> **Status (27 Sep 2026):** built. Conversations, demonstrations, regard and evidence: see D-16 to D-24 and the M5 retro in §13.
+
 **Goal:** people notice, remember, believe, and respond on their own terms.
 
 **Build:**
@@ -1017,6 +1041,8 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 - **Reactions feel flat:** richer context packets; allow LLM-proposed candidate intentions more often.
 
 ### M5: The gate
+
+> **Status (27 Sep 2026):** built as "Talk, show, get in": deals, lending, vouching, the halt, admission. Three routes have each won live (sponsor, business, value); see the retro in §13. Escort, barter and "all 10 NPCs with offers" remain.
 
 **Goal:** the whole demo is completable in more than one way.
 
@@ -1080,6 +1106,13 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-28 | 2026-09-27 | **Encounters.** Anyone who reaches the stranger to address them (halt, confront, threaten, demand payment, attack), or whom the stranger speaks to, is in an encounter, and time moves in rounds (5 s, or longer for a long action, which costs extra blows).<br><br>**Each round is simultaneous:** each person's intent (listen, attack, shout or whistle, flee, leave) is chosen by Jev from the situation before the stranger acts. It's decided in the thinking lane while the player types, in one request for everyone. The stranger says, does, waits or walks away. Code resolves everything at once in a seeded initiative order: a blow that drops someone first stops their action; otherwise both happen. The person addressed, if listening, replies to what actually happened.<br><br>**Other rules:** no blows on the clock any more. Walking away gives an attacker a swing and a chase. The world can't be walked or clocked past a hostile encounter; a conversation you began you can simply leave. One `round` event per round. `/say` and `/craft` join the current round. | The user found word bubbles odd and wanted a dialogue that opens when NPCs interact, round-based, but with actions at the same time ("I swing a sword while he talks"), not strict turns. |
+| D-27 | 2026-09-27 | Seed 6 adds people's own stock (Darin's lodestone, linen, cordage, bronze mirror; Mara's needles and nails; Hessa's bowl and cup) and the public gate trough. World objects can carry `owner_id`, `since_seed` and `water_l`. Seed-5 journeys replay unchanged. | Routes need things worth asking for; the compass needs a real magnet. |
+| D-26 | 2026-09-27 | The gate. Guards halt an unadmitted stranger in the gate approach (code; at most once every 3 minutes), which opens that guard's conversation. Only Roderic admits. Code withholds admission while he knows of a crime he doesn't doubt. He admits when Jev's two beliefs say reason ≥ 0.45 and threat < 0.5, unless his chosen reply is hostile. Admission opens the gate; walking in wins, and the victory panel lists what weighed with him. | One compound "grounds" belief was noisy (0.2–0.8 for the same situation). Two simple beliefs were stable: pleading gave a reason of 0.02; a vouch 0.9; a hire 0.79; a working compass 0.5–0.62; a vouch plus a crime a threat of 0.88. |
+| D-25 | 2026-09-27 | Deals and lending. Authored `offers` (Tomas, Hessa, Darin, Mara) become `task_for_reward` deals only when Jev offers one. Acceptance and completion are yes/no beliefs judged from what that person saw or was given. The reward, a vouch or a hire, is a walk to Roderic that leaves him a memory to weigh, applied once. People can lend their things; using a lent thing is not theft. | GDD §6.6 without scripted quests. Lending was needed: every route through others' things otherwise counted as theft. Offer wording matters: "will be grateful and put in a good word" made Hessa offer 0.51–0.58 of the time instead of about 0.3. |
+| D-24 | 2026-09-27 | `judge_v6` adds **fill** (water is conserved and moves with containers, including into what is made), **demonstrate** (the judge says what an onlooker sees; the object's capabilities become observed or failed; nearby water sources can be used) and **give** (a gift of your own thing transfers ownership). Seeing something shown or given is remembered, not an alarm. | P3: showing is different from describing. The judge ruled a compass demonstration failed when the lodestone was carried beside it. |
+| D-23 | 2026-09-27 | Regard: trust and suspicion per person, from their card. Clear evidence (a working demonstration, a gift, a vouch) moves them ±0.15 once per event; a crime seen clearly moves them twice as far the other way. Words alone can raise regard by at most 0.14 per person, and each piece of evidence allows 0.3 more. Replies are drawn from what Jev rates ≥ 0.2 likely, seeded per exchange. Nobody asks back twice in a row. | The trust-farming rule (§7.6). Evidence had to move regard: Roderic said "Hessa vouched for you" yet stayed at "trust 0.15, suspicion 0.68". Jev's top choice alone was too predictable: ask back 0.45 beat a deal at 0.36 every time. |
+| D-22 | 2026-09-27 | Conversations: code builds the legal replies (answer, ask back, share a fact they know, refer, lend, offer a deal, vouch, admit, refuse, tell to leave, fetch a guard, end). One Jev request per exchange chooses the reply and rates impression, suspicion, anger and belief, plus deal and admission beliefs when relevant. The voice (Luna, `voice_v1`) phrases that reply, and what else was decided, in 1–3 sentences. It is told what the person knows, and what they keep to themselves (deflect, never deny). Free text never changes state. | The user chose "Jev decides, Luna speaks". Measured: about $0.0002 and 2.5 s per exchange (p95 3.3–3.7 s). Found live and fixed: an assistant-like refusal ("I can't help with that"), a denial of a known fact ("I know nothing of any such stone"), and a line that contradicted a deal just judged done. |
 | D-21 | 2026-09-27 | Individual reactions: what a witness saw depends on distance (clear within 5 cells, a vague scuffle beyond). Relationships and family are in the cards, and family can be told as well as guards. New actions: hide, warn others, whistle (guards), threaten, demand payment. Each option carries 1–2 lines from `data/content/lines.json` in voices that suit the person (protective, frightened, angry, official, shrewd), so Jev chooses the action and the line together. Nobody repeats their last line, and victims speak in the first person. | Playtest: every NPC reacted and spoke alike. |
 | D-20 | 2026-09-27 | Jev only at decision points. One Jev request covers everyone deciding in a `/think`, with per-person requests only as fallback. Blows are a seeded code roll on weapon and skill (no model). Ambient behaviour is code only: wary people face the stranger, and frightened people keep their distance. | The user wants Jev used when needed, not all the time. Measured: 2 requests for 3 decisions in the smithy test. |
 | D-19 | 2026-09-27 | Sync in two lanes. The movement lane carries steps (batched) and the clock; the thinking lane carries `/think`. Staleness is judged against the player's own last action (`player_seq`), so NPC thinking never conflicts with the player. The newest world state wins on the client. Slim patch replies were dropped: profiling showed decoding the full state costs about 1.2 ms. | Profiling (`tools/profile_frame.gd`): frames were always fast (2–4 ms). The "FPS drop" was thinking blocking the save loop: 29 frames of frozen movement and 1.57 s without world updates, now 0 frames and 0.4 s. |
@@ -1274,6 +1307,63 @@ Changes to this document: …
 
 - Fights still escalate fast when a protective relative is armed.
 - Speech is chosen from the line bank; a Luna voice could add variety later.
+
+### Retro: encounters in simultaneous rounds (D-28), 27 Sep 2026
+
+**Built:** `backend/encounter.py`, `/encounter/act`, the `round` event, the encounter panel (Say / Do it / Wait / Walk away, participants, log by round), and auto-opening when someone addresses you.
+
+**Evidence:**
+
+- 88 backend tests pass. The new `test_encounter.py` covers:
+  - arrivals opening encounters;
+  - a blow landing while the victim was listening (and their reply reacting to it);
+  - seeded initiative (a killing blow first prevents the swing);
+  - extra blows during long actions;
+  - walking away (an attacker's swing and chase; a chat simply ends);
+  - someone joining mid-conversation;
+  - a halt over HTTP that replays exactly, with the clock refused until it ends.
+- All Godot smoke tests pass. `smoke_talk.gd` now opens and leaves an encounter, is halted at the gate, and plays a Do round and a Wait round.
+- **Live** (`evals/run_encounter_live.py`):
+  - Shoving Jory brought Mara to threaten the stranger; the panel opened and an apology got "Then go. Leave us be."
+  - At the gate, Bren halted the stranger, asked their business, and pointed them to Roderic.
+  - Rounds took 1.3–4.7 s, without the prefetch the game does while you type.
+
+**To watch:**
+
+- People who are listening but weren't addressed stay silent in the log.
+- A fight is only as simultaneous as its intents: an attacker commits before seeing you apologise, which is the point, but it can feel harsh.
+
+### Retro: M5 "Talk, show, get in", 27 Sep 2026
+
+**Built:** conversations, showing/filling/giving, regard and evidence, deals and lending, the guards' halt and Roderic's admission (D-22 to D-27).
+
+**Evidence:**
+
+- 79 backend tests pass. They include one `talk` event per exchange that replays exactly, voice knowledge boundaries, capped goodwill, overhearing, fetching a guard, water conservation, demonstrations updating capabilities and witnesses, gifts, the deal lifecycle (rewarded once), vouch delivery, the halt, admission rules, and an HTTP route from the first step to inside the city.
+- All Godot smoke tests pass. The new `tools/smoke_talk.gd` covers: E opens the Talk panel, the thinking indicator, the exchange, the bubble, the journal, a guard halting at the gate, and the victory text.
+- **Talk evals** (`evals/run_talk_evals.py`, live Jev + Luna): 19/20 over 2 runs of 10 cases. Pleading, injection, grand claims and crimes never got admission. The one miss: Tomas stays wary of a stranger offering help (in character).
+- **Talk costs:** $0.0002 per exchange; median Jev 1.24 s, voice 1.2 s; p95 3.7 s total; no voice fallbacks.
+- **Live routes** (`evals/run_routes_live.py`, real judge + Jev + Luna): all three got inside the city in one run (86 s).
+
+| Route | How it went |
+| --- | --- |
+| Sponsor | Hessa offered the water deal, lent her bucket unasked, judged the gourd of water as done, walked over and vouched. Roderic admitted (reason 0.9, threat 0.21). |
+| Business | Darin offered "show me something I can sell". A reed whistle he heard counted as done, and he hired the stranger under his permit. Roderic admitted (0.79 / 0.24). |
+| Value | Darin would not lend his lodestone on words alone, but did after hearing the whistle. The nail was magnetised, the lodestone returned, and the nail floated on bark in the gate trough in front of Roderic. Admitted: "The demonstration is plain enough." |
+
+**Lessons:**
+
+- Jev under-selects rare, important acts in a long choice list. Typed yes/no beliefs plus an authored rule (admission, deal completion) are more reliable than hoping the act wins the choice.
+- The voice must be told everything decided in the exchange, and what the person privately knows, or it contradicts the game.
+- NPCs are properly sceptical: words alone rarely move them; showing does. Players who act beat players who talk.
+
+**To watch:**
+
+- Everyone opens with "Who are you, and what do you want?" Realistic, but samey.
+- Tomas rarely offers his deal to someone he doesn't know.
+- A vouch or a demonstration is a memory, not a world change: the beam isn't tracked as raised.
+- Escort, barter and loans with deadlines are not built.
+- NPCs can't give things (only lend what lies in the world).
 
 ---
 

@@ -52,6 +52,17 @@
       "frightened": ["{victim}! Oh gods, are you all right?", "Easy, {victim}, I've got you."],
       "protective": ["I'm here, {victim}. Lie still.", "Look at me, {victim}. You'll be all right."],
       "official": ["Stay down, {victim}. I've got this.", "Where are you hurt, {victim}?"]
+    },
+    "halt": {
+      "official": ["Halt! State your business at the gate.", "Stop there, stranger. What brings you to the gate?"],
+      "angry": ["You there! Stop right where you are. What do you want?", "Not one step further. Who are you?"]
+    },
+    "vouch": {
+      "official": ["Captain. I'll speak for this stranger: {why}", "Captain, a word for the stranger: {why}"],
+      "protective": ["Captain, I'll vouch for this one: {why}", "Roderic, hear me out. {why}"],
+      "angry": ["Captain. For what it's worth, I'll speak for the stranger: {why}"],
+      "frightened": ["Captain, sir, I can speak for the stranger: {why}"],
+      "shrewd": ["Captain, a matter of business: {why}", "Roderic, you'll want to hear this. {why}"]
     }
   }
 }

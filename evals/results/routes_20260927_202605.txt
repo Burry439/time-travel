@@ -1,0 +1,55 @@
+
+=== SPONSOR: HESSA'S WATER ===
+  TRY: pick up the dried gourd
+    [success] You pick up the dried gourd from within arm’s reach.
+  YOU → Hessa: Good day! I'm Ash, a traveller. Your yard looks busy. Can I help with anything?
+    [ask_back] “Good day, Ash. What brings you to town, and what did you have in mind by offering to help?”  (Jev 1676 ms, voice 1321 ms)
+  YOU → Hessa: I'm happy to work for my keep. Is there any job I could do for you?
+    [offer:water_haul] “If you bring a container full of water from the trough for my kitchen, I’ll be grateful—and put in a good word for you with the captain.”  (Jev 2246 ms, voice 1755 ms)
+  YOU → Hessa: Gladly. I'll bring you water from the trough right away.
+    [answer] “Glad to hear it, Ash. Bring the water from the trough to my kitchen, then.”  (Jev 2237 ms, voice 1246 ms) beliefs {'accepts': 0.97}
+  TRY: fill the gourd with water from the trough and hand it to Hessa
+    [success] You fill the dried gourd from Hessa’s trough, holding a litre of water. You hand the filled gourd to Hessa.
+  YOU → Hessa: There you are: a gourd full of water for your kitchen.
+    [answer] “Thank you, Ash; that’s what I asked for. I’ll go speak for you to the captain now.”  (Jev 2679 ms, voice 1106 ms) beliefs {'done': 0.76}
+  YOU → Roderic: Captain, Hessa the innkeeper has spoken for me. I'd like to enter the city to find honest work.
+    [admit] “Hessa has vouched for you, and you have done as she asked. Open the gate; let this one through.”  (Jev 1235 ms, voice 1287 ms) beliefs {'threat': 0.21, 'reason': 0.91}
+  Admitted because: ['Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.']
+  ✓ INSIDE THE CITY
+
+=== BUSINESS: DARIN HIRES YOU ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You walk over to the flint shard, then pick it up along with the hollow reeds.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You use the flint edge to cut a short piece from one hollow reed, then carefully scrape a notch near one end. The reed is light and hollow, though getting a clean whistle from the notch is uncertain.
+  YOU → Darin: Good day, sir. I'm Ash, a traveller with a knack for making useful little things.
+    [offer:trade_goods] “A useful knack may be worth a bargain, Ash. Show me something new I could sell or trade at a profit, and I’ll take you on as a hired hand for trade in the city under my permit.”  (Jev 2371 ms, voice 1532 ms)
+  YOU → Darin: Agreed. Let me show you.
+    [answer] “Agreed, then. Show me something worth selling, and we’ll see what profit it holds.”  (Jev 1228 ms, voice 1312 ms) beliefs {'accepts': 0.97}
+  TRY: blow the reed whistle for Darin to show him how loud and clear it is
+    [success] You blow across the notch, and the reed gives a clear, high whistle for Darin to hear.
+  YOU → Darin: There: a whistle anyone could carry, made from a reed. Travellers and herders would buy those.
+    [answer] “A reed whistle—plain, portable, and likely to sell to travellers and herders. You’ve shown me something worth trading; you’re hired under my permit. I’ll go tell the captain.”  (Jev 2241 ms, voice 1624 ms) beliefs {'done': 0.74}
+  YOU → Roderic: Captain, I'm Darin the merchant's hired hand; he's taking me in under his trade permit.
+    [admit] “Darin’s trade permit is in order. Open the gate and admit him.”  (Jev 1197 ms, voice 1184 ms) beliefs {'threat': 0.24, 'reason': 0.78}
+  Admitted because: ["Darin has hired the stranger as a hand for trade in the city, under Darin's trade permit."]
+  ✓ INSIDE THE CITY
+
+=== VALUE: A COMPASS FOR THE PATROLS ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You gather up the hollow reeds from beside you. You walk over to the flint shard and pick it up.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short piece from a hollow reed and scrape a notch into its side with the flint. The result is a simple edge-blown whistle.
+  TRY: blow the reed whistle for Darin to show him what a stranger's knack can make
+    [success] You blow across the notch in the reed whistle, producing a clear, whistle-like tone for Darin.
+  YOU → Darin: Good day. I'm Ash, a traveller who knows a trick or two with iron. Do you have a stone that pulls iron? I hear it's of no use to you.
+    [ask_back] “A stone that pulls iron, is it? Who are you, and what do you want with such a thing?”  (Jev 1619 ms, voice 1417 ms)
+  YOU → Darin: Lend it to me for an hour and I'll show you how to turn it into a direction-finder you could sell. The idea is yours to trade.
+    [answer] “A direction-finder, you say? You offer a fine return on a stone you claim is of no use to me.”  (Jev 1181 ms, voice 1332 ms)
+  YOU → Darin: A direction-finder: stroke an iron needle on your stone, float it on water, and it swings round to point the same way every time. Caravans lost in fog would pay well for one.
+    [offer:trade_goods] “Show me something new I can sell or trade at a profit, and I’ll take you on as a hired hand for trade in the city.”  (Jev 1192 ms, voice 3172 ms)
+  YOU → Darin: I'll make it right here in front of you, and you keep the stone and the idea. You lose nothing.
+    [answer] “Good. Then we have a bargain: show me something new I can sell or trade at a profit.”  (Jev 1198 ms, voice 1060 ms) beliefs {'accepts': 0.9}
+  ✗ Darin would not lend the lodestone.
+
+RESULTS: {'sponsor': True, 'business': True, 'value': False} in 89 s
