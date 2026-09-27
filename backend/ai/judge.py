@@ -1,4 +1,4 @@
-"""Physics judge role: turns a crafting intention plus world context into a proposal.
+"""Physics judge role: turns a Try Something intention plus world context into a proposal.
 
 The proposal is never authoritative; crafting.validate decides what it may change.
 Every call returns a JudgeCall with the raw model output for the developer trace.
@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v1"
+PROMPT_VERSION = "judge_v3"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -45,13 +45,42 @@ class NewObject(BaseModel):
     capabilities: list[Capability]
 
 
+class Piece(BaseModel):
+    name: str
+    description: str
+    materials: list[str]
+    count: int
+    mass_kg: float  # each
+    length_m: float | None
+    flags: list[Flag]
+    capabilities: list[Capability]
+
+
+class Transformation(BaseModel):
+    target_id: str
+    tools_used: list[str]
+    result_state: Literal["felled", "cut_up", "broken", "destroyed"]
+    pieces: list[Piece]
+
+
+class Harm(BaseModel):
+    target_id: str
+    weapon_id: str | None
+    result: Literal["missed", "wounded", "killed"]
+    injury: str
+
+
 class JudgeResult(BaseModel):
+    action: Literal["make", "take", "transform", "harm", "other"]
     outcome: Literal["success", "failed", "blocked", "needs_clarification", "unsupported"]
     reason: str
     effort_seconds: int
     clarifying_question: str | None
     precedent_key: str
     new_object: NewObject | None
+    take_ids: list[str]
+    transformation: Transformation | None
+    harm: Harm | None
 
 
 @dataclass
@@ -121,17 +150,19 @@ def judge_craft(context: dict) -> JudgeCall:
 def _stub_judgement(context: dict) -> JudgeCall:
     """AI_MODE=stub: a deterministic answer for testing the pipeline without a model.
 
-    Bundles the highlighted items (or the first usable one) into a new object.
+    Bundles the highlighted portable items (or the first one) into a new object.
     """
-    items = [i for i in context["available_items"] if i["consumable"]]
-    chosen = [i for i in items if i["id"] in context["highlighted_item_ids"]] or items[:1]
+    items = [i for i in context["available_items"] if i["portable"]]
+    chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
+    empty = {"take_ids": [], "transformation": None, "harm": None}
     if not chosen:
-        result = JudgeResult(outcome="blocked", reason="You have nothing to work with.", effort_seconds=0,
-                             clarifying_question=None, precedent_key="stub:none", new_object=None)
+        result = JudgeResult(action="make", outcome="blocked", reason="You have nothing to work with.",
+                             effort_seconds=0, clarifying_question=None, precedent_key="stub:none",
+                             new_object=None, **empty)
     else:
         result = JudgeResult(
-            outcome="success", reason="(Stub judge) You bind the pieces into one bundle.", effort_seconds=10,
-            clarifying_question=None, precedent_key="stub:bundle",
+            action="make", outcome="success", reason="(Stub judge) You bind the pieces into one bundle.",
+            effort_seconds=10, clarifying_question=None, precedent_key="stub:bundle", **empty,
             new_object=NewObject(
                 name="stub bundle", description="A test bundle of " + ", ".join(i["name"] for i in chosen) + ".",
                 materials=sorted({m for i in chosen for m in i["materials"]}), consumes=[i["id"] for i in chosen],

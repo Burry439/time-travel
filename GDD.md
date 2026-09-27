@@ -105,8 +105,8 @@ The demo is complete when an unbriefed player can do all four of these:
 | --- | --- |
 | One exterior map: south road, inn, craftsmen's row, merchant wagon, city gate (already built) | City interior beyond the entry point |
 | 10 NPCs: 8 core cast plus 2 patrol guards (already painted and animated) | The other 12 NPCs from the v0.8 GDD (parked) |
-| Free-form intentions, conversations, inventions, agreements | Combat, injury, death (parked; attempts return *unsupported*) |
-| Theft as an attempt with witnesses and consequences (from M4) | Economy simulation, day/night, weather |
+| Free-form intentions, conversations, inventions, agreements | Combat systems, pursuit, healing |
+| Try Something beyond making: take, cut/break/fell, and attack (built; D-11–D-13). Theft and harm are recorded with witnesses; NPC reactions come in M4 | Economy simulation, day/night, weather |
 | Text input | Voice |
 | Save/load via event history | Save compatibility between prototype versions (see decision D-04) |
 
@@ -329,6 +329,8 @@ These are declared simulation assumptions, not real-world engineering data. The 
   | Long work (split into interruptible 10 s segments) | Declared total |
 
 ### 4.7 Object manifest for the demo
+
+> **Built so far (seed 5).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). Add materials by editing that file; `tools/generate_material_art.py` paints them. The table below is still the target for the NPC-owned stock.
 
 **Status: CURRENT** (`data/content/objects.json`)
 
@@ -780,7 +782,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 
 | Role | Current setting | Alternative to benchmark |
 | --- | --- | --- |
-| Physics judge (crafting, built) | `gpt-6-sol`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`) | `gpt-6-luna` (about 20× cheaper) |
+| Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
 | Interpreter, voice | `gpt-6-luna` | The judge model |
 | Decider (M4) | Jev (TypeSafe), still to verify | General LLM with a forced-choice schema |
@@ -1066,6 +1068,10 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-14 | 2026-09-27 | The default judge is `gpt-6-luna`. | Requested by the user; it passed 19/19 live eval cases with p50 2.7 s at roughly 1/15 of Sol's cost. Switch back via `MODEL_JUDGE` if evals regress. |
+| D-13 | 2026-09-27 | Map trees become world objects (seed 5). Felling one hides its art, removes its collision, and leaves judge-described pieces that are portable when they weigh 20 kg or less. | The user asked for trees that fall and turn into things to pick up. |
+| D-12 | 2026-09-27 | Attacks are allowed now. The judge proposes missed, wounded or killed; code checks reach, weapon and target. Death is permanent: a fall animation, the body stays, the routine stops. Witnesses are recorded; reactions come in M4. | The user asked for attacks and death animations. Unparks part of §14. |
+| D-11 | 2026-09-27 | Other people's property is offered to the judge and can be used, taken or damaged. Every such use is recorded as a property claim (owner, how) in the event for M4 reactions. | The user wants owned items to be usable, with the owner reacting later. Replaces the rule that it couldn't be consumed. |
 | D-10 | 2026-09-27 | An explicit `AI_MODE=stub` exercises the whole pipeline without a model, and every judge call stores a developer trace: context, raw output, validator notes, tokens, and latency. | Debug model behaviour from inside the game; test the Godot flow without spending money. |
 | D-09 | 2026-09-27 | Generated sprites live **outside** the event log, in an `assets` table plus `data/assets/`. The object gets its `sprite_asset_id` when it is created; painting runs afterwards. | An image isn't physics. This avoids stale-version conflicts from a background writer, and replay never calls models. |
 | D-08 | 2026-09-27 | Build a crafting slice of M2 + M3 before M0/M1. | Test the riskiest idea (AI-judged invention) first, as the user requested. |
@@ -1133,6 +1139,38 @@ Changes to this document: …
 
 **Changes to this document:** §4.7, §8.6, §9.3, §9.4, the §11 order note, D-08 to D-10.
 
+### Retro: Try Something beyond making, 27 Sep 2026
+
+**Built:**
+
+- Judge prompt `judge_v3`, with actions make, take, transform, harm and other.
+- Validator rules for each action: reach, portability, 20 kg limit, mass-capped pieces, target/weapon checks.
+- Other people's property is usable and recorded (D-11).
+- Attacks with permanent death and recorded witnesses (D-12).
+- Trees as world objects (D-13): 19 map trees and 3 saplings, fall animation, collision removed, pieces placed on open cells.
+- 18 more public materials across the map (`data/content/world_objects.json`), all painted.
+- NPC hurt and death animations, and the dead pose restored on reload.
+- Result cards per action. Felling and attacks play out on screen before the card appears.
+- Luna is the default judge (D-14).
+
+**Evidence:**
+
+- 31 backend tests pass.
+- All Godot smoke tests pass.
+- Evals: 19/19 on judge_v2 and 56/57 over 3 runs. The one miss: an unlit torch was once judged "not a torch", which is defensible but inconsistent. 19/19 on judge_v3.
+- **Luna:** p50 about 2.7 s, p95 about 4.5–7 s, about $0.0005 per attempt.
+- **Live in-game chain:** take flint + vine → fell birch sapling (trunk, branches, stump) → make a *crude spear* from the felled trunk → attack Hessa (wounded). The full chain worked.
+
+**Assumptions:**
+
+- **A2:** holding up, with one borderline inconsistency. That's the precedent log's job, so watch for it.
+- **A5 and A6:** comfortably within target with Luna.
+
+**To watch:**
+
+- The trunk became an 8.7 kg spear: plausible, but heavy.
+- NPCs don't react yet, so theft and attacks have no consequences until M4.
+
 ---
 
 ## 14. Parked ideas
@@ -1140,7 +1178,7 @@ Changes to this document: …
 **Status: PARKED**
 
 - The other 12 NPCs from v0.8 (woodcutter, farmers, healer, potter, courier, stable, and others) and their zones.
-- Violence, injury, death, and pursuit.
+- Pursuit, injury recovery and healing, NPC combat behaviour. (Attempts to attack are built: D-12.)
 - Wall climbing and other physical entry routes, which currently return `unsupported`.
 - A kiln, a stream, and a woodlot as material sources.
 - Learned procedures: shortcuts for repeated successful actions.

@@ -39,6 +39,7 @@ var stride_phase := 0.0
 var pose_clock := 0.0
 var gesture_time := 0.0
 var gesture_kind := ""
+var dead := false
 
 const BOUNDS := {
 	"traveler": [Rect2i(222, 49, 258, 573), Rect2i(831, 58, 151, 562),
@@ -148,7 +149,7 @@ func _build() -> void:
 
 
 func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
-	if views.is_empty():
+	if views.is_empty() or dead:
 		return
 	facing = clampi(row, 0, views.size() - 1)
 	locomotion = mode
@@ -212,5 +213,47 @@ func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
 func play_gesture(kind: String) -> void:
 	gesture_kind = kind
 	gesture_time = 0.48
+
+
+## A struck recoil: a red flash and a short shove away from the blow.
+func hurt(from_direction := 1.0) -> void:
+	if dead:
+		return
+	var tween := create_tween()
+	tween.tween_property(self, "modulate", Color(1.0, 0.45, 0.4), 0.06)
+	tween.parallel().tween_property(self, "position:x", position.x + 6.0 * from_direction, 0.06)
+	tween.tween_property(self, "modulate", Color.WHITE, 0.35)
+	tween.parallel().tween_property(self, "position:x", position.x, 0.25)
+
+
+## Collapse sideways around the feet and stay down.
+func die(fall_direction := 1.0) -> void:
+	if dead:
+		return
+	dead = true
+	_hold_still()
+	var tween := create_tween()
+	tween.tween_property(self, "modulate", Color(1.0, 0.5, 0.45), 0.08)
+	tween.tween_property(self, "rotation", fall_direction * 0.35, 0.18).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "rotation", fall_direction * PI * 0.47, 0.42) \
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(self, "modulate", Color(0.62, 0.6, 0.58), 0.6)
+
+
+## Restore a body that died earlier in the journey without replaying the fall.
+func lie_dead(fall_direction := 1.0) -> void:
+	dead = true
+	_hold_still()
+	rotation = fall_direction * PI * 0.47
+	modulate = Color(0.62, 0.6, 0.58)
+
+
+func _hold_still() -> void:
+	if joints.is_empty():
+		return
+	for part_name in joints[facing]:
+		var pivot: Node2D = joints[facing][part_name]
+		pivot.rotation = 0.0
+		pivot.position = rest_positions[facing][part_name]
 
 

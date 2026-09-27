@@ -35,7 +35,20 @@
     "lodestone": "A natural magnet; attracts iron and can magnetise small iron pieces.",
     "water": "Liquid; needs a container; light objects float on it.",
     "cloth": "Flexible, cuttable, can wrap or filter.",
-    "fire": "There is NO fire, ember or heat source available to the player on the road. Nothing can be lit, cooked, hardened in fire or melted unless a burning or heat-source item is listed."
+    "fire": "There is NO fire, ember or heat source available to the player on the road. Nothing can be lit, cooked, hardened in fire or melted unless a burning or heat-source item is listed.",
+    "feather": "Very light, stiff along the quill; can fletch an arrow or dart when bound on.",
+    "wool": "Soft raw fibre; can be twisted by hand into weak yarn; burns and smoulders.",
+    "bone": "Hard and rigid; can be scraped or broken to a sharp point or edge with a harder stone.",
+    "gourd": "A dried gourd shell is light, hard and watertight; can be cut open with a sharp edge.",
+    "fired clay": "Hard and brittle; broken edges are sharp enough to scrape or cut soft things.",
+    "straw": "Light, hollow stalks; bundles, weaves or twists into weak cord; very combustible.",
+    "leather": "Tough and flexible; can be cut into strips with a sharp edge and used as lashing.",
+    "charcoal": "Light and brittle; leaves black marks; burns hot once lit.",
+    "chalk": "Soft white rock; leaves pale marks; crumbles under force.",
+    "bramble": "Flexible, thorny stem; the thorns hook onto cloth and skin.",
+    "leaf": "Broad, soft and flexible; can wrap small things; tears easily.",
+    "living trees": "Felling needs a cutting tool held firmly (a hafted or hand-held blade or axe); bare hands and loose stones cannot fell a tree. A sharp flint can cut through a wrist-thick sapling in a few minutes. A large tree takes an ordinary adult with stone tools many hours, and a crude flint tool may break first. A felled tree becomes a trunk (too heavy to carry if large), branches and a stump.",
+    "people": "Ordinary unarmoured adults. Unarmed blows rarely do more than bruise. A sharp point or blade driven hard at close range can wound badly or kill; a clumsy or weak weapon may glance off. Guards are armed and alert; working craftspeople are not expecting an attack."
   },
   "flag_meanings": {
     "rigid": "holds its shape under load",
@@ -72,6 +85,18 @@
     "plant fiber": "fiber",
     "dry grass": "fiber",
     "cloth": "fiber",
-    "pine resin": "stone"
+    "pine resin": "stone",
+    "feather": "fiber",
+    "wool": "fiber",
+    "bone": "stone",
+    "gourd": "wood",
+    "fired clay": "stone",
+    "clay": "stone",
+    "straw": "fiber",
+    "leather": "fiber",
+    "charcoal": "stone",
+    "chalk": "stone",
+    "bramble": "fiber",
+    "leaf": "fiber"
   }
 }

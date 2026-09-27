@@ -85,7 +85,7 @@ def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int, geometry: dict)
     arrival_time = now_ms + elapsed_ms
     for npc in updated:
         controller = npc.get("controller")
-        if controller is None:
+        if controller is None or not npc.get("alive", True):
             continue
         if controller["activity"] != "walk":
             if arrival_time >= controller["next_at_ms"] and controller["source"] == "routine":

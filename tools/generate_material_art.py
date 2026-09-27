@@ -18,22 +18,31 @@ from ai import config, illustrator  # noqa: E402
 OUT = ROOT / "assets" / "generated" / "materials"
 
 
+def paintable() -> dict[str, dict]:
+    """Every seeded public object without scene art: seed-4 road items and data/content/world_objects.json."""
+    records = {}
+    for object_id, (name, *_rest) in m2.NEW_PUBLIC_MATERIALS.items():
+        materials, description, _, _ = m2.MATERIAL_SEED[object_id]
+        records[object_id] = {"name": name, "description": description, "materials": materials}
+    for spec in m2.WORLD_CONTENT["objects"]:
+        records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
+    return records
+
+
 def main(argv: list[str]) -> int:
     force = "--force" in argv
-    wanted = [a for a in argv if not a.startswith("--")] or list(m2.NEW_PUBLIC_MATERIALS)
+    records = paintable()
+    wanted = [a for a in argv if not a.startswith("--")] or list(records)
     if config.mode() != "live":
         print(f"AI mode is '{config.mode()}'. Add OPENAI_API_KEY to backend/.env (and don't set AI_MODE=stub).")
         return 1
     failures = 0
     for object_id in wanted:
-        name = m2.NEW_PUBLIC_MATERIALS[object_id][0]
-        materials, description, _, _ = m2.MATERIAL_SEED[object_id]
         destination = OUT / f"{object_id}.png"
         if destination.exists() and not force:
             print(f"skip   {object_id}: already painted (use --force to repaint)")
             continue
-        call = illustrator.generate_sprite({"name": name, "description": description, "materials": materials},
-                                           destination)
+        call = illustrator.generate_sprite(records[object_id], destination)
         failures += call.status != "ready"
         print(f"{call.status:6} {object_id}: {call.model} {call.latency_ms} ms {call.error or ''}")
     return 1 if failures else 0

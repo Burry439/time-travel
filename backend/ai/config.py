@@ -35,7 +35,7 @@ def mode() -> str:
 
 
 def judge_model() -> str:
-    return _env("MODEL_JUDGE", "gpt-6-sol")
+    return _env("MODEL_JUDGE", "gpt-6-luna")
 
 
 def judge_reasoning() -> str:

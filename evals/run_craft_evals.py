@@ -25,11 +25,16 @@ from ai import config, judge  # noqa: E402
 PRICES_PER_MTOK = {"gpt-6-sol": (2.0, 10.0), "gpt-6-luna": (0.1, 0.5), "gpt-6-astra": (10.0, 50.0)}
 
 
-def world_with(carry: list[str]) -> dict:
+def world_with(case: dict) -> dict:
     state = app.initial_state({"id": "eval", "mode": "developer", "seed_version": app.SEED_VERSION,
                                "geometry_version": app.GEOMETRY_VERSION})
-    for object_id in carry:
+    for object_id in case["carry"]:
         state["objects"][object_id]["holder_id"] = "player"
+    if "player_at" in case:
+        state["player"].update(x=case["player_at"][0], y=case["player_at"][1])
+    if "beside" in case:
+        npc = next(n for n in state["npcs"] if n["id"] == case["beside"])
+        state["player"].update(x=npc["x"], y=npc["y"] + 1)
     return state
 
 
@@ -52,6 +57,15 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
     wanted = case.get("require_flags_any")
     if wanted and verdict["category"] == "success" and not set(wanted) & set(spec.get("flags", [])):
         problems.append(f"none of {wanted} in flags {spec.get('flags')}")
+    if case.get("require_action") and verdict["category"] == "success" and verdict["action"] != case["require_action"]:
+        problems.append(f"action {verdict['action']} is not {case['require_action']}")
+    recorded = {claim["id"] for claim in verdict.get("property", [])}
+    for item in case.get("require_property_if_success", []):
+        if verdict["category"] == "success" and item not in recorded:
+            problems.append(f"use of {item} was not recorded as someone else's property")
+    harm = verdict.get("harm") or {}
+    if harm.get("result") in case.get("forbid_harm_results", []):
+        problems.append(f"harm result {harm['result']} is not plausible here")
     return problems
 
 
@@ -69,7 +83,7 @@ def main() -> int:
     for case in cases:
         passes = 0
         for run in range(args.runs):
-            state = world_with(case["carry"])
+            state = world_with(case)
             context = crafting.build_context(state, case["text"], [])
             judged = judge.judge_craft(context)
             verdict = crafting.validate(copy.deepcopy(state), judged.result,

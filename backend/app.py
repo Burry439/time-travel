@@ -26,7 +26,9 @@ ASSET_DIR = ROOT / "data" / "assets"
 WORLD_GEOMETRY = json.loads((ROOT / "data" / "world_geometry.json").read_text())
 WORLD_GEOMETRY_V2 = json.loads((ROOT / "data" / "world_geometry_v2.json").read_text())
 GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
-SEED_VERSION = 4  # 4 adds loose road materials and material data for crafting.
+# 4 adds loose road materials and material data for crafting; 5 adds materials across the map,
+# fellable trees and saplings, and NPC health.
+SEED_VERSION = 5
 MOVE_SPEED_CELLS_PER_SECOND = 7.1875
 RUN_SPEED_CELLS_PER_SECOND = 11.5
 NPCS = [
@@ -148,6 +150,9 @@ def initial_state(run: sqlite3.Row) -> dict:
     else:
         state.update({"objects": {}, "agreements": {}, "journal": [],
                       "water_spilled_l": 0.0, "last_action": None})
+    if run["seed_version"] >= 5:
+        for npc in state["npcs"]:
+            npc.update(alive=True, health=100, injuries=[])
     return state
 
 
@@ -467,20 +472,23 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
             crafting.apply_payload(state, payload)
             connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                                (run_id, request.request_id, state["event_seq"], request_json))
-            new_object = payload["new_object"]
+            new_objects = payload["new_objects"]
             trace = {"request_id": request.request_id, "event_seq": state["event_seq"], "text": request.text,
                      "selected_ids": request.selected_ids, "context": context, "judge": judged.as_dict(),
-                     "validator": {key: verdict[key] for key in ("category", "reason", "effort_seconds", "notes",
-                                                                 "consumed_ids", "tool_ids", "new_spec")},
-                     "made": new_object["id"] if new_object else None}
+                     "validator": {key: verdict[key] for key in (
+                         "category", "action", "reason", "effort_seconds", "notes", "consumed_ids", "tool_ids",
+                         "new_spec", "take_ids", "transform", "harm", "property")},
+                     "made": new_objects[0]["id"] if new_objects else None,
+                     "made_ids": [o["id"] for o in new_objects]}
             connection.execute("INSERT INTO craft_traces (run_id,request_id,trace_json) VALUES (?,?,?)",
                                (run_id, request.request_id, json.dumps(trace)))
-            if new_object:
-                record = {key: new_object[key] for key in ("id", "name", "description", "materials")}
+            # One painting per distinct sprite; identical transform pieces share one.
+            for asset_id, obj in {o["sprite_asset_id"]: o for o in reversed(new_objects)}.items():
+                record = {key: obj[key] for key in ("id", "name", "description", "materials")}
                 connection.execute(
                     "INSERT INTO assets (asset_id,run_id,object_id,status,record_json) VALUES (?,?,?,'pending',?)",
-                    (new_object["sprite_asset_id"], run_id, new_object["id"], json.dumps(record)))
-                background.add_task(_generate_asset, new_object["sprite_asset_id"])
+                    (asset_id, run_id, obj["id"], json.dumps(record)))
+                background.add_task(_generate_asset, asset_id)
     finally:
         _crafting_runs.discard(run_id)
     return _craft_response(run, state, trace, duplicate=False)
@@ -604,7 +612,10 @@ def move(run_id: str, request: Move):
                 return 46 <= x <= 50 and state["gate_open"]
             if state["geometry_version"] >= 2:
                 geometry = WORLD_GEOMETRY_V2 if state["geometry_version"] == 2 else WORLD_GEOMETRY
+                cleared = crafting.cleared_obstacles(state)  # e.g. felled trees
                 for building in geometry["buildings"] + geometry["obstacles"]:
+                    if building["name"] in cleared:
+                        continue
                     bx, by, width, height = building["cells"]
                     if bx <= x < bx + width and by <= y < by + height:
                         return False

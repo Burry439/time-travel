@@ -154,6 +154,11 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 		if child.has_meta("dynamic"):
 			$M2Objects.remove_child(child)
 			child.queue_free()
+	for tree in $Foliage.get_children(): # A previous journey may have felled some.
+		if tree.name.begins_with("Tree"):
+			tree.visible = true
+			tree.rotation = 0.0
+			tree.modulate = Color.WHITE
 	player.position = _cell_center(int(state["player"]["x"]), int(state["player"]["y"]))
 	camera.reset_smoothing()
 	menu.hide()
@@ -193,6 +198,8 @@ func _spawn_npcs() -> void:
 		painted.name = "PaintedActor"
 		painted.actor_id = str(npc["name"]).to_lower()
 		actor.add_child(painted)
+		if not npc.get("alive", true):
+			painted.lie_dead()
 		npc_targets[str(npc["id"])] = actor.position
 		npc_facing[str(npc["id"])] = 0
 		var nameplate := Label.new()
@@ -212,7 +219,7 @@ func _animate_npcs(delta: float) -> void:
 	for npc in run_state.get("npcs", []):
 		var id := str(npc["id"])
 		var actor := get_node_or_null("NPCs/" + id) as Node2D
-		if actor == null:
+		if actor == null or not npc.get("alive", true):
 			continue
 		var target: Vector2 = npc_targets.get(id, actor.position)
 		var before := actor.position
@@ -395,6 +402,8 @@ func _sync_display() -> void:
 	ui.bag_button.text = "Bag %s  [I]" % carried.size()
 	for object_id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state["objects"][object_id]
+		if obj.has("scene_node"): # Map trees keep their authored art; see _apply_world_features.
+			continue
 		var sprite := get_node_or_null("M2Objects/" + str(object_id)) as Sprite2D
 		if sprite == null:
 			if obj["holder_id"] != null:
@@ -408,8 +417,13 @@ func _sync_display() -> void:
 			_apply_object_texture(sprite, obj)
 		sprite.visible = obj["holder_id"] == null
 		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
+	_apply_world_features()
 	for npc in run_state.get("npcs", []):
 		npc_targets[str(npc["id"])] = _cell_center(int(npc["x"]), int(npc["y"]))
+		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
+		if plate:
+			plate.text = str(npc["name"]) + ("" if npc.get("alive", true) else " (dead)")
+			plate.position.y = -115.0 if npc.get("alive", true) else -58.0 # Down beside a body.
 	gate_button.text = "CLOSE GATE (TEST)" if run_state["gate_open"] else "OPEN GATE (TEST)"
 	trace_text.text = "RUN " + str(run_state["run_id"]).substr(0, 12) + "\n" \
 		+ "Mode: " + str(run_state["mode"]) + "\n" \
@@ -419,6 +433,76 @@ func _sync_display() -> void:
 		+ "Gate: " + ("open" if run_state["gate_open"] else "closed") + "\n" \
 		+ "Objective: " + ("complete" if run_state["inside_city"] else "active")
 	trace_panel.visible = run_state["mode"] == "developer" and trace_panel.visible
+
+
+## Map trees are authored scene art; hide the felled ones and let the player walk through.
+func _apply_world_features() -> void:
+	for obj in run_state.get("objects", {}).values():
+		if not obj.has("scene_node"):
+			continue
+		var standing := str(obj["condition"]) == "usable"
+		var node := get_node_or_null(str(obj["scene_node"])) as CanvasItem
+		if node:
+			node.visible = standing
+		var shape := get_node_or_null("BuildingCollision/%s/CollisionShape2D" % obj.get("geometry_name", "")) as CollisionShape2D
+		if shape and not standing:
+			shape.set_deferred("disabled", true)
+
+
+## Felled or broken things topple and fade. A copy animates while the real node is hidden.
+func _start_fall(entry: Dictionary) -> void:
+	var transformed = entry.get("transformed")
+	if typeof(transformed) != TYPE_DICTIONARY:
+		return
+	var obj: Dictionary = run_state.get("objects", {}).get(transformed["id"], {})
+	var node := get_node_or_null(str(obj.get("scene_node", "M2Objects/" + str(transformed["id"])))) as Node2D
+	if node == null or not node.visible:
+		return
+	var ghost := node.duplicate() as Node2D
+	for key in ["placeholder", "dynamic"]:
+		if ghost.has_meta(key):
+			ghost.remove_meta(key)
+	node.get_parent().add_child(ghost)
+	var tree := str(obj.get("feature", "")) == "tree"
+	var away := 1.0 if ghost.global_position.x >= player.global_position.x else -1.0
+	var tween := create_tween()
+	tween.tween_property(ghost, "rotation", away * (1.45 if tree else 0.6), 0.95 if tree else 0.35) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func() -> void:
+		effects.sound.pitch_scale = 0.4
+		effects.sound.play())
+	tween.tween_property(ghost, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(ghost.queue_free)
+
+
+## New objects pop into place (after a fall has landed, if there was one).
+func _reveal_new_objects(entry: Dictionary) -> void:
+	var delay := 1.0 if typeof(entry.get("transformed")) == TYPE_DICTIONARY else 0.0
+	for id in entry.get("made_ids", []):
+		var sprite := get_node_or_null("M2Objects/" + str(id)) as Sprite2D
+		if sprite == null or not sprite.visible:
+			continue
+		var size := sprite.scale
+		sprite.scale = Vector2.ZERO
+		create_tween().tween_property(sprite, "scale", size, 0.3).set_delay(delay) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _play_harm(entry: Dictionary) -> void:
+	var harm = entry.get("harm")
+	if typeof(harm) != TYPE_DICTIONARY:
+		return
+	player_visual.play_gesture("gesture")
+	var actor := get_node_or_null("NPCs/" + str(harm["target_id"])) as Node2D
+	if actor == null:
+		return
+	var painted := actor.get_node("PaintedActor")
+	var away := 1.0 if actor.global_position.x >= player.global_position.x else -1.0
+	match str(harm["result"]):
+		"killed":
+			painted.die(away)
+		"wounded":
+			painted.hurt(away)
 
 
 func _refresh_trace() -> void:
@@ -459,6 +543,10 @@ func texture_for(obj: Dictionary) -> Texture2D:
 	var authored := get_node_or_null("M2Objects/" + id) as Sprite2D
 	if authored and not authored.has_meta("dynamic"):
 		return authored.texture
+	if obj.has("scene_node"):
+		var scene_art := get_node_or_null(str(obj["scene_node"])) as Sprite2D
+		if scene_art:
+			return scene_art.texture
 	var material_art := "res://assets/generated/materials/%s.png" % id
 	if ResourceLoader.exists(material_art):
 		object_textures[id] = _trimmed_texture((load(material_art) as Texture2D).get_image())
@@ -476,6 +564,8 @@ func texture_for(obj: Dictionary) -> Texture2D:
 
 
 func is_placeholder(obj: Dictionary) -> bool:
+	if obj.has("scene_node"):
+		return false
 	var authored := get_node_or_null("M2Objects/" + str(obj["id"])) as Sprite2D
 	return not object_textures.has(str(obj["id"])) and not (authored and not authored.has_meta("dynamic"))
 
@@ -505,7 +595,12 @@ func _apply_object_texture(sprite: Sprite2D, obj: Dictionary) -> void:
 		return
 	sprite.texture = texture
 	var size := texture.get_size()
-	sprite.scale = Vector2.ONE * minf(OBJECT_HEIGHT / size.y, OBJECT_MAX_WIDTH / size.x)
+	# Trees stand tall and heavy things read larger; everyday items share one small size.
+	var height := 150.0 if str(obj.get("feature", "")) == "tree" else OBJECT_HEIGHT if "carry" in obj.capabilities else 64.0
+	var width := height * 1.3 if height > OBJECT_HEIGHT else OBJECT_MAX_WIDTH
+	sprite.scale = Vector2.ONE * minf(height / size.y, width / size.x)
+	# Tall things stand on their cell (so a tree falls from its base); small items stay centred.
+	sprite.offset = Vector2.ZERO if height == OBJECT_HEIGHT else Vector2(0, -size.y * 0.5 + 12.0 / sprite.scale.y)
 	sprite.modulate = Color.WHITE
 
 
@@ -561,21 +656,36 @@ func _process(delta: float) -> void:
 			sprite.modulate = Color(0.85, 0.8, 0.7, 0.72 + sin(placeholder_clock * 3.0) * 0.18) if waiting else Color.WHITE
 
 
-## Items a making attempt may use: carried, or loose, unowned, and within reach.
-func craft_candidates() -> Array[Dictionary]:
+## What a Try Something attempt can involve: carried items, anything intact within reach
+## (whoever owns it, including trees), and people within reach.
+func try_candidates() -> Array[Dictionary]:
 	var carried: Array[Dictionary] = []
-	var loose: Array[Dictionary] = []
+	var within_reach: Array[Dictionary] = []
+	var here := Vector2(predicted_cell)
 	for id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state.objects[id]
 		if "water_source" in obj.capabilities or str(obj.condition) != "usable":
 			continue
 		if obj.holder_id == "player":
 			carried.append(obj)
-		elif obj.holder_id == null and obj.owner_id == null and \
-				Vector2(predicted_cell).distance_to(Vector2(int(obj.x), int(obj.y))) <= REACH_CELLS:
-			loose.append(obj)
-	carried.append_array(loose)
+		elif obj.holder_id == null and here.distance_to(Vector2(int(obj.x), int(obj.y))) <= REACH_CELLS:
+			within_reach.append(obj)
+	for npc in run_state.get("npcs", []):
+		if here.distance_to(Vector2(int(npc.x), int(npc.y))) <= REACH_CELLS:
+			within_reach.append({"id": npc.id, "name": npc.name, "person": true, "alive": npc.get("alive", true)})
+	carried.append_array(within_reach)
 	return carried
+
+
+func owner_name(obj: Dictionary) -> String:
+	if obj.get("owner_id") == null:
+		return ""
+	if obj.owner_id == "player":
+		return "you"
+	for npc in run_state.get("npcs", []):
+		if npc.id == obj.owner_id:
+			return str(npc.name)
+	return str(obj.owner_id)
 
 
 func _try_something(text: String, selected_ids: Array) -> void:
@@ -597,12 +707,20 @@ func _try_something(text: String, selected_ids: Array) -> void:
 	if reply.ok:
 		run_state = reply.data.state
 		last_trace = reply.data.get("trace")
-		request_busy = false
-		_sync_display()
 		var entry: Dictionary = run_state.last_action
+		_start_fall(entry) # Copy the falling thing before the sync hides it.
+		_sync_display()
+		_reveal_new_objects(entry)
+		_play_harm(entry)
 		if entry.category == "success":
 			effects.pickup_sound.play()
-			player_visual.play_gesture("gesture")
+			player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
+			if str(entry.get("action", "")) in ["transform", "harm"]:
+				# Let the fall or the blow play out in view before the result card covers it.
+				ui.modal.hide()
+				ui.modal_kind = ""
+				await get_tree().create_timer(1.5).timeout
+		request_busy = false
 		ui.show_craft_result(entry, last_trace)
 		return
 	var problem := _reply_problem(reply)
@@ -689,8 +807,8 @@ func _update_target() -> void:
 			for npc in run_state.npcs:
 				if npc.id == nearby_target:
 					target = npc
-			verb = "Meet"
-		elif target.owner_id != null and target.owner_id != "player":
+			verb = "Meet" if target.get("alive", true) else "Look at"
+		elif (target.owner_id != null and target.owner_id != "player") or not "carry" in target.capabilities:
 			verb = "Inspect"
 		var target_actor := get_node_or_null("NPCs/" + nearby_target) as Node2D
 		effects.marker = target_actor.position if target_actor else _cell_center(int(target.x), int(target.y))
@@ -704,7 +822,7 @@ func _interact() -> void:
 	if nearby_target.is_empty() or request_busy:
 		return
 	var obj: Dictionary = run_state.get("objects", {}).get(nearby_target, {})
-	if not obj.is_empty() and (obj.owner_id == null or obj.owner_id == "player"):
+	if not obj.is_empty() and "carry" in obj.capabilities and (obj.owner_id == null or obj.owner_id == "player"):
 		_quick_action("take", nearby_target)
 	else:
 		ui.inspect(nearby_target)

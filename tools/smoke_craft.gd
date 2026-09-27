@@ -47,7 +47,7 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.modal_kind == "try", "Try box did not open"):
 		return
-	var offered: Array = scene.craft_candidates().map(func(o: Dictionary) -> String: return str(o.id))
+	var offered: Array = scene.try_candidates().map(func(o: Dictionary) -> String: return str(o.id))
 	if not check("branch_a" in offered and "cord_a" in offered and "bucket_hessa" not in offered,
 			"Unexpected items within reach: " + str(offered)):
 		return

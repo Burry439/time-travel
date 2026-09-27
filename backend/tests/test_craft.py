@@ -15,8 +15,9 @@ PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
 
 def spear(**changes):
     result = {
-        "outcome": "success", "reason": "You lash the flint to the branch.", "effort_seconds": 40,
+        "action": "make", "outcome": "success", "reason": "You lash the flint to the branch.", "effort_seconds": 40,
         "clarifying_question": None, "precedent_key": "lash:flint+branch|vine",
+        "take_ids": [], "transformation": None, "harm": None,
         "new_object": {"name": "flint-tipped spear", "description": "A branch with a flint point lashed on.",
                        "materials": ["wood", "flint", "vine"], "consumes": ["branch_a", "flint_a", "vine_a"],
                        "tools_used": [], "mass_kg": 1.9, "length_m": 1.6, "capacity_l": None,
@@ -191,3 +192,137 @@ def test_stub_mode_runs_the_real_pipeline_without_a_model(tmp_path, monkeypatch)
     made = body["state"]["objects"][body["trace"]["made"]]
     assert made["components"] == ["flint_a", "vine_a"] and body["trace"]["judge"]["model"] == "stub"
     assert http.get(f"/assets/{made['sprite_asset_id']}").status_code == 200
+
+
+# --- Try Something beyond making things (judge v2) ---------------------------------------
+
+def fresh_state(x=48, y=68):
+    state = service.initial_state({"id": "unit0000", "mode": "developer", "seed_version": service.SEED_VERSION,
+                                   "geometry_version": service.GEOMETRY_VERSION})
+    state["player"].update(x=x, y=y)
+    return state
+
+
+def judged(action, **fields):
+    base = {"action": action, "outcome": "success", "reason": "It happens.", "effort_seconds": 5,
+            "clarifying_question": None, "precedent_key": action, "new_object": None, "take_ids": [],
+            "transformation": None, "harm": None}
+    base.update(fields)
+    return base
+
+
+def commit(state, verdict, text="try"):
+    payload = crafting.build_payload(state, "unit0000", text, verdict, "trace", state["sim_time_ms"])
+    payload["npcs"] = state["npcs"]
+    crafting.apply_payload(state, payload)
+    return payload
+
+
+def test_other_peoples_property_is_offered_usable_and_recorded():
+    state = fresh_state(63, 28)  # Beside Tomas's plank at (64, 28).
+    offered = {i["id"]: i for i in crafting.build_context(state, "x", [])["available_items"]}
+    assert offered["wood_tomas"]["belongs_to"] == "Tomas" and offered["wood_tomas"]["portable"]
+    shield = {"name": "plank shield", "description": "A plank.", "materials": ["wood"], "consumes": ["wood_tomas"],
+              "tools_used": [], "mass_kg": 4.0, "length_m": None, "capacity_l": None, "rated_load_kg": None,
+              "flags": ["rigid"], "capabilities": []}
+    verdict = crafting.validate(state, judged("make", new_object=shield))
+    assert verdict["category"] == "success"
+    assert verdict["property"] == [{"id": "wood_tomas", "name": "wood plank", "owner_id": "npc_tomas_reed",
+                                    "how": "used up"}]
+    taken = crafting.validate(fresh_state(63, 28), judged("take", take_ids=["wood_tomas"]))
+    assert taken["category"] == "success" and taken["property"][0]["how"] == "taken"
+
+
+def test_take_respects_reach_portability_and_weight():
+    state = fresh_state()
+    verdict = crafting.validate(state, judged("take", take_ids=["branch_a", "cord_a"]))
+    assert verdict["category"] == "success"
+    commit(state, verdict)
+    assert state["objects"]["branch_a"]["holder_id"] == "player" and state["objects"]["cord_a"]["holder_id"] == "player"
+    assert crafting.validate(state, judged("take", take_ids=["log_a"]))["category"] == "unresolved"  # Out of reach.
+    near_log = fresh_state(69, 60)
+    blocked = crafting.validate(near_log, judged("take", take_ids=["log_a"]))
+    assert blocked["category"] == "blocked" and "can't be picked up" in blocked["reason"]
+
+
+def tree_felling(target="tree_01"):
+    def piece(name, count, mass, flags=("rigid",)):
+        return {"name": name, "description": f"A {name}.", "materials": ["wood"], "count": count,
+                "mass_kg": mass, "length_m": None, "flags": list(flags), "capabilities": []}
+    return judged("transform", effort_seconds=5400, transformation={
+        "target_id": target, "tools_used": [], "result_state": "felled",
+        "pieces": [piece("oak trunk", 1, 600.0), piece("leafy branch", 3, 15.0), piece("stump", 1, 150.0)]})
+
+
+def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
+    http = world.http
+    state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 33, 64)  # Oak tree_01 at (32, 64).
+    assert http.post(f"/runs/{state['run_id']}/move", json={
+        "x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "into-tree"}).status_code == 403
+    world.replies.append(tree_felling())
+    body = craft(http, state, "chop down the oak", "fell").json()
+    state = body["state"]
+    tree = state["objects"]["tree_01"]
+    assert tree["condition"] == "felled" and len(tree["became"]) == 5
+    pieces = [state["objects"][i] for i in tree["became"]]
+    trunk, branch = pieces[0], pieces[1]
+    assert trunk["capabilities"] == [] and "carry" in branch["capabilities"]
+    assert {p["sprite_asset_id"] for p in pieces[1:4]} == {branch["sprite_asset_id"]}  # Identical pieces share art.
+    assert len(world.painted) == 3
+    assert state["sim_time_ms"] == 5_400_000
+    moved = http.post(f"/runs/{state['run_id']}/move", json={
+        "x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "through-stump"})
+    assert moved.status_code == 200, moved.text
+    state = moved.json()["state"]
+    assert http.get(f"/runs/{state['run_id']}").json() == state
+
+
+def test_transform_mass_is_capped_by_the_target():
+    state = fresh_state(37, 67)  # Beside the birch sapling (12 kg) at (38, 67).
+    plan = judged("transform", transformation={"target_id": "sapling_a", "tools_used": [], "result_state": "felled",
+                  "pieces": [{"name": "birch pole", "description": "A pole.", "materials": ["wood", "iron"],
+                              "count": 2, "mass_kg": 10.0, "length_m": 2.5, "flags": ["light_source"],
+                              "capabilities": []}]})
+    verdict = crafting.validate(state, plan)
+    piece = verdict["transform"]["pieces"][0]
+    assert piece["mass_kg"] * piece["count"] == pytest.approx(12.0)
+    assert piece["materials"] == ["wood"] and piece["flags"] == []
+
+
+def harm(target, result, weapon=None):
+    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "result": result,
+                                "injury": "a deep wound" if result != "missed" else "the blow misses"})
+
+
+def beside(state, npc_id):
+    npc = next(n for n in state["npcs"] if n["id"] == npc_id)
+    state["player"].update(x=npc["x"], y=npc["y"] + 1)
+    return npc
+
+
+def test_killing_a_person_is_permanent_and_they_stop_moving():
+    state = fresh_state()
+    bren = beside(state, "npc_bren_marr")
+    verdict = crafting.validate(state, harm("npc_bren_marr", "killed"))
+    assert verdict["category"] == "success" and "npc_oren_dast" in verdict["harm"]["witnesses"]
+    commit(state, verdict, "stab Bren")
+    bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
+    assert not bren["alive"] and bren["health"] == 0 and bren["controller"]["activity"] == "dead"
+    where = (bren["x"], bren["y"])
+    later = service.npc_sim.advance_npcs(state["npcs"], 60_000, state["sim_time_ms"], service.WORLD_GEOMETRY)
+    assert next((n["x"], n["y"]) for n in later if n["id"] == "npc_bren_marr") == where
+    again = crafting.validate(state, harm("npc_bren_marr", "killed"))
+    assert again["category"] == "blocked" and "already dead" in again["reason"]
+
+
+def test_wounds_accumulate_and_reach_is_enforced():
+    state = fresh_state()
+    beside(state, "npc_roderic_vale")
+    for expected_alive in (True, True, False):  # 100 -> 55 -> 10 -> 0
+        commit(state, crafting.validate(state, harm("npc_roderic_vale", "wounded")))
+        roderic = next(n for n in state["npcs"] if n["id"] == "npc_roderic_vale")
+        assert roderic["alive"] is expected_alive
+    far = fresh_state()
+    blocked = crafting.validate(far, harm("npc_mara_venn", "killed"))
+    assert blocked["category"] == "blocked" and "too far" in blocked["reason"]
+    assert crafting.validate(fresh_state(), harm("npc_mara_venn", "missed"))["category"] == "blocked"

@@ -277,17 +277,27 @@ func inspect(id: String) -> void:
 			paragraph(body, "Water: %s / %s litres" % [obj.get("water_l", 0), obj.capacity_l])
 		if obj.holder_id == "player":
 			body.add_child(button("Back to belongings", open_bag))
-		elif obj.owner_id == null or obj.owner_id == "player":
+		elif "carry" in obj.capabilities and (obj.owner_id == null or obj.owner_id == "player"):
 			body.add_child(button("Pick up", game._quick_action.bind("take", id)))
+		elif "carry" in obj.capabilities:
+			paragraph(body, "It isn't yours to pick up freely. You could still try something with it (T).")
 		return
 	for npc in game.run_state.npcs:
 		if npc.id == id:
+			var alive: bool = npc.get("alive", true)
 			var painted := game.get_node_or_null("NPCs/" + str(id) + "/PaintedActor")
-			if painted:
+			if painted and alive:
 				painted.play_gesture("greet")
-			var body := begin_modal(str(npc.name), "person")
+			var body := begin_modal(str(npc.name) + ("" if alive else " (dead)"), "person")
 			paragraph(body, str(npc.role))
-			paragraph(body, "You have not spoken yet.\n\nConversations and free-form intentions are still being built. For now, explore the village and get a feel for the world.")
+			var injuries: Array = npc.get("injuries", [])
+			if not alive:
+				paragraph(body, str(npc.name) + " lies still on the ground." + (
+					"\nCause: " + str(injuries[-1]) if not injuries.is_empty() else ""))
+			elif not injuries.is_empty():
+				paragraph(body, str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
+			if alive:
+				paragraph(body, "You have not spoken yet.\n\nConversations are still being built. People don't react to what you do yet; that comes in a later version.")
 			return
 
 func open_journal() -> void:
@@ -364,7 +374,9 @@ func provenance(obj: Dictionary) -> String:
 	var tools: PackedStringArray = []
 	for id in obj.get("tools_used", []):
 		tools.append("the " + str(objects[id].name) if objects.has(id) else str(id))
-	var text := "Made by you from " + _listing(parts)
+	var cut_from: bool = obj.get("components", []).size() == 1 and objects.has(obj.components[0]) \
+		and objects[obj.components[0]].has("became")
+	var text := ("Cut by you from " if cut_from else "Made by you from ") + _listing(parts)
 	if not tools.is_empty():
 		text += ", using " + _listing(tools)
 	return text + ".\nYour words: “" + str(obj.get("created_text", "")) + "”"
@@ -382,7 +394,7 @@ func open_try(prefill := "") -> void:
 	if game.run_state.is_empty() or game.request_busy or not game.gameplay_active:
 		return
 	var body := begin_modal("Try something", "try")
-	paragraph(body, "Describe what you want to make, in your own words. You can use what you carry and loose things within reach.")
+	paragraph(body, "Describe what you want to do, in your own words. You can use what you carry and whatever or whoever is within reach.")
 	if not game.ai_ready():
 		var warning := label("AI judging isn't set up on this computer yet (no OpenAI key on the backend). You can still try; the game will tell you honestly that it couldn't decide.", 14)
 		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -397,19 +409,20 @@ func open_try(prefill := "") -> void:
 	try_input.gui_input.connect(_on_try_key)
 	body.add_child(try_input)
 	try_selected.clear()
-	var items: Array[Dictionary] = game.craft_candidates()
+	var items: Array[Dictionary] = game.try_candidates()
 	if items.is_empty():
-		paragraph(body, "You carry nothing, and nothing loose is within reach. Walk closer to things or pick them up first.")
+		paragraph(body, "You carry nothing, and nothing is within reach. Walk closer to things or people first.")
 	else:
 		body.add_child(label("Within reach (optional: click to point at something)", 14))
 		var chips := HFlowContainer.new()
 		chips.add_theme_constant_override("h_separation", 6)
 		chips.add_theme_constant_override("v_separation", 6)
 		for obj in items:
-			var chip := button(str(obj.name) + ("  (carried)" if obj.holder_id == "player" else ""), func() -> void: pass)
+			var chip := button(str(obj.name) + _chip_note(obj), func() -> void: pass)
 			chip.custom_minimum_size.y = 34
 			chip.toggle_mode = true
-			chip.icon = game.texture_for(obj)
+			if not obj.get("person", false):
+				chip.icon = game.texture_for(obj)
 			chip.expand_icon = false
 			chip.add_theme_constant_override("icon_max_width", 26)
 			chip.add_theme_font_size_override("font_size", 14)
@@ -419,6 +432,15 @@ func open_try(prefill := "") -> void:
 	body.add_child(button("Do it  [Enter]", _submit_try))
 	try_input.grab_focus.call_deferred()
 	try_input.set_caret_column.call_deferred(prefill.length())
+
+
+func _chip_note(obj: Dictionary) -> String:
+	if obj.get("person", false):
+		return "" if obj.alive else "  (dead)"
+	if obj.holder_id == "player":
+		return "  (carried)"
+	var owner: String = game.owner_name(obj)
+	return "  (%s's)" % owner if not owner.is_empty() and owner != "you" else ""
 
 
 func _on_chip(pressed: bool, id: String, item_name: String) -> void:
@@ -456,16 +478,78 @@ func show_working(text: String) -> void:
 	paragraph(body, "The world is working out whether this can be done. Time stands still while you wait.")
 
 
+func _result_title(entry: Dictionary) -> String:
+	var category := str(entry.category)
+	if category != "success":
+		return str(OUTCOME_TITLES.get(category, "Result"))
+	match str(entry.get("action", "make")):
+		"take": return "Taken"
+		"transform": return "It's done"
+		"harm":
+			var harm = entry.get("harm")
+			var result := str(harm.result) if typeof(harm) == TYPE_DICTIONARY else ""
+			return {"killed": "Killed", "wounded": "Wounded", "missed": "You missed"}.get(result, "Done")
+		"other": return "Done"
+	return str(OUTCOME_TITLES.success)
+
+
+func _object_rows(body: VBoxContainer, ids: Array) -> void:
+	var seen := {}
+	for id in ids:
+		var obj: Dictionary = game.run_state.objects.get(id, {})
+		if obj.is_empty():
+			continue
+		var key := str(obj.name)
+		seen[key] = seen.get(key, []) + [obj]
+	for key in seen:
+		var group: Array = seen[key]
+		var obj: Dictionary = group[0]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		body.add_child(row)
+		row.add_child(object_icon(obj, 56))
+		var where := "in your bag" if obj.holder_id == "player" else \
+			("too heavy to carry" if not "carry" in obj.capabilities else "on the ground")
+		var count := "%d × " % group.size() if group.size() > 1 else ""
+		var weight := str(obj.mass_kg) + " kg" + (" each" if group.size() > 1 else "")
+		var line := label(count + str(obj.name).capitalize() + "  ·  " + weight + "  ·  " + where, 16)
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(line)
+
+
 func show_craft_result(entry: Dictionary, trace) -> void:
 	var category := str(entry.category)
-	var body := begin_modal(str(OUTCOME_TITLES.get(category, "Result")), "result")
+	var body := begin_modal(_result_title(entry), "result")
 	var said := label("“" + str(entry.text) + "”", 15)
 	said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	said.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.75))
 	body.add_child(said)
 	paragraph(body, str(entry.reason))
+	for claim in entry.get("property", []):
+		var owner := str(claim.owner_id)
+		for npc in game.run_state.npcs:
+			if npc.id == claim.owner_id:
+				owner = str(npc.name)
+		var note := label("The %s belongs to %s (%s)." % [claim.name, owner, str(claim.how).replace("_", " ")], 15)
+		note.add_theme_color_override("font_color", GOLD)
+		body.add_child(note)
+	if category == "success" and entry.get("action") == "take":
+		_object_rows(body, entry.get("taken_ids", []))
+	if category == "success" and entry.get("action") == "transform":
+		_object_rows(body, entry.get("made_ids", []))
+	var harm = entry.get("harm")
+	if category == "success" and typeof(harm) == TYPE_DICTIONARY:
+		var victim := str(harm.target_id)
+		for npc in game.run_state.npcs:
+			if npc.id == harm.target_id:
+				victim = str(npc.name)
+		paragraph(body, {"killed": "%s is dead.", "wounded": "%s is wounded.", "missed": "%s is unhurt."}.get(
+			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + str(harm.injury).capitalize() + "."))
+		if not harm.get("witnesses", []).is_empty():
+			paragraph(body, "Others nearby may have seen it. (People don't react yet; they will in a later version.)")
 	var made = entry.get("made")
-	if made != null and game.run_state.objects.has(made):
+	if made != null and game.run_state.objects.has(made) and entry.get("action", "make") == "make":
 		var obj: Dictionary = game.run_state.objects[made]
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 14)
