@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/generated/world_ground.jpg" id="1_ground"]
+[ext_resource type="Shader" path="res://assets/ground_finish.gdshader" id="2_ground_shader"]
+[ext_resource type="Texture2D" path="res://assets/source/generated/grass_source.png" id="3_grass"]
+[ext_resource type="Texture2D" path="res://assets/generated/inn_painted_v2.png" id="4_inn"]
+[ext_resource type="PackedScene" path="res://scenes/painted_actor.tscn" id="5_actor"]
+
+[sub_resource type="ShaderMaterial" id="GroundMaterial"]
+shader = ExtResource("2_ground_shader")
+shader_parameter/ground_source = ExtResource("3_grass")
+
+[node name="InnCourtyardPreview" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Ground" type="Sprite2D" parent="."]
+z_index = -20
+texture = ExtResource("1_ground")
+region_enabled = true
+region_rect = Rect2(604, 1070, 1100, 700)
+centered = false
+material = SubResource("GroundMaterial")
+
+[node name="Inn" type="Sprite2D" parent="."]
+position = Vector2(500, 520)
+texture = ExtResource("4_inn")
+scale = Vector2(0.48, 0.48)
+offset = Vector2(0, -503)
+
+[node name="Hessa" parent="." instance=ExtResource("5_actor")]
+position = Vector2(500, 578)
+actor_id = "hessa"
+
+[node name="Traveler" parent="." instance=ExtResource("5_actor")]
+position = Vector2(740, 578)
+
+[node name="PreviewCamera" type="Camera2D" parent="."]
+position = Vector2(550, 400)
+zoom = Vector2(1.2, 1.2)

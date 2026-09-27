@@ -1,0 +1,14 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+backend/.venv/
+**/__pycache__/
+**/.pytest_cache/
+data/*.sqlite3*
+data/*.pid
+data/*.log
+.env
+backend/.env
+
+# Generated sprites for player-created objects (per save)
+data/assets/

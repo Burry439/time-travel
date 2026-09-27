@@ -1,0 +1,15 @@
+# Living village playable pass
+
+Start the backend with `tools/run_m0.ps1`, open the project root in Godot, press F5, and start a **new journey**. New journeys use seed version 3. Older journeys retain their original eight NPCs and clock behavior.
+
+The ten named NPCs now have individual painted, transparent four-direction art. Their Godot cutout rigs animate walking and location activities, with staggered phases and slightly different gaits. The original eight work or watch at the inn, smithy, carpenter, merchant wagon, and city gate. Elin and Kade are new guards patrolling the road and village approach. These are reusable behaviors and locations, not quest steps.
+
+The backend owns each NPC's current cell, goal, destination, activity, route, and timing. `data/npc_routines.json` defines the provisional local routines; the same anchors are visible through `ActivityAnchors` in `scenes/main.tscn` in the Godot editor. `backend/npc_sim.py` chooses a routine destination separately from path execution so a later Jev decision can supply a validated goal without moving animation or world authority into the model. Godot interpolates and animates NPCs between saved backend positions.
+
+The new exploration clock advances only while gameplay is active. Pause, inventory, and other modal interactions stop it; closing the game does not advance NPCs. Player movement no longer adds a second time increment in new journeys. Successful actions can still spend their own validated in-world time. Exploration updates have request IDs, save as events, and restore after reload.
+
+For a manual pass, walk from the south road to Hessa's inn, then north past the smithy toward the gate. Let the game run for at least 20 seconds near each area. Check that Hessa tends the yard, Mara and Jory work, and Bren, Oren, Elin, and Kade move along their patrols. Follow a guard to watch the four facing views and walk cycle. Open Pause for several seconds and check that everyone stops; close it and check that they continue. Exit and resume the same journey to confirm their saved locations. Inspect and interact with Hessa after she moves, then confirm player movement and building collision still feel right.
+
+The game currently uses deterministic local routine choices. Jev, personal knowledge, and event-driven NPC decisions are the **next AI milestone**; this pass does not claim those reactions are present. The cutout rigs give every NPC their own painted directional walk, but they do not yet use separately illustrated foot-contact frames. Review walking in motion at gameplay size before commissioning those frames.
+
+Verification: `backend/.venv/Scripts/python.exe -m pytest tests -q` checks clock persistence, legacy saves, and full patrol paths. `tools/smoke_living_village.gd` checks ten unique rigs, patrol and work animation, pause, and reload in Godot. Rendered snapshots are in `docs/screenshots/living-gate-patrol.png` and `docs/screenshots/living-inn-yard.png`; motion quality still requires the manual pass.
