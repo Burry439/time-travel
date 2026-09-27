@@ -52,6 +52,7 @@ const REACH_CELLS := 2.5 # Matches backend m2.REACH_CELLS.
 const NEARBY_CELLS := 8.0 # Try Something can involve anything this close; the player walks there first.
 var scripted_walk := false
 var shown_speech: Dictionary = {} # npc id -> key of the last line shown in a bubble
+var shown_cues: Dictionary = {} # npc id -> key of the last regard cue shown
 var thinking_active := false
 ## Cheap counters read by tools/profile_frame.gd: key -> [count, total microseconds, total bytes].
 var prof: Dictionary = {}
@@ -222,6 +223,8 @@ func _spawn_npcs() -> void:
 		npc_facing[str(npc["id"])] = 0
 		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
 		shown_speech[str(npc["id"])] = str(said.key) if typeof(said) == TYPE_DICTIONARY else ""
+		var cue = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("cue")
+		shown_cues[str(npc["id"])] = str(cue.key) if typeof(cue) == TYPE_DICTIONARY else ""
 		var nameplate := Label.new()
 		nameplate.name = "Nameplate"
 		nameplate.text = str(npc["name"])
@@ -513,6 +516,11 @@ func _sync_display_now() -> void:
 		if typeof(said) == TYPE_DICTIONARY and shown_speech.get(str(npc["id"]), "") != str(said.key):
 			shown_speech[str(npc["id"])] = str(said.key)
 			_show_bubble(str(npc["id"]), str(said.text))
+		var cue = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("cue")
+		if typeof(cue) == TYPE_DICTIONARY and shown_cues.get(str(npc["id"]), "") != str(cue.key):
+			shown_cues[str(npc["id"])] = str(cue.key)
+			if not in_encounter(): # Face to face, the round log shows it.
+				ui.notify(str(cue.text))
 		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
 			plate.text = str(npc["name"]) + ("" if npc.get("alive", true) else " (dead)")

@@ -98,6 +98,9 @@ def main(argv: list[str]) -> int:
             turns = [exchange(state, case["npc"], line) for line in case["lines"]]
             end = talk.regard(minds.find(state["npcs"], case["npc"]))
             problems = check(case, turns, start, end)
+            if case.get("hint_any"):
+                hinted = any(w in t.get("line", "").lower() for t in turns for w in case["hint_any"])
+                print(f"      (soft) hints at what would change their mind: {'yes' if hinted else 'no'}")
             failures += bool(problems)
             report.append({"case": case["id"], "run": run + 1, "ok": not problems, "problems": problems,
                            "turns": turns})

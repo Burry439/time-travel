@@ -412,6 +412,12 @@ func open_encounter(target := "", prefill := "") -> void:
 			var heading := label("ROUND %d" % shown_round, 11)
 			heading.add_theme_color_override("font_color", Color(0.86, 0.77, 0.56, 0.6))
 			body.add_child(heading)
+		if entry.get("kind") == "cue": # How someone's view of you shifted, as they show it.
+			var cue := label("(" + str(entry.text) + ")", 14)
+			cue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			cue.add_theme_color_override("font_color", Color(0.72, 0.80, 0.70, 0.85))
+			body.add_child(cue)
+			continue
 		_log_line(body, str(entry.text), str(entry.get("who", "")) != "player", false)
 	talk_status = label("", 15)
 	talk_status.add_theme_color_override("font_color", GOLD)
@@ -548,29 +554,57 @@ func open_journal() -> void:
 		return
 	var body := begin_modal("Your journal", "journal")
 	paragraph(body, "GET INSIDE THE CITY\nYou arrived from the future with only your knowledge. Explore, notice what is available, and consider what you could do with it.")
+	var open_leads := PackedStringArray()
+	var done_leads := PackedStringArray()
 	var told := PackedStringArray()
 	for claim in game.run_state.get("learned", []):
-		told.append("• %s: “%s”" % [claim.name, claim.said])
-	if not told.is_empty():
-		var people := label("PEOPLE: WHAT YOU'VE BEEN TOLD", 12)
-		people.add_theme_color_override("font_color", GOLD)
-		body.add_child(people)
-		paragraph(body, "\n".join(told))
-	var deals := PackedStringArray()
-	for deal in game.run_state.get("agreements", {}).values():
-		if deal.has("issuer"):
-			var status: String = {"proposed": "offered", "accepted": "you agreed", "fulfilled": "done"}.get(str(deal.status), str(deal.status))
-			deals.append("• %s asked you to %s (%s)" % [npc_record(str(deal.issuer)).get("name", "Someone"), deal.task, status])
-	if not deals.is_empty():
-		var heading := label("DEALS", 12)
-		heading.add_theme_color_override("font_color", GOLD)
-		body.add_child(heading)
-		paragraph(body, "\n".join(deals))
+		told.append("%s: “%s”" % [claim.name, claim.said])
+		var lead := str(claim.get("lead", ""))
+		if lead.is_empty() or lead in open_leads or lead in done_leads:
+			continue
+		if _lead_done(claim):
+			done_leads.append(lead)
+		else:
+			open_leads.append(lead)
+	_journal_section(body, "LEADS", open_leads, 1.0)
+	_journal_section(body, "DONE", done_leads, 0.55)
+	_journal_section(body, "WHAT PEOPLE SAID", told, 0.8)
 	var history: Array = game.run_state.get("journal", [])
 	if history.is_empty():
 		paragraph(body, "No discoveries recorded yet.")
 	for index in range(history.size() - 1, maxi(-1, history.size() - 21), -1):
 		paragraph(body, "• " + str(history[index].reason))
+
+## Whether what a lead points to has happened: a deal done, a loan returned, a person met.
+func _lead_done(claim: Dictionary) -> bool:
+	if claim.has("fulfilled"):
+		return true
+	if claim.has("offer"):
+		return str(game.run_state.get("agreements", {}).get(str(claim.offer), {}).get("status", "")) == "fulfilled"
+	if claim.has("lend"):
+		var thing: Dictionary = game.run_state.get("objects", {}).get(str(claim.lend), {})
+		return thing.get("holder_id") == claim.npc_id or thing.get("lent_to") != "player"
+	if claim.has("refer"):
+		var their_mind = npc_record(str(claim.refer)).get("mind")
+		return typeof(their_mind) == TYPE_DICTIONARY and their_mind.get("met", false)
+	return false
+
+
+func _journal_section(body: VBoxContainer, title: String, lines: PackedStringArray, strength: float) -> void:
+	if lines.is_empty():
+		return
+	var heading := label(title, 12)
+	heading.add_theme_color_override("font_color", GOLD)
+	body.add_child(heading)
+	var bullets := PackedStringArray()
+	for line in lines:
+		bullets.append("• " + line)
+	var node := label("\n".join(bullets), 17)
+	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	node.modulate.a = strength
+	body.add_child(node)
+
 
 func open_pause() -> void:
 	if game.run_state.is_empty() or game.request_busy:
