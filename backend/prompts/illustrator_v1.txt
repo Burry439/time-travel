@@ -1,0 +1,3 @@
+2D RPG item sprite for a grounded premodern village game. A single object: {subject}. Made of {materials}.
+Style: high-angle three-quarter top-down view matching detailed painterly pixel art with crisp edges, warm muted ochre and olive palette, sun from upper left, soft form shading. The object is centred, fully visible, filling most of the frame with a little transparent padding, resting as if placed on the ground.
+Transparent background. Only the object: no ground tile, no base, no cast shadow, no hands or people, no text, no labels, no border, no grid.

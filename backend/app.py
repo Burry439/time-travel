@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import sqlite3
 import threading
 import copy
@@ -11,17 +12,21 @@ from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+import crafting
 import m2
 import npc_sim
+from ai import config as ai_config, illustrator, judge, telemetry
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "demo.sqlite3"))
+ASSET_DIR = ROOT / "data" / "assets"
 WORLD_GEOMETRY = json.loads((ROOT / "data" / "world_geometry.json").read_text())
 WORLD_GEOMETRY_V2 = json.loads((ROOT / "data" / "world_geometry_v2.json").read_text())
 GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
-SEED_VERSION = 3
+SEED_VERSION = 4  # 4 adds loose road materials and material data for crafting.
 MOVE_SPEED_CELLS_PER_SECOND = 7.1875
 RUN_SPEED_CELLS_PER_SECOND = 11.5
 NPCS = [
@@ -82,6 +87,38 @@ def db():
                 state_json TEXT NOT NULL,
                 PRIMARY KEY(run_id, seq)
             );
+            CREATE TABLE IF NOT EXISTS craft_traces (
+                run_id TEXT NOT NULL REFERENCES runs(id),
+                request_id TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                trace_json TEXT NOT NULL,
+                PRIMARY KEY(run_id, request_id)
+            );
+            -- Sprites are presentation, not physics: kept outside the event log.
+            CREATE TABLE IF NOT EXISTS assets (
+                asset_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(id),
+                object_id TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('pending','ready','failed','disabled')),
+                record_json TEXT NOT NULL,
+                trace_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS model_calls (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                model TEXT,
+                prompt_version TEXT NOT NULL,
+                latency_ms INTEGER NOT NULL,
+                input_tokens INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                attempts INTEGER NOT NULL DEFAULT 1,
+                ok INTEGER NOT NULL,
+                error TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(action_requests)")}
@@ -107,7 +144,7 @@ def initial_state(run: sqlite3.Row) -> dict:
         if run["seed_version"] >= 3 else copy.deepcopy(NPCS),
     }
     if run["seed_version"] >= 2:
-        state.update(m2.seed_m2())
+        state.update(m2.seed_m2(run["seed_version"]))
     else:
         state.update({"objects": {}, "agreements": {}, "journal": [],
                       "water_spilled_l": 0.0, "last_action": None})
@@ -135,6 +172,8 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
         state["sim_time_ms"] = payload["sim_time_ms"]
         if "npcs" in payload:
             state["npcs"] = payload["npcs"]
+    elif event["kind"] == "craft":
+        crafting.apply_payload(state, payload)
     else:
         raise ValueError(f"Unknown event kind {event['kind']}")
     state["event_seq"] = event["seq"]
@@ -210,6 +249,14 @@ class PhysicalAction(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
+class CraftRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+    text: str = Field(min_length=1, max_length=600)
+    selected_ids: list[str] = Field(default_factory=list, max_length=12)
+    expected_version: int = Field(ge=0)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
 def check_request(connection: sqlite3.Connection, state: dict, expected_version: int,
                   request_id: str) -> int | None:
     prior = connection.execute(
@@ -226,7 +273,8 @@ def check_request(connection: sqlite3.Connection, state: dict, expected_version:
 def health():
     with db() as connection:
         connection.execute("SELECT 1").fetchone()
-    return {"status": "ok", "seed_version": SEED_VERSION, "geometry_version": GEOMETRY_VERSION}
+    return {"status": "ok", "seed_version": SEED_VERSION, "geometry_version": GEOMETRY_VERSION,
+            "ai": ai_config.status()}
 
 
 @app.post("/runs", status_code=201)
@@ -339,6 +387,195 @@ def physical_action(run_id: str, request: PhysicalAction):
         connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                            (run_id, request.request_id, state["event_seq"], request_json))
     return {"state": state, "duplicate": False}
+
+
+_crafting_runs: set[str] = set()
+_asset_jobs: set[str] = set()
+_asset_jobs_lock = threading.Lock()
+ASSET_ID = re.compile(r"^spr_[0-9a-f]{8}_[a-z0-9_]+$")
+
+
+def _service_message(judged: judge.JudgeCall) -> str | None:
+    if judged.status == "disabled":
+        return "AI crafting isn't set up on this computer yet. Add OPENAI_API_KEY to backend/.env and restart the backend."
+    if judged.status == "capped":
+        return "This journey has used its allowance of AI calls, so nothing was judged. Nothing changed."
+    if judged.status == "error":
+        return "The judge couldn't be reached, so nothing was decided and nothing changed."
+    return None
+
+
+def _craft_response(run: sqlite3.Row, state: dict, trace: dict | None, duplicate: bool) -> dict:
+    response = {"state": state, "duplicate": duplicate}
+    if run["mode"] == "developer":
+        response["trace"] = trace
+    return response
+
+
+def _load_trace(connection: sqlite3.Connection, run_id: str, request_id: str) -> dict | None:
+    row = connection.execute("SELECT trace_json FROM craft_traces WHERE run_id=? AND request_id=?",
+                             (run_id, request_id)).fetchone()
+    return json.loads(row["trace_json"]) if row else None
+
+
+@app.post("/runs/{run_id}/craft")
+def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
+    """Judge a making attempt outside the lock, then revalidate and commit one event."""
+    request_json = json.dumps({"text": request.text, "selected_ids": request.selected_ids}, sort_keys=True)
+    with _lock, db() as connection:
+        run, state = load_run(connection, run_id)
+        prior = connection.execute("SELECT final_seq,request_json FROM action_requests WHERE run_id=? AND request_id=?",
+                                   (run_id, request.request_id)).fetchone()
+        if prior:
+            if prior["request_json"] != request_json:
+                raise HTTPException(409, {"reason": "request_id_conflict"})
+            return _craft_response(run, state_at(connection, run, prior["final_seq"]),
+                                   _load_trace(connection, run_id, request.request_id), duplicate=True)
+        if connection.execute("SELECT 1 FROM events WHERE run_id=? AND request_id=?",
+                              (run_id, request.request_id)).fetchone():
+            raise HTTPException(409, {"reason": "request_id_conflict"})
+        if request.expected_version != state["event_seq"]:
+            raise HTTPException(409, {"reason": "stale_state", "state": state})
+        if state["inside_city"] or not state["player"]["alive"]:
+            raise HTTPException(409, "Run is no longer interactive")
+        if run["seed_version"] < 4:
+            raise HTTPException(409, "This journey began before crafting existed. Start a new journey to make things.")
+        if run_id in _crafting_runs:
+            raise HTTPException(409, {"reason": "in_progress"})
+        _crafting_runs.add(run_id)
+        context = crafting.build_context(state, request.text, request.selected_ids)
+        calls_used = telemetry.calls_for_run(connection, run_id)
+    try:
+        # The model call happens outside the lock and outside any transaction.
+        if calls_used >= ai_config.max_calls_per_run():
+            judged = judge.JudgeCall(status="capped", error=f"Reached MAX_MODEL_CALLS_PER_RUN ({calls_used}).")
+        else:
+            judged = judge.judge_craft(context)
+        with _lock, db() as connection:
+            run, state = load_run(connection, run_id)
+            if judged.attempts:
+                telemetry.record(connection, run_id, "judge", judged.model, judged.prompt_version, judged.latency_ms,
+                                 judged.status == "ok", judged.error, judged.input_tokens, judged.output_tokens,
+                                 judged.attempts)
+            # Validation runs against the state as it is now, not the snapshot the judge saw.
+            verdict = crafting.validate(state, judged.result, _service_message(judged))
+            effort_ms = verdict["effort_seconds"] * 1000
+            sim_time_ms = state["sim_time_ms"] + effort_ms
+            payload = crafting.build_payload(state, run_id, request.text, verdict, request.request_id, sim_time_ms)
+            payload["npcs"] = npc_sim.advance_npcs(state["npcs"], effort_ms, state["sim_time_ms"], WORLD_GEOMETRY)
+            append(connection, state, "craft", payload, request.request_id, sim_time_ms // 1000)
+            crafting.apply_payload(state, payload)
+            connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
+                               (run_id, request.request_id, state["event_seq"], request_json))
+            new_object = payload["new_object"]
+            trace = {"request_id": request.request_id, "event_seq": state["event_seq"], "text": request.text,
+                     "selected_ids": request.selected_ids, "context": context, "judge": judged.as_dict(),
+                     "validator": {key: verdict[key] for key in ("category", "reason", "effort_seconds", "notes",
+                                                                 "consumed_ids", "tool_ids", "new_spec")},
+                     "made": new_object["id"] if new_object else None}
+            connection.execute("INSERT INTO craft_traces (run_id,request_id,trace_json) VALUES (?,?,?)",
+                               (run_id, request.request_id, json.dumps(trace)))
+            if new_object:
+                record = {key: new_object[key] for key in ("id", "name", "description", "materials")}
+                connection.execute(
+                    "INSERT INTO assets (asset_id,run_id,object_id,status,record_json) VALUES (?,?,?,'pending',?)",
+                    (new_object["sprite_asset_id"], run_id, new_object["id"], json.dumps(record)))
+                background.add_task(_generate_asset, new_object["sprite_asset_id"])
+    finally:
+        _crafting_runs.discard(run_id)
+    return _craft_response(run, state, trace, duplicate=False)
+
+
+def _generate_asset(asset_id: str) -> None:
+    """Paint one sprite. Runs after the response; failure leaves the placeholder in play."""
+    with _asset_jobs_lock:
+        if asset_id in _asset_jobs:
+            return
+        _asset_jobs.add(asset_id)
+    try:
+        with db() as connection:
+            row = connection.execute("SELECT run_id,record_json FROM assets WHERE asset_id=?", (asset_id,)).fetchone()
+        if row is None:
+            return
+        try:
+            call = illustrator.generate_sprite(json.loads(row["record_json"]), ASSET_DIR / f"{asset_id}.png")
+        except Exception as error:  # Never leave a job silently pending (it would be re-queued forever).
+            call = illustrator.SpriteCall(status="failed", error=f"{type(error).__name__}: {error}")
+        with _lock, db() as connection:
+            connection.execute("UPDATE assets SET status=?,trace_json=?,updated_at=CURRENT_TIMESTAMP WHERE asset_id=?",
+                               (call.status, json.dumps(call.as_dict()), asset_id))
+            if call.model:
+                telemetry.record(connection, row["run_id"], "illustrator", call.model, call.prompt_version,
+                                 call.latency_ms, call.status == "ready", call.error)
+    finally:
+        with _asset_jobs_lock:
+            _asset_jobs.discard(asset_id)
+
+
+@app.get("/assets/{asset_id}")
+def get_asset(asset_id: str, background: BackgroundTasks):
+    """200 PNG when painted, 202 while painting, 404 with a status when there is no picture."""
+    if not ASSET_ID.match(asset_id):
+        raise HTTPException(404, "Unknown asset")
+    with db() as connection:
+        row = connection.execute("SELECT status,trace_json FROM assets WHERE asset_id=?", (asset_id,)).fetchone()
+        if row is None:
+            raise HTTPException(404, "Unknown asset")
+        status = row["status"]
+        path = ASSET_DIR / f"{asset_id}.png"
+        if status == "ready" and path.exists():
+            return FileResponse(path, media_type="image/png")
+        if status == "disabled" and ai_config.images_enabled():
+            connection.execute("UPDATE assets SET status='pending' WHERE asset_id=?", (asset_id,))
+            status = "pending"
+    if status == "pending":
+        with _asset_jobs_lock:
+            running = asset_id in _asset_jobs
+        if not running:  # e.g. the backend restarted while painting
+            background.add_task(_generate_asset, asset_id)
+        return JSONResponse({"status": "pending"}, status_code=202)
+    return JSONResponse({"status": status, "error": json.loads(row["trace_json"]).get("error")}, status_code=404)
+
+
+def _developer_run(connection: sqlite3.Connection, run_id: str) -> sqlite3.Row:
+    run = connection.execute("SELECT * FROM runs WHERE id=?", (run_id,)).fetchone()
+    if run is None:
+        raise HTTPException(404, "Run not found")
+    if run["mode"] != "developer":
+        raise HTTPException(403, "AI traces are available in developer playtests only")
+    return run
+
+
+@app.get("/runs/{run_id}/traces")
+def get_traces(run_id: str, limit: int = 10):
+    """Developer view of recent judge calls, validator decisions, sprites, and model telemetry."""
+    with db() as connection:
+        _developer_run(connection, run_id)
+        rows = connection.execute("SELECT trace_json FROM craft_traces WHERE run_id=? ORDER BY rowid DESC LIMIT ?",
+                                  (run_id, max(1, min(limit, 50)))).fetchall()
+        assets = connection.execute("SELECT asset_id,object_id,status,record_json,trace_json,updated_at FROM assets "
+                                    "WHERE run_id=? ORDER BY rowid DESC LIMIT 20", (run_id,)).fetchall()
+        calls = telemetry.recent(connection, run_id)
+    return {"ai": ai_config.status(), "judge_prompt_version": judge.PROMPT_VERSION,
+            "judge_system_prompt": judge.system_prompt(),
+            "traces": [json.loads(row["trace_json"]) for row in rows],
+            "assets": [{"asset_id": a["asset_id"], "object_id": a["object_id"], "status": a["status"],
+                        "record": json.loads(a["record_json"]), "call": json.loads(a["trace_json"]),
+                        "updated_at": a["updated_at"]} for a in assets],
+            "model_calls": calls}
+
+
+@app.post("/runs/{run_id}/assets/{asset_id}/retry")
+def retry_asset(run_id: str, asset_id: str, background: BackgroundTasks):
+    """Developer-only: repaint a failed sprite."""
+    with _lock, db() as connection:
+        _developer_run(connection, run_id)
+        updated = connection.execute("UPDATE assets SET status='pending' WHERE asset_id=? AND run_id=?",
+                                     (asset_id, run_id)).rowcount
+    if not updated:
+        raise HTTPException(404, "Unknown asset")
+    background.add_task(_generate_asset, asset_id)
+    return {"status": "pending"}
 
 
 @app.post("/runs/{run_id}/move")

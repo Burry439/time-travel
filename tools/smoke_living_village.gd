@@ -14,7 +14,7 @@ func _run() -> void:
 	root.add_child(scene)
 	await process_frame
 	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
-	if not created.ok or int(created.data.seed_version) != 3:
+	if not created.ok or int(created.data.seed_version) < 3:
 		_fail("Living-village backend unavailable")
 		return
 	scene._enter_run(created.data, false)

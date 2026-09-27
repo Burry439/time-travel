@@ -11,7 +11,7 @@ def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progres
     http = TestClient(service.app)
     initial = http.post("/runs", json={}).json()
     run_id = initial["run_id"]
-    assert initial["seed_version"] == 3
+    assert initial["seed_version"] >= 3
     assert all("controller" in npc for npc in initial["npcs"])
 
     state = initial

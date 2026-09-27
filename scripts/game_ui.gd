@@ -12,6 +12,23 @@ var toast_time := 0.0
 var bag_button: Button
 var area: Label
 var shade: ColorRect
+var try_input: TextEdit
+var try_selected: Array[String] = []
+var working_label: Label
+var working_clock := 0.0
+const OUTCOME_TITLES := {
+	"success": "You made something", "failed": "It didn't work", "blocked": "Something is missing",
+	"needs_clarification": "One question", "unsupported": "Beyond this world's rules",
+	"unresolved": "Nothing was decided",
+}
+const FLAG_WORDS := {
+	"rigid": "rigid", "flexible": "flexible", "sharp_edge": "sharp", "tieable": "can be tied",
+	"adhesive": "sticky", "container": "holds things", "watertight": "watertight", "floats": "floats",
+	"combustible": "would burn", "ferromagnetic": "attracted to magnets", "magnetized": "magnetic",
+	"magnet_source": "strongly magnetic", "light_source": "gives light", "heat_source": "gives heat",
+	"sound_loud": "loud", "reflective": "reflective", "indicates_direction": "points one way",
+	"measures_length": "measures length", "stable_support": "stands steady", "fulcrum": "works as a pivot",
+}
 
 func label(text: String, font_size := 18) -> Label:
 	var node := Label.new()
@@ -76,7 +93,7 @@ func build(owner_game: Node2D) -> void:
 	buttons.add_child(bag_button)
 	buttons.add_child(button("Journal  [J]", open_journal))
 	buttons.add_child(button("Pause", open_pause))
-	game.hint = label("WASD / arrows  Move     Shift  Run     E  Interact     F  Inspect     I  Bag     Esc  Pause", 14)
+	game.hint = label("WASD / arrows  Move     Shift  Run     E  Interact     F  Inspect     T  Try something     I  Bag     Esc  Pause", 14)
 	game.hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	game.hint.position = Vector2(24, -36)
 	game.hint.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -139,6 +156,7 @@ func build(owner_game: Node2D) -> void:
 	debug_box.add_child(game.trace_text)
 	game.gate_button = button("OPEN GATE (TEST)", game._toggle_gate)
 	debug_box.add_child(game.gate_button)
+	debug_box.add_child(button("AI TRACES  [F4]", game.open_traces))
 	game.trace_panel.hide()
 	game.victory_panel = panel(self, Vector2(380, 230), Vector2(520, 190))
 	var win_box := VBoxContainer.new()
@@ -155,6 +173,9 @@ func _process(delta: float) -> void:
 	shade.visible = game.menu.visible or modal.visible or game.victory_panel.visible
 	chrome.visible = not game.menu.visible
 	prompt.visible = not prompt.text.is_empty() and not modal.visible and not game.victory_panel.visible
+	if modal_kind == "working" and is_instance_valid(working_label):
+		working_clock += delta
+		working_label.text = "You set to work" + ".".repeat(1 + int(working_clock * 2.0) % 3)
 
 func notify(text: String) -> void:
 	toast.text = text
@@ -207,15 +228,9 @@ func open_bag() -> void:
 		count += 1
 		var row := HBoxContainer.new()
 		body.add_child(row)
-		var icon := TextureRect.new()
-		var sprite := game.get_node_or_null("M2Objects/" + str(id)) as Sprite2D
-		if sprite:
-			icon.texture = sprite.texture
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.custom_minimum_size = Vector2(64, 64)
-		row.add_child(icon)
-		var description := label(str(obj.name).capitalize() + "\n" + str(obj.mass_kg) + " kg", 17)
+		row.add_child(object_icon(obj))
+		var made := "  ·  made by you" if obj.get("created_by") == "player" else ""
+		var description := label(str(obj.name).capitalize() + "\n" + str(obj.mass_kg) + " kg" + made, 17)
 		description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(description)
 		row.add_child(button("Inspect", inspect.bind(str(id))))
@@ -229,18 +244,40 @@ func inspect(id: String) -> void:
 	var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
 	if not obj.is_empty():
 		var body := begin_modal(str(obj.name).capitalize(), "inspect")
-		paragraph(body, "Condition: " + str(obj.condition).capitalize() + "\nWeight: " + str(obj.mass_kg) + " kg")
-		var owner_name := "Nobody"
+		var heading := HBoxContainer.new()
+		heading.add_theme_constant_override("separation", 14)
+		body.add_child(heading)
+		heading.add_child(object_icon(obj, 96))
+		var summary := label(str(obj.get("description", "")), 17)
+		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		heading.add_child(summary)
+		var facts := "Condition: " + str(obj.condition).capitalize() + "\nWeight: " + str(obj.mass_kg) + " kg"
+		if obj.get("length_m") != null:
+			facts += "\nLength: about %s m" % obj.length_m
+		if not obj.get("materials", []).is_empty():
+			facts += "\nMade of: " + ", ".join(obj.materials)
+		var feel := flag_words(obj.get("flags", []))
+		if not feel.is_empty():
+			facts += "\nIt is: " + feel
+		paragraph(body, facts)
+		var owner_name := "You" if obj.owner_id == "player" else "Nobody"
 		for npc in game.run_state.npcs:
 			if npc.id == obj.owner_id:
 				owner_name = str(npc.name)
 		paragraph(body, "Belongs to: " + owner_name)
+		if obj.get("created_by") == "player":
+			paragraph(body, provenance(obj))
+			capability_lines(body, obj)
+			if game.is_placeholder(obj):
+				paragraph(body, "(Its picture is still being painted.)" if game.sprite_status(obj) == "polling"
+					else "(Its picture couldn't be painted; a stand-in is shown.)")
 		paragraph(body, "Carried in your bag." if obj.holder_id == "player" else "Lying here in the world.")
 		if float(obj.get("capacity_l", 0)) > 0:
 			paragraph(body, "Water: %s / %s litres" % [obj.get("water_l", 0), obj.capacity_l])
 		if obj.holder_id == "player":
 			body.add_child(button("Back to belongings", open_bag))
-		elif obj.owner_id == null:
+		elif obj.owner_id == null or obj.owner_id == "player":
 			body.add_child(button("Pick up", game._quick_action.bind("take", id)))
 		return
 	for npc in game.run_state.npcs:
@@ -287,3 +324,277 @@ func open_pause() -> void:
 	body.add_child(volume)
 	paragraph(body, "WASD / arrows to move • Shift to run\nE to interact • F to inspect • Tab to cycle nearby targets\nI for belongings • J for journal • Mouse wheel to zoom\n\nEvery completed action and movement is saved automatically.")
 	body.add_child(button("Save and return to title", game._back_to_menu))
+
+
+func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.texture = game.texture_for(obj)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(edge, edge)
+	icon.set_meta("object_id", str(obj.id))
+	return icon
+
+
+## Swap placeholder icons in the open panel once a painted sprite arrives.
+func refresh_icons() -> void:
+	for icon in modal_box.find_children("*", "TextureRect", true, false):
+		if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
+			icon.texture = game.texture_for(game.run_state.objects[icon.get_meta("object_id")])
+
+
+func flag_words(flags: Array) -> String:
+	var words: PackedStringArray = []
+	for flag in flags:
+		words.append(str(FLAG_WORDS.get(flag, flag)))
+	return ", ".join(words)
+
+
+func _listing(names: PackedStringArray) -> String:
+	if names.size() <= 1:
+		return "".join(names)
+	return ", ".join(names.slice(0, names.size() - 1)) + " and " + names[names.size() - 1]
+
+
+func provenance(obj: Dictionary) -> String:
+	var objects: Dictionary = game.run_state.objects
+	var parts: PackedStringArray = []
+	for id in obj.get("components", []):
+		parts.append("a " + str(objects[id].name) if objects.has(id) else str(id))
+	var tools: PackedStringArray = []
+	for id in obj.get("tools_used", []):
+		tools.append("the " + str(objects[id].name) if objects.has(id) else str(id))
+	var text := "Made by you from " + _listing(parts)
+	if not tools.is_empty():
+		text += ", using " + _listing(tools)
+	return text + ".\nYour words: “" + str(obj.get("created_text", "")) + "”"
+
+
+func capability_lines(body: VBoxContainer, obj: Dictionary) -> void:
+	var lines: PackedStringArray = []
+	for capability in obj.get("known_capabilities", []):
+		lines.append("• " + str(capability.text) + ("" if capability.status == "expected" else "  (untested)"))
+	if not lines.is_empty():
+		paragraph(body, "What it might do:\n" + "\n".join(lines))
+
+
+func open_try(prefill := "") -> void:
+	if game.run_state.is_empty() or game.request_busy or not game.gameplay_active:
+		return
+	var body := begin_modal("Try something", "try")
+	paragraph(body, "Describe what you want to make, in your own words. You can use what you carry and loose things within reach.")
+	if not game.ai_ready():
+		var warning := label("AI judging isn't set up on this computer yet (no OpenAI key on the backend). You can still try; the game will tell you honestly that it couldn't decide.", 14)
+		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		warning.add_theme_color_override("font_color", GOLD)
+		body.add_child(warning)
+	try_input = TextEdit.new()
+	try_input.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	try_input.custom_minimum_size = Vector2(0, 96)
+	try_input.placeholder_text = "What do you want to do?"
+	try_input.add_theme_font_size_override("font_size", 17)
+	try_input.text = prefill
+	try_input.gui_input.connect(_on_try_key)
+	body.add_child(try_input)
+	try_selected.clear()
+	var items: Array[Dictionary] = game.craft_candidates()
+	if items.is_empty():
+		paragraph(body, "You carry nothing, and nothing loose is within reach. Walk closer to things or pick them up first.")
+	else:
+		body.add_child(label("Within reach (optional: click to point at something)", 14))
+		var chips := HFlowContainer.new()
+		chips.add_theme_constant_override("h_separation", 6)
+		chips.add_theme_constant_override("v_separation", 6)
+		for obj in items:
+			var chip := button(str(obj.name) + ("  (carried)" if obj.holder_id == "player" else ""), func() -> void: pass)
+			chip.custom_minimum_size.y = 34
+			chip.toggle_mode = true
+			chip.icon = game.texture_for(obj)
+			chip.expand_icon = false
+			chip.add_theme_constant_override("icon_max_width", 26)
+			chip.add_theme_font_size_override("font_size", 14)
+			chip.toggled.connect(_on_chip.bind(str(obj.id), str(obj.name)))
+			chips.add_child(chip)
+		body.add_child(chips)
+	body.add_child(button("Do it  [Enter]", _submit_try))
+	try_input.grab_focus.call_deferred()
+	try_input.set_caret_column.call_deferred(prefill.length())
+
+
+func _on_chip(pressed: bool, id: String, item_name: String) -> void:
+	if pressed and id not in try_selected:
+		try_selected.append(id)
+		if item_name not in try_input.text:
+			try_input.insert_text_at_caret(("" if try_input.text.ends_with(" ") or try_input.text.is_empty() else " ") + "the " + item_name + " ")
+	elif not pressed:
+		try_selected.erase(id)
+	try_input.grab_focus()
+
+
+func _on_try_key(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.shift_pressed and \
+			(event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER):
+		try_input.accept_event()
+		_submit_try()
+
+
+func _submit_try() -> void:
+	var text := try_input.text.strip_edges()
+	if text.is_empty():
+		notify("Describe what you want to try first.")
+		return
+	game._try_something(text, try_selected.duplicate())
+
+
+func show_working(text: String) -> void:
+	var body := begin_modal("Working", "working")
+	paragraph(body, "“" + text + "”")
+	working_clock = 0.0
+	working_label = label("You set to work.", 22)
+	working_label.add_theme_color_override("font_color", GOLD)
+	body.add_child(working_label)
+	paragraph(body, "The world is working out whether this can be done. Time stands still while you wait.")
+
+
+func show_craft_result(entry: Dictionary, trace) -> void:
+	var category := str(entry.category)
+	var body := begin_modal(str(OUTCOME_TITLES.get(category, "Result")), "result")
+	var said := label("“" + str(entry.text) + "”", 15)
+	said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	said.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.75))
+	body.add_child(said)
+	paragraph(body, str(entry.reason))
+	var made = entry.get("made")
+	if made != null and game.run_state.objects.has(made):
+		var obj: Dictionary = game.run_state.objects[made]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		body.add_child(row)
+		row.add_child(object_icon(obj, 104))
+		var about := VBoxContainer.new()
+		about.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(about)
+		var title := label(str(obj.name).capitalize(), 22)
+		title.add_theme_color_override("font_color", GOLD)
+		about.add_child(title)
+		paragraph(about, str(obj.get("description", "")))
+		var facts := "Made of: " + ", ".join(obj.get("materials", [])) + "\nWeight: " + str(obj.mass_kg) + " kg"
+		var feel := flag_words(obj.get("flags", []))
+		if not feel.is_empty():
+			facts += "\nIt is: " + feel
+		paragraph(body, facts)
+		capability_lines(body, obj)
+		paragraph(body, "It's in your bag." if obj.holder_id == "player"
+			else "It's too heavy to carry with everything else, so it's at your feet.")
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	if category == "needs_clarification":
+		actions.add_child(button("Answer", open_try.bind(str(entry.text) + "\n")))
+	actions.add_child(button("Try something else", open_try))
+	actions.add_child(button("Close", close_modal))
+	body.add_child(actions)
+	if game.run_state.get("mode", "") == "developer" and typeof(trace) == TYPE_DICTIONARY:
+		trace_view(body, trace)
+
+
+func show_craft_error(problem: String, text: String) -> void:
+	var body := begin_modal("Nothing happened", "result")
+	paragraph(body, problem)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	actions.add_child(button("Try again", open_try.bind(text)))
+	actions.add_child(button("Close", close_modal))
+	body.add_child(actions)
+
+
+## Developer-only view of one judge call: what was sent, what came back, what code changed.
+func trace_view(body: VBoxContainer, trace: Dictionary) -> void:
+	var heading := label("DEVELOPER TRACE", 12)
+	heading.add_theme_color_override("font_color", GOLD)
+	body.add_child(heading)
+	var judged: Dictionary = trace.get("judge", {})
+	var validator: Dictionary = trace.get("validator", {})
+	var summary := "Judge: %s  ·  model %s  ·  prompt %s  ·  reasoning %s\n%d ms  ·  %d in / %d out tokens  ·  %d attempt(s)" % [
+		_shown(judged.get("status")), _shown(judged.get("model")), _shown(judged.get("prompt_version")),
+		_shown(judged.get("reasoning")), int(judged.get("latency_ms", 0)), int(judged.get("input_tokens", 0)),
+		int(judged.get("output_tokens", 0)), int(judged.get("attempts", 0))]
+	if judged.get("error") != null:
+		summary += "\nError: " + str(judged.error)
+	for failure in judged.get("attempt_errors", []):
+		summary += "\nAttempt error: " + str(failure)
+	var proposed = judged.get("result")
+	if typeof(proposed) == TYPE_DICTIONARY:
+		summary += "\nModel proposed: %s  →  validator committed: %s" % [proposed.get("outcome"), validator.get("category")]
+	else:
+		summary += "\nValidator committed: " + str(validator.get("category"))
+	var notes: Array = validator.get("notes", [])
+	summary += "\nValidator notes: " + ("none (proposal accepted as is)" if notes.is_empty() else "")
+	for note in notes:
+		summary += "\n  • " + str(note)
+	paragraph(body, summary)
+	var raw = judged.get("raw_output")
+	var parsed = JSON.parse_string(str(raw)) if raw != null else null
+	reveal(body, "Model output (raw)", JSON.stringify(parsed, "  ") if parsed != null else str(raw))
+	reveal(body, "Context sent to the model", JSON.stringify(trace.get("context", {}), "  "))
+	if typeof(validator.get("new_spec")) == TYPE_DICTIONARY:
+		reveal(body, "Object committed by code", JSON.stringify(validator.new_spec, "  "))
+
+
+func _shown(value) -> String:
+	return "-" if value == null else str(value)
+
+
+func reveal(body: VBoxContainer, title: String, text: String) -> void:
+	var box := TextEdit.new()
+	box.text = text
+	box.editable = false
+	box.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	box.custom_minimum_size = Vector2(0, 220)
+	box.add_theme_font_size_override("font_size", 13)
+	box.visible = false
+	var toggle := button("Show " + title.to_lower(), func() -> void: pass)
+	toggle.custom_minimum_size.y = 32
+	toggle.add_theme_font_size_override("font_size", 13)
+	toggle.pressed.connect(func() -> void:
+		box.visible = not box.visible
+		toggle.text = ("Hide " if box.visible else "Show ") + title.to_lower())
+	body.add_child(toggle)
+	body.add_child(box)
+
+
+func show_traces(data: Dictionary) -> void:
+	var body := begin_modal("AI traces", "traces")
+	var ai: Dictionary = data.get("ai", {})
+	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)" % [
+		ai.get("mode"), "on" if ai.get("judge") else "off", ai.get("judge_model"),
+		"on" if ai.get("images") else "off", ai.get("image_model")])
+	var traces: Array = data.get("traces", [])
+	if traces.is_empty():
+		paragraph(body, "No attempts yet. Press T in the world to try making something.")
+	for trace in traces:
+		var title := label("“" + str(trace.get("text", "")) + "”", 17)
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.add_theme_color_override("font_color", GOLD)
+		body.add_child(title)
+		trace_view(body, trace)
+		body.add_child(HSeparator.new())
+	var sprites: Array = data.get("assets", [])
+	if not sprites.is_empty():
+		body.add_child(label("SPRITES", 12))
+		for sprite in sprites:
+			var info: Dictionary = sprite.get("call", {})
+			paragraph(body, "%s  ·  %s  ·  %s  ·  %d ms%s" % [sprite.get("record", {}).get("name"), sprite.status,
+				_shown(info.get("model")), int(info.get("latency_ms", 0)),
+				("\nError: " + str(info.error)) if info.get("error") != null else ""])
+			if sprite.status in ["failed", "disabled"]:
+				body.add_child(button("Retry painting " + str(sprite.object_id), game.retry_sprite.bind(str(sprite.asset_id))))
+			if info.has("prompt"):
+				reveal(body, "Image prompt for " + str(sprite.object_id), str(info.prompt))
+	var calls: Array = data.get("model_calls", [])
+	if not calls.is_empty():
+		var lines: PackedStringArray = []
+		for entry in calls:
+			lines.append("%s  %s  %d ms  %d/%d tok  %s" % [entry.role, _shown(entry.model), int(entry.latency_ms),
+				int(entry.input_tokens), int(entry.output_tokens), "ok" if entry.ok else "FAILED"])
+		reveal(body, "Model call log", "\n".join(lines))
+	reveal(body, "Judge system prompt (" + str(data.get("judge_prompt_version", "")) + ")", str(data.get("judge_system_prompt", "")))

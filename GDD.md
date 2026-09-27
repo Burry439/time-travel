@@ -336,7 +336,7 @@ Everything listed is a real stateful object with an owner, a holder, a location,
 
 | Zone | Objects | Owner | Notes |
 | --- | --- | --- | --- |
-| South road | 2 fallen branches ★, short cord (1 m) ★, 3 loose stones ★, dry grass (tinder) | Public | ★ = art exists now |
+| South road | 2 fallen branches ★, short cord (1 m) ★, loose stone ★; **added in seed 4:** flint shard, flat stone, bundle of dry grass, hollow reeds, length of vine (2 m), strip of bark, lump of pine resin | Public | ★ = hand-placed art. Seed-4 items use placeholders until `tools/generate_material_art.py` paints them. Materials and descriptions: `backend/m2.py` `MATERIAL_SEED` |
 | Inn | Wooden bucket ★, water trough (80 L) ★, kitchen knife, 2 cups, bottle, water pitcher, 2 clay bowls, spare cloth, tallow candle, cashbox (locked, private) | Hessa | |
 | South house | Sacks, empty crates, lamp oil flask | Hessa | Storehouse; locked unless Hessa lets you in |
 | Smithy | Forge (facility), anvil, smith's hammer, tongs, file, iron scrap stack, **ferrous needle/pin stack (12)**, nail stack, charcoal sack, **bronze scrap stack**, quench bucket | Mara | Jory can hand out low-value scrap; forge use needs Mara |
@@ -733,6 +733,17 @@ It's the same world and the same rules, plus observability. F3 opens a dock with
 
 The developer gate button stays for map testing but is labelled as a cheat.
 
+**Built for crafting (27 Sep 2026).** In a developer playtest:
+
+- Every Try Something result card ends with a **developer trace**:
+  - Judge status, model, prompt version, reasoning effort, latency, tokens, and attempts
+  - Any API or schema errors
+  - What the model proposed vs. what the validator committed, plus every validator note (clamped, stripped, rejected)
+  - Expandable raw model JSON, the exact context sent to the model, and the object record code committed
+- **F4** (or the F3 panel's *AI traces* button) lists the last 10 attempts, sprite jobs with their image prompts and errors (plus *Retry painting*), the model-call log, and the judge's full system prompt.
+- The same data is available from `GET /runs/{id}/traces`.
+- Normal runs never receive traces (403).
+
 ---
 
 ## 9. The AI layer
@@ -760,26 +771,31 @@ The developer gate button stays for map testing but is labelled as a cheat.
 
 ### 9.3 Candidate models
 
-These are from the previous guide and **haven't been verified** here. Before M2, confirm availability, pricing, and structured-output support for each against the provider's current documentation.
+Checked against OpenAI's model catalogue on 27 Sep 2026.
 
-| Role | Candidate | Alternative to benchmark |
+- **Text models:** `gpt-6-luna` ($0.10 / $0.50 per million tokens in/out), `gpt-6-sol` ($2 / $10), and `gpt-6-astra` ($10 / $50) are listed.
+- **Image models:** the current ones are **GPT-Image-2.5 Flare** (fast) and **Sunburst** (best). They support `background="transparent"`.
+- **Not listed:** `gpt-5.6-terra` and `gpt-image-2`. The installed SDK still knows `gpt-image-2`, so it is kept as an automatic fallback.
+- **Unverified:** Jev.
+
+| Role | Current setting | Alternative to benchmark |
 | --- | --- | --- |
-| Interpreter, voice | GPT-6 Luna (`gpt-6-luna`) | Any fast model with structured outputs |
-| Physics judge | GPT-6 Sol (`gpt-6-sol`) | GPT-5.6 Terra (`gpt-5.6-terra`); same model as interpreter |
-| Decider | Jev (TypeSafe) | General LLM with a forced-choice schema |
-| Hard social cases, candidate NPC intentions | GPT-5.6 Terra | Judge model |
-| Illustrator | GPT Image 2 (`gpt-image-2`) | Any image model with transparent output |
+| Physics judge (crafting, built) | `gpt-6-sol`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`) | `gpt-6-luna` (about 20× cheaper) |
+| Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
+| Interpreter, voice | `gpt-6-luna` | The judge model |
+| Decider (M4) | Jev (TypeSafe), still to verify | General LLM with a forced-choice schema |
+| Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
 
-The model for each role is chosen in `.env` (`MODEL_INTERPRETER=…`, etc.). Gameplay code calls roles, never providers.
+Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Gameplay code calls roles, never providers.
 
 ### 9.4 AI modes
 
 `AI_MODE` in `.env`:
 
-- **`off`**: only deterministic actions; novel attempts return `unresolved`. For UI and art work.
-- **`fixture`**: role adapters return recorded responses from `evals/fixtures/`. Used by automated tests and offline development; fully deterministic.
+- **`off`** (automatic when there's no key): only deterministic actions. Novel attempts return `unresolved` with an honest message.
+- **`stub`** (built): no model. The judge returns a clearly labelled deterministic "stub bundle" of the highlighted items, and the illustrator copies a stand-in picture. It exercises the full pipeline without cost; `tools/smoke_craft.gd` uses it. Automated Python tests monkeypatch the role adapters directly.
 - **`live`**: real providers.
-- **`manual`** (optional experiment): in developer mode a human types the judge's JSON result. This is a "Wizard of Oz" test of whether the loop is fun before we pay for models.
+- **`manual`** (optional experiment, not built): in developer mode a human types the judge's JSON result. This is a "Wizard of Oz" test of whether the loop is fun before we pay for models.
 
 ### 9.5 Contracts
 
@@ -858,6 +874,15 @@ Every model call logs: role, model, prompt version, input/output tokens, latency
 **Status: CURRENT**
 
 Each milestone lists its goal, what we build, its **exit criteria**, the **questions it must answer**, and **pivot options** if the answers are bad. M0–M1 contain no AI. M2 onward bring in the AI roles one at a time.
+
+> **Order change (D-08, 27 Sep 2026).** We pulled a **crafting slice of M2 + M3** ahead of M0/M1: make a new object from nearby materials and give it a generated sprite. It includes only the minimum M1 pieces it needs:
+>
+> - A generic object record and dynamic sprites
+> - The Try Something box
+> - The developer trace
+> - Seed-4 materials
+>
+> Still to do from M0: `/tick` movement sync, delta events for the older event kinds, and removing the legacy seed branches. Still to do from M1: the content files for all objects and NPCs, and the conversation panel. Status: built and tested with the stub judge; live-model verification is pending an API key (see the retro in §13).
 
 ### M0: Clean slate
 
@@ -1041,6 +1066,9 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-10 | 2026-09-27 | An explicit `AI_MODE=stub` exercises the whole pipeline without a model, and every judge call stores a developer trace: context, raw output, validator notes, tokens, and latency. | Debug model behaviour from inside the game; test the Godot flow without spending money. |
+| D-09 | 2026-09-27 | Generated sprites live **outside** the event log, in an `assets` table plus `data/assets/`. The object gets its `sprite_asset_id` when it is created; painting runs afterwards. | An image isn't physics. This avoids stale-version conflicts from a background writer, and replay never calls models. |
+| D-08 | 2026-09-27 | Build a crafting slice of M2 + M3 before M0/M1. | Test the riskiest idea (AI-judged invention) first, as the user requested. |
 | D-07 | 2026-09-27 | The AI layer is defined by **roles** with swappable models. It starts with one LLM and specialises only on measured evidence. | Avoid designing multi-model routing before one call works; let data choose. |
 | D-06 | 2026-09-27 | An **art freeze** until M6, except placeholders and the M3 illustrator style. | The core loop is the unproven risk; art is the proven strength. |
 | D-05 | 2026-09-27 | Player movement syncs once per second plus at action boundaries, not per cell. | Cuts about 8 requests/s to 1 and removes a fragile queue; authority is kept via reachability checks. |
@@ -1059,6 +1087,35 @@ Assumptions: A<x> confirmed / broken (evidence)
 Surprises: …
 Changes to this document: …
 ```
+
+### Retro: crafting slice (M2 + M3 part), 27 Sep 2026: build stage
+
+**Built:**
+
+- Try Something box (T / Enter) with reach chips
+- Judge role (`backend/ai/judge.py`, prompt `judge_v1`)
+- Code validator (`backend/crafting.py`) and `craft` events that store deltas
+- Illustrator role and asset store (`GET /assets/{id}`), with dynamic sprites, placeholders, and polling in Godot
+- Developer traces (result card, F4, `/runs/{id}/traces`), per-run model-call cap, telemetry table
+- Seven seed-4 road materials
+- 13 live eval cases (`evals/`) and a material-art generator
+
+**Exit criteria:**
+
+- Met with the stub judge:
+  - 25 backend tests pass.
+  - `tools/smoke_craft.gd` passes the full flow: make, bag, sprite download, drop, reload, inspect, traces.
+  - All existing Godot smoke tests pass.
+- Still open: **P1** (a real generated sprite) and **P2** with a live judge wait on an OpenAI key.
+
+**Assumptions:** none measured yet. A1, A2, A5, A6 and A9 get their first data from `evals/run_craft_evals.py`.
+
+**Surprises:**
+
+- `gpt-image-2` and `gpt-5.6-terra` aren't in the current catalogue.
+- The godot-ai MCP bridge leaked file handles on Windows ("Errno 24"); the GDScript edits were finished with file tools and verified by Godot's headless parser and the smoke tests.
+
+**Changes to this document:** §4.7, §8.6, §9.3, §9.4, the §11 order note, D-08 to D-10.
 
 ---
 

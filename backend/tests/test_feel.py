@@ -24,7 +24,7 @@ def test_building_and_tree_geometry_rejects_moves_without_mutating_save(tmp_path
 
 def test_geometry_leaves_all_npcs_and_resources_accessible():
     rectangles = service.WORLD_GEOMETRY["buildings"] + service.WORLD_GEOMETRY["obstacles"]
-    points = service.NPCS + list(service.m2.seed_m2()["objects"].values())
+    points = service.NPCS + list(service.m2.seed_m2(service.SEED_VERSION)["objects"].values())
     for point in points:
         for rectangle in rectangles:
             x, y, w, h = rectangle["cells"]

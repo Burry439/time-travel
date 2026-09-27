@@ -41,6 +41,24 @@ var footstep_distance := 0.0
 var camera_zoom := 1.0
 var sound_volume := 0.7
 var sync_error := false
+var ai_status: Dictionary = {}
+var last_trace = null # Developer runs receive the judge trace with each attempt.
+
+# Created and newly seeded objects have no authored scene node. Until their painted
+# sprite arrives they borrow an existing prop picture chosen by material.
+const PLACEHOLDERS := {
+	"wood": preload("res://assets/generated/prop_branch.png"),
+	"stone": preload("res://assets/generated/prop_stone.png"),
+	"fiber": preload("res://assets/generated/prop_cord.png"),
+	"metal": preload("res://assets/generated/prop_stone.png"),
+	"bundle": preload("res://assets/generated/prop_cord.png"),
+}
+const OBJECT_HEIGHT := 46.0
+const OBJECT_MAX_WIDTH := 60.0
+const REACH_CELLS := 2.5 # Matches backend m2.REACH_CELLS.
+var object_textures: Dictionary = {} # object id -> resolved Texture2D
+var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
+var placeholder_clock := 0.0
 
 
 func _ready() -> void:
@@ -85,8 +103,16 @@ func _start(mode: String) -> void:
 
 func _check_health() -> void:
 	var reply := await _api(HTTPClient.METHOD_GET, "/health")
+	if reply["ok"] and typeof(reply["data"].get("ai")) == TYPE_DICTIONARY:
+		ai_status = reply["data"]["ai"]
 	if menu.visible:
-		message.text = "Local simulation ready. Start or resume a run." if reply["ok"] else "Start the local backend first: tools/run_m0.ps1"
+		message.text = ("Local simulation ready. Start or resume a run." + (
+			"" if ai_ready() else "\nAI crafting is off: add OPENAI_API_KEY to backend/.env and restart the backend.")
+			) if reply["ok"] else "Start the local backend first: tools/run_m0.ps1"
+
+
+func ai_ready() -> bool:
+	return bool(ai_status.get("judge", false))
 
 
 func _resume() -> void:
@@ -123,6 +149,11 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	ui.modal.hide()
 	ui.modal_kind = ""
 	_apply_building_geometry(int(state.get("geometry_version", 1)))
+	last_trace = null
+	for child in $M2Objects.get_children():
+		if child.has_meta("dynamic"):
+			$M2Objects.remove_child(child)
+			child.queue_free()
 	player.position = _cell_center(int(state["player"]["x"]), int(state["player"]["y"]))
 	camera.reset_smoothing()
 	menu.hide()
@@ -363,11 +394,20 @@ func _sync_display() -> void:
 	hud.text = "The gate lies to the north ↑" if not run_state["gate_open"] else "The city gate is open ↑"
 	ui.bag_button.text = "Bag %s  [I]" % carried.size()
 	for object_id in run_state.get("objects", {}):
+		var obj: Dictionary = run_state["objects"][object_id]
 		var sprite := get_node_or_null("M2Objects/" + str(object_id)) as Sprite2D
-		if sprite:
-			var obj: Dictionary = run_state["objects"][object_id]
-			sprite.visible = obj["holder_id"] == null
-			sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
+		if sprite == null:
+			if obj["holder_id"] != null:
+				continue
+			sprite = Sprite2D.new()
+			sprite.name = str(object_id)
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			sprite.set_meta("dynamic", true)
+			$M2Objects.add_child(sprite)
+		if sprite.has_meta("dynamic"):
+			_apply_object_texture(sprite, obj)
+		sprite.visible = obj["holder_id"] == null
+		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
 	for npc in run_state.get("npcs", []):
 		npc_targets[str(npc["id"])] = _cell_center(int(npc["x"]), int(npc["y"]))
 	gate_button.text = "CLOSE GATE (TEST)" if run_state["gate_open"] else "OPEN GATE (TEST)"
@@ -390,10 +430,10 @@ func _refresh_trace() -> void:
 		_sync_display()
 
 
-func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}) -> Dictionary:
+func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeout := 5.0) -> Dictionary:
 	var request := HTTPRequest.new()
 	add_child(request)
-	request.timeout = 5.0
+	request.timeout = timeout
 	var payload := JSON.stringify(body) if method != HTTPClient.METHOD_GET else ""
 	var err := request.request(SERVER + path, ["Content-Type: application/json"], method, payload)
 	if err != OK:
@@ -409,6 +449,200 @@ func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}) -> Dic
 
 func _request_id(kind: String) -> String:
 	return str(run_state.run_id) + ":" + kind + ":" + Crypto.new().generate_random_bytes(8).hex_encode()
+
+
+## Picture for any object: authored node, committed material art, painted sprite, or placeholder.
+func texture_for(obj: Dictionary) -> Texture2D:
+	var id := str(obj["id"])
+	if object_textures.has(id):
+		return object_textures[id]
+	var authored := get_node_or_null("M2Objects/" + id) as Sprite2D
+	if authored and not authored.has_meta("dynamic"):
+		return authored.texture
+	var material_art := "res://assets/generated/materials/%s.png" % id
+	if ResourceLoader.exists(material_art):
+		object_textures[id] = _trimmed_texture((load(material_art) as Texture2D).get_image())
+		return object_textures[id]
+	var asset_id := str(obj.get("sprite_asset_id", ""))
+	var cached := "user://assets/%s.png" % asset_id
+	if not asset_id.is_empty() and FileAccess.file_exists(cached):
+		var image := Image.load_from_file(cached)
+		if image:
+			object_textures[id] = _trimmed_texture(image)
+			return object_textures[id]
+	if not asset_id.is_empty() and not sprite_state.has(asset_id):
+		_poll_sprite(id, asset_id)
+	return PLACEHOLDERS.get(str(obj.get("placeholder", "bundle")), PLACEHOLDERS["bundle"])
+
+
+func is_placeholder(obj: Dictionary) -> bool:
+	var authored := get_node_or_null("M2Objects/" + str(obj["id"])) as Sprite2D
+	return not object_textures.has(str(obj["id"])) and not (authored and not authored.has_meta("dynamic"))
+
+
+func sprite_status(obj: Dictionary) -> String:
+	return "ready" if not is_placeholder(obj) else str(sprite_state.get(str(obj.get("sprite_asset_id", "")), "none"))
+
+
+func _trimmed_texture(image: Image) -> Texture2D:
+	if image.is_compressed():
+		image.decompress()
+	var used := image.get_used_rect()
+	if used.size.x > 0 and used.size.y > 0:
+		image = image.get_region(used)
+	var longest := maxi(image.get_width(), image.get_height())
+	if longest > 256:
+		var ratio := 256.0 / float(longest)
+		image.resize(maxi(1, roundi(image.get_width() * ratio)), maxi(1, roundi(image.get_height() * ratio)),
+			Image.INTERPOLATE_LANCZOS)
+	return ImageTexture.create_from_image(image)
+
+
+func _apply_object_texture(sprite: Sprite2D, obj: Dictionary) -> void:
+	var texture := texture_for(obj)
+	sprite.set_meta("placeholder", is_placeholder(obj))
+	if sprite.texture == texture:
+		return
+	sprite.texture = texture
+	var size := texture.get_size()
+	sprite.scale = Vector2.ONE * minf(OBJECT_HEIGHT / size.y, OBJECT_MAX_WIDTH / size.x)
+	sprite.modulate = Color.WHITE
+
+
+## Painting happens on the backend after the object exists; poll until it's ready.
+func _poll_sprite(object_id: String, asset_id: String) -> void:
+	sprite_state[asset_id] = "polling"
+	for _attempt in 60:
+		var reply := await _fetch_asset(asset_id)
+		if run_state.is_empty():
+			break
+		if reply.status == 200:
+			var image := Image.new()
+			if image.load_png_from_buffer(reply.body) == OK:
+				DirAccess.make_dir_recursive_absolute("user://assets")
+				image.save_png("user://assets/%s.png" % asset_id)
+				object_textures[object_id] = _trimmed_texture(image)
+				sprite_state.erase(asset_id)
+				_refresh_object_visuals()
+				return
+		if reply.status != 202:
+			sprite_state[asset_id] = "failed" # Keep the placeholder; developer mode can retry.
+			if run_state.get("mode", "") == "developer":
+				ui.notify("Sprite for %s could not be painted (HTTP %s). See AI traces (F3)." % [object_id, reply.status])
+			return
+		await get_tree().create_timer(3.0).timeout
+	sprite_state.erase(asset_id) # Gave up for now; the next display refresh polls again.
+
+
+func _fetch_asset(asset_id: String) -> Dictionary:
+	var request := HTTPRequest.new()
+	add_child(request)
+	request.timeout = 15.0
+	if request.request(SERVER + "/assets/" + asset_id) != OK:
+		request.queue_free()
+		return {"status": 0, "body": PackedByteArray()}
+	var completed: Array = await request.request_completed
+	request.queue_free()
+	return {"status": int(completed[1]), "body": completed[3]}
+
+
+func _refresh_object_visuals() -> void:
+	if run_state.is_empty():
+		return
+	_sync_display()
+	ui.refresh_icons()
+
+
+func _process(delta: float) -> void:
+	placeholder_clock += delta
+	for sprite in $M2Objects.get_children():
+		if sprite.has_meta("placeholder"):
+			var waiting: bool = sprite.get_meta("placeholder")
+			sprite.modulate = Color(0.85, 0.8, 0.7, 0.72 + sin(placeholder_clock * 3.0) * 0.18) if waiting else Color.WHITE
+
+
+## Items a making attempt may use: carried, or loose, unowned, and within reach.
+func craft_candidates() -> Array[Dictionary]:
+	var carried: Array[Dictionary] = []
+	var loose: Array[Dictionary] = []
+	for id in run_state.get("objects", {}):
+		var obj: Dictionary = run_state.objects[id]
+		if "water_source" in obj.capabilities or str(obj.condition) != "usable":
+			continue
+		if obj.holder_id == "player":
+			carried.append(obj)
+		elif obj.holder_id == null and obj.owner_id == null and \
+				Vector2(predicted_cell).distance_to(Vector2(int(obj.x), int(obj.y))) <= REACH_CELLS:
+			loose.append(obj)
+	carried.append_array(loose)
+	return carried
+
+
+func _try_something(text: String, selected_ids: Array) -> void:
+	if request_busy or not gameplay_active or sync_error:
+		return
+	request_busy = true
+	while movement_sync_active:
+		await get_tree().process_frame
+	if sync_error:
+		request_busy = false
+		return
+	ui.show_working(text)
+	var path := "/runs/" + str(run_state.run_id) + "/craft"
+	var body := {"text": text, "selected_ids": selected_ids,
+		"expected_version": run_state.event_seq, "request_id": _request_id("craft")}
+	var reply := await _api(HTTPClient.METHOD_POST, path, body, 150.0)
+	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500):
+		reply = await _api(HTTPClient.METHOD_POST, path, body, 150.0)
+	if reply.ok:
+		run_state = reply.data.state
+		last_trace = reply.data.get("trace")
+		request_busy = false
+		_sync_display()
+		var entry: Dictionary = run_state.last_action
+		if entry.category == "success":
+			effects.pickup_sound.play()
+			player_visual.play_gesture("gesture")
+		ui.show_craft_result(entry, last_trace)
+		return
+	var problem := _reply_problem(reply)
+	var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
+	if fresh.ok:
+		run_state = fresh.data
+		_sync_display()
+	else:
+		sync_error = true
+	request_busy = false
+	ui.show_craft_error(problem, text)
+
+
+func _reply_problem(reply: Dictionary) -> String:
+	if int(reply.status) == 0:
+		return "The local simulation didn't answer in time. Your journey is safe."
+	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+	if typeof(detail) == TYPE_DICTIONARY and str(detail.get("reason", "")) == "in_progress":
+		return "You're still working on your last attempt."
+	if typeof(detail) == TYPE_STRING:
+		return detail
+	return "The attempt couldn't be completed (HTTP %s). Your journey is safe." % reply.status
+
+
+func open_traces() -> void:
+	if run_state.get("mode", "") != "developer" or request_busy:
+		return
+	var reply := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id) + "/traces?limit=10")
+	if reply.ok:
+		ui.show_traces(reply.data)
+	else:
+		ui.notify("Could not load AI traces (HTTP %s)." % reply.status)
+
+
+func retry_sprite(asset_id: String) -> void:
+	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/assets/" + asset_id + "/retry")
+	if reply.ok:
+		sprite_state.erase(asset_id)
+		_refresh_object_visuals()
+		ui.notify("Repainting the sprite…")
 
 
 func _save_settings() -> void:
@@ -456,7 +690,7 @@ func _update_target() -> void:
 				if npc.id == nearby_target:
 					target = npc
 			verb = "Meet"
-		elif target.owner_id != null:
+		elif target.owner_id != null and target.owner_id != "player":
 			verb = "Inspect"
 		var target_actor := get_node_or_null("NPCs/" + nearby_target) as Node2D
 		effects.marker = target_actor.position if target_actor else _cell_center(int(target.x), int(target.y))
@@ -470,7 +704,7 @@ func _interact() -> void:
 	if nearby_target.is_empty() or request_busy:
 		return
 	var obj: Dictionary = run_state.get("objects", {}).get(nearby_target, {})
-	if not obj.is_empty() and obj.owner_id == null:
+	if not obj.is_empty() and (obj.owner_id == null or obj.owner_id == "player"):
 		_quick_action("take", nearby_target)
 	else:
 		ui.inspect(nearby_target)
@@ -529,6 +763,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			ui.open_pause()
 	elif event.keycode == KEY_F3 and run_state.mode == "developer":
 		trace_panel.visible = not trace_panel.visible
+	elif event.keycode == KEY_F4 and run_state.mode == "developer" and not ui.modal.visible:
+		open_traces()
 	elif (event.keycode == KEY_I and ui.modal_kind == "bag") or (event.keycode == KEY_J and ui.modal_kind == "journal"):
 		ui.close_modal()
 	elif not ui.modal.visible and gameplay_active:
@@ -539,6 +775,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					ui.inspect(nearby_target)
 			KEY_I: ui.open_bag()
 			KEY_J: ui.open_journal()
+			KEY_T, KEY_ENTER, KEY_KP_ENTER: ui.open_try()
 			KEY_TAB:
 				if nearby_ids.size() > 1:
 					nearby_target = nearby_ids[(nearby_ids.find(nearby_target) + 1) % nearby_ids.size()]
