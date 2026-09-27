@@ -58,6 +58,8 @@ const OBJECT_MAX_WIDTH := 60.0
 const REACH_CELLS := 2.5 # Matches backend m2.REACH_CELLS.
 const NEARBY_CELLS := 8.0 # Try Something can involve anything this close; the player walks there first.
 var scripted_walk := false
+var shown_speech: Dictionary = {} # npc id -> key of the last line shown in a bubble
+var thought_last := false
 var object_textures: Dictionary = {} # object id -> resolved Texture2D
 var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
 var placeholder_clock := 0.0
@@ -162,6 +164,7 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 			tree.rotation = 0.0
 			tree.modulate = Color.WHITE
 	player.position = _cell_center(int(state["player"]["x"]), int(state["player"]["y"]))
+	player_visual.revive()
 	camera.reset_smoothing()
 	menu.hide()
 	hud.show()
@@ -174,6 +177,10 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	if state["inside_city"]:
 		victory_panel.show()
 		gameplay_active = false
+	elif not state["player"].get("alive", true):
+		gameplay_active = false
+		player_visual.lie_dead()
+		ui.show_death(_death_reason())
 	else:
 		gameplay_active = true
 
@@ -204,6 +211,8 @@ func _spawn_npcs() -> void:
 			painted.lie_dead()
 		npc_targets[str(npc["id"])] = actor.position
 		npc_facing[str(npc["id"])] = 0
+		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
+		shown_speech[str(npc["id"])] = str(said.key) if typeof(said) == TYPE_DICTIONARY else ""
 		var nameplate := Label.new()
 		nameplate.name = "Nameplate"
 		nameplate.text = str(npc["name"])
@@ -225,7 +234,7 @@ func _animate_npcs(delta: float) -> void:
 			continue
 		var target: Vector2 = npc_targets.get(id, actor.position)
 		var before := actor.position
-		actor.position = actor.position.move_toward(target, 86.0 * delta)
+		actor.position = actor.position.move_toward(target, maxf(86.0, actor.position.distance_to(target) * 5.0) * delta)
 		var travel := actor.position - before
 		var painted := actor.get_node("PaintedActor")
 		var facing := int(npc_facing.get(id, 0))
@@ -233,7 +242,7 @@ func _animate_npcs(delta: float) -> void:
 		if travel.length() > 0.05:
 			facing = 3 if travel.x > 0.0 else 1 if travel.x < 0.0 else 0 if travel.y > 0.0 else 2
 			npc_facing[id] = facing
-			mode = "walk"
+			mode = "run" if travel.length() > 120.0 * delta else "walk"
 		elif npc.has("controller"):
 			mode = str(npc["controller"].get("activity", "idle"))
 			if mode == "wait":
@@ -323,7 +332,8 @@ func _physics_process(delta: float) -> void:
 		predicted_cell = cell
 		if not movement_sync_active:
 			_flush_moves()
-	if int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0 and not movement_sync_active:
+	if not movement_sync_active and (_minds_pending() or
+			(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0)):
 		_flush_moves()
 
 
@@ -331,13 +341,20 @@ func _flush_moves() -> void:
 	if movement_sync_active:
 		return
 	movement_sync_active = true
-	while gameplay_active and (not move_queue.is_empty() or
+	while gameplay_active and (not move_queue.is_empty() or _minds_pending() or
 		(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0)):
 		var sending_move := not move_queue.is_empty()
 		var elapsed_ms := 0
 		var body: Dictionary
 		var path := "/move"
-		if sending_move:
+		var timeout := 5.0
+		if not sending_move and _minds_pending() and not (thought_last and clock_pending_ms >= 500.0):
+			# People decide what to do; the player can keep moving meanwhile (moves queue up).
+			# After a round of thinking the clock gets a beat first, so thinking can never stop time.
+			path = "/think"
+			timeout = 40.0
+			body = {"expected_version": run_state["event_seq"], "request_id": _request_id("think")}
+		elif sending_move:
 			var step: Dictionary = move_queue.pop_front()
 			var cell: Vector2i = step["cell"]
 			body = {"x": cell.x, "y": cell.y,
@@ -349,13 +366,16 @@ func _flush_moves() -> void:
 			path = "/explore"
 			body = {"elapsed_ms": elapsed_ms, "expected_version": run_state["event_seq"],
 				"request_id": _request_id("explore")}
-		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body)
+		thought_last = path == "/think"
+		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body, timeout)
 		# Retrying the identical request is safe even when the first response was lost.
 		if not reply["ok"] and (int(reply.status) == 0 or int(reply.status) >= 500):
-			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body)
+			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + path, body, timeout)
 		if reply["ok"]:
+			var before := run_state
 			run_state = reply["data"]["state"]
 			_sync_display()
+			_react_to(before)
 			if run_state["inside_city"]:
 				gameplay_active = false
 				victory_panel.show()
@@ -422,8 +442,14 @@ func _sync_display() -> void:
 		sprite.visible = obj["holder_id"] == null
 		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
 	_apply_world_features()
+	if float(run_state["player"].get("health", 100)) < 100.0 and run_state["player"].get("alive", true):
+		hud.text += "\nYou are wounded"
 	for npc in run_state.get("npcs", []):
 		npc_targets[str(npc["id"])] = _cell_center(int(npc["x"]), int(npc["y"]))
+		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
+		if typeof(said) == TYPE_DICTIONARY and shown_speech.get(str(npc["id"]), "") != str(said.key):
+			shown_speech[str(npc["id"])] = str(said.key)
+			_show_bubble(str(npc["id"]), str(said.text))
 		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
 			plate.text = str(npc["name"]) + ("" if npc.get("alive", true) else " (dead)")
@@ -437,6 +463,80 @@ func _sync_display() -> void:
 		+ "Gate: " + ("open" if run_state["gate_open"] else "closed") + "\n" \
 		+ "Objective: " + ("complete" if run_state["inside_city"] else "active")
 	trace_panel.visible = run_state["mode"] == "developer" and trace_panel.visible
+
+
+func _minds_pending() -> bool:
+	return gameplay_active and not run_state.is_empty() and not run_state.get("pending_minds", []).is_empty()
+
+
+## Play what happened between two states: people striking the player, the player dying.
+func _react_to(before: Dictionary) -> void:
+	var old_journal: Array = before.get("journal", [])
+	var journal: Array = run_state.get("journal", [])
+	for index in range(old_journal.size(), journal.size()):
+		var entry: Dictionary = journal[index]
+		if entry.get("kind") == "npc_attack":
+			var striker := get_node_or_null("NPCs/%s/PaintedActor" % entry.npc_id)
+			if striker:
+				striker.play_gesture("gesture")
+			if entry.result != "missed" and run_state["player"].get("alive", true):
+				player_visual.hurt(1.0)
+			ui.notify(str(entry.reason))
+	var was_alive: bool = before.get("player", {}).get("alive", true)
+	if was_alive and not run_state["player"].get("alive", true):
+		gameplay_active = false
+		move_queue.clear()
+		player_visual.die(1.0)
+		await get_tree().create_timer(1.6).timeout
+		ui.show_death(_death_reason())
+
+
+func _death_reason() -> String:
+	var journal: Array = run_state.get("journal", [])
+	for index in range(journal.size() - 1, -1, -1):
+		if journal[index].get("kind") == "npc_attack" and journal[index].get("result") == "killed":
+			return str(journal[index].reason)
+	return "You died."
+
+
+func rewind() -> void:
+	if request_busy:
+		return
+	request_busy = true
+	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/rewind", {}, 30.0)
+	request_busy = false
+	if reply.ok and typeof(reply.data) == TYPE_DICTIONARY:
+		_enter_run(reply.data)
+		ui.notify("You are back, just before the trouble began.")
+	else:
+		ui.notify("Could not rewind the journey (HTTP %s)." % reply.status)
+
+
+func _show_bubble(npc_id: String, text: String) -> void:
+	var actor := get_node_or_null("NPCs/" + npc_id) as Node2D
+	if actor == null:
+		return
+	var bubble := actor.get_node_or_null("Speech") as Label
+	if bubble == null:
+		bubble = Label.new()
+		bubble.name = "Speech"
+		bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		bubble.custom_minimum_size = Vector2(190, 0)
+		bubble.position = Vector2(-95, -178)
+		bubble.add_theme_font_size_override("font_size", 14)
+		bubble.add_theme_color_override("font_color", Color("182522"))
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(0.98, 0.95, 0.86, 0.95)
+		box.set_corner_radius_all(8)
+		box.set_content_margin_all(6)
+		bubble.add_theme_stylebox_override("normal", box)
+		actor.add_child(bubble)
+	bubble.text = text
+	bubble.modulate = Color.WHITE
+	var fade := bubble.create_tween()
+	fade.tween_interval(4.0)
+	fade.tween_property(bubble, "modulate:a", 0.0, 0.6)
 
 
 ## Map trees are authored scene art; hide the felled ones and let the player walk through.

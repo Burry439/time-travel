@@ -191,3 +191,39 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     assert restored["run_id"] != state["run_id"] and restored["event_seq"] == calm_seq
     assert restored["player"].get("alive", True) and minds.find(restored["npcs"], "npc_hessa_marr").get("health") == 100
     assert http.get(f"/runs/{state['run_id']}").json() == state  # The original journey is untouched.
+
+
+def test_shaken_people_reconsider_a_limited_number_of_times():
+    state = unit_state()
+    state["player"].update(x=40, y=40)
+    place(state, "npc_tomas_reed", 41, 40)
+    jory = place(state, "npc_jory_venn", 45, 41)
+    wounding = killing("npc_tomas_reed")
+    wounding["harm"]["result"] = "wounded"
+    minds.apply_perceptions(state, minds.perceive(state, wounding))
+    state["pending_minds"] = []
+    rethinks = 0
+    for _ in range(5):
+        minds.apply_decision(state, npc(state, "npc_jory_venn"), answers("watch"), state["sim_time_ms"], [])
+        run_until(state, lambda: bool(state["pending_minds"]), limit_ms=25_000)
+        if state["pending_minds"]:
+            rethinks += 1
+            state["pending_minds"] = []
+    assert rethinks == minds.MAX_RETHINKS
+
+
+def test_shouts_about_known_events_do_not_echo_forever():
+    state = unit_state()
+    state["player"].update(x=40, y=40)
+    place(state, "npc_tomas_reed", 41, 40)
+    place(state, "npc_jory_venn", 45, 41)
+    place(state, "npc_hessa_marr", 44, 38)  # Both saw the same attack.
+    wounding = killing("npc_tomas_reed")
+    wounding["harm"]["result"] = "wounded"
+    minds.apply_perceptions(state, minds.perceive(state, wounding))
+    state["pending_minds"] = []
+    minds.apply_decision(state, npc(state, "npc_jory_venn"), answers("shout_for_help"), 0, [])
+    assert not any(p["npc_id"] == "npc_hessa_marr" for p in state["pending_minds"])  # Old news to Hessa.
+    assert "shout_for_help" not in minds.legal_actions(state, npc(state, "npc_jory_venn"))  # Once per event.
+    minds.apply_decision(state, npc(state, "npc_hessa_marr"), answers("shout_for_help"), 0, [])
+    assert not any(p["npc_id"] == "npc_jory_venn" for p in state["pending_minds"])

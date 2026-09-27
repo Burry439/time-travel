@@ -27,7 +27,8 @@ GEOMETRY = json.loads((ROOT / "data" / "world_geometry.json").read_text(encoding
 WALLS = {(cx, cy) for b in GEOMETRY["buildings"] for x, y, w, h in [b["cells"]]
          for cx in range(x, x + w) for cy in range(y, y + h)}  # Buildings block sight; trees do not.
 SIGHT_CELLS = 10.0
-HEAR_SHOUT_CELLS = 16.0
+HEAR_SHOUT_CELLS = 30.0  # A shout for help carries across the open road.
+MAX_RETHINKS = 2  # Automatic reconsiderations per person after their latest memory.
 MEMORY_LIMIT = 12
 RUN_STEP_MS = 170
 WALK_STEP_MS = 400
@@ -89,6 +90,11 @@ def condition(health: float, alive: bool = True) -> str:
     if not alive:
         return "dead"
     return "unhurt" if health >= 100 else "wounded" if health > 30 else "badly wounded (near death)"
+
+
+def knows(npc: dict, event) -> bool:
+    """Already has a memory of this event (so news about it is not new)."""
+    return event is not None and any(m.get("event") == event for m in mind(npc)["memories"])
 
 
 def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -> None:
@@ -172,6 +178,7 @@ def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
         memories = mind(npc)["memories"]
         memories.append(perception["memory"])
         del memories[:-MEMORY_LIMIT]
+        mind(npc)["rethinks"] = 0
         add_pending(state, npc["id"], "decide", perception["memory"]["source"])
 
 
@@ -192,6 +199,9 @@ def legal_actions(state: dict, npc: dict) -> dict[str, str]:
             options["confront"] = f"{name} walks up to the stranger and demands an explanation."
         weapon = f" with their {me['weapon']}" if me.get("weapon") else " with bare hands"
         options["attack"] = f"{name} attacks the stranger{weapon} ({me.get('combat', 'no fighter')})."
+    worst = max(mind(npc)["memories"], key=lambda m: m["severity"], default=None)
+    if worst is not None and worst.get("event") in mind(npc).get("shouted", []):
+        del options["shout_for_help"]  # Already raised the alarm about this.
     guards = sorted((g for g in state["npcs"] if g["id"] != npc["id"] and g.get("alive", True)
                      and card(g).get("guard")), key=lambda g: math.dist(_cell(g), _cell(npc)))
     for guard in guards[:2]:
@@ -319,17 +329,26 @@ def apply_decision(state: dict, npc: dict, answers: dict, now: int, journal: lis
         line = _shout_line(npc)
         _say(npc, line, now, state, journal)
         worst = max(my_mind["memories"], key=lambda m: m["severity"], default=None)
+        if worst is not None:
+            my_mind.setdefault("shouted", []).append(worst.get("event"))
         for other in state["npcs"]:
             if other["id"] == npc["id"] or not other.get("alive", True):
                 continue
+            if worst is not None and knows(other, worst.get("event")):
+                continue  # Old news to them.
             if math.dist(_cell(other), _cell(npc)) <= HEAR_SHOUT_CELLS:
                 heard = f"{npc['name']} shouted “{line}”"
                 memory = {"kind": worst["kind"] if worst else "alarm", "severity": worst["severity"] if worst else 1,
+                          "event": worst.get("event") if worst else None,
                           "summary": heard + (f" — {npc['name']} says: {worst['summary']}" if worst else "."),
                           "short": worst["short"] if worst else "caused trouble",
                           "victim": worst["victim"] if worst else None, "at": now, "source": f"heard:{npc['id']}"}
                 mind(other)["memories"] = (mind(other)["memories"] + [memory])[-MEMORY_LIMIT:]
+                mind(other)["rethinks"] = 0
                 add_pending(state, other["id"], "decide", "heard a shout")
+                if card(other).get("guard"):
+                    for known in my_mind["memories"]:
+                        known["reported"] = True  # A guard heard: the shouter has done their part.
         _set_job(npc, {"kind": "watch", "until": now + 20_000}, now)
     elif kind == "report":
         _set_job(npc, {"kind": "report", "target": target, "speed": "run"}, now)
@@ -402,10 +421,27 @@ def _deliver_report(state: dict, npcs: list[dict], npc: dict, target: dict, now:
         return
     line = f"{target['name']}! The stranger {worst['short']}!"
     _say(npc, line, now, state, journal)
-    memory = {**{k: worst[k] for k in ("kind", "severity", "short", "victim")},
+    for known in mind(npc)["memories"]:
+        known["reported"] = True  # The teller has done their part.
+    if knows(target, worst.get("event")):
+        return
+    memory = {**{k: worst[k] for k in ("kind", "severity", "short", "victim")}, "event": worst.get("event"),
               "summary": f"{npc['name']} told them: {worst['summary']}", "at": now, "source": f"told_by:{npc['id']}"}
     mind(target)["memories"] = (mind(target)["memories"] + [memory])[-MEMORY_LIMIT:]
+    mind(target)["rethinks"] = 0
     add_pending(state, target["id"], "decide", f"told by {npc['name']}")
+
+
+def _maybe_reconsider(state: dict, npc: dict, why: str) -> None:
+    """Someone shaken by a serious event nobody official has heard about thinks again (a few times at most)."""
+    my_mind = mind(npc)
+    worst = max(my_mind["memories"], key=lambda m: m["severity"], default=None)
+    if worst is None or worst["severity"] < 2 or worst.get("reported") or card(npc).get("guard"):
+        return
+    if my_mind.get("rethinks", 0) >= MAX_RETHINKS or not state["player"].get("alive", True):
+        return
+    my_mind["rethinks"] = my_mind.get("rethinks", 0) + 1
+    add_pending(state, npc["id"], "decide", why)
 
 
 def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], list[dict]]:
@@ -426,6 +462,7 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
         if job["kind"] == "watch":
             if end >= job["until"]:
                 _set_job(npc, None, end)
+                _maybe_reconsider(working, npc, "still shaken")
             continue
         goal = _target_cell(working, npcs, job)
         if goal is None or (job["kind"] == "attack" and math.dist(_cell(npc), goal) > GIVE_UP_CELLS):
@@ -459,6 +496,7 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
         elif job["kind"] == "approach":
             _set_job(npc, {"kind": "watch", "until": end + 20_000}, end)
             controller["activity"] = "work"
+            _maybe_reconsider(working, npc, "tending the hurt person")
         elif job["kind"] == "attack" and end >= job.get("next_at", 0):
             add_pending(working, npc["id"], "resolve_attack", "in reach")
             job["next_at"] = end + ATTACK_INTERVAL_MS

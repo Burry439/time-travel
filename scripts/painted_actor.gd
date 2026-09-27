@@ -248,6 +248,13 @@ func lie_dead(fall_direction := 1.0) -> void:
 	modulate = Color(0.62, 0.6, 0.58)
 
 
+## Undo a death pose (after rewinding the journey).
+func revive() -> void:
+	dead = false
+	rotation = 0.0
+	modulate = Color.WHITE
+
+
 func _hold_still() -> void:
 	if joints.is_empty():
 		return

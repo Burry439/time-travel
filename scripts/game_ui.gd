@@ -182,7 +182,7 @@ func notify(text: String) -> void:
 	toast_time = 4.5
 
 func close_modal() -> void:
-	if game.request_busy:
+	if game.request_busy or modal_kind == "death":
 		return
 	modal.hide()
 	modal_kind = ""
@@ -297,7 +297,17 @@ func inspect(id: String) -> void:
 			elif not injuries.is_empty():
 				paragraph(body, str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
 			if alive:
-				paragraph(body, "You have not spoken yet.\n\nConversations are still being built. People don't react to what you do yet; that comes in a later version.")
+				paragraph(body, "You have not spoken yet. (Conversations are still being built.)")
+			var their_mind = npc.get("mind")
+			if game.run_state.get("mode", "") == "developer" and typeof(their_mind) == TYPE_DICTIONARY:
+				var lines := PackedStringArray()
+				for memory in their_mind.get("memories", []):
+					lines.append("• (%s) %s" % [memory.source, memory.summary])
+				var job = their_mind.get("job")
+				paragraph(body, "DEVELOPER: fear %s · anger %s · doing: %s\n%s" % [
+					their_mind.get("feelings", {}).get("fear", 0), their_mind.get("feelings", {}).get("anger", 0),
+					str(job.kind) if typeof(job) == TYPE_DICTIONARY else "routine",
+					"\n".join(lines) if not lines.is_empty() else "No memories of the stranger."])
 			return
 
 func open_journal() -> void:
@@ -566,7 +576,7 @@ func show_craft_result(entry: Dictionary, trace) -> void:
 		paragraph(body, {"killed": "%s is dead.", "wounded": "%s is wounded.", "missed": "%s is unhurt."}.get(
 			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + _sentence(str(harm.injury))))
 		if not harm.get("witnesses", []).is_empty():
-			paragraph(body, "Others nearby may have seen it. (People don't react yet; they will in a later version.)")
+			paragraph(body, "Others nearby saw it.")
 	var made = _crafted(entry)
 	if made != null and game.run_state.objects.has(made):
 		var obj: Dictionary = game.run_state.objects[made]
@@ -598,6 +608,19 @@ func show_craft_result(entry: Dictionary, trace) -> void:
 	body.add_child(actions)
 	if game.run_state.get("mode", "") == "developer" and typeof(trace) == TYPE_DICTIONARY:
 		trace_view(body, trace)
+
+
+func show_death(reason: String) -> void:
+	var body := begin_modal("You died", "death")
+	for child in modal_box.get_child(0).get_children(): # No "Close" on the death screen.
+		if child is Button:
+			child.hide()
+	paragraph(body, reason)
+	paragraph(body, "The people here remembered what you did, and acted on it.")
+	body.add_child(button("Try again from before the trouble began", game.rewind))
+	body.add_child(button("Start a new journey", func() -> void:
+		modal_kind = ""
+		game._back_to_menu()))
 
 
 func show_craft_error(problem: String, text: String) -> void:
@@ -668,9 +691,10 @@ func reveal(body: VBoxContainer, title: String, text: String) -> void:
 func show_traces(data: Dictionary) -> void:
 	var body := begin_modal("AI traces", "traces")
 	var ai: Dictionary = data.get("ai", {})
-	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)" % [
+	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)\nPeople decide with: %s%s" % [
 		ai.get("mode"), "on" if ai.get("judge") else "off", ai.get("judge_model"),
-		"on" if ai.get("images") else "off", ai.get("image_model")])
+		"on" if ai.get("images") else "off", ai.get("image_model"), _shown(ai.get("decider")),
+		(" (" + str(ai.get("jev_model")) + " via " + str(ai.get("jev_provider")) + ")") if ai.get("decider") == "jev" else ""])
 	var traces: Array = data.get("traces", [])
 	if traces.is_empty():
 		paragraph(body, "No attempts yet. Press T in the world to try making something.")
@@ -680,6 +704,20 @@ func show_traces(data: Dictionary) -> void:
 		title.add_theme_color_override("font_color", GOLD)
 		body.add_child(title)
 		trace_view(body, trace)
+		body.add_child(HSeparator.new())
+	var thoughts: Array = data.get("minds", [])
+	if not thoughts.is_empty():
+		body.add_child(label("PEOPLE'S DECISIONS (newest first)", 12))
+		for thought in thoughts:
+			var call: Dictionary = thought.get("call", {})
+			var what := str(thought.get("action", thought.get("result", thought.get("skipped", "-"))))
+			paragraph(body, "%s (%s) → %s\n%s · %s · %d ms · $%s%s" % [
+				str(thought.npc_id).trim_prefix("npc_"), thought.get("why", ""), what, _shown(call.get("provider")),
+				_shown(call.get("model")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
+				("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else ""])
+			reveal(body, "What %s's decider saw" % str(thought.npc_id).trim_prefix("npc_"),
+				str(thought.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
+				JSON.stringify({"questions": thought.get("questions", {}), "answers": call.get("answers", {})}, "  "))
 		body.add_child(HSeparator.new())
 	var sprites: Array = data.get("assets", [])
 	if not sprites.is_empty():

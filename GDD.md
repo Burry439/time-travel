@@ -585,6 +585,18 @@ The player often needs things they don't own or skills they don't have. **Agreem
 
 **Status: CURRENT** (data model and rules) · **EXPERIMENT** (decision engine; see §9)
 
+> **Built (27 Sep 2026, D-16 to D-18).** `backend/minds.py` and `backend/ai/decider.py`.
+>
+> - **Perception** is code: sight 10 cells with line of sight past buildings; the victim always knows.
+> - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
+> - **Decisions:** one batched Jev request per person, run in parallel. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
+> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think; an attacker in reach triggers a strike.
+> - **Strikes** are sampled from Jev's missed/wounded/killed probabilities.
+> - **Shouts** carry 30 cells, once per event.
+> - **Reconsidering:** shaken people think again at most twice.
+> - **Thinking** runs through the client's one-at-a-time save loop (`/think`), alternating with clock beats so it can never stop time.
+> - **Player** health, death, and `/rewind` to the last calm moment.
+
 ### 7.1 Three layers of truth
 
 | Layer | Example |
@@ -785,7 +797,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
 | Interpreter, voice | `gpt-6-luna` | The judge model |
-| Decider (M4) | Jev (TypeSafe), still to verify | General LLM with a forced-choice schema |
+| Decider (built, D-17) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
 
 Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Gameplay code calls roles, never providers.
@@ -1068,6 +1080,9 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-18 | 2026-09-27 | The player can act on anything within about 14 walking steps. Code plans the walk and the player walks there first. Throws: a held item of 5 kg or less within 8 cells; the judge rules on aim (`judge_v5`). | The user asked not to have to stand right next to things. |
+| D-17 | 2026-09-27 | Jev is the NPC decider, reached through defapi.org with the user's `dk-` key (same request and answer format as TypeSafe; `JEV_PROVIDER` overrides). The LLM decider is only a fallback. | The user wants Jev to do the heavy lifting because it is fastest and cheapest. It was measured at about 1.3 s and 1/12 of Luna's cost per decision. |
+| D-16 | 2026-09-27 | NPC minds: code owns perception, legal actions and their effects; Jev only chooses and rates. Death rewinds to the last calm moment as a copy (the original journey is kept). | NPCs react intelligently without the model inventing actions the simulation can't carry out. The user chose rewind over game-over. |
 | D-15 | 2026-09-27 | One Try Something may contain up to 4 ordered steps (`judge_v4`). Code validates and commits them in order on a draft world. A later step can use what an earlier step made (`made_by_step_N`). The attempt stops at the first step that does not succeed, and the result is `partial_success` when some steps committed. Wounds add up (45 per wound); a fatal one is reported as killed. The judge sees "badly wounded (near death)" at health 30 or below. Leaked ids in text are replaced by names. | Playtest bugs: "make a spear then stab Tomas" narrated a spear that was never made (single-action schema), and a third wound silently killed Tomas while the message said "wounded". |
 | D-14 | 2026-09-27 | The default judge is `gpt-6-luna`. | Requested by the user; it passed 19/19 live eval cases with p50 2.7 s at roughly 1/15 of Sol's cost. Switch back via `MODEL_JUDGE` if evals regress. |
 | D-13 | 2026-09-27 | Map trees become world objects (seed 5). Felling one hides its art, removes its collision, and leaves judge-described pieces that are portable when they weigh 20 kg or less. | The user asked for trees that fall and turn into things to pick up. |
@@ -1195,6 +1210,36 @@ Changes to this document: …
 - A live in-game replay of the reported scenario: spear made and kept, Tomas wounded, then killed with the death animation; a later rock attack is reported as "already dead".
 
 **Lesson:** the judge will describe more than the schema lets it do. The engine must either support it (steps) or say it did not happen. Watch for other cases where the text claims things the effects don't show.
+
+### Retro: NPC minds with Jev (M4, first slice), 27 Sep 2026
+
+**Built:** see §7 (built note), D-16 to D-18.
+
+**Evidence:**
+
+- 48 backend tests pass, including the scripted witness → report → guard → attack → death → rewind chain, the shout-loop regression, and the reconsideration cap.
+- All Godot smoke tests pass.
+- **Live in game (real Jev + Luna).** Punching Jory at the smithy:
+  1. Jory shouted.
+  2. Hessa relayed it.
+  3. Bren and Kade (guards) set off to confront you; Elin watched.
+  4. Mara went to help Jory, then turned on the player and killed them with her hammer, 13 s after the punch.
+  5. The death screen appeared, and rewind restored the calm.
+- **Cost:** 9 decisions, each 1.2–2.3 s, $0.0006 in total.
+
+**Found live and fixed:**
+
+1. A shout echo loop: people re-hearing old news. Fixed with event ids on memories and one shout per event.
+2. Thinking starved the clock, so nobody could walk. Fixed by alternating think and clock beats.
+3. The death screen showed a useless Close button.
+4. The key was a defapi.org key, not a TypeSafe key.
+
+**To watch:**
+
+- Fights are quick and deadly: two hammer blows. Tune `PLAYER_WOUND` and the attack interval.
+- Guards have no *arrest* option yet, so they can only confront or attack.
+- Speech lines are templates; the voice role (LLM) could phrase them.
+- No conversations yet.
 
 ---
 
