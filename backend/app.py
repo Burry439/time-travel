@@ -17,8 +17,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 import crafting
 import m2
+import minds
 import npc_sim
-from ai import config as ai_config, illustrator, judge, telemetry
+from ai import config as ai_config, decider, illustrator, judge, telemetry
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "demo.sqlite3"))
@@ -107,6 +108,14 @@ def db():
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+            CREATE TABLE IF NOT EXISTS mind_traces (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT NOT NULL,
+                event_seq INTEGER NOT NULL,
+                npc_id TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                trace_json TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS model_calls (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 run_id TEXT NOT NULL,
@@ -164,6 +173,7 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
     elif event["kind"] == "explore":
         state["sim_time_ms"] = payload["sim_time_ms"]
         state["npcs"] = payload["npcs"]
+        _apply_people(state, payload)
     elif event["kind"] == "dev_gate":
         state["gate_open"] = payload["open"]
     elif event["kind"] == "objective_complete":
@@ -177,12 +187,38 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
         state["sim_time_ms"] = payload["sim_time_ms"]
         if "npcs" in payload:
             state["npcs"] = payload["npcs"]
+        _apply_people(state, payload)
     elif event["kind"] == "craft":
         crafting.apply_payload(state, payload)
+        _apply_people(state, payload)
+    elif event["kind"] == "minds":
+        state["npcs"] = payload["npcs"]
+        state["player"] = payload["player"]
+        _apply_people(state, payload)
     else:
         raise ValueError(f"Unknown event kind {event['kind']}")
     state["event_seq"] = event["seq"]
     state["tick"] = event["tick"]
+
+
+def _apply_people(state: dict, payload: dict) -> None:
+    """Fields shared by events in which people act: their pending thoughts, what the player heard,
+    and the latest calm moment to rewind to."""
+    if "pending_minds" in payload:
+        state["pending_minds"] = payload["pending_minds"]
+    state["journal"].extend(payload.get("people_journal", []))
+    if "safe_seq" in payload:
+        state["safe_seq"] = payload["safe_seq"]
+
+
+def _advance_people(state: dict, elapsed_ms: int) -> dict:
+    """Payload fields for time passing: routines, and jobs people chose (seed 5+)."""
+    if state["seed_version"] < 5:
+        return {"npcs": npc_sim.advance_npcs(state["npcs"], elapsed_ms, state["sim_time_ms"], WORLD_GEOMETRY)}
+    probe = dict(state)
+    probe["pending_minds"] = list(state.get("pending_minds", []))
+    npcs, heard = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
+    return {"npcs": npcs, "pending_minds": probe["pending_minds"], "people_journal": heard}
 
 
 def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, dict]:
@@ -279,7 +315,7 @@ def health():
     with db() as connection:
         connection.execute("SELECT 1").fetchone()
     return {"status": "ok", "seed_version": SEED_VERSION, "geometry_version": GEOMETRY_VERSION,
-            "ai": ai_config.status()}
+            "ai": {**ai_config.status(), **decider.status()}}
 
 
 @app.post("/runs", status_code=201)
@@ -374,8 +410,7 @@ def physical_action(run_id: str, request: PhysicalAction):
                        "water_spilled_l": draft["water_spilled_l"] if category == "success" else state["water_spilled_l"],
                        "journal_entry": entry, "sim_time_ms": sim_time_ms}
             if run["seed_version"] >= 3:
-                payload["npcs"] = npc_sim.advance_npcs(state["npcs"], effort_ms,
-                                                        state["sim_time_ms"], WORLD_GEOMETRY)
+                payload.update(_advance_people(state, effort_ms))
             append(connection, state, "physical_action", payload,
                    request.request_id if index == 0 else f"{request.request_id}:step:{index + 1}",
                    sim_time_ms // 1000)
@@ -387,6 +422,7 @@ def physical_action(run_id: str, request: PhysicalAction):
             state["sim_time_ms"] = sim_time_ms
             if "npcs" in payload:
                 state["npcs"] = payload["npcs"]
+            _apply_people(state, payload)
             if category != "success":
                 break
         connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
@@ -467,10 +503,14 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
             payload, verdict, after = crafting.resolve_attempt(
                 state, run_id, request.text, judged.result, _service_message(judged), request.request_id,
                 state["sim_time_ms"])
-            payload["npcs"] = npc_sim.advance_npcs(after["npcs"], verdict["effort_seconds"] * 1000,
-                                                   state["sim_time_ms"], WORLD_GEOMETRY)
+            if run["seed_version"] >= 5:
+                payload["perceptions"] = minds.perceive(after, payload["journal_entry"])
+                minds.apply_perceptions(after, payload["perceptions"])
+                payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
+            payload.update(_advance_people(after, verdict["effort_seconds"] * 1000))
             append(connection, state, "craft", payload, request.request_id, payload["sim_time_ms"] // 1000)
             crafting.apply_payload(state, payload)
+            _apply_people(state, payload)
             connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                                (run_id, request.request_id, state["event_seq"], request_json))
             new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]
@@ -565,7 +605,10 @@ def get_traces(run_id: str, limit: int = 10):
         assets = connection.execute("SELECT asset_id,object_id,status,record_json,trace_json,updated_at FROM assets "
                                     "WHERE run_id=? ORDER BY rowid DESC LIMIT 20", (run_id,)).fetchall()
         calls = telemetry.recent(connection, run_id)
-    return {"ai": ai_config.status(), "judge_prompt_version": judge.PROMPT_VERSION,
+        thoughts = connection.execute("SELECT trace_json FROM mind_traces WHERE run_id=? ORDER BY id DESC LIMIT 20",
+                                      (run_id,)).fetchall()
+    return {"ai": {**ai_config.status(), **decider.status()}, "judge_prompt_version": judge.PROMPT_VERSION,
+            "minds": [json.loads(row["trace_json"]) for row in thoughts],
             "judge_system_prompt": judge.system_prompt(),
             "traces": [json.loads(row["trace_json"]) for row in rows],
             "assets": [{"asset_id": a["asset_id"], "object_id": a["object_id"], "status": a["status"],
@@ -585,6 +628,90 @@ def retry_asset(run_id: str, asset_id: str, background: BackgroundTasks):
         raise HTTPException(404, "Unknown asset")
     background.add_task(_generate_asset, asset_id)
     return {"status": "pending"}
+
+
+class ThinkRequest(BaseModel):
+    expected_version: int = Field(ge=0)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
+_thinking_runs: set[str] = set()
+
+
+@app.post("/runs/{run_id}/think")
+def think(run_id: str, request: ThinkRequest):
+    """Let people with something on their mind decide what to do (the decider runs outside the lock)."""
+    with _lock, db() as connection:
+        run, state = load_run(connection, run_id)
+        prior_seq = check_request(connection, state, request.expected_version, request.request_id)
+        if prior_seq is not None:
+            return {"state": state_at(connection, run, prior_seq), "duplicate": True}
+        batch = [p for p in state.get("pending_minds", [])
+                 if (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)][:minds.THINK_BATCH]
+        if not state.get("pending_minds"):
+            return {"state": state, "duplicate": False}
+        if run_id in _thinking_runs:
+            raise HTTPException(409, {"reason": "in_progress"})
+        _thinking_runs.add(run_id)
+        requests = [minds.decision_request(state, pending) for pending in batch]
+    try:
+        calls = decider.decide_many(requests)
+        with _lock, db() as connection:
+            run, state = load_run(connection, run_id)
+            working = copy.deepcopy(state)
+            working["pending_minds"] = [p for p in working.get("pending_minds", []) if p not in batch]
+            now, heard, records = working["sim_time_ms"], [], []
+            for index, (pending, call, (situation, questions)) in enumerate(zip(batch, calls, requests)):
+                telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
+                                 call.error or call.fallback_from, call.input_tokens, call.output_tokens)
+                npc = minds.find(working["npcs"], pending["npc_id"])
+                record = {"npc_id": pending["npc_id"], "kind": pending["kind"], "why": pending["why"],
+                          "skipped": None}
+                if npc is None or not npc.get("alive", True):
+                    record["skipped"] = "no longer alive"
+                elif not call.ok:
+                    record["skipped"] = f"decider failed: {call.error}"
+                elif pending["kind"] == "resolve_attack":
+                    if not working["player"].get("alive", True) or \
+                            math.dist((npc["x"], npc["y"]), minds.player_cell(working)) > 2.0:
+                        record["skipped"] = "the stranger is out of reach"
+                    else:
+                        record.update(minds.resolve_attack(working, npc, call.answers,
+                                                           f"{run_id}:{state['event_seq']}:{index}", heard))
+                else:
+                    record.update(minds.apply_decision(working, npc, call.answers, now, heard))
+                records.append(record)
+                trace = {**record, "situation": situation, "questions": questions, "call": call.as_dict()}
+                connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+                                   (run_id, state["event_seq"] + 1, pending["npc_id"], json.dumps(trace)))
+            payload = {"npcs": working["npcs"], "player": working["player"],
+                       "pending_minds": working.get("pending_minds", []), "people_journal": heard,
+                       "decisions": records}
+            append(connection, state, "minds", payload, request.request_id, state["tick"])
+            state["npcs"], state["player"] = payload["npcs"], payload["player"]
+            _apply_people(state, payload)
+    finally:
+        _thinking_runs.discard(run_id)
+    response = {"state": state, "duplicate": False}
+    if run["mode"] == "developer":
+        response["decisions"] = records
+    return response
+
+
+@app.post("/runs/{run_id}/rewind", status_code=201)
+def rewind(run_id: str):
+    """Copy this journey up to its last calm moment into a new run, leaving the original untouched."""
+    with _lock, db() as connection:
+        run, state = load_run(connection, run_id)
+        point = int(state.get("safe_seq", 0))
+        new_id = uuid4().hex
+        connection.execute("INSERT INTO runs (id,mode,seed_version,geometry_version) VALUES (?,?,?,?)",
+                           (new_id, run["mode"], run["seed_version"], run["geometry_version"]))
+        connection.execute("INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
+                           "SELECT ?,seq,tick,kind,payload,request_id FROM events WHERE run_id=? AND seq<=?",
+                           (new_id, run_id, point))
+        _, restored = load_run(connection, new_id)
+    return restored
 
 
 @app.post("/runs/{run_id}/move")
@@ -658,12 +785,11 @@ def explore(run_id: str, request: ExploreClock):
         if state["inside_city"] or not state["player"]["alive"]:
             raise HTTPException(409, "Run is no longer exploring")
         sim_time_ms = state["sim_time_ms"] + request.elapsed_ms
-        npcs = npc_sim.advance_npcs(state["npcs"], request.elapsed_ms,
-                                    state["sim_time_ms"], WORLD_GEOMETRY)
-        append(connection, state, "explore", {"sim_time_ms": sim_time_ms, "npcs": npcs},
-               request.request_id, sim_time_ms // 1000)
+        payload = {"sim_time_ms": sim_time_ms, **_advance_people(state, request.elapsed_ms)}
+        append(connection, state, "explore", payload, request.request_id, sim_time_ms // 1000)
         state["sim_time_ms"] = sim_time_ms
-        state["npcs"] = npcs
+        state["npcs"] = payload["npcs"]
+        _apply_people(state, payload)
         if state["event_seq"] % 64 == 0:
             connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
                                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))

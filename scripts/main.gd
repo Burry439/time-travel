@@ -56,6 +56,8 @@ const PLACEHOLDERS := {
 const OBJECT_HEIGHT := 46.0
 const OBJECT_MAX_WIDTH := 60.0
 const REACH_CELLS := 2.5 # Matches backend m2.REACH_CELLS.
+const NEARBY_CELLS := 8.0 # Try Something can involve anything this close; the player walks there first.
+var scripted_walk := false
 var object_textures: Dictionary = {} # object id -> resolved Texture2D
 var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
 var placeholder_clock := 0.0
@@ -279,6 +281,8 @@ func _physics_process(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * camera_zoom, minf(1.0, delta * 10))
 	_update_target()
 	if not gameplay_active or request_busy or ui.modal.visible or sync_error:
+		if scripted_walk: # _walk_along is moving the player.
+			return
 		player.velocity = Vector2.ZERO
 		player_sprite.frame = _cardinal_fallback(facing_row) * 3
 		player_visual.set_motion(facing_row, "idle", 0.0, delta)
@@ -488,11 +492,42 @@ func _reveal_new_objects(entry: Dictionary) -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
+## Walk the player along the cells the server planned, with the normal walk animation.
+func _walk_along(path: Array) -> void:
+	if path.is_empty():
+		return
+	scripted_walk = true
+	ui.modal.hide()
+	ui.modal_kind = ""
+	for cell in path:
+		var goal := _cell_center(int(cell[0]), int(cell[1]))
+		while player.position.distance_to(goal) > 0.5:
+			var delta := get_process_delta_time()
+			var before := player.position
+			player.position = player.position.move_toward(goal, WALK_SPEED * delta)
+			var step := player.position - before
+			if step.length() > 0.01:
+				facing_row = _facing_for(step.normalized())
+			player_visual.set_motion(facing_row, "walk", step.length(), delta)
+			await get_tree().process_frame
+	player_visual.set_motion(facing_row, "idle", 0.0, 0.0)
+	predicted_cell = Vector2i(int(path[-1][0]), int(path[-1][1]))
+	scripted_walk = false
+
+
 func _play_harm(entry: Dictionary) -> void:
 	var harm = entry.get("harm")
 	if typeof(harm) != TYPE_DICTIONARY:
 		return
 	player_visual.play_gesture("gesture")
+	if str(harm.get("method", "melee")) == "thrown" and harm.get("weapon_id") != null:
+		var thrown := get_node_or_null("M2Objects/" + str(harm.weapon_id)) as Node2D
+		if thrown:
+			var landing := thrown.position
+			thrown.position = player.position + Vector2(0, -30)
+			var flight := create_tween()
+			flight.tween_property(thrown, "position", landing, 0.35).set_trans(Tween.TRANS_QUAD)
+			flight.parallel().tween_property(thrown, "rotation", thrown.rotation + TAU, 0.35)
 	var actor := get_node_or_null("NPCs/" + str(harm["target_id"])) as Node2D
 	if actor == null:
 		return
@@ -668,10 +703,10 @@ func try_candidates() -> Array[Dictionary]:
 			continue
 		if obj.holder_id == "player":
 			carried.append(obj)
-		elif obj.holder_id == null and here.distance_to(Vector2(int(obj.x), int(obj.y))) <= REACH_CELLS:
+		elif obj.holder_id == null and here.distance_to(Vector2(int(obj.x), int(obj.y))) <= NEARBY_CELLS:
 			within_reach.append(obj)
 	for npc in run_state.get("npcs", []):
-		if here.distance_to(Vector2(int(npc.x), int(npc.y))) <= REACH_CELLS:
+		if here.distance_to(Vector2(int(npc.x), int(npc.y))) <= NEARBY_CELLS:
 			within_reach.append({"id": npc.id, "name": npc.name, "person": true, "alive": npc.get("alive", true)})
 	carried.append_array(within_reach)
 	return carried
@@ -708,6 +743,7 @@ func _try_something(text: String, selected_ids: Array) -> void:
 		run_state = reply.data.state
 		last_trace = reply.data.get("trace")
 		var entry: Dictionary = run_state.last_action
+		await _walk_along(entry.get("walk", [])) # Go there first, as the server already decided.
 		_start_fall(entry) # Copy the falling thing before the sync hides it.
 		_sync_display()
 		_reveal_new_objects(entry)

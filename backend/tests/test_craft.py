@@ -1,4 +1,5 @@
 """Crafting slice: the judge is stubbed, so these test what code allows and commits."""
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -411,3 +412,55 @@ def test_single_step_events_from_before_multi_step_still_replay():
     crafting.apply_payload(state, legacy)
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert state["objects"]["branch_a"]["holder_id"] == "player" and bren["injuries"] == ["a cut"]
+
+
+# --- Acting at a distance: walking there first, or throwing ------------------------------
+
+def test_far_items_are_reached_by_walking_first():
+    state = fresh_state()  # The flint at (45, 66) is 3.6 cells away: beyond arm's reach.
+    assert crafting.walk_costs(state)["flint_a"] > 0
+    summary = commit(state, judged("take", take_ids=["flint_a"]))
+    assert summary["category"] == "success"
+    assert state["objects"]["flint_a"]["holder_id"] == "player"
+    assert crafting._distance(state, 45, 66) <= service.m2.REACH_CELLS
+    assert state["last_action"]["walk"] and state["last_action"]["walk"][-1] == [state["player"]["x"], state["player"]["y"]]
+
+
+def test_melee_walks_up_to_the_target():
+    state = fresh_state()
+    bren = beside(state, "npc_bren_marr")
+    state["player"].update(x=bren["x"], y=bren["y"] + 5)
+    summary = commit(state, harm("npc_bren_marr", "wounded"))
+    assert summary["category"] == "success"
+    assert crafting._distance(state, bren["x"], bren["y"]) <= service.m2.REACH_CELLS
+    assert next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")["health"] == 55
+
+
+def throw(target, weapon, result="wounded"):
+    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "method": "thrown",
+                                "result": result, "injury": "a hard blow"})
+
+
+def test_a_thrown_weapon_lands_by_the_target_and_the_thrower_stays_put():
+    state = fresh_state()
+    bren = beside(state, "npc_bren_marr")
+    state["player"].update(x=bren["x"], y=bren["y"] + 5)
+    state["objects"]["stone_a"]["holder_id"] = "player"
+    here = (state["player"]["x"], state["player"]["y"])
+    summary = commit(state, throw("npc_bren_marr", "stone_a"))
+    assert summary["category"] == "success" and summary["harm"]["method"] == "thrown"
+    assert (state["player"]["x"], state["player"]["y"]) == here
+    stone = state["objects"]["stone_a"]
+    assert stone["holder_id"] is None and math.dist((stone["x"], stone["y"]), (bren["x"], bren["y"])) <= 3
+
+
+def test_throws_need_a_held_light_item_within_range():
+    state = fresh_state()
+    bren = beside(state, "npc_bren_marr")
+    state["player"].update(x=bren["x"], y=bren["y"] + 5)
+    not_held = crafting.validate(state, throw("npc_bren_marr", "stone_a"))
+    assert not_held["category"] in ("blocked", "unresolved")
+    state["objects"]["stone_a"]["holder_id"] = "player"
+    state["player"].update(x=bren["x"], y=bren["y"] + 12)
+    far = crafting.validate(state, throw("npc_bren_marr", "stone_a"))
+    assert far["category"] == "blocked" and "too far" in far["reason"]

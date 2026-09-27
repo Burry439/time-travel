@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v4"
+PROMPT_VERSION = "judge_v5"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -66,6 +66,7 @@ class Transformation(BaseModel):
 class Harm(BaseModel):
     target_id: str
     weapon_id: str | None
+    method: Literal["melee", "thrown"]
     result: Literal["missed", "wounded", "killed"]
     injury: str
 
