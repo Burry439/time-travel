@@ -1162,6 +1162,20 @@ func round_beat(entry: Dictionary) -> void:
 ## After the round has played out: the death screen if the stranger fell.
 func round_played() -> void:
 	played_action = {}
+	var last = run_state.get("last_round")
+	if typeof(last) == TYPE_DICTIONARY and last.get("arrested", false) and run_state["player"].get("alive", true):
+		request_busy = true # Nothing else happens while the guards march you off.
+		await get_tree().create_timer(1.8).timeout # Time to read what happened.
+		ui.close_modal_now()
+		await ui.fade(1.0)
+		predicted_cell = Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"]))
+		player.position = _cell_center(predicted_cell.x, predicted_cell.y)
+		camera.reset_smoothing()
+		_sync_display()
+		await get_tree().create_timer(0.5).timeout
+		await ui.fade(0.0)
+		request_busy = false
+		ui.notify("The guards march you back down the south road. You're not welcome at the gate for a while.")
 	if not run_state["player"].get("alive", true) and gameplay_active:
 		gameplay_active = false
 		move_queue.clear()

@@ -23,6 +23,7 @@ var talk_waiting := false
 var encounter_view: Dictionary = {} # The encounter as last seen (kept to show how it ended).
 var encounter_over := false
 var round_playing := false
+var curtain: ColorRect
 const DID_WORDS := {"listen": "listened", "attack": "attacked", "shout_for_help": "called for help",
 	"whistle": "whistled", "flee": "ran off", "leave": "left", "interject": "cut in"}
 const CAPABILITY_NOTES := {"expected": "", "untested": "  (untested)", "observed": "  (seen working)",
@@ -182,6 +183,18 @@ func build(owner_game: Node2D) -> void:
 	win_box.add_child(button("Return to title", game._back_to_menu))
 	game.victory_panel.hide()
 	chrome.hide()
+	curtain = ColorRect.new()
+	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	curtain.color = Color(0, 0, 0, 0)
+	curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(curtain)
+
+
+## Fade the whole screen to black (to = 1) or back (to = 0).
+func fade(to: float, seconds := 0.6) -> void:
+	var tween := create_tween()
+	tween.tween_property(curtain, "color:a", to, seconds)
+	await tween.finished
 
 func _process(delta: float) -> void:
 	toast_time = maxf(0, toast_time - delta)
@@ -213,6 +226,13 @@ func close_modal() -> void:
 		return
 	modal.hide()
 	modal_kind = ""
+
+## Close whatever is open, without the side effects of the player closing it (walking away).
+func close_modal_now() -> void:
+	modal.hide()
+	modal_kind = ""
+	encounter_over = false
+
 
 func begin_modal(title: String, kind: String) -> VBoxContainer:
 	for child in modal_box.get_children():
@@ -465,6 +485,7 @@ func open_encounter(target := "", prefill := "", playing: Dictionary = {}) -> vo
 	actions.add_child(button("Say it  [Enter]", _submit_talk))
 	actions.add_child(button("Do it", _submit_do))
 	actions.add_child(button("Wait", _submit_simple.bind("wait")))
+	actions.add_child(button("Yield", _submit_simple.bind("yield")))
 	actions.add_child(button("Walk away  [Esc]", close_modal))
 	body.add_child(actions)
 	var hint := label("Do it: an action, like “hand him the plank” or “swing the spear at her”. Everyone acts at the same moment.", 13)

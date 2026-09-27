@@ -572,32 +572,32 @@
   "knife": {
    "hit": 0.6,
    "damage": 30,
-   "kill": 0.08
+   "kill": 0.03
   },
   "smith's hammer": {
    "hit": 0.6,
    "damage": 35,
-   "kill": 0.1
+   "kill": 0.04
   },
   "carpenter's hammer": {
    "hit": 0.55,
    "damage": 30,
-   "kill": 0.06
+   "kill": 0.03
   },
   "spear": {
    "hit": 0.65,
    "damage": 40,
-   "kill": 0.12
+   "kill": 0.05
   },
   "short spear": {
    "hit": 0.65,
    "damage": 35,
-   "kill": 0.1
+   "kill": 0.04
   },
   "sword": {
    "hit": 0.7,
    "damage": 45,
-   "kill": 0.15
+   "kill": 0.06
   }
  }
 }

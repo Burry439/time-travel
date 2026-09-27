@@ -175,6 +175,8 @@ def _shift_regard(npc: dict, memory: dict) -> None:
         trust, suspicion = EVIDENCE_SHIFT, -EVIDENCE_SHIFT
     elif memory["kind"] in CRIME_KINDS and memory.get("clarity") != "vague":
         trust, suspicion = -2 * EVIDENCE_SHIFT, 2 * EVIDENCE_SHIFT
+    elif memory["kind"] == "arrest":
+        trust, suspicion = -EVIDENCE_SHIFT, EVIDENCE_SHIFT
     else:
         return
     if memory.get("event") is not None:
@@ -641,7 +643,7 @@ def strike(state: dict, npc: dict, now: int, journal: list[dict]) -> dict:
     health = player.get("health", 100)
     result = "missed"
     if rng.random() < stats["hit"] + 0.05 * skill:
-        finishing = stats["kill"] + (0.25 if health <= 40 else 0.0)
+        finishing = stats["kill"] + (0.1 if health <= 30 else 0.0)
         damage = round(stats["damage"] * (0.8 + 0.4 * rng.random()))
         health = 0 if rng.random() < finishing else max(0, health - damage)
         result = "killed" if health == 0 else "wounded"

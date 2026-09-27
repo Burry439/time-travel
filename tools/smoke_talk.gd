@@ -143,10 +143,18 @@ func _run() -> void:
 	if not check(await settle() and scene.run_state.encounter.round == 3, "The Wait round did not resolve"):
 		return
 	await screenshot("encounter-halt")
-	scene.ui.close_modal()
-	if not check(await settle() and not scene.in_encounter(), "Walking away from the guard did not end it"):
+	# Yielding to a guard: arrested, marched down the south road, barred from the gate for a while.
+	scene.ui._submit_simple("yield")
+	if not check(await settle() and not scene.in_encounter() and scene.run_state.last_round.get("arrested", false),
+			"Yielding to the guard did not end in an arrest"):
 		return
-	scene.ui.close_modal()
+	for i in 60:
+		if not scene.request_busy:
+			break
+		await create_timer(0.1).timeout
+	if not check(scene.predicted_cell == Vector2i(48, 66) and scene.ui.modal_kind == "", "Not marched to the south road"):
+		return
+	await screenshot("encounter-arrested")
 
 	# Admission is decided on the server (see backend/tests/test_gate.py); the panel explains the route.
 	scene.run_state["admitted"] = {"by": "npc_roderic_vale", "because": ["Hessa vouched for the stranger."]}

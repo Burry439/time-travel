@@ -45,7 +45,7 @@ REASON_YES = 0.45  # The captain admits when he believes there is a legitimate r
 THREAT_NO = 0.5  # ...and doesn't believe the stranger is a threat (two simple beliefs beat one compound one).
 HOSTILE = ("refuse", "tell_to_leave", "call_guard")
 CAPTAIN = "npc_roderic_vale"
-CRIMES = ("violence", "theft")  # Known crimes rule out entry; lesser trouble is for the captain to weigh.
+BARRED_WORDS = "The guards have barred the stranger from the gate for now."
 REWARDS = {"vouch": "{name} will be grateful and put in a good word for the stranger with the captain",
            "hire": "{name} will take the stranger on as a hired hand for trade in the city, under {name}'s own permit"}
 FALLBACK = {"answer": "Hm. I hear you.", "ask_back": "And who might you be?", "refuse": "No. I won't.",
@@ -108,13 +108,19 @@ def deals(state: dict, npc_id: str, *statuses: str) -> list[dict]:
 
 
 def knows_a_crime(npc: dict) -> bool:
-    return any(m["kind"] in CRIMES and not m.get("doubted") for m in minds.mind(npc)["memories"])
+    """A known act of real violence (theft and arrests only weigh on his judgement)."""
+    return any(m["kind"] == "violence" and m.get("severity", 0) >= 2 and not m.get("doubted")
+               for m in minds.mind(npc)["memories"])
+
+
+def barred(state: dict) -> bool:
+    return (state.get("barred_until") or 0) > state.get("sim_time_ms", 0)
 
 
 def can_admit(state: dict, npc: dict) -> bool:
-    """Only the captain, only for a living stranger, and never while he knows of a crime by them."""
+    """Only the captain, only for a living stranger who isn't barred, never after violence he knows of."""
     return npc["id"] == CAPTAIN and not state.get("admitted") and state["player"].get("alive", True) \
-        and not knows_a_crime(npc)
+        and not knows_a_crime(npc) and not barred(state)
 
 
 def lendable(state: dict, npc: dict) -> list[dict]:

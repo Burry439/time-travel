@@ -29,9 +29,11 @@ import minds
 import talk
 
 ROUND_MS = 5_000
+BARRED_MS = 600_000  # How long the guards keep an arrested stranger away from the gate.
+SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LEAVE_MS = 1_000  # Walking away takes a moment; attackers are left a step behind.
 PURSUIT_DELAY_MS = 2_500
-MAX_EXTRA_BLOWS = 4
+MAX_EXTRA_BLOWS = 2
 LOG_KEPT = 30
 OPENING_INTENT = {"attack": "attack"}  # Everyone else opens by listening: they came to talk (or to be answered).
 REASON_WORDS = {"halt": "a guard stopped the stranger at the gate", "confront": "they confronted the stranger",
@@ -136,6 +138,9 @@ def intent_options(state: dict, npc: dict) -> dict[str, dict]:
         weapon = f" with their {me['weapon']}" if me.get("weapon") else " with bare hands"
         bases.append(("attack", f"{name} attacks the stranger{weapon} ({me.get('combat', 'no fighter')}).",
                       "attack"))
+    if me.get("guard") and state["player"].get("alive", True):
+        bases.append(("seize", f"{name} grabs the stranger to arrest them: stolen things are taken back and the "
+                               f"stranger is marched off down the south road and kept from the gate.", None))
     shout = "whistle" if me.get("guard") else "shout_for_help"
     bases.append((shout, f"{name} " + ("blows a whistle to bring every guard within earshot."
                                        if me.get("guard") else "shouts for help and for the guards."), shout))
@@ -164,6 +169,9 @@ def situation(state: dict, npc: dict) -> str:
              f"{view['suspicion']:.2f} of 1.",
              f"{npc['name']} is face to face with the stranger (round {encounter['round']}; it began because "
              f"{REASON_WORDS.get(encounter['reason'], 'they met')})."]
+    if (state.get("barred_until") or 0) > state.get("sim_time_ms", 0):
+        lines.append("The guards seized this stranger earlier and barred them from the gate for now; they have "
+                     "come back before their time.")
     recent = [e.get("seen") or e["text"] for e in encounter["log"][-8:]]
     if recent:
         lines.append("What has happened between them so far, oldest first:")
@@ -261,9 +269,16 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         open_for_talk(draft, minds.find(draft["npcs"], action["target_id"]), now)
     encounter = draft["encounter"]
     kind, text = action["kind"], action.get("text", "")
+    if kind == "yield":
+        for npc_id, intent in encounter["intents"].items():
+            npc = minds.find(draft["npcs"], npc_id)
+            if minds.card(npc).get("guard"):
+                encounter["intents"][npc_id] = {"action": "seize", "line": None, "line_id": None}
+            elif intent["action"] == "attack":
+                encounter["intents"][npc_id] = {"action": "listen", "line": None, "line_id": None}
     record = {"round": encounter["round"], "entries": [], "effort_seconds": 0, "entry": None, "replier": None,
               "happened": [], "walked_away": False, "verdict": None, "intents": copy.deepcopy(encounter["intents"]),
-              "interjector": None,
+              "interjector": None, "seized_by": None,
               "cues_before": {n["id"]: ((n.get("mind") or {}).get("cue") or {}).get("key") for n in draft["npcs"]}}
 
     def note(who, entry_kind, words, seen=None):
@@ -282,6 +297,8 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
             elif kind == "leave":
                 record["walked_away"] = True
                 note("player", "leave", "You turn and walk away.", "The stranger turns and walks away.")
+            elif kind == "yield":
+                note("player", "yield", "You raise your hands and give yourself up.", "The stranger surrenders.")
             elif kind == "do":
                 payload, verdict, _ = crafting.resolve_attempt(draft, run_id, text, judged, service_error,
                                                                trace_id, now)
@@ -319,6 +336,15 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
             radius = minds.WHISTLE_CELLS if act == "whistle" else minds.HEAR_SHOUT_CELLS
             minds._raise_alarm(draft, npc, words, radius, now, guards_only=act == "whistle")
             note(who, act, f"{npc['name']}: “{words}”", f"{npc['name']} called for help.")
+        elif act == "seize":
+            if record["seized_by"]:
+                continue
+            if record["walked_away"]:
+                note(who, "seize", f"{npc['name']} grabs for you, but you're already out of reach.",
+                     f"{npc['name']} tried to seize the stranger, who slipped away.")
+                continue
+            record["seized_by"] = who
+            note(who, "seize", f"{npc['name']} seizes you by the arm.", f"{npc['name']} seized the stranger.")
         elif act in ("flee", "leave"):
             if line:
                 minds._say(npc, line, now, draft, journal, intent.get("line_id"))
@@ -368,6 +394,9 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
         cue = (minds.mind(minds.find(draft["npcs"], npc_id)).get("cue") or {})
         if cue and cue.get("key") != record.get("cues_before", {}).get(npc_id):
             record["entries"].append(_log(encounter, npc_id, "cue", cue["text"]))
+    if record.get("seized_by") and draft["player"].get("alive", True):
+        arrest(draft, record, now)
+        return
     over = (record["walked_away"] or not draft["player"].get("alive", True) or bool(draft.get("admitted"))
             or not encounter["participants"])
     if over:
@@ -384,7 +413,39 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
         minds.add_pending(draft, npc_id, "round", "encounter")
 
 
+def arrest(draft: dict, record: dict, now: int) -> None:
+    """Seized: other people's things go back to them, the stranger is marched down the south road and kept
+    from the gate for a while, and the captain hears of it. Play goes on."""
+    guard = minds.find(draft["npcs"], record["seized_by"])
+    returned = []
+    for obj in draft["objects"].values():
+        if obj["holder_id"] == "player" and obj["owner_id"] not in (None, "player") and obj.get("lent_to") != "player":
+            obj["holder_id"] = obj["owner_id"]  # They take it back.
+            returned.append(obj["name"])
+    draft["player"].update(x=SOUTH_ROAD[0], y=SOUTH_ROAD[1])
+    draft["barred_until"] = now + BARRED_MS
+    words = (f"{guard['name']} and the guards march you back down the south road"
+             + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
+             + ". You're not welcome at the gate for a while.")
+    record["entries"].append(_log(active(draft), "player", "arrested", words))
+    record["arrested"] = True
+    draft["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
+    captain = minds.find(draft["npcs"], talk.CAPTAIN)
+    if captain and captain.get("alive", True):
+        minds.remember(captain, {"kind": "arrest", "severity": 1, "victim": None, "item": None,
+                                 "event": draft.get("event_seq", 0) + 1, "clarity": "told", "at": now,
+                                 "source": f"told_by:{guard['id']}",
+                                 "summary": f"{guard['name']} seized the stranger and marched them off down the south "
+                                            f"road" + (f", taking back the {', the '.join(returned)}" if returned
+                                                       else "") + ".",
+                                 "short": "was arrested by the guards"})
+    end(draft, now)
+    record["ended"] = True
+
+
 def round_ms(record: dict) -> int:
+    if record.get("arrested"):
+        return LEAVE_MS
     if record["walked_away"]:
         return LEAVE_MS
     return max(ROUND_MS, record["effort_seconds"] * 1000)

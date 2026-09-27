@@ -241,7 +241,7 @@ def _apply_people(state: dict, payload: dict) -> None:
 # A round changes many things at once (anything a Try Something can, a reply, people moving on),
 # so its event carries the resulting fields rather than deltas.
 ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "pending_minds", "agreements", "sim_time_ms",
-                "water_spilled_l", "last_action", "gate_open")
+                "water_spilled_l", "last_action", "gate_open", "barred_until")
 
 
 def _round_payload(before: dict, after: dict, record: dict) -> dict:
@@ -251,7 +251,7 @@ def _round_payload(before: dict, after: dict, record: dict) -> dict:
     if after.get("admitted") and not before.get("admitted"):
         payload["admitted"] = after["admitted"]
     payload["round"] = {key: record.get(key) for key in (
-        "round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk")}
+        "round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")}
     payload["round"]["did"] = {npc_id: intent["action"] for npc_id, intent in (record.get("intents") or {}).items()}
     return payload
 
@@ -735,7 +735,7 @@ def _talk_problem(state: dict, npc_id: str) -> tuple[dict, list[list[int]]]:
 
 class EncounterAct(BaseModel):
     model_config = {"extra": "forbid"}
-    kind: Literal["say", "do", "wait", "leave"]
+    kind: Literal["say", "do", "wait", "leave", "yield"]
     text: str = Field(default="", max_length=600)
     target_id: str | None = Field(default=None, max_length=60)
     selected_ids: list[str] = Field(default_factory=list, max_length=12)
