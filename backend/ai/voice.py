@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "voice_v1"
+PROMPT_VERSION = "voice_v2"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
 

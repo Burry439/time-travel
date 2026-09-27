@@ -154,9 +154,10 @@ def world(tmp_path, monkeypatch):
     def fake_decide(situation, questions):
         if "reply" in questions:
             return decider.DeciderCall(provider="script", model="script", answers=replies.pop(0) if replies else {})
-        choice = intents.pop(0) if intents else "listen"
+        choice = intents.pop(0) if intents else "listen"  # One intent for everyone, or {"bren": ..., ...}.
         return decider.DeciderCall(provider="script", model="script", answers={
-            k: {"type": "choice", "choice": choice} for k in questions if k.endswith("action")})
+            k: {"type": "choice", "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict)
+                else choice} for k in questions if k.endswith("action")})
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
     monkeypatch.setattr(service.voice, "speak", lambda context, fallback, allowed=True: voice.VoiceCall(

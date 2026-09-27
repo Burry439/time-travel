@@ -28,7 +28,11 @@ ROOT = Path(__file__).resolve().parents[1]
 _CARD_FILE = json.loads((ROOT / "data" / "content" / "npc_cards.json").read_text(encoding="utf-8"))
 CARDS: dict[str, dict] = _CARD_FILE["npcs"]
 WEAPONS: dict[str, dict] = _CARD_FILE["weapons"]
-LINES: dict[str, dict] = json.loads((ROOT / "data" / "content" / "lines.json").read_text(encoding="utf-8"))["lines"]
+_LINE_FILE = json.loads((ROOT / "data" / "content" / "lines.json").read_text(encoding="utf-8"))
+LINES: dict[str, dict] = _LINE_FILE["lines"]
+CUES: dict[str, list[str]] = _LINE_FILE["cues"]
+TRUST_BANDS = (0.3, 0.45, 0.6, 0.75)  # Crossing one of these shows as a small in-character cue.
+SUSPICION_BANDS = (0.4, 0.6, 0.8)
 GEOMETRY = json.loads((ROOT / "data" / "world_geometry.json").read_text(encoding="utf-8"))
 WALLS = {(cx, cy) for b in GEOMETRY["buildings"] for x, y, w, h in [b["cells"]]
          for cx in range(x, x + w) for cy in range(y, y + h)}  # Buildings block sight; trees do not.
@@ -139,6 +143,28 @@ def is_evidence(memory: dict) -> bool:
     return memory["kind"] in EVIDENCE_KINDS and memory.get("clarity") != "vague" and memory.get("works", True)
 
 
+def regard_cue(npc: dict, before: dict, after: dict) -> None:
+    """A small sign the player can read when someone's view of them crosses a band. Never numbers."""
+    def band(value: float, bands: tuple) -> int:
+        return sum(value >= b for b in bands)
+    trust = band(after["trust"], TRUST_BANDS) - band(before["trust"], TRUST_BANDS)
+    suspicion = band(after["suspicion"], SUSPICION_BANDS) - band(before["suspicion"], SUSPICION_BANDS)
+    if trust > 0:
+        kind = "trusting" if after["trust"] >= TRUST_BANDS[-1] else "warmer"
+    elif trust < 0:
+        kind = "cooler"
+    elif suspicion > 0:
+        kind = "wary"
+    elif suspicion < 0:
+        kind = "easier"
+    else:
+        return
+    count = mind(npc).get("cue_count", 0) + 1
+    pool = CUES[kind]
+    mind(npc).update(cue_count=count, cue={"kind": kind, "key": f"{npc['id']}:cue:{count}",
+                                           "text": pool[(count + len(npc["id"])) % len(pool)].format(name=npc["name"])})
+
+
 def _shift_regard(npc: dict, memory: dict) -> None:
     """Evidence raises trust and eases suspicion; a crime does the opposite. Once per event."""
     view = regard(npc)
@@ -153,8 +179,10 @@ def _shift_regard(npc: dict, memory: dict) -> None:
         return
     if memory.get("event") is not None:
         credited.append(memory["event"])
+    before = dict(view)
     view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
     view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
+    regard_cue(npc, before, view)
 
 
 def remember(npc: dict, memory: dict) -> None:

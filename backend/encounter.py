@@ -139,6 +139,9 @@ def intent_options(state: dict, npc: dict) -> dict[str, dict]:
     shout = "whistle" if me.get("guard") else "shout_for_help"
     bases.append((shout, f"{name} " + ("blows a whistle to bring every guard within earshot."
                                        if me.get("guard") else "shouts for help and for the guards."), shout))
+    if len((active(state) or {}).get("participants", [])) > 1:
+        bases.append(("interject", f"{name} cuts in to say something to the stranger, whoever they are talking to.",
+                      None))
     bases.append(("flee", f"{name} breaks away and runs from the stranger.", "flee"))
     bases.append(("leave", f"{name} has had enough of the stranger and walks off, leaving them be.", None))
     words = minds.slots(state, npc)
@@ -259,7 +262,9 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
     encounter = draft["encounter"]
     kind, text = action["kind"], action.get("text", "")
     record = {"round": encounter["round"], "entries": [], "effort_seconds": 0, "entry": None, "replier": None,
-              "happened": [], "walked_away": False, "verdict": None, "intents": copy.deepcopy(encounter["intents"])}
+              "happened": [], "walked_away": False, "verdict": None, "intents": copy.deepcopy(encounter["intents"]),
+              "interjector": None,
+              "cues_before": {n["id"]: ((n.get("mind") or {}).get("cue") or {}).get("key") for n in draft["npcs"]}}
 
     def note(who, entry_kind, words, seen=None):
         record["entries"].append(_log(encounter, who, entry_kind, words, seen))
@@ -345,18 +350,24 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
     if target and draft["player"].get("alive", True) and not record["walked_away"] \
             and (encounter["intents"].get(target) or {}).get("action") == "listen":
         record["replier"] = target
+    if draft["player"].get("alive", True):  # At most one other person cuts in.
+        record["interjector"] = next((n for n in encounter["participants"] if n != record["replier"]
+                                      and (encounter["intents"].get(n) or {}).get("action") == "interject"), None)
     return draft, record
 
 
-def finish(draft: dict, record: dict, now: int, reply: dict | None = None) -> None:
-    """After the reply (if any): keep or end the encounter and queue the next round's intents."""
+def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None) -> None:
+    """After the replies (if any): keep or end the encounter and queue the next round's intents."""
     encounter = active(draft)
     if encounter is None:
         return
-    if reply:
-        encounter["log"].append({"round": record["round"], "who": reply["npc_id"], "kind": "reply",
-                                 "text": f"{reply['name']}: “{reply['line']}”"})
-        record["entries"].append(encounter["log"][-1])
+    for said in ([reply] if isinstance(reply, dict) else reply or []):
+        record["entries"].append(_log(encounter, said["npc_id"], said.get("kind", "reply"),
+                                      f"{said['name']}: “{said['line']}”"))
+    for npc_id in encounter["participants"]:  # How someone's view of the stranger shifted, as they'd show it.
+        cue = (minds.mind(minds.find(draft["npcs"], npc_id)).get("cue") or {})
+        if cue and cue.get("key") != record.get("cues_before", {}).get(npc_id):
+            record["entries"].append(_log(encounter, npc_id, "cue", cue["text"]))
     over = (record["walked_away"] or not draft["player"].get("alive", True) or bool(draft.get("admitted"))
             or not encounter["participants"])
     if over:

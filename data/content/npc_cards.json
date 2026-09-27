@@ -1,6 +1,6 @@
 {
  "version": 3,
- "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard' and 'weapon' to decide what actions are legal and how fights go. skill: 0 (no fighter) to 3 (veteran) for fights resolved by code. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry.",
+ "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard' and 'weapon' to decide what actions are legal and how fights go. skill: 0 (no fighter) to 3 (veteran) for fights resolved by code. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry. knowledge.*.lead: how the fact reads in the player's journal (Leads). persuaded_by: what would change this person's mind, which they may say in their own words when they refuse. style: how they talk, for the voice.",
  "npcs": {
   "npc_roderic_vale": {
    "name": "Roderic",
@@ -39,20 +39,25 @@
     "gate_rule": {
      "text": "Roderic lets a stranger into the city only if he is sure they are no threat and they have a real reason to enter: a resident he trusts speaks for them, they are bound to honest business, or they bring something of clear value to the city or the garrison.",
      "line": "Nobody passes this gate without a reason I can trust. Someone of standing to speak for you, honest business, or something of real use to this city.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Roderic admits strangers who aren't a threat and have a real reason: someone he trusts vouching, honest business, or something of clear value."
     },
     "gate_beam": {
      "text": "The new gate beam has to be raised into its brackets, and Roderic wants it done without anyone hurt.",
      "line": "That beam has to go up, and I'll not have a man crushed under it.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Roderic wants the new gate beam raised without anyone getting hurt."
     },
     "fog_patrols": {
      "text": "The night patrols get lost on the moor road when the fog comes down; last month a scout's horse went into the bog.",
      "line": "When the fog comes down my patrols can't tell one direction from another. I lost a good horse to the bog that way.",
-     "trusted": true
+     "trusted": true,
+     "lead": "Roderic's patrols lose their way on the moor road when the fog comes down."
     }
    },
-   "decides": "Roderic admits an unknown traveller only when he believes they are not a threat and have a legitimate reason to enter: a resident he trusts has vouched for them, they are bound to honest business (such as working for a merchant with a trade permit), or they have shown him something of concrete value to the city or the garrison. He refuses when his suspicion is high, when he has caught them in a lie, or after a crime. Talk alone, grand claims and pleading do not move him."
+   "decides": "Roderic admits an unknown traveller only when he believes they are not a threat and have a legitimate reason to enter: a resident he trusts has vouched for them, they are bound to honest business (such as working for a merchant with a trade permit), or they have shown him something of concrete value to the city or the garrison. He refuses when his suspicion is high, when he has caught them in a lie, or after a crime. Talk alone, grand claims and pleading do not move him.",
+   "persuaded_by": "evidence: someone he trusts vouching for the stranger, honest business, or seeing something of real value to the city or garrison",
+   "style": "Formal and brief; short, complete sentences; never jokes; addresses the stranger as 'stranger'."
   },
   "npc_bren_marr": {
    "name": "Bren",
@@ -92,19 +97,24 @@
     "captain_decides": {
      "text": "Only Captain Roderic can let anyone through the gate; the guards just stop and question people.",
      "line": "I don't open this gate. The captain does. My job is asking you questions.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Only Captain Roderic can let anyone through the gate."
     },
     "hessa_inn": {
      "text": "Bren's sister Hessa runs the inn down the road and knows everyone who passes through.",
      "line": "My sister Hessa keeps the inn down the road. If anyone knows who's who around here, it's her.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Hessa at the inn knows everyone who passes through."
     },
     "oren_debt": {
      "text": "Oren has been jumpy lately; Bren suspects he owes someone money.",
      "line": "Oren's been jumpy as a cat lately. Owes somebody, if you ask me.",
-     "trusted": true
+     "trusted": true,
+     "lead": "Oren the guard owes somebody money."
     }
-   }
+   },
+   "persuaded_by": "the captain's say-so, and a straight answer",
+   "style": "Plainspoken with dry humour; likes one sharp follow-up question."
   },
   "npc_oren_dast": {
    "name": "Oren",
@@ -140,14 +150,18 @@
     "captain_decides": {
      "text": "Only the captain decides who enters the city.",
      "line": "The captain decides who goes in. Not me, and certainly not you.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Only Captain Roderic decides who enters the city."
     },
     "no_papers": {
      "text": "Strangers without papers or someone to sponsor them are turned away at the gate.",
      "line": "No papers, no sponsor, no entry. That's how it is.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Strangers without papers or a sponsor are turned away at the gate."
     }
-   }
+   },
+   "persuaded_by": "the captain's say-so; nothing a stranger says",
+   "style": "Curt and suspicious; pounces on anything that doesn't add up."
   },
   "npc_hessa_marr": {
    "name": "Hessa",
@@ -187,22 +201,26 @@
     "tomas_beam": {
      "text": "Tomas the carpenter lives inside the city and has been struggling for days to get a new beam up on the gate.",
      "line": "Tomas the carpenter's been fighting that new gate beam for days. He lives inside the walls, you know.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Tomas the carpenter is struggling to get a new beam up on the gate."
     },
     "darin_trade": {
      "text": "Darin the merchant lodges at the inn; he wants to trade inside the city and is always after a profitable deal.",
      "line": "Darin, the merchant who lodges with me, is desperate to trade inside those walls. He'll deal with anyone who can turn him a profit.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Darin the merchant wants to trade inside the city and is always after a profitable deal."
     },
     "vouching": {
      "text": "Captain Roderic listens when a resident he respects speaks up for a newcomer.",
      "line": "Roderic's stiff, but he listens when someone he respects speaks for you.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Roderic listens when a resident he respects speaks up for a newcomer."
     },
     "bren_temper": {
      "text": "Hessa's brother Bren has a temper when he feels he has been made a fool of.",
      "line": "My brother Bren's a good man, but make a fool of him and you'll see his temper.",
-     "trusted": true
+     "trusted": true,
+     "lead": "Bren hates being made a fool of."
     }
    },
    "offers": [
@@ -212,7 +230,9 @@
      "task": "bring Hessa a container full of water from the trough for her kitchen",
      "check": "Has the stranger now handed Hessa a container with water in it?"
     }
-   ]
+   ],
+   "persuaded_by": "someone pitching in around the inn, and honest manners",
+   "style": "Warm and chatty; calls people 'love'; reads people quickly and says so."
   },
   "npc_mara_venn": {
    "name": "Mara",
@@ -251,17 +271,20 @@
     "guard_order": {
      "text": "Mara is behind on a repair order for the gate guards and hates to see metal wasted.",
      "line": "I'm behind on the guards' repairs as it is. I've no metal to waste on strangers' notions.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Mara is behind on a repair order for the guards."
     },
     "needles": {
      "text": "Mara keeps a stack of iron needles and pins and a box of nails in the smithy.",
      "line": "I've needles and pins and nails enough, if someone had a real use for them.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Mara keeps iron needles and nails at the smithy."
     },
     "darin_stone": {
      "text": "Darin the merchant has an odd dark stone that pulls iron to it.",
      "line": "Darin carries a queer black stone that pulls iron to it. Calls it a curiosity.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Darin the merchant has a strange stone that pulls iron to it."
     }
    },
    "offers": [
@@ -271,7 +294,9 @@
      "task": "bring Mara fuel for her forge, such as charcoal or dry wood",
      "check": "Has the stranger now handed Mara fuel for her forge, such as charcoal or dry wood?"
     }
-   ]
+   ],
+   "persuaded_by": "a genuinely useful idea, or fuel for her forge",
+   "style": "Blunt and practical; talks about work and materials; no patience for fancy words."
   },
   "npc_jory_venn": {
    "name": "Jory",
@@ -309,19 +334,24 @@
     "darin_stone": {
      "text": "Darin the merchant has a black stone that makes iron jump to it; Jory saw it once.",
      "line": "Darin's got this black stone, right, and iron just jumps to it! I saw it with my own eyes.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Darin the merchant has a black stone that makes iron jump to it."
     },
     "tomas_beam": {
      "text": "Tomas can't get the new gate beam up into its brackets.",
      "line": "Tomas can't get that big beam up onto the gate. Two men and it still won't go.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Tomas can't get the new gate beam up into its brackets."
     },
     "mara_scrap": {
      "text": "Aunt Mara gets cross about wasted scrap.",
      "line": "Don't touch the scrap. Aunt Mara counts every bit.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Mara counts every bit of scrap at the smithy."
     }
-   }
+   },
+   "persuaded_by": "something new and clever to look at",
+   "style": "Excited and rambling; runs sentences together; full of questions."
   },
   "npc_tomas_reed": {
    "name": "Tomas",
@@ -356,17 +386,20 @@
     "beam_problem": {
      "text": "The replacement gate beam weighs about 60 kg and has to be lifted two metres up into iron brackets; two men have struggled with it and the captain wants it done safely.",
      "line": "Sixty kilos of oak, two metres up into the brackets, and the captain watching. Two of us couldn't manage it safely.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Tomas needs a safe way to lift a 60 kg beam two metres up into the gate brackets."
     },
     "lives_inside": {
      "text": "Tomas lives inside the city and does repair work on the gate.",
      "line": "I live inside, and the gate's my work.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Tomas lives inside the city and works on the gate."
     },
     "tools": {
      "text": "Tomas has a 3 m ladder, 6 m of rope, planks and a fulcrum stone in his yard.",
      "line": "I've a ladder, three metres, and six metres of good rope. Planks too.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Tomas has a 3 m ladder, 6 m of rope, planks and a fulcrum stone."
     }
    },
    "offers": [
@@ -376,7 +409,9 @@
      "task": "show Tomas a safe way to lift the 60 kg gate beam two metres up into its brackets",
      "check": "Has Tomas now seen, or been given, something that would really let the heavy gate beam be lifted two metres into its brackets safely?"
     }
-   ]
+   ],
+   "persuaded_by": "someone showing real skill with wood, or a safe way to lift heavy things",
+   "style": "Measured and precise; talks in measurements and how things are built."
   },
   "npc_darin_ko": {
    "name": "Darin",
@@ -411,22 +446,26 @@
     "lodestone": {
      "text": "Darin has an odd dark stone (a lodestone) that pulls iron to it; he thinks it is a worthless curiosity.",
      "line": "I have a queer dark stone that tugs at iron. A curiosity. Nobody's ever wanted it.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Darin has a lodestone, a stone that pulls iron, and thinks it's worthless."
     },
     "goods": {
      "text": "Darin sells cloth, cordage and a polished bronze mirror from his wagon.",
      "line": "Cloth, cordage, a fine bronze mirror. All for sale, at fair prices.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Darin sells cloth, cordage and a polished bronze mirror."
     },
     "trade_sponsor": {
      "text": "Darin wants to trade inside the city, and a merchant with a permit can take a hired hand in on trade business.",
      "line": "A merchant with a permit can bring his hired hands through on business. If I had a reason to hire one.",
-     "trusted": false
+     "trusted": false,
+     "lead": "A merchant with a permit can bring a hired hand into the city on business."
     },
     "oren_debt": {
      "text": "The guard Oren owes Darin money.",
      "line": "Oren at the gate owes me more than he likes to admit.",
-     "trusted": true
+     "trusted": true,
+     "lead": "Oren the guard owes Darin money."
     }
    },
    "offers": [
@@ -436,7 +475,9 @@
      "task": "show Darin something new that he could sell or trade at a profit",
      "check": "Has Darin now seen, or been given, something new that a merchant could clearly sell or trade at a profit?"
     }
-   ]
+   ],
+   "persuaded_by": "seeing something with his own eyes that he could sell at a profit",
+   "style": "Smooth; calls people 'friend'; turns everything into a bargain."
   },
   "npc_elin_west": {
    "name": "Elin",
@@ -469,14 +510,18 @@
     "fog": {
      "text": "Patrols lose their way on the moor road when the fog comes down; the watch has no reliable way to hold a heading.",
      "line": "In fog the moor road disappears. Can't tell north from anything.",
-     "trusted": false
+     "trusted": false,
+     "lead": "The watch can't hold a heading on the moor road in fog."
     },
     "captain_decides": {
      "text": "Captain Roderic decides who enters the city.",
      "line": "The captain decides who enters.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Captain Roderic decides who enters the city."
     }
-   }
+   },
+   "persuaded_by": "the captain's orders",
+   "style": "Terse; reports facts, not opinions."
   },
   "npc_kade_east": {
    "name": "Kade",
@@ -510,9 +555,12 @@
     "keep_away": {
      "text": "Strangers are kept away from the gate unless the captain says otherwise.",
      "line": "Strangers keep clear of the gate unless the captain says so.",
-     "trusted": false
+     "trusted": false,
+     "lead": "Guards keep strangers away from the gate unless the captain says otherwise."
     }
-   }
+   },
+   "persuaded_by": "the captain's orders",
+   "style": "Gruff; two or three words where he can."
   }
  },
  "weapons": {

@@ -134,8 +134,8 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
         "answer": option("answer", f"{name} answers or reacts to what the stranger said, without telling them "
                                    f"anything new."),
     }
-    last = next((t for t in reversed(turns(npc)) if t["who"] == "them"), {})
-    if last.get("reply") != "ask_back":  # Asked once and answered: the conversation moves on.
+    recent = [t for t in turns(npc) if t["who"] == "them"][-3:]
+    if not any(t.get("reply") == "ask_back" for t in recent):  # Asked once and answered: the conversation moves on.
         options["ask_back"] = option("ask_back", f"{name} asks the stranger a question of their own: who they are, "
                                                  f"what they want, or what they meant.")
     trust = regard(npc)["trust"]
@@ -300,6 +300,9 @@ def voice_context(state: dict, npc: dict, text: str, key: str, answers: dict | N
     anger = minds.mind(npc)["feelings"].get("anger", 0.0)
     return {
         "character": {k: me.get(k) for k in ("name", "age", "role", "personality", "values", "fears")},
+        "speaking_style": me.get("style", ""),
+        **({"what_would_change_their_mind": me["persuaded_by"]}
+           if option["act"] in ("refuse", "tell_to_leave") and me.get("persuaded_by") else {}),
         "regard_for_the_stranger": {"trust": _words(view["trust"], ["none", "little", "some", "real"]),
                                     "suspicion": _words(view["suspicion"], ["none", "slight", "wary", "very wary"]),
                                     "anger": _words(anger, minds.ANGER_LEVELS)},
@@ -352,6 +355,7 @@ def _update_regard(npc: dict, answers: dict) -> dict:
     view = regard(npc)
     evidence = {m.get("event") for m in minds.mind(npc)["memories"] if minds.is_evidence(m)}
     budget = max(0.0, TALK_GOODWILL + EVIDENCE_GOODWILL * len(evidence) - view["goodwill_used"])
+    before = dict(view)
     trust, suspicion = SHIFTS[_level(answers, "impression")], SHIFTS[_level(answers, "suspicion")]
     if trust > 0:
         trust = min(trust, budget)
@@ -361,6 +365,7 @@ def _update_regard(npc: dict, answers: dict) -> dict:
     view["goodwill_used"] = round(view["goodwill_used"] + max(trust, 0.0) + max(-suspicion, 0.0), 3)
     view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
     view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
+    minds.regard_cue(npc, before, view)
     return {"trust": round(trust, 3), "suspicion": round(suspicion, 3)}
 
 
@@ -401,7 +406,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         else:
             reward_job = ("they did what I asked of them, and did it honestly.",
                           f"{name} vouched for the stranger, who had done what {name} asked: {deal['task']}.")
-        learned.append({"npc_id": npc_id, "name": name, "said": line, "fulfilled": deal["id"], "event_id": event_id})
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "fulfilled": deal["id"], "event_id": event_id,
+                        "lead": f"{name} is satisfied: you did what they asked, and they'll speak for you."})
     admission = None
     if act == "offer":
         offer = next(o for o in minds.card(npc).get("offers", []) if o["id"] == target)
@@ -409,7 +415,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         agreements[deal_id] = {"id": deal_id, "type": "task_for_reward", "template": target, "issuer": npc_id,
                                "task": offer["task"], "check": offer["check"], "reward": offer["reward"],
                                "status": "proposed", "offered_event": event_id}
-        learned.append({"npc_id": npc_id, "name": name, "said": line, "offer": deal_id, "event_id": event_id})
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "offer": deal_id, "event_id": event_id,
+                        "lead": f"{name} asked you to {offer['task'].replace(name, 'them')}."})
     elif act == "vouch":
         reward_job = ("I've come to trust them.", f"{name} vouched for the stranger and says they can be trusted.")
     elif act == "admit":
@@ -419,17 +426,22 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         state.update(admitted=admission, gate_open=True)
     if act == "share":
         my_mind.setdefault("shared", []).append(target)
-        learned.append({"npc_id": npc_id, "name": name, "said": line, "fact": target, "event_id": event_id})
+        fact = knowledge(npc)[target]
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "fact": target, "event_id": event_id,
+                        "lead": fact.get("lead") or fact["text"]})
     elif act == "lend":
         thing = state["objects"][target]
         thing["lent_to"] = "player"
         if thing["holder_id"] == npc_id:
             thing["holder_id"] = "player"  # Handed over.
         lent.append({"id": target, "holder_id": thing["holder_id"]})
-        learned.append({"npc_id": npc_id, "name": name, "said": line, "lend": target, "event_id": event_id})
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "lend": target, "event_id": event_id,
+                        "lead": f"{name} lent you their {thing['name']}."})
     elif act == "refer":
         my_mind.setdefault("referred", []).append(target)
-        learned.append({"npc_id": npc_id, "name": name, "said": line, "refer": target, "event_id": event_id})
+        other = minds.find(state["npcs"], target)
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "refer": target, "event_id": event_id,
+                        "lead": f"{name} suggested you talk to {other['name']}, the {minds.card(other)['role']}."})
     if reward_job and npc_id != CAPTAIN:
         my_mind["vouched"] = True
         speak_for(state, npc, reward_job[0], reward_job[1], event_id, now)

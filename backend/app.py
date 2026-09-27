@@ -765,9 +765,14 @@ def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
             raise HTTPException(409, {"reason": "no_encounter", "message": "Nobody is face to face with you."})
         return _talk_problem(state, request.target_id)[1]
     if request.target_id and request.target_id not in current["participants"]:
-        _, walk = _talk_problem(state, request.target_id)
-        if walk:
-            raise HTTPException(409, {"reason": "cannot_talk", "message": "Deal with who is in front of you first."})
+        npc = minds.find(state["npcs"], request.target_id)
+        if npc is None:
+            raise HTTPException(404, "Unknown person")
+        problem = talk.busy(npc)
+        if problem is None and math.dist(minds._cell(npc), minds.player_cell(state)) > talk.HEAR_TALK_CELLS:
+            problem = "Deal with who is in front of you first."  # Face to face, you can call out, not walk off.
+        if problem:
+            raise HTTPException(409, {"reason": "cannot_talk", "message": problem})
     return []
 
 
@@ -788,6 +793,19 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
                                       _service_message(judged) if judged else None, request.request_id)
     record["walk"] = walk
     return draft, record
+
+
+def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[str, dict], run_id: str,
+           allowed: bool) -> dict:
+    """One person's reply in a round: Jev decides what they do, the voice says it (outside the lock)."""
+    decided = decider.decide(*ask)
+    out = {"decided": decided, "ask": ask, "happened": happened, "key": None, "context": None, "spoken": None}
+    if decided.ok:
+        out["key"] = talk.decided_reply(draft, npc, decided.answers, ask[1],
+                                        seed=f"{run_id}:{draft['event_seq']}:{npc['id']}")
+        out["context"] = talk.voice_context(draft, npc, text, out["key"], decided.answers, happened)
+        out["spoken"] = voice.speak(out["context"], talk.fallback_line(draft, npc, out["key"]), allowed=allowed)
+    return out
 
 
 def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
@@ -839,20 +857,19 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
             happened = " ".join(record["happened"]) or None
             text = request.text if request.kind == "say" else ""
             reply_ask = talk.request(draft, replier, text, happened) if replier else None
-        # The person addressed replies to what actually happened: Jev decides, the voice says it.
-        decided = spoken = None
-        key = context_said = None
-        if reply_ask:
-            decided = decider.decide(*reply_ask)
-            if decided.ok:
-                key = talk.decided_reply(draft, replier, decided.answers, reply_ask[1],
-                                         seed=f"{run_id}:{draft['event_seq']}:{replier['id']}")
-                context_said = talk.voice_context(draft, replier, text, key, decided.answers, happened)
-                spoken = voice.speak(context_said, talk.fallback_line(draft, replier, key),
-                                     allowed=calls_used < ai_config.max_calls_per_run())
+        # The person addressed replies to what actually happened; someone else may cut in after them.
+        allowed = calls_used < ai_config.max_calls_per_run()
+        main = _speak(draft, replier, text, happened, reply_ask, run_id, allowed) if reply_ask else None
+        decided = main["decided"] if main else None
+        spoken = main["spoken"] if main else None
+        cutting_in = minds.find(draft["npcs"], record["interjector"]) if record["interjector"] else None
+        side = None
+        if cutting_in:
+            heard = " ".join(filter(None, [happened, f"{replier['name']} just said: “{spoken.text}”" if spoken else None]))
+            side = _speak(draft, cutting_in, "", heard, talk.request(draft, cutting_in, "", heard), run_id, allowed)
         with _lock, db() as connection:
             run, state = load_run(connection, run_id)
-            for call in (intent_call, decided):
+            for call in (intent_call, decided, side["decided"] if side else None):
                 if call is not None:
                     telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                                      call.error or call.fallback_from, call.input_tokens, call.output_tokens)
@@ -860,9 +877,10 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
                 telemetry.record(connection, run_id, "judge", judged.model, judged.prompt_version, judged.latency_ms,
                                  judged.status == "ok", judged.error, judged.input_tokens, judged.output_tokens,
                                  judged.attempts)
-            if spoken and spoken.model and spoken.model != "stub":
-                telemetry.record(connection, run_id, "voice", spoken.model, spoken.prompt_version, spoken.latency_ms,
-                                 spoken.status == "ok", spoken.error, spoken.input_tokens, spoken.output_tokens)
+            for line in (spoken, side["spoken"] if side else None):
+                if line and line.model and line.model != "stub":
+                    telemetry.record(connection, run_id, "voice", line.model, line.prompt_version, line.latency_ms,
+                                     line.status == "ok", line.error, line.input_tokens, line.output_tokens)
         if reply_ask and not (decided and decided.ok) and request.kind == "say" and not any(
                 e["kind"] in ("strike", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
             raise HTTPException(503, {"reason": "decider_failed", "message": (
@@ -873,18 +891,28 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
                 raise HTTPException(409, {"reason": "stale_state", "state": state})
             walk = _round_setup(state, request)
             draft, record = _round_draft(state, run_id, request, walk, intents, judged)  # Redone on the latest world.
-            now, reply, talk_trace = draft["sim_time_ms"], None, None
-            if spoken and record["replier"] == (replier or {}).get("id"):
-                said = talk.exchange(draft, replier["id"], text, decided.answers, key, spoken.text, [], happened)
+            now, replies, talk_trace = draft["sim_time_ms"], [], None
+            for spoke, person, words, kind in ((main, replier, text, "reply"), (side, cutting_in, "", "interject")):
+                if not (spoke and spoke["spoken"]) or record["replier" if kind == "reply" else "interjector"] \
+                        != person["id"]:
+                    continue
+                said = talk.exchange(draft, person["id"], words, spoke["decided"].answers, spoke["key"],
+                                     spoke["spoken"].text, [], spoke["happened"])
                 draft.setdefault("learned", []).extend(said["learned"])
                 draft["journal"].append(said["journal_entry"])
-                reply = {"npc_id": replier["id"], "name": replier["name"], "line": spoken.text}
-                talk_trace = {"kind": "talk", "npc_id": replier["id"], "text": text, "happened": happened,
-                              "action": key, "jev_choice": (decided.answers.get("reply") or {}).get("choice"),
-                              "why": "addressed", "reply": spoken.text, "regard_change": said["regard_change"],
-                              "situation": reply_ask[0], "questions": reply_ask[1], "call": decided.as_dict(),
-                              "voice": spoken.as_dict(), "voice_context": context_said}
-            encounter.finish(draft, record, now, reply)
+                replies.append({"npc_id": person["id"], "name": person["name"], "line": spoke["spoken"].text,
+                                "kind": kind})
+                trace = {"kind": "talk", "npc_id": person["id"], "text": words, "happened": spoke["happened"],
+                         "action": spoke["key"], "jev_choice": (spoke["decided"].answers.get("reply") or {}).get("choice"),
+                         "why": "addressed" if kind == "reply" else "cut in", "reply": spoke["spoken"].text,
+                         "regard_change": said["regard_change"], "situation": spoke["ask"][0],
+                         "questions": spoke["ask"][1], "call": spoke["decided"].as_dict(),
+                         "voice": spoke["spoken"].as_dict(), "voice_context": spoke["context"]}
+                talk_trace = talk_trace or trace
+                if kind == "interject":
+                    connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+                                       (run_id, state["event_seq"] + 1, person["id"], json.dumps(trace)))
+            encounter.finish(draft, record, now, replies)
             elapsed = encounter.round_ms(record)
             people = _advance_people(draft, elapsed)
             draft.update(npcs=people["npcs"], player=people["player"], pending_minds=people["pending_minds"],
@@ -903,7 +931,7 @@ def _play_round(run_id: str, request: EncounterAct, background: BackgroundTasks)
                                               request.selected_ids, context, judged, record["verdict"], made,
                                               background)
             round_trace = {"kind": "round", "npc_id": (replier or {}).get("id") or "encounter",
-                           "why": f"round {record['round']}", "action": key or request.kind,
+                           "why": f"round {record['round']}", "action": (main or {}).get("key") or request.kind,
                            "intents": record.get("intents"), "entries": record["entries"],
                            "situation": asking[0] if asking else "(Everyone's intents were decided earlier, while the "
                                                                  "stranger was choosing.)",

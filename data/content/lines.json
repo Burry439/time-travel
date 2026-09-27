@@ -64,5 +64,12 @@
       "frightened": ["Captain, sir, I can speak for the stranger: {why}"],
       "shrewd": ["Captain, a matter of business: {why}", "Roderic, you'll want to hear this. {why}"]
     }
+  },
+  "cues": {
+    "warmer": ["{name} seems to warm to you.", "{name}'s manner softens.", "{name} looks more interested."],
+    "trusting": ["{name} looks at you with real trust now.", "{name} seems to have made up their mind about you, for the good."],
+    "cooler": ["{name} cools toward you.", "{name} looks less friendly now.", "{name}'s face closes."],
+    "wary": ["{name} eyes you warily.", "{name}'s eyes narrow.", "{name} watches you more carefully now."],
+    "easier": ["{name} seems less wary of you.", "{name} relaxes a little.", "{name} lowers their guard a fraction."]
   }
 }
