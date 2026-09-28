@@ -12,8 +12,10 @@ from pydantic import BaseModel, Field
 import attempts
 import crafting
 import encounter
+import intent
 import minds
 import rounds
+import talk
 import store
 from ai import config as ai_config, decider, judge, telemetry, voice
 
@@ -61,6 +63,56 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
                                                              request_id=request.request_id), background)
     return _attempt(run_id, request.text, request.selected_ids, request.expected_version, request.request_id,
                     background, lambda state, context, calls_used: attempts.judge_attempt(context, calls_used))
+
+
+class ActRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+    text: str = Field(min_length=1, max_length=600)
+    target_id: str | None = Field(default=None, max_length=60)
+    selected_ids: list[str] = Field(default_factory=list, max_length=12)
+    expected_version: int = Field(ge=0)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
+@router.post("/runs/{run_id}/act")
+def act(run_id: str, request: ActRequest, background: BackgroundTasks):
+    """Whatever the stranger typed: words, a deed, both, or waiting / giving up / walking away (GDD D-34)."""
+    with store.db() as connection:
+        _, state = store.load_run(connection, run_id)
+    current = encounter.active(state)
+    here = minds.player_cell(state)
+    near = sorted((n for n in state["npcs"] if n.get("alive", True)
+                   and minds.math.dist(minds._cell(n), here) <= talk.HEAR_TALK_CELLS),
+                  key=lambda n: minds.math.dist(minds._cell(n), here))
+    target = request.target_id or (current.get("opened_by") if current else None)
+    if target == "player":  # A conversation the stranger began: whoever they last addressed answers.
+        target = None
+    kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id))
+    if call is not None:
+        with store.lock, store.db() as connection:
+            telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
+                             call.error or call.fallback_from, call.input_tokens, call.output_tokens)
+    heard = {"kind": kind, "how": how}
+    if current or kind == "say":
+        if not current:
+            target = target or (near[0]["id"] if near else None)
+            if kind == "say" and not target:
+                raise HTTPException(409, {"reason": "nobody_hears", "message": "Nobody is close enough to hear you.",
+                                          "intent": heard})
+        if not current and kind in ("wait", "yield", "leave"):
+            return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
+        round_kind = {"both": "do"}.get(kind, kind)
+        reply = rounds.play_round(run_id, rounds.EncounterAct(
+            kind=round_kind, text=request.text, target_id=target, selected_ids=request.selected_ids,
+            expected_version=request.expected_version, request_id=request.request_id, speech=kind == "both"),
+            background)
+    elif kind in ("wait", "yield", "leave"):
+        return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
+    else:  # A deed (or a deed with words) with nobody face to face: Try Something.
+        reply = craft(run_id, CraftRequest(text=request.text, selected_ids=request.selected_ids,
+                                           expected_version=request.expected_version,
+                                           request_id=request.request_id), background)
+    return {**reply, "intent": heard}
 
 
 @router.post("/runs/{run_id}/quick")

@@ -55,6 +55,7 @@ class EncounterAct(BaseModel):
     selected_ids: list[str] = Field(default_factory=list, max_length=12)
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
+    speech: bool = False  # A deed that also says something: the reply hears the words too.
 
 
 @router.post("/runs/{run_id}/say")
@@ -172,7 +173,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             draft, record = _round_draft(state, run_id, request, walk, intents, judged)
             replier = minds.find(draft["npcs"], record["replier"]) if record["replier"] else None
             happened = " ".join(record["happened"]) or None
-            text = request.text if request.kind == "say" else ""
+            text = request.text if request.kind == "say" or request.speech else ""
             reply_ask = talk.request(draft, replier, text, happened) if replier else None
         # The person addressed replies to what actually happened; someone else may cut in after them.
         allowed = calls_used < ai_config.max_calls_per_run()
