@@ -502,7 +502,7 @@
    "materials": [
     "wood"
    ],
-   "description": "The old oak bar resting across the gate in its iron brackets, holding the gate shut. A long crack runs down one side of it.",
+   "description": "The old gate bar: three metres of squared oak with a long crack down one side.",
    "flags": [
     "rigid",
     "combustible"
