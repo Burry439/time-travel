@@ -13,8 +13,11 @@ def record(connection: sqlite3.Connection, run_id: str, role: str, model: str | 
         (run_id, role, model, prompt_version, latency_ms, input_tokens, output_tokens, attempts, int(ok), error))
 
 
-def calls_for_run(connection: sqlite3.Connection, run_id: str) -> int:
-    return int(connection.execute("SELECT COALESCE(SUM(attempts),0) FROM model_calls WHERE run_id=?",
+def calls_for_run(connection: sqlite3.Connection, run_id: str, decider: bool = False) -> int:
+    """Model calls so far: the writing roles (judge, voice, memory, pictures) or, separately, the decider (D-37:
+    people deciding their day would otherwise use up the allowance meant for writing)."""
+    where = "role='decider'" if decider else "role!='decider'"
+    return int(connection.execute(f"SELECT COALESCE(SUM(attempts),0) FROM model_calls WHERE run_id=? AND {where}",
                                   (run_id,)).fetchone()[0])
 
 

@@ -219,7 +219,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                         != person["id"]:
                     continue
                 said = talk.exchange(draft, person["id"], words, spoke["decided"].answers, spoke["key"],
-                                     spoke["spoken"].text, [], spoke["happened"])
+                                     spoke["spoken"].text, [], spoke["happened"], note=spoke["spoken"].remember,
+                                     name_given=spoke["spoken"].stranger_name)
                 draft.setdefault("learned", []).extend(said["learned"])
                 draft["journal"].append(said["journal_entry"])
                 replies.append({"npc_id": person["id"], "name": person["name"], "line": spoke["spoken"].text,

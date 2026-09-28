@@ -202,9 +202,12 @@ def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -
         pending.append({"npc_id": npc_id, "kind": kind, "why": why})
 
 
+REACTING = ("decide", "round")  # Pending kinds that mean someone is reacting to the stranger.
+
+
 def calm(state: dict) -> bool:
-    """No one is reacting to the player: a safe point to rewind to."""
-    if state.get("pending_minds") or not state["player"].get("alive", True):
+    """No one is reacting to the player: a safe point to rewind to (people planning their day don't count)."""
+    if any(p["kind"] in REACTING for p in state.get("pending_minds", [])) or not state["player"].get("alive", True):
         return False
     if state.get("encounter") and state["encounter"].get("reason") != "talk":
         return False
@@ -448,8 +451,10 @@ def legal_actions(state: dict, npc: dict) -> dict[str, str]:
 
 
 def _situation(state: dict, npc: dict) -> str:
+    import persona  # The character sheet (persona imports minds).
     me, my_mind = card(npc), mind(npc)
     here = player_cell(state)
+    known_as = persona.knows(npc).get("name") or persona.knows(npc).get("heard_name")
     steps = round(math.dist(_cell(npc), here))
     carried = [o["name"] for o in state["objects"].values() if o["holder_id"] == "player"]
     lines = [
@@ -458,12 +463,18 @@ def _situation(state: dict, npc: dict) -> str:
         f"Values: {me['values']}. Fears: {me['fears']}.",
         f"Authority: {me['authority']}",
         f"Armed with a {me['weapon']}; {me['combat']}." if me.get("weapon") else f"Unarmed; {me['combat']}.",
+        *persona.sheet_lines(state, npc),
         f"{me['name']} is {condition(npc.get('health', 100), npc.get('alive', True))} and was "
         f"{ACTIVITY_WORDS.get((npc.get('controller') or {}).get('activity'), 'standing about')}.",
-        f"The stranger (a traveller nobody here knows) is about {steps} steps away and "
+        (f"The stranger ({known_as}, a traveller new to these parts)" if known_as else
+         "The stranger (a traveller nobody here knows)") + f" is about {steps} steps away and "
         f"{condition(state['player'].get('health', 100), state['player'].get('alive', True))}"
-        + (f", carrying: {', '.join(carried)}." if carried else ", empty-handed."),
-        f"What {me['name']} knows, oldest first:"]
+        + (f", carrying: {', '.join(carried)}." if carried else ", empty-handed.")]
+    remembered = persona.stranger_lines(state, npc)
+    if remembered:
+        lines.append(f"What {me['name']} remembers of the stranger:")
+        lines += [f"- {line}" for line in remembered]
+    lines.append(f"What {me['name']} knows, oldest first:")
     for memory in my_mind["memories"]:
         source = {"witnessed": "saw from nearby" if memory.get("clarity") != "vague" else "saw from a distance",
                   "victim": "it happened to them", "received": "it was given to them",
@@ -507,11 +518,20 @@ def _questions(state: dict, npc: dict, prefix: str = "") -> dict:
     return questions
 
 
+ANSWER_KEY = {"decide": "action", "round": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
+
+
 def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str, dict]:
-    """A person's situation and questions: reacting to what they saw, or their next move face to face."""
+    """A person's situation and questions: reacting to what they saw, their next move face to face, what to do
+    next with their day, or what to talk about with someone they've met (D-37)."""
     if pending["kind"] == "round":
         import encounter
         return encounter.situation(state, npc), encounter.questions(state, npc, prefix)
+    if pending["kind"] in ("agenda", "meet"):
+        import village
+        if pending["kind"] == "agenda":
+            return village.agenda_brief(state, npc, prefix)
+        return village.meet_brief(state, npc, find(state["npcs"], pending["why"]), prefix)
     return _situation(state, npc), _questions(state, npc, prefix)
 
 
@@ -533,7 +553,7 @@ def batch_request(state: dict, batch: list[dict]) -> tuple[str, dict, dict[str, 
         text, asked = _brief(state, npc, pending, prefix)
         sections.append(f"=== {npc['name'].upper()} (questions starting '{prefix}') ===\n{text}")
         questions.update(asked)
-    text = ("Several people in a small premodern town are each deciding, independently, how to react to a stranger. "
+    text = ("Several people in a small premodern town are each deciding, independently, what they do. "
             "Judge each person only from their own section.\n\n" + "\n\n".join(sections))
     return text, questions, prefixes
 
@@ -785,10 +805,13 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     journal: list[dict] = []
     blocked = crafting._blocked_cells(state)
     end = now + elapsed_ms
+    talking = set((working.get("encounter") or {}).get("participants", []))
     for npc in npcs:
         job = (npc.get("mind") or {}).get("job")
         if not npc.get("alive", True):
             continue
+        if ((npc.get("mind") or {}).get("knows") or {}).get("notes") and npc["id"] not in talking:
+            add_pending(working, npc["id"], "recollect", "the conversation ended")  # Remember it (D-36).
         if not job:
             _ambient(working, npc, end, blocked)
             continue
@@ -854,6 +877,8 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     if not working.get("encounter"):
         _gate_watch(working, npcs, end)  # Nobody needs halting while the stranger is already face to face with someone.
     encounter.prune(working)
+    import village  # Agenda beats and meetings: the village's own life (village imports minds).
+    village.schedule(working, npcs, end)
     state["pending_minds"] = working.get("pending_minds", state.get("pending_minds", []))
     state["encounter"] = working.get("encounter")
     return npcs, journal, working["player"]

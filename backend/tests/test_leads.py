@@ -55,9 +55,13 @@ def test_refusals_carry_what_would_change_their_mind_and_everyone_has_a_voice():
     state = unit_state()
     darin = beside(state, "npc_darin_ko")
     refusing = talk.voice_context(state, darin, "Lend me the stone.", "refuse")
-    assert "sell" in refusing["what_would_change_their_mind"] and "friend" in refusing["speaking_style"]
+    assert "sell" in refusing["what_would_change_their_mind"] and "friend" in refusing["how_they_talk"]["style"]
     assert "what_would_change_their_mind" not in talk.voice_context(state, darin, "Hello.", "answer")
     assert all(minds.card(n).get("style") and minds.card(n).get("persuaded_by") for n in state["npcs"])
+    # Every character sheet is complete: a voice of their own, wants, likes, people they know, things to do.
+    for n in state["npcs"]:
+        me = minds.card(n)
+        assert len(me["voice"]["samples"]) >= 4 and me["voice"]["habits"] and me["goals"] and me["opinions"]             and me["tasks"] and me["secrets"] and me["mood"], n["id"]
 
 
 def test_asking_back_is_rare():

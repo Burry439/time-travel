@@ -218,6 +218,9 @@ def apply_people(state: dict, payload: dict) -> None:
     if "player" in payload:
         state["player"] = payload["player"]  # e.g. struck by someone during this time
     state["journal"].extend(payload.get("people_journal", []))
+    state.setdefault("learned", []).extend(payload.get("learned_added", []))  # e.g. gossip the stranger overheard
+    if "village" in payload:
+        state["village"] = payload["village"]
     if "safe_seq" in payload:
         state["safe_seq"] = payload["safe_seq"]
     if "encounter" in payload:

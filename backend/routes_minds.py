@@ -1,18 +1,32 @@
-"""People thinking: everyone with something on their mind decides, in one Jev request."""
+"""People thinking: everyone with something on their mind decides, in one Jev request.
+
+Reactions to the stranger (and encounter intents) come first and go alone, so they're never slowed by
+the rest. Otherwise people plan their day and talk to each other (D-37) in the same shared request,
+and anyone whose conversation with the stranger has ended turns it into a memory (D-36) alongside.
+Every result is committed by code in one "minds" event, so replay is exact.
+"""
 from __future__ import annotations
 
 import copy
 import json
+import math
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 import encounter
 import minds
+import persona
 import store
-from ai import decider, telemetry
+import village
+from ai import config as ai_config
+from ai import decider, telemetry, voice
 
 router = APIRouter()
+KINDS = ("decide", "round", "agenda", "meet", "recollect")
+REACTING = ("decide", "round")
+RECOLLECT_BATCH = 3
 
 
 class ThinkRequest(BaseModel):
@@ -23,81 +37,184 @@ class ThinkRequest(BaseModel):
 _thinking_runs: set[str] = set()
 
 
+def _meet_ready(state: dict, pending: dict) -> bool:
+    """Both still free and close enough; otherwise the chat doesn't happen."""
+    a, b = minds.find(state["npcs"], pending["npc_id"]), minds.find(state["npcs"], pending["why"])
+    return bool(a and b) and village.free(state, a) and village.free(state, b) \
+        and math.dist(minds._cell(a), minds._cell(b)) <= village.VISIT_REACH + 1
+
+
+def _choose(state: dict) -> tuple[list[dict], list[dict]]:
+    """Who decides now (reactions alone if there are any) and whose conversations become memories."""
+    alive = [p for p in state.get("pending_minds", []) if p["kind"] in KINDS
+             and (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)]
+    reacting = [p for p in alive if p["kind"] in REACTING]
+    if reacting:
+        batch = reacting[:minds.THINK_BATCH]
+    else:
+        batch = [p for p in alive if p["kind"] == "meet" and _meet_ready(state, p)][:minds.THINK_BATCH]
+        batch += [p for p in alive if p["kind"] == "agenda"][:minds.THINK_BATCH - len(batch)]
+    talking = set((state.get("encounter") or {}).get("participants") or [])
+    recollecting = [p for p in alive if p["kind"] == "recollect" and p["npc_id"] not in talking][:RECOLLECT_BATCH]
+    return batch, recollecting
+
+
+def _recollect_context(npc: dict) -> tuple[dict, dict]:
+    known = persona.knows(npc)
+    fold = [e["text"] for e in known["episodes"][:max(0, len(known["episodes"]) - persona.EPISODES_KEPT + 1)]]
+    context = {"character": {"name": npc["name"], "role": minds.card(npc)["role"]}, "notes": list(known["notes"]),
+               "long_memory": known.get("long_memory", ""), "to_fold": fold}
+    fallback = {"episode": " ".join(known["notes"])[:400],
+                "long_memory": " ".join(filter(None, [known.get("long_memory", "")] + fold))[-600:]}
+    return context, fallback
+
+
+def _apply_recollection(npc: dict, context: dict, result: dict, now: int) -> dict:
+    """The conversation becomes an episode; the notes it covered are cleared; the oldest episodes fold away."""
+    known = persona.knows(npc)
+    covered = len(context["notes"])
+    known["notes"] = known["notes"][covered:]
+    if result["episode"]:
+        known["episodes"].append({"at": now, "text": result["episode"]})
+    if context["to_fold"]:
+        known["episodes"] = known["episodes"][len(context["to_fold"]):]
+        known["long_memory"] = result["long_memory"]
+    known["since"] = now
+    known["talks"] = known.get("talks", 0) + 1
+    return {"npc_id": npc["id"], "kind": "recollect", "episode": result["episode"],
+            "folded": len(context["to_fold"])}
+
+
 @router.post("/runs/{run_id}/think")
 def think(run_id: str, request: ThinkRequest):
-    """Let people with something on their mind decide what to do (the decider runs outside the lock)."""
+    """Let people with something on their mind decide what to do (model calls run outside the lock)."""
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
         prior = connection.execute("SELECT seq FROM events WHERE run_id=? AND request_id=?",
                                    (run_id, request.request_id)).fetchone()
         if prior is not None:
             return {"state": store.state_at(connection, run, int(prior["seq"])), "duplicate": True}
-        # Reactions to what they saw, and intents for encounter rounds ("resolve_attack" is from older saves).
-        batch = [p for p in state.get("pending_minds", []) if p["kind"] in ("decide", "round")
-                 and (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)][:minds.THINK_BATCH]
         if not state.get("pending_minds"):
             return {"state": state, "duplicate": False}
         if run_id in _thinking_runs:
             raise HTTPException(409, {"reason": "in_progress"})
+        over_budget = telemetry.calls_for_run(connection, run_id, decider=True) >= ai_config.max_decider_calls_per_run()
+        writing_allowed = telemetry.calls_for_run(connection, run_id) < ai_config.max_calls_per_run()
+        batch, recollecting = _choose(state)
         _thinking_runs.add(run_id)
-        shared = minds.batch_request(state, batch) if batch else None
+        snapshot = copy.deepcopy(state)
+        # Past the decider allowance, days go on by routine and chats are small talk; reactions still decide.
+        ask_jev = [p for p in batch if not (over_budget and p["kind"] not in REACTING)]
+        shared = minds.batch_request(snapshot, ask_jev) if ask_jev else None
+        memory_jobs = [(p, *_recollect_context(minds.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting]
+    records: list[dict] = []
     try:
-        # One request for everyone deciding now; per-person requests only for anyone it left out.
         calls: dict[str, decider.DeciderCall] = {}
         answers: dict[str, dict] = {}
-        if shared:
-            text, questions, prefixes = shared
-            batch_call = decider.decide(text, questions)
-            calls["batch"] = batch_call
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            memory_futures = [pool.submit(voice.recollect, context, fallback, writing_allowed)
+                              for _, context, fallback in memory_jobs]
+            if shared:  # One request for everyone deciding now; per-person requests only for anyone it missed.
+                text, questions, prefixes = shared
+                batch_call = decider.decide(text, questions)
+                calls["batch"] = batch_call
+                for pending in ask_jev:
+                    mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
+                    if batch_call.ok and minds.ANSWER_KEY[pending["kind"]] in mine:
+                        answers[pending["npc_id"]] = mine
+            missing = [p for p in ask_jev if p["npc_id"] not in answers]
+            for pending, call in zip(missing, decider.decide_many(
+                    [minds.decision_request(snapshot, p) for p in missing])):
+                calls[pending["npc_id"]] = call
+                if call.ok:
+                    answers[pending["npc_id"]] = call.answers
+            # Two villagers talking where the stranger can see them: their own words, one call per chat.
+            chats = {}
             for pending in batch:
-                mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
-                if batch_call.ok and "action" in mine:
-                    answers[pending["npc_id"]] = mine
-        missing = [pending for pending in batch if pending["npc_id"] not in answers]
-        with store.lock, store.db() as connection:
-            _, snapshot = store.load_run(connection, run_id)
-        for pending, call in zip(missing, decider.decide_many(
-                [minds.decision_request(snapshot, pending) for pending in missing])):
-            calls[pending["npc_id"]] = call
-            if call.ok:
-                answers[pending["npc_id"]] = call.answers
+                a = minds.find(snapshot["npcs"], pending["npc_id"])
+                if pending["kind"] != "meet" or not village.chatter_allowed(snapshot, a, snapshot["sim_time_ms"]):
+                    continue
+                b = minds.find(snapshot["npcs"], pending["why"])
+                mine = answers.get(a["id"], {})
+                options = village.topics(snapshot, a, b)
+                topic = options.get((mine.get("topic") or {}).get("choice")) or options["small_talk"]
+                chats[a["id"]] = pool.submit(voice.chatter, village.chatter_context(snapshot, a, b, topic, mine),
+                                             village.fallback_chatter(a, b, topic, mine), writing_allowed)
+            remembered = [future.result() for future in memory_futures]
+            spoken = {npc_id: future.result() for npc_id, future in chats.items()}
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
             for call in calls.values():
                 telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                                  call.error or call.fallback_from, call.input_tokens, call.output_tokens)
+            for call, _ in remembered + list(spoken.values()):
+                if call.model and call.model != "stub" and call.status in ("ok", "fallback") and call.latency_ms:
+                    telemetry.record(connection, run_id, "memory" if call.prompt_version.startswith("recollect")
+                                     else "chatter", call.model, call.prompt_version, call.latency_ms,
+                                     call.status == "ok", call.error, call.input_tokens, call.output_tokens)
             working = copy.deepcopy(state)
-            handled = {(p["npc_id"], p["kind"]) for p in batch}
-            working["pending_minds"] = [p for p in working.get("pending_minds", [])
-                                        if p["kind"] in ("decide", "round") and (p["npc_id"], p["kind"]) not in handled]
-            now, heard, records = working["sim_time_ms"], [], []
+            handled = {(p["npc_id"], p["kind"]) for p in batch + recollecting}
+            working["pending_minds"] = [p for p in working.get("pending_minds", []) if p["kind"] in KINDS
+                                        and (p["npc_id"], p["kind"]) not in handled
+                                        and (n := minds.find(working["npcs"], p["npc_id"])) and n.get("alive", True)]
+            now, heard, learned = working["sim_time_ms"], [], []
             for pending in batch:
                 npc = minds.find(working["npcs"], pending["npc_id"])
                 call = calls.get(pending["npc_id"]) or calls.get("batch")
                 record = {"npc_id": pending["npc_id"], "kind": pending["kind"], "why": pending["why"],
                           "skipped": None, "shared_request": pending["npc_id"] not in calls}
+                mine = answers.get(pending["npc_id"])
                 if npc is None or not npc.get("alive", True):
                     record["skipped"] = "no longer alive"
-                elif pending["npc_id"] not in answers:
+                elif pending["kind"] == "agenda":
+                    if village.free(working, npc):
+                        record.update(village.apply_agenda(working, npc, mine or {}, now))  # No answer: carry on.
+                    else:
+                        record["skipped"] = "busy with something else now"
+                elif pending["kind"] == "meet":
+                    if _meet_ready(working, pending):
+                        other = minds.find(working["npcs"], pending["why"])
+                        said = spoken.get(npc["id"])
+                        record.update(village.apply_meeting(working, npc, other, mine or {},
+                                                            said[1] if said else None, now))
+                        learned += record.pop("learned")
+                    else:
+                        record["skipped"] = "they went their separate ways"
+                elif mine is None:
                     record["skipped"] = f"decider failed: {call.error if call else 'no answer'}"
                 elif pending["kind"] == "round":
                     if pending["npc_id"] in encounter.missing_intents(working):
-                        record.update(encounter.set_intent(working, npc, answers[pending["npc_id"]]))
+                        record.update(encounter.set_intent(working, npc, mine))
                     else:
                         record["skipped"] = "already committed this round"
                 else:
-                    record.update(minds.apply_decision(working, npc, answers[pending["npc_id"]], now, heard))
+                    record.update(minds.apply_decision(working, npc, mine, now, heard))
                 records.append(record)
-                situation, questions = (shared[0], {k: v for k, v in shared[1].items()
-                                                    if k.startswith(shared[2][pending["npc_id"]])}) \
-                    if record["shared_request"] and shared else minds.decision_request(snapshot, pending)
+                if shared and pending in ask_jev and record["shared_request"]:
+                    situation, questions = shared[0], {k: v for k, v in shared[1].items()
+                                                       if k.startswith(shared[2][pending["npc_id"]])}
+                else:
+                    situation, questions = minds.decision_request(snapshot, pending)
                 trace = {**record, "situation": situation, "questions": questions,
-                         "call": call.as_dict() if call else {}, "people_in_request": len(batch)}
+                         "call": call.as_dict() if call else {}, "people_in_request": len(ask_jev)}
+                if pending["kind"] == "meet" and spoken.get(pending["npc_id"]):
+                    trace["chatter"] = spoken[pending["npc_id"]][0].as_dict()
                 connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
                                    (run_id, state["event_seq"] + 1, pending["npc_id"], json.dumps(trace)))
+            for (pending, context, _), (call, result) in zip(memory_jobs, remembered):
+                npc = minds.find(working["npcs"], pending["npc_id"])
+                if npc is None:
+                    continue
+                record = _apply_recollection(npc, context, result, now)
+                records.append(record)
+                connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+                                   (run_id, state["event_seq"] + 1, npc["id"], json.dumps(
+                                       {**record, "why": "the conversation ended", "notes": context["notes"],
+                                        "voice": call.as_dict()})))
             payload = {"npcs": working["npcs"], "player": working["player"],
                        "pending_minds": working.get("pending_minds", []), "people_journal": heard,
-                       "decisions": records, "encounter": working.get("encounter")}
+                       "decisions": records, "encounter": working.get("encounter"), "learned_added": learned,
+                       "village": working.get("village", state.get("village", {"chatter_at": []}))}
             store.append(connection, state, "minds", payload, request.request_id, state["tick"])
             state["npcs"], state["player"] = payload["npcs"], payload["player"]
             store.apply_people(state, payload)

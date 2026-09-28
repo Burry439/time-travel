@@ -69,6 +69,11 @@ def max_calls_per_run() -> int:
     return int(_env("MAX_MODEL_CALLS_PER_RUN", "200"))
 
 
+def max_decider_calls_per_run() -> int:
+    """People deciding their day and their chats (about $0.0001 each); reactions to the stranger always go ahead."""
+    return int(_env("MAX_DECIDER_CALLS_PER_RUN", "1500"))
+
+
 def judge_enabled() -> bool:
     return mode() in ("live", "stub")
 

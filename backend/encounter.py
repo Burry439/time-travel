@@ -173,6 +173,11 @@ def situation(state: dict, npc: dict) -> str:
     if (state.get("barred_until") or 0) > state.get("sim_time_ms", 0):
         lines.append("The guards seized this stranger earlier and barred them from the gate for now; they have "
                      "come back before their time.")
+    import persona
+    talked = persona.current_talk(npc)[-6:]
+    if talked:  # What was said before this encounter's log began (e.g. they came up mid-conversation).
+        lines.append("This conversation so far: " + " ".join(
+            f"{'Stranger' if t['who'] == 'stranger' else npc['name']}: “{t['text']}”" for t in talked))
     recent = [e.get("seen") or e["text"] for e in encounter["log"][-8:]]
     if recent:
         lines.append("What has happened between them so far, oldest first:")

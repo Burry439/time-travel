@@ -19,15 +19,17 @@ from __future__ import annotations
 import copy
 import math
 import random
+import re
 
 import crafting
 import minds
+import persona
 
 TALK_CELLS = 3.0  # Close enough to talk without walking over.
 HEAR_TALK_CELLS = 5.0  # GDD 7.3: normal speech carries 5 cells.
 TALK_SECONDS = 5  # GDD 4.6: one conversation turn.
 TALK_WATCH_MS = 20_000  # The person stays and faces the stranger this long after each exchange.
-TURNS_KEPT = 8
+TURNS_KEPT = 12  # Lines kept verbatim; whole conversations live on as episodes (D-36).
 MAX_TEXT = 300
 SHARE_TRUST = 0.45
 GIVE_TRUST = 0.45  # Someone gives a stranger their things only once they trust them this much.  # Facts marked "trusted" are only told to someone trusted at least this much.
@@ -236,10 +238,12 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     told = [knowledge(npc)[f]["text"] for f in minds.mind(npc).get("shared", []) if f in knowledge(npc)]
     if told:
         lines.append(f"{name} has already told the stranger: " + " ".join(told))
-    history = turns(npc)
+    history = persona.current_talk(npc)
     if history:
-        lines.append("Their conversation so far, oldest first:")
+        lines.append("This conversation so far, oldest first:")
         lines += [f"- {'The stranger' if t['who'] == 'stranger' else name}: “{t['text']}”" for t in history]
+    elif persona.knows(npc).get("episodes") or persona.knows(npc).get("long_memory"):
+        lines.append(f"{name} has spoken with the stranger before (remembered above); this is a new conversation.")
     else:
         lines.append(f"{name} has not spoken with the stranger before.")
     if happened:
@@ -342,9 +346,11 @@ def voice_context(state: dict, npc: dict, text: str, key: str, answers: dict | N
     known += [m["summary"] for m in minds.mind(npc)["memories"]]
     view = regard(npc)
     anger = minds.mind(npc)["feelings"].get("anger", 0.0)
+    own = [t["text"] for t in turns(npc) if t["who"] == "them"][-3:]
     return {
         "character": {k: me.get(k) for k in ("name", "age", "role", "personality", "values", "fears")},
-        "speaking_style": me.get("style", ""),
+        **persona.voice_sheet(state, npc),
+        "their_recent_lines": own,
         **({"what_would_change_their_mind": me["persuaded_by"]}
            if option["act"] in ("refuse", "tell_to_leave") and me.get("persuaded_by") else {}),
         "regard_for_the_stranger": {"trust": _words(view["trust"], ["none", "little", "some", "real"]),
@@ -353,7 +359,7 @@ def voice_context(state: dict, npc: dict, text: str, key: str, answers: dict | N
         "what_they_know": known,
         "keeps_to_themselves": private,
         "conversation_so_far": [{"speaker": "stranger" if t["who"] == "stranger" else me["name"], "words": t["text"]}
-                                for t in turns(npc)],
+                                for t in persona.current_talk(npc)],
         "stranger_says": clean(text) if text.strip() else "(nothing)",
         "what_just_happened": happened or "",
         "decided_reply": option["description"],
@@ -417,8 +423,28 @@ def _update_regard(npc: dict, answers: dict) -> dict:
     return {"trust": round(trust, 3), "suspicion": round(suspicion, 3)}
 
 
+def plain_note(name: str, text: str, happened: str | None, line: str) -> str:
+    """What someone remembers of an exchange when the voice model gave no note."""
+    them = f"The stranger said “{clean(text)[:140]}”" if text.strip() else \
+        f"The stranger {clean(happened or 'said nothing')[:140]}"
+    return f"{them}; {name} replied “{line[:140]}”."
+
+
+def _remember_exchange(npc: dict, text: str, happened: str | None, line: str, note: str, name_given: str,
+                       doubted: bool, now: int) -> None:
+    """The person's own memory of this exchange (D-36): a note, the stranger's name, a claim they doubt."""
+    memory = persona.knows(npc)
+    note = " ".join((note or "").split())[:300] or plain_note(npc["name"], text, happened, line)
+    memory["notes"] = (memory["notes"] + [note])[-persona.NOTES_KEPT:]
+    given = " ".join((name_given or "").split())[:40]
+    if given and re.search(rf"\b{re.escape(given)}\b", text, re.IGNORECASE):  # Only a name they actually said.
+        memory["name"] = given
+    if doubted and text.strip():
+        memory["claims"] = (memory["claims"] + [{"text": clean(text)[:160], "at": now}])[-6:]
+
+
 def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line: str,
-             walk: list[list[int]], happened: str | None = None) -> dict:
+             walk: list[list[int]], happened: str | None = None, note: str = "", name_given: str = "") -> dict:
     """Commit one exchange on a draft world. Returns the talk fields of the event payload."""
     now, event_id = state["sim_time_ms"], state["event_seq"] + 1
     if walk:
@@ -438,6 +464,7 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     history += [{"who": "stranger", "text": said_or_did(text, happened), "at": now, "doubted": doubted},
                 {"who": "them", "text": line, "at": now, "reply": key}]
     del history[:-TURNS_KEPT]
+    _remember_exchange(npc, text, happened, line, note, name_given, doubted, now)
     my_mind["said"] = {"text": line, "at": now, "key": f"{npc_id}:talk:{event_id}"}
     learned, lent, agreements = [], [], state.setdefault("agreements", {})
     proposed = deals(state, npc_id, "proposed")
@@ -526,8 +553,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
             continue
         minds.remember(other, {"kind": "talk", "severity": 0, "victim": None, "item": None, "event": event_id,
                                "clarity": "heard", "source": "overheard", "at": now,
-                               "summary": f"Overheard the stranger say to {name}: “{clean(text)}”, and {name} "
-                                          f"reply: “{line}”",
+                               "summary": (f"Overheard the stranger say to {name}: “{clean(text)}”, and {name} "
+                                           f"reply: “{line}”") if text.strip() else f"Overheard {name} say: “{line}”",
                                "short": f"was talking with {name}"})
     entry = {"kind": "talk", "category": "talk", "npc_id": npc_id, "text": clean(text), "reply": line, "act": key,
              "reason": (f"You to {name}: “{clean(text)}”  " if text.strip() else "") + f"{name}: “{line}”",

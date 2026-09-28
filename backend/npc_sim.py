@@ -1,7 +1,8 @@
 """Saved NPC activity plans and deterministic execution.
 
-Routine selection is deliberately separate from route execution. A later Jev
-decision may supply a validated destination/activity without changing movement.
+Routine selection is deliberately separate from route execution. A plan Jev chose (village.py,
+source "agenda") walks the same way; when its dwell is over the person drifts back to their routine
+until they next decide (GDD D-37).
 """
 from __future__ import annotations
 
@@ -88,7 +89,8 @@ def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int, geometry: dict)
         if controller is None or not npc.get("alive", True) or controller.get("source") == "job":
             continue  # Dead, or busy with something they decided to do (minds.advance_world moves them).
         if controller["activity"] != "walk":
-            if arrival_time >= controller["next_at_ms"] and controller["source"] == "routine":
+            if arrival_time >= controller["next_at_ms"] and controller["source"] in ("routine", "agenda"):
+                controller["source"] = "routine"  # A chosen plan is done: back to the usual round.
                 choose_routine_plan(npc, blocked)
             continue
         controller["step_carry_ms"] += elapsed_ms
@@ -96,8 +98,11 @@ def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int, geometry: dict)
             controller["step_carry_ms"] -= controller["step_ms"]
             npc["x"], npc["y"] = controller["path"].pop(0)
         if not controller["path"]:
-            _, anchors = ROUTINES[npc["id"]]
-            _, _, activity, dwell_ms = anchors[controller["anchor_index"]]
+            if controller["source"] == "agenda":
+                activity, dwell_ms = controller.get("arrive_activity", "look"), controller.get("dwell_ms", 30_000)
+            else:
+                _, anchors = ROUTINES[npc["id"]]
+                _, _, activity, dwell_ms = anchors[controller["anchor_index"]]
             controller["activity"] = activity
             controller["next_at_ms"] = arrival_time + dwell_ms
             controller["step_carry_ms"] = 0

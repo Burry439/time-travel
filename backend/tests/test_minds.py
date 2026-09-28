@@ -7,7 +7,15 @@ from fastapi.testclient import TestClient
 import app as service
 import encounter
 import minds
+import village
 from ai import decider
+
+@pytest.fixture(autouse=True)
+def quiet_village(monkeypatch):
+    """These tests follow reactions to the stranger step by step; the village's own life (agendas, meetings)
+    is tested in test_village.py."""
+    monkeypatch.setattr(village, "schedule", lambda state, npcs, now: None)
+
 
 
 def unit_state():

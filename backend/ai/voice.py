@@ -1,9 +1,11 @@
 """Voice role: puts a decision that has already been made into a character's words.
 
 The decider (Jev) chooses what a person does in a conversation; this role only phrases it,
-from the person's card, what they know, and the conversation so far. Free text never flows
-back into world state: code applies the decision, and the line is what the player reads.
-If the model is unavailable, the person says an authored fallback line instead.
+from the person's character sheet (persona.py), what they know, and the conversation so far.
+Free text never flows back into world state: code applies the decision, and the line is what the
+player reads. The same role keeps memory prose (recollect: a finished conversation becomes an
+episode, D-36) and phrases two villagers talking to each other (chatter, D-37). If the model is
+unavailable, the person says an authored fallback line instead and memory is kept from the notes.
 """
 from __future__ import annotations
 
@@ -17,13 +19,28 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "voice_v2"
-_PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+PROMPT_VERSION = "voice_v3"
+_PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
+_PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+_RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
+_CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
 
 
 class DialogueLine(BaseModel):
     text: str
+    remember: str
+    stranger_name: str
+
+
+class Episode(BaseModel):
+    episode: str
+    long_memory: str
+
+
+class Chatter(BaseModel):
+    first_line: str
+    reply_line: str
 
 
 @dataclass
@@ -36,6 +53,8 @@ class VoiceCall:
     input_tokens: int = 0
     output_tokens: int = 0
     error: str | None = None
+    remember: str = ""  # What the person will remember of this exchange (D-36).
+    stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -54,31 +73,77 @@ def tidy(text: str) -> str:
     return text if len(text) <= MAX_CHARS else text[:MAX_CHARS].rsplit(" ", 1)[0] + "…"
 
 
-def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
-    """The person's line for the decided reply; the fallback line whenever the model can't be used."""
-    if not allowed:
-        return VoiceCall(status="fallback", text=fallback, error="Model call allowance for this journey is used up.")
-    if config.mode() != "live":
-        return VoiceCall(status="fallback", text=fallback, model="stub" if config.mode() == "stub" else None,
-                         error=None if config.mode() == "stub" else "No OPENAI_API_KEY in backend/.env.")
+def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) -> tuple[VoiceCall, BaseModel | None]:
+    """One structured call to the voice model; the call record says how it went."""
     model = config.voice_model()
-    call = VoiceCall(status="fallback", text=fallback, model=model)
+    call = VoiceCall(status="fallback", text="", model=model, prompt_version=version)
     started = time.perf_counter()
+    parsed = None
     try:
         response = config.client().responses.parse(
-            model=model, reasoning={"effort": config.voice_reasoning()}, store=False, text_format=DialogueLine,
-            input=[{"role": "developer", "content": _PROMPT},
+            model=model, reasoning={"effort": config.voice_reasoning()}, store=False, text_format=schema,
+            input=[{"role": "developer", "content": prompt},
                    {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)}])
-    except Exception as error:  # The authored line keeps the conversation going.
+    except Exception as error:  # The caller keeps going with its fallback.
         call.error = f"{type(error).__name__}: {error}"
     else:
         if response.usage is not None:
             call.input_tokens, call.output_tokens = response.usage.input_tokens, response.usage.output_tokens
         parsed = response.output_parsed
-        spoken = tidy(parsed.text) if parsed is not None else ""
-        if spoken:
-            call.status, call.text = "ok", spoken
-        else:
-            call.error = "The model returned no line."
+        if parsed is None:
+            call.error = "The model returned nothing usable."
     call.latency_ms = round((time.perf_counter() - started) * 1000)
+    return call, parsed
+
+
+def _unavailable(fallback: str, allowed: bool, version: str) -> VoiceCall | None:
+    if not allowed:
+        return VoiceCall(status="fallback", text=fallback, prompt_version=version,
+                         error="Model call allowance for this journey is used up.")
+    if config.mode() != "live":
+        return VoiceCall(status="fallback", text=fallback, model="stub" if config.mode() == "stub" else None,
+                         prompt_version=version,
+                         error=None if config.mode() == "stub" else "No OPENAI_API_KEY in backend/.env.")
+    return None
+
+
+def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
+    """The person's line for the decided reply (and their note of it); the fallback line if the model can't be used."""
+    skipped = _unavailable(fallback, allowed, PROMPT_VERSION)
+    if skipped:
+        return skipped
+    call, parsed = _parse(_PROMPT, context, DialogueLine, PROMPT_VERSION)
+    call.text = fallback
+    spoken = tidy(parsed.text) if parsed is not None else ""
+    if spoken:
+        call.status, call.text = "ok", spoken
+        call.remember = " ".join(parsed.remember.split())[:300]
+        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
+    elif call.error is None:
+        call.error = "The model returned no line."
     return call
+
+
+def recollect(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceCall, dict]:
+    """A finished conversation becomes one remembered episode (and older ones fold into long memory)."""
+    skipped = _unavailable("", allowed, "recollect_v1")
+    if skipped:
+        return skipped, fallback
+    call, parsed = _parse(_RECOLLECT, context, Episode, "recollect_v1")
+    if parsed is None or not parsed.episode.strip():
+        return call, fallback
+    call.status = "ok"
+    return call, {"episode": " ".join(parsed.episode.split())[:400],
+                  "long_memory": " ".join(parsed.long_memory.split())[:600] or fallback["long_memory"]}
+
+
+def chatter(context: dict, fallback: tuple[str, str], allowed: bool = True) -> tuple[VoiceCall, tuple[str, str]]:
+    """Two villagers talking to each other, in their own voices (only when the stranger can hear it)."""
+    skipped = _unavailable("", allowed, "chatter_v1")
+    if skipped:
+        return skipped, fallback
+    call, parsed = _parse(_CHATTER, context, Chatter, "chatter_v1")
+    if parsed is None or not parsed.first_line.strip() or not parsed.reply_line.strip():
+        return call, fallback
+    call.status = "ok"
+    return call, (tidy(parsed.first_line), tidy(parsed.reply_line))

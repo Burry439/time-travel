@@ -175,12 +175,12 @@ def test_fetching_a_guard_makes_the_guard_think(world):
     hessa = npc(state, "npc_hessa_marr")
     assert hessa["mind"]["job"]["kind"] == "report" and minds.worst_memory(hessa)["kind"] == "trouble"
     for _ in range(120):
-        if state["pending_minds"]:
+        if any(p["kind"] == "decide" for p in state["pending_minds"]):
             break
         reply = world.http.post(f"/runs/{state['run_id']}/explore", json={
             "elapsed_ms": 1000, "expected_version": state["event_seq"], "request_id": f"beat-{state['event_seq']}"})
         state = reply.json()["state"]
-    assert state["pending_minds"] and minds.card(npc(state, state["pending_minds"][0]["npc_id"]))["guard"]
+    assert any(p["kind"] == "decide" and minds.card(npc(state, p["npc_id"]))["guard"] for p in state["pending_minds"])
 
 
 def test_the_dead_the_busy_and_the_distant_do_not_talk(world):

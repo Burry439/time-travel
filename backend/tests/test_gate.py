@@ -8,9 +8,17 @@ import app as service
 import crafting
 import minds
 import talk
+import village
 from ai import decider, voice
 from test_craft import attempt, judged
 from test_talk import npc, said, unit_state, walk_to
+
+@pytest.fixture(autouse=True)
+def quiet_village(monkeypatch):
+    """These tests follow reactions to the stranger step by step; the village's own life (agendas, meetings)
+    is tested in test_village.py."""
+    monkeypatch.setattr(village, "schedule", lambda state, npcs, now: None)
+
 
 
 def answers(reply, **yes):
