@@ -514,8 +514,10 @@ func _flush_moves() -> void:
 					sync_error = false
 			predicted_cell = Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"]))
 			player.position = _cell_center(predicted_cell.x, predicted_cell.y)
+			var said = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
 			ui.notify("Connection lost. Pause and resume your journey to reconnect." if sync_error else
-				"That path is blocked." if sending_move else "The village clock is reconnecting.")
+				(str(said) if typeof(said) == TYPE_STRING and "gateway" in str(said) else "That path is blocked.")
+				if sending_move else "The village clock is reconnecting.")
 			break
 	movement_sync_active = false
 
@@ -599,6 +601,7 @@ func _sync_display_now() -> void:
 		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
 		if obj.get("installed_in") != null:
 			sprite.position.y -= 36.0 # Up in its fixture, not on the ground.
+		_place_on_gate(sprite, obj)
 	_apply_world_features()
 	for npc in run_state.get("npcs", []):
 		npc_targets[str(npc["id"])] = _cell_center(int(npc["x"]), int(npc["y"]))
@@ -634,6 +637,22 @@ func _sync_display_now() -> void:
 	trace_panel.visible = run_state["mode"] == "developer" and trace_panel.visible
 	ui.note_cell(Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"])))
 	ui.refresh()
+
+
+## The bar across the gate is drawn big, across the gate itself; the brackets show only while empty (D-42).
+func _place_on_gate(sprite: Sprite2D, obj: Dictionary) -> void:
+	var on_gate := str(obj.get("installed_in", "")) == "gate_brackets"
+	var brackets := str(obj.id) == "gate_brackets"
+	sprite.z_index = 1 if on_gate or brackets else 0
+	sprite.rotation = -0.5 if on_gate else 0.0
+	if not (on_gate or brackets):
+		return
+	sprite.position = gate_sprite.position + Vector2(0, 34)
+	if on_gate and sprite.texture:
+		sprite.scale = Vector2.ONE * (190.0 / float(sprite.texture.get_width()))
+	if brackets:
+		sprite.visible = not run_state.get("objects", {}).values().any(
+			func(o) -> bool: return str(o.get("installed_in", "")) == "gate_brackets")
 
 
 ## Something to think about in this lane: reactions (react) or the village's own life (village).
@@ -777,6 +796,8 @@ func _show_victory() -> void:
 			lines.append("What weighed with him:")
 			for reason in because:
 				lines.append("• " + str(reason))
+	elif str(run_state.get("entered_by", "")) == "unbarred":
+		lines.append("You lifted the bar off the gate and walked in, with no guard left to stop you.")
 	else:
 		lines.append("You found your own way in.")
 	victory_route.text = "\n".join(lines)

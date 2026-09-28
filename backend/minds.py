@@ -21,6 +21,7 @@ import math
 from pathlib import Path
 
 import crafting
+import m2
 import npc_sim
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,7 +56,7 @@ FEAR_LEVELS = ["Not afraid", "Uneasy", "Afraid", "Terrified"]
 ANGER_LEVELS = ["Calm", "Annoyed", "Angry", "Furious"]
 FAMILY_WORDS = ("sister", "brother", "nephew", "aunt")
 EVIDENCE_KINDS = ("demonstration", "vouch", "help", "gift")  # Good things seen or heard about the stranger.
-CRIME_KINDS = ("violence", "theft")
+CRIME_KINDS = ("violence", "theft", "breach")  # breach: unbarring the city gate (D-42).
 EVIDENCE_SHIFT = 0.15  # Regard change for one clear piece of evidence (or, doubled, one crime).
 
 
@@ -290,6 +291,24 @@ def _describe(state: dict, entry: dict) -> list[dict]:
                                 "short": f"put the {placed['object_name']} in place", "severity": 1},
                       "vague": {"summary": "The stranger was heaving something heavy into place.",
                                 "short": "was working on something heavy", "severity": 0}})
+    lifted = entry.get("lift_out")
+    if isinstance(lifted, dict):
+        aids = f" using the {' and the '.join(lifted['aid_names'])}" if lifted["aid_names"] else ""
+        if lifted["from_id"] == crafting.m2.GATE_FIXTURE and not gate_work_agreed(state):
+            views.append({"kind": "breach", "victim": None, "item": lifted["object_name"], "clear_cells": SIGHT_CELLS,
+                          "clear": {"summary": f"The stranger lifted the {lifted['object_name']} off the city gate"
+                                               f"{aids}: the gate is unbarred.",
+                                    "short": "unbarred the city gate", "severity": 3},
+                          "vague": {"summary": "The stranger was doing something at the gate.",
+                                    "short": "was meddling at the gate", "severity": 2}})
+        else:  # Work someone asked for (Tomas's swap): seen, not feared.
+            views.append({"kind": "demonstration", "victim": None, "item": lifted["object_name"], "think": False,
+                          "works": True, "audience": [], "clear_cells": SIGHT_CELLS,
+                          "clear": {"summary": f"The stranger got the {lifted['object_name']} out of the "
+                                               f"{lifted['from_name']}{aids}.",
+                                    "short": f"took the {lifted['object_name']} down", "severity": 1},
+                          "vague": {"summary": "The stranger was heaving something heavy down.",
+                                    "short": "was working on something heavy", "severity": 0}})
     give = entry.get("give")
     if isinstance(give, dict):
         things = " and ".join(give["names"])
@@ -302,6 +321,20 @@ def _describe(state: dict, entry: dict) -> list[dict]:
 
 
 SOURCES = {"violence": "victim", "theft": "victim", "gift": "received"}
+
+
+def gate_work_agreed(state: dict) -> bool:
+    """The stranger has an accepted deal to put a new bar on the gate (Tomas's swap): taking the old one out is
+    that work, not an assault on the gate."""
+    for deal in (state.get("agreements") or {}).values():
+        if deal.get("status") != "accepted":
+            continue
+        issuer = find(state["npcs"], deal.get("issuer") or "")
+        offer = next((o for o in (card(issuer).get("offers", []) if issuer else []) if o["id"] == deal.get("template")),
+                     {})
+        if (offer.get("done_when") or {}).get("installed"):
+            return True
+    return False
 
 
 def perceive(state: dict, entry: dict) -> list[dict]:
@@ -349,7 +382,7 @@ def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
     or afraid, the nearest one shouts), and then decide what to do about it (Jev)."""
     barked = False
     here = player_cell(state)
-    order = sorted(perceptions, key=lambda p: (p["memory"]["source"] != "victim",
+    order = sorted(perceptions, key=lambda p: (-p["memory"]["severity"], p["memory"]["source"] != "victim",
                                                math.dist(_cell(find(state["npcs"], p["npc_id"]) or {"x": 0, "y": 0}), here)))
     for perception in order:
         npc = find(state["npcs"], perception["npc_id"])
@@ -385,7 +418,7 @@ def _react_at_once(state: dict, npc: dict, memory: dict, barked: bool) -> bool:
                             "anger": feelings.get("anger", 0.0)}
     if barked or distance > BARK_CELLS:
         return False
-    tone = {("theft", True): "theft", ("theft", False): "theft_witness",
+    tone = {("theft", True): "theft", ("theft", False): "theft_witness", ("breach", False): "breach",
             ("violence", True): "violence_victim", ("violence", False): "violence"}[(memory["kind"], victim)]
     bank = LINES.get("caught", {}).get(tone) or []
     if not bank:

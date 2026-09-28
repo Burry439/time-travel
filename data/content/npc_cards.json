@@ -44,10 +44,10 @@
      "lead": "Roderic admits strangers who aren't a threat and have a real reason: someone he trusts vouching, honest business, or something of clear value."
     },
     "gate_beam": {
-     "text": "The new gate beam has to be raised into its brackets, and Roderic wants it done without anyone hurt.",
-     "line": "That beam has to go up, and I'll not have a man crushed under it.",
+     "text": "The cracked bar across the gate has to come down and the new beam go up in its place, and Roderic wants it done without anyone hurt.",
+     "line": "That old bar's cracked through. The new one has to go up, and I'll not have a man crushed doing it.",
      "trusted": false,
-     "lead": "Roderic wants the new gate beam raised without anyone getting hurt."
+     "lead": "Roderic wants the cracked gate bar swapped for the new beam without anyone getting hurt."
     },
     "fog_patrols": {
      "text": "The night patrols get lost on the moor road when the fog comes down; last month a scout's horse went into the bog.",
@@ -828,17 +828,17 @@
     "trust": 0.3,
     "suspicion": 0.32
    },
-   "concerns": "Getting the 60 kg gate beam lifted two metres up into its iron brackets safely; getting nails from Mara; getting paid.",
+   "concerns": "Getting the cracked bar down off the gate and the 60 kg replacement beam lifted two metres up into the same iron brackets, safely; getting nails from Mara; getting paid.",
    "refers": [
     "npc_mara_venn",
     "npc_roderic_vale"
    ],
    "knowledge": {
     "beam_problem": {
-     "text": "The replacement gate beam weighs about 60 kg and has to be lifted two metres up into iron brackets; two men have struggled with it and the captain wants it done safely.",
+     "text": "The old bar across the gate is cracked and must come down, and the 60 kg replacement lifted two metres up into the same iron brackets; two men have struggled with it and the captain wants it done safely.",
      "line": "Sixty kilos of oak, two metres up into the brackets, and the captain watching. Two of us couldn't manage it safely.",
      "trusted": false,
-     "lead": "Tomas needs a safe way to lift a 60 kg beam two metres up into the gate brackets."
+     "lead": "Tomas needs a safe way to swap the cracked gate bar for the new 60 kg beam."
     },
     "lives_inside": {
      "text": "Tomas lives inside the city and does repair work on the gate.",
@@ -857,7 +857,7 @@
     {
      "id": "beam_help",
      "reward": "vouch",
-     "task": "get the 60 kg replacement gate beam safely up into its iron brackets",
+     "task": "get the cracked bar down off the gate and the new 60 kg gate beam safely up into its iron brackets",
      "check": "Did the stranger get the gate beam up into its brackets, safely?",
      "done_when": {
       "installed": "gate_beam"

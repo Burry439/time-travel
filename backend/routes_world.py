@@ -139,11 +139,14 @@ def move(run_id: str, request: Move):
         if not cells or any(len(cell) != 2 for cell in cells):
             raise HTTPException(422, "Send x and y, or a list of [x, y] cells")
 
+        # Open because its bar was lifted off (not the captain's word, not the developer switch): a guard in the gap.
+        holder = combat.gate_held_by(state) if state["gate_open"] and not crafting.m2.gate_barred(state) else None
+
         def passable(x: int, y: int) -> bool:
             if not (0 <= x <= 95 and 0 <= y <= 71):
                 return False
             if 4 <= y <= 8:
-                return 46 <= x <= 50 and state["gate_open"]
+                return 46 <= x <= 50 and state["gate_open"] and holder is None
             cleared = crafting.cleared_obstacles(state)  # e.g. felled trees
             for building in store.WORLD_GEOMETRY["buildings"] + store.WORLD_GEOMETRY["obstacles"]:
                 if building["name"] in cleared:
@@ -162,7 +165,9 @@ def move(run_id: str, request: Move):
             if max(abs(dx), abs(dy)) != 1:
                 problem = (422, "Move must cross exactly one adjacent cell")
             elif not passable(nx, ny):
-                problem = (403, "A building, city wall, or closed gate blocks the path")
+                problem = (403, f"{holder['name']} steps into the gateway and bars your way."
+                           if holder and 4 <= ny <= 8 and 46 <= nx <= 50
+                           else "A building, city wall, or closed gate blocks the path")
             elif dx and dy and (not passable(x + dx, y) or not passable(x, y + dy)):
                 problem = (403, "Cannot cut diagonally through a blocked corner")
             if problem:
@@ -191,8 +196,10 @@ def move(run_id: str, request: Move):
         if "encounter" in payload:
             state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
         if y <= 3 and not state["inside_city"]:
-            store.append(connection, state, "objective_complete", {"location": "loc_city_interior"},
-                   f"objective:{request.request_id}", tick)
+            how = "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
+            store.append(connection, state, "objective_complete", {"location": "loc_city_interior", "how": how},
+                         f"objective:{request.request_id}", tick)
+            state["entered_by"] = how
             state["inside_city"] = True
         # Bound replay cost during continuous exploration. Events remain the source of truth.
         if state["event_seq"] % 64 == 0:

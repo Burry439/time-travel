@@ -18,7 +18,8 @@ You can describe several things in one go ("sharpen the branch into a spear with
 - **Fill** a container with water: "fill the gourd at the trough". Water is conserved; the troughs are at Hessa's inn and by the gate.
 - **Show** what something does: "float the needle in the bowl and show Darin". The judge says what onlookers actually see, and the object's abilities become *seen working* or *didn't work*. Showing beats describing: people remember what they saw.
 - **Give** something you carry to someone: "give Hessa the gourd of water".
-- **Raise or fit** something into place: "lever the gate beam up in stages and ease it into the brackets". Heavy things need real help (a lever and fulcrum, something to crib it up on, a pulley you make, a ladder), and the judge is honest about whether it works. If it works, the beam really stays up.
+- **Raise or fit** something into place: "lever the gate beam up in stages and ease it into the brackets". Heavy things need real help (a lever and fulcrum, something to crib it up on, a pulley you make, a ladder), and the judge is honest about whether it works. If it works, the beam really stays up. A fixture holds one thing at a time.
+- **Take something down** out of its fixture: "stand on the crates, lift one end of the bar out of its bracket, then the other, and let it down on the rope". The cracked bar across the city gate is what holds it shut: with it down, the gate stands open. The guards see that as an assault on the gate, and any guard near the gate will step into the gap. Doing it as Tomas's swap (his deal accepted) is just work.
 - **Offer a trade**: "offer Darin my whistle for his lodestone". They answer when you next talk. People who trust you may also simply give you their things.
 - **Cut, break or fell** something: "cut down the young birch with the flint shard".
   - The tree falls over and leaves pieces (trunk, branches, stump). Each gets its own picture. Anything up to 20 kg can be picked up.

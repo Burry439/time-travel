@@ -10,6 +10,17 @@ from pathlib import Path
 
 REACH_CELLS = 2.5
 CARRY_LIMIT_KG = 20.0
+GATE_FIXTURE = "gate_brackets"  # Whatever rests in these holds the gate shut (seed 9, D-42).
+GATE_BAR_SEED = 9
+GATEWAY = (48, 8)  # The middle of the gate opening.
+GATE_HOLD_CELLS = 8.0  # A guard standing this close steps into the gap to stop anyone walking through.
+
+
+def gate_barred(state: dict) -> bool:
+    """Seed 9 on: the gate is shut while anything rests in its brackets. Older journeys: always barred."""
+    if state.get("seed_version", 0) < GATE_BAR_SEED:
+        return True
+    return any(o.get("installed_in") == GATE_FIXTURE for o in state["objects"].values())
 _ROOT = Path(__file__).resolve().parents[1]
 WORLD_CONTENT = json.loads((_ROOT / "data" / "content" / "world_objects.json").read_text(encoding="utf-8"))
 _GEOMETRY = json.loads((_ROOT / "data" / "world_geometry.json").read_text(encoding="utf-8"))
@@ -72,6 +83,8 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
         for extra in ("burning", "no_sprite"):  # Lasting fires (the forge) and things drawn by a building's art.
             if spec.get(extra):
                 record[extra] = spec[extra]
+        if spec.get("installed_in"):  # e.g. the bar across the gate (seed 9)
+            record.update(installed_in=spec["installed_in"], condition="installed")
         if spec.get("water_l"):
             record.update(water_l=spec["water_l"], capabilities=["water_source"])
         objects[spec["id"]] = record

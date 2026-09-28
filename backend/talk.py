@@ -109,8 +109,8 @@ def deals(state: dict, npc_id: str, *statuses: str) -> list[dict]:
 
 
 def knows_a_crime(npc: dict) -> bool:
-    """A known act of real violence (theft and arrests only weigh on his judgement)."""
-    return any(m["kind"] == "violence" and m.get("severity", 0) >= 2 and not m.get("doubted")
+    """A known act of real violence, or an assault on the gate (theft and arrests only weigh on his judgement)."""
+    return any(m["kind"] in ("violence", "breach") and m.get("severity", 0) >= 2 and not m.get("doubted")
                for m in minds.mind(npc)["memories"])
 
 

@@ -9,8 +9,12 @@ from test_talk import npc, said
 
 
 def at_gate(state):
-    state["player"].update(x=54, y=11)  # Between the beam (54, 13) and the brackets (54, 9).
+    state["player"].update(x=51, y=11)  # Between the new beam (54, 13) and the brackets across the gate (48, 9).
     return state
+
+
+def lift_out(aids=()):
+    return judged("lift_out", effort_seconds=120, lift_out={"object_id": "gate_bar", "aid_ids": list(aids)})
 
 
 def install(aids=()):
@@ -18,16 +22,22 @@ def install(aids=()):
         "object_id": "gate_beam", "into_id": "gate_brackets", "aid_ids": list(aids)})
 
 
-def test_the_beam_needs_real_help_and_then_it_is_up():
+def test_the_cracked_bar_comes_out_before_the_new_beam_goes_in():
     state = at_gate(fresh_state())
-    blocked = crafting.validate(state, install())
-    assert blocked["category"] == "blocked" and "too heavy" in blocked["reason"]
     for item in ("rope_tomas", "ladder_tomas"):
         state["objects"][item].update(holder_id="player", lent_to="player")  # Tomas lent them.
+    full = crafting.validate(state, install(["rope_tomas", "ladder_tomas"]))
+    assert full["category"] == "blocked" and "cracked gate bar" in full["reason"]  # One bar at a time.
+    heavy = crafting.validate(state, lift_out())
+    assert heavy["category"] == "blocked" and "too heavy" in heavy["reason"]
+    commit(state, lift_out(["rope_tomas", "ladder_tomas"]), text="lower the cracked bar with rope and ladder")
+    bar = state["objects"]["gate_bar"]
+    assert bar["installed_in"] is None and bar["condition"] == "usable" and state["gate_open"]
     summary = commit(state, install(["rope_tomas", "ladder_tomas"]), text="raise the beam with rope and ladder")
     beam = state["objects"]["gate_beam"]
     assert summary["category"] == "success" and summary["property"] == []  # His beam, his lent tools: no theft.
-    assert beam["installed_in"] == "gate_brackets" and (beam["x"], beam["y"]) == (54, 9)
+    assert beam["installed_in"] == "gate_brackets" and (beam["x"], beam["y"]) == (48, 9)
+    assert not state["gate_open"]  # Barred again, with a sound beam.
     assert crafting.validate(state, install(["rope_tomas"]))["category"] in ("blocked", "unresolved")  # Already up.
     seen = minds.perceive(state, state["last_action"])
     roderic = next(p for p in seen if p["npc_id"] == "npc_roderic_vale")

@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, D-39 to D-41)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, D-39 to D-42)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -304,6 +304,14 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 - He responds to evidence and responsibility, and dislikes rambling or grand claims.
 
 How the player satisfies these is open. None of it is a required step.
+
+> **Built (D-42): the gate is also a physical thing.** From seed 9 the gate is held shut by the old, cracked bar resting in the iron brackets across it (Tomas's secret: he cracked it by rushing it). The gate stands open whenever nothing rests in the brackets.
+>
+> - **Lifting the bar off** is a judged deed (`lift_out`, the inverse of install). It's easier than putting a beam up: one end at a time, from a ladder or crates, then lowered or let fall. From the ground with bare hands it's out of reach.
+> - **Guards who clearly see it** treat it as an assault on the gate (a `breach`, severity 3): they fight at once (D-41), and the captain will never admit someone who did it.
+> - **A guard within 8 cells of the gate steps into the gap** and stops anyone walking through an unbarred gate who hasn't been let in. Dead, downed or distant guards hold nothing. So the bar is only half the way in: the guards have to be dead, down, lured away or elsewhere.
+> - **Tomas's swap** is the exception: with his deal accepted, taking the old bar down is work, seen but not feared. The gate still stands open until the new beam goes up.
+> - Walking in through the unbarred gate wins; the victory panel says how you got in.
 
 ### 4.4 Open problems in the world
 
@@ -1200,6 +1208,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-42 | 2026-09-28 | **The gate bar: a physical way in** (seed 9, `judge_v10`). The cracked first bar rests in the brackets across the gate, and the gate is open whenever the brackets are empty. A new `lift_out` step (the inverse of install) is judged like any physics, and code needs aids for anything over 20 kg. An install now needs an empty fixture, so Tomas's job becomes a swap. Guards who clearly see the bar lifted off treat it as a `breach`: they fight, and the captain never admits after it. Tomas's accepted deal makes it work instead. A guard within 8 cells of the gate holds the gap against anyone not let in (code, like a body in a doorway). The victory panel records how you got in. | The user asked for "one possible way to get inside … by simply raising the beam", clarified as lifting the bar off the gate: "that would lead to the guards attacking you, but if they were dead or somewhere else … you could get in like that." Live: by hand it's blocked 3/3; with a ladder and rope it succeeds 3/3 once the prompt says lowering is easier than raising (at first the judge treated it like raising: 0/3). |
 | D-41 | 2026-09-28 | **Real-time fights, and no dice anywhere.**<br><br>**The first strike** is an intent, judged like any physics (`judge_v9`). The judge sees each person's armour, their weapon and whether they're aware of the stranger. It rules missed, **deflected**, wounded, **disabled** (down, alive) or killed, with no luck involved. Code keeps the armour law (V10): fists and light, soft things can't get through mail.<br><br>**Then the fight is real time** (`combat.py`, a `fight` state on the clock). Guards who clearly saw the violence fight at once; others decide. Each attacker closes in and winds up a blow (weapon table in `npc_cards.json`: damage, wind-up, reach). The blow hits only if the stranger is still in reach when it lands. **Space** is a code-only punch (`POST /strike`, 0.7 s recovery). A punch or giving up is a `fight` event carrying the resulting fields. Blows on the clock arrive with `/explore`, so everything replays exactly.<br><br>**Encounters** keep words only: an attack intent turns the encounter into a fight. The stranger acts first in a round, then the others in the order they came.<br><br>**Removed:** the seeded initiative roll, the blow roll (hit, kill and damage chances), fighting `skill` on cards, extra blows for long actions (a long action in a fight now simply lets the clock run), and the weighted draw among Jev's plausible replies (its top choice is taken). | The user asked for fights that start with an intent ("I sneak up and stab him") and then go on in real time, where guards try to kill you, and where it's realistic: a wooden spear can't hurt a man in mail but easily kills anyone else; boiling water disables a guard, but the other guards will likely kill you. And: "we don't want probabilities … things that should work should work if they make sense … no DnD-style dice rolls." |
 | D-40 | 2026-09-28 | **Things that change, judged; code keeps the laws** (`judge_v8`, seed 8).<br><br>**A general `change` step:** heat, boil, cool, set alight, put out or pour, with no per-recipe rules. `poured` is a harm method judged by what is in the container. Fire from sparks or flame is a `make`.<br><br>**Laws by code only (V10):** heat and flame need something burning within reach; sparks need flint and iron into dry tinder; water is conserved; boiling takes time; cold water can't scald.<br><br>**State:** names follow it ("clay bowl of boiling water"). Things cool (boiling 2 min, hot 5 min, warm 10 min) and fires burn down with simulated time, carried as `objects_changed` on clock events.<br><br>**Heat in the world:** Mara's forge and Hessa's cooking fire are burning fixtures. | The user: "if I fill a bowl with water it becomes a bowl with water; if I boil that water it becomes a bowl with boiling water", and crafting must be dynamic: "there isn't something programmed that says you can boil water; it works because it makes sense." Live craft evals: 25/26, then 4/4 consistent on the borderline cases once `materials.json` stated the world facts about sparks from iron and cutting saplings with flint. |
 | D-39 | 2026-09-28 | **Reactions at once; Jev only when something happens.** A crime is answered by code in the same event (witnesses turn, feelings are set and held for 20 s, the nearest shouts). Jev then decides what comes next in a reactions lane that never waits behind village or memory work and never pauses for the bar. Agendas run on events, not a 90 s timer; a chance meeting with nothing to say is a nod by code. Inputs improved: feelings and regard in words, newest-first worst memory, first-person victims, theft is severity 2. | The user took Hessa's bowl and "nothing happened", then asked that Jev do nothing "until something happens". The delay came from Hessa's prompt anchoring her to calm, nothing reacting by code, the thinking lane pausing while the bar was open (one reaction waited 56 s), and theft at severity 1. `smoke_react.gd`: Hessa shouts at once and her decision arrives about 1.1 s later with the bar open. |
@@ -1581,7 +1590,41 @@ Changes to this document: …
 **To watch:**
 
 - No flight AI yet: frightened villagers flee through Jev as before, not through the fight.
-- Next: the gate bar (a physical way in), reputation, and storylines.
+- Next: reputation, and storylines.
+
+### Retro: the gate bar (D-42), 28 Sep 2026
+
+**Built:**
+
+- the cracked bar in the brackets (seed 9, with painted art drawn across the gate);
+- the `lift_out` step, and installs needing an empty fixture;
+- the gate following its bar;
+- breaches seen by guards;
+- guards holding the gap;
+- the Tomas's-deal exception;
+- the victory text for an unbarred gate.
+
+**Evidence:**
+
+- 141 backend tests pass. New `test_gate_bar.py`:
+  - the bar and the gate;
+  - the guards fight, and the captain refuses for good;
+  - Tomas's swap is work;
+  - the gap is held until the guards are down or away;
+  - over HTTP: blocked in the gateway, then walking in once no guard holds it, and replay.
+- `test_world_effects` now swaps the bar before the beam goes up.
+- All Godot smoke tests pass; `docs/screenshots/gate_barred.png` shows the bar.
+- **Live:** lifting by hand is blocked 3/3, and with a ladder and rope it succeeds 3/3. The full craft set passes 30/31: the known borderline case of sparks from the rusty horseshoe failed once, then passed 4/4.
+
+**Lessons:**
+
+- A prompt that likens a new action to an old one ("like install, in reverse") carries the old one's strictness over. Say what is physically different.
+- Perceptions are now ordered most serious first, so the bark is about the gate, not about Tomas's borrowed trestles.
+
+**To watch:**
+
+- Sparks from ordinary iron are still judged inconsistently now and then (1 run in about 10).
+- Nobody yet lures guards away or knows the watch changes (Jory, in the storylines).
 
 ---
 

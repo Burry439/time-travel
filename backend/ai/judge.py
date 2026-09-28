@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v9"
+PROMPT_VERSION = "judge_v10"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -111,6 +111,11 @@ class Install(BaseModel):
     aid_ids: list[str]
 
 
+class LiftOut(BaseModel):
+    object_id: str
+    aid_ids: list[str]
+
+
 class OfferTrade(BaseModel):
     give_ids: list[str]
     want_ids: list[str]
@@ -118,8 +123,8 @@ class OfferTrade(BaseModel):
 
 
 class Step(BaseModel):
-    action: Literal["make", "take", "transform", "harm", "fill", "change", "demonstrate", "give", "install", "offer_trade",
-                    "other"]
+    action: Literal["make", "take", "transform", "harm", "fill", "change", "demonstrate", "give", "install", "lift_out",
+                    "offer_trade", "other"]
     outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str
     effort_seconds: int
@@ -132,6 +137,7 @@ class Step(BaseModel):
     demonstration: Demonstration | None
     give: Give | None
     install: Install | None
+    lift_out: LiftOut | None
     offer_trade: OfferTrade | None
 
 
@@ -213,7 +219,7 @@ def _stub_judgement(context: dict) -> JudgeCall:
     items = [i for i in context["available_items"] if i["portable"]]
     chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
     empty = {"take_ids": [], "transformation": None, "harm": None, "fill": None, "change": None, "demonstration": None,
-             "give": None, "install": None, "offer_trade": None}
+             "give": None, "install": None, "lift_out": None, "offer_trade": None}
     if not chosen:
         step = Step(action="make", outcome="blocked", reason="You have nothing to work with.",
                     effort_seconds=0, new_object=None, **empty)

@@ -29,7 +29,7 @@ GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = 8  # 8: the forge and the inn's cooking fire (heat).
+SEED_VERSION = 9  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut.
 NPCS = [
     {"id": "npc_roderic_vale", "name": "Roderic", "role": "Gate captain", "x": 48, "y": 11},
     {"id": "npc_bren_marr", "name": "Bren", "role": "Gate guard", "x": 44, "y": 14},
@@ -182,6 +182,8 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
         state["gate_open"] = payload["open"]
     elif event["kind"] == "objective_complete":
         state["inside_city"] = True
+        if payload.get("how"):
+            state["entered_by"] = payload["how"]
     elif event["kind"] == "physical_action":
         state["objects"] = payload["objects"]
         state["agreements"] = payload["agreements"]

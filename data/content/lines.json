@@ -194,6 +194,11 @@
    "violence_victim": [
     "Argh! Get off me!",
     "You'll pay for that!"
+   ],
+   "breach": [
+    "Get away from that gate!",
+    "Leave that bar be! Guards!",
+    "The gate! Stop them!"
    ]
   },
   "call_out": {

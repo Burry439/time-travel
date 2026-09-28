@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art.",
+ "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate).",
  "since_seed": 5,
  "objects": [
   {
@@ -494,6 +494,26 @@
    "capacity_l": 60.0
   },
   {
+   "id": "gate_bar",
+   "name": "cracked gate bar",
+   "x": 48,
+   "y": 9,
+   "mass_kg": 60.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "The old oak bar resting across the gate in its iron brackets, holding the gate shut. A long crack runs down one side of it.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": null,
+   "since_seed": 9,
+   "feature": "beam",
+   "length_m": 3.0,
+   "installed_in": "gate_brackets"
+  },
+  {
    "id": "gate_beam",
    "name": "replacement gate beam",
    "x": 54,
@@ -502,7 +522,7 @@
    "materials": [
     "wood"
    ],
-   "description": "A squared oak beam about 3 m long and heavy, meant to sit in iron brackets across the gate.",
+   "description": "A squared oak beam about 3 m long and heavy, cut to replace the cracked bar across the gate.",
    "flags": [
     "rigid",
     "combustible",
@@ -516,13 +536,13 @@
   {
    "id": "gate_brackets",
    "name": "iron gate brackets",
-   "x": 54,
+   "x": 48,
    "y": 9,
    "mass_kg": 20.0,
    "materials": [
     "iron"
    ],
-   "description": "A pair of heavy iron brackets bolted to the gate two metres up, waiting for a beam.",
+   "description": "A pair of heavy iron brackets bolted across the city gate two metres up. Whatever bar rests in them holds the gate shut.",
    "flags": [
     "rigid",
     "ferromagnetic"

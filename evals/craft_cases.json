@@ -496,6 +496,31 @@
     "blocked"
    ],
    "forbid_wound": true
+  },
+  {
+   "id": "lift_bar_by_hand",
+   "group": "gate",
+   "text": "lift the bar off the gate",
+   "carry": [],
+   "beside": "npc_roderic_vale",
+   "expect": [
+    "failed",
+    "blocked"
+   ]
+  },
+  {
+   "id": "lift_bar_with_aids",
+   "group": "gate",
+   "text": "set the ladder against the gate, loop the rope over the bar and lower it down to the ground, one end at a time",
+   "carry": [
+    "rope_tomas",
+    "ladder_tomas"
+   ],
+   "beside": "npc_roderic_vale",
+   "expect": [
+    "success"
+   ],
+   "require_action": "lift_out"
   }
  ]
 }

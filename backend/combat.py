@@ -86,17 +86,27 @@ def start(state: dict, npc_ids: list[str], now: int, why: str) -> dict | None:
 
 
 def responders(state: dict, perceptions: list[dict]) -> list[str]:
-    """Who fights at once after the stranger's violence: guards who clearly saw it (or took it). Anyone else
+    """Who fights at once after the stranger's violence or an unbarred gate: guards who clearly saw it. Anyone else
     decides for themselves (Jev): the smith may pick up her hammer, the merchant runs."""
     ids = []
     for perception in perceptions:
         npc = minds.find(state["npcs"], perception["npc_id"])
         memory = perception["memory"]
-        if npc is None or down(npc) or memory["kind"] != "violence" or memory.get("clarity") != "clear":
+        if npc is None or down(npc) or memory["kind"] not in ("violence", "breach") or memory.get("clarity") != "clear":
             continue
         if minds.card(npc).get("guard"):
             ids.append(npc["id"])
     return ids
+
+
+def gate_held_by(state: dict) -> dict | None:
+    """A guard close to the gate steps into the gap and stops anyone walking through an unbarred gate who hasn't
+    been let in (D-42): the bar is only half the way in. Dead, downed or distant guards hold nothing."""
+    if state.get("admitted"):
+        return None
+    guards = [g for g in state["npcs"] if minds.card(g).get("guard") and not down(g)
+              and math.dist(minds._cell(g), minds.m2.GATEWAY) <= minds.m2.GATE_HOLD_CELLS]
+    return min(guards, key=lambda g: math.dist(minds._cell(g), minds.m2.GATEWAY), default=None)
 
 
 def _their(npc: dict) -> str:
