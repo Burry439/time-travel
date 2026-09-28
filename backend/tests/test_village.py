@@ -149,3 +149,48 @@ def test_the_dead_do_not_keep_the_village_thinking(world):
     import routes_minds
     batch, recollecting = routes_minds._choose(working)
     assert batch == [] and recollecting == []
+
+
+def test_news_comes_first_when_they_would_tell_it_and_nothing_is_said_twice():
+    state = unit_state()
+    hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
+    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
+                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
+                           "clarity": "clear", "source": "victim"})
+    _, questions = village.meet_brief(state, hessa, bren)
+    assert "tells" in questions and "stole my bucket" in questions["tells"]["instructions"]
+    record = village.apply_meeting(state, hessa, bren, {**choice("topic", "worry"), "tells": {"noul": 0.8}}, None, 0)
+    assert record["topic"] == "news:7"  # She'd tell her brother about the theft before her own worries.
+    first = village.apply_meeting(state, hessa, bren, choice("topic", "worry"), None, 1)["about"]
+    second = village.apply_meeting(state, hessa, bren, choice("topic", "worry"), None, 2)["about"]
+    assert first != second  # A different worry, not the same one again.
+
+
+def test_a_wronged_person_can_tell_someone_or_have_it_out_and_errands_are_not_repeated():
+    state = unit_state()
+    hessa = npc(state, "npc_hessa_marr")
+    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
+                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
+                           "clarity": "clear", "source": "victim"})
+    options = village.agenda_options(state, hessa)
+    tells = [k for k in options if k.startswith("tell:")]
+    assert tells[0] == "tell:npc_bren_marr" and "her brother Bren" in options[tells[0]]["description"]  # Family first.
+    assert "confront" in options
+    record = village.apply_agenda(state, hessa, choice("agenda", "confront"), 0)
+    assert hessa["mind"]["job"]["then"] == "confront" and record["agenda"] == "confront"
+    minds._set_job(hessa, None, 1)
+    assert "confront" not in village.agenda_options(state, hessa)  # Not straight back again.
+
+
+def test_meetings_go_both_ways():
+    state = unit_state()
+    hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
+    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
+                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
+                           "clarity": "clear", "source": "victim"})
+    _, questions = village.meet_brief(state, bren, hessa)  # Bren came over; Hessa has the news.
+    assert "tells_back" in questions
+    record = village.apply_meeting(state, bren, hessa, {**choice("topic", "small_talk"), "tells_back": {"noul": 0.9}},
+                                   None, 0)
+    assert record["told_back"] and minds.knows(bren, 7)
+    assert {"npc_id": "npc_bren_marr", "kind": "decide", "why": "told by Hessa"} in state["pending_minds"]

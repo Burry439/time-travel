@@ -122,6 +122,7 @@ def voice_sheet(state: dict, npc: dict) -> dict:
         "doing": doing(npc),
         "authority": me.get("authority", ""),
         "how_they_talk": {"style": me.get("style", ""), "habits": voice.get("habits", ""),
+                          "greeting": voice.get("greeting", ""),
                           "example_lines_never_copy": voice.get("samples", []),
                           "would_never": voice.get("never", "")},
         "people_they_know": opinion_lines(state, npc, [n for n in state["npcs"] if n["id"] in opinions(npc)]),

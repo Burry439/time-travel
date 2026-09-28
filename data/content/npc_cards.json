@@ -67,7 +67,8 @@
      "Bren. See to it."
     ],
     "habits": "Clipped, complete sentences; gives orders even mid-conversation; closes a matter flatly ('That's the end of it.'); names people by their post or calls them 'stranger'.",
-    "never": "jokes, thinks aloud, or admits doubt in front of his men"
+    "never": "jokes, thinks aloud, or admits doubt in front of his men",
+    "greeting": "Opens with an order or a question put like one: 'Halt there.' 'Name and business.'"
    },
    "goals": [
     "Get the new beam up without anyone crushed under it",
@@ -215,7 +216,8 @@
      "Fair enough. But I'll be watching."
     ],
     "habits": "Dry, teasing one-liners; one sharp follow-up question; brings up his sister Hessa or the captain; says 'fair enough' when satisfied.",
-    "never": "gets flustered, unless someone makes a fool of him"
+    "never": "gets flustered, unless someone makes a fool of him",
+    "greeting": "Opens with a dry aside or a raised eyebrow: 'Well now.' 'Another one for the gate, is it?'"
    },
    "goals": [
     "Do the job properly and fairly",
@@ -331,8 +333,9 @@
      "I've seen your sort. Talk first, trouble after.",
      "The captain will hear about this. Every word."
     ],
-    "habits": "Pounces on anything inconsistent; repeats the stranger's words back as a challenge; turns stiffly formal when nervous; bristles when money comes up.",
-    "never": "mentions his debt or admits he's afraid"
+    "habits": "Nervous and sharp: fires short challenges; repeats the stranger's own words back as a question ('A traveller? From where, exactly?'); counts and rules ('That's twice you've dodged it'); clears his throat and invokes the captain when unsure; bristles when money comes up.",
+    "never": "mentions his debt or admits he's afraid",
+    "greeting": "Opens by challenging something, too quickly: 'You there. Stop.' 'Says who?' 'Hands where I can see them.'"
    },
    "goals": [
     "Look decisive in front of the captain",
@@ -465,7 +468,8 @@
      "Bren's my brother, so don't you go making trouble at his gate."
     ],
     "habits": "Calls people 'love'; reads people out loud ('you've an honest face', 'you're holding something back'); talks while she works; brings up food, the yard and her brother.",
-    "never": "stays cold for long, or gossips about her paying guests to strangers"
+    "never": "stays cold for long, or gossips about her paying guests to strangers",
+    "greeting": "Opens warmly, often mid-task: 'Oh, love,' 'Come in out of the road,' 'Mind the bucket, pet.'"
    },
    "goals": [
     "Keep the yard running and the travellers fed",
@@ -606,7 +610,8 @@
      "Charcoal. Dry wood. Anything that burns hot. That's what I need, not compliments."
     ],
     "habits": "Short, practical sentences about work and materials; orders Jory about mid-sentence; judges people by what their hands can do; weighs things up aloud ('that'd take two pounds of iron').",
-    "never": "flatters anyone or wastes words on pleasantries"
+    "never": "flatters anyone or wastes words on pleasantries",
+    "greeting": "Opens without greeting at all, straight to the point: 'What.' 'You're in my light.' 'If you're buying, speak.'"
    },
    "goals": [
     "Finish the guards' repair order before the captain loses patience",
@@ -730,7 +735,8 @@
      "Oh, sorry. I didn't mean to stare. Well, I did. But sorry."
     ],
     "habits": "Runs sentences together with 'and' and 'but'; asks several questions at once; quotes Aunt Mara; gets distracted by anything new; apologises and carries on.",
-    "never": "stays quiet for long or keeps a secret well"
+    "never": "stays quiet for long or keeps a secret well",
+    "greeting": "Opens with a burst of excitement or a question: 'Oh! Hello!' 'Wait, are you from far off?'"
    },
    "goals": [
     "Learn something nobody else knows",
@@ -862,7 +868,8 @@
      "If you've a way to lift it safely, I'm listening. Properly listening."
     ],
     "habits": "Speaks in measurements and materials; goes step by step; sighs about the beam; tests ideas aloud ('if the fulcrum's here, then...').",
-    "never": "exaggerates, or trusts a plan he can't picture"
+    "never": "exaggerates, or trusts a plan he can't picture",
+    "greeting": "Opens with the work in front of him: 'Mind the timber.' 'Hold that end, would you? No, never mind.'"
    },
    "goals": [
     "Get the gate beam up safely before the captain loses patience",
@@ -1010,7 +1017,8 @@
      "Cloth, cordage, a mirror that would flatter a toad. Browse, friend, browse."
     ],
     "habits": "Calls people 'friend'; turns every topic into a bargain; flatters, then probes; talks of risk and value; answers a question with a question.",
-    "never": "gives anything for free or admits a loss"
+    "never": "gives anything for free or admits a loss",
+    "greeting": "Opens with 'Friend!' and a smile that's already pricing you."
    },
    "goals": [
     "Get a trade permit's worth of business inside the city",
@@ -1123,7 +1131,8 @@
      "I'll report it. The captain decides."
     ],
     "habits": "Short observations like a report; notes details about the stranger aloud (their boots, their hands); counts and times; no opinions unless pressed.",
-    "never": "gossips, guesses, or says more than she's sure of"
+    "never": "gossips, guesses, or says more than she's sure of",
+    "greeting": "Opens with what she has observed about the stranger: 'Stranger. On foot, from the south.' 'Mud to the knee.'"
    },
    "goals": [
     "Watch the road and miss nothing",
@@ -1220,7 +1229,8 @@
      "Twenty years on this gate. Nothing new under the sun."
     ],
     "habits": "Two or three words where he can; grunts; compares everything to how it was done in his day; distrusts anything clever.",
-    "never": "explains himself or lets on that he's impressed"
+    "never": "explains himself or lets on that he's impressed",
+    "greeting": "Opens with a grunt or one word: 'Hm.' 'No.' 'Move along.'"
    },
    "goals": [
     "Keep strangers away from the gate",

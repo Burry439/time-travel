@@ -60,6 +60,8 @@ It works in **rounds**. Each round you type what you say or do ("hand him the pl
 
 Time only moves round by round while you're face to face. Walking away from a fight gives an attacker a swing, and they may chase you.
 
+**People remember you.** Tell someone your name and they'll use it; they recall what you told them and what you did, and they hold a lie against you. They also talk to each other: news of what you did travels, and you can overhear it (it goes in your journal). Everyone has their own day, moods and opinions of each other; hover or right-click someone to see how they seem and what they're doing.
+
 Type anything. Jev decides what they do (answer, ask you something, tell you what they know, send you to someone, lend you something, offer a deal, speak for you, refuse, send you away, fetch a guard) and Luna says it in their voice. People nearby overhear. Your journal lists what people told you and your deals.
 
 - **Words alone move people only a little.** Showing them something that works, giving them something, or someone speaking for you counts for much more.
@@ -110,4 +112,5 @@ Start a **Developer playtest**.
   3. Restart the backend normally afterwards.
 - **Live judge quality** (costs about a cent per run): `backend/.venv/Scripts/python.exe evals/run_craft_evals.py --runs 3`. It runs 19 cases, including bad physics, ownership, felling, attacks and prompt injection, and writes a report to `evals/results/`.
 - **Live conversations** (about a tenth of a cent per exchange): `evals/run_talk_evals.py --runs 2`: pleading, injection, rudeness, knowledge boundaries, deals, evidence and crimes at the gate.
+- **Live memory, voices and village** (a few cents each): `evals/run_memory_evals.py` (do people remember you across conversations?), `evals/run_persona_evals.py [--baseline]` (can a judge tell who said each line?), `evals/run_world_live.py` (ten simulated minutes of the village on its own).
 - **Live routes into the city** (a few cents): `evals/run_routes_live.py` plays the sponsor, business and value routes end to end and reports whether each got in.

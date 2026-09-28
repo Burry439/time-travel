@@ -4,6 +4,7 @@ extends SceneTree
 ##   Godot --headless --path . --script res://tools/smoke_village.gd  [-- --capture]
 ## Stands near the gate guards while time passes: people plan their day in the thinking lane, two of
 ## them fall into talk, their bubbles show, and the inspect card says how they seem and what they're doing.
+## Add -- --live (with a live backend) to watch the real Jev and Luna instead of the stub.
 var scene: Node2D
 var capture := false
 
@@ -33,7 +34,8 @@ func _run() -> void:
 	root.add_child(scene)
 	await process_frame
 	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
-	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
+	var live := "--live" in OS.get_cmdline_user_args() # With the real models: Jev plans, Luna voices the chat.
+	if not check(health.ok and (live or str(health.data.ai.mode) == "stub"), "Start the backend with AI_MODE=stub for this test"):
 		return
 	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	scene._enter_run(created.data, false)

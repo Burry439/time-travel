@@ -48,7 +48,8 @@ def exchange(state: dict, npc_id: str, text: str) -> dict:
     spoken = voice.speak(talk.voice_context(state, person, text, key, decided.answers),
                          talk.fallback_line(state, person, key))
     before = dict(talk.regard(person))
-    talk.exchange(state, npc_id, text, decided.answers, key, spoken.text, [])
+    talk.exchange(state, npc_id, text, decided.answers, key, spoken.text, [], note=spoken.remember,
+                  name_given=spoken.stranger_name)
     state["event_seq"] += 1
     after = talk.regard(minds.find(state["npcs"], npc_id))
     return {"said": text, "reply": key, "line": spoken.text, "voice": spoken.status, "voice_error": spoken.error,

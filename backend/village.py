@@ -91,7 +91,22 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
             options[f"visit:{other['id']}"] = {
                 "description": f"{name} goes over to talk with {other['name']} ({view['text']}), who is "
                                f"{persona.doing(other)}.", "plan": {"kind": "visit", "target": other["id"]}}
+        grievance = _grievance(npc)
+        if grievance:  # Something to pass on: tell family or a guard first.
+            listeners = sorted((o for o in state["npcs"] if o["id"] != npc["id"] and free(state, o)
+                                and not minds.knows(o, grievance.get("event"))),
+                               key=lambda o: (not minds.is_family(npc, o["id"]), not minds.card(o).get("guard"),
+                                              math.dist(minds._cell(o), minds._cell(npc))))
+            for other in listeners[:2]:
+                options[f"tell:{other['id']}"] = {
+                    "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} what "
+                                   f"happened: {grievance['summary']}", "plan": {"kind": "visit", "target": other["id"]}}
+        wronged = next((m for m in minds.mind(npc)["memories"] if m["kind"] in minds.CRIME_KINDS
+                        and m.get("victim") == npc["id"] and m.get("source") == "victim"), None)
         player = state["player"]
+        if wronged and player.get("alive", True) and not minds.card(npc).get("guard") and                 state.get("sim_time_ms", 0) - minds.mind(npc).get("confronted_at", -10**9) > 60_000:
+            options["confront"] = {"description": f"{name} goes and has it out with the stranger: {wronged['summary']}",
+                                   "plan": {"kind": "confront"}}
         met = persona.knows(npc).get("episodes") or minds.mind(npc).get("met")
         if player.get("alive", True) and not state.get("inside_city") and not minds.card(npc).get("guard") \
                 and math.dist(minds.player_cell(state), minds._cell(npc)) <= 25:
@@ -102,7 +117,17 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
             options["rest"] = {"description": f"{name} takes a rest by the inn.",
                                "plan": {"kind": "task", "place": "inn_side", "activity": "wait", "dwell_s": 50,
                                         "doing": "resting a while by the inn"}}
+    last = minds.mind(npc).get("last_agenda", "")
+    if last.startswith(("visit:", "tell:", "stranger", "confront")):  # Not the same errand twice in a row.
+        options.pop(last, None)
     return options
+
+
+def _grievance(npc: dict) -> dict | None:
+    """The most serious thing this person knows about the stranger that is worth telling someone."""
+    serious = [m for m in minds.mind(npc)["memories"] if m.get("severity", 0) >= 2 and m.get("event") is not None
+               and not m.get("doubted")]
+    return max(serious, key=lambda m: m["severity"], default=None)
 
 
 def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
@@ -118,6 +143,11 @@ def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
         f"{prefix}mood": {"type": "choice", "criteria": {m: f"{name} feels {m}" for m in persona.MOODS},
                           "instructions": f"How does {name} feel at the moment?"},
     }
+    tell = next((k for k in agenda_options(state, npc) if k.startswith("tell:")), None)
+    if tell:  # A yes/no is more reliable than hoping one important option wins a long choice.
+        questions[f"{prefix}tell_someone"] = {"type": "noul", "instructions": (
+            f"Would {name} go now and tell someone what happened? "
+            f"({agenda_options(state, npc)[tell]['description']})")}
     return text, questions
 
 
@@ -130,11 +160,25 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
     options = agenda_options(state, npc)
     choice = (answers.get("agenda") or {}).get("choice")
     choice = choice if choice in options else "carry_on"
+    tell = next((k for k in options if k.startswith("tell:")), None)
+    if tell and choice != "confront" and float((answers.get("tell_someone") or {}).get("noul", 0.0)) >= 0.5:
+        choice = tell
     plan = options[choice]["plan"]
     controller = npc.get("controller") or {}
     if plan["kind"] == "routine" or not controller:
         minds._set_job(npc, None, now)
         my_mind["doing"] = controller.get("goal")
+    elif plan["kind"] == "confront":
+        my_mind["confronted_at"] = now
+        wronged = next((m for m in minds.mind(npc)["memories"] if m.get("victim") == npc["id"]
+                        and m["kind"] in minds.CRIME_KINDS), {})
+        # Their own grievance in their own words (the confront bank speaks up for someone else).
+        own = minds._lines(state, npc, "demand_payment", minds.slots(state, npc)) \
+            if wronged.get("kind") == "theft" else []
+        line_id, line = own[0] if own else (None, "You! You'll answer for what you did to me.")
+        minds._set_job(npc, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "confront",
+                             "line": line, "line_id": line_id}, now)
+        my_mind["doing"] = "going to have it out with the stranger"
     elif plan["kind"] == "stranger":
         minds._set_job(npc, {"kind": "approach", "target": "player", "stop": 3.0, "speed": "walk", "then": None,
                              "line": None, "line_id": None}, now)
@@ -158,6 +202,7 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
         controller.update(source="agenda", path=path, destination=list(path[-1]) if path else [npc["x"], npc["y"]],
                           activity="walk" if path else controller["arrive_activity"], step_carry_ms=0,
                           next_at_ms=now + (0 if path else controller["dwell_ms"]))
+    my_mind["last_agenda"] = choice
     return {"npc_id": npc["id"], "agenda": choice, "mood": my_mind.get("mood"), "doing": my_mind.get("doing")}
 
 
@@ -209,9 +254,15 @@ def _tick(ms: int) -> int:
 
 # --- Meetings: two people talk, and news travels ---------------------------------------------------
 
+def _told(a: dict, b: dict) -> list[str]:
+    """Topics A has already raised with B (nobody tells the same person the same thing twice)."""
+    return minds.mind(a).setdefault("told", {}).setdefault(b["id"], [])
+
+
 def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
     """What A could bring up with B: news B hasn't heard, the stranger, a worry, an opinion, small talk."""
     options: dict[str, dict] = {}
+    told = _told(a, b)
     for memory in minds.mind(a)["memories"]:
         event = memory.get("event")
         if event is None or minds.knows(b, event) or (memory["kind"] == "talk" and memory.get("severity", 0) < 1):
@@ -226,12 +277,14 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
         options["stranger"] = {"description": f"{a['name']} tells {b['name']} about the stranger: {latest}",
                                "fact": latest, "kind": "stranger"}
     goals = minds.card(a).get("goals") or []
-    if goals:
-        options["worry"] = {"description": f"{a['name']} talks about what's on their mind: {goals[0].lower()}.",
-                            "fact": goals[0], "kind": "worry"}
+    fresh = [i for i in range(len(goals)) if f"worry:{i}" not in told]
+    if fresh:
+        goal = goals[fresh[0]]
+        options["worry"] = {"description": f"{a['name']} talks about what's on their mind: {goal[0].lower() + goal[1:]}.",
+                            "fact": goal, "kind": "worry", "told_key": f"worry:{fresh[0]}"}
     for other_id, view in persona.opinions(a).items():
         other = minds.find(state["npcs"], other_id)
-        if other and other_id != b["id"] and abs(view["warmth"]) >= 0.4:
+        if other and other_id != b["id"] and abs(view["warmth"]) >= 0.4 and f"opinion:{other_id}" not in told:
             options[f"opinion:{other_id}"] = {"description": f"{a['name']} tells {b['name']} what they think of "
                                                              f"{other['name']}: {view['text']}.",
                                               "fact": f"{other['name']}: {view['text']}", "kind": "opinion",
@@ -239,6 +292,25 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
     options["small_talk"] = {"description": f"{a['name']} passes the time of day with {b['name']}.",
                              "fact": "the weather, work and the day", "kind": "small_talk"}
     return options
+
+
+def news_pick(state: dict, a: dict, b: dict) -> str | None:
+    """The most important thing A could pass on to B: the most serious news, else word of the stranger."""
+    options = topics(state, a, b)
+    news = sorted((k for k in options if options[k]["kind"] == "news"),
+                  key=lambda k: -options[k]["memory"].get("severity", 0))
+    return news[0] if news else ("stranger" if "stranger" in options else None)
+
+
+def chosen_topic(state: dict, a: dict, b: dict, answers: dict) -> str:
+    """Jev's topic, unless A (as Jev believes) would pass on the news first: a yes/no is more reliable than
+    hoping one important option wins a long choice (GDD M5 lesson)."""
+    options = topics(state, a, b)
+    pick = news_pick(state, a, b)
+    if pick and float((answers.get("tells") or {}).get("noul", 0.0)) >= 0.5:
+        return pick
+    choice = (answers.get("topic") or {}).get("choice")
+    return choice if choice in options else "small_talk"
 
 
 def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, dict]:
@@ -256,6 +328,15 @@ def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, di
                               "instructions": f"How does {b['name']} take it, and {a['name']} for saying it?"},
         f"{prefix}believes": {"type": "noul", "instructions": f"Does {b['name']} believe what {a['name']} tells them?"},
     }
+    pick = news_pick(state, a, b)
+    if pick:
+        questions[f"{prefix}tells"] = {"type": "noul", "instructions": (
+            f"Would {a['name']} bring this up with {b['name']} now: {topics(state, a, b)[pick]['description']} "
+            f"People pass on trouble, crimes and word of strangers to those it concerns.")}
+    back = news_pick(state, b, a)
+    if back:  # Conversations go both ways: the listener may have news of their own.
+        questions[f"{prefix}tells_back"] = {"type": "noul", "instructions": (
+            f"Would {b['name']} in turn bring this up with {a['name']}: {topics(state, b, a)[back]['description']}")}
     return text, questions
 
 
@@ -296,41 +377,56 @@ def _believes(answers: dict) -> bool:
     return float((answers.get("believes") or {}).get("noul", 1.0)) >= 0.5
 
 
-def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str, str] | None, now: int) -> dict:
-    """Commit what was said: news or hearsay passes to B, opinions shift, and the stranger may overhear."""
-    options = topics(state, a, b)
-    choice = (answers.get("topic") or {}).get("choice")
-    choice = choice if choice in options else "small_talk"
-    topic, believed, level = options[choice], _believes(answers), _level(answers)
+def _pass_on(state: dict, teller: dict, listener: dict, topic: dict, believed: bool, now: int) -> None:
+    """News becomes the listener's memory ("told by"); word of the stranger becomes hearsay (and a name)."""
     if topic["kind"] == "news":
         memory = topic["memory"]
         told = {**{k: memory.get(k) for k in ("kind", "severity", "short", "victim", "item", "works")},
-                "event": memory.get("event"), "clarity": "told", "source": f"told_by:{a['id']}", "at": now,
-                "summary": f"{a['name']} told them: {memory['summary']}", "doubted": not believed}
-        minds.remember(b, told)
+                "event": memory.get("event"), "clarity": "told", "source": f"told_by:{teller['id']}", "at": now,
+                "summary": f"{teller['name']} told them: {memory['summary']}", "doubted": not believed}
+        minds.remember(listener, told)
         if memory.get("severity", 0) >= 2 and believed:
-            minds.mind(b)["rethinks"] = 0
-            minds.add_pending(state, b["id"], "decide", f"told by {a['name']}")
+            minds.mind(listener)["rethinks"] = 0
+            minds.add_pending(state, listener["id"], "decide", f"told by {teller['name']}")
     elif topic["kind"] == "stranger":
-        heard = persona.knows(b).setdefault("heard", [])
-        heard.append({"from": a["id"], "from_name": a["name"], "text": topic["fact"], "at": now, "doubted": not believed})
+        heard = persona.knows(listener).setdefault("heard", [])
+        heard.append({"from": teller["id"], "from_name": teller["name"], "text": topic["fact"], "at": now,
+                      "doubted": not believed})
         del heard[:-6]
-        name = persona.knows(a).get("name") or persona.knows(a).get("heard_name")
-        if name and believed and not persona.knows(b).get("name"):
-            persona.knows(b)["heard_name"] = name
-        view_a, view_b = minds.regard(a), minds.regard(b)
-        told_by = view_b.setdefault("heard_from", [])
-        if believed and a["id"] not in told_by:  # One person's view of the stranger rubs off a little.
-            told_by.append(a["id"])
-            if view_a["trust"] >= 0.5:
-                view_b["trust"] = round(min(1.0, view_b["trust"] + HEARSAY_SHIFT), 3)
-            if view_a["suspicion"] >= 0.6:
-                view_b["suspicion"] = round(min(1.0, view_b["suspicion"] + HEARSAY_SHIFT), 3)
+        name = persona.knows(teller).get("name") or persona.knows(teller).get("heard_name")
+        if name and believed and not persona.knows(listener).get("name"):
+            persona.knows(listener)["heard_name"] = name
+        view_t, view_l = minds.regard(teller), minds.regard(listener)
+        told_by = view_l.setdefault("heard_from", [])
+        if believed and teller["id"] not in told_by:  # One person's view of the stranger rubs off a little.
+            told_by.append(teller["id"])
+            if view_t["trust"] >= 0.5:
+                view_l["trust"] = round(min(1.0, view_l["trust"] + HEARSAY_SHIFT), 3)
+            if view_t["suspicion"] >= 0.6:
+                view_l["suspicion"] = round(min(1.0, view_l["suspicion"] + HEARSAY_SHIFT), 3)
     elif topic["kind"] == "opinion" and believed:
-        feelings = persona.opinions(b)
+        feelings = persona.opinions(listener)
         if topic["about"] in feelings:
             view = feelings[topic["about"]]
             view["warmth"] = round(max(-1.0, min(1.0, view["warmth"] + (0.1 if topic["warmth"] > 0 else -0.1))), 2)
+
+
+def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str, str] | None, now: int) -> dict:
+    """Commit what was said: news or hearsay passes both ways, opinions shift, and the stranger may overhear."""
+    options = topics(state, a, b)
+    choice = chosen_topic(state, a, b, answers)
+    topic, believed, level = options[choice], _believes(answers), _level(answers)
+    if choice != "small_talk":
+        told = _told(a, b)
+        told.append(topic.get("told_key", choice))
+        del told[:-12]
+    _pass_on(state, a, b, topic, believed, now)
+    back = news_pick(state, b, a)
+    returned = None
+    if back and float((answers.get("tells_back") or {}).get("noul", 0.0)) >= 0.5:
+        returned = topics(state, b, a)[back]
+        _told(b, a).append(back)
+        _pass_on(state, b, a, returned, True, now)
     shift = WARMTH_SHIFTS[level]
     for person, other, amount in ((b, a, shift), (a, b, shift / 2)):
         feelings = persona.opinions(person)
@@ -357,4 +453,5 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
                 learned.append({"npc_id": person["id"], "name": person["name"], "said": line,
                                 "overheard": other["name"], "at": now})
     return {"npc_id": a["id"], "with": b["id"], "topic": choice, "about": topic["description"],
+            "told_back": returned["description"] if returned else None,
             "believed": believed, "reaction": REACTION_LEVELS[level], "voiced": bool(lines), "learned": learned}

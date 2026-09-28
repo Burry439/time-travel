@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.4 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35)
+**Version 1.5 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -392,6 +392,18 @@ Everything listed is a real stateful object with an owner, a holder, a location,
 
 Traits run 0.00–1.00; knowledge runs 0 (none) to 4 (master for this world). Full cards live in `data/content/npcs/<id>.json` (schema in [§15](#15-appendix-schemas)).
 
+> **Built (D-38): character sheets** in `data/content/npc_cards.json`. Besides personality, values, fears, knowledge, offers and style, every person has:
+>
+> - a starting **mood**;
+> - a **voice**: four example lines never to be copied, verbal habits, how they greet a stranger, and what they would never say;
+> - two or three **goals**;
+> - **secrets**, with who they would tell;
+> - **likes** and **dislikes**;
+> - **opinions** of the people they know, with a warmth from −1 to 1 that changes as they talk;
+> - **tasks** at named places (`data/places.json`), some of which depend on the world (the beam raised or not).
+>
+> `backend/persona.py` builds one sheet from all of this, and both the decider and the voice read it.
+
 #### Roderic Vale: gate captain · 46
 - **Authority:** admit entrants, order guards, detain, inspect passes. *The only person who can admit the player.*
 - **Personality:** duty .92, caution .82, traditionalism .78, curiosity .45, empathy .48
@@ -640,6 +652,29 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Deals and vouching.** A vouch is a walk to the captain that leaves him a memory to weigh.
 > - **The guards' halt** at the gate.
 > - **Memories** past the limit forget the least serious one first.
+>
+> **Added in 1.5, a living village (D-36 to D-38):**
+>
+> - **Memory of the stranger** (`mind.knows`, D-36).
+>   - Every exchange leaves a one-sentence note from the voice's output.
+>   - The stranger's name is kept only if they actually said it.
+>   - Claims the person didn't believe are kept.
+>   - When a conversation ends, the thinking lane turns its notes into an **episode** (Luna, `recollect_v1`).
+>   - After six episodes, the oldest fold into a **long memory**.
+>   - Jev and the voice both see it all next time, so people greet you by name, recall your trade and hold a lie against you.
+> - **Agendas** (`backend/village.py`, D-37).
+>   - Every ~90 simulated seconds, on a shared 30 s tick, each free person is asked by Jev what to do next.
+>   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
+>   - The gate never drops below two guards.
+>   - The same errand isn't offered twice in a row.
+>   - Jev also picks their mood.
+>   - A finished plan drifts back to the authored routine, which is the fallback whenever Jev can't or needn't decide.
+> - **Meetings and gossip** (D-37).
+>   - People who visit, or who stand idle near someone they know, stop and talk.
+>   - Jev picks the topic: news the other hasn't heard, word of the stranger, a worry, an opinion, or small talk. Yes/no questions settle whether news is passed on, in either direction.
+>   - Nobody repeats a topic to the same person.
+>   - News becomes a "told by" memory, and a crime makes the listener think. Word of the stranger becomes hearsay, including their name, and rubs off on regard a little. Opinions warm or cool.
+>   - Within the stranger's sight, Luna voices the two lines as bubbles (`chatter_v1`, at most two chats a minute). Within 5 cells they go in the journal as overheard.
 
 ### 7.1 Three layers of truth
 
@@ -865,7 +900,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22) | `gpt-6-luna`, reasoning `low` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v1`; phrases a decided reply only; authored fallback lines when unavailable | A smaller or faster model if latency matters more than variety |
+| Voice (built, D-22, D-36, D-38) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v3`; phrases a decided reply from the character sheet and returns a memory note and any name given. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
@@ -1154,6 +1189,9 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-38 | 2026-09-28 | **One character sheet for both models.** Cards gain a mood, a voice (example lines, habits, a greeting, what they'd never say), goals, secrets, likes and dislikes, opinions of people they know, and tasks. `persona.py` builds one sheet that Jev and the voice both read, so nothing about a person is split between them any more. `voice_v3` asks for this person's voice, never a generic opener, and never copying the samples. | The user asked for "a distinct personality for each character". Jev never saw how someone talks or what persuades them; the voice never saw their goals or relationships. Measured with a Luna judge naming the speaker of 60 lines: the previous voice averaged about 74%, the new sheets about 79% (two runs each, noisy). Oren and Elin remain the hardest to tell apart. |
+| D-37 | 2026-09-28 | **The village has its own life.** Jev chooses each person's next move from options code builds, and people meet and pass on news, hearsay and opinions (§7). Chats are voiced only where the stranger can see them. The authored routines remain as the fallback. The decider gets its own per-run allowance (`MAX_DECIDER_CALLS_PER_RUN`, 1500), so ordinary life can't use up the writing allowance. Reactions to the stranger always go first and alone in `/think`. | The user asked for "a simulated world where Jev is in charge of most of it". Live, 10 simulated minutes took about 70 s and 60 Jev decisions (about $0.01): 21 tasks, 7–13 visits, 25 carry-ons, and people looking in on or confronting the stranger. Two fixes came from those runs: yes/no questions for "would they pass this on?" and "would they go and tell someone?" (Jev under-picks one important option in a long list, as in M5), and no repeated topics or errands. |
+| D-36 | 2026-09-28 | **Memory that lasts.** Notes per exchange, a name only if the stranger said it, doubted claims, one episode per finished conversation, and long memory. They are written by the voice (in the same call) and by `recollect_v1` in the thinking lane, stored in the NPC's mind (so events replay exactly), and shown to both models. The words of the current conversation are kept to 12 lines. | People forgot everything past their last 8 lines, and the person you spoke to kept no memory of it at all. Live memory eval: Hessa recalls "Ash … the healer from the south with the feverfew and willow bark" in a later conversation; Bren keeps the king's-cousin lie; after Hessa gossips, Bren knows the name he never heard. Talk evals still pass 12/12; voice median rose from 1.2 to 1.7 s, and cost is $0.00036 per exchange. |
 | D-35 | 2026-09-28 | **UI makeover: mouse first, wood and parchment.**<br><br>**Mouse:** hover names things and says what a left click does. The cursor changes, a ring and a brighten mark the thing, and stealing is shown in red. A left click talks, picks up or steals (walking up to 14 steps there first), or points at anything else; a right click inspects.<br><br>**Always on screen:** the pack with painted icons and weight. Dragging an item writes the line (give, use, fill, put down), never acting on its own.<br><br>**Other parts:** a journal book with a fog-of-war map and a notices history; signs over heads; parchment bubbles; first-time hints, Controls and Settings (interface and text size); soft UI sounds.<br><br>**Removed:** Tab, F, the bottom prompt, the Try box, result cards and the encounter panel.<br><br>**Art:** the frames, cursors and paper are painted in code at start-up, so there is no art step and nothing to download. | The user found the game hard to judge because it was hard to play: two inspect keys, Tab cycling, no visible inventory, three different windows for acting. |
 | D-34 | 2026-09-28 | **One way to act.** One text line, with no Say/Do/Give/Show/Wait/Yield buttons. `/act` decides what the text is: speech, a deed, both, waiting, giving up or walking away.<br><br>**Code first:** quotes mean speech. "I wait", "I give up" and "walk away" (also after "I will…") are those moves. A leading action verb, with no speech words, means a deed.<br><br>**Otherwise:** one Jev request with two yes/no beliefs (does it include spoken words? does it describe a physical action?). There is also a choice used only when it is neither. The text is data. Stub or off mode falls back to speech when someone is near, otherwise a deed.<br><br>**Routing:** speech opens or continues a conversation, or honestly says "Nobody is close enough to hear you." A deed is a Try Something, or a round when face to face. **Both** is a round whose reply also hears the words. The words of quoted speech are said without the quotes. `/say`, `/craft`, `/quick` and `/encounter/act` remain for tools and tests. | The user asked for "one system of doing something that covers all those", not buttons. Measured live: a single choice question under-picked "both" (7/10); two beliefs got 13/14, averaging about 1.4 s per Jev call. Code settled 6 of the 14 instantly. |
 | D-33 | 2026-09-28 | **Housekeeping.**<br><br>**Split:** `app.py` is split into store, route and round modules (§8.5).<br><br>**Retired:** the Milestone 2 phrase parser and `/actions`. Picking up and putting down go through `/quick`, a proposal made by code, not a model, and committed through the same pipeline as Try Something, so witnesses still see a theft. Journeys begun before seed 5 get an honest "start a new journey" (HTTP 410, GDD D-04), and their legacy branches are gone. Seed 5–7 saves that contain old quick-action events still replay. | Review: the backend had grown into one 1,200-line file carrying three generations of rules. |
@@ -1454,6 +1492,44 @@ Changes to this document: …
 - Two model calls per ambiguous line in a round (the classification plus the round's own). Measure whether the extra ~1.4 s is felt.
 - "Both" outside a face-to-face runs the deed; the words aren't heard unless someone is already facing you.
 - The Godot MCP ran out of file handles mid-session, so the checks ran through headless and windowed smoke tests.
+
+### Retro: a living village (D-36 to D-38), 28 Sep 2026
+
+**Built:**
+
+- the talk crash fix (a decider that never raises, and no TLS key-log pipe);
+- character sheets;
+- lasting memory;
+- agendas;
+- meetings and gossip with voiced bubbles;
+- mood, what they're doing, and conversation count on the inspect card;
+- overheard gossip in the journal.
+
+**Evidence:**
+
+- **Backend:** 123 tests pass.
+  - New tests: `test_resilience`, `test_memory` and `test_village`.
+  - `tests/conftest.py` pins every test to stub mode, so no test can call a paid model.
+- **Godot:** all smoke tests pass, including the new `tools/smoke_village.gd`. With `-- --live` it runs against the real models.
+- **Live evals:**
+  - `evals/run_memory_evals.py` passes.
+  - `run_talk_evals.py` passes 12/12.
+  - `run_persona_evals.py` scores about 79% against 74%.
+  - `run_world_live.py` gives the agenda and meeting mix recorded in D-37.
+
+**Lessons:**
+
+- Yes/no beliefs beat one long choice a third time. News was never picked until a yes/no question asked whether they'd pass it on.
+- An eval's judge needs the same information a townsperson would have. With personality alone it misread Oren's echoing challenges as Kade's.
+- Two bugs appear only when the world is busier:
+  - a late reply from a journey already left replaced the new one;
+  - tests that counted any pending thought broke as soon as people started planning their day.
+
+**To watch:**
+
+- Most chat topics are still people's own worries. A theft victim tends to confront the thief herself rather than tell her brother.
+- The voice's added context costs about 0.5 s per line.
+- The Godot MCP still returns "Too many open files".
 
 ---
 

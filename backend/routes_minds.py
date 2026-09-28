@@ -136,8 +136,7 @@ def think(run_id: str, request: ThinkRequest):
                     continue
                 b = minds.find(snapshot["npcs"], pending["why"])
                 mine = answers.get(a["id"], {})
-                options = village.topics(snapshot, a, b)
-                topic = options.get((mine.get("topic") or {}).get("choice")) or options["small_talk"]
+                topic = village.topics(snapshot, a, b)[village.chosen_topic(snapshot, a, b, mine)]
                 chats[a["id"]] = pool.submit(voice.chatter, village.chatter_context(snapshot, a, b, topic, mine),
                                              village.fallback_chatter(a, b, topic, mine), writing_allowed)
             remembered = [future.result() for future in memory_futures]

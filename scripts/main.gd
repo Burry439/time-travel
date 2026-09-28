@@ -715,8 +715,18 @@ func _place_bubble(bubble: PanelContainer) -> void:
 	if not is_instance_valid(bubble):
 		return
 	bubble.reset_size()
-	bubble.position = Vector2(-bubble.size.x * 0.5, -150.0 - bubble.size.y)
-	(bubble.get_node("Tail") as Polygon2D).position = Vector2(bubble.size.x * 0.5, bubble.size.y - 2)
+	# Two people talking side by side: each bubble leans away from the other, so they don't overlap.
+	var lean := 0.0
+	var actor := bubble.get_parent() as Node2D
+	var npc: Dictionary = ui.npc_record(str(actor.name)) if actor else {}
+	var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
+	var chatting = their_mind.get("chatting_with")
+	if typeof(chatting) == TYPE_DICTIONARY:
+		var partner := get_node_or_null("NPCs/" + str(chatting.id)) as Node2D
+		if partner and absf(partner.position.x - actor.position.x) < bubble.size.x + 20.0:
+			lean = (bubble.size.x * 0.5 + 6.0) * (1.0 if actor.position.x >= partner.position.x else -1.0)
+	bubble.position = Vector2(-bubble.size.x * 0.5 + lean, -150.0 - bubble.size.y)
+	(bubble.get_node("Tail") as Polygon2D).position = Vector2(bubble.size.x * 0.5 - lean, bubble.size.y - 2)
 
 ## Map trees are authored scene art; hide the felled ones and let the player walk through.
 func _apply_world_features() -> void:
