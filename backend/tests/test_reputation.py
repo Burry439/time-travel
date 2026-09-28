@@ -69,7 +69,7 @@ def test_bren_lets_you_in_on_his_own_rule():
     bren = npc(state, "npc_bren_marr")
     state["player"].update(x=bren["x"], y=bren["y"] + 1)
     _, questions = talk.request(state, bren, "Will you let me through?")
-    key = talk.decided_reply(state, bren, answers("ask_back", reason=0.8, threat=0.1), questions)
+    key = talk.decided_reply(state, bren, answers("admit", reason=0.8, threat=0.1), "admit")
     assert key == "admit"
     state["event_seq"] = 3
     said = talk.exchange(state, bren["id"], "Will you let me through?", answers("ask_back", reason=0.8, threat=0.1),

@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
 import minds  # noqa: E402
+import rounds  # noqa: E402
 import talk  # noqa: E402
 from ai import decider, voice  # noqa: E402
 
@@ -35,21 +36,23 @@ def world_for(case: dict) -> tuple[dict, dict]:
         minds.remember(person, {"victim": None, "item": None, "event": 900 + index, "at": 0, **memory})
     minds.mind(person)["talk"] = [dict(t, at=0) for t in case.get("talk", [])]
     talk.regard(person).update(case.get("regard", {}))  # e.g. awe or trust already earned
+    for object_id in case.get("carry", []):  # e.g. the stolen rope, in the stranger's hands
+        state["objects"][object_id]["holder_id"] = "player"
+    if case.get("reason"):  # They came up to the stranger for a reason (a halt, a confrontation).
+        state["encounter"] = {"id": "enc_eval", "participants": [person["id"]], "opened_by": person["id"],
+                              "reason": case["reason"], "round": 1, "intents": {}, "log": [], "started_at": 0}
     return state, person
 
 
 def exchange(state: dict, npc_id: str, text: str) -> dict:
     """One exchange exactly as /say does it, minus the database."""
     person = minds.find(state["npcs"], npc_id)
-    situation, questions = talk.request(state, person, text)
-    decided = decider.decide(situation, questions)
-    if not decided.ok:
-        return {"error": decided.error, "jev_ms": decided.latency_ms}
-    key = talk.decided_reply(state, person, decided.answers, questions)
-    spoken = voice.speak(talk.voice_context(state, person, text, key, decided.answers),
-                         talk.fallback_line(state, person, key))
+    out = rounds._speak(state, person, text, None, talk.request(state, person, text), "talkeval", True)  # D-44
+    decided, spoken, key = out["decided"], out["spoken"], out["key"]
+    if not decided.ok and spoken.status != "ok":
+        return {"error": decided.error or spoken.error, "jev_ms": decided.latency_ms}
     before = dict(talk.regard(person))
-    talk.exchange(state, npc_id, text, decided.answers, key, spoken.text, [], note=spoken.remember,
+    talk.exchange(state, npc_id, text, out["answers"], key, spoken.text, [], note=spoken.remember,
                   name_given=spoken.stranger_name)
     state["event_seq"] += 1
     after = talk.regard(minds.find(state["npcs"], npc_id))
@@ -75,6 +78,9 @@ def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
         problems.append("trust did not fall")
     if case.get("suspicion_rises") and not end["suspicion"] > start["suspicion"]:
         problems.append("suspicion did not rise")
+    if case.get("line_needs_any") and not any(w in t.get("line", "").lower() for t in turns
+                                              for w in case["line_needs_any"]):
+        problems.append(f"said none of {case['line_needs_any']}")
     for word in case.get("line_must_not_contain", []):
         for t in turns:
             if word.lower() in f" {t.get('line', '').lower()} ":

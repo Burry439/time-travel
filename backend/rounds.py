@@ -15,6 +15,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 import attempts
+import combat
 import crafting
 import encounter
 import minds
@@ -114,14 +115,18 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
 
 def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[str, dict], run_id: str,
            allowed: bool) -> dict:
-    """One person's reply in a round: Jev decides what they do, the voice says it (outside the lock)."""
+    """One person's reply in a round (D-44): Jev judges the moment (beliefs, feelings, deals, whether a guard's
+    own rule for letting the stranger in is met); then the voice says what they'd say and picks their move from
+    those code allows. Both outside the lock. If Jev can't be reached the voice still answers, on a neutral
+    reading; if the voice can't, an authored line."""
     decided = decider.decide(*ask)
-    out = {"decided": decided, "ask": ask, "happened": happened, "key": None, "context": None, "spoken": None}
-    if decided.ok:
-        out["key"] = talk.decided_reply(draft, npc, decided.answers, ask[1])
-        out["context"] = talk.voice_context(draft, npc, text, out["key"], decided.answers, happened)
-        out["spoken"] = voice.speak(out["context"], talk.fallback_line(draft, npc, out["key"]), allowed=allowed)
-    return out
+    answers = decided.answers if decided.ok else {}
+    context = talk.converse_context(draft, npc, text, answers, happened)
+    fallback_key = talk.decided_reply(draft, npc, answers, "answer")
+    spoken = voice.converse(context, talk.fallback_line(draft, npc, fallback_key), allowed=allowed)
+    key = talk.decided_reply(draft, npc, answers, spoken.move or "answer") if spoken.status == "ok" else fallback_key
+    return {"decided": decided, "answers": answers, "ask": ask, "happened": happened, "key": key,
+            "context": context, "spoken": spoken}
 
 
 def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
@@ -202,7 +207,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 if line and line.model and line.model != "stub":
                     telemetry.record(connection, run_id, "voice", line.model, line.prompt_version, line.latency_ms,
                                      line.status == "ok", line.error, line.input_tokens, line.output_tokens)
-        if reply_ask and not (decided and decided.ok) and request.kind == "say" and not any(
+        if reply_ask and not (decided and decided.ok) and not (spoken and spoken.status == "ok") \
+                and request.kind == "say" and not any(
                 e["kind"] in ("attack", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
             raise HTTPException(503, {"reason": "decider_failed", "message": (
                 f"{replier['name']} doesn't seem to hear you. (The decider couldn't be reached, so nothing changed.)")})
@@ -217,7 +223,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 if not (spoke and spoke["spoken"]) or record["replier" if kind == "reply" else "interjector"] \
                         != person["id"]:
                     continue
-                said = talk.exchange(draft, person["id"], words, spoke["decided"].answers, spoke["key"],
+                said = talk.exchange(draft, person["id"], words, spoke["answers"], spoke["key"],
                                      spoke["spoken"].text, [], spoke["happened"], note=spoke["spoken"].remember,
                                      name_given=spoke["spoken"].stranger_name)
                 draft.setdefault("learned", []).extend(said["learned"])
@@ -225,7 +231,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 replies.append({"npc_id": person["id"], "name": person["name"], "line": spoke["spoken"].text,
                                 "kind": kind})
                 trace = {"kind": "talk", "npc_id": person["id"], "text": words, "happened": spoke["happened"],
-                         "action": spoke["key"], "jev_choice": (spoke["decided"].answers.get("reply") or {}).get("choice"),
+                         "action": spoke["key"], "voice_move": spoke["spoken"].move,
                          "why": "addressed" if kind == "reply" else "cut in", "reply": spoke["spoken"].text,
                          "regard_change": said["regard_change"], "situation": spoke["ask"][0],
                          "questions": spoke["ask"][1], "call": spoke["decided"].as_dict(),
@@ -234,6 +240,14 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 if kind == "interject":
                     connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
                                        (run_id, state["event_seq"] + 1, person["id"], json.dumps(trace)))
+            for spoke, person in ((main, replier), (side, cutting_in)):  # Moves the round itself carries out.
+                act = str((spoke or {}).get("key") or "").split(":")[0]
+                if person is None or not any(r["npc_id"] == person["id"] for r in replies):
+                    continue
+                if act == "seize" and draft["player"].get("alive", True):
+                    record["seized_by"] = record.get("seized_by") or person["id"]
+                elif act == "attack":
+                    combat.start(draft, [person["id"]], now, "attack")
             encounter.finish(draft, record, now, replies)
             elapsed = encounter.round_ms(record)
             people = store.advance_people(draft, elapsed)
@@ -242,6 +256,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             draft.update(npcs=people["npcs"], player=people["player"], pending_minds=people["pending_minds"],
                          encounter=people["encounter"], fight=people["fight"], sim_time_ms=now + elapsed)
             draft["journal"].extend(people["people_journal"])
+            if "barred_until" in people:  # Beaten down and arrested as the round's time passed (D-44).
+                draft["barred_until"] = people["barred_until"]
             payload = store.round_payload(state, draft, record)
             payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
             store.append(connection, state, "round", payload, request.request_id, payload["sim_time_ms"] // 1000)

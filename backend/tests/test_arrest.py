@@ -27,12 +27,36 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     assert "admit" in talk.replies(draft, roderic)  # ...but an arrest isn't the end of the road.
 
 
-def test_slipping_away_first_beats_a_grab():
+def test_slipping_a_grab_means_a_chase_not_a_clean_getaway():
     state = unit_state()
     face_to_face(state, "npc_bren_marr", intent="seize", reason="confront")
-    draft, record = play(state, "leave")  # The stranger acts first in a round: always a step ahead of a grab.
+    draft, record = play(state, "leave")  # The stranger acts first in a round: a step ahead of the grab...
     assert record["seized_by"] is None and record["walked_away"]
-    assert any(e["kind"] == "seize" and "out of reach" in e["text"] for e in record["entries"])
+    assert draft["fight"]["attackers"] == ["npc_bren_marr"]  # ...but he comes after them (D-44)...
+    assert draft["fight"]["lethal"]["npc_bren_marr"] is False  # ...to put them on the ground, not to kill.
+    assert any(e["kind"] == "chase" for e in record["entries"])
+
+
+def test_walking_off_from_someone_you_wronged():
+    state = unit_state()
+    kade = face_to_face(state, "npc_kade_east", reason="confront")
+    minds.remember(kade, {"kind": "theft", "severity": 2, "event": 5, "clarity": "told", "victim": "npc_tomas_reed",
+                          "item": "coil of rope", "source": "told_by:npc_tomas_reed",
+                          "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+                          "short": "stole Tomas's coil of rope"})
+    draft, _ = play(state, "leave")
+    assert "npc_kade_east" in draft["fight"]["attackers"]  # A guard who came about a theft gives chase.
+    state = unit_state()
+    tomas = face_to_face(state, "npc_tomas_reed", reason="confront")
+    minds.remember(tomas, {"kind": "theft", "severity": 2, "event": 5, "clarity": "clear", "victim": "npc_tomas_reed",
+                           "item": "coil of rope", "source": "victim", "summary": "The stranger took my coil of rope.",
+                           "short": "stole my coil of rope"})
+    draft, record = play(state, "leave")
+    assert not draft.get("fight") and any(e["kind"] == "shout_for_help" for e in record["entries"])  # He shouts.
+    calm = unit_state()
+    face_to_face(calm, "npc_bren_marr", reason="halt")
+    draft, _ = play(calm, "leave")
+    assert not draft.get("fight")  # A plain halt, nothing held against you: you may walk off.
 
 
 def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():

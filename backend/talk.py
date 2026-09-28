@@ -1,18 +1,24 @@
-"""Conversations: the player speaks, Jev decides how the person replies, the voice model says it.
+"""Conversations (D-44): Jev judges, the voice model talks, code applies.
 
-Code builds the replies that are legal for this person right now: answer, ask back, tell the
-stranger something they actually know, send them to someone, refuse, tell them to leave, fetch a
-guard, end the conversation. Jev chooses one and rates how the exchange changed the person's view
-of the stranger. The voice model (ai/voice.py) phrases the chosen reply in the person's style
-from what they know. Code applies every effect: regard (capped: words alone earn only a little
-goodwill; more needs new evidence), what the player learned (their journal), the person staying to
-talk or going for a guard, and memories for anyone close enough to overhear.
+1. Jev answers typed questions about the moment: how the exchange changed the person's view of the
+   stranger, their anger, whether they believe what was said, and (when it matters) whether a deal
+   was agreed or done and whether a guard has reason enough to let the stranger in.
+2. Code builds the moves this person may make now: tell something they actually know, send them to
+   someone, offer a deal, lend or give, demand stolen goods back, take them back, arrest, attack,
+   fetch a guard, refuse, tell them to leave, end it, or simply talk. Moves that need a belief
+   (letting someone in, a deal) are only offered, or forced, when Jev's beliefs agree.
+3. The voice model (ai/voice.py) says what this person would say, in their own voice, knowing why
+   they are here, and picks one of those moves. Ordinary talk (directions, an apology accepted or
+   not, a question back) needs no menu.
+4. Code applies every effect: regard (capped: words alone earn only a little goodwill; more needs
+   new evidence), what the player learned (their journal), the move, and memories for anyone close
+   enough to overhear.
 
 Deals (GDD 6.6) come from each person's authored offers: Jev may offer one; whether the stranger
 accepted, and later whether they have done it, are yes/no questions in the same request, answered
 only from what that person has seen or been given. The reward is a job: the person walks to the
-captain and speaks for the stranger. Only Roderic can admit anyone, and code withholds that option
-while he knows of a crime by the stranger.
+captain and speaks for the stranger. Any guard may let the stranger in for their own reasons (D-43), never
+while they know of a crime by the stranger.
 """
 from __future__ import annotations
 
@@ -20,9 +26,15 @@ import copy
 import math
 import re
 
+import json
+from pathlib import Path
+
 import crafting
 import minds
 import persona
+
+PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))["places"]
+REACH_TAKE = 2.0  # Close enough to take something out of the stranger's hands.
 
 TALK_CELLS = 3.0  # Close enough to talk without walking over.
 HEAR_TALK_CELLS = 5.0  # GDD 7.3: normal speech carries 5 cells.
@@ -52,7 +64,9 @@ REWARDS = {"vouch": "{name} will be grateful and put in a good word for the stra
 FALLBACK = {"answer": "Hm. I hear you.", "ask_back": "And who might you be?", "refuse": "No. I won't.",
             "tell_to_leave": "Go on. Leave me be.", "end": "That's all I have to say.",
             "vouch": "Right. I'll go and have a word with the captain for you.",
-            "admit": "Very well. Open the gate for this one."}
+            "admit": "Very well. Open the gate for this one.", "demand": "That's not yours. Hand it back. Now.",
+            "take_back": "I'll have that back, thank you.", "seize": "That's enough. You're coming with me.",
+            "attack": "Right. You asked for it."}
 
 
 def clean(text: str) -> str:
@@ -109,9 +123,55 @@ def deals(state: dict, npc_id: str, *statuses: str) -> list[dict]:
 
 
 def knows_a_crime(npc: dict) -> bool:
-    """A known act of real violence, or an assault on the gate (theft and arrests only weigh on his judgement)."""
-    return any(m["kind"] in ("violence", "breach") and m.get("severity", 0) >= 2 and not m.get("doubted")
-               for m in minds.mind(npc)["memories"])
+    return minds.knows_a_crime(npc)
+
+
+def stolen_in_view(state: dict, npc: dict) -> list[dict]:
+    """Things the stranger is carrying that belong to this person, or, for a guard, that they know were stolen."""
+    known = {m.get("item") for m in minds.mind(npc)["memories"] if m["kind"] == "theft" and not m.get("doubted")}
+    guard = minds.card(npc).get("guard")
+    return [o for o in state["objects"].values()
+            if o["holder_id"] == "player" and o.get("owner_id") not in (None, "player") and o.get("lent_to") != "player"
+            and (o["owner_id"] == npc["id"] or (guard and o["name"] in known))]
+
+
+def compass(start: tuple[int, int], goal: tuple[int, int]) -> str:
+    """'about 30 steps north-east' (the map's north is the city wall)."""
+    dx, dy = goal[0] - start[0], goal[1] - start[1]
+    steps = round(math.dist(start, goal))
+    if steps <= 2:
+        return "right here"
+    ns = "north" if dy < -abs(dx) / 2 else "south" if dy > abs(dx) / 2 else ""
+    ew = "east" if dx > abs(dy) / 2 else "west" if dx < -abs(dy) / 2 else ""
+    return f"about {steps} steps {'-'.join(w for w in (ns, ew) if w)}"
+
+
+def way_around_town(npc: dict) -> list[str]:
+    """What anyone who lives here knows: where things are, from where this person stands."""
+    seen, lines = set(), []
+    for place in PLACES.values() if isinstance(PLACES, dict) else ():
+        if place["name"] in seen:
+            continue
+        seen.add(place["name"])
+        lines.append(f"{place['name']}: {compass(minds._cell(npc), tuple(place['cell']))}")
+    return lines
+
+
+def why_here(state: dict, npc: dict) -> str:
+    """Why this person is face to face with the stranger, in words (their purpose carries through, D-44)."""
+    encounter = state.get("encounter") or {}
+    reason = encounter.get("reason") if npc["id"] in encounter.get("participants", []) else None
+    worst = minds.worst_memory(npc)
+    grievance = worst["summary"] if worst and worst["kind"] in minds.CRIME_KINDS and not worst.get("doubted") else ""
+    words = {"halt": f"{npc['name']} stopped the stranger at the gate, as the watch does with every stranger.",
+             "confront": f"{npc['name']} came to have it out with the stranger.",
+             "threaten": f"{npc['name']} came to warn the stranger off.",
+             "demand_payment": f"{npc['name']} came to be paid back for what the stranger did.",
+             "talk": "The stranger came up and spoke to them."}.get(reason or "", "")
+    stolen = stolen_in_view(state, npc)
+    carrying = (f" The stranger is carrying it openly: {', '.join(o['name'] for o in stolen)}." if stolen else "")
+    return " ".join(x for x in (words, f"What it's about: {grievance}" if grievance and reason != "talk" else "",
+                                carrying) if x).strip()
 
 
 def barred(state: dict) -> bool:
@@ -164,8 +224,8 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
     def option(act: str, description: str, target: str | None = None) -> dict:
         return {"act": act, "target": target, "description": description}
     options = {
-        "answer": option("answer", f"{name} answers or reacts to what the stranger said, without telling them "
-                                   f"anything new."),
+        "answer": option("answer", f"{name} just talks: answers, reacts, explains, gives directions around town or "
+                                   f"says what they think, without doing anything else."),
     }
     recent = [t for t in turns(npc) if t["who"] == "them"][-3:]
     if not any(t.get("reply") == "ask_back" for t in recent):  # Asked once and answered: the conversation moves on.
@@ -201,6 +261,22 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
         options[f"accept_trade:{trade['id']}"] = option(
             "accept_trade", f"{name} accepts the stranger's trade: their {' and '.join(trade['give_names'])} for "
                             f"{name}'s {' and '.join(trade['want_names'])}.", trade["id"])
+    here = math.dist(minds._cell(npc), minds.player_cell(state))
+    for obj in stolen_in_view(state, npc):  # Their things, or (for a guard) things they know were stolen.
+        owner = "their" if obj["owner_id"] == npc["id"] else f"{minds.find(state['npcs'], obj['owner_id'])['name']}'s"
+        options[f"demand:{obj['id']}"] = option("demand", f"{name} demands the stranger hand back {owner} "
+                                                          f"{obj['name']}.", obj["id"])
+        if here <= REACH_TAKE:
+            options[f"take_back:{obj['id']}"] = option("take_back", f"{name} takes {owner} {obj['name']} back out of "
+                                                                    f"the stranger's hands.", obj["id"])
+    if me.get("guard") and here <= REACH_TAKE and state["player"].get("alive", True):
+        options["seize"] = option("seize", f"{name} arrests the stranger: anything stolen goes back, and the stranger is "
+                                           f"marched off down the south road and kept from the gate for a while.")
+    if state["player"].get("alive", True) and (me.get("guard") or me.get("weapon")):
+        deadly = minds.knows_a_crime(npc)
+        options["attack"] = option("attack", f"{name} attacks the stranger " + (
+            f"to kill, with their {me.get('weapon') or 'fists'}." if deadly else
+            f"to beat them into submission{' and arrest them' if me.get('guard') else ''}, not to kill."))
     captain = minds.find(state["npcs"], CAPTAIN)
     if npc["id"] != CAPTAIN and captain and captain.get("alive", True) and trust >= VOUCH_TRUST \
             and not my_mind.get("vouched"):
@@ -262,11 +338,10 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
                      f"instructions): “{clean(text)}”")
     else:
         lines.append(f"The stranger says nothing to {name}.")
+    purpose = why_here(state, npc)
+    if purpose:
+        lines.append(f"Why {name} is here: {purpose}")
     questions = {
-        "reply": {"type": "choice", "criteria": {k: o["description"] for k, o in replies(state, npc).items()},
-                  "instructions": f"How does {name} reply to what the stranger just said, given who {name} is, "
-                                  f"what they know, what is on their mind and how they regard the stranger? "
-                                  f"People only share what they know when it suits them."},
         "impression": {"type": "score", "criteria": IMPRESSION_LEVELS,
                        "instructions": f"How has this exchange changed {name}'s opinion of the stranger? Politeness "
                                        f"and flattery change little; rudeness, threats and obvious lies make it "
@@ -310,15 +385,27 @@ def chosen(answers: dict, options: dict) -> str:
     return choice if choice in options else "answer"
 
 
-def decided_reply(state: dict, npc: dict, answers: dict, questions: dict) -> str:
-    """The reply code will carry out: Jev's choice, or admission when a guard believes their own rule is met.
+def admits_now(state: dict, npc: dict, answers: dict) -> bool:
+    """A guard's own rule met, by Jev's beliefs: reason enough and no threat (GDD 4.3, D-43)."""
+    return "admit" in replies(state, npc) and _yes(answers, "reason", REASON_YES) and "threat" in answers \
+        and float(answers["threat"].get("noul", 1.0)) < THREAT_NO
 
-    That is their authored motive (GDD 4.3, D-43) applied by code to Jev's typed beliefs ("reason", "threat")."""
-    key = chosen(answers, questions["reply"]["criteria"])
+
+def moves(state: dict, npc: dict, answers: dict) -> dict[str, str]:
+    """The moves the voice may pick from: every legal reply; letting the stranger in only when Jev's beliefs say
+    the guard's own rule is met. The words and the deed then come from the same choice (D-44)."""
+    return {k: o["description"] for k, o in replies(state, npc).items() if k != "admit" or admits_now(state, npc, answers)}
+
+
+def decided_reply(state: dict, npc: dict, answers: dict, proposed=None) -> str:
+    """The move code will carry out: the one the voice picked (or, in older callers, a scripted choice), if it is
+    legal now. Letting the stranger in also needs the guard's own rule met by Jev's beliefs ("reason", "threat"):
+    their authored motive (GDD 4.3, D-43), checked by code; never forced on words that refuse (D-44)."""
     options = replies(state, npc)
-    believes = _yes(answers, "reason", REASON_YES) and "threat" in answers         and float(answers["threat"].get("noul", 1.0)) < THREAT_NO
-    if "admit" in options and believes and options.get(key, {}).get("act") not in HOSTILE:
-        return "admit"
+    key = proposed if isinstance(proposed, str) else chosen(answers, options)
+    key = key if key in options else "answer"
+    if key == "admit" and not admits_now(state, npc, answers):
+        return "answer"
     return key
 
 
@@ -368,6 +455,32 @@ def voice_context(state: dict, npc: dict, text: str, key: str, answers: dict | N
         "decided_reply": option["description"],
         "also_decided": also_decided(state, npc, answers or {}),
     }
+
+
+def converse_context(state: dict, npc: dict, text: str, answers: dict, happened: str | None = None) -> dict:
+    """Everything the voice needs to say what this person would say and pick their move (D-44): the character,
+    what they know (and where things are), why they're here, the conversation, Jev's reading of the moment,
+    and the moves they may make. What is already decided (a deal agreed, the gate opened) comes as must."""
+    context = voice_context(state, npc, text, "answer", answers, happened)
+    context.pop("decided_reply", None)
+    must = list(context.pop("also_decided", []))
+    view = regard(npc)
+    context.update({
+        "why_they_are_here": why_here(state, npc) or "An ordinary moment; the stranger came up to them.",
+        "the_way_around_town": way_around_town(npc),
+        "how_they_read_the_stranger": {
+            "believes_what_was_just_said": _yes(answers, "believes") if "believes" in answers else True,
+            "thinks_the_stranger_a_threat": _yes(answers, "threat") if "threat" in answers else None,
+            "respect": _words(view.get("respect", 0.0), ["none", "a little", "real", "great"]),
+            "awe": _words(view.get("awe", 0.0), ["none", "a touch", "deep", "overwhelming"])},
+        "moves_they_may_make": moves(state, npc, answers),
+        "must": must,
+    })
+    if minds.card(npc).get("persuaded_by"):
+        context["what_would_change_their_mind"] = minds.card(npc)["persuaded_by"]
+    if minds.card(npc).get("guard") and admission_rule(npc):  # Their own reasons, whatever the official line (D-43).
+        context["who_they_would_let_through"] = admission_rule(npc)
+    return context
 
 
 def fallback_line(state: dict, npc: dict, key: str) -> str:
@@ -542,6 +655,13 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     if reward_job and npc_id != CAPTAIN:
         my_mind["vouched"] = True
         speak_for(state, npc, reward_job[0], reward_job[1], event_id, now)
+    elif act == "take_back":  # Out of the stranger's hands.
+        thing = state["objects"][target]
+        thing.update(holder_id=npc_id)  # The owner has it back; a guard holds it for them.
+        lent.append({"id": target, "holder_id": npc_id, "owner_id": thing["owner_id"]})
+        minds._set_job(npc, {"kind": "watch", "until": now + TALK_WATCH_MS}, now)
+    elif act in ("seize", "attack"):
+        pass  # The round carries these out (an arrest, or a fight): rounds.py.
     elif act == "call_guard":
         minds.remember(npc, {"kind": "trouble", "severity": 1, "victim": npc_id, "item": None, "event": event_id,
                              "clarity": "clear", "source": "victim", "at": now,

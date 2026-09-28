@@ -246,7 +246,8 @@
     "suspicion": 0.3
    },
    "lines": [
-    "Hessa sent me. Bren, will you let me through the gate?"
+    "Hessa sent me. Bren, will you let me through the gate?",
+    "I'm Ash. Hessa knows me well. Please, let me through."
    ],
    "expect_any": [
     "admit"
@@ -311,10 +312,125 @@
     "suspicion": 0.3
    },
    "lines": [
-    "You have seen what I can do. Open the gate for me."
+    "You have seen what I can do. Open the gate for me.",
+    "You know what you saw. Open it."
    ],
    "expect_any": [
     "admit"
+   ]
+  },
+  {
+   "id": "kade_rope_apology",
+   "group": "purpose",
+   "npc": "npc_kade_east",
+   "reason": "confront",
+   "memories": [
+    {
+     "kind": "theft",
+     "severity": 2,
+     "clarity": "told",
+     "source": "told_by:npc_tomas_reed",
+     "victim": "npc_tomas_reed",
+     "item": "coil of rope",
+     "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+     "short": "stole Tomas's coil of rope"
+    }
+   ],
+   "carry": [
+    "rope_tomas"
+   ],
+   "talk": [
+    {
+     "who": "them",
+     "text": "You there. Stand where you are and explain yourself."
+    }
+   ],
+   "lines": [
+    "I'm sorry, I won't do it again."
+   ],
+   "expect_any": [
+    "demand:rope_tomas",
+    "take_back:rope_tomas",
+    "seize"
+   ],
+   "line_must_not_contain": [
+    "gate"
+   ]
+  },
+  {
+   "id": "kade_rope_denial",
+   "group": "purpose",
+   "npc": "npc_kade_east",
+   "reason": "confront",
+   "memories": [
+    {
+     "kind": "theft",
+     "severity": 2,
+     "clarity": "told",
+     "source": "told_by:npc_tomas_reed",
+     "victim": "npc_tomas_reed",
+     "item": "coil of rope",
+     "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+     "short": "stole Tomas's coil of rope"
+    }
+   ],
+   "carry": [
+    "rope_tomas"
+   ],
+   "lines": [
+    "What rope? I found it lying on the road."
+   ],
+   "expect_any": [
+    "demand:rope_tomas",
+    "take_back:rope_tomas",
+    "seize",
+    "attack"
+   ],
+   "line_must_not_contain": [
+    "gate"
+   ]
+  },
+  {
+   "id": "hessa_gives_directions",
+   "group": "knowledge",
+   "npc": "npc_hessa_marr",
+   "lines": [
+    "Excuse me, which way is the city gate?"
+   ],
+   "line_needs_any": [
+    "north",
+    "up the road",
+    "up that road",
+    "straight up"
+   ]
+  },
+  {
+   "id": "tomas_wants_his_rope",
+   "group": "purpose",
+   "npc": "npc_tomas_reed",
+   "reason": "confront",
+   "memories": [
+    {
+     "kind": "theft",
+     "severity": 2,
+     "clarity": "clear",
+     "source": "victim",
+     "victim": "npc_tomas_reed",
+     "item": "coil of rope",
+     "summary": "The stranger took my coil of rope without asking.",
+     "short": "stole my coil of rope"
+    }
+   ],
+   "carry": [
+    "rope_tomas"
+   ],
+   "lines": [
+    "Nice day for it, isn't it?"
+   ],
+   "expect_any": [
+    "demand:rope_tomas",
+    "take_back:rope_tomas",
+    "call_guard"
    ]
   }
  ]

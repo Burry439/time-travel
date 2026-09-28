@@ -168,7 +168,7 @@
    "personality": "Sociable, fair and dutiful, with dry humour; asks follow-up questions; Hessa the innkeeper is his sister.",
    "values": "doing the job properly, being fair, family reputation",
    "fears": "being tricked publicly, the captain's discipline",
-   "authority": "Can stop, question, warn and hold people, and call the captain.",
+   "authority": "Can stop, question, warn and hold people, and call the captain. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
    "tones": [
     "official",
     "angry",
@@ -193,8 +193,8 @@
    ],
    "knowledge": {
     "captain_decides": {
-     "text": "Only Captain Roderic can let anyone through the gate; the guards just stop and question people.",
-     "line": "I don't open this gate. The captain does. My job is asking you questions.",
+     "text": "Officially only Captain Roderic lets people through the gate; the guards stop and question them.",
+     "line": "Officially? The captain opens this gate, not me. My job is asking you questions.",
      "trusted": false,
      "lead": "Only Captain Roderic can let anyone through the gate."
     },
@@ -299,10 +299,10 @@
    "combat": "a trained guard, quick to act",
    "armor": "mail",
    "armor_text": "a mail shirt and an iron helmet",
-   "personality": "Cautious, sceptical and quick to challenge inconsistencies; anxious to look decisive; privately in debt to Darin.",
+   "personality": "Cautious and quick to challenge inconsistencies in what people say; anxious to look decisive. Underneath the hard manner he is superstitious and easily spooked by what he can't explain; privately in debt to Darin.",
    "values": "keeping his position, appearing decisive, paying his debts",
    "fears": "his debt being exposed, the captain thinking him weak",
-   "authority": "Can stop, question, warn and hold people, and call the captain.",
+   "authority": "Can stop, question, warn and hold people, and call the captain. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
    "tones": [
     "official",
     "angry"
@@ -323,8 +323,8 @@
    ],
    "knowledge": {
     "captain_decides": {
-     "text": "Only the captain decides who enters the city.",
-     "line": "The captain decides who goes in. Not me, and certainly not you.",
+     "text": "Officially the captain decides who enters the city.",
+     "line": "The captain decides who goes in. Officially.",
      "trusted": false,
      "lead": "Only Captain Roderic decides who enters the city."
     },
@@ -1133,7 +1133,7 @@
    "personality": "Observant and terse; reports what she saw, not what she thinks; wants to be useful and right.",
    "values": "being useful, being right",
    "fears": "missing something important",
-   "authority": "Watches the road and reports to the captain; can stop and question people.",
+   "authority": "Watches the road and reports to the captain; can stop and question people. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
    "tones": [
     "official"
    ],
@@ -1157,7 +1157,7 @@
      "lead": "The watch can't hold a heading on the moor road in fog."
     },
     "captain_decides": {
-     "text": "Captain Roderic decides who enters the city.",
+     "text": "Officially Captain Roderic decides who enters the city.",
      "line": "The captain decides who enters.",
      "trusted": false,
      "lead": "Captain Roderic decides who enters the city."
@@ -1242,7 +1242,7 @@
    "personality": "Gruff, traditional and unimpressed by novelty; few words; distrusts strangers.",
    "values": "routine, seniority, order",
    "fears": "young guards making mistakes",
-   "authority": "Can warn, question, hold and escort people away from the gate.",
+   "authority": "Can warn, question, hold and escort people away from the gate. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
    "tones": [
     "official",
     "angry"

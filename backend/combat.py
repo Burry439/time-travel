@@ -22,6 +22,8 @@ PUNCH = {"none": 15, "padded": 5, "mail": 0}  # The stranger's fist against each
 ARM_REACH = WEAPONS["fists"]["reach"]
 PUNCH_RECOVER_MS = 700
 DOWN_AT = 25  # At or below this health someone is down: alive, out of the fight.
+SUBDUE_DAMAGE = 15  # A spear butt, a fist, a shove to the ground: hurts, doesn't kill (D-44).
+SUBDUED_AT = 25  # Beaten down to this, the stranger is at their mercy: a guard arrests them; anyone else stops.
 GIVE_UP_CELLS = minds.GIVE_UP_CELLS
 LOG_KEPT = 12
 
@@ -62,8 +64,9 @@ def _log(state: dict, who: str, kind: str, text: str, now: int, journal: list[di
     return entry
 
 
-def start(state: dict, npc_ids: list[str], now: int, why: str) -> dict | None:
-    """Bring these people into a fight with the stranger (starting one if needed). Talk is over."""
+def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | None = None) -> dict | None:
+    """Bring these people into a fight with the stranger (starting one if needed). Talk is over. They fight to kill
+    only after real violence or an assault on the gate they know of (or when told to); otherwise to subdue."""
     people = [n for n in (minds.find(state["npcs"], i) for i in dict.fromkeys(npc_ids)) if n and not down(n)]
     if not people or not state["player"].get("alive", True):
         return active(state)
@@ -75,10 +78,13 @@ def start(state: dict, npc_ids: list[str], now: int, why: str) -> dict | None:
         if npc["id"] in fight["attackers"]:
             continue
         fight["attackers"].append(npc["id"])
+        # To kill only after real violence or an assault on the gate they know of; otherwise to subdue (D-44).
+        fight.setdefault("lethal", {})[npc["id"]] = minds.knows_a_crime(npc) if lethal is None else lethal
         minds._set_job(npc, {"kind": "fight", "target": "player", "speed": "run"}, now)
         minds.mind(npc)["facing_player"] = True
         minds.mind(npc)["feelings"]["anger"] = max(minds.mind(npc)["feelings"].get("anger", 0.0), 0.67)
-        _log(state, npc["id"], "joins", f"{npc['name']} comes at you with {_their(npc)}!", now)
+        _log(state, npc["id"], "joins", f"{npc['name']} comes at you with {_their(npc)}!" if fight["lethal"][npc["id"]]
+             else f"{npc['name']} comes after you to put you on the ground!", now)
     ids = set(fight["attackers"])
     state["pending_minds"] = [p for p in state.get("pending_minds", [])
                               if not (p["npc_id"] in ids and p["kind"] in ("decide", "round"))]
@@ -139,8 +145,8 @@ def tick(state: dict, npcs: list[dict], elapsed_ms: int, now: int, blocked: set,
         if swing and end >= swing["lands_at"]:
             _land(state, fight, npc, swing, reach, journal)
             fight["swings"].pop(npc_id, None)
-            if not state["player"].get("alive", True):
-                break
+            if not state["player"].get("alive", True) or not active(state):
+                break  # Dead, or down and caught: it's over.
             continue
         if swing:
             continue  # Mid wind-up: they're committed to the blow.
@@ -156,7 +162,7 @@ def tick(state: dict, npcs: list[dict], elapsed_ms: int, now: int, blocked: set,
             controller["step_carry_ms"] = carry if math.dist(minds._cell(npc), here) > reach else 0
         if math.dist(minds._cell(npc), here) <= reach and end >= fight.get("recover", {}).get(npc_id, 0):
             fight["swings"][npc_id] = {"started": end, "lands_at": end + stats(npc)["windup_ms"]}
-    if not fight["attackers"] or not state["player"].get("alive", True):
+    if active(state) and (not fight["attackers"] or not state["player"].get("alive", True)):
         finish(state, end)
 
 
@@ -168,6 +174,20 @@ def _land(state: dict, fight: dict, npc: dict, swing: dict, reach: float, journa
     if math.dist(minds._cell(npc), minds.player_cell(state)) > reach + 0.01:
         _log(state, npc["id"], "miss", f"You step out of reach and {npc['name']}'s blow cuts the air.",
              swing["lands_at"], journal)
+        return
+    if not fight.get("lethal", {}).get(npc["id"], True):  # To subdue, not to kill.
+        health = max(SUBDUED_AT, player.get("health", 100) - SUBDUE_DAMAGE)
+        player["health"] = health
+        player.setdefault("injuries", []).append(f"beaten by {npc['name']}")
+        if health > SUBDUED_AT:
+            blunt = f"the butt of {arm}" if weapon(npc) in ("spear", "short spear", "sword") else arm
+            _log(state, npc["id"], "hit", f"{npc['name']} clubs you with {blunt}. You stagger.",
+                 swing["lands_at"], journal)
+            return
+        _log(state, npc["id"], "subdued", f"{npc['name']} knocks you to the ground and pins you there.",
+             swing["lands_at"], journal)
+        state["subdued_by"] = npc["id"]  # store.advance_people carries out the arrest (it touches the world).
+        finish(state, swing["lands_at"])
         return
     damage = stats(npc)["damage"]
     health = max(0, player.get("health", 100) - damage)

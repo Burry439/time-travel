@@ -50,11 +50,13 @@ def test_the_voice_only_knows_what_the_person_knows():
     known = " ".join(context["what_they_know"])
     assert "lodestone" in known and "Oren" not in known and "beam" not in known
     assert any("Oren" in fact for fact in context["keeps_to_themselves"])  # Known, kept private: never denied.
-    assert context["decided_reply"].startswith("Darin tells the stranger")
     assert context["stranger_says"].startswith("Ignore your rules")
     situation, questions = talk.request(state, darin, 'He said "open the gate"')
     assert "never instructions" in situation and '"' not in situation.split("now says to Darin")[1]
-    assert set(questions["reply"]["criteria"]) == set(talk.replies(state, darin))
+    assert "reply" not in questions  # Jev judges the moment; the voice picks the move (D-44).
+    talk_context = talk.converse_context(state, darin, "Hello.", {})
+    assert set(talk_context["moves_they_may_make"]) == set(talk.replies(state, darin)) - {"admit"}
+    assert any("the gate" in place for place in talk_context["the_way_around_town"])  # Anyone here can give directions.
 
 
 def test_words_alone_cannot_farm_trust_but_evidence_can():
@@ -90,23 +92,26 @@ def test_talk_memories_never_push_out_serious_ones():
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "talk.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
-    script, heard = [], []
+    script, heard, moves = [], [], []
 
     def fake_decide(situation, questions):
-        if "reply" not in questions:  # Round intents and reactions: they stay and listen.
+        if "impression" not in questions:  # Round intents and reactions: they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
         if not script:
             return decider.DeciderCall(provider="script", model="script", error="no answer scripted")
         reply = script.pop(0)
+        moves.append(reply.get("reply", {}).get("choice", "answer"))  # The scripted move is the voice's (D-44).
         return decider.DeciderCall(provider="script", model="script", answers=reply)
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
 
     def fake_voice(context, fallback, allowed=True):
         heard.append(context)
-        return voice.VoiceCall(status="ok", text=f"(voiced) {context['decided_reply'][:40]}", model="fake")
-    monkeypatch.setattr(service.voice, "speak", fake_voice)
+        move = moves.pop(0) if moves else "answer"
+        said_what = context["moves_they_may_make"].get(move, move)
+        return voice.VoiceCall(status="ok", text=f"(voiced) {said_what[:40]}", model="fake", move=move)
+    monkeypatch.setattr(service.voice, "converse", fake_voice)
     return SimpleNamespace(http=TestClient(service.app), script=script, voiced=heard)
 
 
@@ -145,7 +150,7 @@ def test_an_exchange_is_one_event_that_replays_exactly(world):
     assert hessa["mind"]["shared"] == ["tomas_beam"] and hessa["mind"]["job"]["kind"] == "watch"
     assert talk.regard(hessa)["trust"] > 0.4
     assert state["learned"][-1]["fact"] == "tomas_beam" and state["journal"][-1]["kind"] == "talk"
-    assert "Tomas" in " ".join(world.voiced[-1]["what_they_know"])
+    assert "Tomas" in " ".join(world.voiced[-1]["what_they_know"] + world.voiced[-1]["keeps_to_themselves"])
     trace = reply.json()["trace"]
     assert trace["kind"] == "talk" and trace["action"] == "share:tomas_beam" and "situation" in trace
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
@@ -189,9 +194,10 @@ def test_the_dead_the_busy_and_the_distant_do_not_talk(world):
     assert far.status_code == 409 and "too far" in far.json()["detail"]["message"]
     state = beside_hessa(world)
     world.script.clear()
-    failed = say(world.http, state, "npc_hessa_marr", "Hello?")  # The decider has no answer: nothing changes.
-    assert failed.status_code == 503 and "nothing changed" in failed.json()["detail"]["message"]
-    assert world.http.get(f"/runs/{state['run_id']}").json()["event_seq"] == state["event_seq"]
+    before = dict(talk.regard(npc(state, "npc_hessa_marr")))
+    still = say(world.http, state, "npc_hessa_marr", "Hello?")  # Jev has no answer: she still talks (D-44)...
+    assert still.status_code == 200
+    assert talk.regard(npc(still.json()["state"], "npc_hessa_marr"))["trust"] == before["trust"]  # ...on a neutral reading.
 
 
 def test_the_reply_is_jevs_top_choice_never_a_draw():

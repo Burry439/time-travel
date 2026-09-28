@@ -39,7 +39,7 @@ def beat(state, ms=500):
 
 def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
     stay = open_ground(unit_state(), "npc_bren_marr")
-    combat.start(stay, ["npc_bren_marr"], 0, "test")
+    combat.start(stay, ["npc_bren_marr"], 0, "test", lethal=True)
     beat(stay)  # In reach: he winds up.
     swing = stay["fight"]["swings"]["npc_bren_marr"]
     assert swing["lands_at"] - swing["started"] == combat.WEAPONS["spear"]["windup_ms"]
@@ -47,7 +47,7 @@ def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
         beat(stay)
     assert stay["player"]["health"] == 100 - combat.WEAPONS["spear"]["damage"]  # Fixed: no roll.
     dodge = open_ground(unit_state(), "npc_bren_marr")
-    combat.start(dodge, ["npc_bren_marr"], 0, "test")
+    combat.start(dodge, ["npc_bren_marr"], 0, "test", lethal=True)
     beat(dodge)
     dodge["player"].update(x=44)  # Step away while he's winding up.
     heard = beat(dodge) + beat(dodge)
@@ -56,7 +56,7 @@ def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
 
 def test_a_sword_wounds_the_unarmoured_stranger_badly_and_a_second_blow_kills():
     state = open_ground(unit_state(), "npc_roderic_vale")
-    combat.start(state, ["npc_roderic_vale"], 0, "test")
+    combat.start(state, ["npc_roderic_vale"], 0, "test", lethal=True)
     for _ in range(20):
         beat(state)
         if not state["player"]["alive"]:

@@ -122,6 +122,13 @@ def worst_memory(npc: dict) -> dict | None:
     return max(enumerate(memories), key=lambda pair: (pair[1]["severity"], pair[0]))[1] if memories else None
 
 
+def knows_a_crime(npc: dict) -> bool:
+    """A known act of real violence, or an assault on the gate: what rules out entry for good, and what makes
+    someone fight to kill rather than to subdue (D-44). Theft and arrests only weigh on their judgement."""
+    return any(m["kind"] in ("violence", "breach") and m.get("severity", 0) >= 2 and not m.get("doubted")
+               for m in mind(npc)["memories"])
+
+
 def relation(npc: dict, other_id: str | None) -> str | None:
     """How this person refers to someone they know, e.g. 'her nephew Jory'."""
     return card(npc).get("relations", {}).get(other_id or "")
@@ -991,4 +998,6 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     state["pending_minds"] = working.get("pending_minds", state.get("pending_minds", []))
     state["encounter"] = working.get("encounter")
     state["fight"] = working.get("fight")
+    if working.get("subdued_by"):
+        state["subdued_by"] = working["subdued_by"]
     return npcs, journal, working["player"]

@@ -122,18 +122,19 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "gate.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
-    script, rulings = [], []
+    script, rulings, moves = [], [], []
 
     def fake_decide(situation, questions):
-        if "reply" not in questions:  # People choosing what to do (not answering the stranger): they stay and listen.
+        if "impression" not in questions:  # People choosing what to do (not answering the stranger): they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
         reply = script.pop(0) if script else {}
+        moves.append(reply.get("reply", {}).get("choice", "answer"))  # The scripted move is the voice's (D-44).
         return decider.DeciderCall(provider="script", model="script", answers=reply)
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    monkeypatch.setattr(service.voice, "speak", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text=fallback, model="fake"))
+    monkeypatch.setattr(service.voice, "converse", lambda context, fallback, allowed=True: voice.VoiceCall(
+        status="ok", text=fallback, model="fake", move=moves.pop(0) if moves else "answer"))
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
@@ -210,7 +211,8 @@ def test_bringing_hessa_water_earns_her_word_and_the_captain_lets_you_in(world):
         npc(s, "npc_roderic_vale"))["memories"]))
     roderic = npc(state, "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
-    state = say(world, state, "npc_roderic_vale", "Hessa has spoken for me. May I enter?", answers("admit"))
+    state = say(world, state, "npc_roderic_vale", "Hessa has spoken for me. May I enter?",
+                answers("admit", reason=0.8, threat=0.1))
     assert state["gate_open"] and state["admitted"]["by"] == "npc_roderic_vale"
     assert any("Hessa vouched" in reason for reason in state["admitted"]["because"])
     state = walk(http, state, 48, 3)
@@ -266,12 +268,14 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
     _, questions = talk.request(state, roderic, "May I enter?")
     assert {"threat", "reason"} <= set(questions)
-    believes = answers("ask_back", reason=0.8, threat=0.2)
-    assert talk.decided_reply(state, roderic, believes, questions) == "admit"
-    assert talk.decided_reply(state, roderic, answers("ask_back", reason=0.8, threat=0.7), questions) == "ask_back"
-    assert talk.decided_reply(state, roderic, answers("ask_back", reason=0.3, threat=0.1), questions) == "ask_back"
-    assert talk.decided_reply(state, roderic, answers("tell_to_leave", reason=0.9, threat=0.1), questions) \
-        == "tell_to_leave"  # A hostile reply is never turned into admission.
+    # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
+    assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
+    assert "admit" in talk.moves(state, roderic, answers("x", reason=0.8, threat=0.2))
+    assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
+    assert talk.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
+    assert "admit" not in talk.moves(state, roderic, answers("x", reason=0.3, threat=0.1))
+    # Beliefs alone never open the gate on words that refuse.
+    assert talk.decided_reply(state, roderic, answers("x", reason=0.9, threat=0.1), "tell_to_leave") == "tell_to_leave"
     _, questions = talk.request(state, npc(state, "npc_bren_marr"), "May I enter?")
     assert "Hessa has vouched" in questions["reason"]["instructions"]  # Bren weighs it by his own lights.
     _, questions = talk.request(state, npc(state, "npc_hessa_marr"), "May I enter?")

@@ -122,19 +122,22 @@ def test_intents_come_from_code_and_turning_on_the_stranger_makes_it_a_fight():
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "enc.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
-    replies, intents, rulings = [], [], []
+    replies, intents, rulings, moves = [], [], [], []
 
     def fake_decide(situation, questions):
-        if "reply" in questions:
-            return decider.DeciderCall(provider="script", model="script", answers=replies.pop(0) if replies else {})
+        if "impression" in questions:  # A reply: Jev's reading of it; the scripted move is the voice's (D-44).
+            reply = replies.pop(0) if replies else {}
+            moves.append(reply.get("reply", {}).get("choice", "answer"))
+            return decider.DeciderCall(provider="script", model="script", answers=reply)
         choice = intents.pop(0) if intents else "listen"  # One intent for everyone, or {"bren": ..., ...}.
         return decider.DeciderCall(provider="script", model="script", answers={
             k: {"type": "choice", "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict)
                 else choice} for k in questions if k.endswith("action")})
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    monkeypatch.setattr(service.voice, "speak", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120], model="fake"))
+    monkeypatch.setattr(service.voice, "converse", lambda context, fallback, allowed=True: voice.VoiceCall(
+        status="ok", text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120], model="fake",
+        move=moves.pop(0) if moves else "answer"))
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)

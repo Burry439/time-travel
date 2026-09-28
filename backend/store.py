@@ -6,6 +6,7 @@ latest action. Journeys begun before OLDEST_SEED are retired (GDD D-04).
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import sqlite3
@@ -278,9 +279,32 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
     import crafting
-    return {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
-            "encounter": probe.get("encounter"), "fight": probe.get("fight"),
-            "objects_changed": crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])}
+    payload = {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
+               "encounter": probe.get("encounter"), "fight": probe.get("fight"),
+               "objects_changed": crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])}
+    if probe.get("subdued_by"):  # Beaten down by someone who meant only to subdue (D-44).
+        _subdued(state, payload, probe["subdued_by"], state["sim_time_ms"] + elapsed_ms)
+    return payload
+
+
+def _subdued(state: dict, payload: dict, by: str, now: int) -> None:
+    """A guard arrests the stranger they put on the ground (stolen things go back, marched off, barred for a while);
+    anyone else just stops. Everything lands in the payload, so replay needs no rules."""
+    import encounter
+    subduer = minds.find(payload["npcs"], by)
+    guard = subduer if minds.card(subduer).get("guard") else next(
+        (n for n in payload["npcs"] if minds.card(n).get("guard") and not n.get("down") and n.get("alive", True)
+         and n["id"] in (state.get("fight") or {}).get("attackers", [])), None)
+    if guard is None:
+        return
+    draft = {"objects": copy.deepcopy(state["objects"]), "player": payload["player"], "npcs": payload["npcs"],
+             "journal": [], "sim_time_ms": now, "event_seq": state["event_seq"]}
+    encounter.arrest_player(draft, guard, now)
+    for object_id, obj in draft["objects"].items():
+        if obj["holder_id"] != state["objects"][object_id]["holder_id"]:
+            payload["objects_changed"].setdefault(object_id, {})["holder_id"] = obj["holder_id"]
+    payload["barred_until"] = draft["barred_until"]
+    payload["people_journal"] = payload["people_journal"] + draft["journal"]
 
 
 def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, dict]:

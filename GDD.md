@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, D-39 to D-43)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, D-39 to D-44)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -215,7 +215,16 @@ These appear in the result card, the journal, and the developer trace.
 >
 > Each round, whatever you type is words, a deed, both, waiting, giving up or walking away (Esc). Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28). With several people, tabs choose whom you address. Over people's heads: "…" while they think, "!" when frightened, red crossed blades when they mean violence, a brief gold mark when they warm to you, and a health bar when hurt.
 >
-> Jev decides replies from code-built options, and the voice model says them in 1–3 sentences. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
+> **Replies (D-44).** Jev judges the moment:
+> - how the exchange changed their view of you;
+> - their anger;
+> - whether they believe you;
+> - whether a deal was agreed or done;
+> - for a guard, whether their own rule for letting you in is met.
+>
+> Then the voice model (Luna) says what this person would say, in their own voice, knowing why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It also picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, arrest, attack, fetch a guard, refuse, send you away, end it, or simply talk. Letting you in is offered only when Jev's beliefs say the guard's rule is met, so the words and the deed come from one choice. Code applies the move. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
+>
+> **Walking off is answered by why they came.** A guard who came about a crime gives chase, to put you down and arrest you (to kill only after real violence or an assault on the gate). Someone you wronged shouts for the guards. A plain halt or a chat just ends. **Space** punches, in a fight or starting one.
 >
 > **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** punches whoever you face. Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
 
@@ -908,8 +917,8 @@ The developer gate button stays for map testing but is labelled as a cheat.
 | --- | --- | --- | --- |
 | **Interpreter** | Turn player text into a structured Attempt, or a clarification question | Text + nearby/carried entities → `Attempt` (§15) | Every Try Something and every Talk turn |
 | **Physics judge** | Decide what happens for novel methods, new objects, and demonstrations | Attempt step + object records + material facts + precedents + knowledge baseline → `JudgeResult` | Only when deterministic rules can't resolve a step |
-| **Decider** | Typed NPC decisions: notice, believe, care, choose an action | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4) |
-| **Voice** | Write short in-character lines and player-facing feedback | Committed decision + character style → `DialogueLine` | After a decision that includes speech; failure wording |
+| **Decider** | Typed NPC judgements: believe, fear, anger, regard; choose an action from short menus (reactions, agendas, round intents) | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4); every conversational reply (beliefs only, D-44) |
+| **Voice** | In conversation, what the person says and which offered move they make (D-44); otherwise in-character lines for a fixed decision, memory, chatter | Character sheet + purpose + Jev's reading + offered moves → `Reply` | Every conversational reply; chats; memory |
 | **Illustrator** | Sprite for a new object | Object record + style prompt → PNG | After an object is created |
 
 ### 9.2 Starting approach (v1)
@@ -934,7 +943,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22, D-36, D-38) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v3`; phrases a decided reply from the character sheet and returns a memory note and any name given. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
+| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v4` (converse): says the reply and picks the move, and returns a memory note and any name given. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
@@ -1223,6 +1232,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-44 | 2026-09-28 | **Conversations led by the voice; Jev judges; code applies.**<br><br>**Replies:** Jev no longer picks the reply from a menu. It answers typed questions about the moment (impression, suspicion, anger, belief, deals, a guard's reasons and threat). The voice (Luna, `voice_v4`) then says what the person would say and picks one move from those code offers. Code validates the move and applies it.<br><br>**What the voice now sees:**<br>- why they're here and any stolen goods in view;<br>- directions to every place in town;<br>- each guard's own reasons for letting someone in.<br><br>**New moves:** demand, take back, arrest (seize) and attack.<br><br>**Letting someone in** is offered only when Jev's beliefs agree. If the voice can't be reached, an authored line; if Jev can't, the voice still answers on a neutral reading.<br><br>**Walking off** is answered by the person's purpose: a guard with a grievance chases; the wronged shout for guards.<br><br>**Guards who chase a thief subdue:** 15 a blow, down to 25, then arrest, carried out in the clock's payload so it replays. They kill only after violence or a breach they know of.<br><br>**Space** punches out of a fight too. | The user played:<br>- Kade came about Tomas's stolen rope, which the stranger was carrying; to "I'm sorry, I won't do it again" his menu held nothing about the rope, and Jev (30% sure) picked "strangers are kept from the gate";<br>- Hessa couldn't say where the gate was ("answer without telling anything new");<br>- walking away always worked.<br><br>The strong language model was only rewording a classifier's pick. Live now:<br>- Kade: "Sorry won't mend it. Hand Tomas's rope back."<br>- Hessa: "the city gate is about 42 steps north up the road."<br>- Talk evals 20/20 (with four new cases from this run).<br>- Voice median about 2 s; Jev about 1.2 s. |
 | D-43 | 2026-09-28 | **Reputation, and any guard's word** (`judge_v11`, cards v6). Regard gains **respect** (competence seen working) and **awe** (wonder at the uncanny). Demonstrations carry a judged `wonder` (ordinary, clever or uncanny, measured against what a local knows). Awe is double-edged through each card's `superstition`: reverence raises trust; wariness brings suspicion and fear. Only firsthand sight moves awe. **Any guard may let the stranger in** for their own reasons (`admits`), with the captain's two beliefs asked against the guard's own rule. The victory panel names who. | The user: "the point of the game: you are from the future; you use your knowledge to get into the city by helping people, or just by impressing them, or making them believe you are a god", and "any guard, own reasons"; awe "double-edged". Live: the floating needle is judged uncanny 3/3, and hot water shown is ordinary 3/3, once `wonder` was a required field (with a default, the model left it out: 0/3). Talk evals 16/16, including the four new guard cases. |
 | D-42 | 2026-09-28 | **The gate bar: a physical way in** (seed 9, `judge_v10`). The cracked first bar rests in the brackets across the gate, and the gate is open whenever the brackets are empty. A new `lift_out` step (the inverse of install) is judged like any physics, and code needs aids for anything over 20 kg. An install now needs an empty fixture, so Tomas's job becomes a swap. Guards who clearly see the bar lifted off treat it as a `breach`: they fight, and the captain never admits after it. Tomas's accepted deal makes it work instead. A guard within 8 cells of the gate holds the gap against anyone not let in (code, like a body in a doorway). The victory panel records how you got in. | The user asked for "one possible way to get inside … by simply raising the beam", clarified as lifting the bar off the gate: "that would lead to the guards attacking you, but if they were dead or somewhere else … you could get in like that." Live: by hand it's blocked 3/3; with a ladder and rope it succeeds 3/3 once the prompt says lowering is easier than raising (at first the judge treated it like raising: 0/3). |
 | D-41 | 2026-09-28 | **Real-time fights, and no dice anywhere.**<br><br>**The first strike** is an intent, judged like any physics (`judge_v9`). The judge sees each person's armour, their weapon and whether they're aware of the stranger. It rules missed, **deflected**, wounded, **disabled** (down, alive) or killed, with no luck involved. Code keeps the armour law (V10): fists and light, soft things can't get through mail.<br><br>**Then the fight is real time** (`combat.py`, a `fight` state on the clock). Guards who clearly saw the violence fight at once; others decide. Each attacker closes in and winds up a blow (weapon table in `npc_cards.json`: damage, wind-up, reach). The blow hits only if the stranger is still in reach when it lands. **Space** is a code-only punch (`POST /strike`, 0.7 s recovery). A punch or giving up is a `fight` event carrying the resulting fields. Blows on the clock arrive with `/explore`, so everything replays exactly.<br><br>**Encounters** keep words only: an attack intent turns the encounter into a fight. The stranger acts first in a round, then the others in the order they came.<br><br>**Removed:** the seeded initiative roll, the blow roll (hit, kill and damage chances), fighting `skill` on cards, extra blows for long actions (a long action in a fight now simply lets the clock run), and the weighted draw among Jev's plausible replies (its top choice is taken). | The user asked for fights that start with an intent ("I sneak up and stab him") and then go on in real time, where guards try to kill you, and where it's realistic: a wooden spear can't hurt a man in mail but easily kills anyone else; boiling water disables a guard, but the other guards will likely kill you. And: "we don't want probabilities … things that should work should work if they make sense … no DnD-style dice rolls." |
@@ -1675,6 +1685,40 @@ Changes to this document: …
 
 - "What the town says about the stranger" (a summary across people) is not built. Each person still knows only what they saw or were told.
 - Oren's admission is a little too easy with awe alone; watch it once storylines give him other pressures.
+
+### Retro: conversations led by the voice (D-44), 28 Sep 2026
+
+**Built:**
+
+- Jev judges and the voice talks and picks the move (`voice.converse`, `voice_v4`, `talk.converse_context`, `talk.moves`);
+- purpose, stolen goods in view, directions around town, and each guard's private rule;
+- the demand, take back, seize and attack moves;
+- walking off answered by purpose;
+- subdue-and-arrest fights;
+- Space out of a fight.
+
+**Evidence:**
+
+- 152 backend tests pass. New `test_purpose.py`:
+  - a guard who heard of a theft can demand it, take it back or arrest;
+  - Hessa has no such moves;
+  - an arrest from a conversation replays;
+  - subdued on the clock means arrested, not dead: the rope goes back, and it replays.
+- `test_arrest`: slipping a grab means a chase; walking off from someone you wronged; a plain halt lets you go.
+- All Godot smoke tests pass.
+- **Live talk evals: 20/20** on the full set, including the new cases: Kade's apology and denial, Hessa's directions, Tomas and his rope. Bren lets you through on Hessa's word within two lines, 3/3.
+
+**Lessons:**
+
+- Forcing a deed on words written separately gave "No" while the gate opened. Deed and words must come from one choice.
+- Content written for an older rule leaks through the stronger model: "only the captain can let anyone through" in the guards' facts and authority. Keep cards in step with decisions.
+- An anxious, sceptical manner outweighed a reverent superstition until Oren's card said both.
+
+**To watch:**
+
+- Oren in awe lets you through only 1–2 times in 3. He'd rather hand the choice to the captain, which fits him; storylines (his debt) will give him more reason.
+- Voice p95 is about 6 s on long contexts.
+- Decisions outside conversation (reactions, agendas) are still Jev's pick from a code menu. A low-confidence pick (below about 0.4) handing the choice to the voice is not built yet.
 
 ---
 

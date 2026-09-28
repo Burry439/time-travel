@@ -316,9 +316,10 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         elif act == "seize":
             if record["seized_by"]:
                 continue
-            if record["walked_away"]:
-                note(who, "seize", f"{npc['name']} grabs for you, but you're already out of reach.",
-                     f"{npc['name']} tried to seize the stranger, who slipped away.")
+            if record["walked_away"]:  # Slipped the grab: they come after you (D-44).
+                combat.start(draft, [who], now, "chase")
+                note(who, "chase", f"{npc['name']} grabs for you, misses, and comes after you!",
+                     f"{npc['name']} tried to seize the stranger, who ran; {npc['name']} gave chase.")
                 continue
             record["seized_by"] = who
             note(who, "seize", f"{npc['name']} seizes you by the arm.", f"{npc['name']} seized the stranger.")
@@ -333,6 +334,8 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
             encounter["participants"].remove(who)
             note(who, act, (f"{npc['name']}: “{line}” " if line else "") +
                  (f"{npc['name']} runs off." if act == "flee" else f"{npc['name']} turns away and leaves you be."))
+    if record["walked_away"] and draft["player"].get("alive", True):
+        _walked_off(draft, encounter, now, journal, note)
     draft["journal"].extend(journal)
     encounter["participants"] = [n for n in encounter["participants"]
                                  if (npc := minds.find(draft["npcs"], n)) and npc.get("alive", True)]
@@ -348,10 +351,42 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
     return draft, record
 
 
+def grievance(npc: dict) -> dict | None:
+    """What the stranger did that this person holds against them (a crime they believe), if anything."""
+    worst = minds.worst_memory(npc)
+    return worst if worst and worst["kind"] in minds.CRIME_KINDS and not worst.get("doubted") else None
+
+
+def _walked_off(draft: dict, encounter: dict, now: int, journal: list[dict], note) -> None:
+    """Walking away is answered by why they came (D-44). A guard who came about a crime doesn't let the stranger
+    stroll off: they give chase, to put them on the ground and arrest them (to kill only after real violence).
+    Someone wronged shouts for the guards. A plain halt or a chat just ends."""
+    fighting = set((combat.active(draft) or {}).get("attackers", []))
+    for who in list(encounter["participants"]):
+        npc = minds.find(draft["npcs"], who)
+        wrong = grievance(npc) if npc else None
+        if npc is None or who in fighting or wrong is None or not npc.get("alive", True) or npc.get("down"):
+            continue
+        if minds.card(npc).get("guard"):
+            combat.start(draft, [who], now, "chase")
+            note(who, "chase", f"{npc['name']}: “Stop right there!” {npc['name']} comes after you.",
+                 f"The stranger walked off from {npc['name']}, who gave chase.")
+        elif who not in (encounter.get("shouted") or []):
+            encounter.setdefault("shouted", []).append(who)
+            words = "Guards! Stop that one!"
+            minds._say(npc, words, now, draft, journal)
+            minds._raise_alarm(draft, npc, words, minds.HEAR_SHOUT_CELLS, now)
+            note(who, "shout_for_help", f"{npc['name']}: “{words}”", f"{npc['name']} called for the guards.")
+
+
 def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None) -> None:
     """After the replies (if any): keep or end the encounter and queue the next round's intents."""
     encounter = active(draft)
-    if encounter is None:
+    if encounter is None:  # e.g. the reply was an attack: words are over, and a fight is on.
+        for said in ([reply] if isinstance(reply, dict) else reply or []):
+            record["entries"].append({"round": record["round"], "who": said["npc_id"], "kind": said.get("kind", "reply"),
+                                      "text": f"{said['name']}: “{said['line']}”"})
+        record["ended"] = True
         return
     for said in ([reply] if isinstance(reply, dict) else reply or []):
         record["entries"].append(_log(encounter, said["npc_id"], said.get("kind", "reply"),

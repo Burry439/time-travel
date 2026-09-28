@@ -1,9 +1,10 @@
-"""Voice role: puts a decision that has already been made into a character's words.
+"""Voice role: a character's words, and (in conversation) what they do.
 
-The decider (Jev) chooses what a person does in a conversation; this role only phrases it,
-from the person's character sheet (persona.py), what they know, and the conversation so far.
-Free text never flows back into world state: code applies the decision, and the line is what the
-player reads. The same role keeps memory prose (recollect: a finished conversation becomes an
+In conversation (converse, D-44) this role says what the person would say, from their character sheet
+(persona.py), what they know, why they're here, Jev's reading of the moment and the conversation so far,
+and picks one move from those code offers. Code checks the move and applies it; free text never flows
+back into world state. speak() puts an already decided reply into words (the older path, still used
+when a reply is fixed in advance). The same role keeps memory prose (recollect: a finished conversation becomes an
 episode, D-36) and phrases two villagers talking to each other (chatter, D-37). If the model is
 unavailable, the person says an authored fallback line instead and memory is kept from the notes.
 """
@@ -22,6 +23,8 @@ from . import config
 PROMPT_VERSION = "voice_v3"
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 _PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+CONVERSE_VERSION = "voice_v4"
+_CONVERSE = (_PROMPTS / f"{CONVERSE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
@@ -29,6 +32,13 @@ MAX_CHARS = 360
 
 class DialogueLine(BaseModel):
     text: str
+    remember: str
+    stranger_name: str
+
+
+class Reply(BaseModel):
+    text: str
+    move: str  # One key from moves_they_may_make.
     remember: str
     stranger_name: str
 
@@ -55,6 +65,7 @@ class VoiceCall:
     error: str | None = None
     remember: str = ""  # What the person will remember of this exchange (D-36).
     stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
+    move: str = ""  # What the person does (converse): code checks it against the moves it offered.
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -122,6 +133,28 @@ def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     elif call.error is None:
         call.error = "The model returned no line."
     return call
+
+
+def converse(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
+    """What the person says and does back (D-44); the fallback line (and no move) if the model can't be used."""
+    skipped = _unavailable(fallback, allowed, CONVERSE_VERSION)
+    if skipped:
+        return skipped
+    call, parsed = _parse(_CONVERSE, context, Reply, CONVERSE_VERSION)
+    call.text = fallback
+    spoken = tidy(parsed.text) if parsed is not None else ""
+    if spoken:
+        call.status, call.text = "ok", spoken
+        call.move = parsed.move.strip()
+        call.remember = " ".join(parsed.remember.split())[:300]
+        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
+    elif call.error is None:
+        call.error = "The model returned no line."
+    return call
+
+
+def converse_prompt() -> str:
+    return _CONVERSE
 
 
 def recollect(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceCall, dict]:
