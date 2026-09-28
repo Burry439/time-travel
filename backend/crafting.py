@@ -24,6 +24,7 @@ PRIOR_RULINGS = 10
 PEOPLE_RADIUS = 8.0  # Cells within which the judge is told about people.
 WITNESS_RADIUS = 10.0  # Cells within which people are recorded as witnesses (reactions come in M4).
 WOUND_DAMAGE = 45
+DISABLED_HEALTH = 20  # Down and out of the fight, but alive (D-41).
 NEARBY_WALK_STEPS = 14  # Things this many steps away can be acted on; the player walks there first.
 WALK_CELLS_PER_SECOND = 7.1875  # Matches the backend walking speed.
 THROW_RANGE = 8.0  # Cells.
@@ -136,11 +137,43 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
             people.append({
                 "id": npc["id"], "name": npc["name"], "role": npc["role"], "distance_cells": round(distance, 1),
                 "within_reach": distance <= m2.REACH_CELLS, "walk_steps": costs.get(npc["id"]),
-                "condition": ("dead" if not npc.get("alive", True) else "unhurt" if health >= 100
+                "condition": ("dead" if not npc.get("alive", True) else "down (disabled, can't fight)"
+                              if npc.get("down") else "unhurt" if health >= 100
                               else "wounded" if health > 30 else "badly wounded (near death)"),
                 "injuries": npc.get("injuries", []),
+                "armour": minds_card(npc).get("armor_text", "no armour"),
+                "weapon": minds_card(npc).get("weapon") or "none",
+                "aware_of_you": _aware(state, npc),
                 "activity": (npc.get("controller") or {}).get("activity", "standing")})
     return people
+
+
+def minds_card(npc: dict) -> dict:
+    import minds  # minds imports crafting
+    return minds.card(npc)
+
+
+def _aware(state: dict, npc: dict) -> bool:
+    """Is this person watching the stranger (facing them, busy with them, or fighting them)? If not, they can
+    be taken by surprise."""
+    my_mind = npc.get("mind") or {}
+    return bool(my_mind.get("facing_player") or my_mind.get("job") and my_mind["job"].get("target") == "player"
+                or npc["id"] in ((state.get("fight") or {}).get("attackers") or []))
+
+
+# The armour law (D-41): what can't get through mail, whatever anyone says. Everything else is judged.
+SOFT_MATERIALS = {"wood", "bone", "flint", "stone", "grass", "fibre", "fiber", "reed", "clay", "leather", "cloth",
+                  "rope", "straw", "bark"}
+HEAVY_KG = 3.0  # A heavy blow (a sledge, a big rock) can still hurt through mail by weight alone.
+
+
+def _stopped_by_mail(state: dict, npc: dict, method: str, weapon: dict | None) -> bool:
+    if minds_card(npc).get("armor") != "mail" or method == "poured":
+        return False
+    if weapon is None:
+        return True  # Fists and feet against mail.
+    materials = {m.lower() for m in weapon.get("materials", [])}
+    return materials <= SOFT_MATERIALS and weapon.get("mass_kg", 0) < HEAVY_KG
 
 
 def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
@@ -632,6 +665,8 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
         return _unresolved(notes, f"harm target is not a person: {plan['target_id']}")
     if not npc.get("alive", True):
         return _verdict("blocked", f"{npc['name']} is already dead.", notes, action="harm", precedent_key=key)
+    if npc.get("down") and plan["result"] == "disabled":
+        plan = {**plan, "result": "wounded"}  # Already down: another blow can only wound or kill.
     method = plan.get("method", "melee")
     weapon = plan.get("weapon_id")
     if weapon is not None and weapon not in available:
@@ -650,6 +685,11 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             notes.append(f"Law: {container.get('temperature', 'cold')} water can't wound; result set to missed.")
             result = "missed"
             reason = f"The water only soaks {npc['name']}."
+    if result not in ("missed", "deflected") and _stopped_by_mail(state, npc, method, available.get(weapon) if weapon else None):
+        thing = available[weapon]["name"] if weapon else "bare hands"
+        notes.append(f"Law: {thing} can't get through {npc['name']}'s mail; result set to deflected.")
+        result = "deflected"
+        reason = f"The blow glances off {npc['name']}'s mail."
     distance = _distance(state, npc["x"], npc["y"])
     picked_up = []
     if method == "thrown":
@@ -677,7 +717,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     witnesses = [n["id"] for n in state["npcs"] if n["id"] != npc["id"] and n.get("alive", True)
                  and _distance(state, n["x"], n["y"]) <= WITNESS_RADIUS]
     harm = {"target_id": npc["id"], "weapon_id": weapon, "method": method, "result": result,
-            "injury": plan["injury"].strip()[:200] if result != "missed" else "soaked but unhurt"
+            "injury": plan["injury"].strip()[:200] if result not in ("missed", "deflected") else "soaked but unhurt"
             if method == "poured" else plan["injury"].strip()[:200], "witnesses": witnesses}
     return _verdict("success", reason, notes, effort, action="harm", harm=harm, precedent_key=key,
                     take_ids=picked_up, property=_property(state, picked_up, "taken"))
@@ -936,8 +976,11 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         harm = verdict["harm"]
         npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
         health = npc.get("health", 100)
+        down = bool(npc.get("down"))
         if harm["result"] == "killed":
             health = 0
+        elif harm["result"] == "disabled":  # Out of the fight, alive: scalded blind, stunned, a leg gone from under them.
+            health, down = min(health, DISABLED_HEALTH), True
         elif harm["result"] == "wounded":
             health = max(0, health - WOUND_DAMAGE)
             if health == 0:
@@ -945,8 +988,9 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
                 harm["result"] = "killed"
                 verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
                 verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
-        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] != "missed" else [])
-        npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries})
+        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
+        npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries,
+                            **({"down": True} if down and health > 0 else {})})
         taken = verdict["take_ids"]  # A weapon picked up on the way.
         if harm["method"] == "thrown" and harm["weapon_id"]:
             x, y = _open_cells_near(state, npc["x"], npc["y"], cleared_obstacles(state), 1)[0]
@@ -1036,6 +1080,12 @@ def _apply_step(state: dict, deltas: dict) -> None:
             npc.setdefault("injuries", []).append(update["injury"])
         if not update["alive"] and npc.get("controller"):
             npc["controller"].update(activity="dead", path=[], source="dead")
+        elif update.get("down") and not npc.get("down"):
+            npc["down"] = True
+            if npc.get("mind"):
+                npc["mind"]["job"] = None
+            if npc.get("controller"):
+                npc["controller"].update(activity="down", path=[], source="down")
 
 
 _REFERENCE = re.compile(r"^made_by_step_(\d+)$")

@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import copy
 import math
-import random
 import re
 
 import crafting
@@ -43,7 +42,6 @@ BUSY = {"attack": "{name} is attacking you, not talking.", "flee": "{name} is ru
         "report": "{name} is hurrying off somewhere and won't stop."}
 VOUCH_TRUST = 0.6  # Someone must trust the stranger this much to vouch unasked.
 DONE_YES = 0.6  # How sure the decider must be that a deal was done.
-PLAUSIBLE = 0.2  # Replies Jev rates at least this likely are what this person might say; one is drawn.
 REASON_YES = 0.45  # The captain admits when he believes there is a legitimate reason...
 THREAT_NO = 0.5  # ...and doesn't believe the stranger is a threat (two simple beliefs beat one compound one).
 HOSTILE = ("refuse", "tell_to_leave", "call_guard")
@@ -296,22 +294,18 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     return "\n".join(lines), questions
 
 
-def chosen(answers: dict, options: dict, seed: str | None = None) -> str:
-    """Jev's reply, drawn (repeatably, from the seed) among the replies it rates plausible for this person."""
-    reply = answers.get("reply") or {}
-    choice = reply.get("choice")
-    likely = {k: float(p) for k, p in (reply.get("probabilities") or {}).items() if k in options and float(p) >= PLAUSIBLE}
-    if seed is not None and len(likely) > 1:
-        keys = sorted(likely)
-        choice = random.Random(seed).choices(keys, weights=[likely[k] for k in keys])[0]
+def chosen(answers: dict, options: dict) -> str:
+    """Jev's reply: its top choice for this person. No draw among the others (GDD D-41: no dice); variety
+    comes from their mood, memory and who they are."""
+    choice = (answers.get("reply") or {}).get("choice")
     return choice if choice in options else "answer"
 
 
-def decided_reply(state: dict, npc: dict, answers: dict, questions: dict, seed: str | None = None) -> str:
+def decided_reply(state: dict, npc: dict, answers: dict, questions: dict) -> str:
     """The reply code will carry out: Jev's choice, or admission when the captain believes his rule is met.
 
     That is his authored motive (GDD 4.3) applied by code to Jev's typed beliefs ("reason", "threat")."""
-    key = chosen(answers, questions["reply"]["criteria"], seed)
+    key = chosen(answers, questions["reply"]["criteria"])
     options = replies(state, npc)
     believes = _yes(answers, "reason", REASON_YES) and "threat" in answers         and float(answers["threat"].get("noul", 1.0)) < THREAT_NO
     if "admit" in options and believes and options.get(key, {}).get("act") not in HOSTILE:

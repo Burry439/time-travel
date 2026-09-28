@@ -167,7 +167,8 @@ def think(run_id: str, request: ThinkRequest):
             handled = {(p["npc_id"], p["kind"]) for p in batch + recollecting + stale}
             working["pending_minds"] = [p for p in working.get("pending_minds", []) if p["kind"] in KINDS
                                         and (p["npc_id"], p["kind"]) not in handled
-                                        and (n := minds.find(working["npcs"], p["npc_id"])) and n.get("alive", True)]
+                                        and (n := minds.find(working["npcs"], p["npc_id"])) and n.get("alive", True)
+                                        and not n.get("down")]
             now, heard, learned = working["sim_time_ms"], [], []
             for pending in batch:
                 npc = minds.find(working["npcs"], pending["npc_id"])
@@ -224,7 +225,8 @@ def think(run_id: str, request: ThinkRequest):
                                         "voice": call.as_dict()})))
             payload = {"npcs": working["npcs"], "player": working["player"],
                        "pending_minds": working.get("pending_minds", []), "people_journal": heard,
-                       "decisions": records, "encounter": working.get("encounter"), "learned_added": learned,
+                       "decisions": records, "encounter": working.get("encounter"), "fight": working.get("fight"),
+                       "learned_added": learned,
                        "village": working.get("village", state.get("village", {"chatter_at": []}))}
             store.append(connection, state, "minds", payload, request.request_id, state["tick"])
             state["npcs"], state["player"] = payload["npcs"], payload["player"]

@@ -52,71 +52,44 @@ def test_people_who_come_to_address_the_stranger_open_an_encounter():
 
 def test_both_act_at_once_a_blow_lands_while_they_are_talking():
     state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="listen")
-    draft, record = play(state, "do", "punch Bren", blow("npc_bren_marr"))
-    bren = npc(draft, "npc_bren_marr")
-    assert bren["health"] < 100 and bren["alive"]
-    assert record["replier"] == "npc_bren_marr"  # He was listening, so he answers what just happened...
-    assert "Bren" in " ".join(record["happened"])  # ...which is the blow he just took.
+    face_to_face(state, "npc_hessa_marr", intent="listen", reason="talk")
+    draft, record = play(state, "do", "punch Hessa", blow("npc_hessa_marr"))
+    hessa = npc(draft, "npc_hessa_marr")
+    assert hessa["health"] < 100 and hessa["alive"]
+    assert record["replier"] == "npc_hessa_marr"  # She was listening, so she answers what just happened...
+    assert "Hessa" in " ".join(record["happened"])  # ...which is the blow she just took.
     assert [e["kind"] for e in record["entries"]] == ["do"]
 
 
-def rounds_where(state, first):
-    """Round numbers in which the initiative roll puts `first` ahead."""
-    found = []
-    for number in range(1, 60):
-        state["encounter"]["round"] = number
-        if encounter._initiative(state, state["encounter"], "enc00000")[0] == first:
-            found.append(number)
-    return found
-
-
-def test_initiative_decides_what_a_killing_blow_prevents():
+def test_a_blow_at_a_guard_is_a_fight_and_mail_stops_a_fist():
     state = unit_state()
-    face_to_face(state, "npc_mara_venn", intent="attack", reason="attack")
-    state["encounter"]["round"] = rounds_where(state, "player")[0]
-    draft, record = play(state, "do", "stab Mara", blow("npc_mara_venn", "killed"))
-    assert not npc(draft, "npc_mara_venn")["alive"] and draft["player"].get("health", 100) == 100
-    assert not any(e["kind"] == "strike" for e in record["entries"])  # Dead before she could swing.
+    face_to_face(state, "npc_bren_marr", intent="listen")
+    draft, record = play(state, "do", "punch Bren", blow("npc_bren_marr"))
+    assert npc(draft, "npc_bren_marr")["health"] == 100  # The armour law: a fist can't hurt through mail.
+    assert record["verdict"]["harm"]["result"] == "deflected"
+    assert draft["encounter"] is None and "npc_bren_marr" in draft["fight"]["attackers"]  # Words are over.
+    assert record["replier"] is None
+
+
+def test_an_attack_intent_turns_the_encounter_into_a_real_time_fight():
     state = unit_state()
-    face_to_face(state, "npc_mara_venn", intent="attack", reason="attack")
-    state["encounter"]["round"] = rounds_where(state, "npc_mara_venn")[0]
-    draft, record = play(state, "do", "stab Mara", blow("npc_mara_venn", "killed"))
-    assert [e["kind"] for e in record["entries"]][:1] == ["strike"]  # She swung first; then his blow landed too.
-    assert not npc(draft, "npc_mara_venn")["alive"] or not draft["player"]["alive"]
-    again, again_record = play(state, "do", "stab Mara", blow("npc_mara_venn", "killed"))
-    assert again_record["entries"] == record["entries"][:len(again_record["entries"])]  # Seeded: repeatable.
+    face_to_face(state, "npc_mara_venn", intent="attack", reason="confront")
+    draft, record = play(state, "wait")
+    assert draft["encounter"] is None and draft["fight"]["attackers"] == ["npc_mara_venn"]
+    assert draft["player"].get("health", 100) == 100  # No blow in the round: blows are on the clock now.
+    assert npc(draft, "npc_mara_venn")["mind"]["job"]["kind"] == "fight"
+    assert any(e["kind"] == "attack" for e in record["entries"])
+    again, again_record = play(state, "wait")
+    assert again_record["entries"] == record["entries"] and again["fight"] == draft["fight"]  # No dice.
 
 
-def test_a_long_action_mid_fight_costs_extra_blows(monkeypatch):
-    monkeypatch.setitem(minds.WEAPONS, "spear", {"hit": 1.0, "damage": 1, "kill": 0.0})  # Survive to count them.
-    state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="attack", reason="attack")
-    spear = attempt(judged("make", effort_seconds=12, new_object={
-        "name": "crude spear", "description": "A stick.", "materials": ["wood"], "consumes": ["branch_a"],
-        "tools_used": [], "mass_kg": 1.0, "length_m": 1.5, "capacity_l": None, "rated_load_kg": None,
-        "flags": ["rigid"], "capabilities": []}))
-    state["objects"]["branch_a"]["holder_id"] = "player"
-    _, record = play(state, "do", "make a spear", spear)
-    strikes = [e for e in record["entries"] if e["kind"] == "strike"]
-    assert len(strikes) == 1 + (12_000 - encounter.ROUND_MS) // minds.ATTACK_INTERVAL_MS
-    assert any("while you were busy" in e["text"] for e in strikes)
-
-
-def test_walking_away_ends_it_but_an_attacker_gets_a_swing_and_gives_chase():
-    state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="attack", reason="attack")
-    draft, record = play(state, "leave")
-    assert any(e["kind"] == "strike" for e in record["entries"]) and record["replier"] is None
-    encounter.finish(draft, record, draft["sim_time_ms"])
-    assert draft["encounter"] is None and record["ended"]
-    job = npc(draft, "npc_bren_marr")["mind"]["job"]
-    assert job["kind"] == "attack" and job["wait_until"] > draft["sim_time_ms"]
+def test_walking_away_from_a_talk_ends_it():
     calm = unit_state()
     face_to_face(calm, "npc_hessa_marr", intent="listen", reason="talk")
     draft, record = play(calm, "leave")
     encounter.finish(draft, record, draft["sim_time_ms"])
-    assert draft["encounter"] is None and npc(draft, "npc_hessa_marr")["mind"]["job"]["kind"] != "attack"
+    assert draft["encounter"] is None and record["ended"] and not draft.get("fight")
+    assert npc(draft, "npc_hessa_marr")["mind"]["job"]["kind"] != "fight"
 
 
 def test_someone_who_walks_up_mid_encounter_joins_it():
@@ -175,7 +148,7 @@ def post(world, state, path, body, status=200):
     return reply.json()
 
 
-def test_a_halt_becomes_rounds_that_replay_and_walking_away_ends_it(world):
+def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arrest(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     cells = [[48, y] for y in range(67, 15, -1)]
     for i in range(0, len(cells), 20):
@@ -195,17 +168,20 @@ def test_a_halt_becomes_rounds_that_replay_and_walking_away_ends_it(world):
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # One event, replayed exactly.
     world.rulings.append(blow(guard, "wounded"))  # The /craft path during an encounter is the stranger's part of a round.
     world.intents.append("listen")
-    world.replies.append(said("tell_to_leave", impression=0, suspicion=4, anger=3))
     reply = world.http.post(f"/runs/{state['run_id']}/craft", json={
         "text": "shove the guard", "selected_ids": [], "expected_version": state["event_seq"], "request_id": "shove"})
     assert reply.status_code == 200, reply.text
     state = reply.json()["state"]
-    assert npc(state, guard)["health"] < 100 and state["last_round"]["replier"] == guard
-    world.intents.append("listen")
-    state = post(world, state, "encounter/act", {"kind": "leave"})["state"]
-    assert state["encounter"] is None and state["last_round"]["ended"]
+    # A shove at a guard in mail: it does nothing, but it's an assault. Words are over: a real-time fight.
+    assert npc(state, guard)["health"] == 100 and state["encounter"] is None and guard in state["fight"]["attackers"]
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
-    post(world, state, "explore", {"elapsed_ms": 1000})  # The clock runs again.
+    state = post(world, state, "explore", {"elapsed_ms": 500})["state"]  # The clock runs through a fight.
+    body = post(world, state, "act", {"text": "I give up"})
+    state = body["state"]
+    assert state["fight"] is None and "south road" in body["notice"]  # A guard takes the surrender: arrested.
+    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and state["barred_until"] > 0
+    assert world.http.get(f"/runs/{state['run_id']}").json() == state
+    post(world, state, "explore", {"elapsed_ms": 1000})  # The clock runs on.
 
 
 def test_speaking_to_someone_is_an_encounter_you_can_simply_walk_away_from(world):

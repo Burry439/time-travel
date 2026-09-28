@@ -194,12 +194,10 @@ def test_the_dead_the_busy_and_the_distant_do_not_talk(world):
     assert world.http.get(f"/runs/{state['run_id']}").json()["event_seq"] == state["event_seq"]
 
 
-def test_replies_are_drawn_among_the_plausible_ones_repeatably():
+def test_the_reply_is_jevs_top_choice_never_a_draw():
+    """No dice (D-41): the same answers always give the same reply."""
     options = {"ask_back": {}, "offer:water_haul": {}, "answer": {}, "end": {}}
     answers = {"reply": {"choice": "ask_back", "probabilities": {
         "ask_back": 0.45, "offer:water_haul": 0.36, "answer": 0.18, "end": 0.01}}}
-    draws = [talk.chosen(answers, options, seed=f"run:{n}") for n in range(200)]
-    assert set(draws) == {"ask_back", "offer:water_haul"}  # Never the implausible ones.
-    assert 0.3 < draws.count("offer:water_haul") / 200 < 0.6
-    assert draws == [talk.chosen(answers, options, seed=f"run:{n}") for n in range(200)]  # Repeatable.
-    assert talk.chosen(answers, options) == "ask_back"  # Without a seed: Jev's own choice.
+    assert {talk.chosen(answers, options) for _ in range(50)} == {"ask_back"}
+    assert talk.chosen({"reply": {"choice": "nonsense"}}, options) == "answer"

@@ -9,8 +9,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+import combat
 import crafting
 import encounter
+import minds
 import store
 from ai import config as ai_config, decider
 
@@ -32,6 +34,18 @@ class Move(BaseModel):
 
 class ExploreClock(BaseModel):
     elapsed_ms: int = Field(ge=1, le=1000)
+    expected_version: int = Field(ge=0)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
+class Strike(BaseModel):
+    target_id: str | None = Field(default=None, max_length=60)  # Whoever the stranger faces; else the nearest.
+    expected_version: int = Field(ge=0)
+    request_id: str = Field(min_length=1, max_length=100)
+
+
+class FightCommand(BaseModel):
+    npc_ids: list[str] = Field(min_length=1, max_length=6)
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -212,6 +226,50 @@ def explore(run_id: str, request: ExploreClock):
     return {"state": state, "duplicate": False}
 
 
+def fight_event(connection, state: dict, journal_before: int, request_id: str, extra: dict) -> None:
+    """Record a change made to the fight (state is already changed). Like a round, the event carries the
+    resulting fields, so replay needs no rules."""
+    payload = {key: state[key] for key in store.FIGHT_FIELDS if key in state}
+    payload["journal_added"] = state["journal"][journal_before:]
+    payload.update(extra)
+    store.append(connection, state, "fight", payload, request_id, state["tick"])
+
+
+def _punch_target(state: dict, wanted: str | None) -> str | None:
+    """Whoever the stranger faces if they're standing; else the nearest attacker (in reach first)."""
+    npc = minds.find(state["npcs"], wanted or "")
+    if npc is not None and not combat.down(npc):
+        return npc["id"]
+    here = minds.player_cell(state)
+    fighters = [minds.find(state["npcs"], a) for a in (combat.active(state) or {}).get("attackers", [])]
+    fighters = [f for f in fighters if f is not None and not combat.down(f)]
+    if not fighters:
+        return None
+    return min(fighters, key=lambda f: minds.math.dist(minds._cell(f), here))["id"]
+
+
+@router.post("/runs/{run_id}/strike")
+def strike(run_id: str, request: Strike):
+    """Space in a fight: the stranger's fist (D-41). Code only: lands if they're in reach, fixed damage by armour."""
+    with store.lock, store.db() as connection:
+        run, state = store.load_run(connection, run_id)
+        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
+        if prior_seq is not None:
+            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
+        if state["inside_city"] or not state["player"]["alive"]:
+            raise HTTPException(409, "Run is no longer interactive")
+        if not combat.active(state):
+            raise HTTPException(409, {"reason": "no_fight", "message": "You're not fighting anyone."})
+        target = _punch_target(state, request.target_id)
+        if target is None:
+            raise HTTPException(409, {"reason": "no_target", "message": "There's nobody there to hit."})
+        journal_before = len(state["journal"])
+        result = combat.punch(state, target, state["sim_time_ms"])
+        if result["ok"]:  # A punch still recovering is no event: nothing happened.
+            fight_event(connection, state, journal_before, request.request_id, {"strike": {"target_id": target, **result}})
+    return {"state": state, "duplicate": False, "strike": result}
+
+
 @router.post("/runs/{run_id}/dev/gate")
 def developer_gate(run_id: str, request: GateCommand):
     with store.lock, store.db() as connection:
@@ -223,4 +281,22 @@ def developer_gate(run_id: str, request: GateCommand):
             return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
         store.append(connection, state, "dev_gate", {"open": request.open}, request.request_id, state["tick"])
         state["gate_open"] = request.open
+    return {"state": state, "duplicate": False}
+
+
+@router.post("/runs/{run_id}/dev/fight")
+def developer_fight(run_id: str, request: FightCommand):
+    """Developer-only: these people come at the stranger now (for testing fights without a model)."""
+    with store.lock, store.db() as connection:
+        run, state = store.load_run(connection, run_id)
+        if run["mode"] != "developer":
+            raise HTTPException(403, "Developer control is unavailable in normal mode")
+        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
+        if prior_seq is not None:
+            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
+        if any(minds.find(state["npcs"], npc_id) is None for npc_id in request.npc_ids):
+            raise HTTPException(422, "Unknown person")
+        journal_before = len(state["journal"])
+        combat.start(state, request.npc_ids, state["sim_time_ms"], "developer")
+        fight_event(connection, state, journal_before, request.request_id, {})
     return {"state": state, "duplicate": False}

@@ -44,6 +44,8 @@ var sound_volume := 0.7
 var sync_error := false
 var ai_status: Dictionary = {}
 var last_trace = null # Developer runs receive the judge trace with each attempt.
+var strike_busy := false # Space in a fight: one punch in flight at a time.
+var hurt_flash: TextureRect # Red at the screen's edges when you're struck.
 
 # Objects without authored art show a loading ring until their painting arrives (loading_ring.gd).
 const OBJECT_HEIGHT := 46.0
@@ -148,6 +150,22 @@ func _build_ui() -> void:
 	ui = preload("res://scripts/game_ui.gd").new()
 	layer.add_child(ui)
 	ui.build(self)
+	var edges := Gradient.new()
+	edges.set_color(0, Color(0.7, 0.05, 0.02, 0.0))
+	edges.set_color(1, Color(0.7, 0.05, 0.02, 0.85))
+	edges.set_offset(0, 0.55)
+	var fill := GradientTexture2D.new()
+	fill.gradient = edges
+	fill.fill = GradientTexture2D.FILL_RADIAL
+	fill.fill_from = Vector2(0.5, 0.5)
+	fill.fill_to = Vector2(1.05, 1.05)
+	hurt_flash = TextureRect.new()
+	hurt_flash.texture = fill
+	hurt_flash.stretch_mode = TextureRect.STRETCH_SCALE
+	hurt_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hurt_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hurt_flash.modulate.a = 0.0
+	layer.add_child(hurt_flash)
 
 
 func _start(mode: String) -> void:
@@ -266,6 +284,8 @@ func _spawn_npcs() -> void:
 		actor.add_child(painted)
 		if not npc.get("alive", true):
 			painted.lie_dead()
+		elif npc.get("down", false):
+			painted.knock_down(1.0, true)
 		npc_targets[str(npc["id"])] = actor.position
 		npc_facing[str(npc["id"])] = 0
 		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
@@ -295,7 +315,7 @@ func _animate_npcs(delta: float) -> void:
 	for npc in run_state.get("npcs", []):
 		var id := str(npc["id"])
 		var actor := get_node_or_null("NPCs/" + id) as Node2D
-		if actor == null or not npc.get("alive", true):
+		if actor == null or not npc.get("alive", true) or npc.get("down", false):
 			continue
 		var target: Vector2 = npc_targets.get(id, actor.position)
 		var before := actor.position
@@ -384,6 +404,12 @@ func _physics_process(delta: float) -> void:
 			and ui.modal_kind != "death":
 		ui.close_modal_now()
 		ui.bar.open()
+	if in_fight() and gameplay_active and not sync_error and (request_busy or ui.blocks_movement()):
+		# A fight doesn't wait while you type or think: the clock and the blows run on (D-41).
+		_animate_npcs(delta)
+		clock_pending_ms += delta * 1000.0
+		if not movement_sync_active and clock_pending_ms >= 500.0:
+			_flush_moves()
 	if not gameplay_active or request_busy or ui.blocks_movement() or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
 			return
@@ -593,8 +619,10 @@ func _sync_display_now() -> void:
 				ui.notify(str(cue.text))
 		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
-			plate.text = str(npc["name"]) + ("" if npc.get("alive", true) else " (dead)")
-			plate.position.y = -115.0 if npc.get("alive", true) else -58.0 # Down beside a body.
+			var standing: bool = npc.get("alive", true) and not npc.get("down", false)
+			plate.text = str(npc["name"]) + ("" if standing else " (down)" if npc.get("alive", true) else " (dead)")
+			plate.position.y = -115.0 if standing else -58.0 # Down beside a body.
+			plate.reset_size()
 	gate_button.text = "Close gate (test)" if run_state["gate_open"] else "Open gate (test)"
 	trace_text.text = "RUN " + str(run_state["run_id"]).substr(0, 12) + "\n" \
 		+ "Mode: " + str(run_state["mode"]) + "\n" \
@@ -641,6 +669,7 @@ func _react_to(before: Dictionary) -> void:
 		ui.bar.open()
 	elif not in_encounter() and ui.bar.showing_encounter() and not request_busy and not ui.bar.round_playing:
 		ui.bar.ended()
+	_react_to_fight(before)
 	var was_alive: bool = before.get("player", {}).get("alive", true)
 	if was_alive and not run_state["player"].get("alive", true):
 		gameplay_active = false
@@ -648,6 +677,94 @@ func _react_to(before: Dictionary) -> void:
 		player_visual.die(1.0)
 		await get_tree().create_timer(1.6).timeout
 		ui.show_death(_death_reason())
+
+
+## A real-time fight (D-41): it starting, blows landing or missing, people going down, it ending.
+func _react_to_fight(before: Dictionary) -> void:
+	var was_fighting := typeof(before.get("fight")) == TYPE_DICTIONARY
+	if in_fight() and not was_fighting and gameplay_active:
+		ui.close_modal_now()
+		if ui.bar.visible and not request_busy:
+			ui.bar.close() # Hands free: you need to move.
+		for entry in run_state.fight.get("log", []):
+			if str(entry.get("kind", "")) == "joins":
+				var joiner := get_node_or_null("NPCs/%s/PaintedActor" % entry.who)
+				if joiner:
+					joiner.play_gesture("gesture")
+		ui.notify("Fight! Move to dodge their blows, Space to punch. Press T and say you give up to surrender.")
+	elif was_fighting and not in_fight() and run_state["player"].get("alive", true):
+		var now_cell := Vector2i(int(run_state.player.x), int(run_state.player.y))
+		if now_cell.distance_to(predicted_cell) > 3.0: # Marched off by the guards.
+			predicted_cell = now_cell
+			player.position = _cell_center(now_cell.x, now_cell.y)
+			camera.reset_smoothing()
+	var old_journal: Array = before.get("journal", [])
+	var journal: Array = run_state.get("journal", [])
+	for index in range(old_journal.size(), journal.size()):
+		var entry: Dictionary = journal[index]
+		if entry.get("kind") != "fight":
+			continue
+		var who := str(entry.get("npc_id", ""))
+		ui.notify(str(entry.reason))
+		if who == "player":
+			continue
+		var actor := get_node_or_null("NPCs/" + who) as Node2D
+		if actor:
+			actor.get_node("PaintedActor").play_gesture("gesture")
+		if str(entry.get("category", "")) in ["hit", "killed"]:
+			player_visual.hurt(1.0 if actor == null or actor.position.x <= player.position.x else -1.0)
+			hurt_flash.modulate.a = 1.0
+			create_tween().tween_property(hurt_flash, "modulate:a", 0.0, 0.8)
+	for npc in run_state.get("npcs", []): # Punched to the ground (or disabled by a first strike).
+		if npc.get("down", false) and npc.get("alive", true):
+			var painted := get_node_or_null("NPCs/%s/PaintedActor" % npc.id)
+			if painted and not painted.dead:
+				painted.knock_down(1.0 if painted.global_position.x >= player.global_position.x else -1.0)
+
+
+func in_fight() -> bool:
+	return typeof(run_state.get("fight")) == TYPE_DICTIONARY
+
+
+## Space in a fight: punch whoever you face within arm's reach (or the nearest attacker). Code only, no model.
+func _punch() -> void:
+	if strike_busy or not in_fight() or not gameplay_active or sync_error:
+		return
+	strike_busy = true
+	player_visual.play_gesture("gesture")
+	var ahead: Vector2 = [Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT, Vector2(1, 1), Vector2(-1, 1),
+		Vector2(-1, -1), Vector2(1, -1)][facing_row]
+	var target := ""
+	var best := 2.2 * CELL
+	for npc in run_state.get("npcs", []):
+		if not npc.get("alive", true) or npc.get("down", false):
+			continue
+		var actor := get_node_or_null("NPCs/" + str(npc.id)) as Node2D
+		if actor == null:
+			continue
+		var toward := actor.position - player.position
+		if toward.length() < best and (toward.length() < 8.0 or toward.normalized().dot(ahead.normalized()) > 0.3):
+			best = toward.length()
+			target = str(npc.id)
+	while movement_sync_active: # Our steps first: the punch lands where we stand now.
+		await get_tree().process_frame
+	movement_sync_active = true # The punch takes the movement lane, so no step or clock beat races it.
+	var body := {"expected_version": run_state.event_seq, "request_id": _request_id("strike")}
+	if not target.is_empty():
+		body["target_id"] = target
+	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/strike", body)
+	movement_sync_active = false
+	if reply.ok:
+		var result = reply.data.get("strike", {})
+		var struck := str(target)
+		_accept_state(reply.data.state)
+		if typeof(result) == TYPE_DICTIONARY and result.get("ok") == false:
+			ui.notify(str(result.get("reason", "")))
+		elif typeof(result) == TYPE_DICTIONARY and str(result.get("result", "")) == "hit" and not struck.is_empty():
+			var hit := get_node_or_null("NPCs/%s/PaintedActor" % struck)
+			if hit:
+				hit.hurt(1.0 if hit.global_position.x >= player.global_position.x else -1.0)
+	strike_busy = false
 
 
 func _show_victory() -> void:
@@ -670,6 +787,8 @@ func _death_reason() -> String:
 	var journal: Array = run_state.get("journal", [])
 	for index in range(journal.size() - 1, -1, -1):
 		if journal[index].get("kind") == "npc_attack" and journal[index].get("result") == "killed":
+			return str(journal[index].reason)
+		if journal[index].get("kind") == "fight" and journal[index].get("category") == "killed":
 			return str(journal[index].reason)
 	return "You died."
 
@@ -1413,6 +1532,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_E:
 			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
 				_interact()
+		KEY_SPACE:
+			if in_fight() and gameplay_active and not ui.modal.visible and not ui.bar.visible:
+				_punch()
+			else:
+				return
 		KEY_T, KEY_ENTER, KEY_KP_ENTER:
 			if gameplay_active and not ui.modal.visible:
 				ui.bar.open()

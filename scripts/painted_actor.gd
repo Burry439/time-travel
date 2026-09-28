@@ -240,6 +240,23 @@ func die(fall_direction := 1.0) -> void:
 	tween.parallel().tween_property(self, "modulate", Color(0.62, 0.6, 0.58), 0.6)
 
 
+## Knocked down in a fight: alive, but on the ground and out of it (D-41). Instant when restoring a state.
+func knock_down(fall_direction := 1.0, instant := false) -> void:
+	if dead:
+		return
+	dead = true
+	_hold_still()
+	if instant:
+		rotation = fall_direction * PI * 0.47
+		modulate = Color(0.85, 0.8, 0.78)
+		return
+	var tween := create_tween()
+	tween.tween_property(self, "modulate", Color(1.0, 0.5, 0.45), 0.08)
+	tween.tween_property(self, "rotation", fall_direction * PI * 0.47, 0.4) \
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(self, "modulate", Color(0.85, 0.8, 0.78), 0.5)
+
+
 ## Restore a body that died earlier in the journey without replaying the fall.
 func lie_dead(fall_direction := 1.0) -> void:
 	dead = true

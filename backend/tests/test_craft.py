@@ -317,26 +317,34 @@ def beside(state, npc_id):
     return npc
 
 
+def armed(state):
+    """An iron thing in hand: bare hands can't hurt a guard in mail (the armour law, D-41)."""
+    state["objects"]["horseshoe_a"]["holder_id"] = "player"
+    return "horseshoe_a"
+
+
 def test_killing_a_person_is_permanent_and_they_stop_moving():
     state = fresh_state()
     bren = beside(state, "npc_bren_marr")
-    verdict = crafting.validate(state, harm("npc_bren_marr", "killed"))
+    iron = armed(state)
+    verdict = crafting.validate(state, harm("npc_bren_marr", "killed", iron))
     assert verdict["category"] == "success" and "npc_oren_dast" in verdict["harm"]["witnesses"]
-    commit(state, harm("npc_bren_marr", "killed"), text="stab Bren")
+    commit(state, harm("npc_bren_marr", "killed", iron), text="stab Bren")
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert not bren["alive"] and bren["health"] == 0 and bren["controller"]["activity"] == "dead"
     where = (bren["x"], bren["y"])
     later = service.npc_sim.advance_npcs(state["npcs"], 60_000, state["sim_time_ms"], service.WORLD_GEOMETRY)
     assert next((n["x"], n["y"]) for n in later if n["id"] == "npc_bren_marr") == where
-    again = crafting.validate(state, harm("npc_bren_marr", "killed"))
+    again = crafting.validate(state, harm("npc_bren_marr", "killed", iron))
     assert again["category"] == "blocked" and "already dead" in again["reason"]
 
 
 def test_wounds_accumulate_and_reach_is_enforced():
     state = fresh_state()
     beside(state, "npc_roderic_vale")
+    iron = armed(state)
     for expected_alive in (True, True, False):  # 100 -> 55 -> 10 -> 0
-        summary = commit(state, harm("npc_roderic_vale", "wounded"))
+        summary = commit(state, harm("npc_roderic_vale", "wounded", iron))
         roderic = next(n for n in state["npcs"] if n["id"] == "npc_roderic_vale")
         assert roderic["alive"] is expected_alive
     # The fatal wound is reported as a death, not as another wound (the bug players saw with Tomas).
@@ -401,8 +409,9 @@ def test_leaked_ids_are_replaced_with_names():
 def test_people_near_death_are_described_to_the_judge():
     state = fresh_state()
     beside(state, "npc_bren_marr")
-    commit(state, harm("npc_bren_marr", "wounded"))
-    commit(state, harm("npc_bren_marr", "wounded"))
+    iron = armed(state)
+    commit(state, harm("npc_bren_marr", "wounded", iron))
+    commit(state, harm("npc_bren_marr", "wounded", iron))
     bren = next(p for p in crafting.people_nearby(state) if p["id"] == "npc_bren_marr")
     assert bren["condition"] == "badly wounded (near death)" and len(bren["injuries"]) == 2
 
@@ -434,7 +443,7 @@ def test_melee_walks_up_to_the_target():
     state = fresh_state()
     bren = beside(state, "npc_bren_marr")
     state["player"].update(x=bren["x"], y=bren["y"] + 5)
-    summary = commit(state, harm("npc_bren_marr", "wounded"))
+    summary = commit(state, harm("npc_bren_marr", "wounded", armed(state)))
     assert summary["category"] == "success"
     assert crafting._distance(state, bren["x"], bren["y"]) <= service.m2.REACH_CELLS
     assert next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")["health"] == 55

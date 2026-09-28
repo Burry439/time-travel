@@ -1,7 +1,7 @@
 extends Node2D
 ## Small signs over a person's head, from state the client already has (GDD D-35):
 ## "…" while they're thinking or replying, "!" when frightened, red crossed blades when they mean
-## violence (attacking or seizing), a gold mark for a few seconds after they warm to you, and a thin
+## violence (attacking, fighting or seizing), a pulsing red "!" while they wind up a blow in a fight, a gold mark for a few seconds after they warm to you, and a thin
 ## health bar when hurt. Never numbers.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
@@ -18,7 +18,7 @@ func _process(delta: float) -> void:
 	var npc: Dictionary = game.ui.npc_record(npc_id)
 	var next: Array[String] = []
 	health = 100.0
-	if not npc.is_empty() and npc.get("alive", true):
+	if not npc.is_empty() and npc.get("alive", true) and not npc.get("down", false): # Nothing over someone on the ground.
 		health = float(npc.get("health", 100))
 		var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
 		var job = their_mind.get("job")
@@ -34,7 +34,10 @@ func _process(delta: float) -> void:
 			thinking = true
 		if thinking:
 			next.append("thinking")
-		if intent in ["attack", "seize"] or (typeof(job) == TYPE_DICTIONARY and str(job.get("kind", "")) == "attack"):
+		var fight = game.run_state.get("fight")
+		if typeof(fight) == TYPE_DICTIONARY and fight.get("swings", {}).has(npc_id):
+			next.append("swing") # Winding up a blow: step out of reach before it lands.
+		elif intent in ["attack", "seize"] or (typeof(job) == TYPE_DICTIONARY and str(job.get("kind", "")) in ["attack", "fight"]):
 			next.append("hostile")
 		elif float(their_mind.get("feelings", {}).get("fear", 0)) > 0.6 				or float(their_mind.get("feelings", {}).get("anger", 0)) >= 0.6:
 			next.append("alarmed") # Frightened or angry: something just happened to them.
@@ -78,6 +81,13 @@ func _sign(kind: String, at: Vector2) -> void:
 			for side in [-1.0, 1.0]:
 				draw_line(at + Vector2(-5.5 * side, 5.5), at + Vector2(5.5 * side, -5.5), Color("fff0e0"), 2.2, true)
 				draw_line(at + Vector2(-3.5 * side, 1.5), at + Vector2(-1.5 * side, 3.5), Color("fff0e0"), 2.0, true)
+		"swing":
+			var grow := 1.0 + fmod(clock * 2.5, 1.0) * 0.5
+			draw_circle(at, 12 * grow, Color(UITheme.STEAL, 0.35))
+			draw_circle(at, 10, UITheme.STEAL)
+			draw_arc(at, 10, 0, TAU, 20, Color("3a0c06"), 1.6, true)
+			draw_rect(Rect2(at + Vector2(-1.6, -6.5), Vector2(3.2, 8)), Color("fff0e0"))
+			draw_circle(at + Vector2(0, 5), 1.7, Color("fff0e0"))
 		"warm":
 			var glow := 0.75 + sin(clock * 4.0) * 0.25
 			for i in 8:

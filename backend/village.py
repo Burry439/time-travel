@@ -41,7 +41,7 @@ def _village(state: dict) -> dict:
 
 def free(state: dict, npc: dict) -> bool:
     """Alive, not busy with something they decided, and not face to face with the stranger."""
-    if not npc.get("alive", True) or (npc.get("mind") or {}).get("job"):
+    if not npc.get("alive", True) or npc.get("down") or (npc.get("mind") or {}).get("job"):
         return False
     return npc["id"] not in ((state.get("encounter") or {}).get("participants") or [])
 

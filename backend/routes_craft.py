@@ -10,11 +10,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 import attempts
+import combat
 import crafting
 import encounter
 import intent
 import minds
 import rounds
+import routes_world
 import talk
 import store
 from ai import config as ai_config, decider, judge, telemetry, voice
@@ -93,6 +95,8 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
             telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                              call.error or call.fallback_from, call.input_tokens, call.output_tokens)
     heard = {"kind": kind, "how": how}
+    if combat.active(state) and kind in ("yield", "say", "wait", "leave"):  # Mid-fight: no rounds (D-41).
+        return {**_fight_words(run_id, request, kind, state), "intent": heard}
     if current or kind == "say":
         if not current:
             target = target or (near[0]["id"] if near else None)
@@ -113,6 +117,25 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
                                            expected_version=request.expected_version,
                                            request_id=request.request_id), background)
     return {**reply, "intent": heard}
+
+
+def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dict:
+    """Words in a fight: giving up is an event (guards arrest you); anything else, nobody stops to listen."""
+    if kind != "yield":
+        return {"state": seen, "duplicate": False, "notice": {
+            "say": "Nobody stops to listen: they're trying to kill you. Say you give up, or fight, or run.",
+            "wait": "You hold still. They don't.", "leave": "Then run: get out of their reach."}[kind]}
+    with store.lock, store.db() as connection:
+        run, state = store.load_run(connection, run_id)
+        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
+        if prior_seq is not None:
+            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
+        if not combat.active(state):
+            return {"state": state, "duplicate": False, "notice": "The fight is already over."}
+        journal_before = len(state["journal"])
+        outcome = combat.surrender(state, state["sim_time_ms"])
+        routes_world.fight_event(connection, state, journal_before, request.request_id, {"surrender": outcome})
+    return {"state": state, "duplicate": False, "notice": outcome["text"]}
 
 
 @router.post("/runs/{run_id}/quick")

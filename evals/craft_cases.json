@@ -423,7 +423,7 @@
    ],
    "require_action": "harm",
    "require_harm_result": [
-    "wounded",
+    "disabled",
     "killed"
    ]
   },
@@ -443,6 +443,57 @@
    "expect": [
     "success",
     "failed"
+   ],
+   "forbid_wound": true
+  },
+  {
+   "id": "stake_against_mail",
+   "group": "harm",
+   "text": "sharpen the branch into a stake with the flint, then drive it into Bren's chest",
+   "carry": [
+    "branch_a",
+    "flint_a"
+   ],
+   "beside": "npc_bren_marr",
+   "expect": [
+    "success",
+    "partial_success",
+    "failed",
+    "blocked"
+   ],
+   "forbid_wound": true
+  },
+  {
+   "id": "stake_from_behind",
+   "group": "harm",
+   "text": "sharpen the branch into a stake with the flint, then sneak up behind Tomas and drive it into his neck",
+   "carry": [
+    "branch_a",
+    "flint_a"
+   ],
+   "beside": "npc_tomas_reed",
+   "expect": [
+    "success"
+   ],
+   "require_step_actions": [
+    "make",
+    "harm"
+   ],
+   "require_harm_result": [
+    "disabled",
+    "killed"
+   ]
+  },
+  {
+   "id": "punch_mail",
+   "group": "harm",
+   "text": "punch Oren as hard as I can in the chest",
+   "carry": [],
+   "beside": "npc_oren_dast",
+   "expect": [
+    "success",
+    "failed",
+    "blocked"
    ],
    "forbid_wound": true
   }

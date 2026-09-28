@@ -24,13 +24,15 @@ You can describe several things in one go ("sharpen the branch into a spear with
   - The tree falls over and leaves pieces (trunk, branches, stump). Each gets its own picture. Anything up to 20 kg can be picked up.
   - A felled map tree no longer blocks the path.
   - Big oaks and cypresses need real tools and hours of work. The three saplings (by the road start, east of it, and near the craftsmen's row) are realistic with a flint.
-- **Attack** someone within reach: "thrust the spear into …". The result is a miss, a wound or a death, depending on the weapon and how alert they are. A death is permanent: the body stays down and the name shows "(dead)". Witnesses are recorded for later versions.
+- **Attack** someone within reach: "sneak up behind him and drive the stake into his neck". The judge rules what really happens, with no dice: missed, deflected by armour, wounded, disabled (down but alive) or killed, depending on the weapon, their armour and whether they saw you coming. A wooden stake glances off a guard's mail but kills an unarmoured man; boiling water in the face gets past any armour. A death is permanent: the body stays down and the name shows "(dead)"; someone disabled shows "(down)".
+- **Then it's a fight.** Guards who see it come at you at once, in real time. Each blow has a wind-up (a pulsing red "!"); step out of reach before it lands and it misses. **Space** punches whoever you face: it hurts the unarmoured, barely dents padding, and does nothing to mail. Press T and say you give up to be arrested instead.
 
 Code always checks:
 
 - You can't invent materials, and nothing weighs more than what went into it.
 - Nothing burns or is magnetic without a real cause.
 - People must be within reach, and a weapon must actually be at hand.
+- Fists and light, soft things can't hurt anyone through mail, whatever the judge says.
 
 ## Materials in the world
 

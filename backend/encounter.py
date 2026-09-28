@@ -8,8 +8,9 @@ to someone. Time then moves in rounds instead of on the clock:
    for help, flee, leave), chosen by Jev from the situation as it stands, before they know what
    the stranger will do. The thinking lane decides these while the player is still typing.
 2. The player acts: say something, do something (a Try Something), wait, or walk away.
-3. Code resolves everything at once, in a seeded initiative order: a blow that drops someone first
-   stops what they were about to do; otherwise both happen, a sword swung while words are spoken.
+3. Code resolves everything at once: the stranger first, then everyone in the order they came.
+   Nobody swings a weapon in a round: someone who attacks turns the encounter into a real-time fight
+   (combat.py, GDD D-41), where blows land or miss by footwork and reach, not by rolls.
 4. The person the stranger addressed, if they were listening and are still standing, replies to
    what actually happened (talk.py: Jev chooses, the voice says it).
 5. The world moves on by the round's length (longer for long actions, which cost extra blows),
@@ -22,8 +23,8 @@ from __future__ import annotations
 
 import copy
 import math
-import random
 
+import combat
 import crafting
 import minds
 import talk
@@ -32,10 +33,7 @@ ROUND_MS = 5_000
 BARRED_MS = 600_000  # How long the guards keep an arrested stranger away from the gate.
 SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LEAVE_MS = 1_000  # Walking away takes a moment; attackers are left a step behind.
-PURSUIT_DELAY_MS = 2_500
-MAX_EXTRA_BLOWS = 2
 LOG_KEPT = 30
-OPENING_INTENT = {"attack": "attack"}  # Everyone else opens by listening: they came to talk (or to be answered).
 REASON_WORDS = {"halt": "a guard stopped the stranger at the gate", "confront": "they confronted the stranger",
                 "threaten": "they came to threaten the stranger", "demand_payment": "they came to demand payment",
                 "attack": "they attacked the stranger", "talk": "the stranger spoke to them"}
@@ -54,7 +52,14 @@ def hostile(state: dict) -> bool:
 
 
 def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dict:
-    """Open an encounter with this person, or bring them into the current one."""
+    """Open an encounter with this person, or bring them into the current one. An attack is a fight, not an
+    encounter; and while a fight is on, nobody stops to talk."""
+    if reason == "attack":
+        combat.start(state, [npc["id"]], now, "attack")
+        return active(state)
+    if combat.active(state):
+        minds._set_job(npc, {"kind": "watch", "until": now + 15_000}, now)
+        return active(state)
     encounter = active(state)
     if encounter is None:
         encounter = state["encounter"] = {
@@ -65,10 +70,8 @@ def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dic
         encounter["reason"] = reason  # Someone came to confront the stranger mid-conversation: no longer a chat.
     if npc["id"] not in encounter["participants"]:
         encounter["participants"].append(npc["id"])
-        encounter["intents"][npc["id"]] = {"action": OPENING_INTENT.get(reason, "listen"), "line": None,
-                                           "line_id": None}
-        _log(encounter, npc["id"], "arrive", f"{npc['name']}: “{line}”" if line else
-             f"{npc['name']} comes at you." if reason == "attack" else f"{npc['name']} faces you.")
+        encounter["intents"][npc["id"]] = {"action": "listen", "line": None, "line_id": None}
+        _log(encounter, npc["id"], "arrive", f"{npc['name']}: “{line}”" if line else f"{npc['name']} faces you.")
     if reason != "talk":
         minds._set_job(npc, {"kind": "encounter"}, now)
     # Face to face, people act in rounds: they don't also stop to think about what they saw.
@@ -110,7 +113,7 @@ def prune(state: dict) -> None:
 
 
 def end(state: dict, now: int, walked_away: bool = False) -> None:
-    """Everyone goes back to their day; anyone set on attacking gives chase a moment later."""
+    """Everyone goes back to their day."""
     encounter = active(state)
     if encounter is None:
         return
@@ -118,11 +121,7 @@ def end(state: dict, now: int, walked_away: bool = False) -> None:
         npc = minds.find(state["npcs"], npc_id)
         if npc is None or not npc.get("alive", True):
             continue
-        attacking = (encounter["intents"].get(npc_id) or {}).get("action") == "attack"
-        if walked_away and attacking and state["player"].get("alive", True):
-            minds._set_job(npc, {"kind": "attack", "target": "player", "speed": "run", "next_at": now,
-                                 "wait_until": now + PURSUIT_DELAY_MS}, now)
-        elif ((npc.get("mind") or {}).get("job") or {}).get("kind") in (None, "encounter"):
+        if ((npc.get("mind") or {}).get("job") or {}).get("kind") in (None, "encounter"):
             minds._set_job(npc, {"kind": "watch", "until": now + 15_000}, now)
     state["pending_minds"] = [p for p in state.get("pending_minds", []) if p["kind"] != "round"]
     state["encounter"] = None
@@ -138,7 +137,7 @@ def intent_options(state: dict, npc: dict) -> dict[str, dict]:
     if state["player"].get("alive", True):
         weapon = f" with their {me['weapon']}" if me.get("weapon") else " with bare hands"
         bases.append(("attack", f"{name} attacks the stranger{weapon} ({me.get('combat', 'no fighter')}).",
-                      "attack"))
+                      "attack"))  # Not a blow in the round: it starts a real-time fight.
     if me.get("guard") and state["player"].get("alive", True):
         bases.append(("seize", f"{name} grabs the stranger to arrest them: stolen things are taken back and the "
                                f"stranger is marched off down the south road and kept from the gate.", None))
@@ -233,30 +232,6 @@ def intent_request(state: dict, npc_ids: list[str]) -> tuple[str, dict, dict[str
 
 # --- Resolving a round ------------------------------------------------------------------------------
 
-def _initiative(state: dict, encounter: dict, run_id: str) -> list[str]:
-    """Who acts first when it matters: a seeded roll, plus fighting skill for NPCs."""
-    rolls = {"player": random.Random(f"{run_id}:{encounter['id']}:{encounter['round']}:player").random()}
-    for npc_id in encounter["participants"]:
-        npc = minds.find(state["npcs"], npc_id)
-        rng = random.Random(f"{run_id}:{encounter['id']}:{encounter['round']}:{npc_id}")
-        rolls[npc_id] = rng.random() + 0.1 * int(minds.card(npc).get("skill", 0))
-    return sorted(rolls, key=lambda who: (-rolls[who], who))
-
-
-def _close_in(state: dict, npc: dict) -> bool:
-    """An attacker comes within reach this round if they can get there; True if they're within reach."""
-    goal = minds.player_cell(state)
-    blocked = crafting._blocked_cells(state)
-    for _ in range(ROUND_MS // minds.RUN_STEP_MS):
-        if math.dist(minds._cell(npc), goal) <= 1.5:
-            return True
-        step = minds._next_step(minds._cell(npc), goal, 1.5, blocked)
-        if step is None:
-            return False
-        npc["x"], npc["y"] = step
-    return math.dist(minds._cell(npc), goal) <= 1.5
-
-
 def open_for_talk(state: dict, npc: dict, now: int) -> dict:
     """The stranger speaks to someone: a conversation, which is an encounter too."""
     return join(state, npc, "talk", None, now)
@@ -264,7 +239,7 @@ def open_for_talk(state: dict, npc: dict, now: int) -> dict:
 
 def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service_error: str | None,
             trace_id: str) -> tuple[dict, dict]:
-    """The physical part of a round, on a copy of the world: everyone's actions in initiative order.
+    """The physical part of a round, on a copy of the world: the stranger first, then the others in turn.
 
     Returns (draft world, round record: log entries, who replies, effort, what happened in words).
     The reply and time passing are applied afterwards by finish().
@@ -292,7 +267,7 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         if seen:
             record["happened"].append(seen)
 
-    for who in _initiative(draft, encounter, run_id):
+    for who in ["player"] + list(encounter["participants"]):
         if not draft["player"].get("alive", True):
             break
         if who == "player":
@@ -326,16 +301,12 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         if npc is None or not npc.get("alive", True):
             continue
         act, line = intent["action"], intent.get("line")
-        if act == "attack":
+        if act == "attack":  # Words are over: a real-time fight starts (combat.py).
             if line:
                 minds._say(npc, line, now, draft, journal, intent.get("line_id"))
-            if not _close_in(draft, npc):
-                note(who, "attack", f"{npc['name']} can't reach you.", f"{npc['name']} tried to reach the stranger.")
-                continue
-            blow = minds.strike(draft, npc, now, journal)
-            said = f"{npc['name']}: “{line}” " if line else ""
-            note(who, "strike", said + journal[-1]["reason"],
-                 f"{npc['name']} struck at the stranger: {blow['result']}.")
+            combat.start(draft, [who], now, "attack")
+            note(who, "attack", (f"{npc['name']}: “{line}” " if line else "") + f"{npc['name']} comes at you!",
+                 f"{npc['name']} attacked the stranger.")
         elif act in ("shout_for_help", "whistle"):
             words = line or "Guards!"
             minds._say(npc, words, now, draft, journal, intent.get("line_id"))
@@ -362,27 +333,16 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
             encounter["participants"].remove(who)
             note(who, act, (f"{npc['name']}: “{line}” " if line else "") +
                  (f"{npc['name']} runs off." if act == "flee" else f"{npc['name']} turns away and leaves you be."))
-    # A long action in the middle of a fight costs more blows.
-    extra = 0
-    if record["effort_seconds"] * 1000 > ROUND_MS:
-        extra = min(MAX_EXTRA_BLOWS, int((record["effort_seconds"] * 1000 - ROUND_MS) // minds.ATTACK_INTERVAL_MS))
-    for n in range(extra):
-        for who in list(encounter["participants"]):
-            npc = minds.find(draft["npcs"], who)
-            if (encounter["intents"].get(who) or {}).get("action") == "attack" and npc.get("alive", True) \
-                    and draft["player"].get("alive", True):
-                minds.strike(draft, npc, now + (n + 1) * minds.ATTACK_INTERVAL_MS, journal)
-                note(who, "strike", journal[-1]["reason"] + " (while you were busy)")
     draft["journal"].extend(journal)
     encounter["participants"] = [n for n in encounter["participants"]
                                  if (npc := minds.find(draft["npcs"], n)) and npc.get("alive", True)]
     # Who answers: the person addressed, if they were listening and are still there.
     target = action.get("target_id") if action.get("target_id") in encounter["participants"] else next(
         (n for n in [encounter["opened_by"]] + encounter["participants"] if n in encounter["participants"]), None)
-    if target and draft["player"].get("alive", True) and not record["walked_away"] \
+    if target and draft["player"].get("alive", True) and not record["walked_away"] and not combat.active(draft) \
             and (encounter["intents"].get(target) or {}).get("action") == "listen":
         record["replier"] = target
-    if draft["player"].get("alive", True):  # At most one other person cuts in.
+    if draft["player"].get("alive", True) and not combat.active(draft):  # At most one other person cuts in.
         record["interjector"] = next((n for n in encounter["participants"] if n != record["replier"]
                                       and (encounter["intents"].get(n) or {}).get("action") == "interject"), None)
     return draft, record
@@ -419,32 +379,37 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
         minds.add_pending(draft, npc_id, "round", "encounter")
 
 
-def arrest(draft: dict, record: dict, now: int) -> None:
+def arrest_player(state: dict, guard: dict, now: int) -> str:
     """Seized: other people's things go back to them, the stranger is marched down the south road and kept
-    from the gate for a while, and the captain hears of it. Play goes on."""
-    guard = minds.find(draft["npcs"], record["seized_by"])
+    from the gate for a while, and the captain hears of it. Returns what happened, in words."""
     returned = []
-    for obj in draft["objects"].values():
+    for obj in state["objects"].values():
         if obj["holder_id"] == "player" and obj["owner_id"] not in (None, "player") and obj.get("lent_to") != "player":
             obj["holder_id"] = obj["owner_id"]  # They take it back.
             returned.append(obj["name"])
-    draft["player"].update(x=SOUTH_ROAD[0], y=SOUTH_ROAD[1])
-    draft["barred_until"] = now + BARRED_MS
+    state["player"].update(x=SOUTH_ROAD[0], y=SOUTH_ROAD[1])
+    state["barred_until"] = now + BARRED_MS
     words = (f"{guard['name']} and the guards march you back down the south road"
              + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
              + ". You're not welcome at the gate for a while.")
-    record["entries"].append(_log(active(draft), "player", "arrested", words))
-    record["arrested"] = True
-    draft["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
-    captain = minds.find(draft["npcs"], talk.CAPTAIN)
-    if captain and captain.get("alive", True):
+    state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
+    captain = minds.find(state["npcs"], talk.CAPTAIN)
+    if captain and captain.get("alive", True) and not captain.get("down"):
         minds.remember(captain, {"kind": "arrest", "severity": 1, "victim": None, "item": None,
-                                 "event": draft.get("event_seq", 0) + 1, "clarity": "told", "at": now,
+                                 "event": state.get("event_seq", 0) + 1, "clarity": "told", "at": now,
                                  "source": f"told_by:{guard['id']}",
                                  "summary": f"{guard['name']} seized the stranger and marched them off down the south "
                                             f"road" + (f", taking back the {', the '.join(returned)}" if returned
                                                        else "") + ".",
                                  "short": "was arrested by the guards"})
+    return words
+
+
+def arrest(draft: dict, record: dict, now: int) -> None:
+    """Seized in a round: the arrest, logged in the encounter, and play goes on."""
+    words = arrest_player(draft, minds.find(draft["npcs"], record["seized_by"]), now)
+    record["entries"].append(_log(active(draft), "player", "arrested", words))
+    record["arrested"] = True
     end(draft, now)
     record["ended"] = True
 

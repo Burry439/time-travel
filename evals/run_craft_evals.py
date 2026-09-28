@@ -71,7 +71,7 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
         for key, value in case["require_change"].items():
             if not any(c.get(key) == value for c in changes):
                 problems.append(f"no change with {key}={value}: {changes}")
-    if case.get("forbid_wound") and (verdict.get("harm") or {}).get("result") in ("wounded", "killed"):
+    if case.get("forbid_wound") and (verdict.get("harm") or {}).get("result") in ("wounded", "disabled", "killed"):
         problems.append(f"wounded: {(verdict.get('harm') or {}).get('result')}")
     if case.get("require_action") and verdict["category"] == "success" and verdict["action"] != case["require_action"]:
         problems.append(f"action {verdict['action']} is not {case['require_action']}")

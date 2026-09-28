@@ -80,6 +80,7 @@ def test_legal_actions_come_from_code():
 def run_until(state, done, limit_ms=60_000, beat=500):
     for _ in range(limit_ms // beat):
         state["npcs"], heard, state["player"] = minds.advance_world(state, beat, state["sim_time_ms"])
+        state.setdefault("journal", []).extend(heard)
         state["sim_time_ms"] += beat
         if done():
             return True
@@ -108,23 +109,14 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     assert "believes" in questions and "Jory told them" in request_text
     state["pending_minds"] = []
     minds.apply_decision(state, bren, answers("attack"), state["sim_time_ms"], journal)
-    # Reaching the stranger opens an encounter: no blows on the clock, only in its rounds.
-    assert run_until(state, lambda: bool(state.get("encounter")), limit_ms=60_000)
-    assert state["player"].get("health", 100) == 100
-    assert state["encounter"]["participants"] == ["npc_bren_marr"]
-    assert state["encounter"]["intents"]["npc_bren_marr"]["action"] == "attack"
-    for _ in range(30):  # The stranger just waits; Bren keeps attacking. Blows are a seeded roll on weapon and skill.
-        if not state["player"]["alive"]:
-            break
-        state["event_seq"] += 1
-        state, record = encounter.resolve(state, "mind0000", {"kind": "wait", "text": "", "target_id": None},
-                                          None, None, "t")
-        encounter.finish(state, record, state["sim_time_ms"])
-        if state.get("encounter"):
-            state["encounter"]["intents"]["npc_bren_marr"] = {"action": "attack", "line": None, "line_id": None}
-    assert not state["player"]["alive"] and not state.get("encounter")
+    # A real-time fight at once (D-41): he runs in, winds up and strikes on the clock; the stranger stands still.
+    assert state["fight"]["attackers"] == ["npc_bren_marr"] and not state.get("encounter")
+    assert run_until(state, lambda: not state["player"]["alive"], limit_ms=30_000)
+    assert state["player"]["health"] == 0 and not state.get("fight")
+    hits = [e for e in state["journal"] if e.get("kind") == "fight" and e["category"] in ("hit", "killed")]
+    assert [e["category"] for e in hits] == ["hit", "killed"]  # A spear: two blows kill the unarmoured stranger.
     bren = npc(state, "npc_bren_marr")
-    assert minds.math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 1.5
+    assert minds.math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 2.3
     assert bren["mind"]["job"]["kind"] == "watch"  # Attackers stand down once the stranger is dead.
 
 
@@ -198,21 +190,15 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     body = think(http, state)
     state = body["state"]
     hessa = minds.find(state["npcs"], "npc_hessa_marr")
-    assert hessa["mind"]["job"]["kind"] == "attack" and hessa["mind"]["said"]["text"]
+    assert hessa["mind"]["job"]["kind"] == "fight" and hessa["mind"]["said"]["text"]
     assert any(e.get("npc_id") == "npc_hessa_marr" for e in state["journal"])  # The player heard her.
-    for _ in range(200):  # Hessa punches (fists: no instant kills), so this takes a while.
+    for _ in range(200):  # Hessa punches (fists: 12 a blow), so this takes a while; the stranger stands still.
         if not state["player"]["alive"]:
             break
-        if state.get("encounter"):  # Face to face: the stranger just waits, round after round.
-            scripted.script.extend(answers("attack") for _ in encounter.missing_intents(state))
-            reply = http.post(f"/runs/{state['run_id']}/encounter/act", json={
-                "kind": "wait", "expected_version": state["event_seq"], "request_id": f"round-{state['event_seq']}"})
-            assert reply.status_code == 200, reply.text
-            state = reply.json()["state"]
-            continue
         scripted.script.extend(answers("watch") for _ in state["pending_minds"])
         state = think(http, state)["state"] if state["pending_minds"] else tick(http, state, 1000)
-    assert any(e.get("kind") == "npc_attack" and e["npc_id"] == "npc_hessa_marr" for e in state["journal"])
+    assert any(e.get("kind") == "fight" and e["npc_id"] == "npc_hessa_marr" and e["category"] == "hit"
+               for e in state["journal"])
     assert state["player"]["alive"] is False and state["player"]["health"] == 0
     assert http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
     traces = http.get(f"/runs/{state['run_id']}/traces").json()
@@ -309,16 +295,6 @@ def test_voices_fit_the_person_and_never_repeat():
     again = {k for k in minds.legal_actions(state, mara) if k.startswith("shout_for_help|")}
     assert chosen not in again
     assert not any(k.startswith("whistle") for k in minds.legal_actions(state, mara))
-
-
-def test_blows_are_a_repeatable_roll_on_weapon_and_skill():
-    first, second = unit_state(), unit_state()
-    results = []
-    for state in (first, second):
-        kade = npc(state, "npc_kade_east")
-        results.append([minds.strike(state, kade, t * 2500, [])["result"] for t in range(6)])
-    assert results[0] == results[1]
-    assert first["player"]["health"] == second["player"]["health"] < 100
 
 
 def test_victims_speak_in_the_first_person():

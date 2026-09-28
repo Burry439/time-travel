@@ -118,8 +118,7 @@ def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[s
     decided = decider.decide(*ask)
     out = {"decided": decided, "ask": ask, "happened": happened, "key": None, "context": None, "spoken": None}
     if decided.ok:
-        out["key"] = talk.decided_reply(draft, npc, decided.answers, ask[1],
-                                        seed=f"{run_id}:{draft['event_seq']}:{npc['id']}")
+        out["key"] = talk.decided_reply(draft, npc, decided.answers, ask[1])
         out["context"] = talk.voice_context(draft, npc, text, out["key"], decided.answers, happened)
         out["spoken"] = voice.speak(out["context"], talk.fallback_line(draft, npc, out["key"]), allowed=allowed)
     return out
@@ -204,7 +203,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                     telemetry.record(connection, run_id, "voice", line.model, line.prompt_version, line.latency_ms,
                                      line.status == "ok", line.error, line.input_tokens, line.output_tokens)
         if reply_ask and not (decided and decided.ok) and request.kind == "say" and not any(
-                e["kind"] in ("strike", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
+                e["kind"] in ("attack", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
             raise HTTPException(503, {"reason": "decider_failed", "message": (
                 f"{replier['name']} doesn't seem to hear you. (The decider couldn't be reached, so nothing changed.)")})
         with store.lock, store.db() as connection:
@@ -241,7 +240,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             for object_id, fields in people.get("objects_changed", {}).items():
                 draft["objects"][object_id].update(fields)
             draft.update(npcs=people["npcs"], player=people["player"], pending_minds=people["pending_minds"],
-                         encounter=people["encounter"], sim_time_ms=now + elapsed)
+                         encounter=people["encounter"], fight=people["fight"], sim_time_ms=now + elapsed)
             draft["journal"].extend(people["people_journal"])
             payload = store.round_payload(state, draft, record)
             payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)

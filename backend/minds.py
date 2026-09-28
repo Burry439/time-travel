@@ -18,7 +18,6 @@ from __future__ import annotations
 import copy
 import json
 import math
-import random
 from pathlib import Path
 
 import crafting
@@ -27,7 +26,6 @@ import npc_sim
 ROOT = Path(__file__).resolve().parents[1]
 _CARD_FILE = json.loads((ROOT / "data" / "content" / "npc_cards.json").read_text(encoding="utf-8"))
 CARDS: dict[str, dict] = _CARD_FILE["npcs"]
-WEAPONS: dict[str, dict] = _CARD_FILE["weapons"]
 _LINE_FILE = json.loads((ROOT / "data" / "content" / "lines.json").read_text(encoding="utf-8"))
 LINES: dict[str, dict] = _LINE_FILE["lines"]
 CUES: dict[str, list[str]] = _LINE_FILE["cues"]
@@ -46,7 +44,6 @@ MAX_RETHINKS = 2  # Automatic reconsiderations per person after their latest mem
 MEMORY_LIMIT = 12
 RUN_STEP_MS = 170
 WALK_STEP_MS = 400
-ATTACK_INTERVAL_MS = 2500
 GIVE_UP_CELLS = 28.0
 GATE_ZONE = (38, 58, 17)  # x from, x to, rows up to: the gate approach, where guards stop strangers.
 HALT_EVERY_MS = 180_000  # A stranger who was stopped isn't stopped again for a while.
@@ -67,7 +64,7 @@ EVIDENCE_SHIFT = 0.15  # Regard change for one clear piece of evidence (or, doub
 def card(npc: dict) -> dict:
     return CARDS.get(npc["id"], {"name": npc["name"], "role": npc["role"], "guard": False, "weapon": None,
                                  "combat": "no fighter", "personality": "", "values": "", "fears": "",
-                                 "authority": "", "skill": 0, "tones": ["frightened"], "relations": {},
+                                 "authority": "", "armor": "none", "tones": ["frightened"], "relations": {},
                                  "family": []})
 
 
@@ -214,10 +211,10 @@ def calm(state: dict) -> bool:
     """No one is reacting to the player: a safe point to rewind to (people planning their day don't count)."""
     if any(p["kind"] in REACTING for p in state.get("pending_minds", [])) or not state["player"].get("alive", True):
         return False
-    if state.get("encounter") and state["encounter"].get("reason") != "talk":
+    if state.get("encounter") and state["encounter"].get("reason") != "talk" or state.get("fight"):
         return False
     return not any((npc.get("mind") or {}).get("job") and npc["mind"]["job"]["kind"] in
-                   ("attack", "report", "flee", "approach") for npc in state["npcs"])
+                   ("attack", "fight", "report", "flee", "approach") for npc in state["npcs"])
 
 
 def _say(npc: dict, text: str, now: int, state: dict, journal: list[dict], line_id: str | None = None,
@@ -248,16 +245,20 @@ def _describe(state: dict, entry: dict) -> list[dict]:
         weapon = state["objects"].get(harm.get("weapon_id") or "", {}).get("name")
         how = f" with a {weapon}" if weapon else " with bare hands"
         verb = "threw a " + weapon + " at" if harm.get("method") == "thrown" and weapon else "attacked"
+        poured = harm.get("method") == "poured"
+        verb = "threw water over" if poured else verb
         outcome = {"killed": f"{victim} fell and did not get up.", "wounded": f"{victim} was hurt.",
-                   "missed": f"The blow missed {victim}."}[harm["result"]]
-        short = {"killed": f"killed {victim}", "wounded": f"attacked {victim}",
-                 "missed": f"attacked {victim}"}[harm["result"]]
-        severity = {"killed": 3, "wounded": 2, "missed": 1}[harm["result"]]
+                   "disabled": f"{victim} went down, badly hurt, and could not fight on.",
+                   "deflected": f"The blow glanced off {victim}'s armour.",
+                   "missed": f"{victim} was soaked." if poured else f"The blow missed {victim}."}[harm["result"]]
+        short = {"killed": f"killed {victim}", "disabled": f"struck down {victim}"}.get(harm["result"],
+                                                                                       f"attacked {victim}")
+        severity = {"killed": 3, "wounded": 2, "disabled": 3, "deflected": 1, "missed": 1}[harm["result"]]
         views.append({"kind": "violence", "victim": harm["target_id"],
                       "clear": {"summary": f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}",
                                 "short": short, "severity": severity},
                       "vague": {"summary": (f"There was a scuffle near the stranger and {victim} went down."
-                                            if harm["result"] == "killed" else
+                                            if harm["result"] in ("killed", "disabled") else
                                             f"There was a scuffle near the stranger; {victim} cried out."),
                                 "short": f"was in a fight with {victim}", "severity": max(1, severity - 1)}})
     claims = entry.get("property") or []
@@ -314,8 +315,8 @@ def perceive(state: dict, entry: dict) -> list[dict]:
         victim = find(state["npcs"], seen["victim"] or "")
         involved = {seen["victim"], *seen.get("audience", [])} - {None}
         for npc in state["npcs"]:
-            if not npc.get("alive", True):
-                continue
+            if not npc.get("alive", True) or npc.get("down"):
+                continue  # The dead and the knocked-down see nothing.
             views = []
             if math.dist(_cell(npc), here) <= SIGHT_CELLS and line_of_sight(_cell(npc), here):
                 views.append(math.dist(_cell(npc), here))
@@ -361,6 +362,10 @@ def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
             add_pending(state, npc["id"], "decide", memory["source"])
         if memory["kind"] in CRIME_KINDS and memory.get("clarity") == "clear":
             barked = _react_at_once(state, npc, memory, barked) or barked
+    import combat  # Violence clearly seen: guards (and an armed victim still standing) fight at once (D-41).
+    fighters = combat.responders(state, perceptions)
+    if fighters and state["player"].get("alive", True):
+        combat.start(state, fighters, state["sim_time_ms"], "violence")
 
 
 def _react_at_once(state: dict, npc: dict, memory: dict, barked: bool) -> bool:
@@ -626,9 +631,9 @@ def _set_job(npc: dict, job: dict | None, now: int) -> None:
         controller.update(source="routine", activity="look", path=[], next_at_ms=now + 1500, step_carry_ms=0)
     else:
         controller.update(source="job", path=[], step_carry_ms=0,
-                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack", "vouch")
+                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack", "vouch", "fight")
                           else "look")
-        if job["kind"] in ("encounter", "watch", "attack") or job.get("target") == "player":
+        if job["kind"] in ("encounter", "watch", "attack", "fight") or job.get("target") == "player":
             mind(npc)["facing_player"] = True  # Busy with the stranger: they keep an eye on them.
 
 
@@ -715,44 +720,15 @@ def apply_decision(state: dict, npc: dict, answers: dict, now: int, journal: lis
             _say(npc, calls[now // 1000 % len(calls)], now, state, journal)
         _set_job(npc, {"kind": "approach", "target": "player", "stop": 2.5 if action == "threaten" else 2.0,
                        "speed": "walk", "then": action, "line": line, "line_id": line_id}, now)
-    elif action == "attack":
+    elif action == "attack":  # A real-time fight: they come at the stranger with whatever they carry (D-41).
         if line:
             _say(npc, line, now, state, journal, line_id)
-        _set_job(npc, {"kind": "attack", "target": "player", "speed": "run", "next_at": now}, now)
+        import combat
+        combat.start(state, [npc["id"]], now, "decided")
     elif action == "help":
         _set_job(npc, {"kind": "approach", "target": target, "stop": 1.5, "speed": "walk", "then": "help",
                        "line": line, "line_id": line_id}, now)
     return {"npc_id": npc["id"], "action": choice, "feelings": dict(my_mind["feelings"])}
-
-
-def strike(state: dict, npc: dict, now: int, journal: list[dict]) -> dict:
-    """An NPC's blow against the player: a seeded roll on weapon and skill (no model call)."""
-    player = state["player"]
-    weapon = card(npc).get("weapon") or "fists"
-    stats = WEAPONS.get(weapon, WEAPONS["fists"])
-    skill = int(card(npc).get("skill", 0))
-    rng = random.Random(f"{state.get('run_id')}:{npc['id']}:{now}")
-    health = player.get("health", 100)
-    result = "missed"
-    if rng.random() < stats["hit"] + 0.05 * skill:
-        finishing = stats["kill"] + (0.1 if health <= 30 else 0.0)
-        damage = round(stats["damage"] * (0.8 + 0.4 * rng.random()))
-        health = 0 if rng.random() < finishing else max(0, health - damage)
-        result = "killed" if health == 0 else "wounded"
-    player.update(health=health, alive=health > 0)
-    text = {"missed": f"{npc['name']} swings the {weapon} at you and misses.",
-            "wounded": f"{npc['name']} strikes you with the {weapon}. You are wounded.",
-            "killed": f"{npc['name']} strikes you down with the {weapon}."}[result]
-    if result != "missed":
-        player.setdefault("injuries", []).append(f"struck by {npc['name']}'s {weapon}")
-    journal.append({"kind": "npc_attack", "npc_id": npc["id"], "result": result, "category": "attacked",
-                    "reason": text})
-    if not player["alive"]:
-        for other in state["npcs"]:
-            job = (other.get("mind") or {}).get("job")
-            if job and job.get("target") == "player":
-                _set_job(other, {"kind": "watch", "until": now + 20_000}, now)
-    return {"npc_id": npc["id"], "result": result}
 
 
 # --- Time passing ------------------------------------------------------------------------------
@@ -841,7 +817,8 @@ def _ambient(state: dict, npc: dict, now: int, blocked: set) -> None:
     my_mind = npc.get("mind")
     if not my_mind or my_mind.get("job") or not state["player"].get("alive", True):
         if my_mind is not None:
-            my_mind["facing_player"] = bool(my_mind.get("job")) and my_mind["job"]["kind"] in ("watch", "approach", "attack")
+            my_mind["facing_player"] = bool(my_mind.get("job")) and my_mind["job"]["kind"] in ("watch", "approach", "attack",
+                                                                                              "fight")
         return
     feelings = my_mind.get("feelings", {})
     distance = math.dist(_cell(npc), player_cell(state))
@@ -864,21 +841,22 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     working["npcs"] = npcs
     working["player"] = copy.deepcopy(state["player"])
     working["encounter"] = copy.deepcopy(state.get("encounter"))
+    working["fight"] = copy.deepcopy(state.get("fight"))
     journal: list[dict] = []
     blocked = crafting._blocked_cells(state)
     end = now + elapsed_ms
     talking = set((working.get("encounter") or {}).get("participants", []))
     for npc in npcs:
         job = (npc.get("mind") or {}).get("job")
-        if not npc.get("alive", True):
+        if not npc.get("alive", True) or npc.get("down"):
             continue
         if ((npc.get("mind") or {}).get("knows") or {}).get("notes") and npc["id"] not in talking:
             add_pending(working, npc["id"], "recollect", "the conversation ended")  # Remember it (D-36).
         if not job:
             _ambient(working, npc, end, blocked)
             continue
-        if job["kind"] == "encounter":
-            continue  # Face to face with the stranger: acts in rounds, not on the clock.
+        if job["kind"] in ("encounter", "fight"):
+            continue  # Face to face in rounds, or fighting (combat.tick moves them): not on the clock here.
         if job.get("wait_until", 0) > end:
             continue  # e.g. an attacker the stranger just walked away from, a moment before they give chase.
         if job["kind"] == "watch":
@@ -935,12 +913,15 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
             controller["activity"] = "work"
             _maybe_reconsider(working, npc, "tending the hurt person")
         elif job["kind"] == "attack":
-            encounter.join(working, npc, "attack", None, end)  # Blows happen in the encounter's rounds.
-    if not working.get("encounter"):
+            encounter.join(working, npc, "attack", None, end)  # An older chase arriving: it's a fight now.
+    import combat
+    combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Real-time fighting: wind-ups, blows, misses (D-41).
+    if not working.get("encounter") and not working.get("fight"):
         _gate_watch(working, npcs, end)  # Nobody needs halting while the stranger is already face to face with someone.
     encounter.prune(working)
     import village  # Agenda beats and meetings: the village's own life (village imports minds).
     village.schedule(working, npcs, end)
     state["pending_minds"] = working.get("pending_minds", state.get("pending_minds", []))
     state["encounter"] = working.get("encounter")
+    state["fight"] = working.get("fight")
     return npcs, journal, working["player"]

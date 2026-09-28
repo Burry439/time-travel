@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.5 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, D-39 to D-41)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -216,6 +216,8 @@ These appear in the result card, the journal, and the developer trace.
 > Each round, whatever you type is words, a deed, both, waiting, giving up or walking away (Esc). Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28). With several people, tabs choose whom you address. Over people's heads: "…" while they think, "!" when frightened, red crossed blades when they mean violence, a brief gold mark when they warm to you, and a health bar when hurt.
 >
 > Jev decides replies from code-built options, and the voice model says them in 1–3 sentences. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
+>
+> **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** punches whoever you face. Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
 
 - A click on a person opens the **dialogue bar**: their portrait and name, a scrolling exchange, and the one text line.
 - Other NPCs nearby are potential listeners. They join only if they decide to, or if the player addresses them by name.
@@ -339,7 +341,9 @@ These are declared simulation assumptions, not real-world engineering data. The 
 | Clay | Mouldable when wet; fired only in a kiln (none in the demo) |
 | Water | Liquid; fills open containers; conserved; 1 L weighs 1 kg; light objects can float on it |
 | Stone | Rigid, heavy; can be a fulcrum or weight; doesn't burn |
-| Fire | Needs a heat source (forge, hearth) or a complete ignition set: flint, a steel striker, and dry tinder. A missing piece is never inferred. |
+| Fire | Needs something already burning within reach (Mara's forge, Hessa's cooking fire, a fire the stranger made) or real sparks: flint struck on iron into dry tinder. A missing piece is never inferred. Fires burn down over simulated time (D-40). |
+| Heat | Nothing gets hot without something burning within reach. Heating takes time; hot things cool back over simulated time (boiling → hot → warm → cold). Only hot or boiling water can scald; cold or warm water only soaks (D-40). |
+| Armour | A mail shirt and helmet stop wooden points, stone, flint, fists and anything light and soft; heavy blows and scalding water still get through. A padded jerkin blunts fists (D-41). |
 
 ### 4.6 Physical defaults
 
@@ -559,6 +563,8 @@ These are hard rules. No model output bypasses them.
 | V7 | **Time.** Every step declares effort seconds within bounds. |
 | V8 | **Precedent.** A result must agree with earlier rulings (§6.5). A conflict is escalated or rejected, never silently committed. |
 | V9 | **Authority.** Physical resolution can't grant permissions, change beliefs or relationships, open the gate, or complete the objective. Those come only through NPC decisions and objective rules. |
+| V10 | **General laws, not recipes (D-40, D-41).** The judge proposes any change of state that makes sense ("the water in the bowl is now boiling"); nothing is programmed per recipe. Code keeps only general laws: heat and flame need something burning within reach, water is conserved, cold water can't scald, and mail stops what can't get through mail. A law overrides the judge (the result becomes blocked, missed or deflected, and the trace says why). |
+| V11 | **No dice (D-41).** Nothing in the simulation is a percentage roll. What makes sense works; what doesn't, doesn't. The judge rules on what would happen, code applies it, and the same situation always has the same outcome. |
 
 ### 6.3 The object record
 
@@ -637,8 +643,8 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Perception** is code: sight 10 cells with line of sight past buildings; the victim always knows.
 > - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
 > - **Decisions:** one batched Jev request per person, run in parallel. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
-> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address or attack them opens an encounter (D-28).
-> - **Blows** are a seeded code roll on weapon and skill (D-20), struck only in encounter rounds (D-28).
+> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address them opens an encounter (D-28); anyone who attacks starts a real-time fight (D-41).
+> - **Blows** are real time and fixed (D-41, replacing D-20's seeded roll): a wind-up per weapon, a hit only if the stranger is still in reach when it lands, fixed damage by weapon (a sword 55, a spear 50, fists 12; the stranger has 100). The stranger's fists do 15 to the unarmoured, 5 through padding, nothing through mail; at 25 or less someone is **down** (alive, out of the fight, sees nothing).
 > - **Shouts** carry 30 cells, once per event.
 > - **Reconsidering:** shaken people think again at most twice.
 > - **Thinking** runs through the client's one-at-a-time save loop (`/think`), alternating with clock beats so it can never stop time.
@@ -663,7 +669,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >   - After six episodes, the oldest fold into a **long memory**.
 >   - Jev and the voice both see it all next time, so people greet you by name, recall your trade and hold a lie against you.
 > - **Agendas** (`backend/village.py`, D-37).
->   - Every ~90 simulated seconds, on a shared 30 s tick, each free person is asked by Jev what to do next.
+>   - Jev asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
 >   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
 >   - The gate never drops below two guards.
 >   - The same errand isn't offered twice in a row.
@@ -675,7 +681,12 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >   - Nobody repeats a topic to the same person.
 >   - News becomes a "told by" memory, and a crime makes the listener think. Word of the stranger becomes hearsay, including their name, and rubs off on regard a little. Opinions warm or cool.
 >   - Within the stranger's sight, Luna voices the two lines as bubbles (`chatter_v1`, at most two chats a minute). Within 5 cells they go in the journal as overheard.
-
+>
+> **Added in 1.6 (D-39, D-41):**
+>
+> - **The moment itself is code.** A crime is answered in the same event: clear witnesses turn to face the stranger, anger or fear is set and held for 20 s, and the nearest victim or witness within 8 cells shouts in their own words (`lines.json` `caught`). Jev then decides what comes next.
+> - **Two thinking lanes.** Reactions (`decide`, `round`) never wait behind the village's own life or memory work, and thinking never pauses for the dialogue bar or a panel.
+> - **Fights** (`backend/combat.py`): guards who clearly see violence fight at once; anyone else decides (the smith may take up her hammer, the merchant runs). An attacker gives up beyond 28 cells. It ends when every attacker is down, dead or gone, the stranger dies, or gives up (a guard arrests them; otherwise they're left be).
 ### 7.1 Three layers of truth
 
 | Layer | Example |
@@ -714,7 +725,7 @@ Each potential witness receives a **perceived projection** of the event, meaning
 | Addressed by the player | That NPC, immediately |
 | Perceived a salient event (demonstration, theft, a shout, a new object shown) | Each witness |
 | An agreement is due, or its predicate was satisfied | The parties |
-| Activity beat, every ~30 s of simulation time | NPCs within ~20 cells of the player |
+| Something fresh for them (a memory, news, the stranger in view, a visit), at most every 20 s (D-39) | That person |
 | Otherwise | Authored routine (`data/npc_routines.json`, already built) |
 
 ### 7.5 How a decision is made
@@ -1189,6 +1200,9 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-41 | 2026-09-28 | **Real-time fights, and no dice anywhere.**<br><br>**The first strike** is an intent, judged like any physics (`judge_v9`). The judge sees each person's armour, their weapon and whether they're aware of the stranger. It rules missed, **deflected**, wounded, **disabled** (down, alive) or killed, with no luck involved. Code keeps the armour law (V10): fists and light, soft things can't get through mail.<br><br>**Then the fight is real time** (`combat.py`, a `fight` state on the clock). Guards who clearly saw the violence fight at once; others decide. Each attacker closes in and winds up a blow (weapon table in `npc_cards.json`: damage, wind-up, reach). The blow hits only if the stranger is still in reach when it lands. **Space** is a code-only punch (`POST /strike`, 0.7 s recovery). A punch or giving up is a `fight` event carrying the resulting fields. Blows on the clock arrive with `/explore`, so everything replays exactly.<br><br>**Encounters** keep words only: an attack intent turns the encounter into a fight. The stranger acts first in a round, then the others in the order they came.<br><br>**Removed:** the seeded initiative roll, the blow roll (hit, kill and damage chances), fighting `skill` on cards, extra blows for long actions (a long action in a fight now simply lets the clock run), and the weighted draw among Jev's plausible replies (its top choice is taken). | The user asked for fights that start with an intent ("I sneak up and stab him") and then go on in real time, where guards try to kill you, and where it's realistic: a wooden spear can't hurt a man in mail but easily kills anyone else; boiling water disables a guard, but the other guards will likely kill you. And: "we don't want probabilities … things that should work should work if they make sense … no DnD-style dice rolls." |
+| D-40 | 2026-09-28 | **Things that change, judged; code keeps the laws** (`judge_v8`, seed 8).<br><br>**A general `change` step:** heat, boil, cool, set alight, put out or pour, with no per-recipe rules. `poured` is a harm method judged by what is in the container. Fire from sparks or flame is a `make`.<br><br>**Laws by code only (V10):** heat and flame need something burning within reach; sparks need flint and iron into dry tinder; water is conserved; boiling takes time; cold water can't scald.<br><br>**State:** names follow it ("clay bowl of boiling water"). Things cool (boiling 2 min, hot 5 min, warm 10 min) and fires burn down with simulated time, carried as `objects_changed` on clock events.<br><br>**Heat in the world:** Mara's forge and Hessa's cooking fire are burning fixtures. | The user: "if I fill a bowl with water it becomes a bowl with water; if I boil that water it becomes a bowl with boiling water", and crafting must be dynamic: "there isn't something programmed that says you can boil water; it works because it makes sense." Live craft evals: 25/26, then 4/4 consistent on the borderline cases once `materials.json` stated the world facts about sparks from iron and cutting saplings with flint. |
+| D-39 | 2026-09-28 | **Reactions at once; Jev only when something happens.** A crime is answered by code in the same event (witnesses turn, feelings are set and held for 20 s, the nearest shouts). Jev then decides what comes next in a reactions lane that never waits behind village or memory work and never pauses for the bar. Agendas run on events, not a 90 s timer; a chance meeting with nothing to say is a nod by code. Inputs improved: feelings and regard in words, newest-first worst memory, first-person victims, theft is severity 2. | The user took Hessa's bowl and "nothing happened", then asked that Jev do nothing "until something happens". The delay came from Hessa's prompt anchoring her to calm, nothing reacting by code, the thinking lane pausing while the bar was open (one reaction waited 56 s), and theft at severity 1. `smoke_react.gd`: Hessa shouts at once and her decision arrives about 1.1 s later with the bar open. |
 | D-38 | 2026-09-28 | **One character sheet for both models.** Cards gain a mood, a voice (example lines, habits, a greeting, what they'd never say), goals, secrets, likes and dislikes, opinions of people they know, and tasks. `persona.py` builds one sheet that Jev and the voice both read, so nothing about a person is split between them any more. `voice_v3` asks for this person's voice, never a generic opener, and never copying the samples. | The user asked for "a distinct personality for each character". Jev never saw how someone talks or what persuades them; the voice never saw their goals or relationships. Measured with a Luna judge naming the speaker of 60 lines: the previous voice averaged about 74%, the new sheets about 79% (two runs each, noisy). Oren and Elin remain the hardest to tell apart. |
 | D-37 | 2026-09-28 | **The village has its own life.** Jev chooses each person's next move from options code builds, and people meet and pass on news, hearsay and opinions (§7). Chats are voiced only where the stranger can see them. The authored routines remain as the fallback. The decider gets its own per-run allowance (`MAX_DECIDER_CALLS_PER_RUN`, 1500), so ordinary life can't use up the writing allowance. Reactions to the stranger always go first and alone in `/think`. | The user asked for "a simulated world where Jev is in charge of most of it". Live, 10 simulated minutes took about 70 s and 60 Jev decisions (about $0.01): 21 tasks, 7–13 visits, 25 carry-ons, and people looking in on or confronting the stranger. Two fixes came from those runs: yes/no questions for "would they pass this on?" and "would they go and tell someone?" (Jev under-picks one important option in a long list, as in M5), and no repeated topics or errands. |
 | D-36 | 2026-09-28 | **Memory that lasts.** Notes per exchange, a name only if the stranger said it, doubted claims, one episode per finished conversation, and long memory. They are written by the voice (in the same call) and by `recollect_v1` in the thinking lane, stored in the NPC's mind (so events replay exactly), and shown to both models. The words of the current conversation are kept to 12 lines. | People forgot everything past their last 8 lines, and the person you spoke to kept no memory of it at all. Live memory eval: Hessa recalls "Ash … the healer from the south with the feverfew and willow bark" in a later conversation; Bren keeps the king's-cousin lie; after Hessa gossips, Bren knows the name he never heard. Talk evals still pass 12/12; voice median rose from 1.2 to 1.7 s, and cost is $0.00036 per exchange. |
@@ -1530,6 +1544,44 @@ Changes to this document: …
 - Most chat topics are still people's own worries. A theft victim tends to confront the thief herself rather than tell her brother.
 - The voice's added context costs about 0.5 s per line.
 - The Godot MCP still returns "Too many open files".
+
+### Retro: reactions, things that change, real-time fights (D-39 to D-41), 28 Sep 2026
+
+**Built:**
+
+- the moment of a crime answered by code, and a reactions lane (D-39);
+- heat, fire and pouring as judged changes of state, with the laws in code, cooling and burning down (D-40);
+- `combat.py`, `/strike`, the armour law, disabled and deflected results, and fights started by violence, by Jev's "attack" or by an attack intent in an encounter (D-41);
+- in Godot: Space to punch, a pulsing "!" during a wind-up, a red screen edge when struck, a knocked-down pose, "(down)" nameplates, and the clock kept running through a fight while you type.
+
+**Evidence:**
+
+- **Backend:** 136 tests pass. New: `test_reactions`, `test_heat` and `test_combat`:
+  - a blow lands if you stay and misses if you step away;
+  - a sword kills in two blows;
+  - the same fight always goes the same way;
+  - fists against mail, padding and no armour;
+  - it ends on everyone down or on escape;
+  - a wooden stake glances off Bren's mail but kills Tomas;
+  - boiling water disables Bren and Oren comes at you;
+  - the punch replays over HTTP.
+- **Encounter and arrest tests** were rewritten for no dice: a shove at a guard in a halt is a fight, and "I give up" is an arrest that replays.
+- **Godot:** all smoke tests pass, including the new `tools/smoke_fight.gd`. Hessa's blow lands while you stand still; the clock runs with the bar open; Space puts her down.
+- **Screenshots:** `docs/screenshots/fight_*.png`.
+- **Live craft evals (`judge_v9`):** three new harm cases (a stake against mail, a stake from behind, a punch at mail).
+  - Harm cases: 15/16. The one failure read "throw the water from the bowl" as throwing the bowl. The prompt now says contents thrown at someone are poured; scald and soak then passed 4/4 each.
+  - Full set: 29/29 on one run, for $0.03.
+  - The judge rules armour and surprise correctly by itself: deflected against mail, killed from behind, disabled by boiling water. The code law never had to override it.
+
+**Lessons:**
+
+- Once violence is real time, a punch and a clock beat raced each other; the punch now takes the movement lane.
+- Journal lines written straight into shared state don't replay. Fight lines go through the event's journal (`people_journal`, `journal_added`).
+
+**To watch:**
+
+- No flight AI yet: frightened villagers flee through Jev as before, not through the fight.
+- Next: the gate bar (a physical way in), reputation, and storylines.
 
 ---
 

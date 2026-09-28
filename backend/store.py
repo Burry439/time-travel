@@ -158,7 +158,7 @@ def initial_state(run: sqlite3.Row) -> dict:
 
 # Events the player causes. A request is stale only if the client hasn't seen the latest of
 # these; people thinking or the clock ticking in between never makes the player's request stale.
-PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "dev_gate", "objective_complete"}
+PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "fight", "dev_gate", "objective_complete"}
 
 
 def is_stale(state: dict, expected_version: int) -> bool:
@@ -200,6 +200,9 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
     elif event["kind"] == "talk":
         talk.apply_payload(state, payload)
         apply_people(state, payload)
+    elif event["kind"] == "fight":  # A punch or giving up (D-41): the resulting fields.
+        state.update({key: payload[key] for key in FIGHT_FIELDS if key in payload})
+        state["journal"].extend(payload["journal_added"])
     elif event["kind"] == "minds":
         state["npcs"] = payload["npcs"]
         state["player"] = payload["player"]
@@ -228,12 +231,19 @@ def apply_people(state: dict, payload: dict) -> None:
         state["safe_seq"] = payload["safe_seq"]
     if "encounter" in payload:
         state["encounter"] = payload["encounter"]
+    if "fight" in payload:
+        state["fight"] = payload["fight"]
+    if "barred_until" in payload:  # e.g. arrested after giving up a fight
+        state["barred_until"] = payload["barred_until"]
 
 
 # A round changes many things at once (anything a Try Something can, a reply, people moving on),
 # so its event carries the resulting fields rather than deltas.
-ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "pending_minds", "agreements", "sim_time_ms",
+ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "fight", "pending_minds", "agreements", "sim_time_ms",
                 "water_spilled_l", "last_action", "gate_open", "barred_until", "trades")
+
+
+FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_minds", "encounter")
 
 
 def round_payload(before: dict, after: dict, record: dict) -> dict:
@@ -251,7 +261,7 @@ def round_payload(before: dict, after: dict, record: dict) -> dict:
 
 def apply_round(state: dict, payload: dict) -> None:
     for key in ROUND_FIELDS:
-        state[key] = payload[key]
+        state[key] = payload.get(key)
     state["journal"].extend(payload["journal_added"])
     state.setdefault("learned", []).extend(payload["learned_added"])
     if payload.get("admitted"):
@@ -267,7 +277,7 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
     import crafting
     return {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
-            "encounter": probe.get("encounter"),
+            "encounter": probe.get("encounter"), "fight": probe.get("fight"),
             "objects_changed": crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])}
 
 
