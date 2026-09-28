@@ -69,6 +69,9 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
             spec["description"], spec["flags"], spec.get("length_m"), spec.get("capacity_l", 0.0),
             spec.get("feature"))
         record["owner_id"] = spec.get("owner_id")
+        for extra in ("burning", "no_sprite"):  # Lasting fires (the forge) and things drawn by a building's art.
+            if spec.get(extra):
+                record[extra] = spec[extra]
         if spec.get("water_l"):
             record.update(water_l=spec["water_l"], capabilities=["water_source"])
         objects[spec["id"]] = record

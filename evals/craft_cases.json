@@ -340,6 +340,111 @@
     "take",
     "make"
    ]
+  },
+  {
+   "id": "boil_at_cookfire",
+   "group": "heat",
+   "text": "hold the clay bowl of water over the cooking fire until the water boils",
+   "carry": [
+    "bowl_hessa"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0
+    }
+   },
+   "player_at": [
+    37,
+    53
+   ],
+   "expect": [
+    "success"
+   ],
+   "require_action": "change",
+   "require_change": {
+    "temperature": "boiling"
+   }
+  },
+  {
+   "id": "boil_on_the_road",
+   "group": "invalid_physics",
+   "text": "boil the water in the clay bowl",
+   "carry": [
+    "bowl_hessa"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0
+    }
+   },
+   "expect": [
+    "failed",
+    "blocked",
+    "unsupported"
+   ]
+  },
+  {
+   "id": "fire_flint_iron",
+   "group": "heat",
+   "text": "strike the flint against the rusty horseshoe to throw sparks into the dry grass, then feed it the fallen branch to make a small fire",
+   "carry": [
+    "flint_a",
+    "horseshoe_a",
+    "grass_a",
+    "branch_a"
+   ],
+   "player_at": [
+    45,
+    66
+   ],
+   "expect": [
+    "success"
+   ],
+   "require_flags_any": [
+    "heat_source"
+   ]
+  },
+  {
+   "id": "scald_the_guard",
+   "group": "harm",
+   "text": "throw the boiling water from the bowl into Bren's face",
+   "carry": [
+    "bowl_hessa"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0,
+     "temperature": "boiling"
+    }
+   },
+   "beside": "npc_bren_marr",
+   "expect": [
+    "success"
+   ],
+   "require_action": "harm",
+   "require_harm_result": [
+    "wounded",
+    "killed"
+   ]
+  },
+  {
+   "id": "soak_the_guard",
+   "group": "harm",
+   "text": "throw the water from the bowl into Bren's face",
+   "carry": [
+    "bowl_hessa"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0
+    }
+   },
+   "beside": "npc_bren_marr",
+   "expect": [
+    "success",
+    "failed"
+   ],
+   "forbid_wound": true
   }
  ]
 }

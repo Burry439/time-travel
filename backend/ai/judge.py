@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v7"
+PROMPT_VERSION = "judge_v8"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -66,7 +66,7 @@ class Transformation(BaseModel):
 class Harm(BaseModel):
     target_id: str
     weapon_id: str | None
-    method: Literal["melee", "thrown"]
+    method: Literal["melee", "thrown", "poured"]
     result: Literal["missed", "wounded", "killed"]
     injury: str
 
@@ -75,6 +75,15 @@ class Fill(BaseModel):
     container_id: str
     source_id: str
     litres: float
+
+
+class Change(BaseModel):
+    target_id: str
+    temperature: Literal["cold", "warm", "hot", "boiling"] | None
+    burning: bool | None
+    heat_source_id: str | None
+    pour_into_id: str | None
+    pour_litres: float | None
 
 
 class Result(BaseModel):
@@ -109,7 +118,7 @@ class OfferTrade(BaseModel):
 
 
 class Step(BaseModel):
-    action: Literal["make", "take", "transform", "harm", "fill", "demonstrate", "give", "install", "offer_trade",
+    action: Literal["make", "take", "transform", "harm", "fill", "change", "demonstrate", "give", "install", "offer_trade",
                     "other"]
     outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str
@@ -119,6 +128,7 @@ class Step(BaseModel):
     transformation: Transformation | None
     harm: Harm | None
     fill: Fill | None
+    change: Change | None
     demonstration: Demonstration | None
     give: Give | None
     install: Install | None
@@ -202,8 +212,8 @@ def _stub_judgement(context: dict) -> JudgeCall:
     """
     items = [i for i in context["available_items"] if i["portable"]]
     chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
-    empty = {"take_ids": [], "transformation": None, "harm": None, "fill": None, "demonstration": None, "give": None,
-             "install": None, "offer_trade": None}
+    empty = {"take_ids": [], "transformation": None, "harm": None, "fill": None, "change": None, "demonstration": None,
+             "give": None, "install": None, "offer_trade": None}
     if not chosen:
         step = Step(action="make", outcome="blocked", reason="You have nothing to work with.",
                     effort_seconds=0, new_object=None, **empty)

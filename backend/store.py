@@ -29,7 +29,7 @@ GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = 7
+SEED_VERSION = 8  # 8: the forge and the inn's cooking fire (heat).
 NPCS = [
     {"id": "npc_roderic_vale", "name": "Roderic", "role": "Gate captain", "x": 48, "y": 11},
     {"id": "npc_bren_marr", "name": "Bren", "role": "Gate guard", "x": 44, "y": 14},
@@ -218,6 +218,9 @@ def apply_people(state: dict, payload: dict) -> None:
     if "player" in payload:
         state["player"] = payload["player"]  # e.g. struck by someone during this time
     state["journal"].extend(payload.get("people_journal", []))
+    for object_id, fields in (payload.get("objects_changed") or {}).items():  # Cooling, fires burning down.
+        if object_id in state.get("objects", {}):
+            state["objects"][object_id].update(fields)
     state.setdefault("learned", []).extend(payload.get("learned_added", []))  # e.g. gossip the stranger overheard
     if "village" in payload:
         state["village"] = payload["village"]
@@ -262,8 +265,10 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     probe = dict(state)
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
+    import crafting
     return {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
-            "encounter": probe.get("encounter")}
+            "encounter": probe.get("encounter"),
+            "objects_changed": crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])}
 
 
 def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, dict]:

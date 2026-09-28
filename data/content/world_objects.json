@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough).",
+ "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art.",
  "since_seed": 5,
  "objects": [
   {
@@ -623,6 +623,47 @@
    "owner_id": null,
    "since_seed": 7,
    "capacity_l": 40.0
+  },
+  {
+   "id": "forge_mara",
+   "name": "Mara's forge",
+   "x": 17,
+   "y": 25,
+   "mass_kg": 400.0,
+   "materials": [
+    "stone",
+    "iron"
+   ],
+   "description": "A stone forge with a bed of glowing charcoal, always kept hot.",
+   "flags": [
+    "heat_source",
+    "light_source"
+   ],
+   "owner_id": "npc_mara_venn",
+   "since_seed": 8,
+   "feature": "fire",
+   "burning": true,
+   "no_sprite": true
+  },
+  {
+   "id": "cookfire_hessa",
+   "name": "cooking fire",
+   "x": 38,
+   "y": 52,
+   "mass_kg": 30.0,
+   "materials": [
+    "stone",
+    "wood"
+   ],
+   "description": "A ring of stones in the inn yard with a small fire burning under an iron hook.",
+   "flags": [
+    "heat_source",
+    "light_source"
+   ],
+   "owner_id": "npc_hessa_marr",
+   "since_seed": 8,
+   "feature": "fire",
+   "burning": true
   }
  ],
  "trees": {

@@ -238,6 +238,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             encounter.finish(draft, record, now, replies)
             elapsed = encounter.round_ms(record)
             people = store.advance_people(draft, elapsed)
+            for object_id, fields in people.get("objects_changed", {}).items():
+                draft["objects"][object_id].update(fields)
             draft.update(npcs=people["npcs"], player=people["player"], pending_minds=people["pending_minds"],
                          encounter=people["encounter"], sim_time_ms=now + elapsed)
             draft["journal"].extend(people["people_journal"])

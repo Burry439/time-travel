@@ -30,6 +30,9 @@ def world_with(case: dict) -> dict:
                                "geometry_version": app.GEOMETRY_VERSION})
     for object_id in case["carry"]:
         state["objects"][object_id]["holder_id"] = "player"
+    for object_id, fields in case.get("set", {}).items():  # e.g. water already in a bowl, and how hot it is
+        state["objects"][object_id].update(fields)
+        crafting.rename(state["objects"][object_id])
     if "player_at" in case:
         state["player"].update(x=case["player_at"][0], y=case["player_at"][1])
     if "beside" in case:
@@ -61,6 +64,15 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
     wanted = case.get("require_flags_any")
     if wanted and verdict["category"] == "success" and not set(wanted) & set(spec.get("flags", [])):
         problems.append(f"none of {wanted} in flags {spec.get('flags')}")
+    if case.get("require_harm_result") and verdict["category"] == "success" and             (verdict.get("harm") or {}).get("result") not in case["require_harm_result"]:
+        problems.append(f"harm result {(verdict.get('harm') or {}).get('result')} not in {case['require_harm_result']}")
+    if case.get("require_change") and verdict["category"] == "success":
+        changes = [st["change"] for st in steps if st.get("change")]
+        for key, value in case["require_change"].items():
+            if not any(c.get(key) == value for c in changes):
+                problems.append(f"no change with {key}={value}: {changes}")
+    if case.get("forbid_wound") and (verdict.get("harm") or {}).get("result") in ("wounded", "killed"):
+        problems.append(f"wounded: {(verdict.get('harm') or {}).get('result')}")
     if case.get("require_action") and verdict["category"] == "success" and verdict["action"] != case["require_action"]:
         problems.append(f"action {verdict['action']} is not {case['require_action']}")
     recorded = {claim["id"] for claim in verdict.get("property", [])}

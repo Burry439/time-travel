@@ -554,7 +554,7 @@ func _sync_display_now() -> void:
 	gate_opening.visible = bool(run_state["gate_open"])
 	for object_id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state["objects"][object_id]
-		if obj.has("scene_node"): # Map trees keep their authored art; see _apply_world_features.
+		if obj.has("scene_node") or obj.get("no_sprite", false): # Map trees and building parts keep their authored art.
 			continue
 		var sprite := get_node_or_null("M2Objects/" + str(object_id)) as Sprite2D
 		if sprite == null:
@@ -568,6 +568,8 @@ func _sync_display_now() -> void:
 		if sprite.has_meta("dynamic"):
 			_apply_object_texture(sprite, obj)
 		sprite.visible = obj["holder_id"] == null
+		# A fire that has burnt out goes cold and grey.
+		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) == "burnt out" else Color.WHITE
 		sprite.position = _cell_center(int(obj["x"]), int(obj["y"]))
 		if obj.get("installed_in") != null:
 			sprite.position.y -= 36.0 # Up in its fixture, not on the ground.

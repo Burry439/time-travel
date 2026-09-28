@@ -152,6 +152,8 @@ def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
             "carried_by_player": obj["holder_id"] == "player", "portable": "carry" in obj["capabilities"],
             "belongs_to": owner_label(state, obj) + (" (lent to the player)" if obj.get("lent_to") == "player" else ""),
             **({"capacity_l": obj["capacity_l"], "water_l": obj.get("water_l", 0.0)} if obj.get("capacity_l") else {}),
+            **({"temperature": obj["temperature"]} if obj.get("temperature", "cold") != "cold" else {}),
+            **({"burning": True} if obj.get("burning") else {}),
             **({"known_capabilities": obj["known_capabilities"]} if obj.get("known_capabilities") else {})}
 
 
@@ -256,7 +258,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     outcome, reason = judged["outcome"], judged["reason"].strip() or "Nothing happens."
     effort = max(0, min(MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
     key = judged.get("precedent_key")
-    proposed_change = any(judged.get(field) for field in ("new_object", "take_ids", "transformation", "harm", "fill",
+    proposed_change = any(judged.get(field) for field in ("new_object", "take_ids", "transformation", "harm", "fill", "change",
                                                           "demonstration", "give", "install", "offer_trade"))
     if outcome != "success" and proposed_change:
         notes.append(f"Ignored proposed changes because outcome is '{outcome}'.")
@@ -272,7 +274,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     if effort < 1 and action != "other":
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
-    handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill,
+    handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill, "change": _change,
                 "demonstrate": _demonstrate, "give": _give, "install": _install, "offer_trade": _offer_trade,
                 "drop": _drop}
     if action not in handlers:
@@ -383,7 +385,10 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
         notes.append(f"Mass {mass} kg clamped to {clamped} kg (consumed items weigh {input_mass} kg).")
         mass = clamped
     capabilities = [dict(c) for c in spec["capabilities"]]
-    support = {f for i in consumes + tools for f in available[i].get("flags", [])}
+    support = {f for i in consumes + tools for f in available[i].get("flags", [])
+               if f not in ("heat_source", "light_source") or available[i].get("burning")}
+    if can_kindle([available[i] for i in consumes + tools]):  # Sparks into tinder: a real way to make fire.
+        support |= {"heat_source", "light_source"}
     flags = _checked_flags(spec["flags"], materials, support, capabilities, notes)
     capacity = spec.get("capacity_l")
     if capacity and "container" not in flags:
@@ -393,11 +398,134 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
                 "description": spec["description"].strip()[:400], "materials": materials,
                 "mass_kg": round(mass, 3), "length_m": _positive(spec.get("length_m")),
                 "capacity_l": _positive(capacity), "rated_load_kg": _positive(spec.get("rated_load_kg")),
-                "flags": flags, "known_capabilities": capabilities[:6]}
+                "flags": flags, "known_capabilities": capabilities[:6],
+                **({"burning": True} if "heat_source" in flags else {})}  # Made alight: a fire.
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
     return _verdict("success", reason, notes, effort, action="make", consumed_ids=consumes, tool_ids=tools,
                     new_spec=new_spec, precedent_key=key,
                     property=_property(state, consumes, "used up") + _property(state, tools_not_ours, "used"))
+
+
+def can_kindle(things: list[dict]) -> bool:
+    """Something already burning, or flint and iron to strike sparks with dry tinder to catch them."""
+    if any(t.get("burning") for t in things):
+        return True
+    flint = any("flint" in " ".join(t.get("materials", [])).lower() or "flint" in t["name"] for t in things)
+    iron = any("ferromagnetic" in t.get("flags", []) or "iron" in t.get("materials", []) or
+               "steel" in t.get("materials", []) for t in things)
+    tinder = any("combustible" in t.get("flags", []) and t["mass_kg"] <= 1.0 for t in things)
+    return flint and iron and tinder
+
+
+HEAT_ORDER = ["cold", "warm", "hot", "boiling"]
+COOLING_MS = {"boiling": 120_000, "hot": 300_000, "warm": 600_000}  # How long each lasts off the fire.
+FIRE_MS_PER_KG = 600_000  # A made fire burns about ten minutes per kilogram of fuel...
+FIRE_MS_RANGE = (120_000, 1_800_000)  # ...between two and thirty minutes.
+
+
+def display_name(obj: dict) -> str:
+    """The name follows the state: "clay bowl", "clay bowl of water", "clay bowl of boiling water"."""
+    base = obj.get("base_name") or obj["name"]
+    heat = obj.get("temperature", "cold")
+    if obj.get("capacity_l") and obj.get("water_l", 0) > 0 and "water_source" not in obj.get("capabilities", []):
+        return f"{base} of {'' if heat == 'cold' else heat + ' '}water"
+    if obj.get("burning") and obj.get("feature") != "fire":
+        return f"burning {base}"
+    if heat in ("hot", "boiling") and not obj.get("capacity_l"):
+        return f"hot {base}"
+    return base
+
+
+def rename(obj: dict) -> None:
+    obj.setdefault("base_name", obj["name"])
+    obj["name"] = display_name(obj)
+
+
+def age_objects(state: dict, elapsed_ms: int, now: int) -> dict[str, dict]:
+    """Time passing for things (by code, no model): hot things cool back, fires burn down.
+    Returns {object_id: changed fields} for the event payload."""
+    changes: dict[str, dict] = {}
+    end = now + elapsed_ms
+    for obj in state.get("objects", {}).values():
+        fields = {}
+        heat = obj.get("temperature", "cold")
+        if heat != "cold" and obj.get("heated_at") is not None:
+            level, since = heat, obj["heated_at"]
+            while level != "cold" and end - since >= COOLING_MS[level]:
+                since += COOLING_MS[level]
+                level = HEAT_ORDER[HEAT_ORDER.index(level) - 1]
+            if level != heat:
+                fields.update(temperature=level, heated_at=None if level == "cold" else since)
+        if obj.get("burning") and obj.get("burns_until") is not None and end >= obj["burns_until"]:
+            fields.update(burning=False, burns_until=None,
+                          flags=[f for f in obj.get("flags", []) if f not in ("heat_source", "light_source")])
+            if obj.get("feature") == "fire" or obj.get("created_by") == "player" and not obj.get("capacity_l"):
+                fields.update(condition="burnt out", description=f"The cold ashes of what was a {obj['name']}.")
+        if fields:
+            probe = {**obj, **fields}
+            probe.setdefault("base_name", obj["name"])
+            fields.update(base_name=probe["base_name"], name=display_name(probe))
+            changes[obj["id"]] = fields
+    return changes
+
+
+def _change(state, judged, available, notes, reason, effort, key) -> dict:
+    """A thing changes in place (heat, cool, set alight, put out, pour). The judge says what; code keeps the laws:
+    heat and flame only from something really burning within reach, water conserved, time enough to boil."""
+    plan = judged.get("change")
+    if not plan:
+        return _unresolved(notes, "action 'change' without a change")
+    target = available.get(plan["target_id"])
+    if target is None:
+        return _unresolved(notes, f"the thing to change is not within reach: {plan['target_id']}")
+    fields: dict = {}
+    source = available.get(plan.get("heat_source_id") or "") or state["objects"].get(plan.get("heat_source_id") or "")
+    lit = source is not None and source.get("burning") and _distance(state, source["x"], source["y"]) <= m2.REACH_CELLS + 1
+    temperature = plan.get("temperature")
+    if temperature and HEAT_ORDER.index(temperature) > HEAT_ORDER.index(target.get("temperature", "cold")):
+        if not lit:
+            return _verdict("blocked", f"There's nothing burning here to heat the {target['name']} with.",
+                            notes + ["Blocked by code: heat needs something burning within reach."],
+                            action="change", precedent_key=key)
+        needed = 60 + int(240 * max(0.2, target.get("water_l", 0.0))) if temperature == "boiling" else 30
+        if effort < needed:
+            notes.append(f"Effort raised to {needed} s: water takes time to heat.")
+            effort = needed
+    if temperature:
+        fields.update(temperature=temperature, heated_at=state["sim_time_ms"] + effort * 1000
+                      if temperature != "cold" else None)
+    if plan.get("burning") is True and not target.get("burning"):
+        if not lit:
+            return _verdict("blocked", f"You have no flame to light the {target['name']} with.",
+                            notes + ["Blocked by code: nothing burning within reach."], action="change",
+                            precedent_key=key)
+        if "combustible" not in target.get("flags", []):
+            return _verdict("failed", f"The {target['name']} won't catch fire.", notes, max(1, effort),
+                            action="change", precedent_key=key)
+        span = max(FIRE_MS_RANGE[0], min(FIRE_MS_RANGE[1], int(target["mass_kg"] * FIRE_MS_PER_KG)))
+        fields.update(burning=True, burns_until=state["sim_time_ms"] + effort * 1000 + span,
+                      flags=_dedupe(target.get("flags", []) + ["heat_source", "light_source"]))
+    elif plan.get("burning") is False and target.get("burning"):
+        fields.update(burning=False, burns_until=None,
+                      flags=[f for f in target.get("flags", []) if f not in ("heat_source", "light_source")])
+    pour = []
+    litres = float(plan.get("pour_litres") or 0.0)
+    if litres > 0:
+        held = target.get("water_l", 0.0)
+        litres = round(min(litres, held), 3)
+        into = available.get(plan.get("pour_into_id") or "")
+        if into is not None:
+            room = round((into.get("capacity_l") or 0.0) - into.get("water_l", 0.0), 3)
+            litres = min(litres, max(0.0, room))
+            pour.append({"id": into["id"], "water_l": round(into.get("water_l", 0.0) + litres, 3),
+                         "temperature": target.get("temperature", "cold"), "heated_at": target.get("heated_at")})
+        fields["water_l"] = round(held - litres, 3)
+    if not fields and not pour:
+        return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
+    return _verdict("success", reason, notes, effort, action="change", precedent_key=key,
+                    change={"id": target["id"], "fields": fields, "pour": pour,
+                            "spilled_l": round(litres, 3) if litres > 0 and not pour else 0.0},
+                    property=_property(state, [target["id"]], "used"))
 
 
 def quick(state: dict, verb: str, object_id: str) -> dict:
@@ -508,6 +636,20 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     weapon = plan.get("weapon_id")
     if weapon is not None and weapon not in available:
         return _unresolved(notes, f"weapon is not at hand: {weapon}")
+    result = plan["result"]
+    if method == "poured" and weapon is None:  # Unnamed, but only one thing in hand holds water: that one.
+        held = [o["id"] for o in available.values() if o["holder_id"] == "player" and o.get("water_l", 0) > 0]
+        if len(held) == 1:
+            weapon = held[0]
+            notes.append(f"Poured from {weapon}, the only thing in hand holding water.")
+    if method == "poured":  # A law: only what's really hot can scald; cold water only soaks.
+        container = available.get(weapon) if weapon else None
+        if container is None or container.get("water_l", 0) <= 0:
+            return _verdict("blocked", "There's nothing in your hands to pour.", notes, action="harm", precedent_key=key)
+        if container.get("temperature", "cold") in ("cold", "warm") and result != "missed":
+            notes.append(f"Law: {container.get('temperature', 'cold')} water can't wound; result set to missed.")
+            result = "missed"
+            reason = f"The water only soaks {npc['name']}."
     distance = _distance(state, npc["x"], npc["y"])
     picked_up = []
     if method == "thrown":
@@ -534,8 +676,9 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             picked_up = [weapon]  # Picked up on the way.
     witnesses = [n["id"] for n in state["npcs"] if n["id"] != npc["id"] and n.get("alive", True)
                  and _distance(state, n["x"], n["y"]) <= WITNESS_RADIUS]
-    harm = {"target_id": npc["id"], "weapon_id": weapon, "method": method, "result": plan["result"],
-            "injury": plan["injury"].strip()[:200], "witnesses": witnesses}
+    harm = {"target_id": npc["id"], "weapon_id": weapon, "method": method, "result": result,
+            "injury": plan["injury"].strip()[:200] if result != "missed" else "soaked but unhurt"
+            if method == "poured" else plan["injury"].strip()[:200], "witnesses": witnesses}
     return _verdict("success", reason, notes, effort, action="harm", harm=harm, precedent_key=key,
                     take_ids=picked_up, property=_property(state, picked_up, "taken"))
 
@@ -751,6 +894,10 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
         new_objects.append(_object(f"made_{event_id}{suffix}", run_id, spec, px, py, "player",
                                    "player" if fits else None, text, event_id, consumed, verdict["tool_ids"]))
+        if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
+            span = max(FIRE_MS_RANGE[0], min(FIRE_MS_RANGE[1], int(spec["mass_kg"] * FIRE_MS_PER_KG)))
+            new_objects[-1].update(burning=True, feature="fire", capabilities=[], holder_id=None,
+                                   burns_until=state["sim_time_ms"] + verdict["effort_seconds"] * 1000 + span)
         # Water in anything built in stays in the new thing if it holds water; otherwise it spills.
         held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
         kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
@@ -804,11 +951,18 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         if harm["method"] == "thrown" and harm["weapon_id"]:
             x, y = _open_cells_near(state, npc["x"], npc["y"], cleared_obstacles(state), 1)[0]
             moved.append({"id": harm["weapon_id"], "x": x, "y": y})
+        if harm["method"] == "poured" and harm["weapon_id"]:  # Emptied over them.
+            spilled = state["objects"][harm["weapon_id"]].get("water_l", 0.0)
+            water = [{"id": harm["weapon_id"], "water_l": 0.0, "temperature": "cold", "heated_at": None}]
     elif verdict["action"] == "fill":
         fill = verdict["fill"]
         container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
         water = [{"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
                  {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)}]
+    elif verdict["action"] == "change":
+        change = verdict["change"]
+        water = [{"id": change["id"], **change["fields"]}] + change["pour"]
+        spilled = change["spilled_l"]
     elif verdict["action"] == "demonstrate":
         shown = verdict["demonstration"]
         known = {"id": shown["object_id"],
@@ -846,10 +1000,15 @@ def _apply_step(state: dict, deltas: dict) -> None:
             state["objects"][item_id].update(holder_id=f"in:{new_objects[0]['id']}", water_l=0.0)
         for obj in new_objects:
             state["objects"][obj["id"]] = obj
+            rename(obj)
     for item_id in deltas.get("taken_ids", []):
         state["objects"][item_id]["holder_id"] = "player"
-    for change in deltas.get("water", []):
-        state["objects"][change["id"]]["water_l"] = change["water_l"]
+    for change in deltas.get("water", []):  # Water moved, heated, poured; any change of state in place.
+        state["objects"][change["id"]].update({k: v for k, v in change.items() if k != "id"})
+        if not state["objects"][change["id"]].get("water_l"):
+            state["objects"][change["id"]].update(temperature=state["objects"][change["id"]].get("temperature", "cold")
+                                                  if not state["objects"][change["id"]].get("capacity_l") else "cold")
+        rename(state["objects"][change["id"]])
     if deltas.get("spilled_l"):
         state["water_spilled_l"] = round(state.get("water_spilled_l", 0.0) + deltas["spilled_l"], 3)
     if deltas.get("capabilities"):
