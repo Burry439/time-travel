@@ -1,6 +1,15 @@
 # Try Something
 
-Press **T** (or Enter) in the world and describe, in your own words, what you want to do with what you carry and whatever or whoever is within reach. You can describe several things in one go ("sharpen the branch into a spear with the flint, then stab Tomas with it"): they happen in order, and if one fails the rest do not happen. The chips show them; clicking one is optional. There are no command words. The AI judge decides what happens, and code checks the result before anything changes.
+**The mouse:**
+
+- **Hover** over anything to see what it is and what a click does.
+- **Left-click** to talk to someone or to pick something up. If it isn't yours, the label is red: that's stealing.
+- **Right-click** to look closer.
+- **Drag** things from your pack (bottom of the screen) onto people or things.
+
+Press **T** (or Enter), or click something, and the dialogue bar opens with one line: *"What do you say or do?"* Type in your own words. The game works out whether you are speaking, doing something, or both, and "I wait", "I give up" and "I walk away" just work.
+
+You can describe several things in one go ("sharpen the branch into a spear with the flint, then stab Tomas with it"). They happen in order, and if one fails the rest don't happen. The chips on the right point at things; clicking one is optional. There are no command words. The AI judge decides what happens, and code checks the result before anything changes.
 
 ## What you can do
 
@@ -43,16 +52,20 @@ Start a **new journey** to see new content; existing journeys keep their origina
 
 Your **journal's Leads** list what people have told you, where they've pointed you and what they've asked of you, and mark each one done when it is. When someone's view of you shifts, you'll see a small sign ("Darin looks more interested"), never numbers.
 
-If the guards catch you, **Yield** is usually wiser than fighting: they take back anything you stole, march you down the south road, and keep you from the gate for a while. You can still get in later; only real violence closes the gate for good.
+If the guards catch you, giving up ("I give up") is usually wiser than fighting: they take back anything you stole, march you down the south road, and keep you from the gate for a while. You can still get in later; only real violence closes the gate for good.
 
-Walk up to someone and press **E** to talk; when someone comes up to *you* (a guard halting you, someone confronting or attacking you) the same panel opens by itself. It works in **rounds**: each round you **Say it**, **Do it** (any action, like "hand him the plank" or "swing the spear at her"), **Wait**, or **Walk away**, and everyone else acts at the same moment: they decided their move before seeing yours, so a blow can land while someone is mid-sentence. Time only moves round by round while you're face to face; walking away from a fight gives an attacker a swing and they may chase you.
+Click someone to talk. When someone comes up to *you* (a guard halting you, someone confronting or attacking you), the same bar opens by itself.
+
+It works in **rounds**. Each round you type what you say or do ("hand him the plank", "swing the spear at her", or both at once), or wait, give up, or walk away (Esc). Everyone else acts at the same moment: they decided their move before seeing yours, so a blow can land while someone is mid-sentence.
+
+Time only moves round by round while you're face to face. Walking away from a fight gives an attacker a swing, and they may chase you.
 
 Type anything. Jev decides what they do (answer, ask you something, tell you what they know, send you to someone, lend you something, offer a deal, speak for you, refuse, send you away, fetch a guard) and Luna says it in their voice. People nearby overhear. Your journal lists what people told you and your deals.
 
 - **Words alone move people only a little.** Showing them something that works, giving them something, or someone speaking for you counts for much more.
 - **Deals:** some people will ask something of you (Tomas, Hessa, Darin, Mara) and, once they see it done, go and speak for you to the captain.
 - **The gate:** guards stop strangers. Only Captain Roderic can let you in, when he believes you're no threat and have a real reason: someone he trusts speaks for you, you work for someone with honest business, or you've shown him something of real value. He won't after a crime he knows about.
-- **Show something** in the talk panel lets you demonstrate a thing to that person and then ask what they think.
+- **Show something** by saying so ("float the needle in the bowl and show Darin"), or drag it onto them; then ask what they think.
 
 ## Set up the AI (once)
 
@@ -67,7 +80,7 @@ Type anything. Jev decides what they do (answer, ask you something, tell you wha
 
 Start a **Developer playtest**.
 
-- **Every result card** ends with a developer trace:
+- **Every result in the dialogue bar** has a *Details* link with the developer trace (and the bar says how your line was heard, e.g. "heard as do (code)"):
   - The model, latency, tokens and any errors
   - What the model proposed vs. what the validator committed, with a note for every change
   - Buttons to show the raw model JSON, the exact context sent to it, and the committed object
@@ -93,7 +106,7 @@ Start a **Developer playtest**.
 - **Backend:** `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`
 - **Godot flow, no key needed:**
   1. Start the backend with `$env:AI_MODE='stub'; ./tools/run_m0.ps1`.
-  2. Run `Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/smoke_craft.gd` (and `smoke_talk.gd` for conversations and the gate).
+  2. Run `Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/smoke_ui.gd` (and `smoke_talk.gd`, `smoke_craft.gd`). Leave out `--headless` and add `-- --capture` to save screenshots to `docs/screenshots/`.
   3. Restart the backend normally afterwards.
 - **Live judge quality** (costs about a cent per run): `backend/.venv/Scripts/python.exe evals/run_craft_evals.py --runs 3`. It runs 19 cases, including bad physics, ownership, felling, attacks and prompt injection, and writes a report to `evals/results/`.
 - **Live conversations** (about a tenth of a cent per exchange): `evals/run_talk_evals.py --runs 2`: pleading, injection, rudeness, knowledge boundaries, deals, evidence and crimes at the gate.

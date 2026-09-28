@@ -48,9 +48,9 @@ func _run() -> void:
 		return
 	if not check(not scene.get_node("M2Objects/branch_a").visible, "Picked-up object stayed on ground"):
 		return
-	scene.ui.open_bag()
+	scene.ui.open_inventory()
 	await process_frame
-	if not check(scene.ui.modal.visible and scene.ui.modal_kind == "bag", "Inventory did not open"):
+	if not check(scene.ui.modal.visible and scene.ui.modal_kind == "inventory", "Inventory did not open"):
 		return
 	if not check(Rect2(Vector2.ZERO, root.get_visible_rect().size).encloses(scene.ui.modal.get_global_rect()), "Inventory is outside the viewport"):
 		return
@@ -96,7 +96,6 @@ func _run() -> void:
 		return
 	# Screenshot-only camera locations; never sent to the backend or saved.
 	scene.gameplay_active = false
-	scene.ui.toast_time = 0
 	scene.player.position = Vector2(1360, 1690)
 	scene.camera.offset = Vector2.ZERO
 	scene.camera.reset_smoothing()

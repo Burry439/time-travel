@@ -1,5 +1,7 @@
 extends Node2D
 
+const UITheme := preload("res://scripts/ui/ui_theme.gd")
+
 const CELL := 32.0
 const WORLD_SIZE := Vector2(3072, 2304)
 const WALK_SPEED := 230.0 # 7.1875 cells/second, shared with the service.
@@ -27,8 +29,6 @@ var facing_row := 0
 var walk_time := 0.0
 var menu: PanelContainer
 var message: Label
-var hud: Label
-var hint: Label
 var trace_panel: PanelContainer
 var trace_text: Label
 var gate_button: Button
@@ -36,8 +36,8 @@ var victory_panel: PanelContainer
 var victory_route: Label
 var ui: Control
 var effects: Node2D
-var nearby_target := ""
-var nearby_ids: Array[String] = []
+var nearby_target := "" # The nearest thing, for E.
+var warm_until: Dictionary = {} # npc id -> seconds: show a warm mark over their head until then.
 var footstep_distance := 0.0
 var camera_zoom := 1.0
 var sound_volume := 0.7
@@ -177,11 +177,10 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	player_visual.revive()
 	camera.reset_smoothing()
 	menu.hide()
-	hud.show()
-	hint.show()
 	_spawn_npcs()
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	_sync_display()
+	ui.enter_run(state)
 	if int(state.get("geometry_version", 1)) < 2:
 		ui.notify("Earlier map restored. Begin a new journey to test building and tree collisions.")
 	if state["inside_city"]:
@@ -225,6 +224,12 @@ func _spawn_npcs() -> void:
 		shown_speech[str(npc["id"])] = str(said.key) if typeof(said) == TYPE_DICTIONARY else ""
 		var cue = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("cue")
 		shown_cues[str(npc["id"])] = str(cue.key) if typeof(cue) == TYPE_DICTIONARY else ""
+		var status := preload("res://scripts/ui/head_status.gd").new()
+		status.name = "Status"
+		status.game = self
+		status.npc_id = str(npc["id"])
+		status.position = Vector2(0, -126)
+		actor.add_child(status)
 		var nameplate := Label.new()
 		nameplate.name = "Nameplate"
 		nameplate.text = str(npc["name"])
@@ -309,15 +314,19 @@ func _cardinal_fallback(view: int) -> int:
 
 func _physics_process(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * camera_zoom, minf(1.0, delta * 10))
+	# With the dialogue bar open, the view shifts so you stay in sight above it.
+	var lift: float = (ui.bar.HEIGHT + 8.0) * ui.ui_scale * 0.5 / camera.zoom.y if ui.bar.visible else 0.0
+	camera.offset.y = lerpf(camera.offset.y, lift, minf(1.0, delta * 6.0))
 	var started := Time.get_ticks_usec()
-	_update_target()
+	_update_nearby()
 	_prof("update_target", started)
 	if in_encounter() and gameplay_active and not thinking_active and _minds_pending():
 		_flush_minds() # Everyone's next move is decided while the player chooses theirs.
-	if in_encounter() and gameplay_active and not request_busy and ui.modal_kind != "encounter" \
+	if in_encounter() and gameplay_active and not request_busy and not ui.bar.showing_encounter() \
 			and ui.modal_kind != "death":
-		ui.open_encounter()
-	if not gameplay_active or request_busy or ui.modal.visible or sync_error:
+		ui.close_modal_now()
+		ui.bar.open()
+	if not gameplay_active or request_busy or ui.blocks_movement() or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
 			return
 		player.velocity = Vector2.ZERO
@@ -341,7 +350,7 @@ func _physics_process(delta: float) -> void:
 	player.move_and_slide()
 	player.position = player.position.clamp(Vector2(10, 10), WORLD_SIZE - Vector2(10, 10))
 	var travelled := player.position.distance_to(before)
-	camera.offset = camera.offset.lerp(direction * 10.0, minf(1.0, delta * 14.0))
+	camera.offset = camera.offset.lerp(direction * 10.0 + Vector2(0, lift), minf(1.0, delta * 14.0))
 	if direction != Vector2.ZERO:
 		var visual_direction := player.get_real_velocity().normalized() if travelled > 0.15 else direction
 		facing_row = _facing_for(visual_direction)
@@ -361,6 +370,7 @@ func _physics_process(delta: float) -> void:
 	if cell != predicted_cell:
 		move_queue.append({"cell": cell, "running": is_running})
 		predicted_cell = cell
+		ui.note_cell(cell)
 		if not movement_sync_active:
 			_flush_moves()
 	if not movement_sync_active and int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0:
@@ -484,12 +494,6 @@ func _sync_display_now() -> void:
 	gate_shape.set_deferred("disabled", bool(run_state["gate_open"]))
 	gate_sprite.visible = not bool(run_state["gate_open"])
 	gate_opening.visible = bool(run_state["gate_open"])
-	var carried: Array[String] = []
-	for obj in run_state.get("objects", {}).values():
-		if obj["holder_id"] == "player":
-			carried.append(str(obj["name"]))
-	hud.text = "The gate lies to the north ↑" if not run_state["gate_open"] else "The city gate is open ↑"
-	ui.bag_button.text = "Bag %s  [I]" % carried.size()
 	for object_id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state["objects"][object_id]
 		if obj.has("scene_node"): # Map trees keep their authored art; see _apply_world_features.
@@ -510,8 +514,6 @@ func _sync_display_now() -> void:
 		if obj.get("installed_in") != null:
 			sprite.position.y -= 36.0 # Up in its fixture, not on the ground.
 	_apply_world_features()
-	if float(run_state["player"].get("health", 100)) < 100.0 and run_state["player"].get("alive", true):
-		hud.text += "\nYou are wounded"
 	for npc in run_state.get("npcs", []):
 		npc_targets[str(npc["id"])] = _cell_center(int(npc["x"]), int(npc["y"]))
 		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
@@ -521,13 +523,15 @@ func _sync_display_now() -> void:
 		var cue = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("cue")
 		if typeof(cue) == TYPE_DICTIONARY and shown_cues.get(str(npc["id"]), "") != str(cue.key):
 			shown_cues[str(npc["id"])] = str(cue.key)
+			if str(cue.get("kind", "")) in ["warmer", "trusting", "easier"]:
+				warm_until[str(npc["id"])] = Time.get_ticks_msec() / 1000.0 + 3.5
 			if not in_encounter(): # Face to face, the round log shows it.
 				ui.notify(str(cue.text))
 		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
 			plate.text = str(npc["name"]) + ("" if npc.get("alive", true) else " (dead)")
 			plate.position.y = -115.0 if npc.get("alive", true) else -58.0 # Down beside a body.
-	gate_button.text = "CLOSE GATE (TEST)" if run_state["gate_open"] else "OPEN GATE (TEST)"
+	gate_button.text = "Close gate (test)" if run_state["gate_open"] else "Open gate (test)"
 	trace_text.text = "RUN " + str(run_state["run_id"]).substr(0, 12) + "\n" \
 		+ "Mode: " + str(run_state["mode"]) + "\n" \
 		+ "Event: " + str(int(run_state["event_seq"])) + "\n" \
@@ -536,6 +540,8 @@ func _sync_display_now() -> void:
 		+ "Gate: " + ("open" if run_state["gate_open"] else "closed") + "\n" \
 		+ "Objective: " + ("complete" if run_state["inside_city"] else "active")
 	trace_panel.visible = run_state["mode"] == "developer" and trace_panel.visible
+	ui.note_cell(Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"])))
+	ui.refresh()
 
 
 func _minds_pending() -> bool:
@@ -560,11 +566,12 @@ func _react_to(before: Dictionary) -> void:
 				player_visual.hurt(1.0)
 			ui.notify(str(entry.reason))
 	# Someone came up to you (a halt, a confrontation, an attack): face them.
-	if in_encounter() and gameplay_active and not request_busy and ui.modal_kind != "encounter" \
+	if in_encounter() and gameplay_active and not request_busy and not ui.bar.showing_encounter() \
 			and ui.modal_kind != "death":
-		ui.open_encounter()
-	elif not in_encounter() and ui.modal_kind == "encounter" and not request_busy:
-		ui.encounter_ended()
+		ui.close_modal_now()
+		ui.bar.open()
+	elif not in_encounter() and ui.bar.showing_encounter() and not request_busy and not ui.bar.round_playing:
+		ui.bar.ended()
 	var was_alive: bool = before.get("player", {}).get("alive", true)
 	if was_alive and not run_state["player"].get("alive", true):
 		gameplay_active = false
@@ -611,32 +618,47 @@ func rewind() -> void:
 		ui.notify("Could not rewind the journey (HTTP %s)." % reply.status)
 
 
+## A parchment speech bubble over someone's head; long lines are clipped (the log has them in full).
 func _show_bubble(npc_id: String, text: String) -> void:
 	var actor := get_node_or_null("NPCs/" + npc_id) as Node2D
 	if actor == null:
 		return
-	var bubble := actor.get_node_or_null("Speech") as Label
+	var bubble := actor.get_node_or_null("Speech") as PanelContainer
 	if bubble == null:
-		bubble = Label.new()
+		bubble = PanelContainer.new()
 		bubble.name = "Speech"
-		bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		bubble.custom_minimum_size = Vector2(190, 0)
-		bubble.position = Vector2(-95, -178)
-		bubble.add_theme_font_size_override("font_size", 14)
-		bubble.add_theme_color_override("font_color", Color("182522"))
-		var box := StyleBoxFlat.new()
-		box.bg_color = Color(0.98, 0.95, 0.86, 0.95)
-		box.set_corner_radius_all(8)
-		box.set_content_margin_all(6)
-		bubble.add_theme_stylebox_override("normal", box)
+		bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bubble.add_theme_stylebox_override("panel", UITheme.frame_box("paper", 12, 2))
+		var words := Label.new()
+		words.name = "Words"
+		words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		words.custom_minimum_size = Vector2(200, 0)
+		words.add_theme_font_override("font", UITheme.serif())
+		words.add_theme_font_size_override("font_size", 14)
+		words.add_theme_color_override("font_color", UITheme.INK)
+		bubble.add_child(words)
+		var tail := Polygon2D.new()
+		tail.name = "Tail"
+		tail.color = UITheme.PARCHMENT.darkened(0.08)
+		tail.polygon = PackedVector2Array([Vector2(-8, -2), Vector2(8, -2), Vector2(-2, 12)])
+		bubble.add_child(tail)
 		actor.add_child(bubble)
-	bubble.text = text
+	(bubble.get_node("Words") as Label).text = text if text.length() <= 150 else text.left(147).strip_edges() + "…"
+	bubble.reset_size()
 	bubble.modulate = Color.WHITE
+	_place_bubble.call_deferred(bubble)
 	var fade := bubble.create_tween()
-	fade.tween_interval(4.0)
+	fade.tween_interval(4.5)
 	fade.tween_property(bubble, "modulate:a", 0.0, 0.6)
 
+
+func _place_bubble(bubble: PanelContainer) -> void:
+	if not is_instance_valid(bubble):
+		return
+	bubble.reset_size()
+	bubble.position = Vector2(-bubble.size.x * 0.5, -150.0 - bubble.size.y)
+	(bubble.get_node("Tail") as Polygon2D).position = Vector2(bubble.size.x * 0.5, bubble.size.y - 2)
 
 ## Map trees are authored scene art; hide the felled ones and let the player walk through.
 func _apply_world_features() -> void:
@@ -696,8 +718,6 @@ func _walk_along(path: Array) -> void:
 	if path.is_empty():
 		return
 	scripted_walk = true
-	ui.modal.hide()
-	ui.modal_kind = ""
 	for cell in path:
 		var goal := _cell_center(int(cell[0]), int(cell[1]))
 		while player.position.distance_to(goal) > 0.5:
@@ -938,7 +958,10 @@ func owner_name(obj: Dictionary) -> String:
 	return str(obj.owner_id)
 
 
-func _try_something(text: String, selected_ids: Array) -> void:
+## The one text line (GDD D-34): whatever the stranger typed goes to /act, which works out whether it is
+## speech, a deed, both, waiting, giving up or walking away. Rounds play back in the dialogue bar;
+## attempts outside a face-to-face walk, play out in the world, and land in the bar's log.
+func act(text: String, target: String, selected_ids: Array) -> void:
 	if request_busy or not gameplay_active or sync_error:
 		return
 	request_busy = true
@@ -947,43 +970,85 @@ func _try_something(text: String, selected_ids: Array) -> void:
 	if sync_error:
 		request_busy = false
 		return
-	ui.show_working(text)
-	var path := "/runs/" + str(run_state.run_id) + "/craft"
-	var body := {"text": text, "selected_ids": selected_ids,
-		"expected_version": run_state.event_seq, "request_id": _request_id("craft")}
+	ui.bar.wait(text)
+	var path := "/runs/" + str(run_state.run_id) + "/act"
+	var body := {"text": text, "selected_ids": selected_ids, "expected_version": run_state.event_seq,
+		"request_id": _request_id("act")}
+	if not target.is_empty():
+		body["target_id"] = target
 	var reply := await _api(HTTPClient.METHOD_POST, path, body, 150.0)
-	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500):
+	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500) and int(reply.status) != 503:
 		reply = await _api(HTTPClient.METHOD_POST, path, body, 150.0)
-	if reply.ok:
-		run_state = reply.data.state
-		last_trace = reply.data.get("trace")
-		var entry: Dictionary = run_state.last_action
-		await _walk_along(entry.get("walk", [])) # Go there first, as the server already decided.
-		_start_fall(entry) # Copy the falling thing before the sync hides it.
-		_sync_display()
-		_reveal_new_objects(entry)
-		_play_harm(entry)
-		if entry.category in ["success", "partial_success"]:
-			effects.pickup_sound.play()
-			player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
-			if typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY:
-				# Let the fall or the blow play out in view before the result card covers it.
-				ui.modal.hide()
-				ui.modal_kind = ""
-				await get_tree().create_timer(1.5).timeout
-		request_busy = false
-		ui.show_craft_result(entry, last_trace)
+	if not reply.ok:
+		await _act_failed(reply)
 		return
-	var problem := _reply_problem(reply)
+	var heard = reply.data.get("intent")
+	ui.bar.last_intent = heard if typeof(heard) == TYPE_DICTIONARY else {}
+	if typeof(reply.data.get("round")) == TYPE_DICTIONARY:
+		await _play_round_reply(reply.data, target)
+	elif reply.data.has("notice"):
+		request_busy = false
+		_accept_state(reply.data.state)
+		ui.bar.note(str(reply.data.notice))
+	else:
+		await _play_attempt_reply(reply.data)
+
+
+## An attempt outside a face-to-face: walk there, let it happen in the world, then the result.
+func _play_attempt_reply(data: Dictionary) -> void:
+	run_state = data.state
+	last_trace = data.get("trace")
+	var entry: Dictionary = run_state.last_action
+	await _walk_along(entry.get("walk", [])) # Go there first, as the server already decided.
+	_start_fall(entry) # Copy the falling thing before the sync hides it.
+	_sync_display()
+	_reveal_new_objects(entry)
+	_play_harm(entry)
+	if entry.category in ["success", "partial_success"]:
+		effects.pickup_sound.play()
+		player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
+		if typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY:
+			await get_tree().create_timer(1.2).timeout # Let the fall or the blow play out in view.
+	request_busy = false
+	ui.bar.result(entry, last_trace)
+
+
+## A round: walk over first if the server planned it, then the bar plays it back line by line.
+func _play_round_reply(data: Dictionary, target: String) -> void:
+	last_trace = data.get("trace")
+	var before_action = run_state.get("last_action")
+	var round: Dictionary = data.round
+	var walk: Array = round.get("walk", []) if typeof(round.get("walk")) == TYPE_ARRAY else []
+	run_state = data.state
+	if not walk.is_empty(): # Walked over to the person first.
+		await _walk_along(walk)
+	var entry = run_state.get("last_action")
+	var did: bool = typeof(entry) == TYPE_DICTIONARY and entry != before_action
+	if did:
+		await _walk_along(entry.get("walk", []))
+		_start_fall(entry)
+	request_busy = false
+	_sync_display()
+	played_action = entry if did else {}
+	# The bar plays the round back line by line; round_beat() gives each line its moment in the world.
+	if in_encounter():
+		ui.bar.open(target, "", round)
+	else:
+		ui.bar.ended(round)
+
+
+## Nothing happened: say why honestly, reconcile with the server, and hand the words back.
+func _act_failed(reply: Dictionary) -> void:
+	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+	var problem := str(detail.get("message")) if typeof(detail) == TYPE_DICTIONARY and detail.has("message") \
+		else _reply_problem(reply)
 	var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
 	if fresh.ok:
-		run_state = fresh.data
-		_sync_display()
+		_accept_state(fresh.data)
 	else:
 		sync_error = true
 	request_busy = false
-	ui.show_craft_error(problem, text)
-
+	ui.bar.problem(problem)
 
 func _reply_problem(reply: Dictionary) -> String:
 	if int(reply.status) == 0:
@@ -1016,6 +1081,7 @@ func retry_sprite(asset_id: String) -> void:
 
 func _save_settings() -> void:
 	var settings := ConfigFile.new()
+	settings.load("user://presentation.cfg") # Keep the UI settings and hints saved alongside.
 	settings.set_value("feel", "zoom", camera_zoom)
 	settings.set_value("feel", "volume", sound_volume)
 	settings.save("user://presentation.cfg")
@@ -1023,82 +1089,90 @@ func _save_settings() -> void:
 	AudioServer.set_bus_mute(0, sound_volume == 0.0)
 
 
-func _update_target() -> void:
+## Nameplates fade in as you come close (or hover); the nearest thing is what E acts on.
+func _update_nearby() -> void:
 	if run_state.is_empty():
 		return
-	var candidates: Array[Dictionary] = []
+	var hovered := str(ui.cursor.hover.get("id", ""))
+	var best := ""
+	var best_distance := 90.0
 	for id in run_state.get("objects", {}):
 		var obj: Dictionary = run_state.objects[id]
-		if obj.holder_id != null:
+		if obj.holder_id != null or str(obj.get("condition", "usable")) != "usable" or obj.has("scene_node"):
 			continue
 		var distance := player.position.distance_to(_cell_center(int(obj.x), int(obj.y)))
-		if distance <= 76:
-			candidates.append({"id": str(id), "distance": distance})
+		if distance < best_distance:
+			best_distance = distance
+			best = str(id)
 	for npc in run_state.npcs:
 		var npc_actor := get_node_or_null("NPCs/" + str(npc.id)) as Node2D
 		var npc_position := npc_actor.position if npc_actor else _cell_center(int(npc.x), int(npc.y))
 		var distance := player.position.distance_to(npc_position)
-		if distance <= 80:
-			candidates.append({"id": str(npc.id), "distance": distance})
+		if distance < best_distance:
+			best_distance = distance
+			best = str(npc.id)
 		var plate := get_node_or_null("NPCs/" + str(npc.id) + "/Nameplate") as Label
 		if plate:
-			plate.modulate.a = clampf((240 - distance) / 90, 0, 1)
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.distance < b.distance)
-	nearby_ids.clear()
-	for candidate in candidates:
-		nearby_ids.append(candidate.id)
-	if nearby_target not in nearby_ids:
-		nearby_target = nearby_ids[0] if not nearby_ids.is_empty() else ""
-	effects.has_target = not nearby_target.is_empty() and not ui.modal.visible
-	ui.prompt.text = ""
-	if not nearby_target.is_empty():
-		var target: Dictionary = run_state.get("objects", {}).get(nearby_target, {})
-		var verb := "Pick up"
-		if target.is_empty():
-			for npc in run_state.npcs:
-				if npc.id == nearby_target:
-					target = npc
-			verb = "Talk to" if target.get("alive", true) else "Look at"
-		elif (target.owner_id != null and target.owner_id != "player") or not "carry" in target.capabilities:
-			verb = "Inspect"
-		var target_actor := get_node_or_null("NPCs/" + nearby_target) as Node2D
-		effects.marker = target_actor.position if target_actor else _cell_center(int(target.x), int(target.y))
-		ui.prompt.text = "E  %s %s   ·   F  Inspect" % [verb, str(target.name)]
-		if nearby_ids.size() > 1:
-			ui.prompt.text += "   ·   Tab  Next"
-	ui.area.text = "THE CITY GATE" if player.position.y < 600 else "THE CRAFTSMEN'S ROW" if player.position.y < 1200 else "THE WAYSIDE INN" if player.position.y < 1800 else "THE SOUTH ROAD"
+			plate.modulate.a = 1.0 if hovered == str(npc.id) else clampf((240 - distance) / 90, 0, 1)
+	nearby_target = best
+	ui.hud.area.text = "THE CITY GATE" if player.position.y < 600 else "THE CRAFTSMEN'S ROW" if player.position.y < 1200 else "THE WAYSIDE INN" if player.position.y < 1800 else "THE SOUTH ROAD"
 
-
+## E: act on whatever is nearest, as a left click on it would.
 func _interact() -> void:
 	if nearby_target.is_empty() or request_busy:
 		return
-	var obj: Dictionary = run_state.get("objects", {}).get(nearby_target, {})
-	if not obj.is_empty() and "carry" in obj.capabilities and (obj.owner_id == null or obj.owner_id == "player"):
-		_quick_action("take", nearby_target)
-	elif obj.is_empty() and ui.npc_record(nearby_target).get("alive", false):
-		ui.open_encounter(nearby_target)
-	else:
-		ui.inspect(nearby_target)
+	_left_click(ui.cursor.describe(nearby_target))
 
+
+## Left click in the world: talk to a person, pick up (or steal) a thing, or point at anything else
+## in the dialogue bar. With words already in the line (or face to face), clicking points instead.
+func _left_click(hover: Dictionary) -> void:
+	if request_busy or not gameplay_active:
+		return
+	if hover.is_empty():
+		if ui.bar.visible and not ui.bar.showing_encounter() and ui.bar.line.text.strip_edges().is_empty():
+			ui.bar.close()
+		return
+	var id := str(hover.id)
+	if not hover.get("reachable", true):
+		ui.notify("%s is too far away. Walk closer." % str(hover.name).capitalize())
+		return
+	ui.hud.dismiss_hint("controls")
+	if ui.bar.visible and (ui.bar.showing_encounter() or not ui.bar.line.text.strip_edges().is_empty()):
+		if hover.kind == "person" and hover.action == "talk":
+			ui.bar.address(id)
+		else:
+			ui.bar.add_reference(id)
+		return
+	match str(hover.action):
+		"talk":
+			ui.bar.open(id)
+		"take":
+			ui.bar.close()
+			_quick_action("take", id)
+		"look":
+			ui.card.show_for(id)
+		_:
+			ui.bar.open(id)
 
 ## One exchange in a conversation: Jev decides the reply on the server and the voice phrases it.
 func say_to(npc_id: String, text: String) -> void:
-	await encounter_act("say", text, npc_id)
+	await act(text, npc_id, [])
 
 
 func in_encounter() -> bool:
 	return typeof(run_state.get("encounter")) == TYPE_DICTIONARY
 
 
-## One round: the stranger says or does something, waits, or walks away; everyone else's committed
-## actions resolve at the same moment on the server. The round is then played back here.
+## A plain round move without words: walking away (Esc), or waiting / giving up from the tools.
+## Face to face, everyone else's committed actions resolve at the same moment on the server.
 func encounter_act(kind: String, text: String, target: String) -> void:
 	if request_busy or not gameplay_active or sync_error:
 		return
 	request_busy = true
 	while movement_sync_active:
 		await get_tree().process_frame
-	ui.talk_wait(("You: “%s”" % text) if kind == "say" else text)
+	ui.bar.wait({"leave": "You walk away.", "wait": "You wait.", "yield": "You give up."}.get(kind, text))
 	var path := "/runs/" + str(run_state.run_id) + "/encounter/act"
 	var body := {"kind": kind, "text": text, "selected_ids": [], "expected_version": run_state.event_seq,
 		"request_id": _request_id("round")}
@@ -1108,36 +1182,9 @@ func encounter_act(kind: String, text: String, target: String) -> void:
 	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500) and int(reply.status) != 503:
 		reply = await _api(HTTPClient.METHOD_POST, path, body, 150.0)
 	if reply.ok:
-		last_trace = reply.data.get("trace")
-		var before_action = run_state.get("last_action")
-		var round: Dictionary = reply.data.get("round", {}) if typeof(reply.data.get("round")) == TYPE_DICTIONARY else {}
-		var walk: Array = round.get("walk", []) if typeof(round.get("walk")) == TYPE_ARRAY else []
-		run_state = reply.data.state
-		if not walk.is_empty(): # Walked over to the person first.
-			await _walk_along(walk)
-		var entry = run_state.get("last_action")
-		var did: bool = kind == "do" and typeof(entry) == TYPE_DICTIONARY and entry != before_action
-		if did:
-			await _walk_along(entry.get("walk", []))
-			_start_fall(entry)
-		request_busy = false
-		_sync_display()
-		played_action = entry if did else {}
-		# The panel plays the round back line by line; round_beat() gives each line its moment in the world.
-		if in_encounter():
-			ui.open_encounter(target if not target.is_empty() else "", "", round)
-		else:
-			ui.encounter_ended(round)
-		return
-	request_busy = false
-	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
-	var problem := str(detail.get("message")) if typeof(detail) == TYPE_DICTIONARY and detail.has("message") \
-		else _reply_problem(reply)
-	var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
-	if fresh.ok:
-		_accept_state(fresh.data)
-	ui.talk_error(problem)
-
+		await _play_round_reply(reply.data, target)
+	else:
+		await _act_failed(reply)
 
 var played_action: Dictionary = {} # The stranger's Try Something in the round being played back.
 
@@ -1168,6 +1215,7 @@ func round_played() -> void:
 	if typeof(last) == TYPE_DICTIONARY and last.get("arrested", false) and run_state["player"].get("alive", true):
 		request_busy = true # Nothing else happens while the guards march you off.
 		await get_tree().create_timer(1.8).timeout # Time to read what happened.
+		ui.bar.close()
 		ui.close_modal_now()
 		await ui.fade(1.0)
 		predicted_cell = Vector2i(int(run_state["player"]["x"]), int(run_state["player"]["y"]))
@@ -1186,6 +1234,7 @@ func round_played() -> void:
 		ui.show_death(_death_reason())
 
 
+## Pick up (or steal) and put down: decided by code on the server, which plans the walk there first.
 func _quick_action(verb: String, id: String) -> void:
 	if request_busy or not gameplay_active or sync_error:
 		return
@@ -1200,63 +1249,93 @@ func _quick_action(verb: String, id: String) -> void:
 	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/quick", body)
 	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500):
 		reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/quick", body)
-	request_busy = false
 	if reply.ok:
 		run_state = reply.data.state
+		var entry: Dictionary = run_state.last_action
+		await _walk_along(entry.get("walk", []))
+		request_busy = false
 		_sync_display()
-		ui.notify(str(run_state.last_action.reason))
-		if run_state.last_action.category == "success":
+		var claims: Array = entry.get("property", [])
+		if entry.category == "success" and not claims.is_empty():
+			var owner := str(ui.npc_record(str(claims[0].owner_id)).get("name", "someone"))
+			ui.notify("You take the %s. It belongs to %s." % [claims[0].name, owner])
+		else:
+			ui.notify(str(entry.reason))
+		if entry.category == "success":
 			effects.pickup_sound.play()
 			player_visual.play_gesture("pickup" if verb == "take" else "gesture")
-		if ui.modal_kind == "bag":
-			ui.open_bag()
-		elif ui.modal_kind == "inspect":
-			ui.close_modal()
+			if verb == "take":
+				ui.hud.show_hint("pack", "It's in your pack (bottom of the screen). Drag it onto someone or something to use it; right-click it to look closer.")
+		if ui.modal_kind == "inventory":
+			ui.open_inventory()
+		return
+	# Reconcile a lost response before allowing another world-changing action.
+	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+	var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
+	if fresh.ok:
+		run_state = fresh.data
+		_sync_display()
 	else:
-		# Reconcile a lost response before allowing another world-changing action.
-		request_busy = true
-		var fresh := await _api(HTTPClient.METHOD_GET, "/runs/" + str(run_state.run_id))
-		if fresh.ok:
-			run_state = fresh.data
-			_sync_display()
-		else:
-			sync_error = true
-		request_busy = false
-		ui.notify("Could not confirm the action. Your saved journey is preserved.")
-
+		sync_error = true
+	request_busy = false
+	ui.notify("Not now: deal with who's in front of you first." if typeof(detail) == TYPE_DICTIONARY
+		and str(detail.get("reason", "")) == "encounter_active" else "Could not confirm the action. Your saved journey is preserved.")
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and gameplay_active and not ui.modal.visible:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			camera_zoom = clampf(camera_zoom + (0.05 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -0.05), 0.75, 1.25)
-			_save_settings()
-	if not event is InputEventKey or not event.pressed or event.echo or run_state.is_empty():
+	if run_state.is_empty():
 		return
-	if event.keycode == KEY_ESCAPE:
-		if ui.modal.visible:
-			ui.close_modal()
-		else:
-			ui.open_pause()
-	elif event.keycode == KEY_F3 and run_state.mode == "developer":
-		trace_panel.visible = not trace_panel.visible
-	elif event.keycode == KEY_F4 and run_state.mode == "developer" and not ui.modal.visible:
-		open_traces()
-	elif (event.keycode == KEY_I and ui.modal_kind == "bag") or (event.keycode == KEY_J and ui.modal_kind == "journal"):
-		ui.close_modal()
-	elif not ui.modal.visible and gameplay_active:
-		match event.keycode:
-			KEY_E: _interact()
-			KEY_F:
-				if not nearby_target.is_empty():
-					ui.inspect(nearby_target)
-			KEY_I: ui.open_bag()
-			KEY_J: ui.open_journal()
-			KEY_T, KEY_ENTER, KEY_KP_ENTER: ui.open_try()
-			KEY_TAB:
-				if nearby_ids.size() > 1:
-					nearby_target = nearby_ids[(nearby_ids.find(nearby_target) + 1) % nearby_ids.size()]
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			if gameplay_active and not ui.modal.visible:
+				camera_zoom = clampf(camera_zoom + (0.05 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -0.05), 0.75, 1.25)
+				_save_settings()
+			return
+		if not gameplay_active or ui.modal.visible or menu.visible:
+			return
+		var hover: Dictionary = ui.cursor.pick(get_global_mouse_position())
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_left_click(hover)
+		elif event.button_index == MOUSE_BUTTON_RIGHT and not hover.is_empty():
+			ui.card.show_for(str(hover.id))
+		get_viewport().set_input_as_handled()
+		return
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	match event.keycode:
+		KEY_ESCAPE:
+			if ui.card.visible:
+				ui.card.hide()
+			elif ui.modal.visible:
+				ui.close_modal()
+			elif ui.bar.visible:
+				ui.bar.escape()
+			else:
+				ui.open_menu()
+		KEY_F3:
+			if run_state.mode == "developer":
+				trace_panel.visible = not trace_panel.visible
+		KEY_F4:
+			if run_state.mode == "developer" and not ui.modal.visible:
+				open_traces()
+		KEY_J:
+			if ui.modal_kind == "journal":
+				ui.close_modal()
+			elif gameplay_active:
+				ui.open_journal()
+		KEY_I:
+			if ui.modal_kind == "inventory":
+				ui.close_modal()
+			elif gameplay_active:
+				ui.open_inventory()
+		KEY_E:
+			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
+				_interact()
+		KEY_T, KEY_ENTER, KEY_KP_ENTER:
+			if gameplay_active and not ui.modal.visible:
+				ui.bar.open()
+		_:
+			return
 	get_viewport().set_input_as_handled()
-
 
 func _back_to_menu() -> void:
 	if request_busy:
@@ -1268,11 +1347,10 @@ func _back_to_menu() -> void:
 	if not run_state.is_empty():
 		await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/checkpoint")
 	request_busy = false
+	ui.leave_run()
 	run_state = {}
 	menu.show()
-	ui.modal.hide()
-	ui.modal_kind = ""
-	ui.prompt.text = ""
+	ui.leave_run()
 	effects.has_target = false
 	trace_panel.hide()
 	victory_panel.hide()

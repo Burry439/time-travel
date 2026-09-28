@@ -103,7 +103,7 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
             return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
         round_kind = {"both": "do"}.get(kind, kind)
         reply = rounds.play_round(run_id, rounds.EncounterAct(
-            kind=round_kind, text=request.text, target_id=target, selected_ids=request.selected_ids,
+            kind=round_kind, text=intent.unquote(request.text) if kind == "say" else request.text, target_id=target, selected_ids=request.selected_ids,
             expected_version=request.expected_version, request_id=request.request_id, speech=kind == "both"),
             background)
     elif kind in ("wait", "yield", "leave"):

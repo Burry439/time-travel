@@ -74,44 +74,45 @@ func _run() -> void:
 	if not check(await walk_to(36, 53), "Could not walk to the inn yard"):
 		return
 
-	# E on a living person opens the encounter panel.
-	scene.nearby_target = "npc_hessa_marr"
-	scene._interact()
+	# A left click on a living person opens the dialogue bar with them.
+	scene._left_click(scene.ui.cursor.describe("npc_hessa_marr"))
 	await process_frame
-	if not check(scene.ui.modal_kind == "encounter" and scene.ui.talk_npc == "npc_hessa_marr", "Panel did not open"):
+	if not check(scene.ui.bar.visible and scene.ui.bar.target == "npc_hessa_marr", "Dialogue bar did not open"):
 		return
-	scene.ui.talk_input.text = "Good day. Is this your inn?"
-	scene.ui._submit_talk()
+	scene.ui.bar.line.text = "“Good day. Is this your inn?”"
+	scene.ui.bar.submit()
 	await process_frame
-	if not check(scene.ui.talk_waiting, "No thinking indicator while waiting"):
+	if not check(scene.ui.bar.waiting, "No thinking indicator while waiting"):
 		return
 	await settle()
 	var hessa: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	var turns: Array = hessa.get("mind", {}).get("talk", [])
 	if not check(turns.size() == 2 and turns[0].text == "Good day. Is this your inn?", "Exchange not recorded: " + str(turns)):
 		return
-	if not check(scene.ui.modal_kind == "encounter" and not scene.ui.talk_waiting and scene.ui.talk_input.editable
-			and scene.in_encounter(), "Panel did not come back ready for the next line"):
+	if not check(scene.ui.bar.showing_encounter() and not scene.ui.bar.waiting and scene.ui.bar.line.editable
+			and scene.in_encounter(), "Bar did not come back ready for the next line"):
 		return
 	if not check(scene.run_state.journal[-1].kind == "talk" or scene.run_state.journal.any(
 			func(e: Dictionary) -> bool: return e.get("kind") == "talk"), "No journal entry for the exchange"):
 		return
 	if not check(typeof(scene.last_trace) == TYPE_DICTIONARY and scene.last_trace.kind == "talk", "No developer trace"):
 		return
-	var bubble := scene.get_node_or_null("NPCs/npc_hessa_marr/Speech") as Label
-	if not check(bubble != null and bubble.text == str(turns[1].text), "No speech bubble for the reply"):
+	var bubble := scene.get_node_or_null("NPCs/npc_hessa_marr/Speech/Words") as Label
+	if not check(bubble != null and str(turns[1].text).begins_with(bubble.text.trim_suffix("…")), "No speech bubble for the reply"):
 		return
 	await screenshot("encounter-talk")
 
-	# Closing the panel face to face is walking away: the encounter ends, then the panel closes.
-	scene.ui.close_modal()
-	if not check(await settle() and not scene.in_encounter() and scene.ui.encounter_over, "Walking away did not end it"):
+	# Esc face to face is walking away: the encounter ends, then Esc closes the bar.
+	scene.ui.bar.escape()
+	if not check(await settle() and not scene.in_encounter() and scene.ui.bar.encounter_over, "Walking away did not end it"):
 		return
-	scene.ui.close_modal()
-	scene.ui.inspect("npc_hessa_marr")
-	if not check(scene.ui.modal_kind == "person", "Inspect did not open"):
+	scene.ui.bar.escape()
+	if not check(not scene.ui.bar.visible, "The bar did not close"):
 		return
-	scene.ui.close_modal()
+	scene.ui.card.show_for("npc_hessa_marr")
+	if not check(scene.ui.card.visible and scene.ui.card.shown_id == "npc_hessa_marr", "Inspect card did not open"):
+		return
+	scene.ui.card.hide()
 	scene.ui.open_journal()
 	scene.ui.close_modal()
 
@@ -122,29 +123,31 @@ func _run() -> void:
 	if not check(await walk_to(48, 16), "Could not walk up to the gate"):
 		return
 	for i in 300:
-		if scene.ui.modal_kind == "encounter":
+		if scene.ui.bar.showing_encounter():
 			break
 		await create_timer(0.1).timeout
-	if not check(scene.ui.modal_kind == "encounter" and scene.run_state.encounter.reason == "halt",
+	if not check(scene.ui.bar.showing_encounter() and scene.run_state.encounter.reason == "halt",
 			"No guard stopped the stranger at the gate"):
 		return
 	var opening: Array = scene.run_state.encounter.log
 	if not check(not opening.is_empty() and str(opening[0].text).contains("“"), "The halt line is not in the log"):
 		return
 	# A round where you act (the stub judge rules on it) while the guard, listening, answers what happened.
-	scene.ui.talk_input.text = "hand the guard a stone"
-	scene.ui._submit_do()
+	scene.ui.bar.line.text = "hand the guard a stone"
+	scene.ui.bar.submit()
 	if not check(await settle() and scene.run_state.encounter.round == 2, "The Do round did not resolve"):
 		return
 	var kinds: Array = scene.run_state.last_round.entries.map(func(e: Dictionary) -> String: return str(e.kind))
-	if not check("do" in kinds, "The round has no action of yours: " + str(kinds)):
+	if not check("do" in kinds and scene.ui.bar.last_intent.get("kind") == "do", "The round has no action of yours: " + str(kinds)):
 		return
-	scene.ui._submit_simple("wait")
+	scene.ui.bar.line.text = "I wait"
+	scene.ui.bar.submit()
 	if not check(await settle() and scene.run_state.encounter.round == 3, "The Wait round did not resolve"):
 		return
 	await screenshot("encounter-halt")
 	# Yielding to a guard: arrested, marched down the south road, barred from the gate for a while.
-	scene.ui._submit_simple("yield")
+	scene.ui.bar.line.text = "I give up"
+	scene.ui.bar.submit()
 	if not check(await settle() and not scene.in_encounter() and scene.run_state.last_round.get("arrested", false),
 			"Yielding to the guard did not end in an arrest"):
 		return
@@ -152,7 +155,7 @@ func _run() -> void:
 		if not scene.request_busy:
 			break
 		await create_timer(0.1).timeout
-	if not check(scene.predicted_cell == Vector2i(48, 66) and scene.ui.modal_kind == "", "Not marched to the south road"):
+	if not check(scene.predicted_cell == Vector2i(48, 66) and not scene.ui.bar.visible, "Not marched to the south road"):
 		return
 	await screenshot("encounter-arrested")
 

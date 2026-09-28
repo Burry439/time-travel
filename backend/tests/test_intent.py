@@ -13,7 +13,10 @@ def test_obvious_cases_need_no_model():
     assert intent.obvious("I wait") == "wait"
     assert intent.obvious("pick up the flint shard") == "do"
     assert intent.obvious("I carefully lever the beam up") == "do"
+    assert intent.obvious("swing the spear at him") == "do"
+    assert intent.obvious("hand Hessa the gourd and tell her it's full") is None  # Maybe both: the decider says.
     assert intent.obvious("Good day, I'm Ash, a traveller.") is None  # Needs judgement.
+    assert intent.unquote("“Good day to you.”") == "Good day to you." and intent.unquote("I wait") == "I wait"
 
 
 def test_ambiguous_text_asks_the_decider_and_falls_back_honestly(monkeypatch):

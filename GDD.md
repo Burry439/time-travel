@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.2 · 27 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 onward)
+**Version 1.4 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -153,25 +153,42 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 ### Controls
 
-Existing controls stay. New inputs are marked ★.
+> **Built (D-35).** Mouse first; the keyboard still works for everything.
 
 | Input | Action |
 | --- | --- |
+| Hover | The thing's name and what a left click does ("Talk to Hessa", "Pick up the flint shard", **"Steal Darin's lodestone"** in red, "Use the gate beam"); the cursor badge changes to match; farther than about 14 steps shows "too far" |
+| Left click | Talk to a person, pick up a thing (stealing if it isn't yours), or point at anything else in the dialogue bar. You walk there first. |
+| Right click | The inspect card |
+| Drag from the pack | Onto a person ("give the gourd to Hessa"), a thing ("use the lodestone on the nail", "fill the gourd at the trough"), another item, or the ground (put it down). It writes the line; you check it and press Enter. |
+| T or Enter | Open the dialogue bar |
+| E | Act on the nearest thing, as a left click would |
 | WASD / arrows, Shift | Move, run |
-| E | Contextual quick action: pick up a loose public object; **★ Talk** when the target is a person |
-| F | Inspect the highlighted target |
-| **★ T** or **★ Enter** | **Try Something**: open the intention box |
-| Tab | Cycle nearby targets |
-| I / J | Belongings / journal |
-| Esc | Close a panel or pause |
-| F3 | Developer dock (developer mode only) |
+| I / J | Everything you carry / the journal |
+| Esc | Walk away, close, or the menu |
+| F3 / F4 | Developer dock / AI traces (developer mode only) |
 
-### The Try Something box
+Tab cycling and a separate inspect key are gone. The HUD always shows the area, the objective, open leads, the pack (painted icons, a mark on things you made, weight), your wounds and whether you're barred from the gate. Notices stack at the top and are kept in the journal. First-time hints show once; Menu has Controls and Settings (interface size, text size, camera, sound).
 
-- A single text field: *"What do you want to do?"*
-- **Reference chips.** Nearby objects, people, and carried items appear as clickable chips. Clicking one inserts a reference, like `[the lodestone]`. Chips are optional: the interpreter also resolves plain words like "that rope" or "the bowl I'm carrying." They help with ambiguity, but players never need them.
-- Submitting pauses the simulation clock. A **working state** replaces the box: a short line such as "You set to work…" and a subtle animation. Waiting for a model never advances in-world time.
-- The result card shows the outcome, the reason, and what changed (new object, item used up, time spent).
+### The dialogue bar (one way to act)
+
+> **Built (D-34, D-35).** Talking, Try Something and waiting are one panel with **one text line** and no action buttons.
+
+- **Layout.** A parchment panel along the bottom. It shows the addressed person's painted portrait (or the thing you pointed at, or you), their role and condition, and what they did last round. Beside that are a log and a single line, *"What do you say or do?"* On the right is "Point at something": what you carry, what's within reach, and people nearby. While it is open, the view shifts up so you stay in sight.
+- **Whatever you type goes to `/act`, which decides what it is:**
+  - speech ("Good day", or anything in quotes);
+  - a deed ("lever the beam up");
+  - both ("hand Hessa the gourd and tell her it's full");
+  - waiting, giving up or walking away ("I wait", "I give up", "I walk away").
+
+  Code settles the obvious cases instantly. Anything else takes one Jev request with two yes/no beliefs (speaks? acts?), about 1.3 s. The typed text is always data.
+- **Where it goes:**
+  - Face to face, it becomes that kind of round.
+  - Alone, speech opens a conversation with whoever you addressed or whoever is nearest within earshot, or tells you honestly "Nobody is close enough to hear you."
+  - A deed is a Try Something. Its result appears inline in the log: title, reason, what changed, and a card with the painted picture of anything made.
+- **Reference chips** are optional; clicking one (or a thing in the world while you type) inserts its name and sends it along as meant.
+- Waiting for a model never advances in-world time. The hint line narrates it ("You set to work…", "You and Bren act at the same moment…").
+- Esc or × walks away face to face; otherwise it closes the bar.
 
 ### Outcome categories
 
@@ -194,31 +211,37 @@ These appear in the result card, the journal, and the developer trace.
 
 ### Talking
 
-> **Built (D-22, D-28).** Talking happens in the **encounter panel**, which opens when you press E on someone and on its own when someone addresses you (a halt, a confrontation, a threat, a demand, an attack). It shows who you are facing and a log, round by round.
+> **Built (D-22, D-28, D-34).** Talking happens in the **dialogue bar**. It opens when you click someone, and on its own when someone addresses you (a halt, a confrontation, a threat, a demand, an attack). It shows who you are facing and a log, round by round.
 >
-> Each round you **Say** something, **Do** something (a Try Something), **Wait**, or **Walk away**. Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28).
+> Each round, whatever you type is words, a deed, both, waiting, giving up or walking away (Esc). Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28). With several people, tabs choose whom you address. Over people's heads: "…" while they think, "!" when frightened, red crossed blades when they mean violence, a brief gold mark when they warm to you, and a health bar when hurt.
 >
 > Jev decides replies from code-built options, and the voice model says them in 1–3 sentences. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
 
-- E on a person opens the **conversation panel**: the NPC's portrait and name, a scrolling exchange, and a text field.
+- A click on a person opens the **dialogue bar**: their portrait and name, a scrolling exchange, and the one text line.
 - Other NPCs nearby are potential listeners. They join only if they decide to, or if the player addresses them by name.
 - Speech is an event. Anything said can be overheard and repeated, with the original speaker attributed.
 - Showing something is an action inside a conversation ("I show her the floating needle"). It goes through Try Something rules, and witnesses perceive the observable result.
 
 ### Journal
 
-An automatic memory aid, never an omniscient codex. Its tabs:
+An automatic memory aid, never an omniscient codex. **Built (D-35)**, a book with these tabs:
 
-- **Objective**: always "Get inside the city."
-- **Attempts**: every intention you submitted, with its original wording, outcome, and reason.
-- **Things & creations**: current and past items, including their provenance.
-- **People**: who you've met and what they said, as attributed claims ("Darin said the stone is a curiosity").
+- **Leads**: the objective, open leads and done ones.
+- **What people said**: attributed claims, grouped by person ("Darin said the stone is a curiosity").
+- **Attempts**: what you tried, with its wording and result.
+- **Things made**: your creations with picture, provenance and known abilities.
+- **Map**: ink on parchment from the world geometry.
+  - Fog of war: only places you've walked near, remembered per journey on the client.
+  - People you've met, where you last saw them.
+  - A red ring on whoever an open lead points to.
+  - Nothing is marked in the world itself.
+- **Notices**: every notice this session.
 
 It never reveals hidden NPC beliefs, trust scores, or events the player couldn't know about.
 
 ### Inspect
 
-Shows visible facts: name, what it's made of, rough size and weight, condition, who it belongs to, and whether you're carrying it. For created objects it adds **provenance** ("Made by you at the inn from an iron needle, a wood sliver, a bowl, and water") and **known/untested capabilities** ("Points the same direction every time: observed", "Might work at night: untested").
+Right click opens a parchment **inspect card** beside the cursor (D-35). It shows visible facts: name, what it's made of, rough size and weight, condition, who it belongs to, and whether you're carrying it. It ends with what a left click would do (in red for stealing). For created objects it adds **provenance** ("Made by you at the inn from an iron needle, a wood sliver, a bowl, and water") and **known/untested capabilities** ("Points the same direction every time: observed", "Might work at night: untested").
 
 ---
 
@@ -745,8 +768,22 @@ Model calls run **outside** database transactions. Results are revalidated again
 > - `routes_craft.py`: Try Something, the code-only `/quick` pick up and put down, sprites, traces.
 > - `attempts.py`: the judge call, traces and painting, shared with rounds.
 > - `rounds.py`: `/say` and `/encounter/act`.
+> - `intent.py` and `/act` (in `routes_craft.py`): the one text line; says whether it is speech, a deed, both, waiting, giving up or leaving, and routes it (D-34).
 > - `routes_minds.py`: `/think`.
 > - The simulation lives in `crafting.py`, `minds.py`, `talk.py`, `encounter.py`, `m2.py` (the world seed) and `npc_sim.py`.
+
+> **Built client UI (D-35):**
+>
+> - `scripts/game_ui.gd` coordinates the UI and holds the shared wording.
+> - `scripts/ui/`:
+>   - `ui_theme.gd`: palette, serif fonts, and painted frames and cursors, generated in code and cached in `user://ui_cache`.
+>   - `hud.gd`: the HUD, the pack and dragging.
+>   - `action_bar.gd`: the dialogue bar.
+>   - `inspect_card.gd`: the inspect card.
+>   - `journal_book.gd` and `journal_map.gd`: the journal and its map.
+>   - `head_status.gd`: signs over heads.
+>   - `ui_sounds.gd`: UI sounds.
+> - `scripts/world_cursor.gd`: hover picking.
 
 ```
 GDD.md                   ← this document
@@ -1117,6 +1154,8 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-35 | 2026-09-28 | **UI makeover: mouse first, wood and parchment.**<br><br>**Mouse:** hover names things and says what a left click does. The cursor changes, a ring and a brighten mark the thing, and stealing is shown in red. A left click talks, picks up or steals (walking up to 14 steps there first), or points at anything else; a right click inspects.<br><br>**Always on screen:** the pack with painted icons and weight. Dragging an item writes the line (give, use, fill, put down), never acting on its own.<br><br>**Other parts:** a journal book with a fog-of-war map and a notices history; signs over heads; parchment bubbles; first-time hints, Controls and Settings (interface and text size); soft UI sounds.<br><br>**Removed:** Tab, F, the bottom prompt, the Try box, result cards and the encounter panel.<br><br>**Art:** the frames, cursors and paper are painted in code at start-up, so there is no art step and nothing to download. | The user found the game hard to judge because it was hard to play: two inspect keys, Tab cycling, no visible inventory, three different windows for acting. |
+| D-34 | 2026-09-28 | **One way to act.** One text line, with no Say/Do/Give/Show/Wait/Yield buttons. `/act` decides what the text is: speech, a deed, both, waiting, giving up or walking away.<br><br>**Code first:** quotes mean speech. "I wait", "I give up" and "walk away" (also after "I will…") are those moves. A leading action verb, with no speech words, means a deed.<br><br>**Otherwise:** one Jev request with two yes/no beliefs (does it include spoken words? does it describe a physical action?). There is also a choice used only when it is neither. The text is data. Stub or off mode falls back to speech when someone is near, otherwise a deed.<br><br>**Routing:** speech opens or continues a conversation, or honestly says "Nobody is close enough to hear you." A deed is a Try Something, or a round when face to face. **Both** is a round whose reply also hears the words. The words of quoted speech are said without the quotes. `/say`, `/craft`, `/quick` and `/encounter/act` remain for tools and tests. | The user asked for "one system of doing something that covers all those", not buttons. Measured live: a single choice question under-picked "both" (7/10); two beliefs got 13/14, averaging about 1.4 s per Jev call. Code settled 6 of the 14 instantly. |
 | D-33 | 2026-09-28 | **Housekeeping.**<br><br>**Split:** `app.py` is split into store, route and round modules (§8.5).<br><br>**Retired:** the Milestone 2 phrase parser and `/actions`. Picking up and putting down go through `/quick`, a proposal made by code, not a model, and committed through the same pipeline as Try Something, so witnesses still see a theft. Journeys begun before seed 5 get an honest "start a new journey" (HTTP 410, GDD D-04), and their legacy branches are gone. Seed 5–7 saves that contain old quick-action events still replay. | Review: the backend had grown into one 1,200-line file carrying three generations of rules. |
 | D-32 | 2026-09-28 | **Effects that really change the world** (seed 7, `judge_v7`).<br><br>**The beam:** `gate_beam` (60 kg) and `gate_brackets` (a fixture), plus Tomas's rope, ladder, fulcrum stone and trestles, and empty crates at the gate. **Install** lifts or fits an object into a fixture; code requires aids for anything too heavy to lift by hand, and the judge rules on whether they're enough. It really moves the object, and anyone in sight sees it clearly. Tomas's deal can only be done once the beam is up (`done_when`), and he goes and checks.<br><br>**Barter and gifts:** **offer_trade** makes an offer the person can accept in conversation, and ownership swaps. People can **give** you their things once they trust you (0.45).<br><br>**Conversations:** walking off ends a conversation for anyone it leaves more than 6 cells behind, and people left more than 8 cells away drop out of an encounter. | Review: some effects were only memories, and people couldn't give or trade. Live: Tomas now offers the job and lends his gear. The judge is strict about the lift (a rope over a bracket gives no advantage; two crates don't reach 2 m), so raising the beam is a real invention puzzle, like the compass. |
 | D-31 | 2026-09-28 | **Arrest instead of death.**<br><br>**Seizing:** guards can seize the stranger in an encounter, unless the stranger slipped away first. Other people's things go back, the stranger is marched to the south road and barred from the gate for 10 sim-minutes, and the captain remembers it. **Yield** stops non-guards mid-swing, and a guard takes you.<br><br>**Admission:** only a known act of violence (severity 2 or more) rules it out for good; theft and arrests weigh on regard.<br><br>**Gentler fights:** kill chances dropped to 0–6%, with at most 2 extra blows. | Review: trouble tended to end in death rather than consequences. |
@@ -1380,6 +1419,41 @@ Changes to this document: …
 - A vouch or a demonstration is a memory, not a world change: the beam isn't tracked as raised.
 - Escort, barter and loans with deadlines are not built.
 - NPCs can't give things (only lend what lies in the world).
+
+### Retro: one way to act and the UI makeover (D-34, D-35), 28 Sep 2026
+
+**Built:** `/act` and `intent.py`; the wood-and-parchment UI (HUD and pack, hover and clicks, the dialogue bar, the inspect card, the journal book and map, signs over heads, hints, settings, sounds).
+
+**Evidence:**
+
+- 106 backend tests pass (new: `test_intent.py`, covering the obvious cases, the decider path with an honest fallback, and routing of words, deeds and leaving, which replays exactly).
+- **Godot:**
+  - New `tools/smoke_ui.gd` covers:
+    - hover verbs (pick up, steal in red, use, talk, too far) and picking by position;
+    - click to pick up, walking there first;
+    - the pack bar and the text line alone, with an inline result;
+    - "nobody hears you", with the words handed back;
+    - drag-to-write;
+    - the inspect card;
+    - "…" and warm signs;
+    - the journal map with visited places, and interface scale.
+  - `smoke_talk`, `smoke_craft`, `smoke_feel`, `smoke_living_village` and `smoke_responsiveness` pass on the new UI.
+  - Screenshots are in `docs/screenshots/ui-*.png`, `encounter-*.png` and `craft-*.png`.
+- **Live classification:** 13/14 typed lines were classified as intended. After adding posture verbs, the one miss ("lie down and rest", which Jev called speech) is settled by code.
+
+**Lessons:**
+
+- Looking at real renders caught what the tests couldn't:
+  - seams from shading inside a tiled texture;
+  - a font freed mid-frame drawing as black boxes;
+  - wrapped labels growing a card to full height.
+- As with admission, yes/no beliefs beat one multi-way choice for Jev.
+
+**To watch:**
+
+- Two model calls per ambiguous line in a round (the classification plus the round's own). Measure whether the extra ~1.4 s is felt.
+- "Both" outside a face-to-face runs the deed; the words aren't heard unless someone is already facing you.
+- The Godot MCP ran out of file handles mid-session, so the checks ran through headless and windowed smoke tests.
 
 ---
 

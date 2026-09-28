@@ -42,18 +42,18 @@ func _run() -> void:
 	scene.camera_zoom = 1.0
 	await process_frame
 
-	# The Try box lists what is within reach of the start: two branches and the cord.
+	# T opens the dialogue bar; its chips list what is within reach of the start: two branches and the cord.
 	scene.ui.open_try()
 	await process_frame
-	if not check(scene.ui.modal_kind == "try", "Try box did not open"):
+	if not check(scene.ui.bar.visible and scene.ui.bar.chip_box.get_child_count() > 0, "Dialogue bar did not open"):
 		return
 	var offered: Array = scene.try_candidates().map(func(o: Dictionary) -> String: return str(o.id))
 	if not check("branch_a" in offered and "cord_a" in offered and "bucket_hessa" not in offered,
 			"Unexpected items within reach: " + str(offered)):
 		return
-	scene.ui.try_input.text = "tie the cord around the branch"
+	scene.ui.bar.line.text = "tie the cord around the branch"
 	await screenshot("craft-try-box")
-	await scene._try_something("tie the cord around the branch", ["branch_a", "cord_a"])
+	await scene.act("tie the cord around the branch", "", ["branch_a", "cord_a"])
 	var entry: Dictionary = scene.run_state.last_action
 	if not check(entry.category == "success" and entry.made != null, "Craft did not succeed: " + str(entry)):
 		return
@@ -61,8 +61,8 @@ func _run() -> void:
 	var obj: Dictionary = scene.run_state.objects[made]
 	if not check(obj.holder_id == "player" and obj.components == ["branch_a", "cord_a"], "New object not in bag"):
 		return
-	if not check(scene.ui.modal_kind == "result" and typeof(scene.last_trace) == TYPE_DICTIONARY,
-			"Result card or developer trace missing"):
+	if not check(scene.ui.bar.own_log[-1].kind == "result" and typeof(scene.last_trace) == TYPE_DICTIONARY
+			and scene.ui.bar.last_intent.get("kind") == "do", "Inline result or developer trace missing"):
 		return
 	if not check(not scene.get_node("M2Objects/branch_a").visible, "Consumed branch still on the ground"):
 		return
@@ -75,7 +75,7 @@ func _run() -> void:
 	if not check(not scene.is_placeholder(obj), "Sprite never arrived"):
 		return
 	await screenshot("craft-result")
-	scene.ui.close_modal()
+	scene.ui.bar.close()
 
 	# Drop it: a world sprite appears for an object that has no authored scene node.
 	await scene._quick_action("drop", made)
@@ -95,8 +95,10 @@ func _run() -> void:
 		return
 	scene.ui.inspect(made)
 	await process_frame
+	if not check(scene.ui.card.visible, "Inspect card did not open"):
+		return
 	await screenshot("craft-inspect")
-	scene.ui.close_modal()
+	scene.ui.card.hide()
 	await scene.open_traces()
 	if not check(scene.ui.modal_kind == "traces", "AI traces panel did not open"):
 		return

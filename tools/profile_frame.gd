@@ -109,8 +109,8 @@ func _run() -> void:
 		await _hold(["move_down", "run"], 3.0))
 	# People reacting: punch Jory at the smithy (Mara watching), then run away while they react.
 	await _walk(Vector2i(23, 29))
-	await scene._try_something("punch Jory hard in the face", [])
-	scene.ui.close_modal()
+	await scene.act("punch Jory hard in the face", "", [])
+	scene.ui.bar.close()
 	await _record("reacting, running away", func() -> void:
 		await _hold(["move_down", "run"], 2.0)
 		await _hold(["move_right", "run"], 3.0)

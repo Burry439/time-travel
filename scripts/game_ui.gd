@@ -1,31 +1,10 @@
 extends Control
-const INK := Color("182522")
-const GOLD := Color("dbc58f")
-var game: Node2D
-var chrome: Control
-var modal: PanelContainer
-var modal_box: VBoxContainer
-var modal_kind := ""
-var prompt: Label
-var toast: Label
-var toast_time := 0.0
-var bag_button: Button
-var area: Label
-var shade: ColorRect
-var try_input: TextEdit
-var try_selected: Array[String] = []
-var working_label: Label
-var working_clock := 0.0
-var talk_npc := ""
-var talk_input: LineEdit
-var talk_status: Label
-var talk_waiting := false
-var encounter_view: Dictionary = {} # The encounter as last seen (kept to show how it ended).
-var encounter_over := false
-var round_playing := false
-var curtain: ColorRect
-const DID_WORDS := {"listen": "listened", "attack": "attacked", "shout_for_help": "called for help",
-	"whistle": "whistled", "flee": "ran off", "leave": "left", "interject": "cut in"}
+## The UI coordinator (GDD D-35). It owns the wood and parchment theme and UI scale, and puts
+## together the HUD (scripts/ui/hud.gd), the dialogue bar (action_bar.gd), the inspect card,
+## the journal book, menus and the developer views. It also holds the shared formatting
+## helpers (object icons, provenance, result wording).
+
+const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const CAPABILITY_NOTES := {"expected": "", "untested": "  (untested)", "observed": "  (seen working)",
 	"failed": "  (didn't work when tried)"}
 const OUTCOME_TITLES := {
@@ -41,153 +20,221 @@ const FLAG_WORDS := {
 	"sound_loud": "loud", "reflective": "reflective", "indicates_direction": "points one way",
 	"measures_length": "measures length", "stable_support": "stands steady", "fulcrum": "works as a pivot",
 }
+const CONTROLS := [
+	["Hover", "See what something is and what a click will do"],
+	["Left-click", "Talk to someone · pick something up (or steal it, in red) · use a thing"],
+	["Right-click", "Look closer at anyone or anything"],
+	["Drag from your pack", "Onto someone, something or the ground: give, use, fill, put down"],
+	["T  or  Enter", "Say or do anything, in your own words"],
+	["E", "Act on whatever is nearest"],
+	["Esc", "Walk away · close · menu"],
+	["WASD / arrows,  Shift", "Walk, run"],
+	["I  ·  J", "Everything you carry · your journal"],
+	["Mouse wheel", "Zoom"],
+]
 
-func label(text: String, font_size := 18) -> Label:
+var game: Node2D
+var root: Control
+var hud: Control
+var bar: PanelContainer
+var card: PanelContainer
+var cursor: Node
+var sounds: Node
+var modal: PanelContainer
+var modal_box: VBoxContainer
+var modal_kind := ""
+var shade: ColorRect
+var curtain: ColorRect
+var ui_scale := 1.0
+var text_scale := 1.0
+var hints: Dictionary = {}
+var visited: Dictionary = {} # Vector2i blocks of 4×4 cells walked near, for the journal map.
+var visited_run := ""
+var _visited_dirty := false
+var _visited_clock := 0.0
+var round_playing: bool:
+	get:
+		return bar != null and bar.round_playing
+
+
+func label(text: String, font_size := 17) -> Label:
 	var node := Label.new()
 	node.text = text
 	node.add_theme_font_size_override("font_size", font_size)
-	node.add_theme_color_override("font_color", Color("f1ead7"))
 	return node
 
-func style(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	box.border_color = Color(0.70, 0.63, 0.43, 0.5)
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(7)
-	box.set_content_margin_all(18)
-	return box
 
-func button(text: String, call: Callable) -> Button:
+func button(text: String, call: Callable, variation := "") -> Button:
 	var node := Button.new()
 	node.text = text
-	node.custom_minimum_size.y = 40
-	node.add_theme_stylebox_override("normal", style(Color("293a32")))
-	node.add_theme_stylebox_override("hover", style(Color("41533d")))
-	node.add_theme_stylebox_override("pressed", style(Color("536044")))
-	node.add_theme_stylebox_override("focus", style(Color(0.48, 0.46, 0.30, 0.35)))
-	node.add_theme_font_size_override("font_size", 16)
+	if not variation.is_empty():
+		node.theme_type_variation = variation
+	node.pressed.connect(func() -> void: sounds.play("click"))
 	node.pressed.connect(call)
 	return node
 
-func panel(parent: Node, at: Vector2, dimensions: Vector2) -> PanelContainer:
-	var node := PanelContainer.new()
-	node.position = at
-	node.custom_minimum_size = dimensions
-	node.add_theme_stylebox_override("panel", style(Color(0.07, 0.12, 0.10, 0.94)))
-	parent.add_child(node)
+
+func small(body: Control, text: String) -> Label:
+	var node := paragraph(body, text)
+	node.theme_type_variation = "Small"
+	node.remove_theme_font_size_override("font_size")
 	return node
+
+
+func paragraph(body: Control, text: String) -> Label:
+	var node := label(text, 17)
+	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(node)
+	return node
+
 
 func build(owner_game: Node2D) -> void:
 	game = owner_game
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chrome = Control.new()
-	chrome.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	chrome.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(chrome)
-	var objective := panel(chrome, Vector2(24, 24), Vector2(304, 89))
-	objective.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var objective_box := VBoxContainer.new()
-	objective.add_child(objective_box)
-	area = label("THE SOUTH ROAD", 12)
-	area.add_theme_color_override("font_color", GOLD)
-	objective_box.add_child(area)
-	objective_box.add_child(label("Find a way into the city", 21))
-	game.hud = label("The gate lies to the north ↑", 13)
-	objective_box.add_child(game.hud)
-	var buttons := HBoxContainer.new()
-	buttons.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	buttons.position = Vector2(-378, 24)
-	buttons.add_theme_constant_override("separation", 8)
-	chrome.add_child(buttons)
-	bag_button = button("Bag  [I]", open_bag)
-	buttons.add_child(bag_button)
-	buttons.add_child(button("Journal  [J]", open_journal))
-	buttons.add_child(button("Pause", open_pause))
-	game.hint = label("WASD / arrows  Move     Shift  Run     E  Interact     F  Inspect     T  Try something     I  Bag     Esc  Pause", 14)
-	game.hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	game.hint.position = Vector2(24, -36)
-	game.hint.add_theme_color_override("font_shadow_color", Color.BLACK)
-	game.hint.add_theme_constant_override("shadow_offset_y", 2)
-	chrome.add_child(game.hint)
-	prompt = label("", 16)
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.add_theme_stylebox_override("normal", style(Color(0.06, 0.10, 0.08, 0.92)))
-	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	prompt.position = Vector2(-260, -113)
-	prompt.size.x = 520
-	chrome.add_child(prompt)
-	toast = label("", 17)
-	toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	toast.position = Vector2(-270, 132)
-	toast.size.x = 540
-	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	toast.add_theme_color_override("font_shadow_color", Color.BLACK)
-	toast.add_theme_constant_override("shadow_offset_y", 2)
-	chrome.add_child(toast)
+	var settings := ConfigFile.new()
+	if settings.load("user://presentation.cfg") == OK:
+		ui_scale = clampf(float(settings.get_value("ui", "scale", 1.0)), 0.8, 1.4)
+		text_scale = clampf(float(settings.get_value("ui", "text", 1.0)), 0.85, 1.25)
+		for key in settings.get_section_keys("hints") if settings.has_section("hints") else []:
+			hints[key] = bool(settings.get_value("hints", key))
+	sounds = preload("res://scripts/ui/ui_sounds.gd").new()
+	add_child(sounds)
+	root = Control.new()
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.theme = UITheme.build(text_scale)
+	add_child(root)
+	hud = preload("res://scripts/ui/hud.gd").new()
+	root.add_child(hud)
+	hud.build(self, game)
+	bar = preload("res://scripts/ui/action_bar.gd").new()
+	root.add_child(bar)
+	bar.build(self, game)
+
 	shade = ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.025, 0.045, 0.035, 0.60)
-	add_child(shade)
-	game.menu = panel(self, Vector2.ZERO, Vector2(540, 420))
+	shade.color = Color(0.06, 0.04, 0.02, 0.55)
+	root.add_child(shade)
+	game.menu = PanelContainer.new()
 	game.menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	game.menu.offset_left = -270
-	game.menu.offset_top = -210
-	game.menu.offset_right = 270
-	game.menu.offset_bottom = 210
+	game.menu.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	game.menu.grow_vertical = Control.GROW_DIRECTION_BOTH
+	game.menu.custom_minimum_size = Vector2(560, 0)
+	root.add_child(game.menu)
 	var menu_box := VBoxContainer.new()
-	menu_box.add_theme_constant_override("separation", 13)
+	menu_box.add_theme_constant_override("separation", 10)
 	game.menu.add_child(menu_box)
-	menu_box.add_child(label("A STRANGER OUT OF TIME", 12))
-	menu_box.add_child(label("The City Beyond", 38))
+	var caption := label("A STRANGER OUT OF TIME")
+	caption.theme_type_variation = "Caption"
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_box.add_child(caption)
+	var title := label("The City Beyond")
+	title.theme_type_variation = "Title"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_box.add_child(title)
 	var intro := label("A closed city. An unfamiliar world.\nThe only thing you brought is what you know.", 17)
+	intro.add_theme_font_override("font", UITheme.serif(false, true))
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_box.add_child(intro)
+	menu_box.add_child(HSeparator.new())
 	menu_box.add_child(button("Begin a journey", game._start.bind("normal")))
 	menu_box.add_child(button("Continue last journey", game._resume))
 	menu_box.add_child(button("Developer playtest", game._start.bind("developer")))
 	game.message = label("Connecting…", 14)
+	game.message.theme_type_variation = "Small"
 	game.message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	game.message.custom_minimum_size.x = 490
+	game.message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	game.message.custom_minimum_size.x = 500
 	menu_box.add_child(game.message)
-	modal = panel(self, Vector2.ZERO, Vector2(640, 510))
+
+	modal = PanelContainer.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	modal.offset_left = -320
-	modal.offset_top = -255
-	modal.offset_right = 320
-	modal.offset_bottom = 255
+	root.add_child(modal)
 	modal_box = VBoxContainer.new()
-	modal_box.add_theme_constant_override("separation", 12)
+	modal_box.add_theme_constant_override("separation", 10)
 	modal.add_child(modal_box)
 	modal.hide()
-	game.trace_panel = panel(self, Vector2(24, 142), Vector2(290, 210))
+	card = preload("res://scripts/ui/inspect_card.gd").new()
+	root.add_child(card)
+	card.build(self, game)
+
+	game.trace_panel = PanelContainer.new()
+	game.trace_panel.theme_type_variation = "WoodPanel"
+	game.trace_panel.position = Vector2(16, 128)
+	game.trace_panel.custom_minimum_size = Vector2(290, 0)
+	root.add_child(game.trace_panel)
 	var debug_box := VBoxContainer.new()
 	game.trace_panel.add_child(debug_box)
 	game.trace_text = label("", 13)
+	game.trace_text.theme_type_variation = "WoodLabel"
 	debug_box.add_child(game.trace_text)
-	game.gate_button = button("OPEN GATE (TEST)", game._toggle_gate)
+	game.gate_button = button("Open gate (test)", game._toggle_gate)
 	debug_box.add_child(game.gate_button)
-	debug_box.add_child(button("AI TRACES  [F4]", game.open_traces))
+	debug_box.add_child(button("AI traces  ·  F4", game.open_traces))
 	game.trace_panel.hide()
-	game.victory_panel = panel(self, Vector2(380, 230), Vector2(520, 190))
+
+	game.victory_panel = PanelContainer.new()
+	game.victory_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	game.victory_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	game.victory_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	game.victory_panel.custom_minimum_size = Vector2(560, 0)
+	root.add_child(game.victory_panel)
 	var win_box := VBoxContainer.new()
+	win_box.add_theme_constant_override("separation", 10)
 	game.victory_panel.add_child(win_box)
-	win_box.add_child(label("Beyond the gate", 30))
+	var won := label("Beyond the gate")
+	won.theme_type_variation = "Title"
+	win_box.add_child(won)
 	win_box.add_child(label("You reached the end of this playable area.", 17))
 	game.victory_route = label("", 16)
 	game.victory_route.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	game.victory_route.custom_minimum_size.x = 480
-	game.victory_route.add_theme_color_override("font_color", GOLD)
+	game.victory_route.custom_minimum_size.x = 500
+	game.victory_route.add_theme_color_override("font_color", UITheme.ACCENT)
 	win_box.add_child(game.victory_route)
 	win_box.add_child(button("Return to title", game._back_to_menu))
 	game.victory_panel.hide()
-	chrome.hide()
+
+	cursor = preload("res://scripts/world_cursor.gd").new()
+	cursor.game = game
+	cursor.ui = self
+	add_child(cursor)
 	curtain = ColorRect.new()
 	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	curtain.color = Color(0, 0, 0, 0)
 	curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(curtain)
+	get_viewport().size_changed.connect(apply_scale)
+	apply_scale()
+
+
+## UI scale: the whole interface is laid out at 1/scale of the screen, then drawn scaled up.
+func apply_scale() -> void:
+	var screen := get_viewport_rect().size
+	root.scale = Vector2.ONE * ui_scale
+	root.position = Vector2.ZERO
+	root.size = screen / ui_scale
+
+
+func save_ui_settings() -> void:
+	var settings := ConfigFile.new()
+	settings.load("user://presentation.cfg")
+	settings.set_value("ui", "scale", ui_scale)
+	settings.set_value("ui", "text", text_scale)
+	for key in hints:
+		settings.set_value("hints", key, hints[key])
+	settings.save("user://presentation.cfg")
+
+
+func hint_seen(key: String) -> bool:
+	return hints.get(key, false)
+
+
+func mark_hint(key: String) -> void:
+	if key.is_empty():
+		return
+	hints[key] = true
+	save_ui_settings()
 
 
 ## Fade the whole screen to black (to = 1) or back (to = 0).
@@ -196,170 +243,361 @@ func fade(to: float, seconds := 0.6) -> void:
 	tween.tween_property(curtain, "color:a", to, seconds)
 	await tween.finished
 
+
 func _process(delta: float) -> void:
-	toast_time = maxf(0, toast_time - delta)
-	toast.modulate.a = minf(1.0, toast_time)
 	shade.visible = game.menu.visible or modal.visible or game.victory_panel.visible
-	chrome.visible = not game.menu.visible
-	prompt.visible = not prompt.text.is_empty() and not modal.visible and not game.victory_panel.visible
-	if modal_kind == "working" and is_instance_valid(working_label):
-		working_clock += delta
-		var stage: String = ["You look over what you have", "You set to work", "You work at it", "You test what you've done",
-			"Still at it"][mini(4, int(working_clock / 2.5))]
-		working_label.text = "%s%s  (%d s)" % [stage, ".".repeat(1 + int(working_clock * 2.0) % 3), int(working_clock)]
-	if modal_kind == "encounter" and talk_waiting and not round_playing and is_instance_valid(talk_status):
-		working_clock += delta
-		var acting: PackedStringArray = []
-		for id in _encounter().get("participants", [talk_npc]):
-			acting.append(str(npc_record(str(id)).get("name", "")))
-		talk_status.text = "You and " + " and ".join(acting) + " act at the same moment" + ".".repeat(1 + int(working_clock * 2.0) % 3)
+	hud.visible = not game.menu.visible and not game.run_state.is_empty()
+	hud.inventory.visible = not bar.visible
+	_visited_clock += delta
+	if _visited_dirty and _visited_clock > 20.0:
+		save_visited()
+
 
 func notify(text: String) -> void:
-	toast.text = text
-	toast_time = 4.5
+	hud.notify(text)
 
-func close_modal() -> void:
-	if game.request_busy or modal_kind == "death" or round_playing:
+
+func refresh() -> void:
+	hud.refresh()
+	if bar.visible and not bar.waiting and not bar.round_playing:
+		bar.render_chips()
+
+
+## Movement stops while a panel is open or the dialogue bar has you typing.
+func blocks_movement() -> bool:
+	return modal.visible or bar.visible or game.menu.visible or game.victory_panel.visible
+
+
+func pointer_over_ui() -> bool:
+	return get_viewport().gui_get_hovered_control() != null
+
+
+# --- A journey starting and ending ---------------------------------------------------------------
+
+func enter_run(state: Dictionary) -> void:
+	close_modal_now()
+	bar.own_log.clear()
+	bar.last_intent = {}
+	bar.hide()
+	bar.encounter_view = {}
+	bar.encounter_over = false
+	card.hide()
+	hud._signature = "-"
+	hud.visible = true
+	load_visited(str(state.get("run_id", "")))
+	note_cell(Vector2i(int(state.player.x), int(state.player.y)))
+	hud.refresh()
+	hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
+
+
+func leave_run() -> void:
+	save_visited()
+	bar.close()
+	card.hide()
+	close_modal_now()
+
+
+func note_cell(cell: Vector2i) -> void:
+	var centre := Vector2i(cell.x / 4, cell.y / 4)
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			if absi(dx) + absi(dy) <= 3:
+				var block := centre + Vector2i(dx, dy)
+				if not visited.has(block):
+					visited[block] = true
+					_visited_dirty = true
+
+
+func load_visited(run_id: String) -> void:
+	visited.clear()
+	visited_run = run_id
+	var path := "user://maps/%s.json" % run_id
+	if run_id.is_empty() or not FileAccess.file_exists(path):
 		return
-	if modal_kind == "encounter" and not encounter_over and not _encounter().is_empty():
-		game.encounter_act("leave", "", "") # Closing the panel face to face with someone is walking away.
+	var saved = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(saved) == TYPE_ARRAY:
+		for pair in saved:
+			visited[Vector2i(int(pair[0]), int(pair[1]))] = true
+
+
+func save_visited() -> void:
+	_visited_clock = 0.0
+	if visited_run.is_empty() or not _visited_dirty:
 		return
-	modal.hide()
-	modal_kind = ""
+	_visited_dirty = false
+	DirAccess.make_dir_recursive_absolute("user://maps")
+	var pairs := []
+	for block in visited:
+		pairs.append([block.x, block.y])
+	var file := FileAccess.open("user://maps/%s.json" % visited_run, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(pairs))
 
-## Close whatever is open, without the side effects of the player closing it (walking away).
-func close_modal_now() -> void:
-	modal.hide()
-	modal_kind = ""
-	encounter_over = false
 
+# --- Modal panels -----------------------------------------------------------------------------------
 
-func begin_modal(title: String, kind: String) -> VBoxContainer:
+func begin_modal(title: String, kind: String, dims := Vector2(680, 520), scrolling := true) -> VBoxContainer:
 	for child in modal_box.get_children():
 		modal_box.remove_child(child)
 		child.queue_free()
+	if not modal.visible:
+		sounds.play("open")
+	card.hide()
 	modal_kind = kind
+	modal.offset_left = -dims.x * 0.5
+	modal.offset_right = dims.x * 0.5
+	modal.offset_top = -dims.y * 0.5
+	modal.offset_bottom = dims.y * 0.5
 	modal.show()
 	var heading := HBoxContainer.new()
 	modal_box.add_child(heading)
-	var title_label := label(title, 28)
+	var title_label := label(title)
+	title_label.theme_type_variation = "Heading"
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(title_label)
-	heading.add_child(button("Close  [Esc]", close_modal))
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size = Vector2(600, 380)
-	modal_box.add_child(scroll)
+	var close := button("✕", close_modal, "Quiet")
+	close.tooltip_text = "Close  (Esc)"
+	close.add_theme_font_size_override("font_size", 20)
+	heading.add_child(close)
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
-	scroll.add_child(body)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 10)
+	if scrolling:
+		var scroll := ScrollContainer.new()
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		modal_box.add_child(scroll)
+		scroll.add_child(body)
+	else:
+		modal_box.add_child(body)
 	return body
 
-func paragraph(body: VBoxContainer, text: String) -> void:
-	var node := label(text, 17)
-	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(node)
 
-func open_bag() -> void:
+func close_modal() -> void:
+	if game.request_busy or modal_kind == "death":
+		return
+	if modal.visible:
+		sounds.play("close")
+	if modal_kind == "journal":
+		save_visited()
+	modal.hide()
+	modal_kind = ""
+
+
+## Close whatever is open, without the side effects of the player closing it.
+func close_modal_now() -> void:
+	modal.hide()
+	modal_kind = ""
+
+
+func open_menu(page := "main") -> void:
 	if game.run_state.is_empty() or game.request_busy:
 		return
-	var body := begin_modal("Your belongings", "bag")
-	var count := 0
-	for id in game.run_state.get("objects", {}):
-		var obj: Dictionary = game.run_state.objects[id]
-		if obj.holder_id != "player":
-			continue
-		count += 1
+	match page:
+		"controls":
+			var body := begin_modal("Controls", "menu", Vector2(640, 520))
+			var grid := GridContainer.new()
+			grid.columns = 2
+			grid.add_theme_constant_override("h_separation", 18)
+			grid.add_theme_constant_override("v_separation", 8)
+			body.add_child(grid)
+			for pair in CONTROLS:
+				var key := label(pair[0], 16)
+				key.add_theme_font_override("font", UITheme.serif(true))
+				key.add_theme_color_override("font_color", UITheme.ACCENT)
+				grid.add_child(key)
+				var does := label(pair[1], 16)
+				does.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				does.custom_minimum_size.x = 380
+				grid.add_child(does)
+			paragraph(body, "There are no command words: whatever you type, the game works out whether you are speaking, doing something, or both.")
+			body.add_child(button("Back", open_menu.bind("main")))
+		"settings":
+			var body := begin_modal("Settings", "menu", Vector2(560, 540))
+			_slider(body, "Interface size", 0.8, 1.4, 0.05, ui_scale, func(value: float) -> void:
+				ui_scale = value
+				apply_scale()
+				save_ui_settings())
+			paragraph(body, "Text size")
+			var sizes := HBoxContainer.new()
+			sizes.add_theme_constant_override("separation", 6)
+			body.add_child(sizes)
+			var group := ButtonGroup.new()
+			for pair in [["Small", 0.9], ["Normal", 1.0], ["Large", 1.15]]:
+				var choice := button(pair[0], func() -> void:
+					text_scale = pair[1]
+					root.theme = UITheme.build(text_scale)
+					save_ui_settings(), "Chip")
+				choice.toggle_mode = true
+				choice.button_group = group
+				choice.button_pressed = is_equal_approx(text_scale, pair[1])
+				sizes.add_child(choice)
+			_slider(body, "Camera distance", 0.75, 1.25, 0.05, game.camera_zoom, func(value: float) -> void:
+				game.camera_zoom = value
+				game._save_settings())
+			_slider(body, "Sound volume", 0.0, 1.0, 0.05, game.sound_volume, func(value: float) -> void:
+				game.sound_volume = value
+				game._save_settings())
+			body.add_child(button("Show the first-time hints again", func() -> void:
+				hints.clear()
+				save_ui_settings()
+				notify("Hints will show again."), "Chip"))
+			body.add_child(button("Back", open_menu.bind("main")))
+		_:
+			var body := begin_modal("A moment to breathe", "menu", Vector2(440, 430))
+			body.add_child(button("Continue", close_modal))
+			body.add_child(button("Journal", open_journal.bind("leads")))
+			body.add_child(button("Controls", open_menu.bind("controls")))
+			body.add_child(button("Settings", open_menu.bind("settings")))
+			body.add_child(button("Save and return to title", game._back_to_menu))
+			var saved := paragraph(body, "Every action and step is saved as you go.")
+			saved.theme_type_variation = "Small"
+
+
+func open_pause() -> void:
+	open_menu()
+
+
+func _slider(body: VBoxContainer, title: String, low: float, high: float, step: float, value: float, changed: Callable) -> void:
+	paragraph(body, title)
+	var slider := HSlider.new()
+	slider.min_value = low
+	slider.max_value = high
+	slider.step = step
+	slider.value = value
+	slider.custom_minimum_size.y = 24
+	slider.value_changed.connect(changed)
+	body.add_child(slider)
+
+
+func open_journal(tab := "leads") -> void:
+	if game.run_state.is_empty() or game.request_busy:
+		return
+	var body := begin_modal("Your journal", "journal", Vector2(900, 590), false)
+	var book := preload("res://scripts/ui/journal_book.gd").new()
+	body.add_child(book)
+	book.build(self, game, tab)
+
+
+## Everything you carry, when there's more than the pack bar shows (I).
+func open_inventory() -> void:
+	if game.run_state.is_empty() or game.request_busy:
+		return
+	var body := begin_modal("Your pack", "inventory", Vector2(620, 520))
+	var carried: Array[Dictionary] = hud.carried_objects()
+	if carried.is_empty():
+		paragraph(body, "You carry nothing yet.\n\nClick a loose thing in the world to pick it up. What might you make with what you find?")
+	for obj in carried:
 		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
 		body.add_child(row)
-		row.add_child(object_icon(obj))
+		row.add_child(object_icon(obj, 56))
 		var made := "  ·  made by you" if obj.get("created_by") == "player" else ""
-		var description := label(str(obj.name).capitalize() + "\n" + str(obj.mass_kg) + " kg" + made, 17)
-		description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(description)
-		row.add_child(button("Inspect", inspect.bind(str(id))))
-		row.add_child(button("Put down", game._quick_action.bind("drop", str(id))))
-	if count == 0:
-		paragraph(body, "Your bag is empty.\n\nWalk up to a loose object and press E to pick it up. What might you make with the things you find?")
-	else:
-		paragraph(body, "Put down an item to leave it at your feet. Your belongings are saved with your journey.")
+		var words := label(str(obj.name).capitalize() + "\n" + str(obj.mass_kg) + " kg" + made, 16)
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(words)
+		var id := str(obj.id)
+		row.add_child(button("Look", func() -> void: card.show_for(id), "Chip"))
+		row.add_child(button("Use…", func() -> void:
+			close_modal()
+			bar.open(id), "Chip"))
+		row.add_child(button("Put down", game._quick_action.bind("drop", id), "Chip"))
+
+
+func open_bag() -> void:
+	open_inventory()
+
 
 func inspect(id: String) -> void:
-	var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
-	if not obj.is_empty():
-		var body := begin_modal(str(obj.name).capitalize(), "inspect")
-		var heading := HBoxContainer.new()
-		heading.add_theme_constant_override("separation", 14)
-		body.add_child(heading)
-		heading.add_child(object_icon(obj, 96))
-		var summary := label(str(obj.get("description", "")), 17)
-		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		heading.add_child(summary)
-		var facts := "Condition: " + str(obj.condition).capitalize() + "\nWeight: " + str(obj.mass_kg) + " kg"
-		if obj.get("length_m") != null:
-			facts += "\nLength: about %s m" % obj.length_m
-		if not obj.get("materials", []).is_empty():
-			facts += "\nMade of: " + ", ".join(obj.materials)
-		var feel := flag_words(obj.get("flags", []))
-		if not feel.is_empty():
-			facts += "\nIt is: " + feel
-		paragraph(body, facts)
-		var owner_name := "You" if obj.owner_id == "player" else "Nobody"
-		for npc in game.run_state.npcs:
-			if npc.id == obj.owner_id:
-				owner_name = str(npc.name)
-		paragraph(body, "Belongs to: " + owner_name + (" (lent to you)" if obj.get("lent_to") == "player" else ""))
-		if obj.get("created_by") == "player":
-			paragraph(body, provenance(obj))
-			capability_lines(body, obj)
-			if game.is_placeholder(obj):
-				paragraph(body, "(Its picture is still being painted.)" if game.sprite_status(obj) == "polling"
-					else "(Its picture couldn't be painted; a stand-in is shown.)")
-		paragraph(body, "Carried in your bag." if obj.holder_id == "player" else "Lying here in the world.")
-		if float(obj.get("capacity_l", 0)) > 0:
-			paragraph(body, "Water: %s / %s litres" % [obj.get("water_l", 0), obj.capacity_l])
-		if obj.holder_id == "player":
-			body.add_child(button("Back to belongings", open_bag))
-		elif "carry" in obj.capabilities and (obj.owner_id == null or obj.owner_id == "player"):
-			body.add_child(button("Pick up", game._quick_action.bind("take", id)))
-		elif "carry" in obj.capabilities:
-			paragraph(body, "It isn't yours to pick up freely. You could still try something with it (T).")
+	card.show_for(id)
+
+
+# --- Pointing, clicking and dragging -----------------------------------------------------------
+
+## A left click on something in your pack: point at it in the dialogue bar.
+func item_clicked(id: String) -> void:
+	if bar.visible:
+		bar.add_reference(id)
+	else:
+		bar.open(id)
+
+
+## What letting go of a dragged item here would write, e.g. "Give the gourd to Hessa".
+func drop_phrase(item_id: String, over: Dictionary) -> String:
+	var item: Dictionary = game.run_state.get("objects", {}).get(item_id, {})
+	var thing := "the " + str(item.get("name", "thing"))
+	if over.is_empty():
+		return "Put down " + thing
+	if str(over.id) == item_id:
+		return ""
+	if over.kind == "person":
+		return "Give %s to %s" % [thing, over.name]
+	var onto: Dictionary = game.run_state.get("objects", {}).get(str(over.id), {})
+	if float(item.get("capacity_l", 0)) > 0 and "water_source" in onto.get("capabilities", []):
+		return "Fill %s at the %s" % [thing, onto.name]
+	return "Use %s on the %s" % [thing, over.name]
+
+
+func drop_on_item(item_id: String, onto_id: String) -> void:
+	var a: Dictionary = game.run_state.objects.get(item_id, {})
+	var b: Dictionary = game.run_state.objects.get(onto_id, {})
+	if a.is_empty() or b.is_empty():
 		return
-	for npc in game.run_state.npcs:
-		if npc.id == id:
-			var alive: bool = npc.get("alive", true)
-			var painted := game.get_node_or_null("NPCs/" + str(id) + "/PaintedActor")
-			if painted and alive:
-				painted.play_gesture("greet")
-			var body := begin_modal(str(npc.name) + ("" if alive else " (dead)"), "person")
-			paragraph(body, str(npc.role))
-			var injuries: Array = npc.get("injuries", [])
-			if not alive:
-				paragraph(body, str(npc.name) + " lies still on the ground." + (
-					"\nCause: " + str(injuries[-1]) if not injuries.is_empty() else ""))
-			elif not injuries.is_empty():
-				paragraph(body, str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
-			var their_mind = npc.get("mind")
-			if alive:
-				var met: bool = typeof(their_mind) == TYPE_DICTIONARY and their_mind.get("met", false)
-				paragraph(body, "You have spoken before." if met else "You have not spoken yet.")
-				body.add_child(button("Talk  [E]", open_talk.bind(str(id))))
-			if game.run_state.get("mode", "") == "developer" and typeof(their_mind) == TYPE_DICTIONARY:
-				var lines := PackedStringArray()
-				for memory in their_mind.get("memories", []):
-					lines.append("• (%s) %s" % [memory.source, memory.summary])
-				var job = their_mind.get("job")
-				var view: Dictionary = their_mind.get("regard", {})
-				paragraph(body, "DEVELOPER: fear %s · anger %s · trust %s · suspicion %s · doing: %s\n%s" % [
-					their_mind.get("feelings", {}).get("fear", 0), their_mind.get("feelings", {}).get("anger", 0),
-					view.get("trust", "-"), view.get("suspicion", "-"),
-					str(job.kind) if typeof(job) == TYPE_DICTIONARY else "routine",
-					"\n".join(lines) if not lines.is_empty() else "No memories of the stranger."])
-			return
+	_write_line("use the %s with the %s" % [a.name, b.name], "", [item_id, onto_id])
+
+
+func drop_on_world(item_id: String) -> void:
+	var over: Dictionary = cursor.pick(game.get_global_mouse_position()) if not pointer_over_ui() else {}
+	if over.is_empty():
+		game._quick_action("drop", item_id)
+		return
+	if not over.get("reachable", true):
+		notify("That's too far away. Walk closer first.")
+		return
+	var phrase := drop_phrase(item_id, over)
+	if phrase.is_empty():
+		return
+	phrase = phrase.left(1).to_lower() + phrase.substr(1)
+	if over.kind == "person":
+		_write_line(phrase, str(over.id), [item_id])
+	else:
+		_write_line(phrase, "", [item_id, str(over.id)])
+
+
+## Fill the dialogue bar's line for the player to check and send (Enter).
+func _write_line(text: String, person: String, refs: Array) -> void:
+	bar.open(person)
+	for id in refs:
+		if str(id) not in bar.selected:
+			bar.selected.append(str(id))
+	bar.line.text = text + " "
+	bar.line.caret_column = bar.line.text.length()
+	bar.render_chips()
+	hud.show_hint("drag", "Check the words, change anything you like, then press Enter.")
+
+
+# --- Compatibility with the tools and older call sites ----------------------------------------
+
+func open_encounter(target := "", prefill := "", playing: Dictionary = {}) -> void:
+	bar.open(target, prefill, playing)
+
+
+func open_talk(id: String, prefill := "") -> void:
+	bar.open(id, prefill)
+
+
+func open_try(prefill := "") -> void:
+	if game.run_state.is_empty() or game.request_busy or not game.gameplay_active:
+		return
+	bar.open("", prefill)
+
+
+func encounter_ended(playing: Dictionary = {}) -> void:
+	bar.ended(playing)
+
+
+# --- Shared wording -----------------------------------------------------------------------------
 
 func npc_record(id: String) -> Dictionary:
 	for npc in game.run_state.get("npcs", []):
@@ -368,297 +606,18 @@ func npc_record(id: String) -> Dictionary:
 	return {}
 
 
-## The encounter panel: face to face with one or more people, in rounds. Everything you and they
-## do in a round happens at the same moment; the log shows it, round by round.
-func open_talk(id: String, prefill := "") -> void:
-	open_encounter(id, prefill)
-
-
-func _encounter() -> Dictionary:
-	var current = game.run_state.get("encounter")
-	return current if typeof(current) == TYPE_DICTIONARY else {}
-
-
-func open_encounter(target := "", prefill := "", playing: Dictionary = {}) -> void:
-	if game.run_state.is_empty() or not game.gameplay_active:
-		return
-	var current := _encounter()
-	if not current.is_empty():
-		encounter_view = current
-		encounter_over = false
-	elif target != "" and not npc_record(target).get("alive", true):
-		inspect(target)
-		return
-	elif target != "":
-		encounter_view = {}
-		encounter_over = false
-	var people: Array = current.get("participants", []) if not current.is_empty() else \
-		(encounter_view.get("participants", []) if encounter_over else [target])
-	if target != "":
-		talk_npc = target
-	elif not talk_npc in people and not people.is_empty():
-		talk_npc = str(current.get("opened_by", people[0])) if current.get("opened_by", "") in people else str(people[0])
-	var first_open := modal_kind != "encounter"
-	talk_waiting = false
-	var names: PackedStringArray = []
-	for id in people:
-		names.append(str(npc_record(str(id)).get("name", "?")))
-	var body := begin_modal(" & ".join(names) if not names.is_empty() else "Nobody", "encounter")
-	var did: Dictionary = playing.get("did", {}) if not playing.is_empty() else \
-		(game.run_state.get("last_round", {}).get("did", {}) if typeof(game.run_state.get("last_round")) == TYPE_DICTIONARY else {})
-	if not encounter_over:
-		for child in modal_box.get_child(0).get_children(): # "Walk away" is the way out, not "Close".
-			if child is Button:
-				child.hide()
-	var cast := HFlowContainer.new()
-	cast.add_theme_constant_override("h_separation", 8)
-	body.add_child(cast)
-	for id in people:
-		var npc := npc_record(str(id))
-		var health := float(npc.get("health", 100))
-		var state_word := "dead" if not npc.get("alive", true) else "unhurt" if health >= 100 else \
-			"wounded" if health > 30 else "badly wounded"
-		var chip_text := "%s · %s · %s" % [npc.get("name", "?"), str(npc.get("role", "")).to_lower(), state_word]
-		if did.has(str(id)):
-			chip_text += " · " + str(DID_WORDS.get(str(did[str(id)]), did[str(id)]))
-		var chip := button(chip_text, _address.bind(str(id)))
-		chip.toggle_mode = true
-		chip.button_pressed = str(id) == talk_npc
-		chip.add_theme_font_size_override("font_size", 14)
-		chip.custom_minimum_size.y = 32
-		cast.add_child(chip)
-	if game.run_state.get("mode", "") == "developer" and typeof(game.last_trace) == TYPE_DICTIONARY \
-			and game.last_trace.get("kind") == "talk":
-		talk_trace(body, game.last_trace) # Above the log, so the latest lines stay in view.
-	var log: Array = encounter_view.get("log", [])
-	if log.is_empty():
-		var their_mind = npc_record(talk_npc).get("mind") if typeof(npc_record(talk_npc).get("mind")) == TYPE_DICTIONARY else {}
-		for turn in their_mind.get("talk", []): # Earlier conversations with this person.
-			_log_line(body, ("You: " if turn.who == "stranger" else str(npc_record(talk_npc).name) + ": ") + "“" + str(turn.text) + "”",
-				turn.who != "stranger", true)
-		paragraph(body, "%s looks you over. Say something." % npc_record(talk_npc).get("name", ""))
-	var shown_round := -1
-	var fresh: Array = playing.get("entries", [])
-	var hidden: Array = [] # Lines of the round being played back, shown one by one.
-	for entry in log:
-		if int(entry.get("round", 0)) != shown_round:
-			shown_round = int(entry.get("round", 0))
-			var heading := label("ROUND %d" % shown_round, 11)
-			heading.add_theme_color_override("font_color", Color(0.86, 0.77, 0.56, 0.6))
-			body.add_child(heading)
-		var node: Label
-		if entry.get("kind") == "cue": # How someone's view of you shifted, as they show it.
-			node = label("(" + str(entry.text) + ")", 14)
-			node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			node.add_theme_color_override("font_color", Color(0.72, 0.80, 0.70, 0.85))
-			body.add_child(node)
-		else:
-			node = _log_line(body, str(entry.text), str(entry.get("who", "")) != "player", false)
-		if entry in fresh:
-			node.visible = false
-			hidden.append([node, entry])
-	talk_status = label("", 15)
-	talk_status.add_theme_color_override("font_color", GOLD)
-	talk_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_child(talk_status)
-	if encounter_over:
-		var closing := label("It's over." if game.run_state["player"].get("alive", true) else "", 17)
-		body.add_child(closing)
-		var done := button("Continue", close_modal)
-		body.add_child(done)
-		if not hidden.is_empty():
-			closing.visible = false
-			done.visible = false
-			_play_lines(body, hidden, [closing, done])
-		else:
-			_scroll_to_end.call_deferred(body)
-		return
-	talk_input = LineEdit.new()
-	talk_input.placeholder_text = "Say something to %s, or describe what you do…" % npc_record(talk_npc).get("name", "them")
-	talk_input.max_length = 500
-	talk_input.add_theme_font_size_override("font_size", 17)
-	talk_input.custom_minimum_size.y = 40
-	talk_input.text_submitted.connect(func(_text: String) -> void: _submit_talk())
-	body.add_child(talk_input)
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 8)
-	actions.add_child(button("Say it  [Enter]", _submit_talk))
-	actions.add_child(button("Do it", _submit_do))
-	actions.add_child(button("Wait", _submit_simple.bind("wait")))
-	actions.add_child(button("Yield", _submit_simple.bind("yield")))
-	actions.add_child(button("Walk away  [Esc]", close_modal))
-	body.add_child(actions)
-	var hint := label("Do it: an action, like “hand him the plank” or “swing the spear at her”. Everyone acts at the same moment.", 13)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.6))
-	body.add_child(hint)
-	if first_open and current.get("reason", "talk") == "talk":
-		var painted := game.get_node_or_null("NPCs/" + talk_npc + "/PaintedActor")
-		if painted:
-			painted.play_gesture("greet")
-	talk_input.text = prefill
-	talk_input.caret_column = prefill.length()
-	if not hidden.is_empty():
-		_play_lines(body, hidden, [])
-	else:
-		talk_input.grab_focus.call_deferred()
-		_scroll_to_end.call_deferred(body)
-
-
-## Play a round back: each line appears in turn with its moment in the world.
-func _play_lines(body: VBoxContainer, lines: Array, then_show: Array) -> void:
-	round_playing = true
-	talk_waiting = true
-	if is_instance_valid(talk_input):
-		talk_input.editable = false
-	for pair in lines:
-		await get_tree().create_timer(0.45).timeout
-		if not is_instance_valid(pair[0]):
-			break
-		pair[0].visible = true
-		game.round_beat(pair[1])
-		_scroll_to_end(body)
-	for node in then_show:
-		if is_instance_valid(node):
-			node.visible = true
-	round_playing = false
-	talk_waiting = false
-	if is_instance_valid(talk_input):
-		talk_input.editable = true
-		talk_input.grab_focus()
-	if is_instance_valid(talk_status):
-		talk_status.text = ""
-	_scroll_to_end(body)
-	game.round_played()
-
-
-func _log_line(body: VBoxContainer, text: String, theirs: bool, faded: bool) -> Label:
-	var line := label(text, 16)
-	line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if theirs:
-		line.add_theme_color_override("font_color", Color("f3d99a"))
-	if faded:
-		line.modulate.a = 0.6
-	body.add_child(line)
-	return line
-
-
-## The encounter has finished (they left, you walked away, the gate opened): show the last round.
-func encounter_ended(playing: Dictionary = {}) -> void:
-	if modal_kind == "encounter" and not encounter_over:
-		encounter_over = true
-		var log: Array = encounter_view.get("log", []).duplicate()
-		for entry in playing.get("entries", []): # The last round happened after the encounter we last saw.
-			if not entry in log:
-				log.append(entry)
-		encounter_view = encounter_view.duplicate()
-		encounter_view["log"] = log
-		open_encounter("", "", playing)
-	elif not playing.is_empty():
-		game.round_played()
-
-
-func _address(id: String) -> void:
-	talk_npc = id
-	open_encounter(id, talk_input.text if is_instance_valid(talk_input) else "")
-
-
-func _scroll_to_end(body: VBoxContainer) -> void:
-	await get_tree().process_frame
-	var scroll := body.get_parent() as ScrollContainer
-	if is_instance_valid(scroll) and modal_kind == "encounter":
-		scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
-
-
-func _submit_talk() -> void:
-	var text := talk_input.text.strip_edges()
-	if text.is_empty() or talk_waiting or game.request_busy:
-		return
-	game.encounter_act("say", text, talk_npc)
-
-
-func _submit_do() -> void:
-	var text := talk_input.text.strip_edges()
-	if text.is_empty():
-		talk_status.text = "Describe what you do first."
-		return
-	if not talk_waiting and not game.request_busy:
-		game.encounter_act("do", text, talk_npc)
-
-
-func _submit_simple(kind: String) -> void:
-	if not talk_waiting and not game.request_busy:
-		game.encounter_act(kind, "", talk_npc)
-
-
-func talk_wait(text: String) -> void:
-	talk_waiting = true
-	working_clock = 0.0
-	if is_instance_valid(talk_input):
-		talk_input.editable = false
-		if not text.is_empty():
-			var said := label(text, 16)
-			said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			talk_status.get_parent().add_child(said)
-			talk_status.get_parent().move_child(said, talk_status.get_index())
-
-
-func talk_error(message: String) -> void:
-	talk_waiting = false
-	if modal_kind != "encounter" or not is_instance_valid(talk_status):
-		notify(message)
-		return
-	talk_status.text = message
-	if is_instance_valid(talk_input):
-		talk_input.editable = true
-		talk_input.grab_focus()
-
-
-## Developer view of the last exchange: what Jev chose, how regard moved, what the voice was given.
-func talk_trace(body: VBoxContainer, trace: Dictionary) -> void:
-	var call: Dictionary = trace.get("call", {})
-	var spoken: Dictionary = trace.get("voice", {})
-	var change: Dictionary = trace.get("regard_change", {})
-	var heading := label("DEVELOPER: LAST EXCHANGE", 12)
-	heading.add_theme_color_override("font_color", GOLD)
-	body.add_child(heading)
-	paragraph(body, "Reply: %s (Jev's top choice: %s)\nTrust %+.2f · suspicion %+.2f\nDecider: %s · %d ms · $%s%s\nVoice: %s · %s · %d ms%s" % [
-		str(trace.get("action")), str(trace.get("jev_choice")), float(change.get("trust", 0)), float(change.get("suspicion", 0)),
-		_shown(call.get("provider")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
-		("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else "",
-		_shown(spoken.get("status")), _shown(spoken.get("model")), int(spoken.get("latency_ms", 0)),
-		("\nVoice error: " + str(spoken.error)) if spoken.get("error") != null else ""])
-	reveal(body, "What the decider saw", str(trace.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
-		JSON.stringify({"questions": trace.get("questions", {}), "answers": call.get("answers", {})}, "  "))
-	reveal(body, "What the voice was given", JSON.stringify(trace.get("voice_context", {}), "  "))
-
-
-func open_journal() -> void:
-	if game.run_state.is_empty() or game.request_busy:
-		return
-	var body := begin_modal("Your journal", "journal")
-	paragraph(body, "GET INSIDE THE CITY\nYou arrived from the future with only your knowledge. Explore, notice what is available, and consider what you could do with it.")
-	var open_leads := PackedStringArray()
-	var done_leads := PackedStringArray()
-	var told := PackedStringArray()
+func open_leads() -> PackedStringArray:
+	var leads := PackedStringArray()
+	var seen := {}
 	for claim in game.run_state.get("learned", []):
-		told.append("%s: “%s”" % [claim.name, claim.said])
 		var lead := str(claim.get("lead", ""))
-		if lead.is_empty() or lead in open_leads or lead in done_leads:
+		if lead.is_empty() or seen.has(lead):
 			continue
-		if _lead_done(claim):
-			done_leads.append(lead)
-		else:
-			open_leads.append(lead)
-	_journal_section(body, "LEADS", open_leads, 1.0)
-	_journal_section(body, "DONE", done_leads, 0.55)
-	_journal_section(body, "WHAT PEOPLE SAID", told, 0.8)
-	var history: Array = game.run_state.get("journal", [])
-	if history.is_empty():
-		paragraph(body, "No discoveries recorded yet.")
-	for index in range(history.size() - 1, maxi(-1, history.size() - 21), -1):
-		paragraph(body, "• " + str(history[index].reason))
+		seen[lead] = true
+		if not _lead_done(claim):
+			leads.append(lead)
+	return leads
+
 
 ## Whether what a lead points to has happened: a deal done, a loan returned, a person met.
 func _lead_done(claim: Dictionary) -> bool:
@@ -675,45 +634,15 @@ func _lead_done(claim: Dictionary) -> bool:
 	return false
 
 
-func _journal_section(body: VBoxContainer, title: String, lines: PackedStringArray, strength: float) -> void:
-	if lines.is_empty():
-		return
-	var heading := label(title, 12)
-	heading.add_theme_color_override("font_color", GOLD)
-	body.add_child(heading)
-	var bullets := PackedStringArray()
-	for line in lines:
-		bullets.append("• " + line)
-	var node := label("\n".join(bullets), 17)
-	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	node.modulate.a = strength
-	body.add_child(node)
-
-
-func open_pause() -> void:
-	if game.run_state.is_empty() or game.request_busy:
-		return
-	var body := begin_modal("A moment to breathe", "pause")
-	body.add_child(button("Continue exploring", close_modal))
-	paragraph(body, "Camera distance")
-	var zoom_slider := HSlider.new()
-	zoom_slider.min_value = 0.75
-	zoom_slider.max_value = 1.25
-	zoom_slider.step = 0.05
-	zoom_slider.value = game.camera_zoom
-	zoom_slider.value_changed.connect(func(value: float) -> void: game.camera_zoom = value; game._save_settings())
-	body.add_child(zoom_slider)
-	paragraph(body, "Sound volume")
-	var volume := HSlider.new()
-	volume.min_value = 0
-	volume.max_value = 1
-	volume.step = 0.05
-	volume.value = game.sound_volume
-	volume.value_changed.connect(func(value: float) -> void: game.sound_volume = value; game._save_settings())
-	body.add_child(volume)
-	paragraph(body, "WASD / arrows to move • Shift to run\nE to interact • F to inspect • Tab to cycle nearby targets\nI for belongings • J for journal • Mouse wheel to zoom\n\nEvery completed action and movement is saved automatically.")
-	body.add_child(button("Save and return to title", game._back_to_menu))
+func chip_note(obj: Dictionary) -> String:
+	if obj.get("person", false):
+		return "" if obj.alive else "  (dead)"
+	if obj.holder_id == "player":
+		return ""
+	var owner: String = game.owner_name(obj)
+	if obj.get("lent_to") == "player":
+		return "  (lent)"
+	return "  (%s's)" % owner if not owner.is_empty() and owner != "you" else ""
 
 
 func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
@@ -731,18 +660,20 @@ func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
 	return icon
 
 
-## Swap "Painting…" for the picture in the open panel once it arrives.
+## Swap "Painting…" for the picture wherever it's shown once it arrives.
 func refresh_icons() -> void:
-	for icon in modal_box.find_children("*", "TextureRect", true, false):
-		if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
-			var obj: Dictionary = game.run_state.objects[icon.get_meta("object_id")]
-			icon.texture = game.texture_for(obj)
-			var waiting := icon.get_node_or_null("Painting")
-			if waiting and icon.texture != null:
-				icon.remove_child(waiting)
-				waiting.queue_free()
-			elif waiting:
-				waiting.missing = game.sprite_status(obj) in ["failed", "none"]
+	hud.refresh()
+	for holder in [modal_box, bar, card]:
+		for icon in holder.find_children("*", "TextureRect", true, false):
+			if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
+				var obj: Dictionary = game.run_state.objects[icon.get_meta("object_id")]
+				icon.texture = game.texture_for(obj)
+				var waiting: Node = icon.get_node_or_null("Painting")
+				if waiting and icon.texture != null:
+					icon.remove_child(waiting)
+					waiting.queue_free()
+				elif waiting:
+					waiting.missing = game.sprite_status(obj) in ["failed", "none"]
 
 
 func flag_words(flags: Array) -> String:
@@ -774,102 +705,12 @@ func provenance(obj: Dictionary) -> String:
 	return text + ".\nYour words: “" + str(obj.get("created_text", "")) + "”"
 
 
-func capability_lines(body: VBoxContainer, obj: Dictionary) -> void:
+func capability_lines(body: Control, obj: Dictionary) -> void:
 	var lines: PackedStringArray = []
 	for capability in obj.get("known_capabilities", []):
 		lines.append("• " + str(capability.text) + str(CAPABILITY_NOTES.get(str(capability.status), "")))
 	if not lines.is_empty():
 		paragraph(body, "What it might do:\n" + "\n".join(lines))
-
-
-func open_try(prefill := "") -> void:
-	if game.run_state.is_empty() or game.request_busy or not game.gameplay_active:
-		return
-	var body := begin_modal("Try something", "try")
-	paragraph(body, "Describe what you want to do, in your own words. You can use what you carry and whatever or whoever is within reach.")
-	if not game.ai_ready():
-		var warning := label("AI judging isn't set up on this computer yet (no OpenAI key on the backend). You can still try; the game will tell you honestly that it couldn't decide.", 14)
-		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		warning.add_theme_color_override("font_color", GOLD)
-		body.add_child(warning)
-	try_input = TextEdit.new()
-	try_input.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	try_input.custom_minimum_size = Vector2(0, 96)
-	try_input.placeholder_text = "What do you want to do?"
-	try_input.add_theme_font_size_override("font_size", 17)
-	try_input.text = prefill
-	try_input.gui_input.connect(_on_try_key)
-	body.add_child(try_input)
-	try_selected.clear()
-	var items: Array[Dictionary] = game.try_candidates()
-	if items.is_empty():
-		paragraph(body, "You carry nothing, and nothing is within reach. Walk closer to things or people first.")
-	else:
-		body.add_child(label("Within reach (optional: click to point at something)", 14))
-		var chips := HFlowContainer.new()
-		chips.add_theme_constant_override("h_separation", 6)
-		chips.add_theme_constant_override("v_separation", 6)
-		for obj in items:
-			var chip := button(str(obj.name) + _chip_note(obj), func() -> void: pass)
-			chip.custom_minimum_size.y = 34
-			chip.toggle_mode = true
-			if not obj.get("person", false):
-				chip.icon = game.texture_for(obj)
-			chip.expand_icon = false
-			chip.add_theme_constant_override("icon_max_width", 26)
-			chip.add_theme_font_size_override("font_size", 14)
-			chip.toggled.connect(_on_chip.bind(str(obj.id), str(obj.name)))
-			chips.add_child(chip)
-		body.add_child(chips)
-	body.add_child(button("Do it  [Enter]", _submit_try))
-	try_input.grab_focus.call_deferred()
-	try_input.set_caret_column.call_deferred(prefill.length())
-
-
-func _chip_note(obj: Dictionary) -> String:
-	if obj.get("person", false):
-		return "" if obj.alive else "  (dead)"
-	if obj.holder_id == "player":
-		return "  (carried)"
-	var owner: String = game.owner_name(obj)
-	if obj.get("lent_to") == "player":
-		return "  (%s's, lent to you)" % owner
-	return "  (%s's)" % owner if not owner.is_empty() and owner != "you" else ""
-
-
-func _on_chip(pressed: bool, id: String, item_name: String) -> void:
-	if pressed and id not in try_selected:
-		try_selected.append(id)
-		if item_name not in try_input.text:
-			try_input.insert_text_at_caret(("" if try_input.text.ends_with(" ") or try_input.text.is_empty() else " ") + "the " + item_name + " ")
-	elif not pressed:
-		try_selected.erase(id)
-	try_input.grab_focus()
-
-
-func _on_try_key(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.shift_pressed and \
-			(event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER):
-		try_input.accept_event()
-		_submit_try()
-
-
-func _submit_try() -> void:
-	var text := try_input.text.strip_edges()
-	if text.is_empty():
-		notify("Describe what you want to try first.")
-		return
-	game._try_something(text, try_selected.duplicate())
-
-
-func show_working(text: String) -> void:
-	var body := begin_modal("Working", "working")
-	paragraph(body, "“" + text + "”")
-	working_clock = 0.0
-	working_label = label("You set to work.", 22)
-	working_label.add_theme_color_override("font_color", GOLD)
-	body.add_child(working_label)
-	paragraph(body, "The world is working out whether this can be done. Time stands still while you wait.")
 
 
 ## The object a make step produced; older journal entries only record "made".
@@ -879,8 +720,8 @@ func _crafted(entry: Dictionary):
 	return entry.get("made") if str(entry.get("action", "make")) == "make" else null
 
 
-func _result_title(entry: Dictionary) -> String:
-	var category := str(entry.category)
+func result_title(entry: Dictionary) -> String:
+	var category := str(entry.get("category", ""))
 	if category != "success":
 		return str(OUTCOME_TITLES.get(category, "Result"))
 	# Several steps can succeed at once; title the most striking outcome.
@@ -916,119 +757,64 @@ func _sentence(text: String) -> String:
 	return text if text.right(1) in [".", "!", "?"] else text + "."
 
 
-func _object_rows(body: VBoxContainer, ids: Array) -> void:
-	var seen := {}
-	for id in ids:
-		var obj: Dictionary = game.run_state.objects.get(id, {})
-		if obj.is_empty():
-			continue
-		var key := str(obj.name)
-		seen[key] = seen.get(key, []) + [obj]
-	for key in seen:
-		var group: Array = seen[key]
-		var obj: Dictionary = group[0]
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		body.add_child(row)
-		row.add_child(object_icon(obj, 56))
-		var where := "in your bag" if obj.holder_id == "player" else \
-			("too heavy to carry" if not "carry" in obj.capabilities else "on the ground")
-		var count := "%d × " % group.size() if group.size() > 1 else ""
-		var weight := str(obj.mass_kg) + " kg" + (" each" if group.size() > 1 else "")
-		var line := label(count + str(obj.name).capitalize() + "  ·  " + weight + "  ·  " + where, 16)
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(line)
-
-
-func show_craft_result(entry: Dictionary, trace) -> void:
-	var category := str(entry.category)
-	var body := begin_modal(_result_title(entry), "result")
-	var said := label("“" + str(entry.text) + "”", 15)
-	said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	said.add_theme_color_override("font_color", Color(0.85, 0.82, 0.72, 0.75))
-	body.add_child(said)
-	paragraph(body, str(entry.reason))
+## What an attempt changed, in plain sentences (everything a committed step did, even if a later one failed).
+func result_details(entry: Dictionary) -> PackedStringArray:
+	var lines := PackedStringArray()
 	for claim in entry.get("property", []):
-		var owner := str(claim.owner_id)
-		for npc in game.run_state.npcs:
-			if npc.id == claim.owner_id:
-				owner = str(npc.name)
-		var note := label("The %s belongs to %s (%s)." % [claim.name, owner, str(claim.how).replace("_", " ")], 15)
-		note.add_theme_color_override("font_color", GOLD)
-		body.add_child(note)
-	# Everything a committed step changed is shown, even when a later step failed.
-	_object_rows(body, entry.get("taken_ids", []))
-	var transformed = entry.get("transformed")
-	if typeof(transformed) == TYPE_DICTIONARY:
-		_object_rows(body, transformed.get("into", []))
+		var owner := str(npc_record(str(claim.owner_id)).get("name", claim.owner_id))
+		lines.append("The %s belongs to %s (%s)." % [claim.name, owner, str(claim.how).replace("_", " ")])
 	var harm = entry.get("harm")
 	if typeof(harm) == TYPE_DICTIONARY:
-		var victim := str(harm.target_id)
-		for npc in game.run_state.npcs:
-			if npc.id == harm.target_id:
-				victim = str(npc.name)
-		paragraph(body, {"killed": "%s is dead.", "wounded": "%s is wounded.", "missed": "%s is unhurt."}.get(
+		var victim := str(npc_record(str(harm.target_id)).get("name", harm.target_id))
+		lines.append({"killed": "%s is dead.", "wounded": "%s is wounded.", "missed": "%s is unhurt."}.get(
 			str(harm.result), "%s") % victim + ("" if str(harm.result) == "missed" else " " + _sentence(str(harm.injury))))
 		if not harm.get("witnesses", []).is_empty():
-			paragraph(body, "Others nearby saw it.")
+			lines.append("Others nearby saw it.")
 	var shown = entry.get("demonstration")
 	if typeof(shown) == TYPE_DICTIONARY:
-		var seen := label("What people saw: " + str(shown.observed), 16)
-		seen.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		seen.add_theme_color_override("font_color", GOLD)
-		body.add_child(seen)
-		if game.run_state.objects.has(shown.object_id):
-			capability_lines(body, game.run_state.objects[shown.object_id])
+		lines.append("What people saw: " + str(shown.observed))
 	var given = entry.get("give")
 	if typeof(given) == TYPE_DICTIONARY:
-		paragraph(body, "%s now has the %s." % [given.recipient_name, " and the ".join(given.names)])
+		lines.append("%s now has the %s." % [given.recipient_name, " and the ".join(given.names)])
 	var placed = entry.get("install")
 	if typeof(placed) == TYPE_DICTIONARY:
-		paragraph(body, "The %s is up in the %s." % [placed.object_name, placed.into_name])
+		lines.append("The %s is up in the %s." % [placed.object_name, placed.into_name])
 	var offered = entry.get("offer_trade")
 	if typeof(offered) == TYPE_DICTIONARY:
-		paragraph(body, "%s will think it over: your %s for their %s. Talk to them to hear their answer." % [
+		lines.append("%s will think it over: your %s for their %s. Talk to them to hear their answer." % [
 			offered.recipient_name, " and ".join(offered.give_names), " and ".join(offered.want_names)])
 	var filled = entry.get("fill")
 	if typeof(filled) == TYPE_DICTIONARY and game.run_state.objects.has(filled.container_id):
 		var container: Dictionary = game.run_state.objects[filled.container_id]
-		paragraph(body, "The %s holds %s of %s litres." % [container.name, container.water_l, container.capacity_l])
+		lines.append("The %s holds %s of %s litres." % [container.name, container.water_l, container.capacity_l])
+	return lines
+
+
+## The objects worth showing with a picture: made, cut into pieces, taken.
+func result_objects(entry: Dictionary) -> Array:
+	var ids := []
 	var made = _crafted(entry)
-	if made != null and game.run_state.objects.has(made):
-		var obj: Dictionary = game.run_state.objects[made]
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
-		body.add_child(row)
-		row.add_child(object_icon(obj, 104))
-		var about := VBoxContainer.new()
-		about.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(about)
-		var title := label(str(obj.name).capitalize(), 22)
-		title.add_theme_color_override("font_color", GOLD)
-		about.add_child(title)
-		paragraph(about, str(obj.get("description", "")))
-		var facts := "Made of: " + ", ".join(obj.get("materials", [])) + "\nWeight: " + str(obj.mass_kg) + " kg"
-		var feel := flag_words(obj.get("flags", []))
-		if not feel.is_empty():
-			facts += "\nIt is: " + feel
-		paragraph(body, facts)
-		capability_lines(body, obj)
-		paragraph(body, "It's in your bag." if obj.holder_id == "player"
-			else "It's too heavy to carry with everything else, so it's at your feet.")
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 8)
-	if category == "needs_clarification":
-		actions.add_child(button("Answer", open_try.bind(str(entry.text) + "\n")))
-	actions.add_child(button("Try something else", open_try))
-	actions.add_child(button("Close", close_modal))
-	body.add_child(actions)
-	if game.run_state.get("mode", "") == "developer" and typeof(trace) == TYPE_DICTIONARY:
-		trace_view(body, trace)
+	if made != null:
+		ids.append(made)
+	var transformed = entry.get("transformed")
+	if typeof(transformed) == TYPE_DICTIONARY:
+		ids.append_array(transformed.get("into", []))
+	for id in entry.get("taken_ids", []):
+		if not id in ids:
+			ids.append(id)
+	var seen := {}
+	var unique := []
+	for id in ids: # Several identical pieces show once.
+		var key := str(game.run_state.get("objects", {}).get(id, {}).get("name", id))
+		if not seen.has(key):
+			seen[key] = true
+			unique.append(id)
+	return unique
 
 
 func show_death(reason: String) -> void:
-	var body := begin_modal("You died", "death")
+	bar.close()
+	var body := begin_modal("You died", "death", Vector2(560, 380))
 	for child in modal_box.get_child(0).get_children(): # No "Close" on the death screen.
 		if child is Button:
 			child.hide()
@@ -1040,20 +826,15 @@ func show_death(reason: String) -> void:
 		game._back_to_menu()))
 
 
-func show_craft_error(problem: String, text: String) -> void:
-	var body := begin_modal("Nothing happened", "result")
-	paragraph(body, problem)
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 8)
-	actions.add_child(button("Try again", open_try.bind(text)))
-	actions.add_child(button("Close", close_modal))
-	body.add_child(actions)
-
+# --- Developer views -----------------------------------------------------------------------------
 
 ## Developer-only view of one judge call: what was sent, what came back, what code changed.
-func trace_view(body: VBoxContainer, trace: Dictionary) -> void:
-	var heading := label("DEVELOPER TRACE", 12)
-	heading.add_theme_color_override("font_color", GOLD)
+func trace_view(body: Control, trace: Dictionary) -> void:
+	if trace.get("kind") in ["talk", "round"] and not trace.has("judge"):
+		talk_trace(body, trace)
+		return
+	var heading := label("DEVELOPER TRACE")
+	heading.theme_type_variation = "Caption"
 	body.add_child(heading)
 	var judged: Dictionary = trace.get("judge", {})
 	var validator: Dictionary = trace.get("validator", {})
@@ -1074,7 +855,7 @@ func trace_view(body: VBoxContainer, trace: Dictionary) -> void:
 	summary += "\nValidator notes: " + ("none (proposal accepted as is)" if notes.is_empty() else "")
 	for note in notes:
 		summary += "\n  • " + str(note)
-	paragraph(body, summary)
+	small(body, summary)
 	var raw = judged.get("raw_output")
 	var parsed = JSON.parse_string(str(raw)) if raw != null else null
 	reveal(body, "Model output (raw)", JSON.stringify(parsed, "  ") if parsed != null else str(raw))
@@ -1083,11 +864,30 @@ func trace_view(body: VBoxContainer, trace: Dictionary) -> void:
 		reveal(body, "Object committed by code", JSON.stringify(validator.new_spec, "  "))
 
 
+## Developer view of the last exchange: what Jev chose, how regard moved, what the voice was given.
+func talk_trace(body: Control, trace: Dictionary) -> void:
+	var call: Dictionary = trace.get("call", {})
+	var spoken: Dictionary = trace.get("voice", {})
+	var change: Dictionary = trace.get("regard_change", {})
+	var heading := label("DEVELOPER: LAST EXCHANGE")
+	heading.theme_type_variation = "Caption"
+	body.add_child(heading)
+	small(body, "Reply: %s (Jev's top choice: %s)\nTrust %+.2f · suspicion %+.2f\nDecider: %s · %d ms · $%s%s\nVoice: %s · %s · %d ms%s" % [
+		str(trace.get("action")), str(trace.get("jev_choice")), float(change.get("trust", 0)), float(change.get("suspicion", 0)),
+		_shown(call.get("provider")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
+		("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else "",
+		_shown(spoken.get("status")), _shown(spoken.get("model")), int(spoken.get("latency_ms", 0)),
+		("\nVoice error: " + str(spoken.error)) if spoken.get("error") != null else ""])
+	reveal(body, "What the decider saw", str(trace.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
+		JSON.stringify({"questions": trace.get("questions", {}), "answers": call.get("answers", {})}, "  "))
+	reveal(body, "What the voice was given", JSON.stringify(trace.get("voice_context", {}), "  "))
+
+
 func _shown(value) -> String:
 	return "-" if value == null else str(value)
 
 
-func reveal(body: VBoxContainer, title: String, text: String) -> void:
+func reveal(body: Control, title: String, text: String) -> void:
 	var box := TextEdit.new()
 	box.text = text
 	box.editable = false
@@ -1095,9 +895,8 @@ func reveal(body: VBoxContainer, title: String, text: String) -> void:
 	box.custom_minimum_size = Vector2(0, 220)
 	box.add_theme_font_size_override("font_size", 13)
 	box.visible = false
-	var toggle := button("Show " + title.to_lower(), func() -> void: pass)
-	toggle.custom_minimum_size.y = 32
-	toggle.add_theme_font_size_override("font_size", 13)
+	var toggle := button("Show " + title.to_lower(), func() -> void: pass, "Quiet")
+	toggle.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	toggle.pressed.connect(func() -> void:
 		box.visible = not box.visible
 		toggle.text = ("Hide " if box.visible else "Show ") + title.to_lower())
@@ -1106,7 +905,7 @@ func reveal(body: VBoxContainer, title: String, text: String) -> void:
 
 
 func show_traces(data: Dictionary) -> void:
-	var body := begin_modal("AI traces", "traces")
+	var body := begin_modal("AI traces", "traces", Vector2(900, 600))
 	var ai: Dictionary = data.get("ai", {})
 	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)\nPeople decide with: %s%s" % [
 		ai.get("mode"), "on" if ai.get("judge") else "off", ai.get("judge_model"),
@@ -1114,21 +913,23 @@ func show_traces(data: Dictionary) -> void:
 		(" (" + str(ai.get("jev_model")) + " via " + str(ai.get("jev_provider")) + ")") if ai.get("decider") == "jev" else ""])
 	var traces: Array = data.get("traces", [])
 	if traces.is_empty():
-		paragraph(body, "No attempts yet. Press T in the world to try making something.")
+		paragraph(body, "No attempts yet. Press T in the world and describe something to do.")
 	for trace in traces:
 		var title := label("“" + str(trace.get("text", "")) + "”", 17)
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title.add_theme_color_override("font_color", GOLD)
+		title.add_theme_color_override("font_color", UITheme.ACCENT)
 		body.add_child(title)
 		trace_view(body, trace)
 		body.add_child(HSeparator.new())
 	var thoughts: Array = data.get("minds", [])
 	if not thoughts.is_empty():
-		body.add_child(label("PEOPLE'S DECISIONS (newest first)", 12))
+		var heading := label("PEOPLE'S DECISIONS (newest first)")
+		heading.theme_type_variation = "Caption"
+		body.add_child(heading)
 		for thought in thoughts:
 			var call: Dictionary = thought.get("call", {})
 			var what := str(thought.get("action", thought.get("result", thought.get("skipped", "-"))))
-			paragraph(body, "%s (%s) → %s\n%s · %s · %d ms · $%s%s%s" % [
+			small(body, "%s (%s) → %s\n%s · %s · %d ms · $%s%s%s" % [
 				str(thought.npc_id).trim_prefix("npc_"), thought.get("why", ""), what, _shown(call.get("provider")),
 				_shown(call.get("model")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
 				(" · one request for %d people" % int(thought.get("people_in_request", 1))) if thought.get("shared_request", false) else "",
@@ -1138,21 +939,23 @@ func show_traces(data: Dictionary) -> void:
 				JSON.stringify({"questions": thought.get("questions", {}), "answers": call.get("answers", {})}, "  "))
 			if thought.get("kind") == "talk":
 				var spoken: Dictionary = thought.get("voice", {})
-				paragraph(body, "You: “%s”\nSaid: “%s”\nVoice: %s · %s · %d ms" % [thought.get("text", ""),
+				small(body, "You: “%s”\nSaid: “%s”\nVoice: %s · %s · %d ms" % [thought.get("text", ""),
 					thought.get("reply", ""), _shown(spoken.get("status")), _shown(spoken.get("model")),
 					int(spoken.get("latency_ms", 0))])
 				reveal(body, "What the voice was given", JSON.stringify(thought.get("voice_context", {}), "  "))
 		body.add_child(HSeparator.new())
 	var sprites: Array = data.get("assets", [])
 	if not sprites.is_empty():
-		body.add_child(label("SPRITES", 12))
+		var heading := label("SPRITES")
+		heading.theme_type_variation = "Caption"
+		body.add_child(heading)
 		for sprite in sprites:
 			var info: Dictionary = sprite.get("call", {})
-			paragraph(body, "%s  ·  %s  ·  %s  ·  %d ms%s" % [sprite.get("record", {}).get("name"), sprite.status,
+			small(body, "%s  ·  %s  ·  %s  ·  %d ms%s" % [sprite.get("record", {}).get("name"), sprite.status,
 				_shown(info.get("model")), int(info.get("latency_ms", 0)),
 				("\nError: " + str(info.error)) if info.get("error") != null else ""])
 			if sprite.status in ["failed", "disabled"]:
-				body.add_child(button("Retry painting " + str(sprite.object_id), game.retry_sprite.bind(str(sprite.asset_id))))
+				body.add_child(button("Retry painting " + str(sprite.object_id), game.retry_sprite.bind(str(sprite.asset_id)), "Chip"))
 			if info.has("prompt"):
 				reveal(body, "Image prompt for " + str(sprite.object_id), str(info.prompt))
 	var calls: Array = data.get("model_calls", [])
