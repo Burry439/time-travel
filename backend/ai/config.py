@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(ENV_PATH, override=False)
+# Some Windows network monitors set SSLKEYLOGFILE to a pipe this process may not open; every TLS context then
+# fails with PermissionError (the 28 Sep "500 on talk"). Key logging is for debugging captures, never needed here.
+os.environ.pop("SSLKEYLOGFILE", None)
 
 try:  # Use the operating system's certificate store, matching `uv --native-tls`.
     import truststore

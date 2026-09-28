@@ -76,7 +76,14 @@ class DeciderCall:
 
 
 def decide(state_text: str, questions: dict) -> DeciderCall:
-    """Ask all questions about one situation in a single request."""
+    """Ask all questions about one situation in a single request. Never raises: a failure is call.error."""
+    try:
+        return _decide(state_text, questions)
+    except Exception as error:  # A decision that can't be made must never take a request down with it.
+        return DeciderCall(provider="error", error=f"{type(error).__name__}: {error}")
+
+
+def _decide(state_text: str, questions: dict) -> DeciderCall:
     current = mode()
     if current == "stub":
         return _stub(questions)
@@ -108,7 +115,7 @@ def _jev(state_text: str, questions: dict) -> DeciderCall:
     try:
         response = httpx.post(url, json={"state": state_text, "model": model, "questions": questions},
                               headers={"Authorization": f"Bearer {jev_key()}"}, timeout=20.0)
-    except httpx.HTTPError as error:
+    except Exception as error:  # Network, TLS or local environment trouble (e.g. an unusable SSLKEYLOGFILE).
         call.error = f"{type(error).__name__}: {error}"
     else:
         call.latency_ms = round((time.perf_counter() - started) * 1000)
@@ -119,15 +126,19 @@ def _jev(state_text: str, questions: dict) -> DeciderCall:
         elif response.status_code != 200:
             call.error = f"HTTP {response.status_code}: {response.text[:200]}"
         else:
-            data = response.json()
-            call.model = data.get("model", call.model)
-            call.answers = data.get("answers", {})
-            usage = data.get("usage") or {}
-            call.input_tokens, call.output_tokens = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-            consumed = data.get("consumed", usage.get("cost"))
-            call.cost_usd = float(consumed) if consumed is not None else None
+            try:
+                data = response.json()
+                call.model = data.get("model", call.model)
+                call.answers = data.get("answers", {})
+                usage = data.get("usage") or {}
+                call.input_tokens, call.output_tokens = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
+                consumed = data.get("consumed", usage.get("cost"))
+                call.cost_usd = float(consumed) if consumed is not None else None
+            except Exception as error:  # A malformed reply is an unanswered question, not a crash.
+                call.answers = {}
+                call.error = f"bad reply: {type(error).__name__}: {error}"
             missing = [name for name in questions if name not in call.answers]
-            if missing:
+            if missing and call.error is None:
                 call.error = f"missing answers: {missing}"
     call.latency_ms = call.latency_ms or round((time.perf_counter() - started) * 1000)
     return call
@@ -167,6 +178,10 @@ def _llm(state_text: str, questions: dict) -> DeciderCall:
     call.latency_ms = round((time.perf_counter() - started) * 1000)
     if response.usage is not None:
         call.input_tokens, call.output_tokens = response.usage.input_tokens, response.usage.output_tokens
+    missing = [name for name in questions if name not in raw]
+    if missing:
+        call.error = f"missing answers: {missing}"
+        return call
     for name, question in questions.items():  # Reshape into Jev's answer format.
         value = raw[name]
         if question["type"] == "choice":

@@ -825,7 +825,9 @@ func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeou
 	request.queue_free()
 	var status := int(completed[1])
 	var parse_started := Time.get_ticks_usec()
-	var data = JSON.parse_string((completed[3] as PackedByteArray).get_string_from_utf8())
+	var text := (completed[3] as PackedByteArray).get_string_from_utf8()
+	# Only JSON is parsed: an error page ("Internal Server Error") is a failed reply, not something to parse.
+	var data = JSON.parse_string(text) if text.strip_edges().left(1) in ["{", "["] else null
 	_prof("parse " + path.get_slice("?", 0).get_file(), parse_started, (completed[3] as PackedByteArray).size())
 	return {"ok": status >= 200 and status < 300 and typeof(data) == TYPE_DICTIONARY,
 		"status": status, "data": data}
@@ -1097,6 +1099,8 @@ func _act_failed(reply: Dictionary) -> void:
 func _reply_problem(reply: Dictionary) -> String:
 	if int(reply.status) == 0:
 		return "The local simulation didn't answer in time. Your journey is safe."
+	if int(reply.status) >= 500:
+		return "The world stumbled (HTTP %s). Your journey is safe; try again." % reply.status
 	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
 	if typeof(detail) == TYPE_DICTIONARY and str(detail.get("reason", "")) == "in_progress":
 		return "You're still working on your last attempt."

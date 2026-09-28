@@ -140,6 +140,13 @@ func _run() -> void:
 	if not check(await settle() and ui.bar.own_log[-1].kind == "note" and "Nobody" in str(ui.bar.own_log[-1].text)
 			and ui.bar.line.text.begins_with("“Hello"), "Nobody-hears message missing"):
 		return
+	# A server error (plain-text 500) is reported honestly and leaves the line usable.
+	var stumble: String = scene._reply_problem({"status": 500, "data": null})
+	ui.bar.wait("test")
+	ui.bar.problem(stumble)
+	if not check("HTTP 500" in stumble and ui.bar.line.editable and not ui.bar.waiting, "A 500 left the bar stuck"):
+		return
+	ui.bar.line.text = ""
 	ui.bar.escape()
 	if not check(not ui.bar.visible, "Esc did not close the bar"):
 		return

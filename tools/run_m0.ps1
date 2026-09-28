@@ -16,6 +16,8 @@ $backendPath = Join-Path $projectRoot 'backend'
 $arguments = @('run', '--native-tls', '--project', $backendPath,
                'uvicorn', 'app:app', '--app-dir', $backendPath,
                '--host', '127.0.0.1', '--port', '8765')
+# A TLS key-log pipe inherited from some shells breaks every HTTPS call the backend makes.
+Remove-Item Env:SSLKEYLOGFILE -ErrorAction SilentlyContinue
 $process = Start-Process -FilePath $uvExecutable -ArgumentList $arguments `
     -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput (Join-Path $dataDir 'backend.log') `
