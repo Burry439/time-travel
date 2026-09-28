@@ -134,8 +134,11 @@ def is_family(npc: dict, other_id: str | None) -> bool:
 def regard(npc: dict) -> dict:
     """How this person sees the stranger (GDD 7.2): starts from their card, changes only through events."""
     start = card(npc).get("regard", {"trust": 0.2, "suspicion": 0.5})
-    return mind(npc).setdefault("regard", {"trust": start["trust"], "suspicion": start["suspicion"],
+    view = mind(npc).setdefault("regard", {"trust": start["trust"], "suspicion": start["suspicion"],
                                            "goodwill_used": 0.0})
+    view.setdefault("respect", start.get("respect", 0.0))  # Competence seen working (D-43).
+    view.setdefault("awe", start.get("awe", 0.0))  # Wonder at the uncanny: double-edged (D-43).
+    return view
 
 
 def is_evidence(memory: dict) -> bool:
@@ -182,9 +185,35 @@ def _shift_regard(npc: dict, memory: dict) -> None:
     if memory.get("event") is not None:
         credited.append(memory["event"])
     before = dict(view)
+    if is_evidence(memory) and memory["kind"] == "demonstration":
+        trust, suspicion = _wonder(npc, memory, view, trust, suspicion)
     view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
     view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
     regard_cue(npc, before, view)
+
+
+FIRSTHAND = ("witnessed", "shown", "victim", "received")
+RESPECT_SHIFT = {"ordinary": EVIDENCE_SHIFT, "clever": 2 * EVIDENCE_SHIFT, "uncanny": EVIDENCE_SHIFT}
+AWE_SHIFT = 0.25
+
+
+def _wonder(npc: dict, memory: dict, view: dict, trust: float, suspicion: float) -> tuple[float, float]:
+    """Something that worked earns respect; something uncanny, seen with their own eyes, earns awe, and what
+    awe does depends on who they are (their superstition): reverence, or fear of witchcraft. Hearsay earns
+    neither awe nor fear: claims and stories never do (GDD 1)."""
+    wonder = memory.get("wonder", "ordinary")
+    view["respect"] = round(min(1.0, view["respect"] + RESPECT_SHIFT.get(wonder, EVIDENCE_SHIFT)), 3)
+    if wonder != "uncanny" or memory.get("source") not in FIRSTHAND:
+        return trust, suspicion
+    view["awe"] = round(min(1.0, view["awe"] + AWE_SHIFT), 3)
+    leaning = (card(npc).get("superstition") or {}).get("kind", "none")
+    if leaning == "reverent":
+        return trust + EVIDENCE_SHIFT, suspicion - EVIDENCE_SHIFT
+    if leaning == "wary":  # Witchcraft: no credit for it, and afraid of whoever did it.
+        feelings = mind(npc)["feelings"]
+        feelings["fear"] = max(feelings.get("fear", 0.0), 0.34)
+        return 0.0, 2 * EVIDENCE_SHIFT
+    return trust, suspicion
 
 
 def remember(npc: dict, memory: dict) -> None:
@@ -277,6 +306,7 @@ def _describe(state: dict, entry: dict) -> list[dict]:
     if isinstance(shown, dict):
         views.append({"kind": "demonstration", "victim": None, "item": shown["object_name"],
                       "audience": shown.get("audience_ids", []), "think": False, "works": shown["works"],
+                      "wonder": shown.get("wonder", "ordinary"),
                       "clear": {"summary": shown["observed"], "short": f"showed off a {shown['object_name']}",
                                 "severity": 1},
                       "vague": {"summary": "The stranger was showing people something; it was hard to see what.",
@@ -367,6 +397,8 @@ def perceive(state: dict, entry: dict) -> list[dict]:
                       "source": source}
             if "works" in seen:
                 memory["works"] = seen["works"]
+            if seen.get("wonder") and clarity == "clear":
+                memory["wonder"] = seen["wonder"]
             if npc["id"] == seen["victim"]:  # They tell it in the first person: "attacked me", "stole my plank".
                 memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
             perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})
@@ -583,7 +615,9 @@ def _situation(state: dict, npc: dict) -> str:
     lines.append(f"How {me['name']} feels about the stranger right now: "
                  f"{words(feelings['fear'], FEAR_LEVELS).lower()}, {words(feelings['anger'], ANGER_LEVELS).lower()}; "
                  f"trust {words(view['trust'], ['none', 'little', 'some', 'real'])}, "
-                 f"suspicion {words(view['suspicion'], ['none', 'slight', 'wary', 'very wary'])}.")
+                 f"suspicion {words(view['suspicion'], ['none', 'slight', 'wary', 'very wary'])}, "
+                 f"respect for what they can do {words(view['respect'], ['none', 'a little', 'real', 'great'])}, "
+                 f"awe {words(view['awe'], ['none', 'a touch', 'deep', 'overwhelming'])}.")
     others = [f"{n['name']} ({relation(npc, n['id']) or card(n)['role']}, "
               f"{condition(n.get('health', 100), n.get('alive', True))}, {round(math.dist(_cell(n), _cell(npc)))} steps)"
               for n in state["npcs"] if n["id"] != npc["id"] and math.dist(_cell(n), _cell(npc)) <= 16]

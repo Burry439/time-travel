@@ -100,6 +100,8 @@ def sheet_lines(state: dict, npc: dict) -> list[str]:
         lines.append(f"{name} likes {me.get('likes', 'little')}; dislikes {me.get('dislikes', 'little')}.")
     if me.get("persuaded_by"):
         lines.append(f"What would change {name}'s mind: {me['persuaded_by']}.")
+    if (me.get("superstition") or {}).get("text"):
+        lines.append(f"Wonders and the uncanny: {me['superstition']['text']}")
     if me.get("style"):
         lines.append(f"How {name} talks: {me['style']}")
     lines.append(f"{name}'s mood: {mood(npc)}. {name} is {doing(npc)}.")
@@ -121,6 +123,7 @@ def voice_sheet(state: dict, npc: dict) -> dict:
         "mood": mood(npc),
         "doing": doing(npc),
         "authority": me.get("authority", ""),
+        "wonders_and_the_uncanny": (me.get("superstition") or {}).get("text", ""),
         "how_they_talk": {"style": me.get("style", ""), "habits": voice.get("habits", ""),
                           "greeting": voice.get("greeting", ""),
                           "example_lines_never_copy": voice.get("samples", []),

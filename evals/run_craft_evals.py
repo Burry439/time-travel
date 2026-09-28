@@ -73,6 +73,10 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
                 problems.append(f"no change with {key}={value}: {changes}")
     if case.get("forbid_wound") and (verdict.get("harm") or {}).get("result") in ("wounded", "disabled", "killed"):
         problems.append(f"wounded: {(verdict.get('harm') or {}).get('result')}")
+    if case.get("require_wonder"):
+        wonders = [st["demonstration"].get("wonder") for st in steps if st.get("demonstration")]
+        if not wonders or wonders[-1] not in case["require_wonder"]:
+            problems.append(f"wonder {wonders} not in {case['require_wonder']}")
     if case.get("require_action") and verdict["category"] == "success" and verdict["action"] != case["require_action"]:
         problems.append(f"action {verdict['action']} is not {case['require_action']}")
     recorded = {claim["id"] for claim in verdict.get("property", [])}

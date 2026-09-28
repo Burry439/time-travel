@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v10"
+PROMPT_VERSION = "judge_v11"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -98,6 +98,7 @@ class Demonstration(BaseModel):
     observed: str  # What an onlooker sees, starting "The stranger".
     works: bool
     capabilities: list[Result]
+    wonder: Literal["ordinary", "clever", "uncanny"]  # How it strikes a local onlooker (D-43).
 
 
 class Give(BaseModel):

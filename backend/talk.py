@@ -118,9 +118,17 @@ def barred(state: dict) -> bool:
     return (state.get("barred_until") or 0) > state.get("sim_time_ms", 0)
 
 
+def admission_rule(npc: dict) -> str:
+    """How this person decides who may pass the gate, in their own terms (the captain's is 'decides')."""
+    me = minds.card(npc)
+    return me.get("decides") or me.get("admits") or ""
+
+
 def can_admit(state: dict, npc: dict) -> bool:
-    """Only the captain, only for a living stranger who isn't barred, never after violence he knows of."""
-    return npc["id"] == CAPTAIN and not state.get("admitted") and state["player"].get("alive", True) \
+    """Any guard with their own reasons (D-43), standing, for a living stranger who isn't barred, never after
+    violence or an assault on the gate they know of."""
+    return bool(minds.card(npc).get("guard") and admission_rule(npc)) and not npc.get("down") \
+        and npc.get("alive", True) and not state.get("admitted") and state["player"].get("alive", True) \
         and not knows_a_crime(npc) and not barred(state)
 
 
@@ -199,7 +207,9 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
         options["vouch"] = option("vouch", f"{name} offers to go to Captain Roderic now and speak for the stranger.")
     if can_admit(state, npc):
         options["admit"] = option("admit", f"{name} admits the stranger into the city and orders the gate opened "
-                                           f"for them.")
+                                           f"for them." if npc["id"] == CAPTAIN else
+                                           f"{name} lets the stranger through the gate on their own say-so, and "
+                                           f"has it opened for them.")
     options["refuse"] = option("refuse", f"{name} refuses what the stranger is asking for.")
     options["tell_to_leave"] = option("tell_to_leave", f"{name} tells the stranger to go away and leave them be.")
     guard = None if me.get("guard") else _nearest_guard(state, npc)
@@ -226,10 +236,11 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     In an encounter, happened says what took place in the same moment (a blow, a gift, silence)."""
     name, view = npc["name"], regard(npc)
     lines = [minds._situation(state, npc),
-             f"How {name} regards the stranger: trust {view['trust']:.2f} of 1, suspicion {view['suspicion']:.2f} of 1.",
+             f"How {name} regards the stranger: trust {view['trust']:.2f} of 1, suspicion {view['suspicion']:.2f} of 1, "
+             f"respect {view['respect']:.2f} of 1, awe {view['awe']:.2f} of 1.",
              f"On {name}'s mind: {minds.card(npc).get('concerns', 'nothing in particular')}"]
-    if minds.card(npc).get("decides"):
-        lines.append(f"How {name} decides who may enter the city: {minds.card(npc)['decides']}")
+    if admission_rule(npc):
+        lines.append(f"How {name} decides who may enter the city: {admission_rule(npc)}")
     for trade in open_trades(state, npc):
         lines.append(f"The stranger is offering {name} a trade: their {' and '.join(trade['give_names'])} for "
                      f"{name}'s {' and '.join(trade['want_names'])}.")
@@ -276,10 +287,8 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
         questions["threat"] = {"type": "noul", "instructions": f"Does {name} believe the stranger is a threat to the "
                                                                f"city? Judge only from what {name} has seen or been told."}
         questions["reason"] = {"type": "noul", "instructions": (
-            f"Has {name} now seen or been told of a legitimate reason for the stranger to enter the city: a resident "
-            f"{name} trusts has vouched for them, they are bound to honest business (such as working for a merchant "
-            f"with a trade permit), or {name} has seen them show something of clear value to the city or garrison? "
-            f"The stranger's own claims do not count.")}
+            f"By {name}'s own lights ({admission_rule(npc)}), has {name} now seen, been given or been told of reason "
+            f"enough to let the stranger into the city? The stranger's own claims do not count.")}
     accepted = [d for d in accepted if deal_possible(state, d)]
     for deal in accepted:  # A change in the world they asked for is something they go and look at.
         placed = next((o.get("done_when", {}).get("installed") for o in minds.card(npc).get("offers", [])
@@ -302,9 +311,9 @@ def chosen(answers: dict, options: dict) -> str:
 
 
 def decided_reply(state: dict, npc: dict, answers: dict, questions: dict) -> str:
-    """The reply code will carry out: Jev's choice, or admission when the captain believes his rule is met.
+    """The reply code will carry out: Jev's choice, or admission when a guard believes their own rule is met.
 
-    That is his authored motive (GDD 4.3) applied by code to Jev's typed beliefs ("reason", "threat")."""
+    That is their authored motive (GDD 4.3, D-43) applied by code to Jev's typed beliefs ("reason", "threat")."""
     key = chosen(answers, questions["reply"]["criteria"])
     options = replies(state, npc)
     believes = _yes(answers, "reason", REASON_YES) and "threat" in answers         and float(answers["threat"].get("noul", 1.0)) < THREAT_NO

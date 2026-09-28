@@ -34,6 +34,7 @@ def world_for(case: dict) -> tuple[dict, dict]:
     for index, memory in enumerate(case.get("memories", [])):
         minds.remember(person, {"victim": None, "item": None, "event": 900 + index, "at": 0, **memory})
     minds.mind(person)["talk"] = [dict(t, at=0) for t in case.get("talk", [])]
+    talk.regard(person).update(case.get("regard", {}))  # e.g. awe or trust already earned
     return state, person
 
 
@@ -44,7 +45,7 @@ def exchange(state: dict, npc_id: str, text: str) -> dict:
     decided = decider.decide(situation, questions)
     if not decided.ok:
         return {"error": decided.error, "jev_ms": decided.latency_ms}
-    key = talk.decided_reply(state, person, decided.answers, questions, seed=f"{time.time_ns()}")
+    key = talk.decided_reply(state, person, decided.answers, questions)
     spoken = voice.speak(talk.voice_context(state, person, text, key, decided.answers),
                          talk.fallback_line(state, person, key))
     before = dict(talk.regard(person))

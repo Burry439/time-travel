@@ -225,6 +225,97 @@
     "worth",
     "trade"
    ]
+  },
+  {
+   "id": "bren_on_hessas_word",
+   "group": "gate",
+   "npc": "npc_bren_marr",
+   "memories": [
+    {
+     "kind": "vouch",
+     "severity": 1,
+     "by": "npc_hessa_marr",
+     "clarity": "told",
+     "source": "told_by:npc_hessa_marr",
+     "summary": "Hessa told him the stranger boiled the inn's water so her guests stopped falling sick, and that she trusts them like family.",
+     "short": "has Hessa's word"
+    }
+   ],
+   "regard": {
+    "trust": 0.62,
+    "suspicion": 0.3
+   },
+   "lines": [
+    "Hessa sent me. Bren, will you let me through the gate?"
+   ],
+   "expect_any": [
+    "admit"
+   ]
+  },
+  {
+   "id": "bren_wont_for_a_stranger",
+   "group": "gate",
+   "npc": "npc_bren_marr",
+   "lines": [
+    "Come on, be a friend. Let me through the gate, just this once."
+   ],
+   "forbid": [
+    "admit"
+   ]
+  },
+  {
+   "id": "kade_scorns_wonders",
+   "group": "gate",
+   "npc": "npc_kade_east",
+   "memories": [
+    {
+     "kind": "demonstration",
+     "severity": 1,
+     "clarity": "clear",
+     "works": true,
+     "source": "witnessed",
+     "wonder": "uncanny",
+     "summary": "The stranger floated an iron needle on a leaf in a bowl of water; it swung round by itself and settled pointing north, every time, however it was turned.",
+     "short": "showed off a needle that finds north by itself"
+    }
+   ],
+   "regard": {
+    "awe": 0.25
+   },
+   "lines": [
+    "You saw what I can do. Let me through the gate."
+   ],
+   "forbid": [
+    "admit"
+   ]
+  },
+  {
+   "id": "oren_in_awe",
+   "group": "gate",
+   "npc": "npc_oren_dast",
+   "memories": [
+    {
+     "kind": "demonstration",
+     "severity": 1,
+     "clarity": "clear",
+     "works": true,
+     "source": "witnessed",
+     "wonder": "uncanny",
+     "summary": "The stranger floated an iron needle on a leaf in a bowl of water; it swung round by itself and settled pointing north, every time, however it was turned.",
+     "short": "showed off a needle that finds north by itself"
+    }
+   ],
+   "regard": {
+    "awe": 0.5,
+    "trust": 0.45,
+    "suspicion": 0.3
+   },
+   "lines": [
+    "You have seen what I can do. Open the gate for me."
+   ],
+   "expect_any": [
+    "admit"
+   ]
   }
  ]
 }

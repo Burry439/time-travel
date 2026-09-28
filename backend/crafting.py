@@ -780,7 +780,8 @@ def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
     demonstration = {"object_id": shown["id"], "object_name": shown["name"], "used_ids": ids[1:],
                      "audience_ids": [i for i in _dedupe(plan["audience_ids"]) if i in living],
                      "observed": " ".join(plan["observed"].split())[:300] or f"The stranger showed a {shown['name']}.",
-                     "works": bool(plan["works"]), "results": results}
+                     "works": bool(plan["works"]), "results": results,
+                     "wonder": plan.get("wonder", "ordinary") if plan["works"] else "ordinary"}
     not_ours = [i for i in ids if i in water or available[i]["holder_id"] != "player"]
     return _verdict("success", reason, notes, effort, action="demonstrate", demonstration=demonstration,
                     precedent_key=key, property=_property(state, not_ours, "used"))

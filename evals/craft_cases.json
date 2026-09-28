@@ -521,6 +521,51 @@
     "success"
    ],
    "require_action": "lift_out"
+  },
+  {
+   "id": "needle_finds_north",
+   "group": "wonder",
+   "text": "stroke the needle along the lodestone many times, float it on a scrap of bark in the bowl of water, and show Hessa how it always swings round to point the same way",
+   "carry": [
+    "needles_mara",
+    "lodestone_darin",
+    "bowl_hessa",
+    "bark_a"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0
+    }
+   },
+   "beside": "npc_hessa_marr",
+   "expect": [
+    "success",
+    "partial_success"
+   ],
+   "require_wonder": [
+    "uncanny"
+   ]
+  },
+  {
+   "id": "show_hot_water",
+   "group": "wonder",
+   "text": "show Hessa the bowl of hot water",
+   "carry": [
+    "bowl_hessa"
+   ],
+   "set": {
+    "bowl_hessa": {
+     "water_l": 1.0,
+     "temperature": "hot"
+    }
+   },
+   "beside": "npc_hessa_marr",
+   "expect": [
+    "success"
+   ],
+   "require_wonder": [
+    "ordinary"
+   ]
   }
  ]
 }

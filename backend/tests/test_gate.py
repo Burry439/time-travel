@@ -27,10 +27,13 @@ def answers(reply, **yes):
     return out
 
 
-def test_only_the_captain_admits_and_never_after_a_crime():
+def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
     state = unit_state()
     roderic, bren = npc(state, "npc_roderic_vale"), npc(state, "npc_bren_marr")
-    assert "admit" in talk.replies(state, roderic) and "admit" not in talk.replies(state, bren)
+    assert "admit" in talk.replies(state, roderic) and "admit" in talk.replies(state, bren)  # D-43.
+    assert "admit" not in talk.replies(state, npc(state, "npc_hessa_marr"))  # Not a guard: not hers to give.
+    bren["down"] = True
+    assert "admit" not in talk.replies(state, bren)
     minds.remember(roderic, {"kind": "violence", "severity": 2, "event": 3, "summary": "The stranger attacked Oren.",
                              "short": "attacked Oren", "victim": "npc_oren_dast", "source": "witnessed"})
     assert "admit" not in talk.replies(state, roderic)
@@ -270,4 +273,6 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     assert talk.decided_reply(state, roderic, answers("tell_to_leave", reason=0.9, threat=0.1), questions) \
         == "tell_to_leave"  # A hostile reply is never turned into admission.
     _, questions = talk.request(state, npc(state, "npc_bren_marr"), "May I enter?")
-    assert "reason" not in questions  # Only the captain decides.
+    assert "Hessa has vouched" in questions["reason"]["instructions"]  # Bren weighs it by his own lights.
+    _, questions = talk.request(state, npc(state, "npc_hessa_marr"), "May I enter?")
+    assert "reason" not in questions

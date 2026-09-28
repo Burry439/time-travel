@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, D-39 to D-42)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, D-39 to D-43)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -291,7 +291,16 @@ Elin watches the road between the gate and the row. Kade patrols the village app
 
 **Status: CURRENT**
 
-The city runs controlled entry. Unknown travellers need **a credible reason**: a known sponsor, legitimate business, a recognised pass, or the captain's direct approval. It's a social rule enforced by people, not a magic lock. Only **Roderic** can admit someone. The guards can stop, question, warn, report, and call the captain.
+The city runs controlled entry. Unknown travellers need **a credible reason**: a known sponsor, legitimate business, a recognised pass, or the captain's direct approval. It's a social rule enforced by people, not a magic lock. Roderic admits by the rule below; since D-43, **any guard may let someone through for their own reasons** (below). The guards can also stop, question, warn, report, and call the captain.
+
+> **Built (D-43): any guard, for their own reasons.** Each guard's card carries `admits`, the captain's `decides`. In conversation Jev answers the same two yes/no beliefs for any guard: by their own lights, is there reason enough, and is the stranger a threat? Code admits on reason ≥ 0.45 and threat < 0.5, never after a crime or breach they know of, never while barred, never by someone who's down.
+>
+> - **Bren:** on trust alone (his own, or Hessa's word); never for a stranger he doesn't know.
+> - **Oren:** out of fear or awe, or if his debt to Darin is settled; never out of goodwill.
+> - **Kade:** only for real, practical work he has seen and respects; wonders count for nothing.
+> - **Elin:** for something of real use to the watch (finding the way in fog, seeing danger), shown to work.
+>
+> Live: Bren admits on Hessa's word (2/2) but not as a favour (2/2); Kade ignores wonders (2/2); Oren in awe opens the gate (2/2).
 
 **Roderic's authored motives.** These are conditions he reasons about, not a recipe.
 
@@ -694,6 +703,12 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >
 > - **The moment itself is code.** A crime is answered in the same event: clear witnesses turn to face the stranger, anger or fear is set and held for 20 s, and the nearest victim or witness within 8 cells shouts in their own words (`lines.json` `caught`). Jev then decides what comes next.
 > - **Two thinking lanes.** Reactions (`decide`, `round`) never wait behind the village's own life or memory work, and thinking never pauses for the dialogue bar or a panel.
+> - **Respect and awe** (D-43) join trust and suspicion. A demonstration or installation that works earns respect: a clever one twice as much. An uncanny one, seen with their own eyes, earns awe, and the judge rates each demonstration's wonder against the knowledge baseline. Each card's `superstition` makes awe double-edged:
+>   - **reverent** (Jory, Oren, Hessa): trust rises beyond any ordinary proof;
+>   - **wary** (Roderic, Mara, Elin, Kade): witchcraft; no credit, more suspicion, and fear;
+>   - **none** (Bren, Tomas, Darin): ordinary evidence.
+>
+>   Stories of wonders earn no awe: only seeing does (§1). Both models see all four in words, with the superstition.
 > - **Fights** (`backend/combat.py`): guards who clearly see violence fight at once; anyone else decides (the smith may take up her hammer, the merchant runs). An attacker gives up beyond 28 cells. It ends when every attacker is down, dead or gone, the stranger dies, or gives up (a guard arrests them; otherwise they're left be).
 ### 7.1 Three layers of truth
 
@@ -1208,6 +1223,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-43 | 2026-09-28 | **Reputation, and any guard's word** (`judge_v11`, cards v6). Regard gains **respect** (competence seen working) and **awe** (wonder at the uncanny). Demonstrations carry a judged `wonder` (ordinary, clever or uncanny, measured against what a local knows). Awe is double-edged through each card's `superstition`: reverence raises trust; wariness brings suspicion and fear. Only firsthand sight moves awe. **Any guard may let the stranger in** for their own reasons (`admits`), with the captain's two beliefs asked against the guard's own rule. The victory panel names who. | The user: "the point of the game: you are from the future; you use your knowledge to get into the city by helping people, or just by impressing them, or making them believe you are a god", and "any guard, own reasons"; awe "double-edged". Live: the floating needle is judged uncanny 3/3, and hot water shown is ordinary 3/3, once `wonder` was a required field (with a default, the model left it out: 0/3). Talk evals 16/16, including the four new guard cases. |
 | D-42 | 2026-09-28 | **The gate bar: a physical way in** (seed 9, `judge_v10`). The cracked first bar rests in the brackets across the gate, and the gate is open whenever the brackets are empty. A new `lift_out` step (the inverse of install) is judged like any physics, and code needs aids for anything over 20 kg. An install now needs an empty fixture, so Tomas's job becomes a swap. Guards who clearly see the bar lifted off treat it as a `breach`: they fight, and the captain never admits after it. Tomas's accepted deal makes it work instead. A guard within 8 cells of the gate holds the gap against anyone not let in (code, like a body in a doorway). The victory panel records how you got in. | The user asked for "one possible way to get inside … by simply raising the beam", clarified as lifting the bar off the gate: "that would lead to the guards attacking you, but if they were dead or somewhere else … you could get in like that." Live: by hand it's blocked 3/3; with a ladder and rope it succeeds 3/3 once the prompt says lowering is easier than raising (at first the judge treated it like raising: 0/3). |
 | D-41 | 2026-09-28 | **Real-time fights, and no dice anywhere.**<br><br>**The first strike** is an intent, judged like any physics (`judge_v9`). The judge sees each person's armour, their weapon and whether they're aware of the stranger. It rules missed, **deflected**, wounded, **disabled** (down, alive) or killed, with no luck involved. Code keeps the armour law (V10): fists and light, soft things can't get through mail.<br><br>**Then the fight is real time** (`combat.py`, a `fight` state on the clock). Guards who clearly saw the violence fight at once; others decide. Each attacker closes in and winds up a blow (weapon table in `npc_cards.json`: damage, wind-up, reach). The blow hits only if the stranger is still in reach when it lands. **Space** is a code-only punch (`POST /strike`, 0.7 s recovery). A punch or giving up is a `fight` event carrying the resulting fields. Blows on the clock arrive with `/explore`, so everything replays exactly.<br><br>**Encounters** keep words only: an attack intent turns the encounter into a fight. The stranger acts first in a round, then the others in the order they came.<br><br>**Removed:** the seeded initiative roll, the blow roll (hit, kill and damage chances), fighting `skill` on cards, extra blows for long actions (a long action in a fight now simply lets the clock run), and the weighted draw among Jev's plausible replies (its top choice is taken). | The user asked for fights that start with an intent ("I sneak up and stab him") and then go on in real time, where guards try to kill you, and where it's realistic: a wooden spear can't hurt a man in mail but easily kills anyone else; boiling water disables a guard, but the other guards will likely kill you. And: "we don't want probabilities … things that should work should work if they make sense … no DnD-style dice rolls." |
 | D-40 | 2026-09-28 | **Things that change, judged; code keeps the laws** (`judge_v8`, seed 8).<br><br>**A general `change` step:** heat, boil, cool, set alight, put out or pour, with no per-recipe rules. `poured` is a harm method judged by what is in the container. Fire from sparks or flame is a `make`.<br><br>**Laws by code only (V10):** heat and flame need something burning within reach; sparks need flint and iron into dry tinder; water is conserved; boiling takes time; cold water can't scald.<br><br>**State:** names follow it ("clay bowl of boiling water"). Things cool (boiling 2 min, hot 5 min, warm 10 min) and fires burn down with simulated time, carried as `objects_changed` on clock events.<br><br>**Heat in the world:** Mara's forge and Hessa's cooking fire are burning fixtures. | The user: "if I fill a bowl with water it becomes a bowl with water; if I boil that water it becomes a bowl with boiling water", and crafting must be dynamic: "there isn't something programmed that says you can boil water; it works because it makes sense." Live craft evals: 25/26, then 4/4 consistent on the borderline cases once `materials.json` stated the world facts about sparks from iron and cutting saplings with flint. |
@@ -1625,6 +1641,40 @@ Changes to this document: …
 
 - Sparks from ordinary iron are still judged inconsistently now and then (1 run in about 10).
 - Nobody yet lures guards away or knows the watch changes (Jory, in the storylines).
+
+### Retro: reputation and any guard's word (D-43), 28 Sep 2026
+
+**Built:**
+
+- respect and awe;
+- judged wonder;
+- superstition on every card;
+- `admits` for Bren, Oren, Kade and Elin;
+- admission by any guard;
+- regard in words for all four;
+- the victory panel naming who let you in.
+
+**Evidence:**
+
+- 146 backend tests pass. New `test_reputation.py`:
+  - a clever thing earns more respect;
+  - awe is double-edged (Jory's trust rises; Roderic grows suspicious and uneasy; Tomas is unmoved);
+  - stories earn no awe;
+  - the sheets carry it;
+  - Bren admits on his own rule.
+- **Live:**
+  - Talk: 16/16.
+  - Craft: 33/33, including the new cases "needle finds north" (uncanny 3/3) and "show hot water" (ordinary 3/3).
+
+**Lessons:**
+
+- A structured-output field with a default is optional to the model, and it leaves it out. Make judged fields required.
+- The talk eval still passed the old `seed` argument, removed in D-41. Evals are code too: run them after an interface change.
+
+**To watch:**
+
+- "What the town says about the stranger" (a summary across people) is not built. Each person still knows only what they saw or were told.
+- Oren's admission is a little too easy with awe alone; watch it once storylines give him other pressures.
 
 ---
 

@@ -790,10 +790,12 @@ func _show_victory() -> void:
 	var admitted = run_state.get("admitted")
 	var lines := PackedStringArray()
 	if typeof(admitted) == TYPE_DICTIONARY:
-		lines.append("Captain Roderic let you through the gate.")
+		var by := str(admitted.get("by", ""))
+		lines.append("Captain Roderic let you through the gate." if by == "npc_roderic_vale" else
+			"%s let you through the gate, on their own say-so." % str(ui.npc_record(by).get("name", "A guard")))
 		var because: Array = admitted.get("because", [])
 		if not because.is_empty():
-			lines.append("What weighed with him:")
+			lines.append("What weighed with them:")
 			for reason in because:
 				lines.append("• " + str(reason))
 	elif str(run_state.get("entered_by", "")) == "unbarred":

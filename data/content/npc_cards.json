@@ -1,6 +1,6 @@
 {
- "version": 5,
- "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard', 'weapon' and 'armor' to decide what actions are legal and how fights go (GDD D-41: real time, no dice). armor: none, padded or mail (armor_text: what it looks like, for the judge). weapons: each weapon's fixed damage against the unarmoured stranger (health 100), its wind-up (time to step out of reach) and its reach in cells. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry. knowledge.*.lead: how the fact reads in the player's journal (Leads). persuaded_by: what would change this person's mind, which they may say in their own words when they refuse. style: how they talk, for the voice. offers.*.done_when: a world condition that must hold before the deal can count as done. Character sheets (GDD D-38): mood (starting mood word), voice {samples: example lines in their own words, never to be copied; habits: turns of phrase; never: things they wouldn't say}, goals (current wants that drive agendas and talk), secrets ({text, reveal}: kept to themselves unless the condition is met), likes, dislikes, opinions ({npc_id: {text, warmth -1..1}}, which change as people talk), tasks ({id, place (data/places.json), activity, dwell_s, doing}: what they may choose to go and do). A task may have when/unless: {installed: object_id}, so the world changes what people choose to do.",
+ "version": 6,
+ "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard', 'weapon' and 'armor' to decide what actions are legal and how fights go (GDD D-41: real time, no dice). armor: none, padded or mail (armor_text: what it looks like, for the judge). weapons: each weapon's fixed damage against the unarmoured stranger (health 100), its wind-up (time to step out of reach) and its reach in cells. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry. knowledge.*.lead: how the fact reads in the player's journal (Leads). persuaded_by: what would change this person's mind, which they may say in their own words when they refuse. style: how they talk, for the voice. offers.*.done_when: a world condition that must hold before the deal can count as done. Character sheets (GDD D-38): mood (starting mood word), voice {samples: example lines in their own words, never to be copied; habits: turns of phrase; never: things they wouldn't say}, goals (current wants that drive agendas and talk), secrets ({text, reveal}: kept to themselves unless the condition is met), likes, dislikes, opinions ({npc_id: {text, warmth -1..1}}, which change as people talk), tasks ({id, place (data/places.json), activity, dwell_s, doing}: what they may choose to go and do). A task may have when/unless: {installed: object_id}, so the world changes what people choose to do. superstition ({kind: reverent | wary | none, text}): what awe at an uncanny wonder does to them (D-43: reverence raises trust; wariness means fear and suspicion). admits: a guard's own reasons for letting the stranger through the gate (any guard with one can, D-43; the captain's is decides).",
  "npcs": {
   "npc_roderic_vale": {
    "name": "Roderic",
@@ -150,7 +150,11 @@
       "installed": "gate_beam"
      }
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Roderic has buried men who trusted omens. Anything uncanny smells to him of trickery or witchcraft, and a stranger who works wonders is a danger to be watched, not a blessing."
+   }
   },
   "npc_bren_marr": {
    "name": "Bren",
@@ -279,7 +283,12 @@
      "dwell_s": 45,
      "doing": "walking the gate approach"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Bren laughs off omens but touches wood when no one's looking. A wonder makes him curious, not afraid."
+   },
+   "admits": "Bren would let someone through on trust alone: if he has come to trust them himself, or Hessa has vouched for them. He'd bend the captain's rule for a friend, never for a stranger he doesn't know."
   },
   "npc_oren_dast": {
    "name": "Oren",
@@ -390,7 +399,12 @@
      "dwell_s": 45,
      "doing": "pacing the gate approach"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "reverent",
+    "text": "Oren is anxious and half-believes the old stories. Something truly uncanny would awe him: he'd think the stranger touched by the gods, and be afraid to cross them."
+   },
+   "admits": "Oren lets someone through only out of fear or awe (someone he believes touched by the gods, or dangerous to cross), or if they have settled his debt with Darin. He never does it out of simple goodwill."
   },
   "npc_hessa_marr": {
    "name": "Hessa",
@@ -540,7 +554,11 @@
      "dwell_s": 45,
      "doing": "sweeping the side of the yard"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "reverent",
+    "text": "Hessa keeps a little shrine for her lost husband and believes in signs. A true wonder moves her, gently."
+   }
   },
   "npc_mara_venn": {
    "name": "Mara",
@@ -675,7 +693,11 @@
      "dwell_s": 40,
      "doing": "taking a bundle of nails to Tomas"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Mara trusts iron and fire, nothing else. She calls anything uncanny sorcery and wants it away from her forge and her nephew."
+   }
   },
   "npc_jory_venn": {
    "name": "Jory",
@@ -801,7 +823,11 @@
      "dwell_s": 40,
      "doing": "gawking at Darin's goods"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "reverent",
+    "text": "Jory devours every tale of gods and wonder-workers. Anything uncanny would set him telling everyone the stranger is touched by the gods."
+   }
   },
   "npc_tomas_reed": {
    "name": "Tomas",
@@ -948,7 +974,11 @@
       "installed": "gate_beam"
      }
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Tomas wants to know how a thing works. A wonder is a puzzle to him until he understands it."
+   }
   },
   "npc_darin_ko": {
    "name": "Darin",
@@ -1085,7 +1115,11 @@
      "dwell_s": 50,
      "doing": "taking a meal at the inn"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Darin has seen conjurors in every market town. A wonder is a trick to him, and a trick is worth money."
+   }
   },
   "npc_elin_west": {
    "name": "Elin",
@@ -1189,7 +1223,12 @@
      "dwell_s": 45,
      "doing": "walking the road"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Elin was on the moor the night the fog took the patrol. She fears what she can't explain and keeps her distance from it."
+   },
+   "admits": "Elin would let through someone of real use to the watch: something that helps the patrols find their way in the fog or see danger coming, shown to work."
   },
   "npc_kade_east": {
    "name": "Kade",
@@ -1288,7 +1327,12 @@
      "dwell_s": 45,
      "doing": "patrolling the bend in the road"
     }
-   ]
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Kade has no time for wonders. Tricks and clever talk are how men get killed; only honest work earns his respect."
+   },
+   "admits": "Kade lets through only someone whose real, practical work he has seen and respects with his own eyes. Talk, tricks and wonders count for nothing with him."
   }
  },
  "weapons": {
