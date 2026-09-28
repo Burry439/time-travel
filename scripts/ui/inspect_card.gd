@@ -158,8 +158,14 @@ func _person(npc: Dictionary) -> void:
 	elif not injuries.is_empty():
 		_text(str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
 	var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
+	var known = their_mind.get("knows") if typeof(their_mind.get("knows")) == TYPE_DICTIONARY else {}
 	if alive:
-		_text("You have spoken before." if their_mind.get("met", false) else "You have not spoken yet.", "Small")
+		var mood := str(their_mind.get("mood")) if their_mind.get("mood") != null else "at ease"
+		var doing := str(their_mind.get("doing", "")) if their_mind.get("doing") != null else ""
+		_text(("Seems %s" % mood) + ((", %s." % doing) if not doing.is_empty() else "."))
+		var talks := int(known.get("talks", 0)) + (1 if not known.get("notes", []).is_empty() else 0)
+		_text("You have not spoken yet." if talks == 0 and not their_mind.get("met", false) else
+			"You have spoken once." if talks <= 1 else "You have spoken %d times." % talks, "Small")
 		_text("Left-click to talk.", "Small")
 	if game.run_state.get("mode", "") == "developer" and not their_mind.is_empty():
 		var lines := PackedStringArray()
@@ -167,6 +173,14 @@ func _person(npc: Dictionary) -> void:
 			lines.append("• (%s) %s" % [memory.source, memory.summary])
 		var job = their_mind.get("job")
 		var view: Dictionary = their_mind.get("regard", {})
+		var episodes: Array = known.get("episodes", [])
+		var feelings := PackedStringArray()
+		var views = their_mind.get("opinions") if typeof(their_mind.get("opinions")) == TYPE_DICTIONARY else {}
+		for other_id in views:
+			feelings.append("%s %+.2f" % [str(ui.npc_record(str(other_id)).get("name", other_id)), float(views[other_id].warmth)])
+		_text("DEVELOPER  ·  knows the stranger as %s · %d episodes%s\nOpinions: %s" % [
+			str(known.get("name") if known.get("name") != null else known.get("heard_name", "-")), episodes.size(),
+			("\nLast: " + str(episodes[-1].text)) if not episodes.is_empty() else "", ", ".join(feelings)], "Small")
 		_text("DEVELOPER  ·  fear %s · anger %s · trust %s · suspicion %s · doing: %s\n%s" % [
 			their_mind.get("feelings", {}).get("fear", 0), their_mind.get("feelings", {}).get("anger", 0),
 			view.get("trust", "-"), view.get("suspicion", "-"),

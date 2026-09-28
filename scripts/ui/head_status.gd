@@ -26,8 +26,10 @@ func _process(delta: float) -> void:
 		var intent := ""
 		if typeof(current) == TYPE_DICTIONARY:
 			intent = str((current.get("intents", {}).get(npc_id) if typeof(current.get("intents", {}).get(npc_id)) == TYPE_DICTIONARY else {}).get("action", ""))
+		# "…" means reacting to the stranger (or face to face), not planning an ordinary day.
 		var thinking: bool = game.run_state.get("pending_minds", []).any(func(p) -> bool:
-			return typeof(p) == TYPE_DICTIONARY and str(p.get("npc_id", "")) == npc_id)
+			return typeof(p) == TYPE_DICTIONARY and str(p.get("npc_id", "")) == npc_id \
+				and str(p.get("kind", "")) in ["decide", "round"])
 		if game.ui.bar.waiting and typeof(current) == TYPE_DICTIONARY and npc_id in current.get("participants", []):
 			thinking = true
 		if thinking:

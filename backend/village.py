@@ -20,7 +20,7 @@ PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json
 AGENDA_EVERY_MS = 90_000  # How often a free person reconsiders their day...
 TICK_MS = 30_000  # ...rounded to a shared tick, so several decide in one request.
 MEET_GAP_MS = 120_000  # Nobody stops for another chat within this long of their last one.
-MEET_CELLS = 2.5  # Close enough to fall into conversation.
+MEET_CELLS = 3.0  # Close enough to fall into conversation.
 VISIT_REACH = 3.0
 MIN_GATE_GUARDS = 2  # The gate is never left with fewer guards than this.
 GATE_GUARDS = ("npc_roderic_vale", "npc_bren_marr", "npc_oren_dast")
@@ -167,6 +167,7 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
         if not free(state, npc):
             continue
         my_mind = minds.mind(npc)
+        my_mind.setdefault("mood", persona.mood(npc))  # So everyone (and the client) can see how they seem.
         due = my_mind.get("next_agenda_at")
         if due is None:  # Staggered first beats, so the village doesn't all decide at once.
             my_mind["next_agenda_at"] = _tick(30_000 + index * 9_000)
@@ -179,7 +180,7 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
             controller["visit"] = None
             other = minds.find(npcs, visiting)
             if other and free(state, other) and math.dist(minds._cell(other), minds._cell(npc)) <= VISIT_REACH:
-                minds.add_pending(state, npc["id"], "meet", visiting)
+                _stop_to_talk(state, npc, other, now)
             else:
                 my_mind["doing"] = f"looking for {other['name'] if other else 'someone'}, who has gone"
     idle = [n for n in npcs if free(state, n) and (n.get("controller") or {}).get("activity") != "walk"
@@ -189,7 +190,17 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
             if a["id"] < b["id"] and math.dist(minds._cell(a), minds._cell(b)) <= MEET_CELLS and \
                     (b["id"] in persona.opinions(a) or a["id"] in persona.opinions(b)) and \
                     not any(p["kind"] == "meet" and p["npc_id"] in (a["id"], b["id"]) for p in state.get("pending_minds", [])):
-                minds.add_pending(state, a["id"], "meet", b["id"])
+                _stop_to_talk(state, a, b, now)
+
+
+def _stop_to_talk(state: dict, a: dict, b: dict, now: int) -> None:
+    """They fall into conversation: both stay where they are until it has been decided what they talk about."""
+    minds.add_pending(state, a["id"], "meet", b["id"])
+    for person, other in ((a, b), (b, a)):
+        controller = person.get("controller") or {}
+        if controller.get("activity") != "walk":
+            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 2 * CHAT_MS)
+        minds.mind(person)["chatting_with"] = {"id": other["id"], "until": now + 2 * CHAT_MS}
 
 
 def _tick(ms: int) -> int:

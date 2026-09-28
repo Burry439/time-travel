@@ -619,7 +619,7 @@ func open_leads() -> PackedStringArray:
 	var leads := PackedStringArray()
 	var seen := {}
 	for claim in game.run_state.get("learned", []):
-		var lead := str(claim.get("lead", ""))
+		var lead := str(claim.get("lead", "")) if claim.get("lead") != null else ""
 		if lead.is_empty() or seen.has(lead):
 			continue
 		seen[lead] = true

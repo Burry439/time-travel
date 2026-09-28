@@ -42,6 +42,7 @@ func walk_to(x: int, y: int) -> bool:
 		if typeof(reply.data) == TYPE_DICTIONARY and reply.data.has("state"):
 			scene._accept_state(reply.data.state)
 		if not reply.ok:
+			print("walk refused: ", reply.status, " ", JSON.stringify(reply.data).left(300))
 			break
 	scene.predicted_cell = Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
 	scene.player.position = scene._cell_center(scene.predicted_cell.x, scene.predicted_cell.y)

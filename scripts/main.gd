@@ -312,6 +312,14 @@ func _animate_npcs(delta: float) -> void:
 			mode = str(npc["controller"].get("activity", "idle"))
 			if mode == "wait":
 				mode = "idle"
+			var chatting = mind.get("chatting_with") if typeof(mind) == TYPE_DICTIONARY else null
+			if typeof(chatting) == TYPE_DICTIONARY and float(chatting.get("until", 0)) > float(run_state.get("sim_time_ms", 0)):
+				var partner := get_node_or_null("NPCs/" + str(chatting.id)) as Node2D
+				if partner: # Two people talking turn to face each other.
+					var across := partner.position - actor.position
+					facing = (3 if across.x > 0.0 else 1) if absf(across.x) > absf(across.y) else (0 if across.y > 0.0 else 2)
+					npc_facing[id] = facing
+					mode = "idle"
 			if typeof(mind) == TYPE_DICTIONARY and mind.get("facing_player", false):
 				# Wary people turn to face the stranger (decided by code on the server, not by Jev).
 				var toward := player.position - actor.position
@@ -504,6 +512,8 @@ func _flush_minds() -> void:
 func _accept_state(new_state: Dictionary) -> void:
 	if int(new_state.get("event_seq", 0)) < int(run_state.get("event_seq", 0)):
 		return
+	if run_state.has("run_id") and new_state.get("run_id") != run_state.get("run_id"):
+		return # A late reply from a journey that has since been left (e.g. its thinking lane).
 	if last_state_usec > 0:
 		_prof_max("longest_gap_between_updates_ms", (Time.get_ticks_usec() - last_state_usec) / 1000.0)
 	last_state_usec = Time.get_ticks_usec()
@@ -563,7 +573,11 @@ func _sync_display_now() -> void:
 		var said = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("said")
 		if typeof(said) == TYPE_DICTIONARY and shown_speech.get(str(npc["id"]), "") != str(said.key):
 			shown_speech[str(npc["id"])] = str(said.key)
-			_show_bubble(str(npc["id"]), str(said.text))
+			var after := float(said.get("after_ms", 0)) / 1000.0 # The second speaker in a chat answers a beat later.
+			if after > 0.0:
+				get_tree().create_timer(after).timeout.connect(_show_bubble.bind(str(npc["id"]), str(said.text)))
+			else:
+				_show_bubble(str(npc["id"]), str(said.text))
 		var cue = (npc.get("mind", {}) if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}).get("cue")
 		if typeof(cue) == TYPE_DICTIONARY and shown_cues.get(str(npc["id"]), "") != str(cue.key):
 			shown_cues[str(npc["id"])] = str(cue.key)

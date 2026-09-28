@@ -95,7 +95,10 @@ func _said(body: VBoxContainer) -> void:
 		var who := str(claim.get("name", "?"))
 		if not by_person.has(who):
 			by_person[who] = PackedStringArray()
-		by_person[who].append("“%s”" % claim.said)
+		if claim.has("overheard"): # Gossip the stranger overheard between two villagers.
+			by_person[who].append("(overheard, to %s) “%s”" % [claim.overheard, claim.said])
+		else:
+			by_person[who].append("“%s”" % claim.said)
 	if by_person.is_empty():
 		ui.paragraph(body, "Nobody has told you anything yet.")
 	for who in by_person:
