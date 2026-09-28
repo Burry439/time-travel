@@ -477,3 +477,18 @@ def test_throws_need_a_held_light_item_within_range():
     state["player"].update(x=bren["x"], y=bren["y"] + 12)
     far = crafting.validate(state, throw("npc_bren_marr", "stone_a"))
     assert far["category"] == "blocked" and "too far" in far["reason"]
+
+
+def test_a_later_step_can_show_light_or_give_what_an_earlier_step_made():
+    """'Make a sling, then show Kade': every later step may name made_by_step_N, not only weapons and ingredients."""
+    state = fresh_state()
+    beside(state, "npc_tomas_reed")
+    for item in ("branch_a", "flint_a", "vine_a"):
+        state["objects"][item]["holder_id"] = "player"
+    shown = judged("demonstrate", demonstration={
+        "object_id": "made_by_step_1", "used_ids": [], "audience_ids": ["npc_tomas_reed"],
+        "observed": "The stranger jabbed the spear into a post.", "works": True, "capabilities": [], "wonder": "ordinary"})
+    given = judged("give", give={"item_ids": ["made_by_step_1"], "recipient_id": "npc_tomas_reed"})
+    summary = commit(state, spear_step(), shown, given, text="make a spear, show Tomas, then give it to him")
+    assert [s["category"] for s in summary["steps"]] == ["success", "success", "success"], summary["steps"]
+    assert state["objects"][state["last_action"]["crafted"]]["holder_id"] == "npc_tomas_reed"

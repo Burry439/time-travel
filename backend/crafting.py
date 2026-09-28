@@ -799,8 +799,9 @@ def _give(state, judged, available, notes, reason, effort, key) -> dict:
     ids = _dedupe(plan["item_ids"])
     loose = [i for i in ids if state["objects"].get(i, {}).get("holder_id") != "player"]
     if not ids or loose:
-        name = state["objects"].get(loose[0], {}).get("name", "that") if loose else "anything"
-        return _verdict("blocked", f"You aren't carrying {'the ' + name if loose else name} to give.",
+        known = state["objects"].get(loose[0]) if loose else None
+        what = f"the {known['name']}" if known else "that" if loose else "anything"
+        return _verdict("blocked", f"You aren't carrying {what} to give.",
                         notes, action="give", precedent_key=key)
     if _distance(state, npc["x"], npc["y"]) > m2.REACH_CELLS:
         return _verdict("blocked", f"{npc['name']} is too far away to hand anything to.", notes, action="give",
@@ -1155,21 +1156,16 @@ _REFERENCE = re.compile(r"^made_by_step_(\d+)$")
 
 
 def _resolve_references(step: dict, made_by_step: dict[int, str]) -> dict:
-    """Point 'made_by_step_N' at the object that step actually made."""
+    """Point 'made_by_step_N' at the object that step actually made, wherever a later step names it (the thing
+    to show, light, fill, give, fit or pour into as well as a weapon or ingredient)."""
     def swap(value):
+        if isinstance(value, dict):
+            return {k: swap(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [swap(v) for v in value]
         match = _REFERENCE.match(value) if isinstance(value, str) else None
         return made_by_step.get(int(match.group(1)), value) if match else value
-    step = copy.deepcopy(step)
-    if step.get("new_object"):
-        step["new_object"]["consumes"] = [swap(i) for i in step["new_object"]["consumes"]]
-        step["new_object"]["tools_used"] = [swap(i) for i in step["new_object"]["tools_used"]]
-    step["take_ids"] = [swap(i) for i in step.get("take_ids") or []]
-    if step.get("transformation"):
-        step["transformation"]["target_id"] = swap(step["transformation"]["target_id"])
-        step["transformation"]["tools_used"] = [swap(i) for i in step["transformation"]["tools_used"]]
-    if step.get("harm"):
-        step["harm"]["weapon_id"] = swap(step["harm"]["weapon_id"])
-    return step
+    return swap(copy.deepcopy(step))
 
 
 def humanize(text: str, state: dict, made_by_step: dict[int, str]) -> str:
