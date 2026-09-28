@@ -65,13 +65,19 @@ def test_a_chosen_task_is_walked_to_done_and_left_for_the_routine():
     assert next(n for n in npcs if n["id"] == "npc_hessa_marr")["controller"]["source"] == "routine"
 
 
-def test_agenda_beats_share_a_tick_and_idle_neighbours_fall_into_talk():
+def test_jev_is_asked_only_when_something_happens_and_neighbours_fall_into_talk():
     state = unit_state()
-    village.schedule(state, state["npcs"], 0)
-    firsts = {minds.mind(n)["next_agenda_at"] for n in state["npcs"]}
-    assert all(t % village.TICK_MS == 0 for t in firsts) and len(firsts) < len(state["npcs"])
-    village.schedule(state, state["npcs"], max(firsts))
-    assert sum(p["kind"] == "agenda" for p in state["pending_minds"]) == len(state["npcs"])
+    for t in range(0, 600_000, 30_000):  # Ten quiet minutes, the stranger out of sight: nobody asks Jev anything.
+        village.schedule(state, state["npcs"], t)
+    assert not [p for p in state["pending_minds"] if p["kind"] == "agenda"]
+    hessa = npc(state, "npc_hessa_marr")
+    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
+                           "short": "stole my bucket", "victim": "npc_hessa_marr", "clarity": "clear", "source": "victim"})
+    village.schedule(state, state["npcs"], 700_000)
+    assert {"npc_id": "npc_hessa_marr", "kind": "agenda", "why": "stole my bucket"} in state["pending_minds"]
+    state["player"].update(x=npc(state, "npc_mara_venn")["x"] + 2, y=npc(state, "npc_mara_venn")["y"])
+    village.schedule(state, state["npcs"], 710_000)  # The stranger walks into view: that's news too.
+    assert any(p["npc_id"] == "npc_mara_venn" and p["why"] == "the stranger came into view" for p in state["pending_minds"])
     state["pending_minds"] = []
     hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
     bren["x"], bren["y"] = hessa["x"] + 1, hessa["y"]
@@ -117,10 +123,12 @@ def test_chatter_is_voiced_only_where_the_stranger_can_see_it():
 
 def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, monkeypatch):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
-    for _ in range(40):
+    for _ in range(40):  # Walking up the road brings people into view: they reconsider their day.
         if any(p["kind"] == "agenda" for p in state.get("pending_minds", [])):
             break
-        state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]
+        y = state["player"]["y"] - 2
+        state = post(world, state, "move", {"cells": [[48, y + 1], [48, y]]})["state"]
+        state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]  # Time passes on the clock lane.
     assert any(p["kind"] == "agenda" for p in state.get("pending_minds", []))
     body = post(world, state, "think", {})
     state = body["state"]
@@ -130,10 +138,13 @@ def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, m
     asked = []
     monkeypatch.setattr(ai_config, "max_decider_calls_per_run", lambda: 0)
     monkeypatch.setattr(decider, "decide", lambda text, questions: asked.append(questions) or decider.DeciderCall("x"))
-    for _ in range(120):
+    state = world.http.post("/runs", json={"mode": "developer"}).json()
+    for _ in range(40):
         if any(p["kind"] == "agenda" for p in state.get("pending_minds", [])):
             break
-        state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]
+        y = state["player"]["y"] - 2
+        state = post(world, state, "move", {"cells": [[48, y + 1], [48, y]]})["state"]
+        state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]  # Time passes on the clock lane.
     body = post(world, state, "think", {})
     assert not asked and any(d["kind"] == "agenda" for d in body["decisions"])
 
@@ -147,7 +158,7 @@ def test_the_dead_do_not_keep_the_village_thinking(world):
     working["pending_minds"] = [{"npc_id": "npc_jory_venn", "kind": "agenda", "why": "test"}]
     minds.find(working["npcs"], "npc_jory_venn")["alive"] = False
     import routes_minds
-    batch, recollecting = routes_minds._choose(working)
+    batch, recollecting, stale = routes_minds._choose(working)
     assert batch == [] and recollecting == []
 
 

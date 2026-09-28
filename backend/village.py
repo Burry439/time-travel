@@ -17,8 +17,7 @@ import npc_sim
 import persona
 
 PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))["places"]
-AGENDA_EVERY_MS = 90_000  # How often a free person reconsiders their day...
-TICK_MS = 30_000  # ...rounded to a shared tick, so several decide in one request.
+AGENDA_GAP_MS = 20_000  # Something fresh makes a free person reconsider their day, at most this often (D-39).
 MEET_GAP_MS = 120_000  # Nobody stops for another chat within this long of their last one.
 MEET_CELLS = 3.0  # Close enough to fall into conversation.
 VISIT_REACH = 3.0
@@ -207,18 +206,23 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
 
 
 def schedule(state: dict, npcs: list[dict], now: int) -> None:
-    """Queue agenda beats (on a shared tick) and meetings for people who arrived or bumped into each other."""
-    for index, npc in enumerate(npcs):
-        if not free(state, npc):
-            continue
+    """Jev only when something happens (D-39): a free person whose mind is fresh (news, a memory, a storyline,
+    the stranger coming into view) reconsiders their day. Otherwise the routine goes on by code. Also queues
+    meetings for people who arrived on a visit or bumped into someone they know."""
+    for npc in npcs:
         my_mind = minds.mind(npc)
         my_mind.setdefault("mood", persona.mood(npc))  # So everyone (and the client) can see how they seem.
-        due = my_mind.get("next_agenda_at")
-        if due is None:  # Staggered first beats, so the village doesn't all decide at once.
-            my_mind["next_agenda_at"] = _tick(30_000 + index * 9_000)
-        elif now >= due:
-            minds.add_pending(state, npc["id"], "agenda", "time to decide what next")
-            my_mind["next_agenda_at"] = _tick(now + AGENDA_EVERY_MS)
+        seen = near_stranger(state, npc, minds.SIGHT_CELLS)
+        if seen and not my_mind.get("stranger_seen"):
+            my_mind["fresh"] = my_mind.get("fresh") or "the stranger came into view"
+        my_mind["stranger_seen"] = seen
+        if not free(state, npc):
+            continue
+        if my_mind.get("fresh") and now >= my_mind.get("next_agenda_at", 0) and \
+                not any(p["npc_id"] == npc["id"] for p in state.get("pending_minds", [])):
+            minds.add_pending(state, npc["id"], "agenda", str(my_mind["fresh"]))
+            my_mind["fresh"] = None
+            my_mind["next_agenda_at"] = now + AGENDA_GAP_MS
         controller = npc.get("controller") or {}
         visiting = controller.get("visit")
         if visiting and controller.get("activity") != "walk":
@@ -246,10 +250,6 @@ def _stop_to_talk(state: dict, a: dict, b: dict, now: int) -> None:
         if controller.get("activity") != "walk":
             controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 2 * CHAT_MS)
         minds.mind(person)["chatting_with"] = {"id": other["id"], "until": now + 2 * CHAT_MS}
-
-
-def _tick(ms: int) -> int:
-    return -(-ms // TICK_MS) * TICK_MS
 
 
 # --- Meetings: two people talk, and news travels ---------------------------------------------------
@@ -292,6 +292,12 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
     options["small_talk"] = {"description": f"{a['name']} passes the time of day with {b['name']}.",
                              "fact": "the weather, work and the day", "kind": "small_talk"}
     return options
+
+
+def has_news(state: dict, a: dict, b: dict) -> bool:
+    """Whether a meeting is worth asking Jev about: either has something to pass on (else it's a nod, by code)."""
+    return bool(news_pick(state, a, b) or news_pick(state, b, a) or minds.mind(a).get("fresh")
+                or minds.mind(b).get("fresh"))
 
 
 def news_pick(state: dict, a: dict, b: dict) -> str | None:

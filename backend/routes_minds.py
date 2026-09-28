@@ -12,6 +12,8 @@ import json
 import math
 from concurrent.futures import ThreadPoolExecutor
 
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -32,9 +34,11 @@ RECOLLECT_BATCH = 3
 class ThinkRequest(BaseModel):
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
+    # Two lanes (D-39): reactions never wait behind people planning their day. "any" = reactions first.
+    lane: Literal["any", "react", "village"] = "any"
 
 
-_thinking_runs: set[str] = set()
+_thinking_runs: set[tuple[str, str]] = set()
 
 
 def _meet_ready(state: dict, pending: dict) -> bool:
@@ -44,19 +48,22 @@ def _meet_ready(state: dict, pending: dict) -> bool:
         and math.dist(minds._cell(a), minds._cell(b)) <= village.VISIT_REACH + 1
 
 
-def _choose(state: dict) -> tuple[list[dict], list[dict]]:
-    """Who decides now (reactions alone if there are any) and whose conversations become memories."""
+def _choose(state: dict, lane: str = "any") -> tuple[list[dict], list[dict], list[dict]]:
+    """Who decides now, whose conversations become memories, and stale entries to drop.
+
+    Reactions go alone and never carry memory or chatter work; the village lane takes meetings, agendas
+    and memories."""
     alive = [p for p in state.get("pending_minds", []) if p["kind"] in KINDS
              and (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)]
     reacting = [p for p in alive if p["kind"] in REACTING]
-    if reacting:
-        batch = reacting[:minds.THINK_BATCH]
-    else:
-        batch = [p for p in alive if p["kind"] == "meet" and _meet_ready(state, p)][:minds.THINK_BATCH]
-        batch += [p for p in alive if p["kind"] == "agenda"][:minds.THINK_BATCH - len(batch)]
+    if lane == "react" or (lane == "any" and reacting):
+        return reacting[:minds.THINK_BATCH], [], []
+    stale = [p for p in alive if p["kind"] == "meet" and not _meet_ready(state, p)]  # They went their ways.
+    batch = [p for p in alive if p["kind"] == "meet" and _meet_ready(state, p)][:minds.THINK_BATCH]
+    batch += [p for p in alive if p["kind"] == "agenda"][:minds.THINK_BATCH - len(batch)]
     talking = set((state.get("encounter") or {}).get("participants") or [])
     recollecting = [p for p in alive if p["kind"] == "recollect" and p["npc_id"] not in talking][:RECOLLECT_BATCH]
-    return batch, recollecting
+    return batch, recollecting, stale
 
 
 def _recollect_context(npc: dict) -> tuple[dict, dict]:
@@ -96,15 +103,20 @@ def think(run_id: str, request: ThinkRequest):
             return {"state": store.state_at(connection, run, int(prior["seq"])), "duplicate": True}
         if not state.get("pending_minds"):
             return {"state": state, "duplicate": False}
-        if run_id in _thinking_runs:
+        guard = (run_id, request.lane)
+        if guard in _thinking_runs or (run_id, "any") in _thinking_runs or \
+                (request.lane == "any" and any(r == run_id for r, _ in _thinking_runs)):
             raise HTTPException(409, {"reason": "in_progress"})
         over_budget = telemetry.calls_for_run(connection, run_id, decider=True) >= ai_config.max_decider_calls_per_run()
         writing_allowed = telemetry.calls_for_run(connection, run_id) < ai_config.max_calls_per_run()
-        batch, recollecting = _choose(state)
-        _thinking_runs.add(run_id)
+        batch, recollecting, stale = _choose(state, request.lane)
+        _thinking_runs.add(guard)
         snapshot = copy.deepcopy(state)
         # Past the decider allowance, days go on by routine and chats are small talk; reactions still decide.
-        ask_jev = [p for p in batch if not (over_budget and p["kind"] not in REACTING)]
+        # A chance meeting with nothing to pass on is a nod, decided by code (no Jev call).
+        ask_jev = [p for p in batch if not (over_budget and p["kind"] not in REACTING) and not (
+            p["kind"] == "meet" and not village.has_news(snapshot, minds.find(snapshot["npcs"], p["npc_id"]),
+                                                         minds.find(snapshot["npcs"], p["why"])))]
         shared = minds.batch_request(snapshot, ask_jev) if ask_jev else None
         memory_jobs = [(p, *_recollect_context(minds.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting]
     records: list[dict] = []
@@ -152,7 +164,7 @@ def think(run_id: str, request: ThinkRequest):
                                      else "chatter", call.model, call.prompt_version, call.latency_ms,
                                      call.status == "ok", call.error, call.input_tokens, call.output_tokens)
             working = copy.deepcopy(state)
-            handled = {(p["npc_id"], p["kind"]) for p in batch + recollecting}
+            handled = {(p["npc_id"], p["kind"]) for p in batch + recollecting + stale}
             working["pending_minds"] = [p for p in working.get("pending_minds", []) if p["kind"] in KINDS
                                         and (p["npc_id"], p["kind"]) not in handled
                                         and (n := minds.find(working["npcs"], p["npc_id"])) and n.get("alive", True)]
@@ -218,7 +230,7 @@ def think(run_id: str, request: ThinkRequest):
             state["npcs"], state["player"] = payload["npcs"], payload["player"]
             store.apply_people(state, payload)
     finally:
-        _thinking_runs.discard(run_id)
+        _thinking_runs.discard(guard)
     response = {"state": state, "duplicate": False}
     if run["mode"] == "developer":
         response["decisions"] = records

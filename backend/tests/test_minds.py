@@ -97,7 +97,7 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     journal = []
     record = minds.apply_decision(state, jory, answers("report:npc_bren_marr"), state["sim_time_ms"], journal)
     assert record["action"].startswith("report:npc_bren_marr|") and jory["mind"]["job"]["kind"] == "report"
-    assert state["pending_minds"] and state["pending_minds"][0]["npc_id"] == "npc_jory_venn"
+    assert any(p["npc_id"] == "npc_jory_venn" for p in state["pending_minds"])
     state["pending_minds"] = []
     assert run_until(state, lambda: any(p["npc_id"] == "npc_bren_marr" for p in state["pending_minds"]))
     bren = npc(state, "npc_bren_marr")

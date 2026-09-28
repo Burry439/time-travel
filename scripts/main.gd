@@ -53,7 +53,11 @@ const NEARBY_CELLS := 8.0 # Try Something can involve anything this close; the p
 var scripted_walk := false
 var shown_speech: Dictionary = {} # npc id -> key of the last line shown in a bubble
 var shown_cues: Dictionary = {} # npc id -> key of the last regard cue shown
-var thinking_active := false
+## Two thinking lanes (D-39): reactions never wait behind people planning their day or remembering.
+var thinking_lanes := {"react": false, "village": false}
+var thinking_active: bool:
+	get:
+		return thinking_lanes.react or thinking_lanes.village
 ## Cheap counters read by tools/profile_frame.gd: key -> [count, total microseconds, total bytes].
 var prof: Dictionary = {}
 
@@ -372,8 +376,10 @@ func _physics_process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
 	_update_nearby()
 	_prof("update_target", started)
-	if in_encounter() and gameplay_active and not thinking_active and _minds_pending():
-		_flush_minds() # Everyone's next move is decided while the player chooses theirs.
+	if gameplay_active and not sync_error: # Thinking never pauses: not for the dialogue bar, a panel or a walk.
+		for lane in ["react", "village"]:
+			if not thinking_lanes[lane] and _minds_pending(lane):
+				_flush_minds(lane)
 	if in_encounter() and gameplay_active and not request_busy and not ui.bar.showing_encounter() \
 			and ui.modal_kind != "death":
 		ui.close_modal_now()
@@ -427,8 +433,6 @@ func _physics_process(delta: float) -> void:
 			_flush_moves()
 	if not movement_sync_active and int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0:
 		_flush_moves()
-	if not thinking_active and _minds_pending():
-		_flush_minds()
 
 
 ## Movement lane: the player's steps (batched) and the clock, one request at a time.
@@ -491,12 +495,12 @@ func _flush_moves() -> void:
 
 
 ## Thinking lane: people with something on their mind decide (Jev), alongside the movement lane.
-func _flush_minds() -> void:
-	if thinking_active:
+func _flush_minds(lane := "react") -> void:
+	if thinking_lanes[lane]:
 		return
-	thinking_active = true
-	while _minds_pending():
-		var body := {"expected_version": run_state["event_seq"], "request_id": _request_id("think")}
+	thinking_lanes[lane] = true
+	while _minds_pending(lane):
+		var body := {"expected_version": run_state["event_seq"], "request_id": _request_id("think"), "lane": lane}
 		var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + "/think", body, 40.0)
 		if not reply["ok"] and (int(reply.status) == 0 or int(reply.status) >= 500):
 			reply = await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state["run_id"]) + "/think", body, 40.0)
@@ -504,7 +508,7 @@ func _flush_minds() -> void:
 			await get_tree().create_timer(1.0).timeout # e.g. another think still finishing; try again shortly.
 			continue
 		_accept_state(reply["data"]["state"])
-	thinking_active = false
+	thinking_lanes[lane] = false
 
 
 ## Replies from the two lanes can arrive in either order; the newest world state wins
@@ -602,8 +606,13 @@ func _sync_display_now() -> void:
 	ui.refresh()
 
 
-func _minds_pending() -> bool:
-	return gameplay_active and not run_state.is_empty() and not run_state.get("pending_minds", []).is_empty()
+## Something to think about in this lane: reactions (react) or the village's own life (village).
+func _minds_pending(lane := "any") -> bool:
+	if not gameplay_active or run_state.is_empty():
+		return false
+	var reacting := ["decide", "round", "fight"]
+	return run_state.get("pending_minds", []).any(func(p) -> bool:
+		return lane == "any" or (str(p.get("kind", "")) in reacting) == (lane == "react"))
 
 
 ## Play what happened between two states: people striking the player, the player dying.
