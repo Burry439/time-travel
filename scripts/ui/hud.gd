@@ -13,6 +13,8 @@ var status: Label
 var slots_box: HBoxContainer
 var weight: Label
 var inventory: PanelContainer
+var objective: PanelContainer
+var corner: HBoxContainer
 var condition_box: VBoxContainer
 var notices: VBoxContainer
 var history: Array[Dictionary] = [] # Every notice this session, for the journal.
@@ -44,7 +46,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var objective := PanelContainer.new()
+	objective = PanelContainer.new()
 	objective.theme_type_variation = "WoodPanel"
 	objective.position = Vector2(16, 14)
 	objective.custom_minimum_size = Vector2(310, 0)
@@ -62,7 +64,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	status = _wood_label("", 13, Color(UITheme.CREAM, 0.8))
 	column.add_child(status)
 
-	var corner := HBoxContainer.new()
+	corner = HBoxContainer.new()
 	corner.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	corner.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	corner.offset_right = -16
@@ -149,6 +151,18 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	drag_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	drag_icon.hide()
 	add_child(drag_icon)
+
+
+## Panels the stranger walks behind fade so they never hide him (a safety net for the map's edges).
+func _process(delta: float) -> void:
+	if game.run_state.is_empty():
+		return
+	var zoom: float = game.camera.zoom.y
+	var feet: Vector2 = game.player.get_global_transform_with_canvas().origin / ui.ui_scale
+	var body := Rect2(feet + Vector2(-26, -112) * zoom / ui.ui_scale, Vector2(52, 124) * zoom / ui.ui_scale)
+	for panel in [inventory, objective, corner]:
+		var over: bool = Rect2(panel.position, panel.size).intersects(body)
+		panel.modulate.a = move_toward(panel.modulate.a, 0.3 if over else 1.0, delta * 4.0)
 
 
 func _wood_label(text: String, font_size: int, colour := UITheme.CREAM) -> Label:

@@ -2,7 +2,7 @@
 extends Node2D
 ## Deterministic ground detail: visible in the editor, never part of simulation state.
 const ROADS := [
-	[Vector2(1552, 2350), Vector2(1530, 1950), Vector2(1552, 1400), Vector2(1536, 850), Vector2(1552, 285)],
+	[Vector2(1566, 2780), Vector2(1552, 2350), Vector2(1530, 1950), Vector2(1552, 1400), Vector2(1536, 850), Vector2(1552, 285)],
 	[Vector2(1080, 1670), Vector2(1260, 1690), Vector2(1540, 1630), Vector2(2010, 1540)],
 	[Vector2(560, 840), Vector2(750, 960), Vector2(1170, 940), Vector2(1540, 920)],
 	[Vector2(1540, 920), Vector2(1810, 940), Vector2(2090, 920), Vector2(2580, 1020)]

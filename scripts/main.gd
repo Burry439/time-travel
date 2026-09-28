@@ -79,6 +79,7 @@ func _ready() -> void:
 	$NPCPreview.hide()
 	$M2Objects.hide()
 	_build_ui()
+	_extend_ground()
 	effects = preload("res://scripts/feel_effects.gd").new()
 	effects.z_index = -1
 	add_child(effects)
@@ -88,6 +89,49 @@ func _ready() -> void:
 		sound_volume = clampf(float(settings.get_value("feel", "volume", 0.7)), 0.0, 1.0)
 	_save_settings()
 	_check_health()
+
+
+## The ground carries on a little past the south edge of the map, fading into shadow, so the view can
+## shift down to keep the stranger clear of the bottom panels without showing an empty void.
+func _extend_ground() -> void:
+	var ground := $Map/Ground as Sprite2D
+	var size := ground.texture.get_size()
+	var depth := 520.0
+	var beyond := Sprite2D.new()
+	beyond.name = "GroundBeyond"
+	beyond.texture = ground.texture
+	beyond.centered = false
+	beyond.region_enabled = true
+	beyond.region_rect = Rect2(0, size.y - depth, size.x, depth)
+	beyond.flip_v = true # Mirrored, so it meets the map edge without a seam.
+	beyond.position = Vector2(0, size.y)
+	beyond.z_index = ground.z_index
+	beyond.material = ground.material
+	beyond.texture_filter = ground.texture_filter
+	$Map.add_child(beyond)
+	var shade := Polygon2D.new()
+	shade.name = "EdgeShade"
+	shade.z_index = -18
+	shade.polygon = PackedVector2Array([Vector2(0, size.y - 40), Vector2(size.x, size.y - 40),
+		Vector2(size.x, size.y + depth), Vector2(0, size.y + depth)])
+	var dusk := Color(0.05, 0.06, 0.04, 0.0)
+	shade.vertex_colors = PackedColorArray([dusk, dusk, Color(dusk, 0.85), Color(dusk, 0.85)])
+	$Map.add_child(shade)
+
+
+## How far the view shifts down so the stranger stays clear of the bottom panels: the dialogue bar,
+## or the pack near the south edge, where the camera can't follow any further (offset goes past limits).
+func _camera_lift() -> float:
+	var screen := get_viewport_rect().size
+	var zoom := camera.zoom.y
+	var covered: float = ui.bottom_cover()
+	var half := screen.y * 0.5 / zoom
+	var centre := clampf(player.position.y, float(camera.limit_top) + half, float(camera.limit_bottom) - half)
+	var feet := screen.y * 0.5 + (player.position.y - centre) * zoom
+	var lift := maxf(0.0, (feet + 28.0 * zoom - (screen.y - covered)) / zoom)
+	if ui.bar.visible:
+		lift = maxf(lift, covered * 0.5 / zoom) # Centred in what's left of the view.
+	return lift
 
 
 func _cell_center(x: int, y: int) -> Vector2:
@@ -314,8 +358,8 @@ func _cardinal_fallback(view: int) -> int:
 
 func _physics_process(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * camera_zoom, minf(1.0, delta * 10))
-	# With the dialogue bar open, the view shifts so you stay in sight above it.
-	var lift: float = (ui.bar.HEIGHT + 8.0) * ui.ui_scale * 0.5 / camera.zoom.y if ui.bar.visible else 0.0
+	# The view shifts so you stay in sight above the dialogue bar or the pack.
+	var lift := _camera_lift()
 	camera.offset.y = lerpf(camera.offset.y, lift, minf(1.0, delta * 6.0))
 	var started := Time.get_ticks_usec()
 	_update_nearby()

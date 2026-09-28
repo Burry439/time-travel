@@ -268,6 +268,15 @@ func blocks_movement() -> bool:
 	return modal.visible or bar.visible or game.menu.visible or game.victory_panel.visible
 
 
+## Screen pixels covered along the bottom: the dialogue bar when it's open, otherwise the pack.
+func bottom_cover() -> float:
+	if bar.visible:
+		return (bar.size.y + 8.0) * ui_scale
+	if hud.visible and hud.inventory.visible:
+		return (hud.inventory.size.y + 10.0) * ui_scale
+	return 0.0
+
+
 func pointer_over_ui() -> bool:
 	return get_viewport().gui_get_hovered_control() != null
 

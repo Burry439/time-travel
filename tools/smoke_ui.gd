@@ -73,7 +73,23 @@ func _run() -> void:
 	var ui: Control = scene.ui
 	if not check(ui.hud.visible and ui.hud.inventory.visible and ui.hud.slots_box.get_child_count() == 10, "No inventory bar %s %s %s" % [ui.hud.visible, ui.hud.inventory.visible, ui.hud.slots_box.get_child_count()]):
 		return
+	# The start is at the south edge, where the camera can't follow: the view lifts past the edge so the
+	# stranger stays clear of the pack, and of the dialogue bar when it's open.
+	var screen_bottom: float = scene.get_viewport_rect().size.y
+	await create_timer(1.0).timeout
+	var feet: float = scene.player.get_global_transform_with_canvas().origin.y
+	if not check(feet < screen_bottom - ui.bottom_cover(), "The pack covers the stranger: feet at %s, pack from %s" % [
+			feet, screen_bottom - ui.bottom_cover()]):
+		return
 	await screenshot("ui-hud")
+	ui.open_try()
+	await create_timer(1.2).timeout
+	feet = scene.player.get_global_transform_with_canvas().origin.y
+	if not check(feet < screen_bottom - ui.bottom_cover(), "The dialogue bar covers the stranger: feet at %s, bar from %s" % [
+			feet, screen_bottom - ui.bottom_cover()]):
+		return
+	await screenshot("ui-bar-south-edge")
+	ui.bar.close()
 
 	# Hover: what a click will do, and whether it's within reach.
 	var branch: Dictionary = ui.cursor.describe("branch_a")

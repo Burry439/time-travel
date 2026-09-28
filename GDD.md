@@ -168,7 +168,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 | Esc | Walk away, close, or the menu |
 | F3 / F4 | Developer dock / AI traces (developer mode only) |
 
-Tab cycling and a separate inspect key are gone. The HUD always shows the area, the objective, open leads, the pack (painted icons, a mark on things you made, weight), your wounds and whether you're barred from the gate. Notices stack at the top and are kept in the journal. First-time hints show once; Menu has Controls and Settings (interface size, text size, camera, sound).
+Tab cycling and a separate inspect key are gone. Panels never hide the stranger: near the south edge the view shifts past the map edge (the ground carries on into shadow), and any HUD panel he walks behind fades. The HUD always shows the area, the objective, open leads, the pack (painted icons, a mark on things you made, weight), your wounds and whether you're barred from the gate. Notices stack at the top and are kept in the journal. First-time hints show once; Menu has Controls and Settings (interface size, text size, camera, sound).
 
 ### The dialogue bar (one way to act)
 
