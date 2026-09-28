@@ -745,9 +745,10 @@ func in_fight() -> bool:
 	return typeof(run_state.get("fight")) == TYPE_DICTIONARY
 
 
-## Space in a fight: punch whoever you face within arm's reach (or the nearest attacker). Code only, no model.
+## Space: punch whoever you face within arm's reach (or the nearest attacker). Code only, no model. Outside a
+## fight it's an assault like any other: people see it and answer it.
 func _punch() -> void:
-	if strike_busy or not in_fight() or not gameplay_active or sync_error:
+	if strike_busy or not gameplay_active or sync_error:
 		return
 	strike_busy = true
 	player_visual.play_gesture("gesture")
@@ -773,16 +774,20 @@ func _punch() -> void:
 		body["target_id"] = target
 	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/strike", body)
 	movement_sync_active = false
-	if reply.ok:
-		var result = reply.data.get("strike", {})
-		var struck := str(target)
-		_accept_state(reply.data.state)
-		if typeof(result) == TYPE_DICTIONARY and result.get("ok") == false:
-			ui.notify(str(result.get("reason", "")))
-		elif typeof(result) == TYPE_DICTIONARY and str(result.get("result", "")) == "hit" and not struck.is_empty():
-			var hit := get_node_or_null("NPCs/%s/PaintedActor" % struck)
-			if hit:
-				hit.hurt(1.0 if hit.global_position.x >= player.global_position.x else -1.0)
+	if not reply.ok:
+		var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
+		if typeof(detail) == TYPE_DICTIONARY:
+			ui.notify(str(detail.get("message", ""))) # e.g. nobody within reach
+		strike_busy = false
+		return
+	var result = reply.data.get("strike", {})
+	_accept_state(reply.data.state)
+	if typeof(result) == TYPE_DICTIONARY and result.get("ok") == false:
+		ui.notify(str(result.get("reason", "")))
+	elif typeof(result) == TYPE_DICTIONARY and str(result.get("result", "")) == "hit" and not target.is_empty():
+		var hit := get_node_or_null("NPCs/%s/PaintedActor" % target)
+		if hit:
+			hit.hurt(1.0 if hit.global_position.x >= player.global_position.x else -1.0)
 	strike_busy = false
 
 
@@ -1556,8 +1561,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
 				_interact()
 		KEY_SPACE:
-			if in_fight() and gameplay_active and not ui.modal.visible and not ui.bar.visible:
-				_punch()
+			if gameplay_active and not request_busy and not ui.modal.visible and not ui.bar.visible:
+				_punch() # In a fight or starting one.
 			else:
 				return
 		KEY_T, KEY_ENTER, KEY_KP_ENTER:

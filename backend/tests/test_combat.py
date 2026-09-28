@@ -156,7 +156,7 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
 
 def test_space_is_a_code_only_punch_that_replays(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
-    assert post(world, state, "strike", {}, status=409)["detail"]["reason"] == "no_fight"
+    assert post(world, state, "strike", {}, status=409)["detail"]["reason"] == "no_target"  # Nobody within reach.
     while (state["player"]["x"], state["player"]["y"]) != (36, 52):  # Beside Hessa at the inn.
         px, py = state["player"]["x"], state["player"]["y"]
         state = post(world, state, "move", {"x": px + (36 > px) - (36 < px), "y": py + (52 > py) - (52 < py)})["state"]
@@ -174,3 +174,15 @@ def test_space_is_a_code_only_punch_that_replays(world):
     assert body["strike"]["result"] in ("hit", "missed") and body["state"]["event_seq"] == state["event_seq"] + 1
     state = body["state"]
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
+
+
+def test_space_outside_a_fight_is_an_assault_like_any_other():
+    guard = open_ground(unit_state(), "npc_bren_marr")
+    assert combat.punch(guard, "npc_bren_marr", 0)["result"] == "glanced"  # Mail: it does nothing...
+    assert "npc_bren_marr" in guard["fight"]["attackers"]  # ...but it's an attack on a guard: a fight.
+    villager = open_ground(unit_state(), "npc_hessa_marr")
+    assert combat.punch(villager, "npc_hessa_marr", 0)["result"] == "hit"
+    hessa = npc(villager, "npc_hessa_marr")
+    assert hessa["health"] == 100 - combat.PUNCH["none"] and not villager.get("fight")
+    assert hessa["mind"]["memories"][-1]["kind"] == "violence"  # She remembers, and decides what to do (Jev).
+    assert any(p["npc_id"] == "npc_hessa_marr" and p["kind"] == "decide" for p in villager["pending_minds"])

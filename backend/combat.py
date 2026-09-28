@@ -53,7 +53,7 @@ def down(npc: dict) -> bool:
 
 def _log(state: dict, who: str, kind: str, text: str, now: int, journal: list[dict] | None = None) -> dict:
     """The fight's own log (what the client shows as it happens); the journal gets it too when one is given."""
-    fight = state["fight"]
+    fight = state.get("fight") or {"count": 0, "log": []}  # A punch thrown outside a fight: journal only.
     entry = {"at": now, "who": who, "kind": kind, "text": text, "n": fight.get("count", 0) + 1}
     fight["count"] = entry["n"]
     fight["log"] = (fight["log"] + [entry])[-LOG_KEPT:]
@@ -68,7 +68,7 @@ def start(state: dict, npc_ids: list[str], now: int, why: str) -> dict | None:
     if not people or not state["player"].get("alive", True):
         return active(state)
     fight = state.get("fight") or {"started_at": now, "attackers": [], "swings": {}, "log": [], "count": 0,
-                                   "player_ready_at": 0, "why": why}
+                                   "why": why}
     state["fight"] = fight
     state["encounter"] = None  # Words are over: no more rounds.
     for npc in people:
@@ -183,45 +183,53 @@ def _land(state: dict, fight: dict, npc: dict, swing: dict, reach: float, journa
 
 
 def punch(state: dict, target_id: str, now: int) -> dict:
-    """The stranger's fist: lands if the target is within reach; fixed damage against their armour."""
+    """The stranger's fist (Space), in a fight or out of one: lands if the target is within reach; fixed damage
+    against their armour. Outside a fight it is an assault like any other: seen, and answered (guards who saw it
+    fight at once; anyone else decides)."""
     fight = active(state)
     npc = minds.find(state["npcs"], target_id)
-    if fight is None:
-        return {"ok": False, "reason": "There's no fight."}
     if npc is None or down(npc):
         return {"ok": False, "reason": "There's nobody there to hit."}
-    if now < fight.get("player_ready_at", 0):
+    if now < state["player"].get("ready_at", 0):
         return {"ok": False, "reason": "You're still recovering from the last swing."}
-    fight["player_ready_at"] = now + PUNCH_RECOVER_MS
+    state["player"]["ready_at"] = now + PUNCH_RECOVER_MS
+    journal = state["journal"]
     if math.dist(minds._cell(npc), minds.player_cell(state)) > ARM_REACH + 0.01:
-        _log(state, "player", "miss", f"You swing at {npc['name']} and hit nothing but air.", now,
-             state["journal"])
-        return {"ok": True, "result": "missed"}
-    worn = armor(npc)
-    damage = PUNCH[worn]
-    if damage == 0:
-        _log(state, "player", "glance", f"Your fist thuds uselessly against {npc['name']}'s mail.", now,
-             state["journal"])
-        return {"ok": True, "result": "glanced"}
-    health = max(0, npc.get("health", 100) - damage)
-    npc["health"] = health
-    npc.setdefault("injuries", []).append("punched by the stranger")
-    if health <= DOWN_AT:
-        npc["down"] = True
-        minds._set_job(npc, None, now)
-        (npc.get("controller") or {}).update(activity="down", source="down", path=[])
-        fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
-        fight["swings"].pop(npc["id"], None)
-        _log(state, "player", "down", f"You knock {npc['name']} to the ground. They don't get up.", now,
-             state["journal"])
-        if not fight["attackers"]:
-            finish(state, now)
-        return {"ok": True, "result": "down"}
-    if npc["id"] not in fight["attackers"]:  # Hit someone who wasn't fighting: now they are.
-        start(state, [npc["id"]], now, "punched")
-    _log(state, "player", "hit", f"You punch {npc['name']}. " + ("They stagger." if health <= 50 else "They reel."),
-         now, state["journal"])
-    return {"ok": True, "result": "hit"}
+        _log(state, "player", "miss", f"You swing at {npc['name']} and hit nothing but air.", now, journal)
+        result = "missed"
+    elif PUNCH[armor(npc)] == 0:
+        _log(state, "player", "glance", f"Your fist thuds uselessly against {npc['name']}'s mail.", now, journal)
+        result = "glanced"
+    else:
+        health = max(0, npc.get("health", 100) - PUNCH[armor(npc)])
+        npc["health"] = health
+        npc.setdefault("injuries", []).append("punched by the stranger")
+        if health <= DOWN_AT:
+            npc["down"] = True
+            minds._set_job(npc, None, now)
+            (npc.get("controller") or {}).update(activity="down", source="down", path=[])
+            _log(state, "player", "down", f"You knock {npc['name']} to the ground. They don't get up.", now, journal)
+            result = "down"
+        else:
+            _log(state, "player", "hit", f"You punch {npc['name']}. " +
+                 ("They stagger." if health <= 50 else "They reel."), now, journal)
+            result = "hit"
+    if fight is not None:
+        if result == "down":
+            fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
+            fight["swings"].pop(npc["id"], None)
+            if not fight["attackers"]:
+                finish(state, now)
+        elif result == "hit" and npc["id"] not in fight["attackers"]:  # Hit someone who wasn't fighting: now they are.
+            start(state, [npc["id"]], now, "punched")
+        return {"ok": True, "result": result}
+    # Out of a fight: everyone who could see it remembers an assault, and reacts (D-39, D-41).
+    harm = {"target_id": npc["id"], "weapon_id": None, "method": "melee", "injury": "a punch",
+            "result": {"missed": "missed", "glanced": "deflected", "hit": "wounded", "down": "disabled"}[result]}
+    entry = {"event_id": state.get("event_seq", 0) + 1, "category": "success", "action": "harm", "harm": harm,
+             "property": []}
+    minds.apply_perceptions(state, minds.perceive(state, entry))
+    return {"ok": True, "result": result}
 
 
 def surrender(state: dict, now: int) -> dict:
