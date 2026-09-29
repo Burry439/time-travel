@@ -198,8 +198,16 @@ func refresh() -> void:
 		child.queue_free()
 	var player: Dictionary = state.get("player", {})
 	var health := float(player.get("health", 100))
-	if player.get("alive", true) and health < 100.0:
-		_condition("Wounded  ·  %d / 100" % roundi(health), UITheme.BAD)
+	if player.get("alive", true) and (health < 100.0 or typeof(state.get("fight")) == TYPE_DICTIONARY):
+		var bar := "▮".repeat(ceili(health / 10.0)) + "▯".repeat(10 - ceili(health / 10.0))
+		_condition("Health  %s  %d" % [bar, floori(health)], UITheme.BAD if health <= 40 else UITheme.INK)
+	var conditions = player.get("conditions")
+	if typeof(conditions) == TYPE_ARRAY:
+		for condition in conditions: # Bleeding, burns, breaks, festering: see Pack & gear (I) to treat them (D-49).
+			if str(condition.get("kind", "")) == "knocked_out":
+				_condition("Knocked senseless", UITheme.BAD)
+			elif ui._needs_treating(condition):
+				_condition(ui.condition_words(condition).trim_suffix("."), UITheme.BAD)
 	var barred := int(state.get("barred_until") if state.get("barred_until") != null else 0) - int(state.get("sim_time_ms", 0))
 	if barred > 0:
 		_condition("Barred from the gate  ·  about %d min" % maxi(1, ceili(barred / 60000.0)), UITheme.ACCENT)

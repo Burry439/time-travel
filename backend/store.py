@@ -30,7 +30,7 @@ GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = 9  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut.
+SEED_VERSION = 10  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
 NPCS = [
     {"id": "npc_roderic_vale", "name": "Roderic", "role": "Gate captain", "x": 48, "y": 11},
     {"id": "npc_bren_marr", "name": "Bren", "role": "Gate guard", "x": 44, "y": 14},
@@ -106,6 +106,15 @@ def db():
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+            CREATE TABLE IF NOT EXISTS item_library (
+                signature TEXT NOT NULL,
+                view TEXT NOT NULL,
+                file TEXT NOT NULL,
+                record_json TEXT NOT NULL DEFAULT '{}',
+                uses INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(signature, view)
+            );
             CREATE TABLE IF NOT EXISTS mind_traces (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 run_id TEXT NOT NULL,
@@ -154,12 +163,17 @@ def initial_state(run: sqlite3.Row) -> dict:
     state.update(m2.seed_m2(run["seed_version"]))
     for npc in state["npcs"]:
         npc.update(alive=True, health=100, injuries=[])
+    people = {n["id"]: n for n in state["npcs"]} | {"player": state["player"]}
+    for obj in state["objects"].values():  # Everyone starts wearing and holding their own gear (seed 10, D-49).
+        for slot in obj.pop("worn_slots", []):
+            people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
     return state
 
 
 # Events the player causes. A request is stale only if the client hasn't seen the latest of
 # these; people thinking or the clock ticking in between never makes the player's request stale.
-PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "fight", "dev_gate", "objective_complete"}
+PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "fight", "gear", "dev_gate",
+                "objective_complete"}
 
 
 def is_stale(state: dict, expected_version: int) -> bool:
@@ -206,6 +220,8 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
     elif event["kind"] == "fight":  # A punch or giving up (D-41): the resulting fields.
         state.update({key: payload[key] for key in FIGHT_FIELDS if key in payload})
         state["journal"].extend(payload["journal_added"])
+    elif event["kind"] == "gear":  # Equip, swap hands, treat (D-49): the resulting fields.
+        apply_gear(state, payload)
     elif event["kind"] == "minds":
         state["npcs"] = payload["npcs"]
         state["player"] = payload["player"]
@@ -224,9 +240,13 @@ def apply_people(state: dict, payload: dict) -> None:
     if "player" in payload:
         state["player"] = payload["player"]  # e.g. struck by someone during this time
     state["journal"].extend(payload.get("people_journal", []))
+    for obj in payload.get("objects_added") or []:  # e.g. an arrow lying where it fell (D-49).
+        state["objects"][obj["id"]] = dict(obj)
     for object_id, fields in (payload.get("objects_changed") or {}).items():  # Cooling, fires burning down.
         if object_id in state.get("objects", {}):
             state["objects"][object_id].update(fields)
+    if "projectiles" in payload:
+        state["projectiles"] = payload["projectiles"]
     state.setdefault("learned", []).extend(payload.get("learned_added", []))  # e.g. gossip the stranger overheard
     if "village" in payload:
         state["village"] = payload["village"]
@@ -240,13 +260,23 @@ def apply_people(state: dict, payload: dict) -> None:
         state["barred_until"] = payload["barred_until"]
 
 
+def apply_gear(state: dict, payload: dict, already_journaled: bool = False) -> None:
+    state["objects"] = payload["objects"]
+    state["npcs"] = payload["npcs"]
+    if "sim_time_ms" in payload:
+        state["sim_time_ms"] = payload["sim_time_ms"]
+    if not already_journaled:
+        state["journal"].extend(payload.get("journal_added", []))
+    apply_people(state, payload)
+
+
 # A round changes many things at once (anything a Try Something can, a reply, people moving on),
 # so its event carries the resulting fields rather than deltas.
 ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "fight", "pending_minds", "agreements", "sim_time_ms",
-                "water_spilled_l", "last_action", "gate_open", "barred_until", "trades")
+                "water_spilled_l", "last_action", "gate_open", "barred_until", "trades", "projectiles")
 
 
-FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_minds", "encounter")
+FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_minds", "encounter", "projectiles")
 
 
 def round_payload(before: dict, after: dict, record: dict) -> dict:
@@ -278,9 +308,14 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
     import crafting
+    changed = crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])
+    for object_id, fields in (probe.get("people_objects_changed") or {}).items():  # Arrows landing, shields worn.
+        changed.setdefault(object_id, {}).update(fields)
     payload = {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
                "encounter": probe.get("encounter"), "fight": probe.get("fight"),
-               "objects_changed": crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])}
+               "objects_changed": changed, "projectiles": probe.get("projectiles") or []}
+    if probe.get("people_objects_added"):
+        payload["objects_added"] = probe["people_objects_added"]
     if probe.get("subdued_by"):  # Beaten down by someone who meant only to subdue (D-44).
         _subdued(state, payload, probe["subdued_by"], state["sim_time_ms"] + elapsed_ms)
     return payload

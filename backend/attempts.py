@@ -9,6 +9,7 @@ import threading
 
 from fastapi import BackgroundTasks
 
+import library
 import store
 from ai import config as ai_config, illustrator, judge, telemetry
 
@@ -41,13 +42,33 @@ def record_attempt(connection: sqlite3.Connection, run_id: str, request_id: str,
              "made": new_objects[0]["id"] if new_objects else None, "made_ids": [o["id"] for o in new_objects]}
     connection.execute("INSERT INTO craft_traces (run_id,request_id,trace_json) VALUES (?,?,?)",
                        (run_id, request_id, json.dumps(trace)))
-    # One painting per distinct sprite; identical transform pieces share one.
+    # One painting per distinct sprite (identical transform pieces share one), plus the held view of a weapon or
+    # shield and the worn sheet of armour or clothing (D-49); the item library supplies any already painted.
     for asset_id, obj in {o["sprite_asset_id"]: o for o in reversed(new_objects)}.items():
-        record = {key: obj[key] for key in ("id", "name", "description", "materials")}
-        connection.execute("INSERT INTO assets (asset_id,run_id,object_id,status,record_json) VALUES (?,?,?,'pending',?)",
-                           (asset_id, run_id, obj["id"], json.dumps(record)))
-        background.add_task(_generate_asset, asset_id)
+        signature = library.signature(obj, verdict.get("precedent_key"))
+        queue_picture(connection, run_id, obj, "world", asset_id, signature, background)
+        for view in ("held", "worn"):
+            if obj.get(f"{view}_asset_id"):
+                queue_picture(connection, run_id, obj, view, obj[f"{view}_asset_id"], signature, background)
     return trace
+
+
+def queue_picture(connection: sqlite3.Connection, run_id: str, obj: dict, view: str, asset_id: str,
+                  signature: str | None, background: BackgroundTasks) -> None:
+    """A picture for a thing: from the item library if this very thing has been painted before, else painted
+    after the response (D-49)."""
+    if connection.execute("SELECT 1 FROM assets WHERE asset_id=?", (asset_id,)).fetchone():
+        return
+    record = {key: obj[key] for key in ("id", "name", "description", "materials")}
+    record.update(view=view, signature=signature)
+    if signature and library.use(connection, signature, view, ASSET_DIR / f"{asset_id}.png"):
+        connection.execute("INSERT INTO assets (asset_id,run_id,object_id,status,record_json,trace_json) "
+                           "VALUES (?,?,?,'ready',?,?)", (asset_id, run_id, obj["id"], json.dumps(record),
+                                                         json.dumps({"from_library": signature, "view": view})))
+        return
+    connection.execute("INSERT INTO assets (asset_id,run_id,object_id,status,record_json) VALUES (?,?,?,'pending',?)",
+                       (asset_id, run_id, obj["id"], json.dumps(record)))
+    background.add_task(_generate_asset, asset_id)
 
 
 def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
@@ -74,6 +95,10 @@ def _generate_asset(asset_id: str) -> None:
         with store.lock, store.db() as connection:
             connection.execute("UPDATE assets SET status=?,trace_json=?,updated_at=CURRENT_TIMESTAMP WHERE asset_id=?",
                                (call.status, json.dumps(call.as_dict()), asset_id))
+            record = json.loads(row["record_json"])
+            if call.status == "ready" and call.model != "stub" and record.get("signature"):  # Kept for next time.
+                library.remember(connection, record["signature"], record.get("view", "world"),
+                                 ASSET_DIR / f"{asset_id}.png", record)
             if call.model:
                 telemetry.record(connection, row["run_id"], "illustrator", call.model, call.prompt_version,
                                  call.latency_ms, call.status == "ready", call.error)

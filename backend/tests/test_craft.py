@@ -306,8 +306,9 @@ def test_transform_mass_is_capped_by_the_target():
     assert piece["materials"] == ["wood"] and piece["flags"] == []
 
 
-def harm(target, result, weapon=None):
-    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "result": result,
+def harm(target, result, weapon=None, area="torso"):
+    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "result": result, "target_area": area,
+                                "outcome": "missed" if result == "missed" else "landed",
                                 "injury": "a deep wound" if result != "missed" else "the blow misses"})
 
 
@@ -323,34 +324,46 @@ def armed(state):
     return "horseshoe_a"
 
 
+def knife(state):
+    """An iron knife in hand (D-49): deadly to the unarmoured, and to anyone's throat."""
+    state["objects"]["knife_test"] = {
+        "id": "knife_test", "name": "iron knife", "x": 0, "y": 0, "mass_kg": 0.3, "owner_id": "player",
+        "holder_id": "player", "capabilities": ["carry"], "bound_to": [], "water_l": 0.0, "capacity_l": 0.0,
+        "condition": "usable", "materials": ["iron", "wood"], "description": "A short iron knife.",
+        "flags": ["rigid", "sharp_edge"], "length_m": 0.25,
+        "gear": {"kind": "weapon", "class": "knife", "covers": [], "quality": "fair"}}
+    return "knife_test"
+
+
 def test_killing_a_person_is_permanent_and_they_stop_moving():
     state = fresh_state()
     bren = beside(state, "npc_bren_marr")
-    iron = armed(state)
-    verdict = crafting.validate(state, harm("npc_bren_marr", "killed", iron))
+    blade = knife(state)  # Mail and a helmet, but nothing at the throat (D-49).
+    verdict = crafting.validate(state, harm("npc_bren_marr", "killed", blade, area="neck"))
     assert verdict["category"] == "success" and "npc_oren_dast" in verdict["harm"]["witnesses"]
-    commit(state, harm("npc_bren_marr", "killed", iron), text="stab Bren")
+    commit(state, harm("npc_bren_marr", "killed", blade, area="neck"), text="cut Bren's throat")
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert not bren["alive"] and bren["health"] == 0 and bren["controller"]["activity"] == "dead"
     where = (bren["x"], bren["y"])
     later = service.npc_sim.advance_npcs(state["npcs"], 60_000, state["sim_time_ms"], service.WORLD_GEOMETRY)
     assert next((n["x"], n["y"]) for n in later if n["id"] == "npc_bren_marr") == where
-    again = crafting.validate(state, harm("npc_bren_marr", "killed", iron))
+    again = crafting.validate(state, harm("npc_bren_marr", "killed", blade))
     assert again["category"] == "blocked" and "already dead" in again["reason"]
 
 
 def test_wounds_accumulate_and_reach_is_enforced():
     state = fresh_state()
-    beside(state, "npc_roderic_vale")
-    iron = armed(state)
-    for expected_alive in (True, True, False):  # 100 -> 55 -> 10 -> 0
-        summary = commit(state, harm("npc_roderic_vale", "wounded", iron))
-        roderic = next(n for n in state["npcs"] if n["id"] == "npc_roderic_vale")
-        assert roderic["alive"] is expected_alive
+    beside(state, "npc_darin_ko")
+    blade = knife(state)
+    for expected_alive in (True, False):  # Unarmoured: 100 -> 30 (surprised: 70) -> dead (35)
+        summary = commit(state, harm("npc_darin_ko", "wounded", blade))
+        darin = next(n for n in state["npcs"] if n["id"] == "npc_darin_ko")
+        darin.setdefault("mind", {})["facing_player"] = True  # He sees it coming now.
+        assert darin["alive"] is expected_alive
     # The fatal wound is reported as a death, not as another wound (the bug players saw with Tomas).
     assert summary["harm"]["result"] == "killed" and "does not survive" in summary["reason"]
     assert state["last_action"]["harm"]["result"] == "killed"
-    assert len(roderic["injuries"]) == 3
+    assert len(darin["injuries"]) == 2
     far = fresh_state()
     blocked = crafting.validate(far, harm("npc_mara_venn", "killed"))
     assert blocked["category"] == "blocked" and "too far" in blocked["reason"]
@@ -376,7 +389,7 @@ def test_make_then_use_keeps_the_new_object_and_resolves_references():
     assert summary["harm"]["weapon_id"] == made
     assert "made_by_step_1" not in summary["reason"] and "flint-tipped spear" in summary["reason"]
     tomas = next(n for n in state["npcs"] if n["id"] == "npc_tomas_reed")
-    assert tomas["health"] == 55
+    assert tomas["health"] == 32 and not tomas.get("down")  # A crude flint spear, unexpected: 34 x 2 (D-49).
 
 
 def test_a_failed_later_step_keeps_earlier_work_and_stops():
@@ -408,12 +421,11 @@ def test_leaked_ids_are_replaced_with_names():
 
 def test_people_near_death_are_described_to_the_judge():
     state = fresh_state()
-    beside(state, "npc_bren_marr")
-    iron = armed(state)
-    commit(state, harm("npc_bren_marr", "wounded", iron))
-    commit(state, harm("npc_bren_marr", "wounded", iron))
-    bren = next(p for p in crafting.people_nearby(state) if p["id"] == "npc_bren_marr")
-    assert bren["condition"] == "badly wounded (near death)" and len(bren["injuries"]) == 2
+    beside(state, "npc_darin_ko")
+    commit(state, harm("npc_darin_ko", "wounded", knife(state)))  # 100 -> 30, and bleeding.
+    darin = next(p for p in crafting.people_nearby(state) if p["id"] == "npc_darin_ko")
+    assert darin["condition"] == "badly wounded (near death)" and len(darin["injuries"]) == 1
+    assert any("cut" in c for c in darin["conditions"])  # The judge sees the bleeding cut.
 
 
 def test_single_step_events_from_before_multi_step_still_replay():
@@ -446,7 +458,7 @@ def test_melee_walks_up_to_the_target():
     summary = commit(state, harm("npc_bren_marr", "wounded", armed(state)))
     assert summary["category"] == "success"
     assert crafting._distance(state, bren["x"], bren["y"]) <= service.m2.REACH_CELLS
-    assert next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")["health"] == 55
+    assert next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")["health"] < 100
 
 
 def throw(target, weapon, result="wounded"):

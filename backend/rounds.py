@@ -245,10 +245,13 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
             elapsed = encounter.round_ms(record)
             people = store.advance_people(draft, elapsed)
+            for obj in people.get("objects_added", []):
+                draft["objects"][obj["id"]] = dict(obj)
             for object_id, fields in people.get("objects_changed", {}).items():
                 draft["objects"][object_id].update(fields)
             draft.update(npcs=people["npcs"], player=people["player"], pending_minds=people["pending_minds"],
-                         encounter=people["encounter"], fight=people["fight"], sim_time_ms=now + elapsed)
+                         encounter=people["encounter"], fight=people["fight"], sim_time_ms=now + elapsed,
+                         projectiles=people.get("projectiles") or [])
             draft["journal"].extend(people["people_journal"])
             if "barred_until" in people:  # Beaten down and arrested as the round's time passed (D-44).
                 draft["barred_until"] = people["barred_until"]

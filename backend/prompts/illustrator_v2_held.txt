@@ -1,0 +1,4 @@
+2D RPG held-item sprite for a grounded premodern village game. A single object: {subject}. Made of {materials}.
+Orientation: seen flat from the side, the object lies diagonally across the frame with its grip, handle or butt at the lower left corner and its working end (blade, point, head, face, mouth) at the upper right corner, as if held out in a hand. A shield or a board held up as one is shown face-on instead, upright and filling the frame.
+Style: detailed painterly pixel art with crisp edges, warm muted ochre and olive palette, sun from upper left, soft form shading. The object is fully visible, filling the frame corner to corner with a little transparent padding.
+Transparent background. Only the object: no hands, arms or people, no ground, no cast shadow, no text, no labels, no border, no grid.

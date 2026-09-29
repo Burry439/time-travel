@@ -71,7 +71,7 @@ def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():
         store.apply_people(state, payload)
         if not state.get("fight"):
             break
-    assert state["player"]["alive"] and state["player"]["health"] == combat.SUBDUED_AT
+    assert state["player"]["alive"] and combat.SUBDUED_AT <= state["player"]["health"] < combat.SUBDUED_AT + 1  # (mending)
     assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and talk.barred(state)
     assert state["objects"]["rope_tomas"]["holder_id"] == "npc_tomas_reed"  # The rope goes back.
     assert any(e.get("kind") == "arrest" for e in state["journal"])

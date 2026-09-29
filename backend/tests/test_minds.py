@@ -114,7 +114,8 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     assert run_until(state, lambda: not state["player"]["alive"], limit_ms=30_000)
     assert state["player"]["health"] == 0 and not state.get("fight")
     hits = [e for e in state["journal"] if e.get("kind") == "fight" and e["category"] in ("hit", "killed")]
-    assert [e["category"] for e in hits] == ["hit", "killed"]  # A spear: two blows kill the unarmoured stranger.
+    categories = [e["category"] for e in hits]  # An iron spear: a few blows kill the unarmoured stranger.
+    assert categories[-1] == "killed" and 2 <= len(categories) <= 3 and set(categories[:-1]) == {"hit"}
     bren = npc(state, "npc_bren_marr")
     assert minds.math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 2.3
     assert bren["mind"]["job"]["kind"] == "watch"  # Attackers stand down once the stranger is dead.

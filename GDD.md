@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.7 · 29 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48)
+**Version 1.8 · 29 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -164,7 +164,9 @@ EXPLORE → NOTICE (a problem, a person, a material)
 | T or Enter | Open the dialogue bar |
 | E | Act on the nearest thing, as a left click would |
 | WASD / arrows, Shift | Move, run |
-| I / J | Everything you carry / the journal |
+| Space / F | Use what's in the right / left hand: a blow, a shot, a pour; empty hands punch. Hold F with a shield to raise it (D-49) |
+| X / Q | Swap hands / throw what's in the right hand |
+| I / J | Pack & gear (what you hold and wear, what you carry, your wounds and what treats them) / the journal |
 | Esc | Walk away, close, or the menu |
 | F3 / F4 | Developer dock / AI traces (developer mode only) |
 
@@ -237,7 +239,7 @@ These appear in the result card, the journal, and the developer trace.
 
 > **Walking off is answered by why they came.** A guard who came about a crime not yet put right gives chase, to put you down and arrest you (to kill only after real violence or an assault on the gate). Someone you wronged shouts for the guards. A plain halt or a chat just ends. **Space** punches, in a fight or starting one.
 >
-> **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** punches whoever you face. Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
+> **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** and **F** use the right and left hands, with the same rules: your blow winds up (each weapon at its own speed) and lands only if they're still in reach; a raised shield takes blows from the front (D-49). Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
 
 - A click on a person opens the **dialogue bar**: their portrait and name, a scrolling exchange, and the one text line.
 - Other NPCs nearby are listeners. They join by speaking in the round's scene when it makes sense for them (D-48), or when the player addresses them.
@@ -664,6 +666,22 @@ The player often needs things they don't own or skills they don't have. **Agreem
 - **Fields:** issuer (must have authority over what's offered), obligations, a completion predicate built from reusable checks (deliver X, move load to position, return item, demonstrate result), reward effects, resource limits, deadline, evidence event IDs
 - Rewards are idempotent and bound to evidence. NPCs may only offer work that the simulation can represent. **Never fabricate** a job, reward, or sick patient to make dialogue interesting.
 
+### 6.8 Gear, bodies and remedies (D-49)
+
+**Status: CURRENT.** `data/content/gear.json` and `backend/gear.py`. Code owns every number; the judge only proposes a class for something made (checked against its physics, then its near kin, then code's own reading).
+
+**Weapons** (damage against an unarmoured torso, iron edge, health 100): fists 10; knife 35; sickle 35; short sword 50; long sword 60; great sword 70; hand axe 50; great axe 70; scythe 45; pointed stake 30; short spear 50; long spear 55; pitchfork 40; club 25, mace 45, hammer 40, sledge 60, staff 22, a stone in the hand 25 (blunt scales with the square root of mass); flail 35; whip 8; a burning brand 15; a bow 45 at 25 paces and a sling 25 at 20 (with arrows or stones in the quiver); a javelin 45 at 12; anything thrown by hand; a container of hot liquid (boiling 45 and down, hot 20, cold nothing). Each has hands, reach, wind-up, recovery and an animation. The edge's material scales cut and pierce (steel 1.1, iron 1, bronze 0.9, flint 0.8, bone 0.6, fire-hardened wood 0.55; a wooden "blade" clubs).
+
+**Armour** stops a share of each kind of blow (clothes, thick wool or hide, padded, leather, lamellar, mail, scale, plate, metal helmet, cap, bracers, leggings, gloves, boots). **The penetration law:** a cut or thrust whose edge is softer than the armour is deflected, and only a little of its force gets through; a heavy blunt blow (3 kg or more) still does its share; a fist does nothing through metal.
+
+**Situations:** unaware ×2; already down or held ×2; where it lands (described attacks: head ×1.6, neck ×2, heart ×2 for a thrust, arm or leg ×0.6; real-time blows land on the torso). **Laws:** a clean cut or thrust to the throat or heart of someone unaware, down or held kills; a choke needs them unaware, down or held (15 s knocks out, 120 s kills); a trick with bare hands on someone standing only hurts.
+
+**Conditions** (people and the stranger): bleeding (light or heavy, until treated), burns and open wounds that fester after 10 minutes, broken limbs (a broken arm holds nothing, a leg can't run), infection, and knockouts (the only one that passes by itself). Ordinary damage mends at 1 a minute, but not while anything is untreated. **Remedies** you make or find: bandage, stitches, tourniquet, splint, burn dressing, salve, poultice, boiled water. Treating yourself or someone else is code (Pack & gear, or in words); helping someone is remembered like a gift. Plantain, yarrow, moss, garlic, honey and flax thread are in the world.
+
+**Equipping:** slots head, body, arms, legs, hands, feet, right and left hand, quiver; two-handed weapons take both hands; putting things on takes time (a weapon 1 s, mail 60 s; only weapons and shields in a fight); worn armour doesn't count toward what you carry. Everyone's gear is real objects (seed 10): Roderic's sword, mail and helmet, the guards' spears and mail, Kade's and Elin's padded jackets, the smiths' hammers, Darin's knife, your own clothes. What someone down or dead has on them can be taken (theft).
+
+**Pictures:** a weapon or shield also gets a held view (diagonal, grip low left); armour and clothes get a worn sheet (front, facing left, back, facing right) fitted to the rig's head, torso and legs. The **item library** keeps every picture by the thing's exact signature (method, name, materials, gear class, flags, size and weight to a tenth): anyone making the very same thing gets them at once; anything different is painted anew (`tools/export_library.py`).
+
 ### 6.7 Generated sprites
 
 1. The moment an object is created, it appears with a **placeholder**: a generic silhouette chosen from its dominant material (wood, metal, cloth, bundle, container, stone).
@@ -685,7 +703,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
 > - **Decisions:** one batched decider request (the language model answering typed questions, D-47) for everyone deciding at once. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
 > - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address them opens an encounter (D-28); anyone who attacks starts a real-time fight (D-41).
-> - **Blows** are real time and fixed (D-41, replacing D-20's seeded roll): a wind-up per weapon, a hit only if the stranger is still in reach when it lands, fixed damage by weapon (a sword 55, a spear 50, fists 12; the stranger has 100). The stranger's fists do 15 to the unarmoured, 5 through padding, nothing through mail; at 25 or less someone is **down** (alive, out of the fight, sees nothing).
+> - **Blows** are real time and fixed (D-41, replacing D-20's seeded roll): a wind-up per weapon, a hit only if the target is still in reach when it lands. Since D-49 what a blow does is the gear table (§6.8): the weapon in hand against the armour covering the spot, how aware the target was, and the conditions that follow. At 25 or less someone in the world is **down** (alive, out of the fight, sees nothing); the stranger drops only when knocked out or scalded.
 > - **Shouts** carry 30 cells, once per event.
 > - **Reconsidering:** shaken people think again at most twice.
 > - **Thinking** runs through the client's one-at-a-time save loop (`/think`), alternating with clock beats so it can never stop time.
@@ -1248,6 +1266,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-49 | 2026-09-29 | **Gear, real health, and finished real-time combat.**<br><br>**One gear table** (`gear.json`, `gear.py`): about 30 weapon classes, 14 kinds of armour and clothing, shields, ammunition and remedies. The judge proposes a class for what's made (`judge_v14`); code checks it against the thing's physics (then its near kin, then its own reading) and owns every number.<br><br>**Blows by physics:** weapon and edge material against the armour covering the spot, awareness, where it lands; the penetration law generalises D-41's mail law; laws for throats and hearts, chokes and bare-handed tricks. Described attacks: the judge rules whether and where it lands (and how long a choke is held); code works out what it does.<br><br>**Bodies:** bleeding, burns, broken limbs, infection and knockouts; ordinary damage mends slowly, conditions need a remedy you make; NPCs who help bind wounds.<br><br>**Real-time:** both hands (Space, F; X swaps; Q throws), wind-ups for the stranger too, shields raised by holding their key, bows, slings and throws as missiles that land as objects, pours.<br><br>**Everyone's gear is objects** (seed 10); what the fallen have can be taken.<br><br>**Pictures:** held views and worn sheets on the rig; procedural attack poses over the real wind-up; the item library reuses pictures of exactly the same thing. | The user: "I want to be able to equip the weapons that we create and have the player hold them and attack with them with animations"; armour "should be way stronger than not having armour"; "an iron sword is extremely dangerous and so is just a blunt rock"; a described sneak attack should do "way more damage than just normally attacking"; "it should be general enough to take into account things we haven't" (strangling with a rope, a knife to the throat); healing things you make; armour as equipped assets rather than repainting the character; controls for each hand; the same item never made twice.<br><br>**Chosen:** bleeding and healing; held items and worn sprites (the full repaint was dropped when the user asked for armour as assets); NPC gear as real objects; wind-ups both ways. |
 | D-48 | 2026-09-29 | **Group conversations, and one conversation system.**<br><br>**One scene per round.** One voice call (`scene_v1`) writes 1 to 3 lines for the people in the conversation and up to three free people within 5 cells. Each speaker reads the moment and picks their own move. Code checks each line (real person, near enough, legal move) and applies it as that person's exchange. A nearby person who speaks joins.<br><br>**Purpose per person.** An encounter keeps each participant's purpose (talk, joined, halt, confront, threaten, demand payment); hostility follows from any hostile purpose. A halt arriving at a friendly chat becomes "joined".<br><br>**No side channels:**<br>- no gate halt during a conversation, or within 60 s of dealing with a guard;<br>- no meetings or chatter within earshot of a conversation;<br>- the same pair doesn't meet again for 10 minutes without news.<br><br>**Also:**<br>- deeds aimed at a nearby person open a conversation with them;<br>- face to face, words about what you'll do are words;<br>- a social step with no details changes nothing instead of "could not be resolved";<br>- everyone knows everyone in town (role and usual place);<br>- a new `gather` action (`judge_v13`) takes a leaf, twig, bark or handful without destroying the source.<br><br>**Removed:** round intents and their questions, the "round" thinking kind, `voice.converse` (`voice_v5`), `talk.chosen`. | The user spoke to Roderic, and "while I was speaking the other two guards asked what I was doing". They asked for nearby people to really join, "like a group chat".<br><br>**From that game (run 6e88596f):**<br>- The gate watch sent Bren to shout "Halt!" mid-demonstration: it only checked for an open encounter.<br>- Oren made small talk with Roderic, and Bren and Tomas gossiped about the stranger's needle, a few steps away: they were "free" because they weren't participants.<br>- A halt joining a chat turned the whole conversation hostile.<br>- "I show Roderic the compass" ran as a Try Something with no reply.<br>- "…I need to show it to the guards" was read as a deed and came back "could not be resolved".<br>- Kade didn't know Hessa; Jory and Mara made the same small talk four times; there was no way to take a leaf off a tree. |
 | D-47 | 2026-09-29 | **Retire Jev: one model for every mind.** The decider is the language model (`gpt-6-luna`) answering the same typed questions over code-built options with a strict schema. The interface stays narrow so a typed engine could serve it again (crowds inside the city, or a cheap grader in evals). Removed: the TypeSafe/defapi route, `DECIDER`, `TYPESAFE_API_KEY`, `JEV_PROVIDER` and D-46's `background` split. | The user asked whether Jev is a technology that is useful to this game at all; credits were not the question.<br><br>**It isn't, here.** Jev picks from menus and gives calibrated typed answers: fast and cheap, best for high-volume, well-defined judgements. This game needs:<br>- open-ended understanding (the right response is often not on a menu: Kade's rope, Hessa's directions);<br>- one consistent mind per character (every split between a deciding model and a speaking model contradicted itself);<br>- judgement at a small scale (ten people, a few decisions a minute).<br><br>Its long menus under-picked the key option three times (M5, D-34, D-37). Its probabilities and confidence were read nowhere. At this volume Luna costs about the same (about $0.0002 against $0.00012 per decision).<br><br>**Also found:** Jev ran out of credit on 28 Sep at 23:37 local, minutes after D-44 went live. All 133 decisions since then fell back to Luna. |
 | D-46 | 2026-09-29 | **One mind per reply, and a fair baseline.**<br><br>**Jev is background only.** It answers the village's own life (agendas, meetings, gossip). Anything the player meets is Luna: reactions to the stranger, reading their line, and every conversational reply.<br><br>**One call per reply.** The reply returns the person's reading of the moment (impression, suspicion, anger, belief, threat, reason enough, deal agreed or done) with the words and the move. Code checks the move against that same reading.<br><br>**No second decision per round.** Encounter "intents" are gone: what someone does comes with their reply, after hearing the stranger.<br><br>**Fair baseline:**<br>- theft is taking, not using;<br>- grudges settle (given back, taken back, forgiven, or an arrest answers for it);<br>- guards arrest or attack only for a known crime not put right;<br>- words alone move regard only so far either way (±0.3);<br>- walking off draws a chase or a shout only over something unresolved.<br><br>**Removed:** interjections, which depended on intents. | The user: "most conversations end in conflict and I think that's Jev's fault … do we really need Jev?" Across four games after D-44: 5 arrests, 3 chases, a whistle and a shout for the guards, mostly while talking.<br><br>**Causes, from the traces:**<br>- The pre-committed round intent was "seize" in 7 of 23 choices. (Correction, D-47: Jev had no credit in those games, so these were Luna's answers through the fallback. The cause was the design, a pre-committed menu with "seize" on it, not the model.) Bren "warms to you" and seizes you the same round; Oren arrested the stranger for vague answers about family.<br>- Grudges never ended: Kade re-arrested over a rope already returned.<br>- Filling Hessa's gourd at her trough, as she asked, counted as theft.<br>- Regard only slid down: "a little more suspicious" 11 of 22 times, with falls uncapped.<br>- The D-44 walk-off rule had Hessa shout for guards after she'd made up with you.<br><br>The user chose: Jev for background only, and a friendlier baseline. |
@@ -1851,6 +1870,48 @@ Changes to this document: …
 - One voice call took 21 s on its first attempt: a provider latency spike, not a retry.
 - Deliberate visits bypass the pair gap: Oren visited Roderic for small talk twice in 10 minutes.
 - A guard who came to halt keeps the purpose "halt" for the whole talk, so a civil conversation that began with a halt still counts as hostile (you can't walk over to someone else in it).
+
+---
+
+### Retro: gear, real health and finished real-time combat (D-49), 29 Sep 2026
+
+**Built:**
+
+- `backend/gear.py` and `data/content/gear.json`: classes, armour, the penetration law, situations, conditions, remedies, equipping.
+- `combat.py` rewritten on gear: the stranger's swings wind up and land on the clock; both hands; shields; missiles; pours; NPCs fight with their own gear.
+- `routes_gear.py`: strike, guard, equip, swap and treat. `library.py`: the item library.
+- `judge_v14`: gear classes, harm families, areas, choke time, and treat and equip actions.
+- Client:
+  - `fight_view.gd` (hands, gear, swings, missiles), `combat_pose.gd` and `projectile.gd`;
+  - `painted_actor.gd`: held items and worn layers on the rig;
+  - the Pack & gear screen;
+  - a health line and condition chips.
+- Seed 10: everyone's gear, the stranger's clothes, healing materials.
+
+**Evidence:**
+
+- 194 backend tests pass (new: `test_gear`, `test_equip`, and rewritten `test_combat`). All Godot smoke tests pass on stub, including the new `smoke_gear`.
+  - `smoke_fight` now picks up a stone first. In a bare-handed brawl Hessa wins about as often as the stranger does.
+- **Live gear evals** (`run_gear_evals.py`): 12/18, then 16/18 twice as causes were fixed. Every changed case then passed 3/3 on rerun.
+  - The fixes: near kin for a judged class; a law for bare-handed tricks; clearer choke timing; "readying a remedy is a make step" in the prompt.
+  - Made things get the right class: spear, long-hafted flint axe, bow, sling, club, padded jacket, hood, plank shield, bandage, stitches, splint, poultice.
+  - A rock to the back of Tomas's head knocks him out; a sword across Darin's throat from behind kills.
+  - A branch against Bren's mail only bruises.
+  - Strangling Oren unaware leaves him limp; Oren alert turns away; a shove only hurts.
+  - Two early misses were the judge being honest about too-small materials (a palm-sized scrap for a cap, a tuft of wool for a jacket). The cases were changed, not the rules.
+- **Pictures:** a mail shirt, helmet, padded jacket and a held spear from the image model, seen on the rig in four facings and mid-thrust (`docs/screenshots/gear_rig*.png`).
+
+**Lessons:**
+
+- Let the judge decide what's plausible and code decide what it does. The judge's result words ("killed") were too blunt, and too trusting of the player's wording.
+- Generated pictures need a real alpha threshold: faint haze made every sheet trim to its whole cell.
+- A judged class that doesn't quite fit should try its near kin before code's own guess: a long flint axe is still an axe.
+
+**To watch:**
+
+- The helmet's front view sits large on the face; worn layers don't follow the arm and leg swing.
+- Held views exist only for new things (older items get one the first time they're equipped); NPCs don't draw what they pick up.
+- Seed-10 healing materials have no painted world sprites yet (run `tools/generate_material_art.py`).
 
 ---
 

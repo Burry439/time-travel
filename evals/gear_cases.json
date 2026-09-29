@@ -1,0 +1,237 @@
+{
+ "notes": "Live gear evals (D-49): what the judge's class for a made thing turns into after code's physics check, and what described attacks do through gear.hit. made_class_any: acceptable gear classes of the first thing made. result_any: acceptable harm results. alive: whether the target is alive after.",
+ "cases": [
+  {
+   "id": "flint_spear",
+   "carry": [
+    "branch_a",
+    "flint_a",
+    "vine_a"
+   ],
+   "text": "lash the flint shard to the end of the branch with the vine to make a spear",
+   "made_class_any": [
+    "short_spear",
+    "stake",
+    "long_spear"
+   ]
+  },
+  {
+   "id": "flint_axe",
+   "carry": [
+    "hazel_rod",
+    "flint_a",
+    "vine_a"
+   ],
+   "text": "haft the flint shard crosswise onto the end of the hazel rod with vine to make a small axe",
+   "made_class_any": [
+    "hand_axe",
+    "great_axe",
+    "sickle",
+    "knife"
+   ]
+  },
+  {
+   "id": "bow",
+   "carry": [
+    "hazel_rod",
+    "cord_a",
+    "vine_a"
+   ],
+   "text": "bend the hazel rod and string it with the cord and the vine knotted together to make a bow",
+   "made_class_any": [
+    "bow"
+   ]
+  },
+  {
+   "id": "sling",
+   "carry": [
+    "leather_a",
+    "cord_a",
+    "vine_a"
+   ],
+   "text": "make a sling: the leather scrap as the pouch, the cord as one string and the vine as the other",
+   "made_class_any": [
+    "sling"
+   ]
+  },
+  {
+   "id": "club",
+   "carry": [
+    "branch_b",
+    "flint_a"
+   ],
+   "text": "cut the branch down to a heavy club about as long as my arm",
+   "made_class_any": [
+    "club",
+    "staff",
+    "mace"
+   ]
+  },
+  {
+   "id": "padded_jacket",
+   "carry": [
+    "cloth_darin",
+    "straw_a",
+    "needles_mara",
+    "thread_hessa"
+   ],
+   "text": "quilt the linen over a layer of straw, stitching it with the needle and thread, into a padded jacket I can wear",
+   "made_class_any": [
+    "padded",
+    "clothes",
+    "thick"
+   ]
+  },
+  {
+   "id": "leather_cap",
+   "carry": [
+    "cloth_darin",
+    "cord_a"
+   ],
+   "text": "fold and tie some of the linen into a hood I can wear on my head",
+   "made_class_any": [
+    "cap",
+    "clothes"
+   ]
+  },
+  {
+   "id": "plank_shield",
+   "carry": [
+    "wood_tomas",
+    "cord_a"
+   ],
+   "text": "tie the cord across the back of the plank as a handle so I can hold it up as a shield",
+   "made_class_any": [
+    "improvised",
+    "round",
+    "large"
+   ]
+  },
+  {
+   "id": "bandage",
+   "carry": [
+    "cloth_darin"
+   ],
+   "text": "tear some strips off the linen and roll them into a bandage",
+   "made_class_any": [
+    "bandage"
+   ]
+  },
+  {
+   "id": "stitches",
+   "carry": [
+    "needles_mara",
+    "thread_hessa"
+   ],
+   "text": "thread one of the iron needles with the flax thread, ready for stitching a wound",
+   "made_class_any": [
+    "stitches"
+   ]
+  },
+  {
+   "id": "splint",
+   "carry": [
+    "branch_b",
+    "cord_a",
+    "flint_a"
+   ],
+   "text": "cut two straight sticks from the branch and bind them with the cord to make a splint for a broken arm",
+   "made_class_any": [
+    "splint"
+   ]
+  },
+  {
+   "id": "poultice",
+   "carry": [
+    "plantain_a",
+    "yarrow_a"
+   ],
+   "text": "crush the plantain and yarrow leaves together into a poultice for a wound",
+   "made_class_any": [
+    "poultice",
+    "salve"
+   ]
+  },
+  {
+   "id": "rock_sneak",
+   "carry": [
+    "stone_a"
+   ],
+   "beside": "npc_tomas_reed",
+   "text": "creep up behind Tomas while he isn't looking and smash the stone down on his head",
+   "result_any": [
+    "knocked_out",
+    "killed",
+    "disabled"
+   ]
+  },
+  {
+   "id": "stick_vs_mail",
+   "carry": [
+    "branch_a"
+   ],
+   "beside": "npc_bren_marr",
+   "text": "jab Bren in the chest with the branch",
+   "result_any": [
+    "deflected",
+    "missed",
+    "wounded"
+   ],
+   "alive": true
+  },
+  {
+   "id": "sword_throat",
+   "carry": [
+    "sword_roderic"
+   ],
+   "beside": "npc_darin_ko",
+   "text": "while Darin has his back to me, draw the sword across his throat",
+   "result_any": [
+    "killed"
+   ],
+   "alive": false
+  },
+  {
+   "id": "strangle_unaware",
+   "carry": [
+    "cord_a"
+   ],
+   "beside": "npc_oren_dast",
+   "text": "slip behind Oren, loop the cord round his neck and pull it tight until he stops moving",
+   "result_any": [
+    "killed",
+    "knocked_out"
+   ]
+  },
+  {
+   "id": "strangle_alert",
+   "carry": [
+    "cord_a"
+   ],
+   "beside": "npc_oren_dast",
+   "facing": [
+    "npc_oren_dast"
+   ],
+   "text": "loop the cord round Oren's neck and strangle him",
+   "result_any": [
+    "missed",
+    "deflected",
+    "wounded",
+    null
+   ],
+   "alive": true
+  },
+  {
+   "id": "shove",
+   "carry": [],
+   "beside": "npc_hessa_marr",
+   "text": "shove Hessa hard so she falls over",
+   "result_any": [
+    "missed",
+    "wounded",
+    "deflected"
+   ],
+   "alive": true
+  }
+ ]
+}

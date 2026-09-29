@@ -74,7 +74,8 @@ def classify(text: str, someone_near: bool, talking_with: list[str] | None = Non
              ) -> tuple[str, str, decider.DeciderCall | None]:
     """(kind, how it was decided: code | model | fallback, the decider call if any). talking_with: the names of
     the people in a conversation with the stranger right now, if any."""
-    kind = obvious(text, bool(talking_with))
+    asking = decider.mode() not in ("stub", "off")  # With nobody to ask, the plain code reading stands.
+    kind = obvious(text, bool(talking_with) and asking)
     if kind:
         return kind, "code", None
     if decider.mode() in ("stub", "off"):  # No decider to ask: speech if someone can hear it, else a deed.

@@ -13,7 +13,11 @@ from pathlib import Path
 from . import config
 
 PROMPT_VERSION = "illustrator_v1"
-_TEMPLATE = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
+# The world sprite, the view held in a hand, and the four-view sheet worn on the body (D-49).
+VERSIONS = {"world": PROMPT_VERSION, "held": "illustrator_v2_held", "worn": "illustrator_v2_worn"}
+_TEMPLATES = {view: (Path(__file__).resolve().parents[1] / "prompts" / f"{version}.txt").read_text(encoding="utf-8")
+              for view, version in VERSIONS.items()}
+_TEMPLATE = _TEMPLATES["world"]
 
 
 @dataclass
@@ -32,20 +36,23 @@ class SpriteCall:
 def sprite_prompt(record: dict) -> str:
     subject = f"a {record['name']}. {record.get('description', '')}".strip()
     materials = ", ".join(record.get("materials") or ["ordinary materials"])
-    return _TEMPLATE.replace("{subject}", subject).replace("{materials}", materials)
+    template = _TEMPLATES.get(record.get("view", "world"), _TEMPLATE)
+    return template.replace("{subject}", subject).replace("{materials}", materials)
 
 
 def generate_sprite(record: dict, destination: Path) -> SpriteCall:
     prompt = sprite_prompt(record)
+    version = VERSIONS.get(record.get("view", "world"), PROMPT_VERSION)
     if not config.images_enabled():
-        return SpriteCall(status="disabled", prompt=prompt, error="Image generation is off or no API key is set.")
+        return SpriteCall(status="disabled", prompt=prompt, prompt_version=version,
+                          error="Image generation is off or no API key is set.")
     if config.mode() == "stub":  # Exercise storage and delivery without a model.
         destination.parent.mkdir(parents=True, exist_ok=True)
         stand_in = Path(__file__).resolve().parents[2] / "assets" / "generated" / "prop_stone.png"
         destination.write_bytes(stand_in.read_bytes())
-        return SpriteCall(status="ready", model="stub", prompt=prompt)
+        return SpriteCall(status="ready", model="stub", prompt=prompt, prompt_version=version)
     started = time.perf_counter()
-    call = SpriteCall(status="failed", prompt=prompt)
+    call = SpriteCall(status="failed", prompt=prompt, prompt_version=version)
     errors = []
     for model in dict.fromkeys([config.image_model(), config.image_fallback_model()]):
         call.model = model

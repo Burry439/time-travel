@@ -30,9 +30,29 @@ const CAST_ART := {
 		if is_inside_tree():
 			_build()
 
+const CombatPose := preload("res://scripts/combat_pose.gd")
+const PX_PER_METRE := 62.0 # The rig is about 1.75 m tall at 108 px.
+# Where worn things sit, as fractions of a view's painted box: (x, y, width, height).
+# A worn thing is fitted to the width of its part and hangs from the top of it (a mail shirt falls to the knee,
+# a helmet sits on the crown), so its own proportions decide how far down it reaches.
+const WORN_RECTS := {"head": Rect2(0.23, -0.06, 0.54, 0.3), "body": Rect2(0.13, 0.17, 0.74, 0.6),
+	"legs": Rect2(0.12, 0.55, 0.76, 0.42), "feet": Rect2(0.1, 0.86, 0.8, 0.14)}
+const WORN_PART := {"head": "head", "body": "torso", "legs": "hip_bridge", "feet": "hip_bridge"}
+const WORN_ORDER := ["legs", "feet", "body", "head"] # Drawn in this order (a coat over leggings).
+
 var views: Array[Node2D] = []
 var joints: Array[Dictionary] = []
 var rest_positions: Array[Dictionary] = []
+var boxes: Array[Rect2i] = [] # Each view's painted box in its atlas.
+var joint_px: Array[Dictionary] = [] # Each part's pivot, in atlas pixels.
+var hand_points: Array[Dictionary] = [] # Where each hand is, in its arm pivot's space.
+# What they hold and wear (D-49): hand -> {texture, animation, hands, kind, length_px}; slot -> [4 textures].
+var held := {}
+var worn := {}
+var held_nodes: Array[Dictionary] = []
+var attack := {} # {hand, animation, windup, t}
+var guarding := false
+var guard_hand := "left"
 var facing := 0
 var locomotion := "idle"
 var stride_phase := 0.0
@@ -86,6 +106,10 @@ func _build() -> void:
 	views.clear()
 	joints.clear()
 	rest_positions.clear()
+	boxes.clear()
+	joint_px.clear()
+	hand_points.clear()
+	held_nodes.clear()
 	var view_count := 8 if actor_id == "traveler" else 4
 	for row in view_count:
 		var atlas: Texture2D = TRAVELER_DIAGONALS if row >= 4 else TRAVELER if actor_id == "traveler" else HESSA if actor_id == "hessa" else CAST_ART[actor_id]
@@ -101,6 +125,9 @@ func _build() -> void:
 		whole.scale = Vector2.ONE * rig_scale
 		var rig: Dictionary = {}
 		var rests: Dictionary = {}
+		var pivots_px: Dictionary = {}
+		var hands: Dictionary = {}
+		boxes.append(box)
 		# Overlaps are intentional, keeping painted seams hidden at the rest pose.
 		# Anatomy differs by view; each part has its own shoulder/hip pivot.
 		var slices := {
@@ -143,9 +170,137 @@ func _build() -> void:
 			pivot.add_child(section)
 			rig[part_name] = pivot
 			rests[part_name] = pivot.position
+			pivots_px[part_name] = joint
+			if part_name == "left_arm" or part_name == "right_arm":
+				hands[part_name] = Vector2(region.position) + Vector2(region.size.x * 0.5, region.size.y * 0.9) - joint
 		joints.append(rig)
 		rest_positions.append(rests)
+		joint_px.append(pivots_px)
+		hand_points.append(hands)
+	_apply_gear()
 	queue_redraw()
+
+
+## What they hold (hand -> {texture, animation, hands, kind, length_m}) and wear (slot -> the 2x2 worn sheet
+## as an Image). Rebuilt only when it changes.
+func set_gear(new_held: Dictionary, new_worn: Dictionary) -> void:
+	var worn_key := {}
+	for slot in new_worn:
+		worn_key[slot] = new_worn[slot].get_instance_id() if new_worn[slot] else 0
+	var held_key := {}
+	for hand in new_held:
+		held_key[hand] = [new_held[hand].get("texture"), new_held[hand].get("animation"), new_held[hand].get("kind")]
+	if var_to_str(held_key) == str(get_meta("held_key", "")) and var_to_str(worn_key) == str(get_meta("worn_key", "")):
+		return
+	set_meta("held_key", var_to_str(held_key))
+	set_meta("worn_key", var_to_str(worn_key))
+	held = new_held
+	worn = {}
+	for slot in new_worn:
+		if new_worn[slot]:
+			worn[slot] = _slice_sheet(new_worn[slot])
+	_apply_gear()
+
+
+## A worn sheet is four views in a 2x2 grid: front, right side / back, left side.
+func _slice_sheet(image: Image) -> Array:
+	if image.is_compressed():
+		image.decompress()
+	var half := Vector2i(image.get_width() / 2, image.get_height() / 2)
+	var quads := []
+	for cell in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var part := image.get_region(Rect2i(cell * half, half))
+		var used := solid_rect(part)
+		quads.append(ImageTexture.create_from_image(part.get_region(used)) if used.size.x > 2 else null)
+	return quads # [front, facing left, back, facing right]
+
+
+## The box around what is really there: generated pictures can carry a faint haze that get_used_rect counts.
+## Scans a small copy, so it stays quick.
+static func solid_rect(image: Image, threshold := 0.35) -> Rect2i:
+	var probe: Image = image.duplicate()
+	var step := maxi(1, maxi(image.get_width(), image.get_height()) / 128)
+	probe.resize(maxi(1, image.get_width() / step), maxi(1, image.get_height() / step), Image.INTERPOLATE_NEAREST)
+	var low := Vector2i(probe.get_width(), probe.get_height())
+	var high := Vector2i(-1, -1)
+	for y in probe.get_height():
+		for x in probe.get_width():
+			if probe.get_pixel(x, y).a > threshold:
+				low = Vector2i(mini(low.x, x), mini(low.y, y))
+				high = Vector2i(maxi(high.x, x), maxi(high.y, y))
+	if high.x < 0:
+		return Rect2i()
+	return Rect2i(low * step, (high - low + Vector2i.ONE) * step).intersection(Rect2i(Vector2i.ZERO, image.get_size()))
+
+
+func _apply_gear() -> void:
+	held_nodes.clear()
+	for row in views.size():
+		var rig: Dictionary = joints[row]
+		for part_name in rig:
+			for child in rig[part_name].get_children():
+				if child.has_meta("gear"):
+					rig[part_name].remove_child(child)
+					child.queue_free()
+		var box: Rect2i = boxes[row]
+		# Worn layers, each view from the matching side of its sheet (diagonals use the front or back).
+		var quadrant: int = [0, 1, 2, 3, 0, 0, 2, 2][row] # Sheet: front, facing left / back, facing right.
+		for slot in WORN_ORDER:
+			if not worn.has(slot) or worn[slot][quadrant] == null:
+				continue
+			var texture: Texture2D = worn[slot][quadrant]
+			var area: Rect2 = WORN_RECTS[slot]
+			var rect := Rect2(Vector2(box.position) + area.position * Vector2(box.size), area.size * Vector2(box.size))
+			var layer := Sprite2D.new()
+			layer.set_meta("gear", true)
+			layer.texture = texture
+			var fit := rect.size.x / texture.get_size().x
+			if row in [1, 3]: # In profile a body is narrower than it is from the front.
+				fit = minf(fit, rect.size.y / texture.get_size().y)
+			layer.scale = Vector2.ONE * fit
+			var part_name: String = WORN_PART[slot]
+			var top_centre := Vector2(rect.get_center().x, rect.position.y + texture.get_size().y * fit * 0.5)
+			layer.position = top_centre - joint_px[row][part_name]
+			layer.z_index = 1
+			rig[part_name].add_child(layer)
+		# Held things hang from the hands: behind the body when facing away, mirrored when facing left.
+		var nodes := {}
+		for hand in held:
+			var spec: Dictionary = held[hand]
+			if spec.get("texture") == null:
+				continue
+			var arm := "right_arm" if hand == "right" else "left_arm"
+			var sprite := Sprite2D.new()
+			sprite.set_meta("gear", true)
+			sprite.texture = spec.texture
+			var size: Vector2 = spec.texture.get_size()
+			var shield := str(spec.get("kind", "")) == "shield"
+			var grip := Vector2.ZERO if shield else Vector2(-size.x * 0.4, size.y * 0.4)
+			sprite.offset = -grip
+			var length_px := maxf(18.0, float(spec.get("length_m", 0.4)) * PX_PER_METRE) if not shield else 34.0
+			var span := size.length() if not shield else maxf(size.x, size.y)
+			var rig_scale: float = views[row].scale.x
+			sprite.scale = Vector2.ONE * (length_px / maxf(span, 1.0)) / maxf(rig_scale, 0.001)
+			sprite.position = hand_points[row].get(arm, Vector2.ZERO)
+			var away := row == 2 or row == 6 or row == 7
+			sprite.z_index = -1 if away else 2
+			if row == 1 or row == 5 or row == 6:
+				sprite.scale.x *= -1.0
+			rig[arm].add_child(sprite)
+			nodes[hand] = sprite
+		held_nodes.append(nodes)
+
+
+## Start a blow with whatever is in that hand, its wind-up stretched over windup_ms so it can be read.
+func play_attack(animation: String, windup_ms: float, hand := "right") -> void:
+	if dead:
+		return
+	attack = {"hand": hand, "animation": animation, "windup": maxf(0.05, windup_ms / 1000.0), "t": 0.0}
+
+
+func set_guard(raised: bool, hand := "left") -> void:
+	guarding = raised
+	guard_hand = hand
 
 
 func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
@@ -208,6 +363,57 @@ func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
 		for part_name in ["head", "left_arm", "right_arm", "torso"]:
 			var pivot: Node2D = rig[part_name]
 			pivot.position.y += gesture * 10.0
+	_pose_fighting(rig, delta)
+
+
+## Blows, guarding and how held things sit (D-49), on top of walking and idling.
+func _pose_fighting(rig: Dictionary, delta: float) -> void:
+	# Forward is +x on right-facing views; a positive arm angle swings the hand forward.
+	var forward := -1.0 if facing in [1, 5, 6] else 1.0
+	var nodes: Dictionary = held_nodes[facing] if facing < held_nodes.size() else {}
+	for hand in nodes:
+		var sprite: Sprite2D = nodes[hand]
+		var spec: Dictionary = held.get(hand, {})
+		var shield := str(spec.get("kind", "")) == "shield"
+		var carry := 0.0 if shield else CombatPose.hold_angle(str(spec.get("animation", "slash")))
+		if facing == 0 or facing == 2:
+			carry -= PI / 4.0 # Front and back views: held upright at the side.
+		sprite.rotation = carry * (1.0 if sprite.scale.x > 0 else -1.0)
+		sprite.position = hand_points[facing].get("right_arm" if hand == "right" else "left_arm", Vector2.ZERO)
+	if guarding:
+		var arm := "left_arm" if guard_hand == "left" else "right_arm"
+		rig[arm].rotation = -1.25 * forward
+		rig["torso"].rotation += 0.03 * forward
+	if attack.is_empty():
+		return
+	attack.t += delta
+	var windup: float = attack.windup
+	var animation: String = attack.animation
+	if attack.t > CombatPose.duration(windup):
+		attack = {}
+		return
+	var angle := CombatPose.arm_angle(animation, attack.t, windup)
+	var striking := "right_arm" if attack.hand == "right" else "left_arm"
+	rig[striking].rotation = -angle * forward
+	if CombatPose.both_arms(animation):
+		var other := "left_arm" if striking == "right_arm" else "right_arm"
+		rig[other].rotation = -angle * forward * 0.85
+	rig["torso"].rotation += CombatPose.torso_lean(animation, attack.t, windup) * forward
+	var sprite: Sprite2D = nodes.get(attack.hand)
+	if sprite:
+		# Thrusts, stabs and shots point the weapon straight where they face; swings carry it round with the arm.
+		var aimed := animation in ["thrust", "two_hand_thrust", "stab", "draw_shoot", "bash"]
+		var arm_turn: float = rig[striking].rotation
+		var target := 0.0 if forward > 0 else PI
+		if facing == 0:
+			target = PI / 2.0
+		elif facing == 2:
+			target = -PI / 2.0
+		var painted_axis := -PI / 4.0 if sprite.scale.x > 0 else -3.0 * PI / 4.0
+		if aimed:
+			sprite.rotation = target - arm_turn - painted_axis
+		var along := Vector2.from_angle((target if aimed else arm_turn + sprite.rotation + painted_axis) - arm_turn)
+		sprite.position += along * CombatPose.reach(animation, attack.t, windup) / maxf(views[facing].scale.x, 0.001)
 
 
 func play_gesture(kind: String) -> void:

@@ -44,8 +44,8 @@ var sound_volume := 0.7
 var sync_error := false
 var ai_status: Dictionary = {}
 var last_trace = null # Developer runs receive the judge trace with each attempt.
-var strike_busy := false # Space in a fight: one punch in flight at a time.
 var hurt_flash: TextureRect # Red at the screen's edges when you're struck.
+var fight: Node # Hands, gear, blows and missiles on screen (D-49): scripts/fight_view.gd.
 
 # Objects without authored art show a loading ring until their painting arrives (loading_ring.gd).
 const OBJECT_HEIGHT := 46.0
@@ -89,6 +89,10 @@ func _ready() -> void:
 	effects = preload("res://scripts/feel_effects.gd").new()
 	effects.z_index = -1
 	add_child(effects)
+	fight = preload("res://scripts/fight_view.gd").new()
+	fight.name = "FightView"
+	fight.game = self
+	add_child(fight)
 	var settings := ConfigFile.new()
 	if settings.load("user://presentation.cfg") == OK:
 		camera_zoom = clampf(float(settings.get_value("feel", "zoom", 1.0)), 0.75, 1.25)
@@ -552,6 +556,7 @@ func _accept_state(new_state: Dictionary) -> void:
 	var before := run_state
 	run_state = new_state
 	_sync_display()
+	fight.sync()
 	_react_to(before)
 
 
@@ -710,7 +715,8 @@ func _react_to_fight(before: Dictionary) -> void:
 				var joiner := get_node_or_null("NPCs/%s/PaintedActor" % entry.who)
 				if joiner:
 					joiner.play_gesture("gesture")
-		ui.notify("Fight! Move to dodge their blows, Space to punch. Press T and say you give up to surrender.")
+		ui.notify("Fight! Step out of reach as they wind up. Space: right hand, F: left (hold with a shield). "
+			+ "Press T and say you give up to surrender.")
 	elif was_fighting and not in_fight() and run_state["player"].get("alive", true):
 		var now_cell := Vector2i(int(run_state.player.x), int(run_state.player.y))
 		if now_cell.distance_to(predicted_cell) > 3.0: # Marched off by the guards.
@@ -743,52 +749,6 @@ func _react_to_fight(before: Dictionary) -> void:
 
 func in_fight() -> bool:
 	return typeof(run_state.get("fight")) == TYPE_DICTIONARY
-
-
-## Space: punch whoever you face within arm's reach (or the nearest attacker). Code only, no model. Outside a
-## fight it's an assault like any other: people see it and answer it.
-func _punch() -> void:
-	if strike_busy or not gameplay_active or sync_error:
-		return
-	strike_busy = true
-	player_visual.play_gesture("gesture")
-	var ahead: Vector2 = [Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT, Vector2(1, 1), Vector2(-1, 1),
-		Vector2(-1, -1), Vector2(1, -1)][facing_row]
-	var target := ""
-	var best := 2.2 * CELL
-	for npc in run_state.get("npcs", []):
-		if not npc.get("alive", true) or npc.get("down", false):
-			continue
-		var actor := get_node_or_null("NPCs/" + str(npc.id)) as Node2D
-		if actor == null:
-			continue
-		var toward := actor.position - player.position
-		if toward.length() < best and (toward.length() < 8.0 or toward.normalized().dot(ahead.normalized()) > 0.3):
-			best = toward.length()
-			target = str(npc.id)
-	while movement_sync_active: # Our steps first: the punch lands where we stand now.
-		await get_tree().process_frame
-	movement_sync_active = true # The punch takes the movement lane, so no step or clock beat races it.
-	var body := {"expected_version": run_state.event_seq, "request_id": _request_id("strike")}
-	if not target.is_empty():
-		body["target_id"] = target
-	var reply := await _api(HTTPClient.METHOD_POST, "/runs/" + str(run_state.run_id) + "/strike", body)
-	movement_sync_active = false
-	if not reply.ok:
-		var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
-		if typeof(detail) == TYPE_DICTIONARY:
-			ui.notify(str(detail.get("message", ""))) # e.g. nobody within reach
-		strike_busy = false
-		return
-	var result = reply.data.get("strike", {})
-	_accept_state(reply.data.state)
-	if typeof(result) == TYPE_DICTIONARY and result.get("ok") == false:
-		ui.notify(str(result.get("reason", "")))
-	elif typeof(result) == TYPE_DICTIONARY and str(result.get("result", "")) == "hit" and not target.is_empty():
-		var hit := get_node_or_null("NPCs/%s/PaintedActor" % target)
-		if hit:
-			hit.hurt(1.0 if hit.global_position.x >= player.global_position.x else -1.0)
-	strike_busy = false
 
 
 func _show_victory() -> void:
@@ -1529,8 +1489,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			ui.card.show_for(str(hover.id))
 		get_viewport().set_input_as_handled()
 		return
+	if event is InputEventKey and not event.pressed and event.keycode == KEY_F and fight.guarding:
+		fight.guard(false) # Let go of F: the shield comes down.
+		get_viewport().set_input_as_handled()
+		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	var hands_free: bool = gameplay_active and not request_busy and not ui.modal.visible and not ui.bar.visible
 	match event.keycode:
 		KEY_ESCAPE:
 			if ui.card.visible:
@@ -1561,8 +1526,25 @@ func _unhandled_input(event: InputEvent) -> void:
 			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
 				_interact()
 		KEY_SPACE:
-			if gameplay_active and not request_busy and not ui.modal.visible and not ui.bar.visible:
-				_punch() # In a fight or starting one.
+			if hands_free:
+				fight.strike("right") # Whatever is in the right hand: a blow, a shot, a pour (D-49).
+			else:
+				return
+		KEY_F:
+			if not hands_free:
+				return
+			if not fight.shield_hand().is_empty():
+				fight.guard(true) # Held: the shield stays up until F is let go.
+			else:
+				fight.strike("left")
+		KEY_X:
+			if hands_free:
+				fight.swap()
+			else:
+				return
+		KEY_Q:
+			if hands_free:
+				fight.strike("right", true) # Throw what's in the right hand.
 			else:
 				return
 		KEY_T, KEY_ENTER, KEY_KP_ENTER:

@@ -684,6 +684,623 @@
    "since_seed": 8,
    "feature": "fire",
    "burning": true
+  },
+  {
+   "id": "sword_roderic",
+   "name": "iron sword",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.3,
+   "materials": [
+    "iron",
+    "wood",
+    "leather"
+   ],
+   "description": "A straight double-edged iron sword with a leather-wrapped grip, kept sharp.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_roderic_vale",
+   "worn_by": "npc_roderic_vale",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "long_sword",
+    "covers": [],
+    "quality": "good"
+   },
+   "length_m": 0.95
+  },
+  {
+   "id": "mail_roderic",
+   "name": "mail shirt",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 11.0,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_roderic_vale",
+   "worn_by": "npc_roderic_vale",
+   "slots": [
+    "body",
+    "arms"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "helmet_roderic",
+   "name": "iron helmet",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.6,
+   "materials": [
+    "iron"
+   ],
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_roderic_vale",
+   "worn_by": "npc_roderic_vale",
+   "slots": [
+    "head"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "spear_bren",
+   "name": "iron-headed spear",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 2.2,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "An ash-shafted spear with a leaf-shaped iron head.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_bren_marr",
+   "worn_by": "npc_bren_marr",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "short_spear",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 2.0
+  },
+  {
+   "id": "mail_bren",
+   "name": "mail shirt",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 10.5,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_bren_marr",
+   "worn_by": "npc_bren_marr",
+   "slots": [
+    "body",
+    "arms"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "helmet_bren",
+   "name": "iron helmet",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron"
+   ],
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_bren_marr",
+   "worn_by": "npc_bren_marr",
+   "slots": [
+    "head"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "spear_oren",
+   "name": "iron-headed spear",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 2.2,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "An ash-shafted spear with a leaf-shaped iron head.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_oren_dast",
+   "worn_by": "npc_oren_dast",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "short_spear",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 2.0
+  },
+  {
+   "id": "mail_oren",
+   "name": "mail shirt",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 10.5,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_oren_dast",
+   "worn_by": "npc_oren_dast",
+   "slots": [
+    "body",
+    "arms"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "helmet_oren",
+   "name": "iron helmet",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron"
+   ],
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_oren_dast",
+   "worn_by": "npc_oren_dast",
+   "slots": [
+    "head"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "spear_kade",
+   "name": "iron-headed spear",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 2.3,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "A long-used ash spear, its iron head worn thin from sharpening.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_kade_east",
+   "worn_by": "npc_kade_east",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "short_spear",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 2.1
+  },
+  {
+   "id": "jerkin_kade",
+   "name": "padded jerkin",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 3.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "description": "An old quilted jerkin, stained and patched, stuffed thick with wool.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_kade_east",
+   "worn_by": "npc_kade_east",
+   "slots": [
+    "body"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "padded",
+    "covers": [
+     "body"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "spear_elin",
+   "name": "short spear",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.6,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "A light spear with a narrow iron head, easy to carry at a run.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_elin_west",
+   "worn_by": "npc_elin_west",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "short_spear",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 1.6
+  },
+  {
+   "id": "jacket_elin",
+   "name": "quilted jacket",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "description": "A light quilted scout's jacket, dyed a dull green.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_elin_west",
+   "worn_by": "npc_elin_west",
+   "slots": [
+    "body"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "padded",
+    "covers": [
+     "body"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "hammer_mara",
+   "name": "smith's hammer",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "A heavy cross-peen hammer with a short hickory handle, black from the forge.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_mara_venn",
+   "worn_by": "npc_mara_venn",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "hammer",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.35
+  },
+  {
+   "id": "hammer_tomas",
+   "name": "carpenter's hammer",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 0.7,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "A claw hammer with a smooth ash handle.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_tomas_reed",
+   "worn_by": "npc_tomas_reed",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "hammer",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.32
+  },
+  {
+   "id": "knife_darin",
+   "name": "iron knife",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 0.25,
+   "materials": [
+    "iron",
+    "bone"
+   ],
+   "description": "A slim iron knife with a bone handle, kept in his belt.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_darin_ko",
+   "worn_by": "npc_darin_ko",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "knife",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.24
+  },
+  {
+   "id": "clothes_player",
+   "name": "travelling clothes",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 1.5,
+   "materials": [
+    "wool",
+    "linen"
+   ],
+   "description": "Your own clothes from the road: a wool coat over a linen shirt.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "player",
+   "worn_by": "player",
+   "slots": [
+    "body"
+   ],
+   "gear": {
+    "kind": "clothing",
+    "class": "clothes",
+    "covers": [
+     "body"
+    ],
+    "quality": "fair"
+   },
+   "no_overlay": true,
+   "no_sprite": true
+  },
+  {
+   "id": "dressing_bren",
+   "name": "roll of linen bandage",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 0.1,
+   "materials": [
+    "linen"
+   ],
+   "description": "A clean roll of linen strips, for binding wounds.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_bren_marr",
+   "carried_by": "npc_bren_marr",
+   "gear": {
+    "kind": "remedy",
+    "class": "bandage",
+    "covers": [],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "plantain_a",
+   "name": "plantain leaves",
+   "x": 46,
+   "y": 63,
+   "mass_kg": 0.05,
+   "materials": [
+    "plantain",
+    "leaf"
+   ],
+   "description": "A handful of broad, ribbed plantain leaves from beside the road.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10
+  },
+  {
+   "id": "yarrow_a",
+   "name": "yarrow",
+   "x": 50,
+   "y": 61,
+   "mass_kg": 0.05,
+   "materials": [
+    "yarrow",
+    "herb"
+   ],
+   "description": "Feathery yarrow with flat white flower heads.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "since_seed": 10
+  },
+  {
+   "id": "moss_a",
+   "name": "clump of moss",
+   "x": 38,
+   "y": 14,
+   "mass_kg": 0.1,
+   "materials": [
+    "moss"
+   ],
+   "description": "A soft, damp clump of green moss from the foot of the wall.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 10
+  },
+  {
+   "id": "garlic_hessa",
+   "name": "garlic bulbs",
+   "x": 34,
+   "y": 53,
+   "mass_kg": 0.2,
+   "materials": [
+    "garlic"
+   ],
+   "description": "A string of papery garlic bulbs hung to dry.",
+   "flags": [],
+   "since_seed": 10,
+   "owner_id": "npc_hessa_marr"
+  },
+  {
+   "id": "honey_hessa",
+   "name": "pot of honey",
+   "x": 35,
+   "y": 53,
+   "mass_kg": 0.6,
+   "materials": [
+    "honey",
+    "fired clay"
+   ],
+   "description": "A small stoppered clay pot of thick dark honey.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_hessa_marr"
+  },
+  {
+   "id": "thread_hessa",
+   "name": "skein of flax thread",
+   "x": 33,
+   "y": 51,
+   "mass_kg": 0.05,
+   "materials": [
+    "flax",
+    "thread"
+   ],
+   "description": "A skein of fine spun flax thread for mending.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "since_seed": 10,
+   "owner_id": "npc_hessa_marr"
   }
  ],
  "trees": {

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from . import config
 
-PROMPT_VERSION = "judge_v13"
+PROMPT_VERSION = "judge_v14"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 _WORLD = json.loads((Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
 
@@ -24,6 +24,14 @@ Flag = Literal[
     "combustible", "ferromagnetic", "magnetized", "magnet_source", "light_source", "heat_source",
     "sound_loud", "reflective", "indicates_direction", "measures_length", "stable_support", "fulcrum",
 ]
+
+
+class Gear(BaseModel):
+    """What a made thing is for, if anything (D-49). Code checks the class against the thing's physics."""
+    kind: Literal["weapon", "shield", "armour", "clothing", "ammo", "remedy", "none"]
+    gear_class: str  # One class id from gear_classes for that kind, or "" for none.
+    covers: list[Literal["head", "neck", "body", "arms", "legs", "hands", "feet"]]
+    quality: Literal["crude", "fair", "good"]
 
 
 class Capability(BaseModel):
@@ -43,6 +51,7 @@ class NewObject(BaseModel):
     rated_load_kg: float | None
     flags: list[Flag]
     capabilities: list[Capability]
+    gear: Gear | None
 
 
 class Piece(BaseModel):
@@ -54,6 +63,7 @@ class Piece(BaseModel):
     length_m: float | None
     flags: list[Flag]
     capabilities: list[Capability]
+    gear: Gear | None
 
 
 class Transformation(BaseModel):
@@ -67,8 +77,23 @@ class Harm(BaseModel):
     target_id: str
     weapon_id: str | None
     method: Literal["melee", "thrown", "poured"]
-    result: Literal["missed", "deflected", "wounded", "disabled", "killed"]
+    family: Literal["blow", "missile", "pour", "choke", "other"]
+    outcome: Literal["missed", "blocked", "landed"]
+    target_area: Literal["head", "neck", "heart", "torso", "arm", "leg"]
+    held_seconds: int  # A choke: how long it is held. Otherwise 0.
+    result: Literal["missed", "deflected", "wounded", "knocked_out", "disabled", "killed"]  # Only "other" is taken.
     injury: str
+
+
+class Treat(BaseModel):
+    patient_id: str  # "player" for the stranger, or a person's id.
+    remedy_id: str  # The carried thing used to treat it.
+    condition: Literal["bleeding", "burn", "broken", "infection"]
+
+
+class Equip(BaseModel):
+    object_id: str
+    slot: Literal["right", "left", "head", "body", "arms", "legs", "hands", "feet", "ammo"] | None
 
 
 class Fill(BaseModel):
@@ -131,7 +156,7 @@ class Gather(BaseModel):
 
 class Step(BaseModel):
     action: Literal["make", "take", "gather", "transform", "harm", "fill", "change", "demonstrate", "give", "install",
-                    "lift_out", "offer_trade", "other"]
+                    "lift_out", "offer_trade", "treat", "equip", "other"]
     outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str
     effort_seconds: int
@@ -147,6 +172,8 @@ class Step(BaseModel):
     lift_out: LiftOut | None
     offer_trade: OfferTrade | None
     gather: Gather | None
+    treat: Treat | None
+    equip: Equip | None
 
 
 class JudgeResult(BaseModel):
@@ -175,9 +202,22 @@ class JudgeCall:
         return asdict(self)
 
 
+def gear_classes() -> dict:
+    """The gear classes the judge may name (code owns what each does: data/content/gear.json)."""
+    import gear  # backend/gear.py
+    return {"weapon": {k: v["name"] for k, v in gear.WEAPONS.items() if k not in ("fists", "improvised")},
+            "shield": {k: v["name"] for k, v in gear.SHIELDS.items()},
+            "armour": {k: v["name"] for k, v in gear.ARMOUR.items()},
+            "clothing": {k: v["name"] for k, v in gear.ARMOUR.items() if k in ("clothes", "thick", "cap", "gloves",
+                                                                               "boots", "leggings")},
+            "ammo": {k: v["name"] for k, v in gear.GEAR["ammo"].items()},
+            "remedy": {k: v["name"] for k, v in gear.REMEDIES.items()}}
+
+
 def system_prompt() -> str:
     world = {key: _WORLD[key] for key in ("setting", "knowledge_baseline", "material_facts", "flag_meanings")}
-    return _PROMPT.replace("{world}", json.dumps(world, indent=1))
+    return _PROMPT.replace("{world}", json.dumps(world, indent=1)).replace(
+        "{gear_classes}", json.dumps(gear_classes(), indent=1))
 
 
 def judge_craft(context: dict) -> JudgeCall:
@@ -227,7 +267,8 @@ def _stub_judgement(context: dict) -> JudgeCall:
     items = [i for i in context["available_items"] if i["portable"]]
     chosen = [i for i in items if i["id"] in context["highlighted_ids"]] or items[:1]
     empty = {"take_ids": [], "transformation": None, "harm": None, "fill": None, "change": None, "demonstration": None,
-             "give": None, "install": None, "lift_out": None, "offer_trade": None, "gather": None}
+             "give": None, "install": None, "lift_out": None, "offer_trade": None, "gather": None, "treat": None,
+             "equip": None}
     if not chosen:
         step = Step(action="make", outcome="blocked", reason="You have nothing to work with.",
                     effort_seconds=0, new_object=None, **empty)
@@ -239,7 +280,8 @@ def _stub_judgement(context: dict) -> JudgeCall:
                 name="stub bundle", description="A test bundle of " + ", ".join(i["name"] for i in chosen) + ".",
                 materials=sorted({m for i in chosen for m in i["materials"]}), consumes=[i["id"] for i in chosen],
                 tools_used=[], mass_kg=sum(i["mass_kg"] for i in chosen), length_m=None, capacity_l=None,
-                rated_load_kg=None, flags=[], capabilities=[Capability(text="exists for testing", status="expected")]))
+                rated_load_kg=None, flags=[], capabilities=[Capability(text="exists for testing", status="expected")],
+                gear=None))
     result = JudgeResult(clarifying_question=None, precedent_key="stub:bundle", steps=[step])
     return JudgeCall(status="ok", result=result.model_dump(), model="stub", raw_output=result.model_dump_json(),
                      attempts=1)

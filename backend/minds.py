@@ -317,18 +317,21 @@ def _describe(state: dict, entry: dict) -> list[dict]:
         verb = "threw a " + weapon + " at" if harm.get("method") == "thrown" and weapon else "attacked"
         poured = harm.get("method") == "poured"
         verb = "threw water over" if poured else verb
+        verb = "strangled" if harm.get("family") == "choke" else verb
         outcome = {"killed": f"{victim} fell and did not get up.", "wounded": f"{victim} was hurt.",
                    "disabled": f"{victim} went down, badly hurt, and could not fight on.",
+                   "knocked_out": f"{victim} dropped senseless.",
                    "deflected": f"The blow glanced off {victim}'s armour.",
                    "missed": f"{victim} was soaked." if poured else f"The blow missed {victim}."}[harm["result"]]
-        short = {"killed": f"killed {victim}", "disabled": f"struck down {victim}"}.get(harm["result"],
-                                                                                       f"attacked {victim}")
-        severity = {"killed": 3, "wounded": 2, "disabled": 3, "deflected": 1, "missed": 1}[harm["result"]]
+        short = {"killed": f"killed {victim}", "disabled": f"struck down {victim}",
+                 "knocked_out": f"knocked {victim} senseless"}.get(harm["result"], f"attacked {victim}")
+        severity = {"killed": 3, "wounded": 2, "disabled": 3, "knocked_out": 3, "deflected": 1,
+                    "missed": 1}[harm["result"]]
         views.append({"kind": "violence", "victim": harm["target_id"],
                       "clear": {"summary": f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}",
                                 "short": short, "severity": severity},
                       "vague": {"summary": (f"There was a scuffle near the stranger and {victim} went down."
-                                            if harm["result"] in ("killed", "disabled") else
+                                            if harm["result"] in ("killed", "disabled", "knocked_out") else
                                             f"There was a scuffle near the stranger; {victim} cried out."),
                                 "short": f"was in a fight with {victim}", "severity": max(1, severity - 1)}})
     claims = [c for c in entry.get("property") or [] if c.get("how") != "used"]  # Using isn't taking (D-46).
@@ -388,10 +391,18 @@ def _describe(state: dict, entry: dict) -> list[dict]:
                                 "short": f"gave {give['recipient_name']} a {things}", "severity": 1},
                       "vague": {"summary": f"The stranger handed something to {give['recipient_name']}.",
                                 "short": f"handed something to {give['recipient_name']}", "severity": 0}})
+    treated = entry.get("treated")
+    if isinstance(treated, dict):  # Binding someone's wound, splinting a limb (D-49): help, seen and remembered.
+        views.append({"kind": "help", "victim": treated["patient_id"], "item": treated["remedy"], "think": False,
+                      "clear": {"summary": f"The stranger treated {treated['patient_name']}'s {treated['what']} "
+                                           f"with a {treated['remedy']}.",
+                                "short": f"treated {treated['patient_name']}'s wound", "severity": 1},
+                      "vague": {"summary": f"The stranger was tending to {treated['patient_name']}.",
+                                "short": f"tended to {treated['patient_name']}", "severity": 0}})
     return views
 
 
-SOURCES = {"violence": "victim", "theft": "victim", "gift": "received"}
+SOURCES = {"violence": "victim", "theft": "victim", "gift": "received", "help": "received"}
 
 
 def gate_work_agreed(state: dict) -> bool:
@@ -967,6 +978,10 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     working["player"] = copy.deepcopy(state["player"])
     working["encounter"] = copy.deepcopy(state.get("encounter"))
     working["fight"] = copy.deepcopy(state.get("fight"))
+    working["objects"] = dict(state.get("objects") or {})  # Copy-on-write: combat.change_object replaces entries.
+    working["projectiles"] = copy.deepcopy(state.get("projectiles") or [])
+    working.pop("objects_changed", None)
+    working.pop("objects_added", None)
     journal: list[dict] = []
     blocked = crafting._blocked_cells(state)
     end = now + elapsed_ms
@@ -1040,11 +1055,14 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
                 _say(npc, job["line"], end, working, journal, job.get("line_id"))
             _set_job(npc, {"kind": "watch", "until": end + 20_000}, end)
             controller["activity"] = "work"
+            if job.get("then") == "help":
+                _tend(working, npc, find(npcs, job.get("target") or ""), end, journal)
             _maybe_reconsider(working, npc, "tending the hurt person")
         elif job["kind"] == "attack":
             encounter.join(working, npc, "attack", None, end)  # An older chase arriving: it's a fight now.
     import combat
     combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Real-time fighting: wind-ups, blows, misses (D-41).
+    _bodies(working, npcs, elapsed_ms, now, journal)  # Bleeding, festering, waking, mending (D-49).
     if not working.get("encounter") and not working.get("fight"):
         _gate_watch(working, npcs, end)  # Nobody needs halting while the stranger is already face to face with someone.
     encounter.prune(working)
@@ -1055,4 +1073,63 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     state["fight"] = working.get("fight")
     if working.get("subdued_by"):
         state["subdued_by"] = working["subdued_by"]
+    state["projectiles"] = working.get("projectiles") or []
+    state["people_objects_changed"] = working.get("objects_changed") or {}
+    state["people_objects_added"] = working.get("objects_added") or []
     return npcs, journal, working["player"]
+
+
+def _tend(state: dict, helper: dict, patient: dict | None, now: int, journal: list[dict]) -> None:
+    """Someone who came to help binds what they can (D-49): with a remedy they carry, or a strip torn from their
+    own clothes (which slows heavy bleeding but won't close it)."""
+    import gear
+    if patient is None or not patient.get("alive", True):
+        return
+    carried = [o for o in state["objects"].values() if o.get("holder_id") == helper["id"] and gear.remedy_for(o)]
+    strip = {"id": None, "name": "strip of cloth", "materials": ["linen"], "mass_kg": 0.05, "flags": ["flexible"],
+             "gear": {"kind": "remedy", "class": "bandage", "covers": [], "quality": "crude"}}
+    tended = []
+    for index, condition in enumerate(gear.conditions(patient)):
+        if condition not in gear.untreated(patient):
+            continue
+        remedy = next((o for o in carried if condition["kind"] in gear.remedy_for(o)["treats"]), None)
+        use = remedy or (strip if condition["kind"] == "bleeding" else None)
+        if use is None or not gear.treat(patient, index, use, now)["ok"]:
+            continue
+        tended.append(gear.describe(condition).removeprefix("the "))
+        if remedy is not None and gear.remedy_for(remedy).get("consumed"):
+            import combat  # Copy-on-write, so the tick's changes reach the event.
+            combat.change_object(state, remedy["id"], holder_id="used", condition="used up")
+            carried.remove(remedy)
+    if tended and math.dist(_cell(patient), player_cell(state)) <= SIGHT_CELLS:
+        journal.append({"kind": "people", "category": "tend", "npc_id": helper["id"],
+                        "reason": f"{helper['name']} binds {patient['name']}'s {tended[0]}."})
+
+
+def _bodies(state: dict, npcs: list[dict], elapsed_ms: int, now: int, journal: list[dict]) -> None:
+    """Bodies on the clock (gear.advance): wounds bleed and fester, the knocked-out wake, the unhurt mend."""
+    import gear
+    end = now + elapsed_ms
+    player = state["player"]
+    was_alive = player.get("alive", True)
+    gear.advance(player, elapsed_ms, now)
+    if was_alive and not player.get("alive", True):
+        journal.append({"kind": "fight", "category": "killed", "npc_id": "player",
+                        "reason": "You've lost too much blood. Everything goes dark."})
+    for npc in npcs:
+        if not npc.get("alive", True) or not npc.get("conditions"):
+            continue
+        was_down = bool(npc.get("down"))
+        gear.advance(npc, elapsed_ms, now)
+        controller = npc.get("controller") or {}
+        if not npc.get("alive", True):
+            controller.update(activity="dead", path=[], source="dead")
+            if npc.get("mind"):
+                npc["mind"]["job"] = None
+            if math.dist(_cell(npc), player_cell(state)) <= SIGHT_CELLS:
+                journal.append({"kind": "fight", "category": "killed", "npc_id": npc["id"],
+                                "reason": f"{npc['name']} bleeds out and lies still."})
+        elif was_down and not npc.get("down"):  # Came round after being knocked senseless.
+            controller.update(activity="look", source="routine", path=[])
+            _set_job(npc, {"kind": "watch", "until": end + 20_000}, end)
+            mind(npc)["fresh"] = "came round after being knocked senseless"

@@ -51,6 +51,11 @@ def seed_objects(seed_version: int = 3) -> dict[str, dict]:
             obj.update(materials=materials, description=description, flags=flags, length_m=length_m)
     if seed_version >= 5:
         objects.update(_seed5_objects(seed_version))
+    if seed_version >= 10:
+        import gear  # What each portable thing is good for in a fight or for the body, as code reads it (D-49).
+        for obj in objects.values():
+            if "gear" not in obj and "carry" in obj["capabilities"] and obj.get("materials"):
+                obj["gear"] = gear.classify(obj)
     return objects
 
 
@@ -80,9 +85,14 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
             spec["description"], spec["flags"], spec.get("length_m"), spec.get("capacity_l", 0.0),
             spec.get("feature"))
         record["owner_id"] = spec.get("owner_id")
-        for extra in ("burning", "no_sprite"):  # Lasting fires (the forge) and things drawn by a building's art.
+        for extra in ("burning", "no_sprite", "gear", "no_overlay", "count"):  # Lasting fires, building art, gear.
             if spec.get(extra):
                 record[extra] = spec[extra]
+        if spec.get("worn_by") or spec.get("carried_by"):  # Someone's own gear (seed 10, D-49): on them.
+            record["holder_id"] = spec.get("worn_by") or spec.get("carried_by")
+            record["capabilities"] = ["carry"] + [c for c in record["capabilities"] if c != "carry"]
+            if spec.get("worn_by"):
+                record["worn_slots"] = spec["slots"]
         if spec.get("installed_in"):  # e.g. the bar across the gate (seed 9)
             record.update(installed_in=spec["installed_in"], condition="installed")
         if spec.get("water_l"):
@@ -149,5 +159,8 @@ def seed_m2(seed_version: int = 3) -> dict:
 
 
 def inventory_mass(state: dict) -> float:
+    """What the stranger carries, not counting what they wear (D-49: worn armour is on the body, not in the pack)."""
+    kit = state["player"].get("equipped") or {}
+    worn = {oid for slot, oid in kit.items() if slot in ("head", "body", "arms", "legs", "hands", "feet")}
     return sum(o["mass_kg"] + o["water_l"] for o in state["objects"].values()
-               if o["holder_id"] == "player")
+               if o["holder_id"] == "player" and o["id"] not in worn)

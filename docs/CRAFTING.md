@@ -27,7 +27,15 @@ You can describe several things in one go ("sharpen the branch into a spear with
   - A felled map tree no longer blocks the path.
   - Big oaks and cypresses need real tools and hours of work. The three saplings (by the road start, east of it, and near the craftsmen's row) are realistic with a flint.
 - **Attack** someone within reach: "sneak up behind him and drive the stake into his neck". The judge rules what really happens, with no dice: missed, deflected by armour, wounded, disabled (down but alive) or killed, depending on the weapon, their armour and whether they saw you coming. A wooden stake glances off a guard's mail but kills an unarmoured man; boiling water in the face gets past any armour. A death is permanent: the body stays down and the name shows "(dead)"; someone disabled shows "(down)".
-- **Then it's a fight.** Guards who see it come at you at once, in real time. Each blow has a wind-up (a pulsing red "!"); step out of reach before it lands and it misses. **Space** punches whoever you face: it hurts the unarmoured, barely dents padding, and does nothing to mail. Press T and say you give up to be arrested instead.
+- **Then it's a fight.** Guards who see it come at you at once, in real time. Each blow has a wind-up (a pulsing red "!"); step out of reach before it lands and it misses. **Space** uses what's in your right hand and **F** your left (empty hands punch); hold **F** with a shield to raise it against blows from the front; **X** swaps hands; **Q** throws what's in your right hand. Your blows wind up too: a knife is quick, a sledge slow, a bow must be drawn. Press T and say you give up to be arrested instead.
+
+## Weapons, armour and wounds
+
+- **Anything you make is something**: a spear, an axe, a bow, a padded jacket, a shield, a bandage. Press **I** for **Pack & gear**: take things in either hand, put armour and clothes on, see what each is good for ("Deadly: stabs, reaches far, one hand").
+- **What a blow does is physics.** An iron sword cuts an unarmoured man down in two blows; a fire-hardened wooden spear is dangerous bare, useless against mail; a rock is deadly to the head of someone who doesn't see it coming. Armour matters a great deal: mail turns almost any cut, but a heavy blow still bruises through it.
+- **Say it and it can work**: "sneak up behind him and bash his head in with the stone", "cut his throat while his back is turned", "strangle him with the cord until he stops moving". Someone who sees you coming is much harder to catch, and a choke needs them unaware.
+- **Wounds.** Cuts bleed until you bind them, burns and open wounds fester after a while, a hard blow can break an arm (no shield, no two-handed weapon) or a leg (no running). Ordinary hurts mend slowly on their own, but not while a wound is untreated. Make what you need: linen strips for a **bandage**, a needle and thread for **stitches**, sticks and cord for a **splint**, crushed plantain or yarrow (by the road), moss (by the wall), garlic or honey (Hessa's) for a **poultice**. Treat yourself in Pack & gear, or someone else by saying so; people remember who helped them.
+- **Everyone's gear is real.** The guards' spears and mail, Roderic's sword: take them from someone down or dead (it's theft, and seen as such).
 
 Code always checks:
 

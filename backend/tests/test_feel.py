@@ -27,7 +27,8 @@ def test_geometry_leaves_all_npcs_and_resources_accessible():
     objects = list(service.m2.seed_m2(service.SEED_VERSION)["objects"].values())
     # Map trees are objects standing on their own obstacle cell; the player must reach a neighbouring cell.
     trees = [o for o in objects if o.get("geometry_name")]
-    points = service.NPCS + [o for o in objects if not o.get("geometry_name")]
+    points = service.NPCS + [o for o in objects if not o.get("geometry_name")
+              and o["holder_id"] is None]  # (Gear someone holds is where they are.)
     for point in points:
         for rectangle in rectangles:
             x, y, w, h = rectangle["cells"]

@@ -13,6 +13,7 @@ import re
 from collections import deque
 from pathlib import Path
 
+import gear
 import m2
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,9 +105,16 @@ def walk_costs(state: dict) -> dict[str, int]:
         options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= m2.REACH_CELLS]
         return min(options) if options else None
     costs = {}
+    fallen = fallen_holders(state)
     for obj in state["objects"].values():
         if obj["holder_id"] == "player":
             costs[obj["id"]] = 0
+        elif obj["holder_id"] in fallen:  # On someone down or dead: reach them to take it (D-49).
+            npc = fallen[obj["holder_id"]]
+            if math.dist(start, (npc["x"], npc["y"])) <= NEARBY_WALK_STEPS + 3:
+                found = cost(npc["x"], npc["y"])
+                if found is not None:
+                    costs[obj["id"]] = found
         elif obj["holder_id"] is None and math.dist(start, (obj["x"], obj["y"])) <= NEARBY_WALK_STEPS + 3:
             found = cost(obj["x"], obj["y"])
             if found is not None:
@@ -119,12 +127,25 @@ def walk_costs(state: dict) -> dict[str, int]:
     return costs
 
 
+def fallen_holders(state: dict) -> dict[str, dict]:
+    """People down or dead: what they hold or wear can be taken from them (D-49)."""
+    return {n["id"]: n for n in state["npcs"] if n.get("down") or not n.get("alive", True)}
+
+
 def available_items(state: dict, costs: dict | None = None) -> list[dict]:
-    """Carried items plus anything intact the player can walk to nearby, whoever owns it."""
+    """Carried items plus anything intact the player can walk to nearby, whoever owns it (including what someone
+    down or dead has on them)."""
     costs = walk_costs(state) if costs is None else costs
-    return [obj for obj in state["objects"].values()
-            if obj["id"] in costs and obj["holder_id"] in (None, "player")
+    fallen = fallen_holders(state)
+    return [_on_body(obj, fallen) for obj in state["objects"].values()
+            if obj["id"] in costs and (obj["holder_id"] in (None, "player") or obj["holder_id"] in fallen)
             and "water_source" not in obj["capabilities"] and obj["condition"] in ("usable", "installed")]
+
+
+def _on_body(obj: dict, fallen: dict[str, dict]) -> dict:
+    """Something on a fallen person is where they lie."""
+    npc = fallen.get(obj["holder_id"])
+    return {**obj, "x": npc["x"], "y": npc["y"], "on_person": npc["id"]} if npc else obj
 
 
 def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
@@ -141,11 +162,31 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
                               if npc.get("down") else "unhurt" if health >= 100
                               else "wounded" if health > 30 else "badly wounded (near death)"),
                 "injuries": npc.get("injuries", []),
-                "armour": minds_card(npc).get("armor_text", "no armour"),
-                "weapon": minds_card(npc).get("weapon") or "none",
+                "armour": _worn_words(state, npc),
+                "weapon": _held_words(state, npc),
+                **({"conditions": [gear.describe(c) for c in npc["conditions"]]} if npc.get("conditions") else {}),
                 "aware_of_you": _aware(state, npc),
                 "activity": (npc.get("controller") or {}).get("activity", "standing")})
     return people
+
+
+def _worn_words(state: dict, npc: dict) -> str:
+    """What someone has on, in words, for the judge (their card's description for journeys before seed 10)."""
+    if not npc.get("equipped"):
+        return minds_card(npc).get("armor_text", "no armour")
+    names = []
+    for slot in gear.BODY_SLOTS:
+        obj = gear.worn(state, npc, slot)
+        if obj is not None and obj["name"] not in names:
+            names.append(obj["name"])
+    return ", ".join(names) or "no armour"
+
+
+def _held_words(state: dict, npc: dict) -> str:
+    if not npc.get("equipped"):
+        return minds_card(npc).get("weapon") or "none"
+    held = [o["name"] for h in gear.HAND_SLOTS if (o := gear.held(state, npc, h))]
+    return ", ".join(dict.fromkeys(held)) or "none"
 
 
 def minds_card(npc: dict) -> dict:
@@ -161,21 +202,6 @@ def _aware(state: dict, npc: dict) -> bool:
                 or npc["id"] in ((state.get("fight") or {}).get("attackers") or []))
 
 
-# The armour law (D-41): what can't get through mail, whatever anyone says. Everything else is judged.
-SOFT_MATERIALS = {"wood", "bone", "flint", "stone", "grass", "fibre", "fiber", "reed", "clay", "leather", "cloth",
-                  "rope", "straw", "bark"}
-HEAVY_KG = 3.0  # A heavy blow (a sledge, a big rock) can still hurt through mail by weight alone.
-
-
-def _stopped_by_mail(state: dict, npc: dict, method: str, weapon: dict | None) -> bool:
-    if minds_card(npc).get("armor") != "mail" or method == "poured":
-        return False
-    if weapon is None:
-        return True  # Fists and feet against mail.
-    materials = {m.lower() for m in weapon.get("materials", [])}
-    return materials <= SOFT_MATERIALS and weapon.get("mass_kg", 0) < HEAVY_KG
-
-
 def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
     return {"id": obj["id"], "name": obj["name"], "kind": obj.get("feature", "item"),
             "walk_steps": costs.get(obj["id"], 0),
@@ -183,6 +209,7 @@ def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
             "description": obj.get("description", ""), "materials": obj.get("materials", []),
             "mass_kg": obj["mass_kg"], "length_m": obj.get("length_m"), "flags": obj.get("flags", []),
             "carried_by_player": obj["holder_id"] == "player", "portable": "carry" in obj["capabilities"],
+            **({"on_someone_down": obj["on_person"]} if obj.get("on_person") else {}),
             "belongs_to": owner_label(state, obj) + (" (lent to the player)" if obj.get("lent_to") == "player" else ""),
             **({"capacity_l": obj["capacity_l"], "water_l": obj.get("water_l", 0.0)} if obj.get("capacity_l") else {}),
             **({"temperature": obj["temperature"]} if obj.get("temperature", "cold") != "cold" else {}),
@@ -222,7 +249,7 @@ def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **ex
     base = {"category": category, "reason": reason, "effort_seconds": effort, "notes": notes, "action": "other",
             "consumed_ids": [], "tool_ids": [], "new_spec": None, "take_ids": [], "transform": None,
             "harm": None, "fill": None, "demonstration": None, "give": None, "install": None, "lift_out": None,
-            "offer_trade": None, "gather": None,
+            "offer_trade": None, "gather": None, "treat": None, "equip": None,
             "drop_ids": [],
             "property": [], "precedent_key": None,
             "walk": []}
@@ -317,7 +344,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     effort = max(1, effort) if action != "other" else effort
     handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill, "change": _change,
                 "demonstrate": _demonstrate, "give": _give, "install": _install, "lift_out": _lift_out,
-                "offer_trade": _offer_trade, "gather": _gather,
+                "offer_trade": _offer_trade, "gather": _gather, "treat": _treat, "equip": _equip,
                 "drop": _drop}
     if action in PAYLOAD and not judged.get(PAYLOAD[action]):
         # The judge named an action but described nothing for it (e.g. "demonstrate" for words about showing
@@ -451,6 +478,7 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
                 "capacity_l": _positive(capacity), "rated_load_kg": _positive(spec.get("rated_load_kg")),
                 "flags": flags, "known_capabilities": capabilities[:6],
                 **({"burning": True} if "heat_source" in flags else {})}  # Made alight: a fire.
+    new_spec["gear"] = gear.checked(_gear_proposal(spec.get("gear")), new_spec, notes)
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
     return _verdict("success", reason, notes, effort, action="make", consumed_ids=consumes, tool_ids=tools,
                     new_spec=new_spec, precedent_key=key,
@@ -664,10 +692,69 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
             "length_m": _positive(piece.get("length_m")), "capacity_l": None, "rated_load_kg": None,
             "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
             "known_capabilities": capabilities[:4]}
+    spec["gear"] = gear.checked(_gear_proposal(piece.get("gear")), spec, notes)
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
     return _verdict("success", reason, notes, effort, action="gather", tool_ids=tools,
                     gather={"source_id": source["id"], "piece": spec}, precedent_key=key,
                     property=_property(state, [source["id"]], "gathered from") + _property(state, tools_not_ours, "used"))
+
+
+def _patient(state: dict, patient_id: str) -> dict | None:
+    if patient_id in ("player", "stranger", None):
+        return state["player"]
+    return next((n for n in state["npcs"] if n["id"] == patient_id), None)
+
+
+def _treat(state, judged, available, notes, reason, effort, key) -> dict:
+    """A remedy on a condition (D-49): code checks the thing fits the condition and how well it works."""
+    plan = judged.get("treat")
+    if not plan:
+        return _unresolved(notes, "action 'treat' without a treat")
+    remedy = available.get(plan["remedy_id"])
+    if remedy is None or remedy["holder_id"] != "player":
+        return _verdict("blocked", "You don't have that with you.", notes, action="treat", precedent_key=key)
+    patient = _patient(state, plan.get("patient_id"))
+    if patient is None or not patient.get("alive", True):
+        return _verdict("blocked", "There's nobody there to treat.", notes, action="treat", precedent_key=key)
+    if patient is not state["player"] and _distance(state, patient["x"], patient["y"]) > m2.REACH_CELLS:
+        return _verdict("blocked", f"{patient['name']} is too far away.", notes, action="treat", precedent_key=key)
+    items = patient.get("conditions") or []
+    index = next((i for i, c in enumerate(items) if c["kind"] == plan["condition"] and c["kind"] != "knocked_out"
+                  and (c.get("treated", 0) < 3)), None)
+    if index is None:
+        who = "You have" if patient is state["player"] else f"{patient['name']} has"
+        return _verdict("blocked", f"{who} no {plan['condition'].replace('broken', 'broken bone')} to treat.", notes,
+                        action="treat", precedent_key=key)
+    probe = copy.deepcopy(patient)
+    remedy_view = {**remedy, "gear": gear.checked(remedy.get("gear") or gear.classify(remedy), remedy)}
+    result = gear.treat(probe, index, remedy_view, state["sim_time_ms"])
+    if not result["ok"]:
+        return _verdict("failed", result["text"], notes, max(1, effort), action="treat", precedent_key=key)
+    effort = max(effort, result["seconds"])
+    treat = {"patient_id": "player" if patient is state["player"] else patient["id"],
+             "patient_name": "you" if patient is state["player"] else patient["name"],
+             "conditions": probe["conditions"], "remedy_id": remedy["id"],
+             "remedy": gear.REMEDIES[remedy_view["gear"]["class"]]["name"],
+             "what": gear.describe(items[index]).removeprefix("the "),
+             "consumed": remedy["id"] if result["consumed"] else None}
+    return _verdict("success", reason, notes, effort, action="treat", treat=treat, precedent_key=key)
+
+
+def _equip(state, judged, available, notes, reason, effort, key) -> dict:
+    """Putting something on or in a hand, described in words (the same rules as the pack, D-49)."""
+    plan = judged.get("equip")
+    if not plan:
+        return _unresolved(notes, "action 'equip' without an equip")
+    obj = available.get(plan["object_id"])
+    if obj is None or obj["holder_id"] != "player":
+        return _verdict("blocked", "You aren't carrying that.", notes, action="equip", precedent_key=key)
+    probe = {"equipped": dict(state["player"].get("equipped") or {}), "conditions": state["player"].get("conditions") or []}
+    result = gear.equip(state, probe, obj, plan.get("slot"), fighting=bool(state.get("fight")))
+    if not result["ok"]:
+        return _verdict("blocked", result["reason"], notes, action="equip", precedent_key=key)
+    return _verdict("success", reason or result["text"], notes, max(effort, result["seconds"]), action="equip",
+                    equip={"equipped": probe["equipped"], "object_id": obj["id"], "slot": plan.get("slot")},
+                    precedent_key=key)
 
 
 def _transform(state, judged, available, notes, reason, effort, key) -> dict:
@@ -697,12 +784,14 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
         total += count
         capabilities = [dict(c) for c in piece["capabilities"]]
         materials = _checked_materials(piece["materials"], target_materials, notes)
-        pieces.append({"name": piece["name"].strip().lower()[:60] or "piece",
-                       "description": piece["description"].strip()[:400], "materials": materials,
-                       "count": count, "mass_kg": max(0.01, float(piece["mass_kg"])),
-                       "length_m": _positive(piece.get("length_m")),
-                       "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
-                       "known_capabilities": capabilities[:4]})
+        made = {"name": piece["name"].strip().lower()[:60] or "piece",
+                "description": piece["description"].strip()[:400], "materials": materials,
+                "count": count, "mass_kg": max(0.01, float(piece["mass_kg"])),
+                "length_m": _positive(piece.get("length_m")),
+                "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
+                "known_capabilities": capabilities[:4]}
+        made["gear"] = gear.checked(_gear_proposal(piece.get("gear")), made, notes)
+        pieces.append(made)
     if not pieces:
         return _unresolved(notes, "transform produced no pieces")
     produced = sum(p["mass_kg"] * p["count"] for p in pieces)
@@ -746,14 +835,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
         if container is None or container.get("water_l", 0) <= 0:
             return _verdict("blocked", "There's nothing in your hands to pour.", notes, action="harm", precedent_key=key)
         if container.get("temperature", "cold") in ("cold", "warm") and result != "missed":
-            notes.append(f"Law: {container.get('temperature', 'cold')} water can't wound; result set to missed.")
-            result = "missed"
             reason = f"The water only soaks {npc['name']}."
-    if result not in ("missed", "deflected") and _stopped_by_mail(state, npc, method, available.get(weapon) if weapon else None):
-        thing = available[weapon]["name"] if weapon else "bare hands"
-        notes.append(f"Law: {thing} can't get through {npc['name']}'s mail; result set to deflected.")
-        result = "deflected"
-        reason = f"The blow glances off {npc['name']}'s mail."
     distance = _distance(state, npc["x"], npc["y"])
     picked_up = []
     if method == "thrown":
@@ -780,11 +862,61 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             picked_up = [weapon]  # Picked up on the way.
     witnesses = [n["id"] for n in state["npcs"] if n["id"] != npc["id"] and n.get("alive", True)
                  and _distance(state, n["x"], n["y"]) <= WITNESS_RADIUS]
-    harm = {"target_id": npc["id"], "weapon_id": weapon, "method": method, "result": result,
-            "injury": plan["injury"].strip()[:200] if result not in ("missed", "deflected") else "soaked but unhurt"
-            if method == "poured" else plan["injury"].strip()[:200], "witnesses": witnesses}
+    outcome = _blow(state, npc, plan, method, available.get(weapon) if weapon else None, result, notes, effort)
+    if outcome["result"] == "deflected" and result not in ("missed", "deflected") and method != "poured":
+        reason = f"The blow glances off {npc['name']}'s armour." if outcome.get("armoured") else reason
+    if outcome["result"] == "killed" and result != "killed":  # The wounds add up (the bug players saw with Tomas).
+        reason = reason.rstrip() + f" {npc['name']} does not survive this wound."
+        notes.append("Wound was fatal: the injuries added up (health reached 0).")
+    harm = {"target_id": npc["id"], "weapon_id": weapon, "method": method, "result": outcome["result"],
+            "family": outcome["family"], "area": outcome["area"], "effective": outcome["effective"],
+            "conditions": outcome["conditions"], "down": outcome["down"], "kill": outcome["kill"],
+            "injury": plan["injury"].strip()[:200] if outcome["result"] not in ("missed", "deflected")
+            else "soaked but unhurt" if method == "poured" else plan["injury"].strip()[:200], "witnesses": witnesses}
     return _verdict("success", reason, notes, effort, action="harm", harm=harm, precedent_key=key,
                     take_ids=picked_up, property=_property(state, picked_up, "taken"))
+
+
+FAMILY_OF_METHOD = {"melee": "blow", "thrown": "missile", "poured": "pour"}
+
+
+def _blow(state: dict, npc: dict, plan: dict, method: str, weapon: dict | None, result: str, notes: list[str],
+          effort: int = 0) -> dict:
+    """What a described attack does (D-49): the judge rules whether it lands, where, and (for a choke or anything
+    else) how; code works out what that does to this person with gear.hit."""
+    import combat  # combat imports minds, which imports crafting
+    family = plan.get("family") or FAMILY_OF_METHOD.get(method, "blow")
+    area = plan.get("target_area") or "torso"
+    landed = plan.get("outcome", "landed" if result not in ("missed",) else "missed")
+    base = {"family": family, "area": area, "effective": 0.0, "conditions": [], "down": False, "kill": False}
+    if landed == "missed" or result == "missed":
+        return {**base, "result": "missed"}
+    if landed == "blocked":
+        return {**base, "result": "deflected"}
+    aware = _aware(state, npc)
+    if family == "pour":
+        profile = {}
+    elif family == "missile" and weapon is not None:
+        profile = gear.thrown(weapon)
+    else:
+        profile = gear.weapon(weapon)
+    outcome = gear.hit(state, combat.body(npc), profile, area=area, aware=aware, held_down=bool(npc.get("down")),
+                       family=family, liquid=weapon if family == "pour" else None,
+                       held_seconds=max(int(plan.get("held_seconds") or 0), effort if family == "choke" else 0),
+                       judged=result)
+    if family == "pour" and weapon and weapon.get("temperature", "cold") in ("cold", "warm"):
+        notes.append("Law: cold or warm water can't wound.")
+    if outcome["deflected"] or (outcome["effective"] < 1 and outcome["result"] != "killed"):
+        notes.append(f"Law: {profile.get('name', 'the blow')} against what {npc['name']} wears: "
+                     f"{outcome['effective']} gets through.")
+    word = outcome["result"]
+    if word not in ("missed", "deflected"):
+        probe = {k: npc.get(k) for k in ("id", "health", "alive", "down")}
+        probe["conditions"] = []
+        word = gear.apply(probe, outcome, 0)
+    return {**base, "family": family, "result": word, "effective": outcome["effective"],
+            "conditions": outcome["conditions"], "down": outcome["down"] or word in ("disabled", "knocked_out"),
+            "kill": outcome["kill"] or word == "killed", "armoured": outcome["deflected"]}
 
 
 def _fill(state, judged, available, notes, reason, effort, key) -> dict:
@@ -1005,6 +1137,24 @@ def _open_cells_near(state: dict, x: int, y: int, cleared: set[str], count: int)
     return [free[i % len(free)] for i in range(count)] if free else [(x, y)] * count
 
 
+def _picture_ids(spec: dict, sprite: str) -> dict:
+    """A weapon or shield is also drawn in the hand, armour and clothes on the body (D-49)."""
+    kind = (spec.get("gear") or {}).get("kind")
+    if kind in ("weapon", "shield") and (spec.get("gear") or {}).get("class") not in ("improvised", None):
+        return {"held_asset_id": f"{sprite}_held"}
+    if kind in ("armour", "clothing"):
+        return {"worn_asset_id": f"{sprite}_worn"}
+    return {}
+
+
+def _gear_proposal(judged: dict | None) -> dict | None:
+    """The judge's gear field in gear.py's shape ({kind, class, covers, quality})."""
+    if not judged:
+        return None
+    return {"kind": judged.get("kind"), "class": judged.get("gear_class"), "covers": judged.get("covers") or [],
+            "quality": judged.get("quality", "fair")}
+
+
 def _object(new_id: str, run_id: str, spec: dict, x: int, y: int, owner, holder, text: str, event_id: int,
             components: list[str], tools: list[str], asset_id: str | None = None) -> dict:
     portable = spec["mass_kg"] <= m2.CARRY_LIMIT_KG
@@ -1016,8 +1166,10 @@ def _object(new_id: str, run_id: str, spec: dict, x: int, y: int, owner, holder,
             "condition": "usable", "materials": spec["materials"], "flags": spec["flags"],
             "length_m": spec.get("length_m"), "rated_load_kg": spec.get("rated_load_kg"),
             "known_capabilities": spec["known_capabilities"], "components": components, "tools_used": tools,
+            **({"gear": spec["gear"]} if spec.get("gear") else {}),
             "created_by": "player", "created_event_id": event_id, "created_text": text,
             "sprite_asset_id": asset_id or f"spr_{run_id[:8]}_{new_id}",
+            **_picture_ids(spec, asset_id or f"spr_{run_id[:8]}_{new_id}"),
             "placeholder": placeholder_category(spec["materials"])}
 
 
@@ -1062,6 +1214,16 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         if "carry" in source["capabilities"]:  # A small source is that much smaller; a tree doesn't notice.
             left = max(0.01, round(source["mass_kg"] - plan["piece"]["mass_kg"] * plan["piece"]["count"], 3))
             water = [{"id": source["id"], "mass_kg": left}]
+    elif verdict["action"] == "treat":
+        treated = verdict["treat"]
+        if treated["patient_id"] == "player":
+            water.append({"id": "__player__", "conditions": treated["conditions"]})
+        else:
+            npc_updates.append({"id": treated["patient_id"], "conditions": treated["conditions"]})
+        if treated["consumed"]:
+            moved.append({"id": treated["consumed"], "used_up": True})
+    elif verdict["action"] == "equip":
+        water.append({"id": "__player__", "equipped": verdict["equip"]["equipped"]})
     elif verdict["action"] == "drop":
         moved = [{"id": i, "x": px, "y": py} for i in verdict["drop_ids"]]  # At the stranger's feet.
     elif verdict["action"] == "transform":
@@ -1092,22 +1254,37 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     elif verdict["action"] == "harm":
         harm = verdict["harm"]
         npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
-        health = npc.get("health", 100)
-        down = bool(npc.get("down"))
-        if harm["result"] == "killed":
-            health = 0
-        elif harm["result"] == "disabled":  # Out of the fight, alive: scalded blind, stunned, a leg gone from under them.
-            health, down = min(health, DISABLED_HEALTH), True
-        elif harm["result"] == "wounded":
-            health = max(0, health - WOUND_DAMAGE)
-            if health == 0:
-                # Wounds add up: say so, rather than reporting a wound and quietly killing.
-                harm["result"] = "killed"
-                verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
-                verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
-        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
-        npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries,
-                            **({"down": True} if down and health > 0 else {})})
+        if "effective" in harm:  # D-49: what gear.hit worked out, carried out on the person.
+            body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
+            body["health"] = body["health"] if body["health"] is not None else 100
+            body["alive"] = body["alive"] if body["alive"] is not None else True
+            body["conditions"] = body["conditions"] or []
+            if harm["result"] not in ("missed", "deflected"):
+                gear.apply(body, harm, state["sim_time_ms"])
+            health, down = body["health"], bool(body.get("down"))
+            if harm["result"] == "killed":
+                health = 0
+            injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
+            npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries,
+                                "conditions": body["conditions"], **({"down": True} if down and health > 0 else {})})
+        else:  # Older journeys' events (before D-49): fixed damage by result.
+            health = npc.get("health", 100)
+            down = bool(npc.get("down"))
+            if harm["result"] == "killed":
+                health = 0
+            elif harm["result"] == "disabled":
+                health, down = min(health, DISABLED_HEALTH), True
+            elif harm["result"] == "wounded":
+                health = max(0, health - WOUND_DAMAGE)
+                if health == 0:
+                    harm["result"] = "killed"
+                    verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
+                    verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
+            injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
+            npc_updates.append({"id": npc["id"], "alive": health > 0, "health": health, "injuries": injuries,
+                                **({"down": True} if down and health > 0 else {})})
+        if harm["result"] == "killed" and "effective" in harm and not verdict["reason"].rstrip().endswith("."):
+            verdict["reason"] = verdict["reason"].rstrip() + "."
         taken = verdict["take_ids"]  # A weapon picked up on the way.
         if harm["method"] == "thrown" and harm["weapon_id"]:
             x, y = _open_cells_near(state, npc["x"], npc["y"], cleared_obstacles(state), 1)[0]
@@ -1163,6 +1340,9 @@ def _apply_step(state: dict, deltas: dict) -> None:
     if deltas.get("player_to"):
         state["player"].update(x=deltas["player_to"][0], y=deltas["player_to"][1])
     for landed in deltas.get("moved", []):
+        if landed.get("used_up"):  # A bandage or poultice, used (D-49).
+            state["objects"][landed["id"]].update(holder_id="used", condition="used up")
+            continue
         state["objects"][landed["id"]].update(x=landed["x"], y=landed["y"], holder_id=None)
     new_objects = deltas.get("new_objects") or ([deltas["new_object"]] if deltas.get("new_object") else [])
     if new_objects:
@@ -1175,6 +1355,9 @@ def _apply_step(state: dict, deltas: dict) -> None:
     for item_id in deltas.get("taken_ids", []):
         state["objects"][item_id]["holder_id"] = "player"
     for change in deltas.get("water", []):  # Water moved, heated, poured; any change of state in place.
+        if change["id"] == "__player__":  # The stranger's own body and kit (D-49).
+            state["player"].update(copy.deepcopy({k: v for k, v in change.items() if k != "id"}))
+            continue
         state["objects"][change["id"]].update({k: v for k, v in change.items() if k != "id"})
         if not state["objects"][change["id"]].get("water_l"):
             state["objects"][change["id"]].update(temperature=state["objects"][change["id"]].get("temperature", "cold")
@@ -1208,9 +1391,14 @@ def _apply_step(state: dict, deltas: dict) -> None:
                       became=transformed["into"])
     for update in deltas.get("npc_updates", []):
         npc = next(n for n in state["npcs"] if n["id"] == update["id"])
+        if "alive" not in update:  # Only their conditions changed (someone treated them, D-49).
+            npc["conditions"] = copy.deepcopy(update.get("conditions", npc.get("conditions", [])))
+            continue
         npc.update(alive=update["alive"], health=update["health"])
         if "injuries" in update:
             npc["injuries"] = list(update["injuries"])
+        if "conditions" in update:
+            npc["conditions"] = copy.deepcopy(update["conditions"])
         elif update.get("injury"):  # Seed-5 payloads before multi-step recorded one injury at a time.
             npc.setdefault("injuries", []).append(update["injury"])
         if not update["alive"] and npc.get("controller"):
@@ -1305,6 +1493,7 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
         "fill": next((v["fill"] for v in reversed(committed) if v["fill"]), None),
         "demonstration": next((v["demonstration"] for v in reversed(committed) if v["demonstration"]), None),
         "give": next((v["give"] for v in reversed(committed) if v["give"]), None),
+        "treat": next((v["treat"] for v in reversed(committed) if v.get("treat")), None),
         "install": next((v["install"] for v in reversed(committed) if v["install"]), None),
         "lift_out": next((v["lift_out"] for v in reversed(committed) if v["lift_out"]), None),
         "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
@@ -1329,6 +1518,8 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
              "made_ids": made_ids, "taken_ids": summary["take_ids"], "transformed": transformed, "harm": harm,
              "fill": summary["fill"], "demonstration": summary["demonstration"], "give": summary["give"],
              "install": summary["install"], "lift_out": summary["lift_out"], "offer_trade": summary["offer_trade"],
+             **({"treated": summary["treat"]} if summary.get("treat") and summary["treat"]["patient_id"] != "player"
+                else {}),
              "walk": [cell for d in deltas for cell in d.get("walk", [])],
              "property": summary["property"], "precedent_key": summary["precedent_key"], "trace_id": trace_id}
     payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}

@@ -42,8 +42,22 @@ func _run() -> void:
 	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	scene._enter_run(created.data, false)
 	await process_frame
+	# Pick up the flat stone at the road's start and hold it in the right hand (D-49): a stone in the fist.
+	var took: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
+		{"verb": "take", "object_id": "stone_b", "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+	if not check(took.ok, "Could not pick up the stone: " + str(took.get("data"))):
+		return
+	scene._accept_state(took.data.state)
+	var held: Dictionary = await scene.fight.equip("stone_b", "right")
+	if not check(held.get("ok", false) and scene.fight.in_hand(scene.run_state.player, "right").get("id") == "stone_b",
+			"Could not take the stone in hand: " + str(held)):
+		return
 	var cells := []
-	for y in range(67, 54, -1):
+	var here := Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
+	while here.x != 48:
+		here.x += signi(48 - here.x)
+		cells.append([here.x, here.y])
+	for y in (range(here.y - 1, 54, -1) if here.y > 55 else range(here.y + 1, 56)):
 		cells.append([48, y])
 	for x in range(47, 38, -1):
 		cells.append([x, 55])
@@ -78,14 +92,14 @@ func _run() -> void:
 	if not check(int(scene.run_state.sim_time_ms) > clock_before, "The clock stopped while the bar was open mid-fight"):
 		return
 	scene.ui.bar.close()
-	# Space: punch her until she's down (fists against no armour, fixed damage).
+	# Space and F: punch her until she's down (fists against no armour, fixed damage).
 	var hessa := scene.get_node("NPCs/npc_hessa_marr") as Node2D
 	for attempt in 30:
 		if not scene.in_fight() or not scene.run_state.player.get("alive", true):
 			break
 		var toward: Vector2 = hessa.position - scene.player.position
 		scene.facing_row = scene._facing_for(toward.normalized()) if toward.length() > 1.0 else scene.facing_row
-		await scene._punch()
+		await scene.fight.strike("right" if attempt % 2 == 0 else "left") # Both fists (D-49).
 		await create_timer(0.75).timeout
 	var her: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	if not check(scene.run_state.player.get("alive", true), "The stranger died to Hessa's fists"):
