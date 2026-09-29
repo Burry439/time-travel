@@ -87,7 +87,7 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
              else f"{npc['name']} comes after you to put you on the ground!", now)
     ids = set(fight["attackers"])
     state["pending_minds"] = [p for p in state.get("pending_minds", [])
-                              if not (p["npc_id"] in ids and p["kind"] in ("decide", "round"))]
+                              if not (p["npc_id"] in ids and p["kind"] == "decide")]
     return fight
 
 

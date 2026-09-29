@@ -164,7 +164,7 @@ def test_space_is_a_code_only_punch_that_replays(world):
         "harm", harm={"target_id": "npc_hessa_marr", "weapon_id": None, "method": "melee", "result": "wounded",
                       "injury": "a bruise"})]})
     state = post(world, state, "craft", {"text": "punch Hessa", "selected_ids": []})["state"]
-    world.intents.append("attack")
+    world.choices.append("attack")
     reply = world.http.post(f"/runs/{state['run_id']}/think", json={
         "expected_version": state["event_seq"], "request_id": "think-1"})
     state = reply.json()["state"]

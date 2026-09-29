@@ -222,7 +222,7 @@ def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **ex
     base = {"category": category, "reason": reason, "effort_seconds": effort, "notes": notes, "action": "other",
             "consumed_ids": [], "tool_ids": [], "new_spec": None, "take_ids": [], "transform": None,
             "harm": None, "fill": None, "demonstration": None, "give": None, "install": None, "lift_out": None,
-            "offer_trade": None,
+            "offer_trade": None, "gather": None,
             "drop_ids": [],
             "property": [], "precedent_key": None,
             "walk": []}
@@ -284,6 +284,11 @@ def _property(state: dict, ids: list[str], how: str) -> list[dict]:
             and state["objects"][i].get("lent_to") != "player"]  # Lent by its owner: theirs, but not theft.
 
 
+# Social actions whose details can be missing when the stranger only talked about them ("I need to show it to the
+# guards"); a missing payload for a physical action (make, take, ...) stays unresolved, since its reason claims a change.
+PAYLOAD = {"demonstrate": "demonstration", "give": "give", "offer_trade": "offer_trade"}
+
+
 def validate(state: dict, judged: dict | None, service_error: str | None = None) -> dict:
     """Turn a judge proposal into what code will actually commit, against the current state."""
     notes: list[str] = []
@@ -312,8 +317,13 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     effort = max(1, effort) if action != "other" else effort
     handlers = {"make": _make, "take": _take, "transform": _transform, "harm": _harm, "fill": _fill, "change": _change,
                 "demonstrate": _demonstrate, "give": _give, "install": _install, "lift_out": _lift_out,
-                "offer_trade": _offer_trade,
+                "offer_trade": _offer_trade, "gather": _gather,
                 "drop": _drop}
+    if action in PAYLOAD and not judged.get(PAYLOAD[action]):
+        # The judge named an action but described nothing for it (e.g. "demonstrate" for words about showing
+        # something later): nothing changes, and the judge's reason stands, rather than "could not be resolved" (D-48).
+        notes.append(f"action '{action}' without a {PAYLOAD[action]}: nothing changes.")
+        action = "other"
     if action not in handlers:
         return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
@@ -343,6 +353,8 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
         ids = plan.get("consumes", []) + plan.get("tools_used", [])
     elif action == "take":
         ids = judged.get("take_ids") or []
+    elif action == "gather" and judged.get("gather"):
+        ids = [judged["gather"]["source_id"]] + judged["gather"]["tools_used"]
     elif action == "transform" and judged.get("transformation"):
         ids = [judged["transformation"]["target_id"]] + judged["transformation"]["tools_used"]
     elif action == "fill" and judged.get("fill"):
@@ -610,6 +622,52 @@ def _take(state, judged, available, notes, reason, effort, key) -> dict:
                                    f"{m2.CARRY_LIMIT_KG:.0f} kg).", notes, action="take", precedent_key=key)
     return _verdict("success", reason, notes, effort, action="take", take_ids=ids, precedent_key=key,
                     property=_property(state, ids, "taken"))
+
+
+GATHER_MAX_KG = 1.0  # A part taken off something larger: a leaf, a twig, a strip of bark, a handful (D-48).
+LIVING_PARTS = {"leaf", "bark", "resin", "wood"}  # What a living tree or sapling also gives.
+
+
+def _gather(state, judged, available, notes, reason, effort, key) -> dict:
+    """A small part off something larger that stays where it is: a leaf off a tree, a handful of clay (D-48)."""
+    plan = judged.get("gather")
+    if not plan:
+        return _unresolved(notes, "action 'gather' without a gather")
+    source = available.get(plan["source_id"])
+    if source is None:
+        return _unresolved(notes, f"gather source is not within reach: {plan['source_id']}")
+    tools = [i for i in _dedupe(plan["tools_used"]) if i != source["id"]]
+    missing = [i for i in tools if i not in available]
+    if missing:
+        return _unresolved(notes, f"gather used tools that are not available now: {missing}")
+    piece = plan["piece"]
+    allowed = {m.lower() for m in source.get("materials", [])}
+    if source.get("feature") == "tree" or "sapling" in source["name"]:
+        allowed |= LIVING_PARTS
+    elif "wood" in allowed:
+        allowed.add("bark")
+    capabilities = [dict(c) for c in piece["capabilities"]]
+    fits = [m for m in piece["materials"] if _material_matches(m.lower().strip(), allowed)]
+    materials = _checked_materials(fits or piece["materials"], allowed if fits else
+                                   {m.lower() for m in source.get("materials", [])} or allowed, notes)
+    count = max(1, min(MAX_PIECES, int(piece["count"])))
+    each = max(0.005, float(piece["mass_kg"]))
+    cap = min(GATHER_MAX_KG, source["mass_kg"] / 2)
+    if each * count > cap:
+        notes.append(f"Gathered mass cut to {cap} kg: a part, not the whole {source['name']}.")
+        each = round(cap / count, 3)
+    if m2.inventory_mass(state) + each * count > m2.CARRY_LIMIT_KG:
+        return _verdict("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
+    support = {f for i in [source["id"]] + tools for f in available[i].get("flags", [])}
+    spec = {"name": piece["name"].strip().lower()[:60] or "piece", "description": piece["description"].strip()[:400],
+            "materials": materials, "count": count, "mass_kg": round(each, 3),
+            "length_m": _positive(piece.get("length_m")), "capacity_l": None, "rated_load_kg": None,
+            "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
+            "known_capabilities": capabilities[:4]}
+    tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
+    return _verdict("success", reason, notes, effort, action="gather", tool_ids=tools,
+                    gather={"source_id": source["id"], "piece": spec}, precedent_key=key,
+                    property=_property(state, [source["id"]], "gathered from") + _property(state, tools_not_ours, "used"))
 
 
 def _transform(state, judged, available, notes, reason, effort, key) -> dict:
@@ -991,6 +1049,19 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
         spilled = round(held - kept, 3)
     elif verdict["action"] == "take":
         taken = verdict["take_ids"]
+    elif verdict["action"] == "gather":  # New small things in hand; the source stays as it was.
+        plan = verdict["gather"]
+        source = state["objects"][plan["source_id"]]
+        owner = source["owner_id"] if source["owner_id"] not in (None, "player") else "player"
+        asset_id = None
+        for index in range(1, plan["piece"]["count"] + 1):
+            obj = _object(f"gathered_{event_id}{suffix}_{index}", run_id, plan["piece"], px, py, owner, "player",
+                          text, event_id, [plan["source_id"]], verdict["tool_ids"], asset_id)
+            asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
+            new_objects.append(obj)
+        if "carry" in source["capabilities"]:  # A small source is that much smaller; a tree doesn't notice.
+            left = max(0.01, round(source["mass_kg"] - plan["piece"]["mass_kg"] * plan["piece"]["count"], 3))
+            water = [{"id": source["id"], "mass_kg": left}]
     elif verdict["action"] == "drop":
         moved = [{"id": i, "x": px, "y": py} for i in verdict["drop_ids"]]  # At the stranger's feet.
     elif verdict["action"] == "transform":
@@ -1237,6 +1308,7 @@ def resolve_attempt(state: dict, run_id: str, text: str, judged: dict | None, se
         "install": next((v["install"] for v in reversed(committed) if v["install"]), None),
         "lift_out": next((v["lift_out"] for v in reversed(committed) if v["lift_out"]), None),
         "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
+        "gather": next((v["gather"] for v in reversed(committed) if v["gather"]), None),
         "precedent_key": (judged or {}).get("precedent_key"),
         "steps": [{"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
                   for v in verdicts]}

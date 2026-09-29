@@ -258,7 +258,6 @@ def round_payload(before: dict, after: dict, record: dict) -> dict:
         payload["admitted"] = after["admitted"]
     payload["round"] = {key: record.get(key) for key in (
         "round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")}
-    payload["round"]["did"] = {npc_id: intent["action"] for npc_id, intent in (record.get("intents") or {}).items()}
     return payload
 
 

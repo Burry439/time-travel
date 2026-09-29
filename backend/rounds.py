@@ -1,14 +1,16 @@
-"""Talking and encounter rounds: the stranger's part of a round, everyone's intents, replies.
+"""Talking and encounter rounds: the stranger's part of a round, then the scene's answer (D-48).
 
-/say and /encounter/act both play one round (encounter.py has the rules); the decider and the voice
-run outside the lock and the round is redone on the latest world before it is committed as one event.
+/say and /encounter/act both play one round (encounter.py has the rules). The stranger acts; then one
+voice call writes the group's moment: the person addressed and anyone else in the conversation or near
+enough to join it say what they would say and do, in order. Code checks each line (the speaker is really
+there, the move is theirs to make) and applies it as that person's exchange. Model calls run outside the
+lock and the round is redone on the latest world before it is committed as one event.
 """
 from __future__ import annotations
 
 import json
 import math
 import time
-from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -21,7 +23,7 @@ import encounter
 import minds
 import store
 import talk
-from ai import config as ai_config, decider, judge, telemetry, voice
+from ai import config as ai_config, judge, telemetry, voice
 
 router = APIRouter()
 
@@ -69,7 +71,7 @@ def say(run_id: str, request: SayRequest, background: BackgroundTasks):
 
 @router.post("/runs/{run_id}/encounter/act")
 def encounter_act(run_id: str, request: EncounterAct, background: BackgroundTasks):
-    """The stranger's part of a round: say, do, wait or walk away. Everyone's actions resolve together."""
+    """The stranger's part of a round: say, do, wait, give up or walk away; then the scene answers."""
     return play_round(run_id, request, background)
 
 
@@ -79,24 +81,26 @@ def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
         raise HTTPException(422, "Say something")
     current = encounter.active(state)
     if current is None:
-        if request.kind != "say" or not request.target_id:
+        if request.kind not in ("say", "do") or not request.target_id:
             raise HTTPException(409, {"reason": "no_encounter", "message": "Nobody is face to face with you."})
-        return _talk_problem(state, request.target_id)[1]
+        return _talk_problem(state, request.target_id)[1]  # Speaking or showing something to someone.
     if request.target_id and request.target_id not in current["participants"]:
         npc = minds.find(state["npcs"], request.target_id)
         if npc is None:
             raise HTTPException(404, "Unknown person")
         problem = talk.busy(npc)
         if problem is None and math.dist(minds._cell(npc), minds.player_cell(state)) > talk.HEAR_TALK_CELLS:
-            problem = "Deal with who is in front of you first."  # Face to face, you can call out, not walk off.
+            if not encounter.hostile(state):  # A friendly talk moves with you: walk over to them (D-48).
+                return _talk_problem(state, request.target_id)[1]
+            problem = "Deal with who is in front of you first."  # Confronted, you can call out, not walk off.
         if problem:
             raise HTTPException(409, {"reason": "cannot_talk", "message": problem})
     return []
 
 
-def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[list[int]], intents: dict,
+def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[list[int]],
                  judged: judge.JudgeCall | None) -> tuple[dict, dict]:
-    """The physical part of a round on the latest world (deterministic: safe to redo after model calls)."""
+    """The stranger's part of a round on the latest world (deterministic: safe to redo after model calls)."""
     seen = talk.standing_at(state, walk)
     now = seen["sim_time_ms"]
     current = encounter.active(seen)
@@ -104,8 +108,6 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
         encounter.open_for_talk(seen, minds.find(seen["npcs"], request.target_id), now)
     elif request.target_id and request.target_id not in current["participants"]:
         encounter.join(seen, minds.find(seen["npcs"], request.target_id), "talk", None, now)
-    for npc_id in encounter.missing_intents(seen):  # Everyone keeps listening (D-46: no intents).
-        encounter.set_intent(seen, minds.find(seen["npcs"], npc_id), intents.get(npc_id, {}))
     action = {"kind": request.kind, "text": request.text, "target_id": request.target_id}
     draft, record = encounter.resolve(seen, run_id, action, judged.result if judged else None,
                                       attempts.service_message(judged) if judged else None, request.request_id)
@@ -113,20 +115,59 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
     return draft, record
 
 
-def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[str, dict], run_id: str,
-           allowed: bool) -> dict:
-    """One person's reply in a round (D-46): one call. The voice model reads the moment as this person (belief,
-    suspicion, anger, a guard's reasons, deals), says what they'd say and picks their move from those code allows.
-    Code checks the move against that same reading (letting someone in needs reason enough and no threat).
-    If the model can't be used: an authored line, on a neutral reading. Outside the lock."""
-    context = talk.converse_context(draft, npc, text, {}, happened)
-    spoken = voice.converse(context, talk.fallback_line(draft, npc, "answer"), allowed=allowed)
-    answers = spoken.answers if spoken.status == "ok" else {}
-    key = talk.decided_reply(draft, npc, answers, spoken.move or "answer") if spoken.status == "ok" else "answer"
-    decided = decider.DeciderCall(provider="voice", model=spoken.model, answers=answers, latency_ms=0,
-                                  error=None if answers else (spoken.error or "no reading"))
-    return {"decided": decided, "answers": answers, "ask": ask, "happened": happened, "key": key,
-            "context": context, "spoken": spoken}
+def scene(draft: dict, addressed_id: str, text: str, happened: str | None, allowed: bool,
+          nearby: list[dict] | None = None) -> dict:
+    """The group's moment (D-48): one voice call, outside the lock. Everyone in the conversation, plus up to
+    three people near enough to hear it, may speak in turn, talk to each other or ask the stranger something."""
+    current = encounter.active(draft) or {"participants": [addressed_id]}
+    addressed = minds.find(draft["npcs"], addressed_id)
+    inside = [minds.find(draft["npcs"], n) for n in current["participants"]]
+    inside = [n for n in inside if n is not None]
+    nearby = [n for n in (talk.bystanders(draft) if nearby is None else nearby)
+              if n["id"] not in current["participants"]]
+    context = talk.scene_context(draft, addressed, inside, nearby, text, happened)
+    call = voice.scene(context, talk.fallback_line(draft, addressed, "answer"), allowed=allowed)
+    return {"call": call, "context": context, "addressed": addressed_id,
+            "inside": [n["id"] for n in inside], "nearby": [n["id"] for n in nearby]}
+
+
+def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now: int) -> list[dict]:
+    """Check the scene's lines against the world as it now stands and apply each as that person's exchange.
+    Returns what was said: [{npc_id, name, line, kind, key, trace}]. A nearby person who speaks joins first."""
+    call, said = moment["call"], []
+    lines = call.lines if call.status == "ok" else [
+        {"speaker_id": moment["addressed"], "text": call.text, "move": "answer", "answers": {}, "remember": ""}]
+    here = minds.player_cell(draft)
+    heard = [happened] if happened else []
+    for line in lines:
+        npc = minds.find(draft["npcs"], line["speaker_id"])
+        current = encounter.active(draft)
+        if npc is None or current is None or any(s["npc_id"] == npc["id"] for s in said):
+            continue  # Not a real person here, the conversation is over, or they've already spoken.
+        joining = npc["id"] not in current["participants"]
+        if joining and (npc["id"] not in moment["nearby"] or talk.busy(npc)
+                        or math.dist(minds._cell(npc), here) > talk.HEAR_TALK_CELLS + 1):
+            continue  # Only someone who was really near enough to hear can join in.
+        if joining:
+            encounter.join(draft, npc, "joined", None, now)
+        answers = line.get("answers") or {}
+        key = talk.decided_reply(draft, npc, answers, line.get("move") or "answer")
+        moment_words = " ".join(heard) or None
+        exchange = talk.exchange(draft, npc["id"], text, answers, key, line["text"], [], moment_words,
+                                 note=line.get("remember", ""),
+                                 name_given=call.stranger_name if npc["id"] == moment["addressed"] else "")
+        draft.setdefault("learned", []).extend(exchange["learned"])
+        draft["journal"].append(exchange["journal_entry"])
+        heard.append(f"{npc['name']} just said: “{line['text']}”")
+        said.append({"npc_id": npc["id"], "name": npc["name"], "line": line["text"], "kind": "reply", "key": key,
+                     "trace": {"kind": "talk", "npc_id": npc["id"], "text": text, "happened": moment_words,
+                               "action": key, "voice_move": line.get("move"), "joined": joining,
+                               "why": "addressed" if npc["id"] == moment["addressed"] else "in the scene",
+                               "reply": line["text"], "regard_change": exchange["regard_change"],
+                               "situation": talk.request(draft, npc, text, moment_words)[0],
+                               "call": {"provider": "voice", "model": call.model, "answers": answers},
+                               "voice": call.as_dict(), "voice_context": moment["context"]}})
+    return said
 
 
 def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
@@ -154,103 +195,54 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             raise HTTPException(409, {"reason": "in_progress"})
         attempts.busy_runs.add(run_id)
         seen = talk.standing_at(state, walk)
-        missing = encounter.missing_intents(seen)
-        asking = encounter.intent_request(seen, missing) if missing else None
         context = crafting.build_context(seen, request.text, request.selected_ids) if request.kind == "do" else None
         calls_used = telemetry.calls_for_run(connection, run_id)
     try:
-        # Everyone's intent for this round (usually decided already while the player typed) and the judge
-        # for the stranger's attempt: both outside the lock, side by side.
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            intent_job = pool.submit(decider.decide, asking[0], asking[1]) if asking else None
-            judge_job = pool.submit(attempts.judge_attempt, context, calls_used) if context else None
-            intent_call = intent_job.result() if intent_job else None
-            judged = judge_job.result() if judge_job else None
-        timing["intents_ms"] = intent_call.latency_ms if intent_call else 0
+        judged = attempts.judge_attempt(context, calls_used) if context else None  # Outside the lock.
         timing["judge_ms"] = judged.latency_ms if judged else 0
-        intents = {n: minds.answers_for(intent_call.answers, asking[2][n]) for n in missing} \
-            if intent_call and intent_call.ok else {}
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
             if store.is_stale(state, request.expected_version):
                 raise HTTPException(409, {"reason": "stale_state", "state": state})
-            draft, record = _round_draft(state, run_id, request, walk, intents, judged)
-            replier = minds.find(draft["npcs"], record["replier"]) if record["replier"] else None
+            draft, record = _round_draft(state, run_id, request, walk, judged)
             happened = " ".join(record["happened"]) or None
             text = request.text if request.kind == "say" or request.speech else ""
-            reply_ask = talk.request(draft, replier, text, happened) if replier else None
-        # The person addressed replies to what actually happened; someone else may cut in after them.
+        # The scene answers what actually happened (the person addressed, and anyone who joins in).
         allowed = calls_used < ai_config.max_calls_per_run()
-        speaking = time.perf_counter()
-        main = _speak(draft, replier, text, happened, reply_ask, run_id, allowed) if reply_ask else None
-        decided = main["decided"] if main else None
-        spoken = main["spoken"] if main else None
-        cutting_in = minds.find(draft["npcs"], record["interjector"]) if record["interjector"] else None
-        side = None
-        if cutting_in:
-            heard = " ".join(filter(None, [happened, f"{replier['name']} just said: “{spoken.text}”" if spoken else None]))
-            side = _speak(draft, cutting_in, "", heard, talk.request(draft, cutting_in, "", heard), run_id, allowed)
-        timing["reply_decide_ms"] = main["decided"].latency_ms if main else 0
-        timing["reply_voice_ms"] = main["spoken"].latency_ms if main and main["spoken"] else 0
-        timing["speaking_ms"] = round((time.perf_counter() - speaking) * 1000)
+        moment = scene(draft, record["replier"], text, happened, allowed) if record["replier"] else None
+        spoken = moment["call"] if moment else None
+        timing["scene_ms"] = spoken.latency_ms if spoken else 0
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
-            for call in (intent_call, decided, side["decided"] if side else None):
-                if call is not None and call.provider != "voice":  # A reply's reading is part of the voice call.
-                    telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
-                                     call.error or call.fallback_from, call.input_tokens, call.output_tokens)
             if judged and judged.attempts:
                 telemetry.record(connection, run_id, "judge", judged.model, judged.prompt_version, judged.latency_ms,
                                  judged.status == "ok", judged.error, judged.input_tokens, judged.output_tokens,
                                  judged.attempts)
-            for line in (spoken, side["spoken"] if side else None):
-                if line and line.model and line.model != "stub":
-                    telemetry.record(connection, run_id, "voice", line.model, line.prompt_version, line.latency_ms,
-                                     line.status == "ok", line.error, line.input_tokens, line.output_tokens)
+            if spoken and spoken.model and spoken.model != "stub":
+                telemetry.record(connection, run_id, "voice", spoken.model, spoken.prompt_version, spoken.latency_ms,
+                                 spoken.status == "ok", spoken.error, spoken.input_tokens, spoken.output_tokens)
         # Only a real failure changes nothing; stub mode or a spent allowance answers with the authored line.
         broken = spoken is not None and spoken.status != "ok" and bool(spoken.error) \
             and not spoken.error.startswith("Model call allowance")
-        if reply_ask and broken and request.kind == "say" and not any(
-                e["kind"] in ("attack", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
+        if moment and broken and request.kind == "say":
+            name = minds.find(draft["npcs"], record["replier"])["name"]
             raise HTTPException(503, {"reason": "decider_failed", "message": (
-                f"{replier['name']} doesn't seem to hear you. (The decider couldn't be reached, so nothing changed.)")})
+                f"{name} doesn't seem to hear you. (The model couldn't be reached, so nothing changed.)")})
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
             if store.is_stale(state, request.expected_version):
                 raise HTTPException(409, {"reason": "stale_state", "state": state})
             walk = _round_setup(state, request)
-            draft, record = _round_draft(state, run_id, request, walk, intents, judged)  # Redone on the latest world.
-            now, replies, talk_trace = draft["sim_time_ms"], [], None
-            for spoke, person, words, kind in ((main, replier, text, "reply"), (side, cutting_in, "", "interject")):
-                if not (spoke and spoke["spoken"]) or record["replier" if kind == "reply" else "interjector"] \
-                        != person["id"]:
-                    continue
-                said = talk.exchange(draft, person["id"], words, spoke["answers"], spoke["key"],
-                                     spoke["spoken"].text, [], spoke["happened"], note=spoke["spoken"].remember,
-                                     name_given=spoke["spoken"].stranger_name)
-                draft.setdefault("learned", []).extend(said["learned"])
-                draft["journal"].append(said["journal_entry"])
-                replies.append({"npc_id": person["id"], "name": person["name"], "line": spoke["spoken"].text,
-                                "kind": kind})
-                trace = {"kind": "talk", "npc_id": person["id"], "text": words, "happened": spoke["happened"],
-                         "action": spoke["key"], "voice_move": spoke["spoken"].move,
-                         "why": "addressed" if kind == "reply" else "cut in", "reply": spoke["spoken"].text,
-                         "regard_change": said["regard_change"], "situation": spoke["ask"][0],
-                         "questions": spoke["ask"][1], "call": spoke["decided"].as_dict(),
-                         "voice": spoke["spoken"].as_dict(), "voice_context": spoke["context"]}
-                talk_trace = talk_trace or trace
-                if kind == "interject":
-                    connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
-                                       (run_id, state["event_seq"] + 1, person["id"], json.dumps(trace)))
-            for spoke, person in ((main, replier), (side, cutting_in)):  # Moves the round itself carries out.
-                act = str((spoke or {}).get("key") or "").split(":")[0]
-                if person is None or not any(r["npc_id"] == person["id"] for r in replies):
-                    continue
+            draft, record = _round_draft(state, run_id, request, walk, judged)  # Redone on the latest world.
+            now = draft["sim_time_ms"]
+            said = apply_scene(draft, moment, text, happened, now) if moment and record["replier"] else []
+            for line in said:  # Moves the round itself carries out.
+                act = line["key"].split(":")[0]
                 if act == "seize" and draft["player"].get("alive", True):
-                    record["seized_by"] = record.get("seized_by") or person["id"]
+                    record["seized_by"] = record.get("seized_by") or line["npc_id"]
                 elif act == "attack":
-                    combat.start(draft, [person["id"]], now, "attack")
-            encounter.finish(draft, record, now, replies)
+                    combat.start(draft, [line["npc_id"]], now, "attack")
+            encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
             elapsed = encounter.round_ms(record)
             people = store.advance_people(draft, elapsed)
             for object_id, fields in people.get("objects_changed", {}).items():
@@ -269,26 +261,24 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             craft_trace = None
             if record.get("verdict"):
                 made = [state["objects"][i] for i in record["entry"].get("made_ids", []) if i in state["objects"]]
-                craft_trace = attempts.record_attempt(connection, run_id, request.request_id, state["event_seq"], request.text,
-                                              request.selected_ids, context, judged, record["verdict"], made,
-                                              background)
-            round_trace = {"kind": "round", "npc_id": (replier or {}).get("id") or "encounter",
-                           "why": f"round {record['round']}", "action": (main or {}).get("key") or request.kind,
-                           "intents": record.get("intents"), "entries": record["entries"],
-                           "situation": asking[0] if asking else "(Everyone's intents were decided earlier, while the "
-                                                                 "stranger was choosing.)",
-                           "questions": asking[1] if asking else {},
-                           "call": intent_call.as_dict() if intent_call else {},
+                craft_trace = attempts.record_attempt(connection, run_id, request.request_id, state["event_seq"],
+                                                      request.text, request.selected_ids, context, judged,
+                                                      record["verdict"], made, background)
+            for line in said:
+                connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+                                   (run_id, state["event_seq"], line["npc_id"], json.dumps(line["trace"])))
+            round_trace = {"kind": "round", "npc_id": record.get("replier") or "encounter",
+                           "why": f"round {record['round']}", "action": request.kind, "entries": record["entries"],
+                           "scene": {"inside": moment["inside"], "nearby": moment["nearby"],
+                                     "lines": spoken.lines} if moment else None,
                            "timing": dict(timing, total_ms=round((time.perf_counter() - started) * 1000))}
-            for trace in (talk_trace, round_trace):
-                if trace:
-                    connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
-                                       (run_id, state["event_seq"], trace["npc_id"], json.dumps(trace)))
+            connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+                               (run_id, state["event_seq"], round_trace["npc_id"], json.dumps(round_trace)))
     finally:
         attempts.busy_runs.discard(run_id)
     timing["total_ms"] = round((time.perf_counter() - started) * 1000)
     response = {"state": state, "duplicate": False, "round": state["last_round"], "timing": timing}
     if run["mode"] == "developer":
-        response["trace"] = talk_trace or craft_trace
+        response["trace"] = (said[0]["trace"] if said else None) or craft_trace
         response["craft_trace"] = craft_trace
     return response

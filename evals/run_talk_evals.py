@@ -1,9 +1,11 @@
-"""Live evaluation of conversations: the real voice model (Luna) through the game's code.
+"""Live evaluation of conversations: the real voice model (Luna) through the game's code, one scene per round (D-48).
 
     backend/.venv/Scripts/python.exe evals/run_talk_evals.py [--runs 2] [--case injection_admit ...]
 
 Needs OPENAI_API_KEY in backend/.env. Costs a little real money
-(about a tenth of a cent per exchange). Writes a JSON report to evals/results/ and prints a summary.
+(about a tenth of a cent per round). Writes a JSON report to evals/results/ and prints a summary.
+A case's lines are what the stranger says, or {"say": ..., "happened": ...} for something the stranger did
+as they said it (e.g. a demonstration); "nearby" places other people a step or two away, free to join in.
 """
 from __future__ import annotations
 
@@ -18,10 +20,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
+import encounter  # noqa: E402
 import minds  # noqa: E402
 import rounds  # noqa: E402
 import talk  # noqa: E402
-from ai import decider, voice  # noqa: E402
 
 LUNA_PER_MTOK = (0.1, 0.5)  # input, output USD
 
@@ -38,35 +40,50 @@ def world_for(case: dict) -> tuple[dict, dict]:
     talk.regard(person).update(case.get("regard", {}))  # e.g. awe or trust already earned
     for object_id in case.get("carry", []):  # e.g. the stolen rope, in the stranger's hands
         state["objects"][object_id]["holder_id"] = "player"
+    for near in case.get("nearby", []):  # Others a step or two away, free to listen and join in.
+        other = minds.find(state["npcs"], near["npc"])
+        other.update(x=state["player"]["x"] + near.get("dx", 2), y=state["player"]["y"] + near.get("dy", 0))
+        minds.mind(other)["job"] = None
     if case.get("reason"):  # They came up to the stranger for a reason (a halt, a confrontation).
-        state["encounter"] = {"id": "enc_eval", "participants": [person["id"]], "opened_by": person["id"],
-                              "reason": case["reason"], "round": 1, "intents": {}, "log": [], "started_at": 0}
+        encounter.join(state, person, case["reason"], None, 0)
     return state, person
 
 
-def exchange(state: dict, npc_id: str, text: str) -> dict:
-    """One exchange exactly as /say does it, minus the database."""
-    person = minds.find(state["npcs"], npc_id)
-    out = rounds._speak(state, person, text, None, talk.request(state, person, text), "talkeval", True)  # D-44
-    decided, spoken, key = out["decided"], out["spoken"], out["key"]
-    if not decided.ok and spoken.status != "ok":
-        return {"error": decided.error or spoken.error, "decider_ms": decided.latency_ms}
-    before = dict(talk.regard(person))
-    talk.exchange(state, npc_id, text, out["answers"], key, spoken.text, [], note=spoken.remember,
-                  name_given=spoken.stranger_name)
-    state["event_seq"] += 1
+def exchange(state: dict, npc_id: str, line) -> dict:
+    """One round exactly as /act plays it for words, minus the database and the world moving on."""
+    text, extra = (line, None) if isinstance(line, str) else (line.get("say", ""), line.get("happened"))
+    request = rounds.EncounterAct(kind="say", text=text, target_id=npc_id, expected_version=state["event_seq"],
+                                  request_id=f"eval-{state['event_seq']}")
+    draft, record = rounds._round_draft(state, "talkeval", request, [], None)
+    happened = " ".join([*record["happened"], *([extra] if extra else [])]) or None
+    moment = rounds.scene(draft, record["replier"], text, happened, True)
+    call = moment["call"]
+    if call.status != "ok":
+        return {"said": text, "error": call.error, "voice_ms": call.latency_ms}
+    before = dict(talk.regard(minds.find(draft["npcs"], npc_id)))
+    now = draft["sim_time_ms"]
+    said = rounds.apply_scene(draft, moment, text, happened, now)
+    encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
+    draft["event_seq"] += 1
+    draft["sim_time_ms"] = now + encounter.round_ms(record)
+    state.clear()
+    state.update(draft)
     after = talk.regard(minds.find(state["npcs"], npc_id))
-    return {"said": text, "reply": key, "line": spoken.text, "voice": spoken.status, "voice_error": spoken.error,
+    mine = next((s for s in said if s["npc_id"] == npc_id), None)
+    return {"said": text, "reply": mine["key"] if mine else None,
+            "lines": [{"who": s["npc_id"], "key": s["key"], "line": s["line"], "joined": s["trace"]["joined"]}
+                      for s in said],
+            "keys": [s["key"] for s in said], "line": " ".join(s["line"] for s in said),
+            "hostile": encounter.hostile(state),
             "trust": round(after["trust"] - before["trust"], 3),
             "suspicion": round(after["suspicion"] - before["suspicion"], 3),
-            "decider_ms": decided.latency_ms, "decider_usd": decided.cost_usd or 0.0, "provider": decided.provider,
-            "voice_ms": spoken.latency_ms,
-            "voice_usd": (spoken.input_tokens * LUNA_PER_MTOK[0] + spoken.output_tokens * LUNA_PER_MTOK[1]) / 1e6}
+            "voice_ms": call.latency_ms,
+            "voice_usd": (call.input_tokens * LUNA_PER_MTOK[0] + call.output_tokens * LUNA_PER_MTOK[1]) / 1e6}
 
 
 def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
-    problems = [f"decider failed: {t['error']}" for t in turns if "error" in t]
-    keys = [t["reply"] for t in turns if "reply" in t]
+    problems = [f"voice failed: {t['error']}" for t in turns if "error" in t]
+    keys = [k for t in turns for k in t.get("keys", [])]  # Anyone's move: a guard beside them admitting counts too.
     for prefix in case.get("forbid", []):
         if any(k.startswith(prefix) for k in keys):
             problems.append(f"chose forbidden {prefix}")
@@ -87,6 +104,11 @@ def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
         for t in turns:
             if word.lower() in f" {t.get('line', '').lower()} ":
                 problems.append(f"said '{word.strip()}': {t['line']}")
+    speakers = {line["who"] for t in turns for line in t.get("lines", [])}
+    if case.get("expect_speakers_any") and not speakers & set(case["expect_speakers_any"]):
+        problems.append(f"none of {case['expect_speakers_any']} spoke (only {sorted(speakers)})")
+    if case.get("stays_friendly") and any(t.get("hostile") for t in turns):
+        problems.append("the conversation turned hostile")
     return problems
 
 
@@ -95,8 +117,8 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--case", nargs="*")
     args = parser.parse_args(argv)
-    if decider.mode() != "llm" or app.ai_config.mode() != "live":
-        print(f"Decider is '{decider.mode()}' and AI mode '{app.ai_config.mode()}': add OPENAI_API_KEY to backend/.env.")
+    if app.ai_config.mode() != "live":
+        print(f"AI mode is '{app.ai_config.mode()}': add OPENAI_API_KEY to backend/.env.")
         return 1
     cases = [c for c in json.loads((ROOT / "evals" / "talk_cases.json").read_text(encoding="utf-8"))["cases"]
              if not args.case or c["id"] in args.case]
@@ -114,19 +136,18 @@ def main(argv: list[str]) -> int:
             failures += bool(problems)
             report.append({"case": case["id"], "run": run + 1, "ok": not problems, "problems": problems,
                            "turns": turns})
-            print(f"{'PASS' if not problems else 'FAIL'}  {case['id']:28} " +
-                  " | ".join(f"{t.get('reply')}: {t.get('line', t.get('error'))}" for t in turns)[:400])
+            print(f"{'PASS' if not problems else 'FAIL'}  {case['id']:28} " + " | ".join(
+                " / ".join(f"{l['who'].split('_')[1]} {l['key']}: {l['line']}" for l in t.get("lines", []))
+                or str(t.get("error")) for t in turns)[:600])
             for problem in problems:
                 print(f"      - {problem}")
-    exchanges = [t for r in report for t in r["turns"] if "reply" in t]
+    exchanges = [t for r in report for t in r["turns"] if "lines" in t]
     if exchanges:
-        total = [t["decider_ms"] + t["voice_ms"] for t in exchanges]
-        print(f"\n{len(report) - failures}/{len(report)} passed · {len(exchanges)} exchanges · "
-              f"decider median {statistics.median(t['decider_ms'] for t in exchanges):.0f} ms · voice median "
-              f"{statistics.median(t['voice_ms'] for t in exchanges):.0f} ms · p95 total "
-              f"{sorted(total)[int(0.95 * (len(total) - 1))]:.0f} ms · mean cost "
-              f"${statistics.mean(t['decider_usd'] + t['voice_usd'] for t in exchanges):.5f} per exchange · "
-              f"voice fallbacks {sum(t['voice'] != 'ok' for t in exchanges)}")
+        print(f"\n{len(report) - failures}/{len(report)} passed · {len(exchanges)} rounds · voice median "
+              f"{statistics.median(t['voice_ms'] for t in exchanges):.0f} ms · p95 "
+              f"{sorted(t['voice_ms'] for t in exchanges)[int(0.95 * (len(exchanges) - 1))]:.0f} ms · mean cost "
+              f"${statistics.mean(t['voice_usd'] for t in exchanges):.5f} per round · "
+              f"{statistics.mean(len(t['lines']) for t in exchanges):.1f} lines per round")
     out = ROOT / "evals" / "results" / f"talk_{time.strftime('%Y%m%d_%H%M%S')}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")

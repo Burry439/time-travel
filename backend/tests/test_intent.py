@@ -61,3 +61,11 @@ def test_one_line_routes_words_deeds_and_leaving(world):
     body = post(world, state, "act", {"text": "I walk away"})
     assert body["intent"]["kind"] == "leave" and body["state"]["encounter"] is None
     assert world.http.get(f"/runs/{state['run_id']}").json() == body["state"]
+
+
+def test_mid_conversation_only_a_first_person_deed_is_obvious():
+    """D-48: "float it on water and it turns north" said to Roderic is an explanation, so the model reads it."""
+    assert intent.obvious("float the needle on the leaf") == "do"
+    assert intent.obvious("float it on water and it turns north", talking=True) is None
+    assert intent.obvious("I float the needle on the leaf", talking=True) == "do"
+    assert intent.obvious("I give up", talking=True) == "yield"

@@ -1,7 +1,9 @@
 """Try Something outside encounters, the quick pick up / put down, sprites, and developer traces."""
 from __future__ import annotations
 
+import difflib
 import json
+import re
 import sqlite3
 from typing import Callable, Literal
 
@@ -89,7 +91,9 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     target = request.target_id or (current.get("opened_by") if current else None)
     if target == "player":  # A conversation the stranger began: whoever they last addressed answers.
         target = None
-    kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id))
+    talking_with = [n["name"] for i in (current or {}).get("participants", []) if (n := minds.find(state["npcs"], i))]
+    kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id),
+                                      talking_with)
     if call is not None:
         with store.lock, store.db() as connection:
             telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
@@ -97,7 +101,10 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     heard = {"kind": kind, "how": how}
     if combat.active(state) and kind in ("yield", "say", "wait", "leave"):  # Mid-fight: no rounds (D-41).
         return {**_fight_words(run_id, request, kind, state), "intent": heard}
-    if current or kind == "say":
+    if not current and kind in ("do", "both") and not combat.active(state):
+        # A deed shown or handed to someone nearby ("I show Roderic the compass") is a round with them, so they answer (D-48).
+        target = request.target_id or named(request.text, near)
+    if current or kind == "say" or (kind in ("do", "both") and target and not combat.active(state)):
         if not current:
             target = target or (near[0]["id"] if near else None)
             if kind == "say" and not target:
@@ -117,6 +124,16 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
                                            expected_version=request.expected_version,
                                            request_id=request.request_id), background)
     return {**reply, "intent": heard}
+
+
+def named(text: str, near: list[dict]) -> str | None:
+    """The nearby person the words name, allowing for a misspelling ("Rodric"), or None."""
+    words = [w for w in re.findall(r"[a-z]+", text.lower()) if len(w) >= 3]
+    for npc in near:
+        name = npc["name"].split()[0].lower()
+        if any(w == name or (len(w) >= 4 and difflib.SequenceMatcher(None, w, name).ratio() >= 0.8) for w in words):
+            return npc["id"]
+    return None
 
 
 def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dict:

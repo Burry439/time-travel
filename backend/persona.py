@@ -8,9 +8,14 @@ memory (notes, episodes); it never changes world state.
 """
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
 
 import minds
+import npc_sim
+
+_PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))["places"]
 
 MOODS = ["content", "cheerful", "weary", "irritable", "anxious", "excited", "grieving"]
 MOOD_WORDS = {m: m for m in MOODS}
@@ -90,6 +95,29 @@ def opinion_lines(state: dict, npc: dict, people: list[dict] | None = None) -> l
     return lines
 
 
+def usual_place(npc_id: str) -> str | None:
+    """Where this person is usually found: the named place nearest their routine's first stop."""
+    routine = npc_sim.ROUTINES.get(npc_id)
+    if not routine or not routine[1]:
+        return None
+    x, y = routine[1][0][0], routine[1][0][1]
+    return min(_PLACES.values(), key=lambda p: math.dist(p["cell"], (x, y)))["name"]
+
+
+def everyone_in_town(state: dict, npc: dict) -> list[str]:
+    """Everyone in a village this small knows everyone else (D-48): who they are and where they're usually found."""
+    lines = []
+    for other in state["npcs"]:
+        if other["id"] == npc["id"]:
+            continue
+        place = usual_place(other["id"])
+        relation = minds.relation(npc, other["id"])
+        lines.append(f"{other['name']}, the {minds.card(other)['role']}" + (f" ({relation})" if relation else "")
+                     + (f", usually at {place}" if place else "")
+                     + ("" if other.get("alive", True) else ", now dead"))
+    return lines
+
+
 def sheet_lines(state: dict, npc: dict) -> list[str]:
     """The character sheet for the decider: who they are beyond their role, what they want, how they feel now."""
     me, name = minds.card(npc), npc["name"]
@@ -108,6 +136,7 @@ def sheet_lines(state: dict, npc: dict) -> list[str]:
     for secret in secrets(npc):
         lines.append(f"(Private) {secret['text']} {name} would only let this out to {secret['reveal']}.")
     lines += opinion_lines(state, npc)
+    lines.append(f"Everyone in town, whom {name} knows: " + "; ".join(everyone_in_town(state, npc)) + ".")
     return lines
 
 
@@ -129,6 +158,7 @@ def voice_sheet(state: dict, npc: dict) -> dict:
                           "example_lines_never_copy": voice.get("samples", []),
                           "would_never": voice.get("never", "")},
         "people_they_know": opinion_lines(state, npc, [n for n in state["npcs"] if n["id"] in opinions(npc)]),
+        "everyone_in_town": everyone_in_town(state, npc),
         "secrets_kept": [f"{s['text']} (only told to {s['reveal']})" for s in secrets(npc)],
         "remembers_the_stranger": stranger_lines(state, npc),
     }

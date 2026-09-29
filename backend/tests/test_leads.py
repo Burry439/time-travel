@@ -76,18 +76,3 @@ def test_asking_back_is_rare():
     assert "ask_back" in talk.replies(state, tomas)  # Four of their replies later, they may ask again.
 
 
-def test_someone_else_in_the_encounter_can_cut_in():
-    state = unit_state()
-    hessa = face_to_face(state, "npc_hessa_marr", reason="talk")
-    assert "interject" not in {o["action"] for o in encounter.intent_options(state, hessa).values()}  # Alone.
-    bren = npc(state, "npc_bren_marr")
-    bren.update(x=hessa["x"] + 1, y=hessa["y"])
-    encounter.join(state, bren, "confront", "What's this?", state["sim_time_ms"])
-    assert "interject" in {o["action"] for o in encounter.intent_options(state, bren).values()}
-    state["encounter"]["intents"]["npc_bren_marr"] = {"action": "interject", "line": None, "line_id": None}
-    state["event_seq"] += 1
-    _, record = encounter.resolve(state, "run", {"kind": "say", "text": "Hello both.", "target_id": "npc_hessa_marr"},
-                                  None, None, "t")
-    assert record["replier"] == "npc_hessa_marr" and record["interjector"] == "npc_bren_marr"
-
-

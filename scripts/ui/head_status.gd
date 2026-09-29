@@ -1,7 +1,7 @@
 extends Node2D
 ## Small signs over a person's head, from state the client already has (GDD D-35):
 ## "…" while they're thinking or replying, "!" when frightened, red crossed blades when they mean
-## violence (attacking, fighting or seizing), a pulsing red "!" while they wind up a blow in a fight, a gold mark for a few seconds after they warm to you, and a thin
+## violence (attacking or fighting), a pulsing red "!" while they wind up a blow in a fight, a gold mark for a few seconds after they warm to you, and a thin
 ## health bar when hurt. Never numbers.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
@@ -23,13 +23,10 @@ func _process(delta: float) -> void:
 		var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
 		var job = their_mind.get("job")
 		var current = game.run_state.get("encounter")
-		var intent := ""
-		if typeof(current) == TYPE_DICTIONARY:
-			intent = str((current.get("intents", {}).get(npc_id) if typeof(current.get("intents", {}).get(npc_id)) == TYPE_DICTIONARY else {}).get("action", ""))
 		# "…" means reacting to the stranger (or face to face), not planning an ordinary day.
 		var thinking: bool = game.run_state.get("pending_minds", []).any(func(p) -> bool:
 			return typeof(p) == TYPE_DICTIONARY and str(p.get("npc_id", "")) == npc_id \
-				and str(p.get("kind", "")) in ["decide", "round"])
+				and str(p.get("kind", "")) == "decide")
 		if game.ui.bar.waiting and typeof(current) == TYPE_DICTIONARY and npc_id in current.get("participants", []):
 			thinking = true
 		if thinking:
@@ -37,9 +34,9 @@ func _process(delta: float) -> void:
 		var fight = game.run_state.get("fight")
 		if typeof(fight) == TYPE_DICTIONARY and fight.get("swings", {}).has(npc_id):
 			next.append("swing") # Winding up a blow: step out of reach before it lands.
-		elif intent in ["attack", "seize"] or (typeof(job) == TYPE_DICTIONARY and str(job.get("kind", "")) in ["attack", "fight"]):
+		elif typeof(job) == TYPE_DICTIONARY and str(job.get("kind", "")) in ["attack", "fight"]:
 			next.append("hostile")
-		elif float(their_mind.get("feelings", {}).get("fear", 0)) > 0.6 				or float(their_mind.get("feelings", {}).get("anger", 0)) >= 0.6:
+		elif float(their_mind.get("feelings", {}).get("fear", 0)) > 0.6 or float(their_mind.get("feelings", {}).get("anger", 0)) >= 0.6:
 			next.append("alarmed") # Frightened or angry: something just happened to them.
 		if float(game.warm_until.get(npc_id, 0.0)) > Time.get_ticks_msec() / 1000.0:
 			next.append("warm")

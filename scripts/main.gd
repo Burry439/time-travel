@@ -659,7 +659,7 @@ func _place_on_gate(sprite: Sprite2D, obj: Dictionary) -> void:
 func _minds_pending(lane := "any") -> bool:
 	if not gameplay_active or run_state.is_empty():
 		return false
-	var reacting := ["decide", "round", "fight"]
+	var reacting := ["decide", "fight"]
 	return run_state.get("pending_minds", []).any(func(p) -> bool:
 		return lane == "any" or (str(p.get("kind", "")) in reacting) == (lane == "react"))
 
@@ -1431,7 +1431,7 @@ func round_beat(entry: Dictionary) -> void:
 				player_visual.play_gesture("pickup" if played_action.get("action") == "take" else "gesture")
 		return
 	var actor := get_node_or_null("NPCs/%s/PaintedActor" % who)
-	if actor and entry.get("kind") in ["strike", "reply", "interject", "shout_for_help", "whistle", "attack", "arrive"]:
+	if actor and entry.get("kind") in ["strike", "reply", "arrive"]:
 		actor.play_gesture("gesture")
 	if entry.get("kind") == "strike" and not "misses" in str(entry.text):
 		var npc_actor := get_node_or_null("NPCs/" + who) as Node2D

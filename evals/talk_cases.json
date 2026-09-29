@@ -493,6 +493,82 @@
    "line_must_not_contain": [
     "rope"
    ]
+  },
+  {
+   "id": "group_compass_at_gate",
+   "group": "group",
+   "npc": "npc_roderic_vale",
+   "nearby": [
+    {
+     "npc": "npc_bren_marr",
+     "dx": 2
+    },
+    {
+     "npc": "npc_oren_dast",
+     "dx": -2
+    }
+   ],
+   "lines": [
+    {
+     "say": "Captain, watch this.",
+     "happened": "The stranger floated a magnetised needle on a leaf in a bowl of water; it swung round and settled pointing north, three times."
+    },
+    "It always points north, even at night or in fog.",
+    "Your men could find their way with it on patrol."
+   ],
+   "expect_speakers_any": [
+    "npc_bren_marr",
+    "npc_oren_dast"
+   ],
+   "stays_friendly": true,
+   "forbid": [
+    "seize",
+    "attack",
+    "call_guard"
+   ]
+  },
+  {
+   "id": "group_bren_joins_hessa",
+   "group": "group",
+   "npc": "npc_hessa_marr",
+   "nearby": [
+    {
+     "npc": "npc_bren_marr",
+     "dx": 2
+    }
+   ],
+   "lines": [
+    "Good evening! Is this your inn?",
+    "I'm looking for somewhere to sleep tonight.",
+    "And you, sir, the one in the mail shirt: are you one of the gate guards?"
+   ],
+   "expect_speakers_any": [
+    "npc_bren_marr"
+   ],
+   "stays_friendly": true,
+   "forbid": [
+    "seize",
+    "attack",
+    "tell_to_leave"
+   ]
+  },
+  {
+   "id": "kade_knows_hessa",
+   "group": "group",
+   "npc": "npc_kade_east",
+   "lines": [
+    "Do you know Hessa?",
+    "Where would I find her?"
+   ],
+   "line_needs_any": [
+    "inn"
+   ],
+   "line_must_not_contain": [
+    "don't know her",
+    "never heard",
+    "who's hessa",
+    "who is hessa"
+   ]
   }
  ]
 }

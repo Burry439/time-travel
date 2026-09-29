@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 import app as service
 import crafting
 import minds
+import scenes
 import talk
 import village
 from ai import decider, voice
@@ -131,11 +132,9 @@ def world(tmp_path, monkeypatch):
         return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
-        reply = script.pop(0) if script else {}
-        return voice.VoiceCall(status="ok", text=fallback, model="fake", answers=reply,
-                               move=reply.get("reply", {}).get("choice", "answer"))
-    monkeypatch.setattr(service.voice, "converse", fake_voice)
+    def fake_voice(context, fallback, allowed=True):  # The scripted scene (D-48): lines, moves and readings.
+        return scenes.scene_call(context, script.pop(0) if script else {}, lambda ctx, person, move: fallback)
+    monkeypatch.setattr(service.voice, "scene", fake_voice)
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)

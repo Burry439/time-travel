@@ -9,10 +9,10 @@ from test_talk import npc, unit_state
 
 def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="seize", reason="confront")
+    face_to_face(state, "npc_bren_marr", reason="confront")
     state["objects"]["cloth_darin"]["holder_id"] = "player"  # Stolen.
     state["objects"]["lodestone_darin"].update(holder_id="player", lent_to="player")  # Lent: theirs to keep using.
-    draft, record = play(state, "wait")
+    draft, record = play(state, "yield")  # Giving up to a guard: he takes the stranger.
     assert record["seized_by"] == "npc_bren_marr"
     encounter.finish(draft, record, draft["sim_time_ms"])
     assert record["arrested"] and draft["encounter"] is None
@@ -25,16 +25,6 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     assert "admit" not in talk.replies(draft, roderic)  # Not while barred...
     draft["sim_time_ms"] = draft["barred_until"] + 1
     assert "admit" in talk.replies(draft, roderic)  # ...but an arrest isn't the end of the road.
-
-
-def test_slipping_a_grab_means_a_chase_not_a_clean_getaway():
-    state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="seize", reason="confront")
-    draft, record = play(state, "leave")  # The stranger acts first in a round: a step ahead of the grab...
-    assert record["seized_by"] is None and record["walked_away"]
-    assert draft["fight"]["attackers"] == ["npc_bren_marr"]  # ...but he comes after them (D-44)...
-    assert draft["fight"]["lethal"]["npc_bren_marr"] is False  # ...to put them on the ground, not to kill.
-    assert any(e["kind"] == "chase" for e in record["entries"])
 
 
 def test_walking_off_from_someone_you_wronged():
@@ -82,14 +72,6 @@ def test_only_violence_rules_out_entry_for_good():
                              "summary": "The stranger took Darin's cloth.", "short": "stole cloth", "victim": None})
     assert "admit" in talk.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
     assert minds.regard(roderic)["suspicion"] > 0.68
-
-
-def test_only_guards_can_seize():
-    state = unit_state()
-    hessa = face_to_face(state, "npc_hessa_marr", reason="talk")
-    assert "seize" not in {o["action"] for o in encounter.intent_options(state, hessa).values()}
-    bren = face_to_face(state, "npc_bren_marr", reason="halt")
-    assert "seize" in {o["action"] for o in encounter.intent_options(state, bren).values()}
 
 
 def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):

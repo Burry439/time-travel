@@ -37,7 +37,7 @@ def record_attempt(connection: sqlite3.Connection, run_id: str, request_id: str,
              "context": context, "judge": judged.as_dict(),
              "validator": {key: verdict[key] for key in (
                  "category", "action", "reason", "effort_seconds", "notes", "consumed_ids", "tool_ids",
-                 "new_spec", "take_ids", "transform", "harm", "fill", "demonstration", "give", "property", "steps")},
+                 "new_spec", "take_ids", "gather", "transform", "harm", "fill", "demonstration", "give", "property", "steps")},
              "made": new_objects[0]["id"] if new_objects else None, "made_ids": [o["id"] for o in new_objects]}
     connection.execute("INSERT INTO craft_traces (run_id,request_id,trace_json) VALUES (?,?,?)",
                        (run_id, request_id, json.dumps(trace)))

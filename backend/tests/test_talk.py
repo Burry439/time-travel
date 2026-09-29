@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 import app as service
 import minds
+import scenes
 import talk
 from ai import decider, voice
 
@@ -95,22 +96,20 @@ def world(tmp_path, monkeypatch):
     script, heard, moves = [], [], []
 
     def fake_decide(situation, questions):
-        if "impression" not in questions:  # Round intents and reactions: they stay and listen.
+        if "impression" not in questions:  # Reactions: they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
         return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
 
-    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
+    def fake_voice(context, fallback, allowed=True):  # The scripted scene: each speaker's line, move and reading.
         heard.append(context)
         if not script:
             return voice.VoiceCall(status="fallback", text=fallback, error="nothing scripted")
-        reply = script.pop(0)
-        move = reply.get("reply", {}).get("choice", "answer")
-        said_what = context["moves_they_may_make"].get(move, move)
-        return voice.VoiceCall(status="ok", text=f"(voiced) {said_what[:40]}", model="fake", move=move, answers=reply)
-    monkeypatch.setattr(service.voice, "converse", fake_voice)
+        return scenes.scene_call(context, script.pop(0), lambda ctx, person, move: (
+            "(voiced) " + person["moves_they_may_make"].get(move, move)[:40]))
+    monkeypatch.setattr(service.voice, "scene", fake_voice)
     return SimpleNamespace(http=TestClient(service.app), script=script, voiced=heard)
 
 
@@ -149,7 +148,8 @@ def test_an_exchange_is_one_event_that_replays_exactly(world):
     assert hessa["mind"]["shared"] == ["tomas_beam"] and hessa["mind"]["job"]["kind"] == "watch"
     assert talk.regard(hessa)["trust"] > 0.4
     assert state["learned"][-1]["fact"] == "tomas_beam" and state["journal"][-1]["kind"] == "talk"
-    assert "Tomas" in " ".join(world.voiced[-1]["what_they_know"] + world.voiced[-1]["keeps_to_themselves"])
+    person = world.voiced[-1]["people"][0]
+    assert "Tomas" in " ".join(person["what_they_know"] + person["keeps_to_themselves"])
     trace = reply.json()["trace"]
     assert trace["kind"] == "talk" and trace["action"] == "share:tomas_beam" and "situation" in trace
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
@@ -196,12 +196,3 @@ def test_the_dead_the_busy_and_the_distant_do_not_talk(world):
     failed = say(world.http, state, "npc_hessa_marr", "Hello?")  # The voice can't answer: nothing changes (D-46).
     assert failed.status_code == 503 and "nothing changed" in failed.json()["detail"]["message"]
     assert world.http.get(f"/runs/{state['run_id']}").json()["event_seq"] == state["event_seq"]
-
-
-def test_the_reply_is_the_top_choice_never_a_draw():
-    """No dice (D-41): the same answers always give the same reply."""
-    options = {"ask_back": {}, "offer:water_haul": {}, "answer": {}, "end": {}}
-    answers = {"reply": {"choice": "ask_back", "probabilities": {
-        "ask_back": 0.45, "offer:water_haul": 0.36, "answer": 0.18, "end": 0.01}}}
-    assert {talk.chosen(answers, options) for _ in range(50)} == {"ask_back"}
-    assert talk.chosen({"reply": {"choice": "nonsense"}}, options) == "answer"

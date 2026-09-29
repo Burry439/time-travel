@@ -1,6 +1,6 @@
 """People thinking: everyone with something on their mind decides, in one decider request.
 
-Reactions to the stranger (and encounter intents) come first and go alone, so they're never slowed by
+Reactions to the stranger come first and go alone, so they're never slowed by
 the rest. Otherwise people plan their day and talk to each other (D-37) in the same shared request,
 and anyone whose conversation with the stranger has ended turns it into a memory (D-36) alongside.
 Every result is committed by code in one "minds" event, so replay is exact.
@@ -17,7 +17,6 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-import encounter
 import minds
 import persona
 import store
@@ -26,8 +25,8 @@ from ai import config as ai_config
 from ai import decider, telemetry, voice
 
 router = APIRouter()
-KINDS = ("decide", "round", "agenda", "meet", "recollect")
-REACTING = ("decide", "round")
+KINDS = ("decide", "agenda", "meet", "recollect")
+REACTING = ("decide",)
 RECOLLECT_BATCH = 3
 
 
@@ -194,11 +193,6 @@ def think(run_id: str, request: ThinkRequest):
                         record["skipped"] = "they went their separate ways"
                 elif mine is None:
                     record["skipped"] = f"decider failed: {call.error if call else 'no answer'}"
-                elif pending["kind"] == "round":
-                    if pending["npc_id"] in encounter.missing_intents(working):
-                        record.update(encounter.set_intent(working, npc, mine))
-                    else:
-                        record["skipped"] = "already committed this round"
                 else:
                     record.update(minds.apply_decision(working, npc, mine, now, heard))
                 records.append(record)

@@ -10,8 +10,10 @@ from test_talk import npc, said, unit_state
 
 
 def speaking(monkeypatch, remember="", name=""):
-    monkeypatch.setattr(voice, "converse", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text="Well met.", model="fake", remember=remember, stranger_name=name, move="answer"))
+    monkeypatch.setattr(voice, "scene", lambda context, fallback, allowed=True: voice.VoiceCall(
+        status="ok", text="Well met.", model="fake", stranger_name=name, lines=[
+            {"speaker_id": context["people"][0]["id"], "text": "Well met.", "move": "answer", "answers": {},
+             "remember": remember}]))
 
 
 def test_a_name_is_only_learned_when_the_stranger_said_it():

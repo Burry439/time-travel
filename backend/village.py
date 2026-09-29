@@ -19,6 +19,7 @@ import persona
 PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))["places"]
 AGENDA_GAP_MS = 20_000  # Something fresh makes a free person reconsider their day, at most this often (D-39).
 MEET_GAP_MS = 120_000  # Nobody stops for another chat within this long of their last one.
+PAIR_GAP_MS = 600_000  # The same two don't fall into small talk again this soon, unless one has news (D-48).
 MEET_CELLS = 3.0  # Close enough to fall into conversation.
 VISIT_REACH = 3.0
 MIN_GATE_GUARDS = 2  # The gate is never left with fewer guards than this.
@@ -40,10 +41,14 @@ def _village(state: dict) -> dict:
 
 
 def free(state: dict, npc: dict) -> bool:
-    """Alive, not busy with something they decided, and not face to face with the stranger."""
+    """Alive, not busy with something they decided, not face to face with the stranger, and not standing close
+    enough to a conversation with the stranger to be listening to it (they may join it instead, D-48)."""
     if not npc.get("alive", True) or npc.get("down") or (npc.get("mind") or {}).get("job"):
         return False
-    return npc["id"] not in ((state.get("encounter") or {}).get("participants") or [])
+    encounter = state.get("encounter") or {}
+    if npc["id"] in (encounter.get("participants") or []):
+        return False
+    return not (encounter and math.dist(minds._cell(npc), minds.player_cell(state)) <= OVERHEAR_CELLS)
 
 
 def _world_holds(state: dict, condition: dict | None) -> bool:
@@ -238,6 +243,8 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
         for b in idle:
             if a["id"] < b["id"] and math.dist(minds._cell(a), minds._cell(b)) <= MEET_CELLS and \
                     (b["id"] in persona.opinions(a) or a["id"] in persona.opinions(b)) and \
+                    (now - minds.mind(a).get("met_with", {}).get(b["id"], -PAIR_GAP_MS) >= PAIR_GAP_MS
+                     or has_news(state, a, b)) and \
                     not any(p["kind"] == "meet" and p["npc_id"] in (a["id"], b["id"]) for p in state.get("pending_minds", [])):
                 _stop_to_talk(state, a, b, now)
 
@@ -446,6 +453,7 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
     for person, other in ((a, b), (b, a)):
         my_mind = minds.mind(person)
         my_mind["last_met"] = now
+        my_mind.setdefault("met_with", {})[other["id"]] = now
         my_mind["chatting_with"] = {"id": other["id"], "until": now + CHAT_MS}
         controller = person.get("controller") or {}
         if controller.get("activity") != "walk":

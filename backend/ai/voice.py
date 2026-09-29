@@ -1,12 +1,13 @@
-"""Voice role: a character's words, and (in conversation) what they do.
+"""Voice role: characters' words, and (in conversation) what they do.
 
-In conversation (converse, D-44) this role says what the person would say, from their character sheet
-(persona.py), what they know, why they're here and the conversation so far; it reads the moment itself (D-46),
-and picks one move from those code offers. Code checks the move and applies it; free text never flows
-back into world state. speak() puts an already decided reply into words (the older path, still used
-when a reply is fixed in advance). The same role keeps memory prose (recollect: a finished conversation becomes an
-episode, D-36) and phrases two villagers talking to each other (chatter, D-37). If the model is
-unavailable, the person says an authored fallback line instead and memory is kept from the notes.
+In conversation the role writes the group's moment (scene, D-48): the person addressed answers, and others in the
+conversation or near enough to hear may add a line, talk to each other or ask the stranger something. Each line
+comes from that person's character sheet (persona.py), what they know, why they're there and the conversation so
+far; each speaker reads the moment themselves (D-46) and picks one move from those code offers them. Code checks
+every line and applies it as that person's exchange; free text never flows back into world state. speak() puts an
+already decided reply into words (used by the persona eval). The same role keeps memory prose (recollect: a
+finished conversation becomes an episode, D-36) and phrases two villagers talking to each other (chatter, D-37).
+If the model is unavailable, the person addressed says an authored fallback line instead.
 """
 from __future__ import annotations
 
@@ -24,12 +25,13 @@ from . import config
 PROMPT_VERSION = "voice_v3"
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 _PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
-CONVERSE_VERSION = "voice_v5"
 IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
 SUSPICION = ["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
              "Much more suspicious"]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-_CONVERSE = (_PROMPTS / f"{CONVERSE_VERSION}.txt").read_text(encoding="utf-8")
+SCENE_VERSION = "scene_v1"
+_SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
+SCENE_LINES = 3
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
@@ -41,10 +43,11 @@ class DialogueLine(BaseModel):
     stranger_name: str
 
 
-class Reply(BaseModel):
-    """What the person says and does, and how they read the moment (D-46: one mind decides all of it)."""
+class SceneLine(BaseModel):
+    """One person's line in a group moment: who speaks, what they say and do, how they read it (D-48)."""
+    speaker_id: str
     text: str
-    move: str  # One key from moves_they_may_make.
+    move: str
     impression: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
     suspicion: Literal["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
                        "Much more suspicious"]
@@ -55,6 +58,10 @@ class Reply(BaseModel):
     agreed_to_the_deal: bool
     did_what_was_asked: bool
     remember: str
+
+
+class Scene(BaseModel):
+    lines: list[SceneLine]
     stranger_name: str
 
 
@@ -80,15 +87,16 @@ class VoiceCall:
     error: str | None = None
     remember: str = ""  # What the person will remember of this exchange (D-36).
     stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
-    move: str = ""  # What the person does (converse): code checks it against the moves it offered.
     answers: dict = field(default_factory=dict)  # Their reading of the moment, in the typed-answer shape code uses.
+    lines: list = field(default_factory=list)  # A group moment (scene): [{speaker_id, text, move, answers, remember}].
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
 def system_prompt() -> str:
-    return _PROMPT
+    """The prompt the game's conversations use (the group scene, D-48)."""
+    return _SCENE
 
 
 def tidy(text: str) -> str:
@@ -115,12 +123,16 @@ def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) ->
                        {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)}])
             call.error = None
             break
-        except ValidationError as error:  # Malformed structured output: ask once more.
-            call.error = f"{type(error).__name__}: {error}"
+        except ValidationError as error:  # Malformed structured output: keep a whole answer followed by stray text,
+            call.error = f"{type(error).__name__}: {error}"  # or ask once more.
+            parsed = salvage(error, schema)
+            if parsed is not None:
+                call.error = None
+                break
         except Exception as error:  # Anything else: the caller keeps going with its fallback.
             call.error = f"{type(error).__name__}: {error}"
             break
-    if response is not None and call.error is None:
+    if response is not None and call.error is None and parsed is None:
         if response.usage is not None:
             call.input_tokens, call.output_tokens = response.usage.input_tokens, response.usage.output_tokens
         parsed = response.output_parsed
@@ -128,6 +140,19 @@ def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) ->
             call.error = "The model returned nothing usable."
     call.latency_ms = round((time.perf_counter() - started) * 1000)
     return call, parsed
+
+
+def salvage(error: ValidationError, schema: type[BaseModel]) -> BaseModel | None:
+    """A complete, valid answer with stray text after it ("trailing characters", seen live twice in a row): keep
+    the answer. Anything else malformed stays an error."""
+    raw = next((e.get("input") for e in error.errors() if e.get("type") == "json_invalid"), None)
+    if not isinstance(raw, str):
+        return None
+    try:
+        whole, _ = json.JSONDecoder().raw_decode(raw.lstrip())
+        return schema.model_validate(whole)
+    except (ValueError, ValidationError):
+        return None
 
 
 def _unavailable(fallback: str, allowed: bool, version: str) -> VoiceCall | None:
@@ -158,26 +183,7 @@ def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     return call
 
 
-def converse(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
-    """What the person says and does back (D-44); the fallback line (and no move) if the model can't be used."""
-    skipped = _unavailable(fallback, allowed, CONVERSE_VERSION)
-    if skipped:
-        return skipped
-    call, parsed = _parse(_CONVERSE, context, Reply, CONVERSE_VERSION)
-    call.text = fallback
-    spoken = tidy(parsed.text) if parsed is not None else ""
-    if spoken:
-        call.status, call.text = "ok", spoken
-        call.move = parsed.move.strip()
-        call.remember = " ".join(parsed.remember.split())[:300]
-        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
-        call.answers = reading(parsed)
-    elif call.error is None:
-        call.error = "The model returned no line."
-    return call
-
-
-def reading(parsed: Reply) -> dict:
+def reading(parsed: SceneLine) -> dict:
     """The person's reading of the moment, in the typed-answer shape the rest of the code reads."""
     yes = lambda value: {"type": "noul", "noul": 0.9 if value else 0.1}  # noqa: E731
     return {"impression": {"type": "score", "score": IMPRESSION.index(parsed.impression)},
@@ -188,8 +194,27 @@ def reading(parsed: Reply) -> dict:
             "done": yes(parsed.did_what_was_asked)}
 
 
-def converse_prompt() -> str:
-    return _CONVERSE
+def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
+    """A group moment (D-48): up to three lines, in order, each by a person in or near the conversation, with
+    what they do and how they read it. Code checks every line. If the model can't be used: no lines (the caller
+    has the addressed person say the authored fallback)."""
+    skipped = _unavailable(fallback, allowed, SCENE_VERSION)
+    if skipped:
+        return skipped
+    call, parsed = _parse(_SCENE, context, Scene, SCENE_VERSION)
+    call.text = fallback
+    lines = []
+    for line in (parsed.lines if parsed is not None else [])[:SCENE_LINES]:
+        spoken = tidy(line.text)
+        if spoken:
+            lines.append({"speaker_id": line.speaker_id.strip(), "text": spoken, "move": line.move.strip(),
+                          "answers": reading(line), "remember": " ".join(line.remember.split())[:300]})
+    if lines:
+        call.status, call.lines, call.text = "ok", lines, lines[0]["text"]
+        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
+    elif call.error is None:
+        call.error = "The model returned no lines."
+    return call
 
 
 def recollect(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceCall, dict]:

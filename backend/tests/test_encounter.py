@@ -1,4 +1,4 @@
-"""Encounters: simultaneous rounds with the people who address the stranger (scripted decider, judge and voice)."""
+"""Encounters: rounds with the people who address the stranger (scripted judge and scene, D-48)."""
 from types import SimpleNamespace
 
 import pytest
@@ -7,17 +7,17 @@ from fastapi.testclient import TestClient
 import app as service
 import encounter
 import minds
+import scenes
 from ai import decider, voice
 from test_craft import attempt, judged
 from test_talk import npc, said, unit_state
 
 
-def face_to_face(state, npc_id, intent="listen", reason="confront"):
+def face_to_face(state, npc_id, reason="confront"):
     """The stranger beside someone who has come to address them."""
     person = npc(state, npc_id)
     state["player"].update(x=person["x"], y=person["y"] + 1)
     encounter.join(state, person, reason, "You there!", state["sim_time_ms"])
-    state["encounter"]["intents"][npc_id] = {"action": intent, "line": None, "line_id": None}
     return person
 
 
@@ -43,7 +43,7 @@ def test_people_who_come_to_address_the_stranger_open_an_encounter():
     current = state["encounter"]
     guard = npc(state, current["participants"][0])
     assert current["reason"] == "halt" and minds.card(guard)["guard"] and encounter.hostile(state)
-    assert current["intents"][guard["id"]]["action"] == "listen" and guard["mind"]["job"]["kind"] == "encounter"
+    assert guard["mind"]["job"]["kind"] == "encounter"
     assert current["log"][0]["text"].startswith(guard["name"] + ": “")
     where = (guard["x"], guard["y"])
     state["npcs"], _, _ = minds.advance_world(state, 5_000, state["sim_time_ms"])
@@ -52,18 +52,18 @@ def test_people_who_come_to_address_the_stranger_open_an_encounter():
 
 def test_both_act_at_once_a_blow_lands_while_they_are_talking():
     state = unit_state()
-    face_to_face(state, "npc_hessa_marr", intent="listen", reason="talk")
+    face_to_face(state, "npc_hessa_marr", reason="talk")
     draft, record = play(state, "do", "punch Hessa", blow("npc_hessa_marr"))
     hessa = npc(draft, "npc_hessa_marr")
     assert hessa["health"] < 100 and hessa["alive"]
-    assert record["replier"] == "npc_hessa_marr"  # She was listening, so she answers what just happened...
+    assert record["replier"] == "npc_hessa_marr"  # She is addressed, so she answers what just happened...
     assert "Hessa" in " ".join(record["happened"])  # ...which is the blow she just took.
     assert [e["kind"] for e in record["entries"]] == ["do"]
 
 
 def test_a_blow_at_a_guard_is_a_fight_and_mail_stops_a_fist():
     state = unit_state()
-    face_to_face(state, "npc_bren_marr", intent="listen")
+    face_to_face(state, "npc_bren_marr")
     draft, record = play(state, "do", "punch Bren", blow("npc_bren_marr"))
     assert npc(draft, "npc_bren_marr")["health"] == 100  # The armour law: a fist can't hurt through mail.
     assert record["verdict"]["harm"]["result"] == "deflected"
@@ -71,21 +71,9 @@ def test_a_blow_at_a_guard_is_a_fight_and_mail_stops_a_fist():
     assert record["replier"] is None
 
 
-def test_an_attack_intent_turns_the_encounter_into_a_real_time_fight():
-    state = unit_state()
-    face_to_face(state, "npc_mara_venn", intent="attack", reason="confront")
-    draft, record = play(state, "wait")
-    assert draft["encounter"] is None and draft["fight"]["attackers"] == ["npc_mara_venn"]
-    assert draft["player"].get("health", 100) == 100  # No blow in the round: blows are on the clock now.
-    assert npc(draft, "npc_mara_venn")["mind"]["job"]["kind"] == "fight"
-    assert any(e["kind"] == "attack" for e in record["entries"])
-    again, again_record = play(state, "wait")
-    assert again_record["entries"] == record["entries"] and again["fight"] == draft["fight"]  # No dice.
-
-
 def test_walking_away_from_a_talk_ends_it():
     calm = unit_state()
-    face_to_face(calm, "npc_hessa_marr", intent="listen", reason="talk")
+    face_to_face(calm, "npc_hessa_marr", reason="talk")
     draft, record = play(calm, "leave")
     encounter.finish(draft, record, draft["sim_time_ms"])
     assert draft["encounter"] is None and record["ended"] and not draft.get("fight")
@@ -94,7 +82,7 @@ def test_walking_away_from_a_talk_ends_it():
 
 def test_someone_who_walks_up_mid_encounter_joins_it():
     state = unit_state()
-    face_to_face(state, "npc_hessa_marr", intent="listen", reason="talk")
+    face_to_face(state, "npc_hessa_marr", reason="talk")
     bren = npc(state, "npc_bren_marr")
     bren.update(x=state["player"]["x"] + 6, y=state["player"]["y"])
     minds._set_job(bren, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "confront",
@@ -104,44 +92,29 @@ def test_someone_who_walks_up_mid_encounter_joins_it():
     assert state["encounter"]["reason"] == "confront"  # No longer just a chat.
 
 
-def test_intents_come_from_code_and_turning_on_the_stranger_makes_it_a_fight():
-    state = unit_state()
-    person = face_to_face(state, "npc_hessa_marr", reason="talk")
-    options = encounter.intent_options(state, person)
-    assert {o["action"] for o in options.values()} == {"listen", "attack", "shout_for_help", "flee", "leave"}
-    guard = face_to_face(state, "npc_bren_marr", reason="halt")
-    assert "whistle" in {o["action"] for o in encounter.intent_options(state, guard).values()}
-    state["encounter"]["reason"] = "talk"
-    encounter.set_intent(state, person, {"action": {"choice": next(k for k in options if k.startswith("attack"))}})
-    assert state["encounter"]["intents"]["npc_hessa_marr"]["action"] == "attack" and encounter.hostile(state)
-
-
-# --- Over HTTP ----------------------------------------------------------------------------------------
-
 @pytest.fixture
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "enc.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
-    replies, intents, rulings, moves = [], [], [], []
+    replies, choices, rulings = [], [], []
 
     def fake_decide(situation, questions):
         if "impression" in questions:
             return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
-        choice = intents.pop(0) if intents else "listen"  # One intent for everyone, or {"bren": ..., ...}.
+        choice = choices.pop(0) if choices else "listen"  # A scripted reaction: one for everyone, or per person.
         return decider.DeciderCall(provider="script", model="script", answers={
             k: {"type": "choice", "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict)
                 else choice} for k in questions if k.endswith("action")})
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
-        reply = replies.pop(0) if replies else {}
-        return voice.VoiceCall(status="ok", model="fake", answers=reply, move=reply.get("reply", {}).get("choice", "answer"),
-                               text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120])
-    monkeypatch.setattr(service.voice, "converse", fake_voice)
+    def fake_voice(context, fallback, allowed=True):  # The scripted scene (D-48): lines, moves and readings.
+        return scenes.scene_call(context, replies.pop(0) if replies else {}, lambda ctx, person, move: (
+            f"(voiced) {ctx['what_just_happened'] or ctx['stranger_says']}"[:120]))
+    monkeypatch.setattr(service.voice, "scene", fake_voice)
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
-    return SimpleNamespace(http=TestClient(service.app), replies=replies, intents=intents, rulings=rulings)
+    return SimpleNamespace(http=TestClient(service.app), replies=replies, choices=choices, rulings=rulings)
 
 
 def post(world, state, path, body, status=200):
@@ -171,7 +144,7 @@ def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arres
     assert not any(p["kind"] == "round" for p in state["pending_minds"])  # No second decision per round (D-46).
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # One event, replayed exactly.
     world.rulings.append(blow(guard, "wounded"))  # The /craft path during an encounter is the stranger's part of a round.
-    world.intents.append("listen")
+    world.choices.append("listen")
     reply = world.http.post(f"/runs/{state['run_id']}/craft", json={
         "text": "shove the guard", "selected_ids": [], "expected_version": state["event_seq"], "request_id": "shove"})
     assert reply.status_code == 200, reply.text

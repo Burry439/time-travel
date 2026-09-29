@@ -162,17 +162,20 @@ def way_around_town(npc: dict) -> list[str]:
 def why_here(state: dict, npc: dict) -> str:
     """Why this person is face to face with the stranger, in words (their purpose carries through, D-44)."""
     encounter = state.get("encounter") or {}
-    reason = encounter.get("reason") if npc["id"] in encounter.get("participants", []) else None
+    inside = npc["id"] in encounter.get("participants", [])
+    reason = ((encounter.get("purpose") or {}).get(npc["id"]) or encounter.get("reason")) if inside else None
     crime = minds.unresolved_crime(npc)
     grievance = crime["summary"] if crime else ""
     words = {"halt": f"{npc['name']} stopped the stranger at the gate, as the watch does with every stranger.",
              "confront": f"{npc['name']} came to have it out with the stranger.",
              "threaten": f"{npc['name']} came to warn the stranger off.",
              "demand_payment": f"{npc['name']} came to be paid back for what the stranger did.",
-             "talk": "The stranger came up and spoke to them."}.get(reason or "", "")
+             "talk": "The stranger came up and spoke to them.",
+             "joined": f"{npc['name']} was nearby and joined the conversation."}.get(reason or "", "")
     stolen = stolen_in_view(state, npc)
     carrying = (f" The stranger is carrying it openly: {', '.join(o['name'] for o in stolen)}." if stolen else "")
-    return " ".join(x for x in (words, f"What it's about: {grievance}" if grievance and reason != "talk" else "",
+    return " ".join(x for x in (words, f"What it's about: {grievance}" if grievance and reason not in ("talk", "joined")
+                                else "",
                                 carrying) if x).strip()
 
 
@@ -386,13 +389,6 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     return "\n".join(lines), questions
 
 
-def chosen(answers: dict, options: dict) -> str:
-    """A scripted or decided reply: the top choice for this person. No draw among the others (GDD D-41: no dice); variety
-    comes from their mood, memory and who they are."""
-    choice = (answers.get("reply") or {}).get("choice")
-    return choice if choice in options else "answer"
-
-
 def admits_now(state: dict, npc: dict, answers: dict) -> bool:
     """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43)."""
     return "admit" in replies(state, npc) and _yes(answers, "reason", REASON_YES) and "threat" in answers \
@@ -405,13 +401,11 @@ def moves(state: dict, npc: dict, answers: dict | None = None) -> dict[str, str]
     return {k: o["description"] for k, o in replies(state, npc).items()}
 
 
-def decided_reply(state: dict, npc: dict, answers: dict, proposed=None) -> str:
-    """The move code will carry out: the one the voice picked (or, in older callers, a scripted choice), if it is
-    legal now. Letting the stranger in also needs the guard's own rule met by the reading ("reason", "threat"):
-    their authored motive (GDD 4.3, D-43), checked by code; never forced on words that refuse (D-44)."""
+def decided_reply(state: dict, npc: dict, answers: dict, proposed: str) -> str:
+    """The move code will carry out: the one the voice picked, if it is legal now. Letting the stranger in also
+    needs the guard's own rule met by the reading ("reason", "threat"): their authored motive (GDD 4.3, D-43), checked by code; never forced on words that refuse (D-44)."""
     options = replies(state, npc)
-    key = proposed if isinstance(proposed, str) else chosen(answers, options)
-    key = key if key in options else "answer"
+    key = proposed if proposed in options else "answer"
     if key == "admit" and not admits_now(state, npc, answers):
         return "answer"
     return key
@@ -499,6 +493,43 @@ def converse_context(state: dict, npc: dict, text: str, answers: dict, happened:
     if minds.card(npc).get("guard") and admission_rule(npc):  # Their own reasons, whatever the official line (D-43).
         context["who_they_would_let_through"] = admission_rule(npc)
     return context
+
+
+def bystanders(state: dict, limit: int = 3) -> list[dict]:
+    """People close enough to hear the conversation who aren't in it, nearest first (D-48). They may join."""
+    here = minds.player_cell(state)
+    inside = set((state.get("encounter") or {}).get("participants") or [])
+    near = [n for n in state["npcs"] if n["id"] not in inside and n.get("alive", True) and not n.get("down")
+            and busy(n) is None and ((n.get("mind") or {}).get("job") or {}).get("kind") in (None, "watch")
+            and math.dist(minds._cell(n), here) <= HEAR_TALK_CELLS]
+    return sorted(near, key=lambda n: math.dist(minds._cell(n), here))[:limit]
+
+
+SHARED = ("stranger_says", "what_just_happened", "conversation_so_far")  # Said once for the whole scene.
+
+
+def scene_context(state: dict, addressed: dict | None, participants: list[dict], nearby: list[dict], text: str,
+                  happened: str | None) -> dict:
+    """Everything the voice needs for one group moment (D-48): what the stranger just said or did, the
+    conversation so far, and for each person (addressed first, then those taking part, then those nearby)
+    their sheet, purpose, regard, open deals and legal moves."""
+    encounter = state.get("encounter") or {}
+    people = []
+    order = ([addressed] if addressed else []) + [p for p in participants if p is not addressed] + nearby
+    for npc in order:
+        person = converse_context(state, npc, text, {}, happened)
+        for key in SHARED:
+            person.pop(key, None)
+        if npc in nearby:
+            person.pop("the_way_around_town", None)
+            person["why_they_are_here"] = f"{npc['name']} is nearby and can hear the conversation."
+        person["id"] = npc["id"]
+        person["in_the_conversation"] = ("addressed" if npc is addressed else "nearby" if npc in nearby
+                                         else "taking part")
+        people.append(person)
+    so_far = [e["text"] for e in encounter.get("log", [])[-12:] if e.get("kind") in ("say", "reply", "arrive", "do")]
+    return {"stranger_says": clean(text) if text.strip() else "(nothing)", "what_just_happened": happened or "",
+            "conversation_so_far": so_far, "people": people}
 
 
 def fallback_line(state: dict, npc: dict, key: str) -> str:

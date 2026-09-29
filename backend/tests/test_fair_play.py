@@ -91,4 +91,4 @@ def test_no_second_decision_per_round():
     draft, record = play(state, "say", "I'm here to visit family.", target="npc_oren_dast")
     encounter.finish(draft, record, draft["sim_time_ms"])
     assert not any(p["kind"] == "round" for p in draft.get("pending_minds", []))
-    assert all(i["action"] == "listen" for i in draft["encounter"]["intents"].values())
+    assert "intents" not in draft["encounter"]  # Nobody commits to anything before hearing the stranger.

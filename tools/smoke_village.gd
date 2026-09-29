@@ -40,18 +40,21 @@ func _run() -> void:
 	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	scene._enter_run(created.data, false)
 	await process_frame
-	# Walk up the road to just below the gate (not into the zone where guards stop strangers).
+	# Walk west along the road and up to within sight of the smithy, where Mara and Jory fall into talk. (The gate
+	# guards' patrols only line up by chance, and a pair doesn't small-talk again for ten minutes, D-48.)
 	var cells := []
-	for y in range(67, 20, -1):
-		cells.append([48, y])
+	for x in range(47, 18, -1):
+		cells.append([x, 67])
+	for y in range(66, 33, -1):
+		cells.append([19, y])
 	for i in range(0, cells.size(), 20):
 		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
 			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
 		if not check(reply.ok, "Could not walk up the road"):
 			return
 		scene._accept_state(reply.data.state)
-	scene.predicted_cell = Vector2i(48, 21)
-	scene.player.position = scene._cell_center(48, 21)
+	scene.predicted_cell = Vector2i(19, 34)
+	scene.player.position = scene._cell_center(19, 34)
 	scene.camera.reset_smoothing()
 	var planned := false
 	var chat := ""

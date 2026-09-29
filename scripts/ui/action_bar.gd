@@ -7,8 +7,6 @@ extends PanelContainer
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const PaintedActor := preload("res://scripts/painted_actor.gd")
 const HEIGHT := 272.0
-const DID_WORDS := {"listen": "listened", "attack": "attacked", "shout_for_help": "called for help",
-	"whistle": "whistled", "flee": "ran off", "leave": "left", "interject": "cut in", "seize": "seized you"}
 const EXAMPLES := [
 	"Type anything: “Good day, is this your inn?”",
 	"Or do something: “show Hessa the gourd”, “lever the beam up”",
@@ -434,12 +432,6 @@ func _render_header() -> void:
 		var words := PackedStringArray([str(npc.get("role", "")).to_lower()])
 		words.append("dead" if not npc.get("alive", true) else "unhurt" if health >= 100 else
 			"wounded" if health > 30 else "badly wounded")
-		var did: Dictionary = {}
-		var last = game.run_state.get("last_round")
-		if face_to_face() and typeof(last) == TYPE_DICTIONARY:
-			did = last.get("did", {})
-		if did.has(target):
-			words.append(str(DID_WORDS.get(str(did[target]), did[target])))
 		what.text = "  ·  ".join(words)
 	elif game.run_state.get("objects", {}).has(target):
 		var obj: Dictionary = game.run_state.objects[target]

@@ -492,3 +492,37 @@ def test_a_later_step_can_show_light_or_give_what_an_earlier_step_made():
     summary = commit(state, spear_step(), shown, given, text="make a spear, show Tomas, then give it to him")
     assert [s["category"] for s in summary["steps"]] == ["success", "success", "success"], summary["steps"]
     assert state["objects"][state["last_action"]["crafted"]]["holder_id"] == "npc_tomas_reed"
+
+
+def gather_step(source="tree_01", name="oak leaf", materials=("leaf",), count=1, mass=0.01):
+    return {"action": "gather", "outcome": "success", "reason": "You pull a leaf off the oak.", "effort_seconds": 3,
+            "new_object": None, "take_ids": [], "transformation": None, "harm": None,
+            "gather": {"source_id": source, "tools_used": [],
+                       "piece": {"name": name, "description": "A broad green oak leaf.", "materials": list(materials),
+                                 "count": count, "mass_kg": mass, "length_m": None, "flags": ["flexible"],
+                                 "capabilities": [{"text": "can float on water", "status": "expected"}]}}}
+
+
+def test_a_leaf_can_be_taken_off_a_tree_and_the_tree_stays(world):
+    """D-48: a part of something larger (a leaf, a twig, a handful), with the source left where it is."""
+    http = world.http
+    state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 33, 64)  # Oak tree_01 at (32, 64).
+    world.replies.append(attempt(gather_step(), key="gather:leaf|tree"))
+    body = craft(http, state, "pull a leaf off the tree", "leaf").json()
+    state = body["state"]
+    leaf = state["objects"][f"gathered_{state['event_seq']}_1"]
+    assert leaf["name"] == "oak leaf" and leaf["materials"] == ["leaf"] and leaf["holder_id"] == "player"
+    assert leaf["owner_id"] == "player" and leaf["components"] == ["tree_01"]
+    tree = state["objects"]["tree_01"]
+    assert tree["condition"] == "usable" and tree["holder_id"] is None  # Still standing, still in the way.
+    assert http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
+
+
+def test_gathering_keeps_to_the_source_and_to_a_handful(world):
+    http = world.http
+    state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 33, 64)
+    world.replies.append(attempt(gather_step(name="iron leaf", materials=("iron",), count=3, mass=2.0)))
+    state = craft(http, state, "pull some iron leaves off the tree", "iron").json()["state"]
+    made = [o for o in state["objects"].values() if o["id"].startswith("gathered_")]
+    assert len(made) == 3 and all(o["materials"] == ["wood"] for o in made)  # Iron doesn't grow on oaks.
+    assert sum(o["mass_kg"] for o in made) <= crafting.GATHER_MAX_KG + 0.01

@@ -15,6 +15,7 @@ You can describe several things in one go ("sharpen the branch into a spear with
 
 - **Make** something new: "lash the flint to the branch with the vine to make a spear". The new object goes in your bag with its own history, and a picture is painted for it (a pulsing stand-in shows until it arrives).
 - **Take** things, including other people's: "grab Tomas's plank". It works, but it is theft, and anyone who sees it may react. Things someone has **lent** you are fine to use.
+- **Take part of something** bigger: "pull a leaf off the oak", "snap a twig off the sapling", "peel a strip of bark", "scoop a handful of the clay". You get a small new thing (at most 1 kg) made of what it came from; the tree stays standing, and a small lump gets that much smaller. Every big tree gives leaves, twigs, bark and resin.
 - **Fill** a container with water: "fill the gourd at the trough". Water is conserved; the troughs are at Hessa's inn and by the gate.
 - **Show** what something does: "float the needle in the bowl and show Darin". The judge says what onlookers actually see, and the object's abilities become *seen working* or *didn't work*. Showing beats describing: people remember what they saw.
 - **Give** something you carry to someone: "give Hessa the gourd of water".
@@ -59,7 +60,7 @@ If the guards catch you, giving up ("I give up") is usually wiser than fighting:
 
 Click someone to talk. When someone comes up to *you* (a guard halting you, someone confronting or attacking you), the same bar opens by itself.
 
-It works in **rounds**. Each round you type what you say or do ("hand him the plank", "swing the spear at her", or both at once), or wait, give up, or walk away (Esc). Everyone else acts at the same moment: they decided their move before seeing yours, so a blow can land while someone is mid-sentence.
+It works in **rounds**. Each round you type what you say or do ("hand him the plank", "swing the spear at her", or both at once), or wait, give up, or walk away (Esc). Then the people there answer what you just said and did. **It's a group:** the person you spoke to answers, and others in the conversation or standing close by may chime in, talk to each other, or ask you something. Anyone nearby who speaks steps over and joins. Showing someone something ("I show Roderic the compass") starts a conversation with them too.
 
 Time only moves round by round while you're face to face. Walking away from a fight gives an attacker a swing, and they may chase you.
 

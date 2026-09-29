@@ -274,7 +274,7 @@ def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -
         pending.append({"npc_id": npc_id, "kind": kind, "why": why})
 
 
-REACTING = ("decide", "round")  # Pending kinds that mean someone is reacting to the stranger.
+REACTING = ("decide",)  # Pending kinds that mean someone is reacting to the stranger.
 
 
 def calm(state: dict) -> bool:
@@ -335,7 +335,8 @@ def _describe(state: dict, entry: dict) -> list[dict]:
     if claims and not isinstance(harm, dict):  # A weapon grabbed for an attack is part of the attack.
         claim = claims[0]
         owner = names.get(claim["owner_id"], "someone")
-        verb = {"taken": "took", "used up": "used up", "used": "used", "given away": "gave away"}.get(
+        verb = {"taken": "took", "used up": "used up", "used": "used", "given away": "gave away",
+                "gathered from": "took some of"}.get(
             claim["how"], f"{claim['how']}")
         views.append({"kind": "theft", "victim": claim["owner_id"], "item": claim["name"],
                       "clear": {"summary": f"The stranger {verb} {owner}'s {claim['name']} without asking.",
@@ -683,15 +684,12 @@ def _questions(state: dict, npc: dict, prefix: str = "") -> dict:
     return questions
 
 
-ANSWER_KEY = {"decide": "action", "round": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
+ANSWER_KEY = {"decide": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
 
 
 def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str, dict]:
-    """A person's situation and questions: reacting to what they saw, their next move face to face, what to do
-    next with their day, or what to talk about with someone they've met (D-37)."""
-    if pending["kind"] == "round":
-        import encounter
-        return encounter.situation(state, npc), encounter.questions(state, npc, prefix)
+    """A person's situation and questions: reacting to what they saw, what to do next with their day, or what to
+    talk about with someone they've met (D-37)."""
     if pending["kind"] in ("agenda", "meet"):
         import village
         if pending["kind"] == "agenda":
@@ -888,12 +886,32 @@ def _deliver_vouch(state: dict, npc: dict, captain: dict, now: int, journal: lis
                        "summary": job["summary"], "short": f"has {npc['name']}'s word"})
 
 
+DEALT_WITH_MS = 60_000  # The stranger just talked to or showed something to a guard: nobody needs to halt them.
+
+
+def dealt_with_recently(npcs: list[dict], now: int) -> bool:
+    """A guard has just been speaking with the stranger or been shown something by them (D-48)."""
+    for guard in npcs:
+        if not card(guard).get("guard") or not guard.get("mind"):
+            continue
+        last_talk = max((t.get("at", -10**9) for t in guard["mind"].get("talk", [])), default=-10**9)
+        last_seen = max((m.get("at", -10**9) for m in guard["mind"].get("memories", [])
+                         if m["kind"] in EVIDENCE_KINDS + ("talk",)), default=-10**9)
+        if max(last_talk, last_seen) >= now - DEALT_WITH_MS:
+            return True
+    return False
+
+
 def _gate_watch(state: dict, npcs: list[dict], now: int) -> None:
-    """No model involved: the nearest free guard walks up to a stranger at the gate who hasn't been admitted."""
+    """No model involved: the nearest free guard walks up to a stranger at the gate who hasn't been admitted,
+    unless the stranger is already being dealt with (a conversation, or a guard they've just talked to)."""
     x, y = player_cell(state)
     guards = [g for g in npcs if g.get("alive", True) and card(g).get("guard")]
-    if state.get("admitted") or state.get("inside_city") or not state["player"].get("alive", True)             or not (GATE_ZONE[0] <= x <= GATE_ZONE[1] and y <= GATE_ZONE[2]):
-        for guard in guards:  # The stranger left (or may pass): nobody needs stopping.
+    at_gate = GATE_ZONE[0] <= x <= GATE_ZONE[1] and y <= GATE_ZONE[2]
+    dealt_with = bool(state.get("encounter")) or dealt_with_recently(npcs, now)
+    if state.get("admitted") or state.get("inside_city") or not state["player"].get("alive", True) \
+            or not at_gate or dealt_with:
+        for guard in guards:  # The stranger left, may pass, or is being dealt with: nobody needs stopping.
             if ((guard.get("mind") or {}).get("job") or {}).get("then") == "halt":
                 _set_job(guard, None, now)
         return
@@ -1001,6 +1019,10 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
             if captain:
                 _deliver_vouch(working, npc, captain, end, journal, job)
             _set_job(npc, {"kind": "watch", "until": end + 15_000}, end)
+        elif job["kind"] == "approach" and job.get("then") == "halt" and working.get("encounter"):
+            encounter.join(working, npc, "halt", None, end)  # A conversation is on: they step over and join it.
+        elif job["kind"] == "approach" and job.get("then") == "halt" and dealt_with_recently(npcs, end):
+            _set_job(npc, {"kind": "watch", "until": end + 20_000}, end)  # Already being dealt with.
         elif job["kind"] == "approach" and job.get("then") == "halt":
             choices = _lines(working, npc, "halt", {})
             line_id, text = choices[0] if choices else (None, "Halt! State your business.")
