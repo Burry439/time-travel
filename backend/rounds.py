@@ -115,16 +115,16 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
 
 def _speak(draft: dict, npc: dict, text: str, happened: str | None, ask: tuple[str, dict], run_id: str,
            allowed: bool) -> dict:
-    """One person's reply in a round (D-44): Jev judges the moment (beliefs, feelings, deals, whether a guard's
-    own rule for letting the stranger in is met); then the voice says what they'd say and picks their move from
-    those code allows. Both outside the lock. If Jev can't be reached the voice still answers, on a neutral
-    reading; if the voice can't, an authored line."""
-    decided = decider.decide(*ask)
-    answers = decided.answers if decided.ok else {}
-    context = talk.converse_context(draft, npc, text, answers, happened)
-    fallback_key = talk.decided_reply(draft, npc, answers, "answer")
-    spoken = voice.converse(context, talk.fallback_line(draft, npc, fallback_key), allowed=allowed)
-    key = talk.decided_reply(draft, npc, answers, spoken.move or "answer") if spoken.status == "ok" else fallback_key
+    """One person's reply in a round (D-46): one call. The voice model reads the moment as this person (belief,
+    suspicion, anger, a guard's reasons, deals), says what they'd say and picks their move from those code allows.
+    Code checks the move against that same reading (letting someone in needs reason enough and no threat).
+    If the model can't be used: an authored line, on a neutral reading. Outside the lock."""
+    context = talk.converse_context(draft, npc, text, {}, happened)
+    spoken = voice.converse(context, talk.fallback_line(draft, npc, "answer"), allowed=allowed)
+    answers = spoken.answers if spoken.status == "ok" else {}
+    key = talk.decided_reply(draft, npc, answers, spoken.move or "answer") if spoken.status == "ok" else "answer"
+    decided = decider.DeciderCall(provider="voice", model=spoken.model, answers=answers, latency_ms=0,
+                                  error=None if answers else (spoken.error or "no reading"))
     return {"decided": decided, "answers": answers, "ask": ask, "happened": happened, "key": key,
             "context": context, "spoken": spoken}
 
@@ -196,7 +196,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
             for call in (intent_call, decided, side["decided"] if side else None):
-                if call is not None:
+                if call is not None and call.provider != "voice":  # A reply's reading is part of the voice call.
                     telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                                      call.error or call.fallback_from, call.input_tokens, call.output_tokens)
             if judged and judged.attempts:
@@ -207,8 +207,10 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 if line and line.model and line.model != "stub":
                     telemetry.record(connection, run_id, "voice", line.model, line.prompt_version, line.latency_ms,
                                      line.status == "ok", line.error, line.input_tokens, line.output_tokens)
-        if reply_ask and not (decided and decided.ok) and not (spoken and spoken.status == "ok") \
-                and request.kind == "say" and not any(
+        # Only a real failure changes nothing; stub mode or a spent allowance answers with the authored line.
+        broken = spoken is not None and spoken.status != "ok" and bool(spoken.error) \
+            and not spoken.error.startswith("Model call allowance")
+        if reply_ask and broken and request.kind == "say" and not any(
                 e["kind"] in ("attack", "flee", "leave", "shout_for_help", "whistle") for e in record["entries"]):
             raise HTTPException(503, {"reason": "decider_failed", "message": (
                 f"{replier['name']} doesn't seem to hear you. (The decider couldn't be reached, so nothing changed.)")})

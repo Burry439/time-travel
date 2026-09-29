@@ -124,20 +124,20 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     replies, intents, rulings, moves = [], [], [], []
 
-    def fake_decide(situation, questions):
-        if "impression" in questions:  # A reply: Jev's reading of it; the scripted move is the voice's (D-44).
-            reply = replies.pop(0) if replies else {}
-            moves.append(reply.get("reply", {}).get("choice", "answer"))
-            return decider.DeciderCall(provider="script", model="script", answers=reply)
+    def fake_decide(situation, questions, background=False):
+        if "impression" in questions:
+            return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
         choice = intents.pop(0) if intents else "listen"  # One intent for everyone, or {"bren": ..., ...}.
         return decider.DeciderCall(provider="script", model="script", answers={
             k: {"type": "choice", "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict)
                 else choice} for k in questions if k.endswith("action")})
     monkeypatch.setattr(service.decider, "decide", fake_decide)
-    monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    monkeypatch.setattr(service.voice, "converse", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120], model="fake",
-        move=moves.pop(0) if moves else "answer"))
+    monkeypatch.setattr(service.decider, "decide_many", lambda requests, background=False: [fake_decide(*r) for r in requests])
+    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
+        reply = replies.pop(0) if replies else {}
+        return voice.VoiceCall(status="ok", model="fake", answers=reply, move=reply.get("reply", {}).get("choice", "answer"),
+                               text=f"(voiced) {context['what_just_happened'] or context['stranger_says']}"[:120])
+    monkeypatch.setattr(service.voice, "converse", fake_voice)
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
@@ -167,7 +167,8 @@ def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arres
     state = body["state"]
     assert body["round"]["replier"] == guard and state["encounter"]["round"] == 2
     assert [e["kind"] for e in body["round"]["entries"]] == ["say", "reply"]
-    assert body["trace"]["kind"] == "talk" and any(p["kind"] == "round" for p in state["pending_minds"])
+    assert body["trace"]["kind"] == "talk"
+    assert not any(p["kind"] == "round" for p in state["pending_minds"])  # No second decision per round (D-46).
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # One event, replayed exactly.
     world.rulings.append(blow(guard, "wounded"))  # The /craft path during an encounter is the stranger's part of a round.
     world.intents.append("listen")

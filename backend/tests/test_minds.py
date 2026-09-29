@@ -132,7 +132,7 @@ def scripted(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script = []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, background=False):
         prefixes = sorted({key.split("__")[0] + "__" for key in questions if "__" in key}) or [""]
         replies = {}
         for prefix in prefixes:
@@ -140,7 +140,7 @@ def scripted(tmp_path, monkeypatch):
             replies.update({prefix + key: value for key, value in reply.items()})
         return decider.DeciderCall(provider="script", model="script", answers=replies)
     monkeypatch.setattr(service.decider, "decide", fake_decide)
-    monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
+    monkeypatch.setattr(service.decider, "decide_many", lambda requests, background=False: [fake_decide(*r) for r in requests])
     judge_replies = []
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=judge_replies.pop(0), model="stub", attempts=1))

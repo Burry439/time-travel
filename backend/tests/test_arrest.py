@@ -92,7 +92,7 @@ def test_only_guards_can_seize():
     assert "seize" in {o["action"] for o in encounter.intent_options(state, bren).values()}
 
 
-def test_an_arrest_is_one_round_that_replays(world):
+def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     cells = [[48, y] for y in range(67, 15, -1)]
     for i in range(0, len(cells), 20):
@@ -102,8 +102,7 @@ def test_an_arrest_is_one_round_that_replays(world):
             break
         state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]
     state = post(world, state, "encounter/act", {"kind": "wait"})["state"]  # Round 1: the guard asks first.
-    world.intents.append("seize")
-    body = post(world, state, "encounter/act", {"kind": "wait"})
+    body = post(world, state, "encounter/act", {"kind": "yield"})  # Giving up to a guard: arrested.
     state = body["state"]
     assert body["round"]["arrested"] and state["encounter"] is None and state["barred_until"] > state["sim_time_ms"]
     assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD

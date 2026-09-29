@@ -117,16 +117,49 @@ def knows(npc: dict, event) -> bool:
 
 
 def worst_memory(npc: dict) -> dict | None:
-    """The most serious memory; of equals, the newest (the bowl just taken, not the cup last week)."""
-    memories = mind(npc)["memories"]
+    """The most serious memory still standing; of equals, the newest (the bowl just taken, not the cup last week).
+    Settled matters (made right, forgiven, paid for with an arrest) no longer count (D-46)."""
+    memories = [m for m in mind(npc)["memories"] if not m.get("settled")]
     return max(enumerate(memories), key=lambda pair: (pair[1]["severity"], pair[0]))[1] if memories else None
+
+
+def unresolved_crime(npc: dict, kinds: tuple = ("violence", "theft", "breach")) -> dict | None:
+    """The worst crime by the stranger this person knows of, believes, and that hasn't been put right."""
+    crimes = [m for m in mind(npc)["memories"] if m["kind"] in kinds and not m.get("doubted") and not m.get("settled")
+              and m.get("severity", 0) >= 2]
+    return max(crimes, key=lambda m: m["severity"], default=None)
 
 
 def knows_a_crime(npc: dict) -> bool:
     """A known act of real violence, or an assault on the gate: what rules out entry for good, and what makes
     someone fight to kill rather than to subdue (D-44). Theft and arrests only weigh on their judgement."""
-    return any(m["kind"] in ("violence", "breach") and m.get("severity", 0) >= 2 and not m.get("doubted")
-               for m in mind(npc)["memories"])
+    return unresolved_crime(npc, ("violence", "breach")) is not None
+
+
+def settle(state: dict, why: str, item: str | None = None, kinds: tuple = ("theft",),
+           npc_ids: set | None = None) -> list[str]:
+    """A matter is put right (the thing given back, forgiven, paid for with an arrest): everyone who held it
+    against the stranger lets it go (D-46). Regard already moved stays moved; the grudge ends."""
+    touched = []
+    for npc in state["npcs"]:
+        if npc_ids is not None and npc["id"] not in npc_ids:
+            continue
+        for memory in (npc.get("mind") or {}).get("memories", []):
+            if memory["kind"] in kinds and not memory.get("settled") and (item is None or memory.get("item") == item):
+                memory["settled"] = why
+                touched.append(npc["id"])
+    return sorted(set(touched))
+
+
+def after_deed(state: dict, entry: dict) -> None:
+    """What a committed deed puts right: giving someone back their own things settles that theft."""
+    give = entry.get("give") if entry.get("category") in ("success", "partial_success") else None
+    if not isinstance(give, dict):
+        return
+    for item_id in give.get("item_ids", []):
+        thing = state["objects"].get(item_id)
+        if thing and thing.get("owner_id") == give["recipient_id"]:
+            settle(state, "given back", item=thing["name"])
 
 
 def relation(npc: dict, other_id: str | None) -> str | None:
@@ -298,7 +331,7 @@ def _describe(state: dict, entry: dict) -> list[dict]:
                                             if harm["result"] in ("killed", "disabled") else
                                             f"There was a scuffle near the stranger; {victim} cried out."),
                                 "short": f"was in a fight with {victim}", "severity": max(1, severity - 1)}})
-    claims = entry.get("property") or []
+    claims = [c for c in entry.get("property") or [] if c.get("how") != "used"]  # Using isn't taking (D-46).
     if claims and not isinstance(harm, dict):  # A weapon grabbed for an attack is part of the attack.
         claim = claims[0]
         owner = names.get(claim["owner_id"], "someone")

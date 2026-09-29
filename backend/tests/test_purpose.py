@@ -47,14 +47,15 @@ def test_hessa_only_sees_her_own_things_and_nobody_offers_to_take_what_isnt_thei
     assert not any(k.startswith(("demand:", "take_back:", "seize")) for k in moves) and "attack" not in moves
 
 
-def test_an_arrest_from_a_conversation(world):
+def test_no_crime_no_arrest(world):
+    """A guard may only arrest for a real crime not put right (D-46): with none, a scripted arrest is just talk."""
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     state = walk_near(world, state, "npc_kade_east")
+    assert "seize" not in talk.moves(state, npc(state, "npc_kade_east"))
     world.replies.append(said("seize"))
     body = post(world, state, "act", {"text": "What are you looking at?", "target_id": "npc_kade_east"})
-    state = body["state"]
-    assert body["round"]["arrested"] and (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD
-    assert world.http.get(f"/runs/{state['run_id']}").json() == state
+    assert not body["round"].get("arrested") and body["state"]["encounter"] is not None
+    assert world.http.get(f"/runs/{body['state']['run_id']}").json() == body["state"]
 
 
 def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():

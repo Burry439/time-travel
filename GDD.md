@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, D-39 to D-44)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, D-39 to D-46)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -213,18 +213,18 @@ These appear in the result card, the journal, and the developer trace.
 
 > **Built (D-22, D-28, D-34).** Talking happens in the **dialogue bar**. It opens when you click someone, and on its own when someone addresses you (a halt, a confrontation, a threat, a demand, an attack). It shows who you are facing and a log, round by round.
 >
-> Each round, whatever you type is words, a deed, both, waiting, giving up or walking away (Esc). Everyone in the encounter committed to their own move at the start of the round, and it all happens at the same moment (§7, D-28). With several people, tabs choose whom you address. Over people's heads: "…" while they think, "!" when frightened, red crossed blades when they mean violence, a brief gold mark when they warm to you, and a health bar when hurt.
+> Each round, whatever you type is words, a deed, both, waiting, giving up or walking away (Esc). Since D-46 nobody commits to a move before you act: what a person does comes with their reply, decided after hearing you. With several people, tabs choose whom you address. Over people's heads: "…" while they think, "!" when frightened, red crossed blades when they mean violence, a brief gold mark when they warm to you, and a health bar when hurt.
 >
-> **Replies (D-44).** Jev judges the moment:
-> - how the exchange changed their view of you;
-> - their anger;
-> - whether they believe you;
-> - whether a deal was agreed or done;
-> - for a guard, whether their own rule for letting you in is met.
+> **Replies (D-46).** One call to the voice model (Luna) per reply. As this person, it reads the moment: how the exchange changed their view of you, their suspicion, their anger, whether they believe you, whether a guard has reason enough to let you in and sees no threat, and whether a deal was agreed or done. It knows why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It says what they'd say and picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, forgive, arrest, attack, fetch a guard, refuse, send you away, end it, or simply talk. Code checks the move against that same reading (letting you in needs reason enough and no threat) and applies it. People within 5 cells overhear. The journal lists what people told you and your deals.
 >
-> Then the voice model (Luna) says what this person would say, in their own voice, knowing why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It also picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, arrest, attack, fetch a guard, refuse, send you away, end it, or simply talk. Letting you in is offered only when Jev's beliefs say the guard's rule is met, so the words and the deed come from one choice. Code applies the move. People within 5 cells overhear (they remember; they don't stop to think). The journal lists what people told you and your deals.
->
-> **Walking off is answered by why they came.** A guard who came about a crime gives chase, to put you down and arrest you (to kill only after real violence or an assault on the gate). Someone you wronged shouts for the guards. A plain halt or a chat just ends. **Space** punches, in a fight or starting one.
+> **A fair baseline (D-46):**
+> - Ordinary talk leaves people unchanged or warmer.
+> - Words alone move regard only so far, either way; deeds and crimes count in full.
+> - Theft is taking possession of something, not using a trough or a tool where it stands.
+> - A grudge ends when it's put right: the thing given back or taken back, a forgiving word, or an arrest that answers for it.
+> - Guards question and challenge, but arrest or attack only for a crime they know of that hasn't been put right.
+
+> **Walking off is answered by why they came.** A guard who came about a crime not yet put right gives chase, to put you down and arrest you (to kill only after real violence or an assault on the gate). Someone you wronged shouts for the guards. A plain halt or a chat just ends. **Space** punches, in a fight or starting one.
 >
 > **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** punches whoever you face. Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
 
@@ -917,8 +917,8 @@ The developer gate button stays for map testing but is labelled as a cheat.
 | --- | --- | --- | --- |
 | **Interpreter** | Turn player text into a structured Attempt, or a clarification question | Text + nearby/carried entities → `Attempt` (§15) | Every Try Something and every Talk turn |
 | **Physics judge** | Decide what happens for novel methods, new objects, and demonstrations | Attempt step + object records + material facts + precedents + knowledge baseline → `JudgeResult` | Only when deterministic rules can't resolve a step |
-| **Decider** | Typed NPC judgements: believe, fear, anger, regard; choose an action from short menus (reactions, agendas, round intents) | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4); every conversational reply (beliefs only, D-44) |
-| **Voice** | In conversation, what the person says and which offered move they make (D-44); otherwise in-character lines for a fixed decision, memory, chatter | Character sheet + purpose + Jev's reading + offered moves → `Reply` | Every conversational reply; chats; memory |
+| **Decider** | Typed NPC judgements from short menus: reactions to the stranger and reading the player's line (Luna); the village's own life, agendas and meetings (Jev, D-46) | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4) |
+| **Voice** | In conversation, how the person reads the moment, what they say and which offered move they make, in one call (D-46); otherwise in-character lines for a fixed decision, memory, chatter | Character sheet + purpose + offered moves → `Reply` | Every conversational reply; chats; memory |
 | **Illustrator** | Sprite for a new object | Object record + style prompt → PNG | After an object is created |
 
 ### 9.2 Starting approach (v1)
@@ -943,9 +943,9 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v4` (converse): says the reply and picks the move, and returns a memory note and any name given. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
+| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v5` (converse): reads the moment, says the reply and picks the move, and returns a memory note and any name given. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
-| Decider (built, D-17) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
+| Decider (built, D-17; background only since D-46) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
 
 Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Gameplay code calls roles, never providers.
@@ -1232,6 +1232,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-46 | 2026-09-29 | **One mind per reply, and a fair baseline.**<br><br>**Jev is background only.** It answers the village's own life (agendas, meetings, gossip). Anything the player meets is Luna: reactions to the stranger, reading their line, and every conversational reply.<br><br>**One call per reply.** The reply returns the person's reading of the moment (impression, suspicion, anger, belief, threat, reason enough, deal agreed or done) with the words and the move. Code checks the move against that same reading.<br><br>**No second decision per round.** Encounter "intents" are gone: what someone does comes with their reply, after hearing the stranger.<br><br>**Fair baseline:**<br>- theft is taking, not using;<br>- grudges settle (given back, taken back, forgiven, or an arrest answers for it);<br>- guards arrest or attack only for a known crime not put right;<br>- words alone move regard only so far either way (±0.3);<br>- walking off draws a chase or a shout only over something unresolved.<br><br>**Removed:** interjections, which depended on intents. | The user: "most conversations end in conflict and I think that's Jev's fault … do we really need Jev?" Across four games after D-44: 5 arrests, 3 chases, a whistle and a shout for the guards, mostly while talking.<br><br>**Causes, from the traces:**<br>- Jev's pre-committed round intent was "seize" in 7 of 23 choices. Bren "warms to you" and seizes you the same round; Oren arrested the stranger for vague answers about family.<br>- Grudges never ended: Kade re-arrested over a rope already returned.<br>- Filling Hessa's gourd at her trough, as she asked, counted as theft.<br>- Regard only slid down: "a little more suspicious" 11 of 22 times, with falls uncapped.<br>- The D-44 walk-off rule had Hessa shout for guards after she'd made up with you.<br><br>The user chose: Jev for background only, and a friendlier baseline. |
 | D-45 | 2026-09-29 | **Future techniques are judged by physics alone** (`judge_v12`), and **a later step can use anything an earlier step made** (show it, light it, fill it, give it, fit it). Being unknown here only makes something clever or uncanny to onlookers; it never makes it unsupported. | Testing a player walkthrough: the judge called a siphon "unknown here" and refused it, which is the opposite of the game's fantasy. "Make a torch and light it" or "make a brace and give it to Kade" failed at the second step, because only weapons and ingredients followed `made_by_step_N`. Live after the fix: siphon uncanny, 3-4-5 rope square clever, filter clever, and the made-then-used chains all succeed; craft set 32/33 then 4/4 on the one miss; teleporter and fire from a bare stone are still refused. |
 | D-44 | 2026-09-28 | **Conversations led by the voice; Jev judges; code applies.**<br><br>**Replies:** Jev no longer picks the reply from a menu. It answers typed questions about the moment (impression, suspicion, anger, belief, deals, a guard's reasons and threat). The voice (Luna, `voice_v4`) then says what the person would say and picks one move from those code offers. Code validates the move and applies it.<br><br>**What the voice now sees:**<br>- why they're here and any stolen goods in view;<br>- directions to every place in town;<br>- each guard's own reasons for letting someone in.<br><br>**New moves:** demand, take back, arrest (seize) and attack.<br><br>**Letting someone in** is offered only when Jev's beliefs agree. If the voice can't be reached, an authored line; if Jev can't, the voice still answers on a neutral reading.<br><br>**Walking off** is answered by the person's purpose: a guard with a grievance chases; the wronged shout for guards.<br><br>**Guards who chase a thief subdue:** 15 a blow, down to 25, then arrest, carried out in the clock's payload so it replays. They kill only after violence or a breach they know of.<br><br>**Space** punches out of a fight too. | The user played:<br>- Kade came about Tomas's stolen rope, which the stranger was carrying; to "I'm sorry, I won't do it again" his menu held nothing about the rope, and Jev (30% sure) picked "strangers are kept from the gate";<br>- Hessa couldn't say where the gate was ("answer without telling anything new");<br>- walking away always worked.<br><br>The strong language model was only rewording a classifier's pick. Live now:<br>- Kade: "Sorry won't mend it. Hand Tomas's rope back."<br>- Hessa: "the city gate is about 42 steps north up the road."<br>- Talk evals 20/20 (with four new cases from this run).<br>- Voice median about 2 s; Jev about 1.2 s. |
 | D-43 | 2026-09-28 | **Reputation, and any guard's word** (`judge_v11`, cards v6). Regard gains **respect** (competence seen working) and **awe** (wonder at the uncanny). Demonstrations carry a judged `wonder` (ordinary, clever or uncanny, measured against what a local knows). Awe is double-edged through each card's `superstition`: reverence raises trust; wariness brings suspicion and fear. Only firsthand sight moves awe. **Any guard may let the stranger in** for their own reasons (`admits`), with the captain's two beliefs asked against the guard's own rule. The victory panel names who. | The user: "the point of the game: you are from the future; you use your knowledge to get into the city by helping people, or just by impressing them, or making them believe you are a god", and "any guard, own reasons"; awe "double-edged". Live: the floating needle is judged uncanny 3/3, and hot water shown is ordinary 3/3, once `wonder` was a required field (with a default, the model left it out: 0/3). Talk evals 16/16, including the four new guard cases. |
@@ -1720,6 +1721,46 @@ Changes to this document: …
 - Oren in awe lets you through only 1–2 times in 3. He'd rather hand the choice to the captain, which fits him; storylines (his debt) will give him more reason.
 - Voice p95 is about 6 s on long contexts.
 - Decisions outside conversation (reactions, agendas) are still Jev's pick from a code menu. A low-confidence pick (below about 0.4) handing the choice to the voice is not built yet.
+
+### Retro: one mind per reply, and a fair baseline (D-46), 29 Sep 2026
+
+**Built:**
+
+- `decider.decide(..., background=)`: Jev answers only the village's own life; Luna answers everything the player meets;
+- one `voice_v5` call per reply returns the reading, the words and the move;
+- no encounter intents;
+- `minds.unresolved_crime`, `settle` and `after_deed`, plus the forgive move;
+- theft only for taking;
+- the symmetric words-only cap;
+- guards' arrest and attack moves gated on an unresolved crime.
+
+**Evidence:**
+
+- 160 backend tests pass. New `test_fair_play.py`, from the user's games:
+  - water from Hessa's trough isn't theft;
+  - giving it back settles it for everyone;
+  - an arrest answers for a theft;
+  - forgiving settles one's own grudge;
+  - no crime means no arrest or attack;
+  - walking off after amends is just walking off;
+  - words alone sour someone only so far;
+  - no second decision per round.
+- All Godot smoke tests pass.
+- **Live talk evals:** the first ten cases passed; the other thirteen, 12/13.
+  - The new cases from the user's games pass: Oren's family visit ends in "Where are your papers?" and a referral to the captain, with no arrest; Bren says "give me a straight answer"; Kade doesn't bring the rope up again once it's returned.
+  - The miss is the known Oren-in-awe case.
+- **Latency:** voice median 2.2 s, p95 4.2 s, with one call per reply (Jev's 1.2 s pre-call is gone). A cold first call in a new process takes about 5 s. Reactions and reading the player's line on Luna take about 1.5 s warm.
+
+**Lessons:**
+
+- Two deciders on one person in one moment (the reply and the pre-committed intent) contradict each other. One mind per moment.
+- Most of the conflict was rules, not the model: grudges that never ended, "using" counted as stealing, and an uncapped fall in regard.
+- Look at the player's own games first: the traces showed each cause directly.
+
+**To watch:**
+
+- With no interjections, a second person in an encounter just listens.
+- Reactions (the witness menus) are still menu picks, now by Luna.
 
 ---
 

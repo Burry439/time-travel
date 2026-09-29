@@ -29,8 +29,9 @@ def test_talk_still_works_when_every_model_call_fails(world, monkeypatch):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     state = walk_near(world, state, "npc_kade_east")
     monkeypatch.setattr(decider, "decide", REAL_DECIDE)
-    monkeypatch.setattr(decider, "decide_many", lambda requests: [REAL_DECIDE(*r) for r in requests])
+    monkeypatch.setattr(decider, "decide_many", lambda requests, background=False: [REAL_DECIDE(*r) for r in requests])
     monkeypatch.setattr(voice, "converse", REAL_CONVERSE)
+    monkeypatch.setattr(config, "mode", lambda: "live")  # A live game whose every call fails (not stub mode).
     break_everything(monkeypatch)
     # Classification falls back to speech; neither Jev nor the voice answers, so the honest answer is "nothing changed".
     body = post(world, state, "act", {"text": "Good evening, I'm new here.", "target_id": "npc_kade_east"}, status=503)

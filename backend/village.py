@@ -101,7 +101,7 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
                     "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} what "
                                    f"happened: {grievance['summary']}", "plan": {"kind": "visit", "target": other["id"]}}
         wronged = next((m for m in minds.mind(npc)["memories"] if m["kind"] in minds.CRIME_KINDS
-                        and m.get("victim") == npc["id"] and m.get("source") == "victim"), None)
+                        and m.get("victim") == npc["id"] and m.get("source") == "victim" and not m.get("settled")), None)
         player = state["player"]
         if wronged and player.get("alive", True) and not minds.card(npc).get("guard") and                 state.get("sim_time_ms", 0) - minds.mind(npc).get("confronted_at", -10**9) > 60_000:
             options["confront"] = {"description": f"{name} goes and has it out with the stranger: {wronged['summary']}",
@@ -125,7 +125,7 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
 def _grievance(npc: dict) -> dict | None:
     """The most serious thing this person knows about the stranger that is worth telling someone."""
     serious = [m for m in minds.mind(npc)["memories"] if m.get("severity", 0) >= 2 and m.get("event") is not None
-               and not m.get("doubted")]
+               and not m.get("doubted") and not m.get("settled")]
     return max(serious, key=lambda m: m["severity"], default=None)
 
 

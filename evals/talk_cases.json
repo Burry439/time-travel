@@ -432,6 +432,67 @@
     "take_back:rope_tomas",
     "call_guard"
    ]
+  },
+  {
+   "id": "oren_family_visit",
+   "group": "fair",
+   "npc": "npc_oren_dast",
+   "reason": "halt",
+   "lines": [
+    "I am here to visit family in the city.",
+    "Dude Weinstock.",
+    "My parents, the Weinstocks."
+   ],
+   "forbid": [
+    "seize",
+    "attack",
+    "call_guard"
+   ],
+   "max_suspicion_gain": 0.15
+  },
+  {
+   "id": "bren_how_to_prove",
+   "group": "fair",
+   "npc": "npc_bren_marr",
+   "reason": "halt",
+   "lines": [
+    "I understand you can't just let anyone in. How can I prove myself?"
+   ],
+   "forbid": [
+    "seize",
+    "attack",
+    "tell_to_leave"
+   ],
+   "max_suspicion_gain": 0.0
+  },
+  {
+   "id": "kade_after_rope_returned",
+   "group": "fair",
+   "npc": "npc_kade_east",
+   "memories": [
+    {
+     "kind": "theft",
+     "severity": 2,
+     "clarity": "told",
+     "source": "told_by:npc_tomas_reed",
+     "victim": "npc_tomas_reed",
+     "item": "coil of rope",
+     "settled": "given back",
+     "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+     "short": "stole Tomas's coil of rope"
+    }
+   ],
+   "lines": [
+    "Have you seen Hessa?"
+   ],
+   "forbid": [
+    "seize",
+    "attack",
+    "demand:"
+   ],
+   "line_must_not_contain": [
+    "rope"
+   ]
   }
  ]
 }

@@ -9,7 +9,7 @@ from test_talk import npc, unit_state
 
 def test_a_theft_is_answered_at_once_in_the_victims_own_words(world, monkeypatch):
     asked = []
-    monkeypatch.setattr(decider, "decide", lambda *a: asked.append(a) or decider.DeciderCall("x"))
+    monkeypatch.setattr(decider, "decide", lambda *a, **kw: asked.append(a) or decider.DeciderCall("x"))
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     state = post(world, state, "move", {"cells": [[48, y] for y in range(67, 54, -1)]})["state"]
     state = post(world, state, "move", {"cells": [[x, 55] for x in range(47, 38, -1)]})["state"]

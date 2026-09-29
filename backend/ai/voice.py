@@ -13,7 +13,8 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
+from typing import Literal
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -23,7 +24,11 @@ from . import config
 PROMPT_VERSION = "voice_v3"
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 _PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
-CONVERSE_VERSION = "voice_v4"
+CONVERSE_VERSION = "voice_v5"
+IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
+SUSPICION = ["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
+             "Much more suspicious"]
+ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 _CONVERSE = (_PROMPTS / f"{CONVERSE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
@@ -37,8 +42,18 @@ class DialogueLine(BaseModel):
 
 
 class Reply(BaseModel):
+    """What the person says and does, and how they read the moment (D-46: one mind decides all of it)."""
     text: str
     move: str  # One key from moves_they_may_make.
+    impression: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
+    suspicion: Literal["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
+                       "Much more suspicious"]
+    anger: Literal["Calm", "Annoyed", "Angry", "Furious"]
+    believes_what_was_said: bool
+    sees_the_stranger_as_a_threat: bool
+    reason_enough_to_let_them_through: bool
+    agreed_to_the_deal: bool
+    did_what_was_asked: bool
     remember: str
     stranger_name: str
 
@@ -66,6 +81,7 @@ class VoiceCall:
     remember: str = ""  # What the person will remember of this exchange (D-36).
     stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
     move: str = ""  # What the person does (converse): code checks it against the moves it offered.
+    answers: dict = field(default_factory=dict)  # Their reading of the moment, in the typed-answer shape code uses.
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -148,9 +164,21 @@ def converse(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
         call.move = parsed.move.strip()
         call.remember = " ".join(parsed.remember.split())[:300]
         call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
+        call.answers = reading(parsed)
     elif call.error is None:
         call.error = "The model returned no line."
     return call
+
+
+def reading(parsed: Reply) -> dict:
+    """The person's reading of the moment, in the typed-answer shape the rest of the code reads."""
+    yes = lambda value: {"type": "noul", "noul": 0.9 if value else 0.1}  # noqa: E731
+    return {"impression": {"type": "score", "score": IMPRESSION.index(parsed.impression)},
+            "suspicion": {"type": "score", "score": SUSPICION.index(parsed.suspicion)},
+            "anger": {"type": "score", "score": ANGER.index(parsed.anger)},
+            "believes": yes(parsed.believes_what_was_said), "threat": yes(parsed.sees_the_stranger_as_a_threat),
+            "reason": yes(parsed.reason_enough_to_let_them_through), "accepts": yes(parsed.agreed_to_the_deal),
+            "done": yes(parsed.did_what_was_asked)}
 
 
 def converse_prompt() -> str:

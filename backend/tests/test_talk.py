@@ -94,23 +94,22 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, heard, moves = [], [], []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, background=False):
         if "impression" not in questions:  # Round intents and reactions: they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
-        if not script:
-            return decider.DeciderCall(provider="script", model="script", error="no answer scripted")
-        reply = script.pop(0)
-        moves.append(reply.get("reply", {}).get("choice", "answer"))  # The scripted move is the voice's (D-44).
-        return decider.DeciderCall(provider="script", model="script", answers=reply)
+        return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
     monkeypatch.setattr(service.decider, "decide", fake_decide)
-    monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
+    monkeypatch.setattr(service.decider, "decide_many", lambda requests, background=False: [fake_decide(*r) for r in requests])
 
-    def fake_voice(context, fallback, allowed=True):
+    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
         heard.append(context)
-        move = moves.pop(0) if moves else "answer"
+        if not script:
+            return voice.VoiceCall(status="fallback", text=fallback, error="nothing scripted")
+        reply = script.pop(0)
+        move = reply.get("reply", {}).get("choice", "answer")
         said_what = context["moves_they_may_make"].get(move, move)
-        return voice.VoiceCall(status="ok", text=f"(voiced) {said_what[:40]}", model="fake", move=move)
+        return voice.VoiceCall(status="ok", text=f"(voiced) {said_what[:40]}", model="fake", move=move, answers=reply)
     monkeypatch.setattr(service.voice, "converse", fake_voice)
     return SimpleNamespace(http=TestClient(service.app), script=script, voiced=heard)
 
@@ -194,10 +193,9 @@ def test_the_dead_the_busy_and_the_distant_do_not_talk(world):
     assert far.status_code == 409 and "too far" in far.json()["detail"]["message"]
     state = beside_hessa(world)
     world.script.clear()
-    before = dict(talk.regard(npc(state, "npc_hessa_marr")))
-    still = say(world.http, state, "npc_hessa_marr", "Hello?")  # Jev has no answer: she still talks (D-44)...
-    assert still.status_code == 200
-    assert talk.regard(npc(still.json()["state"], "npc_hessa_marr"))["trust"] == before["trust"]  # ...on a neutral reading.
+    failed = say(world.http, state, "npc_hessa_marr", "Hello?")  # The voice can't answer: nothing changes (D-46).
+    assert failed.status_code == 503 and "nothing changed" in failed.json()["detail"]["message"]
+    assert world.http.get(f"/runs/{state['run_id']}").json()["event_seq"] == state["event_seq"]
 
 
 def test_the_reply_is_jevs_top_choice_never_a_draw():

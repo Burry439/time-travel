@@ -118,6 +118,7 @@ def think(run_id: str, request: ThinkRequest):
             p["kind"] == "meet" and not village.has_news(snapshot, minds.find(snapshot["npcs"], p["npc_id"]),
                                                          minds.find(snapshot["npcs"], p["why"])))]
         shared = minds.batch_request(snapshot, ask_jev) if ask_jev else None
+        background = not any(p["kind"] in REACTING for p in ask_jev)  # Jev for the village's own life only (D-46).
         memory_jobs = [(p, *_recollect_context(minds.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting]
     records: list[dict] = []
     try:
@@ -128,7 +129,7 @@ def think(run_id: str, request: ThinkRequest):
                               for _, context, fallback in memory_jobs]
             if shared:  # One request for everyone deciding now; per-person requests only for anyone it missed.
                 text, questions, prefixes = shared
-                batch_call = decider.decide(text, questions)
+                batch_call = decider.decide(text, questions, background=background)
                 calls["batch"] = batch_call
                 for pending in ask_jev:
                     mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
@@ -136,7 +137,7 @@ def think(run_id: str, request: ThinkRequest):
                         answers[pending["npc_id"]] = mine
             missing = [p for p in ask_jev if p["npc_id"] not in answers]
             for pending, call in zip(missing, decider.decide_many(
-                    [minds.decision_request(snapshot, p) for p in missing])):
+                    [minds.decision_request(snapshot, p) for p in missing], background=background)):
                 calls[pending["npc_id"]] = call
                 if call.ok:
                     answers[pending["npc_id"]] = call.answers

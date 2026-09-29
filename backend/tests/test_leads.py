@@ -91,23 +91,3 @@ def test_someone_else_in_the_encounter_can_cut_in():
     assert record["replier"] == "npc_hessa_marr" and record["interjector"] == "npc_bren_marr"
 
 
-def test_an_interjection_is_a_second_reply_in_the_same_round(world):
-    state = world.http.post("/runs", json={"mode": "developer"}).json()
-    cells = [[48, y] for y in range(67, 15, -1)]
-    for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
-    for _ in range(60):
-        if state.get("encounter"):
-            break
-        state = post(world, state, "explore", {"elapsed_ms": 1000})["state"]
-    guard = state["encounter"]["participants"][0]
-    other = next(n for n in ("npc_oren_dast", "npc_bren_marr", "npc_roderic_vale") if n != guard)
-    world.replies.extend([said("answer"), said("ask_back")])
-    state = post(world, state, "encounter/act", {"kind": "say", "text": "Hello.", "target_id": other})["state"]
-    assert other in state["encounter"]["participants"]
-    world.intents.append({guard.split("_")[1]: "interject", other.split("_")[1]: "listen"})
-    world.replies.extend([said("answer"), said("ask_back")])
-    body = post(world, state, "encounter/act", {"kind": "say", "text": "I'm a traveller.", "target_id": other})
-    kinds = [e["kind"] for e in body["round"]["entries"]]
-    assert kinds.count("reply") == 1 and kinds.count("interject") == 1
-    assert world.http.get(f"/runs/{state['run_id']}").json() == body["state"]

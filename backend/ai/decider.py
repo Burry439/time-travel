@@ -75,21 +75,24 @@ class DeciderCall:
         return asdict(self)
 
 
-def decide(state_text: str, questions: dict) -> DeciderCall:
-    """Ask all questions about one situation in a single request. Never raises: a failure is call.error."""
+def decide(state_text: str, questions: dict, background: bool = False) -> DeciderCall:
+    """Ask all questions about one situation in a single request. Never raises: a failure is call.error.
+
+    Anything the player meets (reactions to them, reading what they typed) is decided by the language model;
+    Jev only answers the village's own background life (background=True): agendas and meetings (D-46)."""
     try:
-        return _decide(state_text, questions)
+        return _decide(state_text, questions, background)
     except Exception as error:  # A decision that can't be made must never take a request down with it.
         return DeciderCall(provider="error", error=f"{type(error).__name__}: {error}")
 
 
-def _decide(state_text: str, questions: dict) -> DeciderCall:
+def _decide(state_text: str, questions: dict, background: bool = False) -> DeciderCall:
     current = mode()
     if current == "stub":
         return _stub(questions)
     if current == "off":
         return DeciderCall(provider="off", error="No TypeSafe or OpenAI key configured.")
-    if current == "jev":
+    if current == "jev" and background:
         call = _jev(state_text, questions)
         if call.ok:
             return call
@@ -100,11 +103,11 @@ def _decide(state_text: str, questions: dict) -> DeciderCall:
     return _llm(state_text, questions)
 
 
-def decide_many(requests: list[tuple[str, dict]]) -> list[DeciderCall]:
+def decide_many(requests: list[tuple[str, dict]], background: bool = False) -> list[DeciderCall]:
     if not requests:
         return []
     with ThreadPoolExecutor(max_workers=min(8, len(requests))) as pool:
-        return list(pool.map(lambda request: decide(*request), requests))
+        return list(pool.map(lambda request: decide(*request, background=background), requests))
 
 
 def _jev(state_text: str, questions: dict) -> DeciderCall:

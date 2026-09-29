@@ -137,7 +137,7 @@ def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, m
     # Past the decider allowance, nobody asks Jev about their day: they carry on by routine.
     asked = []
     monkeypatch.setattr(ai_config, "max_decider_calls_per_run", lambda: 0)
-    monkeypatch.setattr(decider, "decide", lambda text, questions: asked.append(questions) or decider.DeciderCall("x"))
+    monkeypatch.setattr(decider, "decide", lambda text, questions, **kw: asked.append(questions) or decider.DeciderCall("x"))
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     for _ in range(40):
         if any(p["kind"] == "agenda" for p in state.get("pending_minds", [])):

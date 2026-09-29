@@ -289,6 +289,7 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
                 record["entry"], record["effort_seconds"], record["verdict"] = entry, verdict["effort_seconds"], verdict
                 perceptions = minds.perceive(draft, entry)
                 minds.apply_perceptions(draft, perceptions)
+                minds.after_deed(draft, entry)
                 inside = set(encounter["participants"])
                 draft["pending_minds"] = [p for p in draft.get("pending_minds", [])
                                           if not (p["npc_id"] in inside and p["kind"] == "decide")]
@@ -353,8 +354,7 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
 
 def grievance(npc: dict) -> dict | None:
     """What the stranger did that this person holds against them (a crime they believe), if anything."""
-    worst = minds.worst_memory(npc)
-    return worst if worst and worst["kind"] in minds.CRIME_KINDS and not worst.get("doubted") else None
+    return minds.unresolved_crime(npc)
 
 
 def _walked_off(draft: dict, encounter: dict, now: int, journal: list[dict], note) -> None:
@@ -406,12 +406,13 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
         return
     record["ended"] = False
     encounter["round"] += 1
-    encounter["intents"] = {}
+    # No second decision per round (D-46): everyone listens, and what they do comes with their reply, decided
+    # after hearing the stranger. (A separate pre-committed "intent" had guards seizing people mid-friendly-chat.)
+    encounter["intents"] = {n: {"action": "listen", "line": None, "line_id": None} for n in encounter["participants"]}
     for npc_id in encounter["participants"]:
         npc = minds.find(draft["npcs"], npc_id)
         if encounter["reason"] != "talk":
             minds._set_job(npc, {"kind": "encounter"}, now)  # Stay face to face (a reply may have set a watch).
-        minds.add_pending(draft, npc_id, "round", "encounter")
 
 
 def arrest_player(state: dict, guard: dict, now: int) -> str:
@@ -428,6 +429,7 @@ def arrest_player(state: dict, guard: dict, now: int) -> str:
              + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
              + ". You're not welcome at the gate for a while.")
     state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
+    minds.settle(state, "paid for with an arrest")  # The thefts are answered for (violence is not, D-46).
     captain = minds.find(state["npcs"], talk.CAPTAIN)
     if captain and captain.get("alive", True) and not captain.get("down"):
         minds.remember(captain, {"kind": "arrest", "severity": 1, "victim": None, "item": None,

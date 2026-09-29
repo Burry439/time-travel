@@ -124,17 +124,18 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, rulings, moves = [], [], []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, background=False):
         if "impression" not in questions:  # People choosing what to do (not answering the stranger): they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
-        reply = script.pop(0) if script else {}
-        moves.append(reply.get("reply", {}).get("choice", "answer"))  # The scripted move is the voice's (D-44).
-        return decider.DeciderCall(provider="script", model="script", answers=reply)
+        return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
     monkeypatch.setattr(service.decider, "decide", fake_decide)
-    monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
-    monkeypatch.setattr(service.voice, "converse", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text=fallback, model="fake", move=moves.pop(0) if moves else "answer"))
+    monkeypatch.setattr(service.decider, "decide_many", lambda requests, background=False: [fake_decide(*r) for r in requests])
+    def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
+        reply = script.pop(0) if script else {}
+        return voice.VoiceCall(status="ok", text=fallback, model="fake", answers=reply,
+                               move=reply.get("reply", {}).get("choice", "answer"))
+    monkeypatch.setattr(service.voice, "converse", fake_voice)
     monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
         status="ok", result=rulings.pop(0), model="stub", attempts=1))
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
@@ -270,10 +271,8 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     assert {"threat", "reason"} <= set(questions)
     # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
-    assert "admit" in talk.moves(state, roderic, answers("x", reason=0.8, threat=0.2))
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
-    assert "admit" not in talk.moves(state, roderic, answers("x", reason=0.3, threat=0.1))
     # Beliefs alone never open the gate on words that refuse.
     assert talk.decided_reply(state, roderic, answers("x", reason=0.9, threat=0.1), "tell_to_leave") == "tell_to_leave"
     _, questions = talk.request(state, npc(state, "npc_bren_marr"), "May I enter?")

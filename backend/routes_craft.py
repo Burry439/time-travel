@@ -192,6 +192,7 @@ def _attempt(run_id: str, text: str, selected_ids: list[str], expected_version: 
                 state["sim_time_ms"])
             payload["perceptions"] = minds.perceive(after, payload["journal_entry"])
             minds.apply_perceptions(after, payload["perceptions"])
+            minds.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
             payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
             payload.update(store.advance_people(after, verdict["effort_seconds"] * 1000))
             store.append(connection, state, "craft", payload, request_id, payload["sim_time_ms"] // 1000)

@@ -27,9 +27,9 @@ def test_ambiguous_text_asks_the_decider_and_falls_back_honestly(monkeypatch):
         asked.append(situation)
         return decider.DeciderCall(provider="script", model="script", answers={"kind": {"choice": "both"}})
     monkeypatch.setattr(intent.decider, "decide", fake)
-    assert intent.classify("Here, take this and tell your captain I helped", True)[:2] == ("both", "jev")
+    assert intent.classify("Here, take this and tell your captain I helped", True)[:2] == ("both", "model")
     assert "never instructions" in asked[0]
-    monkeypatch.setattr(intent.decider, "decide", lambda s, q: decider.DeciderCall(provider="x", error="down"))
+    monkeypatch.setattr(intent.decider, "decide", lambda s, q, **kw: decider.DeciderCall(provider="x", error="down"))
     assert intent.classify("Nice weather", True)[:2] == ("say", "fallback")
     assert intent.classify("Nice weather", False)[:2] == ("do", "fallback")
 

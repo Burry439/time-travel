@@ -92,9 +92,9 @@ def classify(text: str, someone_near: bool) -> tuple[str, str, decider.DeciderCa
     acts = (call.answers.get("acts") or {}).get("noul")
     choice = (call.answers.get("kind") or {}).get("choice")
     if choice in ("wait", "yield", "leave") or speaks is None or acts is None:
-        return (choice, "jev", call) if choice in KINDS else (("say" if someone_near else "do"), "fallback", call)
+        return (choice, "model", call) if choice in KINDS else (("say" if someone_near else "do"), "fallback", call)
     if speaks >= 0.5 and acts >= 0.5:
-        return "both", "jev", call
+        return "both", "model", call
     if acts >= 0.5 or speaks >= 0.5:
-        return ("do" if acts >= speaks else "say"), "jev", call
-    return (choice if choice in KINDS else ("say" if someone_near else "do")), "jev", call
+        return ("do" if acts >= speaks else "say"), "model", call
+    return (choice if choice in KINDS else ("say" if someone_near else "do")), "model", call

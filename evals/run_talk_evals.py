@@ -76,6 +76,8 @@ def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
         problems.append(f"trust rose {end['trust'] - start['trust']:.2f}")
     if case.get("trust_falls") and not end["trust"] < start["trust"]:
         problems.append("trust did not fall")
+    if "max_suspicion_gain" in case and end["suspicion"] - start["suspicion"] > case["max_suspicion_gain"] + 1e-9:
+        problems.append(f"suspicion rose {end['suspicion'] - start['suspicion']:.2f}")
     if case.get("suspicion_rises") and not end["suspicion"] > start["suspicion"]:
         problems.append("suspicion did not rise")
     if case.get("line_needs_any") and not any(w in t.get("line", "").lower() for t in turns
