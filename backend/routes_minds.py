@@ -1,4 +1,4 @@
-"""People thinking: everyone with something on their mind decides, in one Jev request.
+"""People thinking: everyone with something on their mind decides, in one decider request.
 
 Reactions to the stranger (and encounter intents) come first and go alone, so they're never slowed by
 the rest. Otherwise people plan their day and talk to each other (D-37) in the same shared request,
@@ -113,12 +113,11 @@ def think(run_id: str, request: ThinkRequest):
         _thinking_runs.add(guard)
         snapshot = copy.deepcopy(state)
         # Past the decider allowance, days go on by routine and chats are small talk; reactions still decide.
-        # A chance meeting with nothing to pass on is a nod, decided by code (no Jev call).
-        ask_jev = [p for p in batch if not (over_budget and p["kind"] not in REACTING) and not (
+        # A chance meeting with nothing to pass on is a nod, decided by code (no model call).
+        ask = [p for p in batch if not (over_budget and p["kind"] not in REACTING) and not (
             p["kind"] == "meet" and not village.has_news(snapshot, minds.find(snapshot["npcs"], p["npc_id"]),
                                                          minds.find(snapshot["npcs"], p["why"])))]
-        shared = minds.batch_request(snapshot, ask_jev) if ask_jev else None
-        background = not any(p["kind"] in REACTING for p in ask_jev)  # Jev for the village's own life only (D-46).
+        shared = minds.batch_request(snapshot, ask) if ask else None
         memory_jobs = [(p, *_recollect_context(minds.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting]
     records: list[dict] = []
     try:
@@ -129,15 +128,15 @@ def think(run_id: str, request: ThinkRequest):
                               for _, context, fallback in memory_jobs]
             if shared:  # One request for everyone deciding now; per-person requests only for anyone it missed.
                 text, questions, prefixes = shared
-                batch_call = decider.decide(text, questions, background=background)
+                batch_call = decider.decide(text, questions)
                 calls["batch"] = batch_call
-                for pending in ask_jev:
+                for pending in ask:
                     mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
                     if batch_call.ok and minds.ANSWER_KEY[pending["kind"]] in mine:
                         answers[pending["npc_id"]] = mine
-            missing = [p for p in ask_jev if p["npc_id"] not in answers]
+            missing = [p for p in ask if p["npc_id"] not in answers]
             for pending, call in zip(missing, decider.decide_many(
-                    [minds.decision_request(snapshot, p) for p in missing], background=background)):
+                    [minds.decision_request(snapshot, p) for p in missing])):
                 calls[pending["npc_id"]] = call
                 if call.ok:
                     answers[pending["npc_id"]] = call.answers
@@ -203,13 +202,13 @@ def think(run_id: str, request: ThinkRequest):
                 else:
                     record.update(minds.apply_decision(working, npc, mine, now, heard))
                 records.append(record)
-                if shared and pending in ask_jev and record["shared_request"]:
+                if shared and pending in ask and record["shared_request"]:
                     situation, questions = shared[0], {k: v for k, v in shared[1].items()
                                                        if k.startswith(shared[2][pending["npc_id"]])}
                 else:
                     situation, questions = minds.decision_request(snapshot, pending)
                 trace = {**record, "situation": situation, "questions": questions,
-                         "call": call.as_dict() if call else {}, "people_in_request": len(ask_jev)}
+                         "call": call.as_dict() if call else {}, "people_in_request": len(ask)}
                 if pending["kind"] == "meet" and spoken.get(pending["npc_id"]):
                     trace["chatter"] = spoken[pending["npc_id"]][0].as_dict()
                 connection.execute("INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",

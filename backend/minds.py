@@ -1,12 +1,12 @@
 """NPC minds: perception, memories, feelings, decisions and the actions that follow.
 
 Code decides who could perceive an event (and how clearly), which actions are legal for each
-person, what those actions do over time, and how fights go. The decider role (Jev) is asked only
+person, what those actions do over time, and how fights go. The decider role (the language model, typed questions) is asked only
 at decision points: it chooses among the legal options - each paired with lines in that person's
-voice - and rates feelings. Everyone deciding at the same moment shares one Jev request.
+voice - and rates feelings. Everyone deciding at the same moment shares one decider request.
 
 Flow: a committed player act -> perceive() gives witnesses memories and queues them in
-state["pending_minds"] -> the client's thinking lane calls /think -> batch_request() -> Jev ->
+state["pending_minds"] -> the client's thinking lane calls /think -> batch_request() -> the decider ->
 apply_decision() starts jobs (flee, hide, shout, warn, whistle, report, confront, threaten,
 demand payment, attack, help) -> advance_world() moves people along their jobs each clock beat
 and applies calm ambient rules. Anyone who reaches the stranger to address them (a halt, a
@@ -49,7 +49,7 @@ GIVE_UP_CELLS = 28.0
 GATE_ZONE = (38, 58, 17)  # x from, x to, rows up to: the gate approach, where guards stop strangers.
 HALT_EVERY_MS = 180_000  # A stranger who was stopped isn't stopped again for a while.
 HALT_REACH_CELLS = 14.0
-THINK_BATCH = 6  # People who can think in one /think call (one Jev request); the rest wait for the next.
+THINK_BATCH = 6  # People who can think in one /think call (one decider request); the rest wait for the next.
 ACTIVITY_WORDS = {"work": "working", "look": "keeping watch", "patrol": "patrolling", "wait": "waiting",
                   "walk": "walking", "conversation": "talking", "dead": "lying dead"}
 FEAR_LEVELS = ["Not afraid", "Uneasy", "Afraid", "Terrified"]
@@ -258,7 +258,7 @@ def _wonder(npc: dict, memory: dict, view: dict, trust: float, suspicion: float)
 
 def remember(npc: dict, memory: dict) -> None:
     """Add a memory (evidence and crimes move regard); past the limit, forget the least serious one.
-    Anything of note makes them fresh: they'll reconsider their day (D-39: Jev on events, not a timer)."""
+    Anything of note makes them fresh: they'll reconsider their day (D-39: the decider on events, not a timer)."""
     _shift_regard(npc, memory)
     if memory.get("severity", 0) >= 1:
         mind(npc)["fresh"] = memory.get("short") or memory.get("summary", "")[:80]
@@ -451,7 +451,7 @@ STIRRED_MS = 20_000  # How long the feelings of that moment last before they can
 
 def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
     """Remember what was seen; people who clearly saw a crime react at once by code (they turn, they're angry
-    or afraid, the nearest one shouts), and then decide what to do about it (Jev)."""
+    or afraid, the nearest one shouts), and then decide what to do about it (the decider)."""
     barked = False
     here = player_cell(state)
     order = sorted(perceptions, key=lambda p: (-p["memory"]["severity"], p["memory"]["source"] != "victim",

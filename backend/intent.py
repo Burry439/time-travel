@@ -1,7 +1,7 @@
 """What the stranger typed: words to someone, a deed, both, or waiting / giving up / walking away.
 
 The player has one text line. Obvious cases are decided by code (quoted words are speech, "I give up"
-is yielding, a sentence that starts with an action verb is a deed); anything else is one Jev choice
+is yielding, a sentence that starts with an action verb is a deed); anything else is one decider choice
 question. The text is only ever data to the decider.
 """
 from __future__ import annotations
@@ -65,7 +65,7 @@ def unquote(text: str) -> str:
 
 
 def classify(text: str, someone_near: bool) -> tuple[str, str, decider.DeciderCall | None]:
-    """(kind, how it was decided: code | jev | fallback, the decider call if any)."""
+    """(kind, how it was decided: code | model | fallback, the decider call if any)."""
     kind = obvious(text)
     if kind:
         return kind, "code", None

@@ -1,10 +1,10 @@
-"""The village's own life (GDD D-37): Jev chooses each person's next move in their day, and people
+"""The village's own life (GDD D-37): the decider chooses each person's next move in their day, and people
 meet and pass news between them, whether or not the stranger is watching.
 
 Code builds every option from the character sheet and the world (a task at a real place, a visit to
 someone they know, a look at the stranger, a rest, or carrying on with their round) and applies every
-effect: the walk there, a memory passed on, a warmer or cooler opinion. Jev only chooses among them.
-The authored routines stay as the fallback whenever Jev can't or needn't decide.
+effect: the walk there, a memory passed on, a warmer or cooler opinion. The decider only chooses among them.
+The authored routines stay as the fallback whenever the decider can't or needn't decide.
 """
 from __future__ import annotations
 
@@ -206,7 +206,7 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
 
 
 def schedule(state: dict, npcs: list[dict], now: int) -> None:
-    """Jev only when something happens (D-39): a free person whose mind is fresh (news, a memory, a storyline,
+    """The decider only when something happens (D-39): a free person whose mind is fresh (news, a memory, a storyline,
     the stranger coming into view) reconsiders their day. Otherwise the routine goes on by code. Also queues
     meetings for people who arrived on a visit or bumped into someone they know."""
     for npc in npcs:
@@ -295,7 +295,7 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
 
 
 def has_news(state: dict, a: dict, b: dict) -> bool:
-    """Whether a meeting is worth asking Jev about: either has something to pass on (else it's a nod, by code)."""
+    """Whether a meeting is worth asking the decider about: either has something to pass on (else it's a nod, by code)."""
     return bool(news_pick(state, a, b) or news_pick(state, b, a) or minds.mind(a).get("fresh")
                 or minds.mind(b).get("fresh"))
 
@@ -309,7 +309,7 @@ def news_pick(state: dict, a: dict, b: dict) -> str | None:
 
 
 def chosen_topic(state: dict, a: dict, b: dict, answers: dict) -> str:
-    """Jev's topic, unless A (as Jev believes) would pass on the news first: a yes/no is more reliable than
+    """The decider's topic, unless A (as the decider believes) would pass on the news first: a yes/no is more reliable than
     hoping one important option wins a long choice (GDD M5 lesson)."""
     options = topics(state, a, b)
     pick = news_pick(state, a, b)

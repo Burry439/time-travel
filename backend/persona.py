@@ -1,6 +1,6 @@
-"""One character sheet per person, read by the decider (Jev) and the voice alike (GDD D-38).
+"""One character sheet per person, read by the decider and the voice alike (GDD D-38).
 
-Personality used to be split: Jev never saw how someone talks or what persuades them, and the voice
+Personality used to be split: the decider never saw how someone talks or what persuades them, and the voice
 never saw their goals or the people they know. Everything here comes from the authored card plus
 what has happened to them: their mood, what they're doing, how they feel about the people around
 them, and what they remember of the stranger (D-36). Free text from models only ever lands in
@@ -91,7 +91,7 @@ def opinion_lines(state: dict, npc: dict, people: list[dict] | None = None) -> l
 
 
 def sheet_lines(state: dict, npc: dict) -> list[str]:
-    """The character sheet for Jev: who they are beyond their role, what they want, how they feel now."""
+    """The character sheet for the decider: who they are beyond their role, what they want, how they feel now."""
     me, name = minds.card(npc), npc["name"]
     lines = []
     if me.get("goals"):

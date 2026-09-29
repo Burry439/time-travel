@@ -1,4 +1,4 @@
-"""Conversations led by the voice, with purpose (GDD D-44): Jev judges the moment, the voice says what the person
+"""Conversations led by the voice, with purpose (GDD D-44, D-46): the voice reads the moment, says what the person
 would say and picks their move, code applies it. People who came about stolen goods deal with the stolen goods;
 guards chasing a thief subdue and arrest rather than kill."""
 import combat

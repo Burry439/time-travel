@@ -873,7 +873,7 @@ func trace_view(body: Control, trace: Dictionary) -> void:
 		reveal(body, "Object committed by code", JSON.stringify(validator.new_spec, "  "))
 
 
-## Developer view of the last exchange: what Jev chose, how regard moved, what the voice was given.
+## Developer view of the last exchange: the move and reading the voice returned, how regard moved, what the voice was given.
 func talk_trace(body: Control, trace: Dictionary) -> void:
 	var call: Dictionary = trace.get("call", {})
 	var spoken: Dictionary = trace.get("voice", {})
@@ -881,14 +881,19 @@ func talk_trace(body: Control, trace: Dictionary) -> void:
 	var heading := label("DEVELOPER: LAST EXCHANGE")
 	heading.theme_type_variation = "Caption"
 	body.add_child(heading)
-	small(body, "Reply: %s (Jev's top choice: %s)\nTrust %+.2f · suspicion %+.2f\nDecider: %s · %d ms · $%s%s\nVoice: %s · %s · %d ms%s" % [
-		str(trace.get("action")), str(trace.get("jev_choice")), float(change.get("trust", 0)), float(change.get("suspicion", 0)),
-		_shown(call.get("provider")), int(call.get("latency_ms", 0)), _shown(call.get("cost_usd")),
-		("\nFell back from " + str(call.fallback_from)) if call.get("fallback_from") != null else "",
+	var reading: Dictionary = call.get("answers", {})
+	var level := func(name: String) -> String:
+		var value = reading.get(name, {})
+		return "-" if typeof(value) != TYPE_DICTIONARY else str(value.get("score", value.get("noul", "-")))
+	small(body, "Move: %s (the voice chose %s)\nReading: impression %s · suspicion %s · anger %s · believes %s · threat %s · reason %s\nTrust %+.2f · suspicion %+.2f\nVoice: %s · %s · %d ms%s" % [
+		str(trace.get("action")), _shown(trace.get("voice_move")),
+		level.call("impression"), level.call("suspicion"), level.call("anger"), level.call("believes"),
+		level.call("threat"), level.call("reason"),
+		float(change.get("trust", 0)), float(change.get("suspicion", 0)),
 		_shown(spoken.get("status")), _shown(spoken.get("model")), int(spoken.get("latency_ms", 0)),
 		("\nVoice error: " + str(spoken.error)) if spoken.get("error") != null else ""])
-	reveal(body, "What the decider saw", str(trace.get("situation", "")) + "\n\nOPTIONS AND ANSWERS\n" +
-		JSON.stringify({"questions": trace.get("questions", {}), "answers": call.get("answers", {})}, "  "))
+	reveal(body, "The person's situation", str(trace.get("situation", "")) + "\n\nREADING\n" +
+		JSON.stringify(reading, "  "))
 	reveal(body, "What the voice was given", JSON.stringify(trace.get("voice_context", {}), "  "))
 
 
@@ -916,10 +921,10 @@ func reveal(body: Control, title: String, text: String) -> void:
 func show_traces(data: Dictionary) -> void:
 	var body := begin_modal("AI traces", "traces", Vector2(900, 600))
 	var ai: Dictionary = data.get("ai", {})
-	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)\nPeople decide with: %s%s" % [
+	paragraph(body, "AI mode: %s  ·  judge %s (%s)  ·  images %s (%s)\nPeople decide with: %s (%s)  ·  voice %s" % [
 		ai.get("mode"), "on" if ai.get("judge") else "off", ai.get("judge_model"),
 		"on" if ai.get("images") else "off", ai.get("image_model"), _shown(ai.get("decider")),
-		(" (" + str(ai.get("jev_model")) + " via " + str(ai.get("jev_provider")) + ")") if ai.get("decider") == "jev" else ""])
+		_shown(ai.get("decider_model")), _shown(ai.get("voice_model"))])
 	var traces: Array = data.get("traces", [])
 	if traces.is_empty():
 		paragraph(body, "No attempts yet. Press T in the world and describe something to do.")

@@ -1,6 +1,6 @@
 extends SceneTree
 ## Frame-time profile of the real scene: idle, walking, running, and people reacting to a punch.
-## Needs the backend running live (the reaction phase uses the real judge and Jev, about $0.002):
+## Needs the backend running live (the reaction phase uses the real judge and decider, about $0.002):
 ##   ./tools/run_m0.ps1
 ##   Godot_v4.7.2-stable_win64_console.exe --path . --script res://tools/profile_frame.gd
 ## Runs with vsync off so frame times show real work, not the monitor's refresh.

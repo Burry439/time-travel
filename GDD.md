@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, D-39 to D-46)
+**Version 1.6 · 28 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -181,7 +181,7 @@ Tab cycling and a separate inspect key are gone. Panels never hide the stranger:
   - both ("hand Hessa the gourd and tell her it's full");
   - waiting, giving up or walking away ("I wait", "I give up", "I walk away").
 
-  Code settles the obvious cases instantly. Anything else takes one Jev request with two yes/no beliefs (speaks? acts?), about 1.3 s. The typed text is always data.
+  Code settles the obvious cases instantly. Anything else takes one decider request with two yes/no beliefs (speaks? acts?), about 1.5 s. The typed text is always data.
 - **Where it goes:**
   - Face to face, it becomes that kind of round.
   - Alone, speech opens a conversation with whoever you addressed or whoever is nearest within earshot, or tells you honestly "Nobody is close enough to hear you."
@@ -296,13 +296,13 @@ Elin watches the road between the gate and the row. Kade patrols the village app
 
 ### 4.3 Why the gate is closed
 
-> **Built (D-26).** Roderic's card carries this rule (`decides`). In conversation Jev answers two beliefs for him: is the stranger a threat, and has he seen or been told of a legitimate reason. He admits when reason ≥ 0.45 and threat < 0.5, unless his chosen reply is hostile. Code never offers admission while he knows of a crime by the stranger he doesn't doubt. Guards stop an unadmitted stranger in the gate approach.
+> **Built (D-26).** Roderic's card carries this rule (`decides`). In conversation his reply's reading answers two beliefs for him (D-46): is the stranger a threat, and has he seen or been told of a legitimate reason. He admits when reason ≥ 0.45 and threat < 0.5, unless his chosen reply is hostile. Code never offers admission while he knows of a crime by the stranger he doesn't doubt. Guards stop an unadmitted stranger in the gate approach.
 
 **Status: CURRENT**
 
 The city runs controlled entry. Unknown travellers need **a credible reason**: a known sponsor, legitimate business, a recognised pass, or the captain's direct approval. It's a social rule enforced by people, not a magic lock. Roderic admits by the rule below; since D-43, **any guard may let someone through for their own reasons** (below). The guards can also stop, question, warn, report, and call the captain.
 
-> **Built (D-43): any guard, for their own reasons.** Each guard's card carries `admits`, the captain's `decides`. In conversation Jev answers the same two yes/no beliefs for any guard: by their own lights, is there reason enough, and is the stranger a threat? Code admits on reason ≥ 0.45 and threat < 0.5, never after a crime or breach they know of, never while barred, never by someone who's down.
+> **Built (D-43): any guard, for their own reasons.** Each guard's card carries `admits`, the captain's `decides`. In conversation the reply's reading answers the same two yes/no beliefs for any guard: by their own lights, is there reason enough, and is the stranger a threat? Code admits on reason ≥ 0.45 and threat < 0.5, never after a crime or breach they know of, never while barred, never by someone who's down.
 >
 > - **Bren:** on trust alone (his own, or Hessa's word); never for a stranger he doesn't know.
 > - **Oren:** out of fear or awe, or if his debt to Darin is settled; never out of goodwill.
@@ -333,7 +333,7 @@ How the player satisfies these is open. None of it is a required step.
 
 ### 4.4 Open problems in the world
 
-> **Built (D-25).** Tomas, Hessa, Darin and Mara have authored `offers` in `npc_cards.json`: a task, a reward (speak for you to the captain, or, for Darin, hire you under his trade permit) and a completion check. Jev decides whether and when they offer; nothing is marked as a quest.
+> **Built (D-25).** Tomas, Hessa, Darin and Mara have authored `offers` in `npc_cards.json`: a task, a reward (speak for you to the captain, or, for Darin, hire you under his trade permit) and a completion check. The person decides, in their reply, whether and when they offer; nothing is marked as a quest.
 
 **Status: CURRENT**
 
@@ -640,7 +640,7 @@ The judge receives the relevant precedents and must stay consistent with them. V
 
 ### 6.6 Agreements and NPC help
 
-> **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are Jev yes/no questions asked in the same conversation request, judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. Not built yet: escort, barter, loans with a return deadline, and breach.
+> **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are yes/no readings returned with the reply itself (D-46), judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. Not built yet: escort, barter, loans with a return deadline, and breach.
 
 The player often needs things they don't own or skills they don't have. **Agreements** are the typed mechanism for help. A promise in dialogue is not an agreement until it's committed.
 
@@ -668,7 +668,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >
 > - **Perception** is code: sight 10 cells with line of sight past buildings; the victim always knows.
 > - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
-> - **Decisions:** one batched Jev request per person, run in parallel. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
+> - **Decisions:** one batched decider request (the language model answering typed questions, D-47) for everyone deciding at once. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
 > - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address them opens an encounter (D-28); anyone who attacks starts a real-time fight (D-41).
 > - **Blows** are real time and fixed (D-41, replacing D-20's seeded roll): a wind-up per weapon, a hit only if the stranger is still in reach when it lands, fixed damage by weapon (a sword 55, a spear 50, fists 12; the stranger has 100). The stranger's fists do 15 to the unarmoured, 5 through padding, nothing through mail; at 25 or less someone is **down** (alive, out of the fight, sees nothing).
 > - **Shouts** carry 30 cells, once per event.
@@ -693,24 +693,24 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >   - Claims the person didn't believe are kept.
 >   - When a conversation ends, the thinking lane turns its notes into an **episode** (Luna, `recollect_v1`).
 >   - After six episodes, the oldest fold into a **long memory**.
->   - Jev and the voice both see it all next time, so people greet you by name, recall your trade and hold a lie against you.
+>   - The decider and the voice both see it all next time, so people greet you by name, recall your trade and hold a lie against you.
 > - **Agendas** (`backend/village.py`, D-37).
->   - Jev asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
+>   - The decider asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
 >   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
 >   - The gate never drops below two guards.
 >   - The same errand isn't offered twice in a row.
->   - Jev also picks their mood.
->   - A finished plan drifts back to the authored routine, which is the fallback whenever Jev can't or needn't decide.
+>   - The decider also picks their mood.
+>   - A finished plan drifts back to the authored routine, which is the fallback whenever the decider can't or needn't decide.
 > - **Meetings and gossip** (D-37).
 >   - People who visit, or who stand idle near someone they know, stop and talk.
->   - Jev picks the topic: news the other hasn't heard, word of the stranger, a worry, an opinion, or small talk. Yes/no questions settle whether news is passed on, in either direction.
+>   - The decider picks the topic: news the other hasn't heard, word of the stranger, a worry, an opinion, or small talk. Yes/no questions settle whether news is passed on, in either direction.
 >   - Nobody repeats a topic to the same person.
 >   - News becomes a "told by" memory, and a crime makes the listener think. Word of the stranger becomes hearsay, including their name, and rubs off on regard a little. Opinions warm or cool.
 >   - Within the stranger's sight, Luna voices the two lines as bubbles (`chatter_v1`, at most two chats a minute). Within 5 cells they go in the journal as overheard.
 >
 > **Added in 1.6 (D-39, D-41):**
 >
-> - **The moment itself is code.** A crime is answered in the same event: clear witnesses turn to face the stranger, anger or fear is set and held for 20 s, and the nearest victim or witness within 8 cells shouts in their own words (`lines.json` `caught`). Jev then decides what comes next.
+> - **The moment itself is code.** A crime is answered in the same event: clear witnesses turn to face the stranger, anger or fear is set and held for 20 s, and the nearest victim or witness within 8 cells shouts in their own words (`lines.json` `caught`). The decider then decides what comes next.
 > - **Two thinking lanes.** Reactions (`decide`, `round`) never wait behind the village's own life or memory work, and thinking never pauses for the dialogue bar or a panel.
 > - **Respect and awe** (D-43) join trust and suspicion. A demonstration or installation that works earns respect: a clever one twice as much. An uncanny one, seen with their own eyes, earns awe, and the judge rates each demonstration's wonder against the knowledge baseline. Each card's `superstition` makes awe double-edged:
 >   - **reverent** (Jory, Oren, Hessa): trust rises beyond any ordinary proof;
@@ -917,7 +917,7 @@ The developer gate button stays for map testing but is labelled as a cheat.
 | --- | --- | --- | --- |
 | **Interpreter** | Turn player text into a structured Attempt, or a clarification question | Text + nearby/carried entities → `Attempt` (§15) | Every Try Something and every Talk turn |
 | **Physics judge** | Decide what happens for novel methods, new objects, and demonstrations | Attempt step + object records + material facts + precedents + knowledge baseline → `JudgeResult` | Only when deterministic rules can't resolve a step |
-| **Decider** | Typed NPC judgements from short menus: reactions to the stranger and reading the player's line (Luna); the village's own life, agendas and meetings (Jev, D-46) | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4) |
+| **Decider** | Typed NPC judgements from short, code-built menus: reactions to the stranger, reading the player's line, and the village's own life (agendas, meetings). The language model answers against a strict schema (D-47) | Context packet + typed questions → probabilities, scores, choices | NPC triggers (§7.4) |
 | **Voice** | In conversation, how the person reads the moment, what they say and which offered move they make, in one call (D-46); otherwise in-character lines for a fixed decision, memory, chatter | Character sheet + purpose + offered moves → `Reply` | Every conversational reply; chats; memory |
 | **Illustrator** | Sprite for a new object | Object record + style prompt → PNG | After an object is created |
 
@@ -937,7 +937,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 - **Text models:** `gpt-6-luna` ($0.10 / $0.50 per million tokens in/out), `gpt-6-sol` ($2 / $10), and `gpt-6-astra` ($10 / $50) are listed.
 - **Image models:** the current ones are **GPT-Image-2.5 Flare** (fast) and **Sunburst** (best). They support `background="transparent"`.
 - **Not listed:** `gpt-5.6-terra` and `gpt-image-2`. The installed SDK still knows `gpt-image-2`, so it is kept as an automatic fallback.
-- **Unverified:** Jev.
+- **Retired:** Jev (TypeSafe), the typed decider used until D-47.
 
 | Role | Current setting | Alternative to benchmark |
 | --- | --- | --- |
@@ -945,7 +945,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
 | Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v5` (converse): reads the moment, says the reply and picks the move, and returns a memory note and any name given. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
-| Decider (built, D-17; background only since D-46) | Jev `typesafe/jev-1.13` via defapi.org (keys `dk-`), or TypeSafe directly; $0.084 per 1M input tokens, output free; measured about 1.2–2.3 s and $0.00005–0.00016 per person-decision | `gpt-6-luna` with a strict per-question schema (automatic fallback, same answer shape) |
+| Decider (built, D-17; one model since D-47) | `gpt-6-luna`, reasoning `low` (`MODEL_DECIDER`, `DECIDER_REASONING`), a strict per-question JSON schema over code-built options; about $0.0002 and 1.5–3 s per decision | A typed engine such as Jev behind the same interface, only if crowds inside the city make volume and cost matter |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
 
 Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Gameplay code calls roles, never providers.
@@ -1216,7 +1216,7 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 | --- | --- | --- | --- | --- |
 | A1 | An LLM can reliably turn casual player text into a structured Attempt that references the right objects | M2 | Untested | Require reference chips for ambiguous cases; add a clarify step; fine-tune prompts on logged failures |
 | A2 | An LLM judge plus precedents gives consistent, fair physics rulings | M2 | Untested | Move more mechanics into deterministic rules; shrink the judge to "which supported template applies?" |
-| A3 | Jev beats a general LLM on NPC decisions for cost and latency at acceptable quality | M4 | Untested | Use an LLM with forced-choice schemas everywhere |
+| A3 | Jev beats a general LLM on NPC decisions for cost and latency at acceptable quality | M4 | Retired (D-47): the fallback was adopted | Use an LLM with forced-choice schemas everywhere |
 | A4 | An image model can produce style-consistent, readable sprites for arbitrary objects | M3 | Untested | Composite or silhouette approach (M3 pivots) |
 | A5 | End-to-end latency stays tolerable: invention ≤ 12 s p95, reactions ≤ 3 s | M2, M4 | Untested | Smaller models; async narration; precomputation; relax the targets if players don't mind |
 | A6 | Model cost per session is affordable for a demo | M2, M6 | Untested | Caching, cheaper roles, fewer calls per intent |
@@ -1232,7 +1232,8 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
-| D-46 | 2026-09-29 | **One mind per reply, and a fair baseline.**<br><br>**Jev is background only.** It answers the village's own life (agendas, meetings, gossip). Anything the player meets is Luna: reactions to the stranger, reading their line, and every conversational reply.<br><br>**One call per reply.** The reply returns the person's reading of the moment (impression, suspicion, anger, belief, threat, reason enough, deal agreed or done) with the words and the move. Code checks the move against that same reading.<br><br>**No second decision per round.** Encounter "intents" are gone: what someone does comes with their reply, after hearing the stranger.<br><br>**Fair baseline:**<br>- theft is taking, not using;<br>- grudges settle (given back, taken back, forgiven, or an arrest answers for it);<br>- guards arrest or attack only for a known crime not put right;<br>- words alone move regard only so far either way (±0.3);<br>- walking off draws a chase or a shout only over something unresolved.<br><br>**Removed:** interjections, which depended on intents. | The user: "most conversations end in conflict and I think that's Jev's fault … do we really need Jev?" Across four games after D-44: 5 arrests, 3 chases, a whistle and a shout for the guards, mostly while talking.<br><br>**Causes, from the traces:**<br>- Jev's pre-committed round intent was "seize" in 7 of 23 choices. Bren "warms to you" and seizes you the same round; Oren arrested the stranger for vague answers about family.<br>- Grudges never ended: Kade re-arrested over a rope already returned.<br>- Filling Hessa's gourd at her trough, as she asked, counted as theft.<br>- Regard only slid down: "a little more suspicious" 11 of 22 times, with falls uncapped.<br>- The D-44 walk-off rule had Hessa shout for guards after she'd made up with you.<br><br>The user chose: Jev for background only, and a friendlier baseline. |
+| D-47 | 2026-09-29 | **Retire Jev: one model for every mind.** The decider is the language model (`gpt-6-luna`) answering the same typed questions over code-built options with a strict schema. The interface stays narrow so a typed engine could serve it again (crowds inside the city, or a cheap grader in evals). Removed: the TypeSafe/defapi route, `DECIDER`, `TYPESAFE_API_KEY`, `JEV_PROVIDER` and D-46's `background` split. | The user asked whether Jev is a technology that is useful to this game at all; credits were not the question.<br><br>**It isn't, here.** Jev picks from menus and gives calibrated typed answers: fast and cheap, best for high-volume, well-defined judgements. This game needs:<br>- open-ended understanding (the right response is often not on a menu: Kade's rope, Hessa's directions);<br>- one consistent mind per character (every split between a deciding model and a speaking model contradicted itself);<br>- judgement at a small scale (ten people, a few decisions a minute).<br><br>Its long menus under-picked the key option three times (M5, D-34, D-37). Its probabilities and confidence were read nowhere. At this volume Luna costs about the same (about $0.0002 against $0.00012 per decision).<br><br>**Also found:** Jev ran out of credit on 28 Sep at 23:37 local, minutes after D-44 went live. All 133 decisions since then fell back to Luna. |
+| D-46 | 2026-09-29 | **One mind per reply, and a fair baseline.**<br><br>**Jev is background only.** It answers the village's own life (agendas, meetings, gossip). Anything the player meets is Luna: reactions to the stranger, reading their line, and every conversational reply.<br><br>**One call per reply.** The reply returns the person's reading of the moment (impression, suspicion, anger, belief, threat, reason enough, deal agreed or done) with the words and the move. Code checks the move against that same reading.<br><br>**No second decision per round.** Encounter "intents" are gone: what someone does comes with their reply, after hearing the stranger.<br><br>**Fair baseline:**<br>- theft is taking, not using;<br>- grudges settle (given back, taken back, forgiven, or an arrest answers for it);<br>- guards arrest or attack only for a known crime not put right;<br>- words alone move regard only so far either way (±0.3);<br>- walking off draws a chase or a shout only over something unresolved.<br><br>**Removed:** interjections, which depended on intents. | The user: "most conversations end in conflict and I think that's Jev's fault … do we really need Jev?" Across four games after D-44: 5 arrests, 3 chases, a whistle and a shout for the guards, mostly while talking.<br><br>**Causes, from the traces:**<br>- The pre-committed round intent was "seize" in 7 of 23 choices. (Correction, D-47: Jev had no credit in those games, so these were Luna's answers through the fallback. The cause was the design, a pre-committed menu with "seize" on it, not the model.) Bren "warms to you" and seizes you the same round; Oren arrested the stranger for vague answers about family.<br>- Grudges never ended: Kade re-arrested over a rope already returned.<br>- Filling Hessa's gourd at her trough, as she asked, counted as theft.<br>- Regard only slid down: "a little more suspicious" 11 of 22 times, with falls uncapped.<br>- The D-44 walk-off rule had Hessa shout for guards after she'd made up with you.<br><br>The user chose: Jev for background only, and a friendlier baseline. |
 | D-45 | 2026-09-29 | **Future techniques are judged by physics alone** (`judge_v12`), and **a later step can use anything an earlier step made** (show it, light it, fill it, give it, fit it). Being unknown here only makes something clever or uncanny to onlookers; it never makes it unsupported. | Testing a player walkthrough: the judge called a siphon "unknown here" and refused it, which is the opposite of the game's fantasy. "Make a torch and light it" or "make a brace and give it to Kade" failed at the second step, because only weapons and ingredients followed `made_by_step_N`. Live after the fix: siphon uncanny, 3-4-5 rope square clever, filter clever, and the made-then-used chains all succeed; craft set 32/33 then 4/4 on the one miss; teleporter and fire from a bare stone are still refused. |
 | D-44 | 2026-09-28 | **Conversations led by the voice; Jev judges; code applies.**<br><br>**Replies:** Jev no longer picks the reply from a menu. It answers typed questions about the moment (impression, suspicion, anger, belief, deals, a guard's reasons and threat). The voice (Luna, `voice_v4`) then says what the person would say and picks one move from those code offers. Code validates the move and applies it.<br><br>**What the voice now sees:**<br>- why they're here and any stolen goods in view;<br>- directions to every place in town;<br>- each guard's own reasons for letting someone in.<br><br>**New moves:** demand, take back, arrest (seize) and attack.<br><br>**Letting someone in** is offered only when Jev's beliefs agree. If the voice can't be reached, an authored line; if Jev can't, the voice still answers on a neutral reading.<br><br>**Walking off** is answered by the person's purpose: a guard with a grievance chases; the wronged shout for guards.<br><br>**Guards who chase a thief subdue:** 15 a blow, down to 25, then arrest, carried out in the clock's payload so it replays. They kill only after violence or a breach they know of.<br><br>**Space** punches out of a fight too. | The user played:<br>- Kade came about Tomas's stolen rope, which the stranger was carrying; to "I'm sorry, I won't do it again" his menu held nothing about the rope, and Jev (30% sure) picked "strangers are kept from the gate";<br>- Hessa couldn't say where the gate was ("answer without telling anything new");<br>- walking away always worked.<br><br>The strong language model was only rewording a classifier's pick. Live now:<br>- Kade: "Sorry won't mend it. Hand Tomas's rope back."<br>- Hessa: "the city gate is about 42 steps north up the road."<br>- Talk evals 20/20 (with four new cases from this run).<br>- Voice median about 2 s; Jev about 1.2 s. |
 | D-43 | 2026-09-28 | **Reputation, and any guard's word** (`judge_v11`, cards v6). Regard gains **respect** (competence seen working) and **awe** (wonder at the uncanny). Demonstrations carry a judged `wonder` (ordinary, clever or uncanny, measured against what a local knows). Awe is double-edged through each card's `superstition`: reverence raises trust; wariness brings suspicion and fear. Only firsthand sight moves awe. **Any guard may let the stranger in** for their own reasons (`admits`), with the captain's two beliefs asked against the guard's own rule. The victory panel names who. | The user: "the point of the game: you are from the future; you use your knowledge to get into the city by helping people, or just by impressing them, or making them believe you are a god", and "any guard, own reasons"; awe "double-edged". Live: the floating needle is judged uncanny 3/3, and hot water shown is ordinary 3/3, once `wonder` was a required field (with a default, the model left it out: 0/3). Talk evals 16/16, including the four new guard cases. |
@@ -1761,6 +1762,38 @@ Changes to this document: …
 
 - With no interjections, a second person in an encounter just listens.
 - Reactions (the witness menus) are still menu picks, now by Luna.
+
+### Retro: one model for every mind (D-47), 29 Sep 2026
+
+**Built:**
+
+- `ai/decider.py` is now the language model only: `MODEL_DECIDER` and `DECIDER_REASONING`, with the same typed questions and answer shape.
+- Removed: the TypeSafe/defapi route and its settings, and D-46's background split.
+- One retry when the voice's or the decider's structured output comes back malformed.
+- The developer panel shows the voice's move and its reading instead of "Jev's top choice".
+- Docs, evals and comments now say "the decider".
+
+**Evidence:**
+
+- 161 backend tests pass, including the new retry test. All Godot smoke tests pass.
+- The health check shows the decider as `gpt-6-luna` with no failing pre-call.
+- **Live village** (`run_world_live.py`): 10 simulated minutes in 102 s, 22 think requests.
+  - Agendas: mostly carrying on, plus tasks, a visit and a look at the stranger. 7 meetings, mostly small talk.
+  - The scripted bucket theft brought Hessa to demand it back; the guards heard of it.
+- **Live talk evals:** 21/23 on the full set, then 6/6 on the rerun cases.
+  - One miss was malformed structured output from the voice ("trailing characters"). That's why the retry was added; after it, the case passed 3/3.
+  - The other miss is the known Oren-in-awe case.
+  - Voice median 2.1 s; p95 3–4 s; about $0.0004 an exchange.
+
+**Lessons:**
+
+- Check the call records before blaming a model: Jev had been answering nothing for a day, and the fallback hid it.
+- A second model is worth it only when it does something the first can't. Here its strengths (volume, calibration) didn't match the game's needs (open-ended judgement, one mind per character).
+
+**To watch:**
+
+- People who should know each other don't always: Kade said he didn't know Hessa. Cards list only a few acquaintances. This is due in the character-layers work (shared histories).
+- Jory made the same small talk with Mara four times in one run.
 
 ---
 

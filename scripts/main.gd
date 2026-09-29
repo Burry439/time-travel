@@ -345,7 +345,7 @@ func _animate_npcs(delta: float) -> void:
 					npc_facing[id] = facing
 					mode = "idle"
 			if typeof(mind) == TYPE_DICTIONARY and mind.get("facing_player", false):
-				# Wary people turn to face the stranger (decided by code on the server, not by Jev).
+				# Wary people turn to face the stranger (decided by code on the server, not by a model).
 				var toward := player.position - actor.position
 				facing = (3 if toward.x > 0.0 else 1) if absf(toward.x) > absf(toward.y) else (0 if toward.y > 0.0 else 2)
 				npc_facing[id] = facing
@@ -462,7 +462,7 @@ func _physics_process(delta: float) -> void:
 
 
 ## Movement lane: the player's steps (batched) and the clock, one request at a time.
-## People's thinking runs separately in _flush_minds, so Jev never holds up walking or time.
+## People's thinking runs separately in _flush_minds, so a model never holds up walking or time.
 func _flush_moves() -> void:
 	if movement_sync_active:
 		return
@@ -522,7 +522,7 @@ func _flush_moves() -> void:
 	movement_sync_active = false
 
 
-## Thinking lane: people with something on their mind decide (Jev), alongside the movement lane.
+## Thinking lane: people with something on their mind decide (the decider), alongside the movement lane.
 func _flush_minds(lane := "react") -> void:
 	if thinking_lanes[lane]:
 		return
@@ -1385,7 +1385,7 @@ func _left_click(hover: Dictionary) -> void:
 		_:
 			ui.bar.open(id)
 
-## One exchange in a conversation: Jev decides the reply on the server and the voice phrases it.
+## One exchange in a conversation: the voice model reads the moment and replies on the server.
 func say_to(npc_id: String, text: String) -> void:
 	await act(text, npc_id, [])
 

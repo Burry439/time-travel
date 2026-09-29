@@ -1,4 +1,4 @@
-"""Live playthrough of the three routes into the city with the real judge, Jev and voice.
+"""Live playthrough of the three routes into the city with the real judge, decider and voice.
 
     backend/.venv/Scripts/python.exe evals/run_routes_live.py [sponsor] [business] [value]
 
@@ -82,7 +82,7 @@ class Route:
         beliefs = {k: round(v["noul"], 2) for k, v in trace["call"]["answers"].items()
                    if k in ("threat", "reason", "accepts", "done") and "noul" in v}
         note(f"  YOU → {self.person(npc_id)['name']}: {text}\n    [{trace['action']}] “{trace['reply']}”  "
-             f"(Jev {trace['call']['latency_ms']} ms, voice {trace['voice']['latency_ms']} ms)"
+             f"(decider {trace['call']['latency_ms']} ms, voice {trace['voice']['latency_ms']} ms)"
              + (f" beliefs {beliefs}" if beliefs else ""))
         return trace["action"]
 
@@ -105,7 +105,7 @@ class Route:
         return entry
 
     def settle(self, until, seconds: int = 60) -> bool:
-        """Let the clock run and people think (real Jev) until the condition holds."""
+        """Let the clock run and people think (the real decider) until the condition holds."""
         for _ in range(seconds * 2):
             if until():
                 return True

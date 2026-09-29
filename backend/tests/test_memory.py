@@ -1,6 +1,6 @@
 """Memory that lasts (GDD D-36): each exchange leaves a note, a name the stranger actually said, doubted
 claims; a finished conversation becomes an episode in the thinking lane; old episodes fold into long
-memory; and all of it reaches both Jev and the voice the next time you talk. Replays exactly."""
+memory; and all of it reaches both the decider and the voice the next time you talk. Replays exactly."""
 import persona
 import talk
 from ai import voice

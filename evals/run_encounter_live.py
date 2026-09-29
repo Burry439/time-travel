@@ -1,4 +1,4 @@
-"""Live encounters with the real judge, Jev and voice: a fight at the smithy and a halt at the gate.
+"""Live encounters with the real judge, decider and voice: a fight at the smithy and a halt at the gate.
 
     backend/.venv/Scripts/python.exe evals/run_encounter_live.py
 

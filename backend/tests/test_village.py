@@ -1,4 +1,4 @@
-"""The village's own life (GDD D-37): agendas Jev chooses among options built by code, the gate never
+"""The village's own life (GDD D-37): agendas the decider chooses among options built by code, the gate never
 left short of guards, meetings that pass news and hearsay and shift opinions, chatter voiced only where
 the stranger can see it, a decider budget, and replay of all of it."""
 import copy
@@ -65,9 +65,9 @@ def test_a_chosen_task_is_walked_to_done_and_left_for_the_routine():
     assert next(n for n in npcs if n["id"] == "npc_hessa_marr")["controller"]["source"] == "routine"
 
 
-def test_jev_is_asked_only_when_something_happens_and_neighbours_fall_into_talk():
+def test_the_decider_is_asked_only_when_something_happens_and_neighbours_fall_into_talk():
     state = unit_state()
-    for t in range(0, 600_000, 30_000):  # Ten quiet minutes, the stranger out of sight: nobody asks Jev anything.
+    for t in range(0, 600_000, 30_000):  # Ten quiet minutes, the stranger out of sight: nobody asks the decider anything.
         village.schedule(state, state["npcs"], t)
     assert not [p for p in state["pending_minds"] if p["kind"] == "agenda"]
     hessa = npc(state, "npc_hessa_marr")
@@ -134,10 +134,10 @@ def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, m
     state = body["state"]
     assert any(d["kind"] == "agenda" and d.get("agenda") == "carry_on" for d in body["decisions"])  # No answer: routine.
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
-    # Past the decider allowance, nobody asks Jev about their day: they carry on by routine.
+    # Past the decider allowance, nobody asks the decider about their day: they carry on by routine.
     asked = []
     monkeypatch.setattr(ai_config, "max_decider_calls_per_run", lambda: 0)
-    monkeypatch.setattr(decider, "decide", lambda text, questions, **kw: asked.append(questions) or decider.DeciderCall("x"))
+    monkeypatch.setattr(decider, "decide", lambda text, questions: asked.append(questions) or decider.DeciderCall("x"))
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     for _ in range(40):
         if any(p["kind"] == "agenda" for p in state.get("pending_minds", [])):

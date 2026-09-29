@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Things people say when they act. Jev picks the action and the line together, so the voice fits the person. Tones: frightened, angry, protective (the victim is family), official (guards), shrewd (merchants and calculating types). Slots: {victim}, {relation} (e.g. 'my nephew'), {guard}, {item}, {owner}, {weapon}. A person never repeats their last line. caught: barked by code the moment someone sees a crime (theft = the owner, theft_witness = someone else, violence_victim, violence). call_out: said when someone sets off after the stranger.",
+ "notes": "Things people say when they act. The decider picks the action and the line together, so the voice fits the person. Tones: frightened, angry, protective (the victim is family), official (guards), shrewd (merchants and calculating types). Slots: {victim}, {relation} (e.g. 'my nephew'), {guard}, {item}, {owner}, {weapon}. A person never repeats their last line. caught: barked by code the moment someone sees a crime (theft = the owner, theft_witness = someone else, violence_victim, violence). call_out: said when someone sets off after the stranger.",
  "lines": {
   "flee": {
    "frightened": [

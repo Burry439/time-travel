@@ -1,6 +1,6 @@
 """Saved NPC activity plans and deterministic execution.
 
-Routine selection is deliberately separate from route execution. A plan Jev chose (village.py,
+Routine selection is deliberately separate from route execution. A plan the decider chose (village.py,
 source "agenda") walks the same way; when its dwell is over the person drifts back to their routine
 until they next decide (GDD D-37).
 """
@@ -68,7 +68,7 @@ def seed_npcs(npcs: list[dict], geometry: dict) -> list[dict]:
 
 
 def choose_routine_plan(npc: dict, blocked: set[tuple[int, int]]) -> None:
-    """Current planner. Jev can later replace this choice with another valid plan."""
+    """Current planner. The decider can replace this choice with another valid plan."""
     controller = npc["controller"]
     _, anchors = ROUTINES[npc["id"]]
     next_index = (controller["anchor_index"] + 1) % len(anchors)

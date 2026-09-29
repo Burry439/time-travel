@@ -1,4 +1,4 @@
-"""Live run of the village on its own (GDD D-37): ten simulated minutes with the real Jev deciding.
+"""Live run of the village on its own (GDD D-37): ten simulated minutes with the real decider (the language model).
 
     backend/.venv/Scripts/python.exe evals/run_world_live.py [--minutes 10]
 
@@ -31,8 +31,8 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--minutes", type=int, default=10)
     args = parser.parse_args(argv)
-    if decider.mode() != "jev":
-        print("Needs TYPESAFE_API_KEY in backend/.env.")
+    if decider.mode() != "llm":
+        print("Needs OPENAI_API_KEY in backend/.env.")
         return 1
     app.store.DB_PATH = Path(tempfile.mkdtemp()) / "world.sqlite3"
     http = TestClient(app.app)

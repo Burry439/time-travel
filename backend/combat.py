@@ -93,7 +93,7 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
 
 def responders(state: dict, perceptions: list[dict]) -> list[str]:
     """Who fights at once after the stranger's violence or an unbarred gate: guards who clearly saw it. Anyone else
-    decides for themselves (Jev): the smith may pick up her hammer, the merchant runs."""
+    decides for themselves (the decider): the smith may pick up her hammer, the merchant runs."""
     ids = []
     for perception in perceptions:
         npc = minds.find(state["npcs"], perception["npc_id"])

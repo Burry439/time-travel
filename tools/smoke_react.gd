@@ -2,7 +2,7 @@ extends SceneTree
 ## The moment itself (GDD D-39). Needs the backend with AI_MODE=stub:
 ##   $env:AI_MODE='stub'; ./tools/run_m0.ps1
 ##   Godot --headless --path . --script res://tools/smoke_react.gd  [-- --capture]
-## Take Hessa's bowl: she shouts and shows "!" at once (code), and her considered reaction (Jev's lane)
+## Take Hessa's bowl: she shouts and shows "!" at once (code), and her considered reaction (the reaction lane)
 ## still arrives while the dialogue bar is open.
 var scene: Node2D
 var capture := false
@@ -65,7 +65,7 @@ func _run() -> void:
 		return
 	print("Bark after ", Time.get_ticks_msec() - started, " ms (including the walk there)")
 	await screenshot("react-bowl")
-	# Her considered reaction (Jev's lane) arrives even with the dialogue bar open.
+	# Her considered reaction (the reaction lane) arrives even with the dialogue bar open.
 	scene.ui.open_try()
 	for i in 100:
 		if not scene.run_state.pending_minds.any(func(p: Dictionary) -> bool: return p.kind == "decide"):

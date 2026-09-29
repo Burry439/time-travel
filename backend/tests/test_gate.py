@@ -124,13 +124,13 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, rulings, moves = [], [], []
 
-    def fake_decide(situation, questions, background=False):
+    def fake_decide(situation, questions):
         if "impression" not in questions:  # People choosing what to do (not answering the stranger): they stay and listen.
             return decider.DeciderCall(provider="script", model="script", answers={
                 k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
         return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
     monkeypatch.setattr(service.decider, "decide", fake_decide)
-    monkeypatch.setattr(service.decider, "decide_many", lambda requests, background=False: [fake_decide(*r) for r in requests])
+    monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
     def fake_voice(context, fallback, allowed=True):  # The scripted reply: the voice's move and reading (D-46).
         reply = script.pop(0) if script else {}
         return voice.VoiceCall(status="ok", text=fallback, model="fake", answers=reply,

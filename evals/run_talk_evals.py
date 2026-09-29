@@ -1,8 +1,8 @@
-"""Live evaluation of conversations: the real decider (Jev) and voice (Luna) through the game's code.
+"""Live evaluation of conversations: the real voice model (Luna) through the game's code.
 
     backend/.venv/Scripts/python.exe evals/run_talk_evals.py [--runs 2] [--case injection_admit ...]
 
-Needs TYPESAFE_API_KEY (Jev) and OPENAI_API_KEY (voice) in backend/.env. Costs a little real money
+Needs OPENAI_API_KEY in backend/.env. Costs a little real money
 (about a tenth of a cent per exchange). Writes a JSON report to evals/results/ and prints a summary.
 """
 from __future__ import annotations
@@ -50,7 +50,7 @@ def exchange(state: dict, npc_id: str, text: str) -> dict:
     out = rounds._speak(state, person, text, None, talk.request(state, person, text), "talkeval", True)  # D-44
     decided, spoken, key = out["decided"], out["spoken"], out["key"]
     if not decided.ok and spoken.status != "ok":
-        return {"error": decided.error or spoken.error, "jev_ms": decided.latency_ms}
+        return {"error": decided.error or spoken.error, "decider_ms": decided.latency_ms}
     before = dict(talk.regard(person))
     talk.exchange(state, npc_id, text, out["answers"], key, spoken.text, [], note=spoken.remember,
                   name_given=spoken.stranger_name)
@@ -59,7 +59,7 @@ def exchange(state: dict, npc_id: str, text: str) -> dict:
     return {"said": text, "reply": key, "line": spoken.text, "voice": spoken.status, "voice_error": spoken.error,
             "trust": round(after["trust"] - before["trust"], 3),
             "suspicion": round(after["suspicion"] - before["suspicion"], 3),
-            "jev_ms": decided.latency_ms, "jev_usd": decided.cost_usd or 0.0, "provider": decided.provider,
+            "decider_ms": decided.latency_ms, "decider_usd": decided.cost_usd or 0.0, "provider": decided.provider,
             "voice_ms": spoken.latency_ms,
             "voice_usd": (spoken.input_tokens * LUNA_PER_MTOK[0] + spoken.output_tokens * LUNA_PER_MTOK[1]) / 1e6}
 
@@ -95,8 +95,8 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--case", nargs="*")
     args = parser.parse_args(argv)
-    if decider.mode() != "jev" or app.ai_config.mode() != "live":
-        print(f"Decider is '{decider.mode()}' and AI mode '{app.ai_config.mode()}': add both keys to backend/.env.")
+    if decider.mode() != "llm" or app.ai_config.mode() != "live":
+        print(f"Decider is '{decider.mode()}' and AI mode '{app.ai_config.mode()}': add OPENAI_API_KEY to backend/.env.")
         return 1
     cases = [c for c in json.loads((ROOT / "evals" / "talk_cases.json").read_text(encoding="utf-8"))["cases"]
              if not args.case or c["id"] in args.case]
@@ -120,12 +120,12 @@ def main(argv: list[str]) -> int:
                 print(f"      - {problem}")
     exchanges = [t for r in report for t in r["turns"] if "reply" in t]
     if exchanges:
-        total = [t["jev_ms"] + t["voice_ms"] for t in exchanges]
+        total = [t["decider_ms"] + t["voice_ms"] for t in exchanges]
         print(f"\n{len(report) - failures}/{len(report)} passed · {len(exchanges)} exchanges · "
-              f"Jev median {statistics.median(t['jev_ms'] for t in exchanges):.0f} ms · voice median "
+              f"decider median {statistics.median(t['decider_ms'] for t in exchanges):.0f} ms · voice median "
               f"{statistics.median(t['voice_ms'] for t in exchanges):.0f} ms · p95 total "
               f"{sorted(total)[int(0.95 * (len(total) - 1))]:.0f} ms · mean cost "
-              f"${statistics.mean(t['jev_usd'] + t['voice_usd'] for t in exchanges):.5f} per exchange · "
+              f"${statistics.mean(t['decider_usd'] + t['voice_usd'] for t in exchanges):.5f} per exchange · "
               f"voice fallbacks {sum(t['voice'] != 'ok' for t in exchanges)}")
     out = ROOT / "evals" / "results" / f"talk_{time.strftime('%Y%m%d_%H%M%S')}.json"
     out.parent.mkdir(exist_ok=True)

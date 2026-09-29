@@ -5,14 +5,15 @@ for payment, an attacker reaching them) opens or joins an encounter; so does the
 to someone. Time then moves in rounds instead of on the clock:
 
 1. At the start of a round each person in it commits an intent (listen, attack, shout or whistle
-   for help, flee, leave), chosen by Jev from the situation as it stands, before they know what
+   for help, flee, leave). Since D-46 everyone simply listens: what a person does comes with their reply,
+   decided after hearing the stranger (no separate pre-committed choice), before they know what
    the stranger will do. The thinking lane decides these while the player is still typing.
 2. The player acts: say something, do something (a Try Something), wait, or walk away.
 3. Code resolves everything at once: the stranger first, then everyone in the order they came.
    Nobody swings a weapon in a round: someone who attacks turns the encounter into a real-time fight
    (combat.py, GDD D-41), where blows land or miss by footwork and reach, not by rolls.
 4. The person the stranger addressed, if they were listening and are still standing, replies to
-   what actually happened (talk.py: Jev chooses, the voice says it).
+   what actually happened (talk.py: the voice model reads the moment, says it and picks the move).
 5. The world moves on by the round's length (longer for long actions, which cost extra blows),
    so others can walk up and join. The next round's intents are queued.
 
@@ -198,7 +199,8 @@ def questions(state: dict, npc: dict, prefix: str = "") -> dict:
 
 
 def set_intent(state: dict, npc: dict, answers: dict) -> dict:
-    """Commit Jev's choice as this person's intent for the current round (and their feelings)."""
+    """Commit a decided intent for this person in the current round (and their feelings). Unused since D-46,
+    when intents stopped being asked for; kept for older saved rounds and tools."""
     encounter = active(state)
     if encounter is None or npc["id"] not in encounter["participants"]:
         return {"npc_id": npc["id"], "skipped": "no longer in the encounter"}
@@ -226,7 +228,7 @@ def missing_intents(state: dict) -> list[str]:
 
 
 def intent_request(state: dict, npc_ids: list[str]) -> tuple[str, dict, dict[str, str]]:
-    """One Jev request for everyone in the encounter who hasn't committed yet."""
+    """One decider request for everyone in the encounter who hasn't committed yet (unused since D-46)."""
     return minds.batch_request(state, [{"npc_id": n, "kind": "round", "why": "encounter"} for n in npc_ids])
 
 

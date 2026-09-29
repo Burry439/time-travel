@@ -1,7 +1,7 @@
 """Voice role: a character's words, and (in conversation) what they do.
 
 In conversation (converse, D-44) this role says what the person would say, from their character sheet
-(persona.py), what they know, why they're here, Jev's reading of the moment and the conversation so far,
+(persona.py), what they know, why they're here and the conversation so far; it reads the moment itself (D-46),
 and picks one move from those code offers. Code checks the move and applies it; free text never flows
 back into world state. speak() puts an already decided reply into words (the older path, still used
 when a reply is fixed in advance). The same role keeps memory prose (recollect: a finished conversation becomes an
@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Literal
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from . import config
 
@@ -106,14 +106,21 @@ def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) ->
     call = VoiceCall(status="fallback", text="", model=model, prompt_version=version)
     started = time.perf_counter()
     parsed = None
-    try:
-        response = config.client().responses.parse(
-            model=model, reasoning={"effort": config.voice_reasoning()}, store=False, text_format=schema,
-            input=[{"role": "developer", "content": prompt},
-                   {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)}])
-    except Exception as error:  # The caller keeps going with its fallback.
-        call.error = f"{type(error).__name__}: {error}"
-    else:
+    response = None
+    for attempt in range(2):  # One retry when the model's output doesn't match the schema (it happens rarely).
+        try:
+            response = config.client().responses.parse(
+                model=model, reasoning={"effort": config.voice_reasoning()}, store=False, text_format=schema,
+                input=[{"role": "developer", "content": prompt},
+                       {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)}])
+            call.error = None
+            break
+        except ValidationError as error:  # Malformed structured output: ask once more.
+            call.error = f"{type(error).__name__}: {error}"
+        except Exception as error:  # Anything else: the caller keeps going with its fallback.
+            call.error = f"{type(error).__name__}: {error}"
+            break
+    if response is not None and call.error is None:
         if response.usage is not None:
             call.input_tokens, call.output_tokens = response.usage.input_tokens, response.usage.output_tokens
         parsed = response.output_parsed

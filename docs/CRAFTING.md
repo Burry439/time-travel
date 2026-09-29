@@ -65,7 +65,7 @@ Time only moves round by round while you're face to face. Walking away from a fi
 
 **People remember you.** Tell someone your name and they'll use it; they recall what you told them and what you did, and they hold a lie against you. They also talk to each other: news of what you did travels, and you can overhear it (it goes in your journal). Everyone has their own day, moods and opinions of each other; hover or right-click someone to see how they seem and what they're doing.
 
-Type anything. Jev decides what they do (answer, ask you something, tell you what they know, send you to someone, lend you something, offer a deal, speak for you, refuse, send you away, fetch a guard) and Luna says it in their voice. People nearby overhear. Your journal lists what people told you and your deals.
+Type anything. The person reads the moment and answers in their own voice, and does one thing: answer, ask you something, tell you what they know, send you to someone, lend you something, offer a deal, speak for you, demand something back, forgive you, refuse, send you away, or fetch a guard. Guards arrest only for a real crime that hasn't been put right. People nearby overhear. Your journal lists what people told you and your deals.
 
 - **Words alone move people only a little.** Showing them something that works, giving them something, or someone speaking for you counts for much more.
 - **Deals:** some people will ask something of you (Tomas, Hessa, Darin, Mara) and, once they see it done, go and speak for you to the captain.
@@ -98,8 +98,8 @@ Start a **Developer playtest**.
 | --- | --- | --- |
 | `MODEL_JUDGE` | `gpt-6-luna` | `gpt-6-sol` is about 15× the cost; switch only if evals show a need |
 | `JUDGE_REASONING` | `low` | `none`, `low`, `medium`, `high` |
-| `MODEL_VOICE`, `VOICE_REASONING` | `gpt-6-luna`, `low` | Phrases what people say; authored fallback lines if unavailable |
-| `TYPESAFE_API_KEY` | | Jev (defapi `dk-` keys work), who decides what people do |
+| `MODEL_VOICE`, `VOICE_REASONING` | `gpt-6-luna`, `none` | Conversations: reads the moment, says the line, picks the move; authored fallback lines if unavailable |
+| `MODEL_DECIDER`, `DECIDER_REASONING` | `gpt-6-luna`, `low` | Typed decisions people make on their own (reactions, their day) from options code builds |
 | `MODEL_IMAGE` | `gpt-image-2.5-flare` | Falls back to `MODEL_IMAGE_FALLBACK` (`gpt-image-2`) |
 | `IMAGE_QUALITY` | `medium` | |
 | `IMAGES` | `on` | `off` keeps stand-in pictures |

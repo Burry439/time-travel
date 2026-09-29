@@ -184,5 +184,5 @@ def test_space_outside_a_fight_is_an_assault_like_any_other():
     assert combat.punch(villager, "npc_hessa_marr", 0)["result"] == "hit"
     hessa = npc(villager, "npc_hessa_marr")
     assert hessa["health"] == 100 - combat.PUNCH["none"] and not villager.get("fight")
-    assert hessa["mind"]["memories"][-1]["kind"] == "violence"  # She remembers, and decides what to do (Jev).
+    assert hessa["mind"]["memories"][-1]["kind"] == "violence"  # She remembers, and decides what to do (the decider).
     assert any(p["npc_id"] == "npc_hessa_marr" and p["kind"] == "decide" for p in villager["pending_minds"])

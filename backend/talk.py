@@ -1,12 +1,12 @@
-"""Conversations (D-44): Jev judges, the voice model talks, code applies.
+"""Conversations (D-44, D-46): the voice model reads the moment, talks and picks the move; code applies.
 
-1. Jev answers typed questions about the moment: how the exchange changed the person's view of the
+1. The reply reads the moment, as this person: how the exchange changed their view of the
    stranger, their anger, whether they believe what was said, and (when it matters) whether a deal
    was agreed or done and whether a guard has reason enough to let the stranger in.
 2. Code builds the moves this person may make now: tell something they actually know, send them to
    someone, offer a deal, lend or give, demand stolen goods back, take them back, arrest, attack,
    fetch a guard, refuse, tell them to leave, end it, or simply talk. Moves that need a belief
-   (letting someone in, a deal) are only offered, or forced, when Jev's beliefs agree.
+   (letting someone in, a deal) are checked by code against that same reading.
 3. The voice model (ai/voice.py) says what this person would say, in their own voice, knowing why
    they are here, and picks one of those moves. Ordinary talk (directions, an apology accepted or
    not, a question back) needs no menu.
@@ -14,7 +14,7 @@
    new evidence), what the player learned (their journal), the move, and memories for anyone close
    enough to overhear.
 
-Deals (GDD 6.6) come from each person's authored offers: Jev may offer one; whether the stranger
+Deals (GDD 6.6) come from each person's authored offers: the person may offer one; whether the stranger
 accepted, and later whether they have done it, are yes/no questions in the same request, answered
 only from what that person has seen or been given. The reward is a job: the person walks to the
 captain and speaks for the stranger. Any guard may let the stranger in for their own reasons (D-43), never
@@ -314,7 +314,8 @@ def said_or_did(text: str, happened: str | None) -> str:
 
 
 def request(state: dict, npc: dict, text: str, happened: str | None = None) -> tuple[str, dict]:
-    """One Jev request for one exchange: the person's situation, the conversation, the stranger's words.
+    """The person's situation, the conversation and the stranger's words, as typed questions (for tools and
+    traces; replies themselves are one voice call since D-46).
 
     In an encounter, happened says what took place in the same moment (a blow, a gift, silence)."""
     name, view = npc["name"], regard(npc)
@@ -386,14 +387,14 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
 
 
 def chosen(answers: dict, options: dict) -> str:
-    """Jev's reply: its top choice for this person. No draw among the others (GDD D-41: no dice); variety
+    """A scripted or decided reply: the top choice for this person. No draw among the others (GDD D-41: no dice); variety
     comes from their mood, memory and who they are."""
     choice = (answers.get("reply") or {}).get("choice")
     return choice if choice in options else "answer"
 
 
 def admits_now(state: dict, npc: dict, answers: dict) -> bool:
-    """A guard's own rule met, by Jev's beliefs: reason enough and no threat (GDD 4.3, D-43)."""
+    """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43)."""
     return "admit" in replies(state, npc) and _yes(answers, "reason", REASON_YES) and "threat" in answers \
         and float(answers["threat"].get("noul", 1.0)) < THREAT_NO
 
@@ -406,7 +407,7 @@ def moves(state: dict, npc: dict, answers: dict | None = None) -> dict[str, str]
 
 def decided_reply(state: dict, npc: dict, answers: dict, proposed=None) -> str:
     """The move code will carry out: the one the voice picked (or, in older callers, a scripted choice), if it is
-    legal now. Letting the stranger in also needs the guard's own rule met by Jev's beliefs ("reason", "threat"):
+    legal now. Letting the stranger in also needs the guard's own rule met by the reading ("reason", "threat"):
     their authored motive (GDD 4.3, D-43), checked by code; never forced on words that refuse (D-44)."""
     options = replies(state, npc)
     key = proposed if isinstance(proposed, str) else chosen(answers, options)
@@ -478,7 +479,7 @@ def open_deals(state: dict, npc: dict) -> list[str]:
 
 def converse_context(state: dict, npc: dict, text: str, answers: dict, happened: str | None = None) -> dict:
     """Everything the voice needs to say what this person would say and pick their move (D-44): the character,
-    what they know (and where things are), why they're here, the conversation, Jev's reading of the moment,
+    what they know (and where things are), why they're here, the conversation,
     and the moves they may make. What is already decided (a deal agreed, the gate opened) comes as must."""
     context = voice_context(state, npc, text, "answer", answers, happened)
     context.pop("decided_reply", None)

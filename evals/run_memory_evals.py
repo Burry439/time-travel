@@ -1,4 +1,4 @@
-"""Live evaluation of memory across conversations (GDD D-36), with the real Jev and Luna.
+"""Live evaluation of memory across conversations (GDD D-36), with the real models.
 
     backend/.venv/Scripts/python.exe evals/run_memory_evals.py
 
@@ -43,8 +43,8 @@ def recollect(state: dict, npc_id: str) -> str:
 
 
 def main() -> int:
-    if decider.mode() != "jev":
-        print("Needs TYPESAFE_API_KEY and OPENAI_API_KEY in backend/.env.")
+    if decider.mode() != "llm":
+        print("Needs OPENAI_API_KEY in backend/.env.")
         return 1
     report, failures = {}, []
     state, hessa = world_for({"npc": "npc_hessa_marr"})
@@ -82,7 +82,7 @@ def main() -> int:
     text, questions = village.meet_brief(state, a, b)
     decided = decider.decide(text, questions)
     topic = (decided.answers.get("topic") or {}).get("choice")
-    report["gossip_topic_jev_chose"] = topic
+    report["gossip_topic_chosen"] = topic
     answers = dict(decided.answers, topic={"choice": "stranger"})
     options = village.topics(state, a, b)
     call, lines = voice.chatter(village.chatter_context(state, a, b, options["stranger"], answers),
@@ -99,7 +99,7 @@ def main() -> int:
     for turn in later:
         print(f"Later  you: {turn['said']}\n       Hessa: {turn.get('line')}")
     print(f"Bren on the lie: {lie.get('line')}  (claims kept: {len(claims)})")
-    print(f"Jev's own topic choice for Hessa meeting Bren: {topic}")
+    print(f"The decider's own topic choice for Hessa meeting Bren: {topic}")
     print(f"Gossip  Hessa: {lines[0]}\n        Bren:  {lines[1]}")
     print(f"Bren, asked 'Have you heard of me?': {reply.get('line')}")
     print("\n" + ("PASS" if not failures else "FAIL: " + "; ".join(failures)))

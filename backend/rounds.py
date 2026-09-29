@@ -104,7 +104,7 @@ def _round_draft(state: dict, run_id: str, request: EncounterAct, walk: list[lis
         encounter.open_for_talk(seen, minds.find(seen["npcs"], request.target_id), now)
     elif request.target_id and request.target_id not in current["participants"]:
         encounter.join(seen, minds.find(seen["npcs"], request.target_id), "talk", None, now)
-    for npc_id in encounter.missing_intents(seen):  # Anyone Jev didn't answer for keeps listening.
+    for npc_id in encounter.missing_intents(seen):  # Everyone keeps listening (D-46: no intents).
         encounter.set_intent(seen, minds.find(seen["npcs"], npc_id), intents.get(npc_id, {}))
     action = {"kind": request.kind, "text": request.text, "target_id": request.target_id}
     draft, record = encounter.resolve(seen, run_id, action, judged.result if judged else None,
