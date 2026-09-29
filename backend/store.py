@@ -142,6 +142,9 @@ def db():
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(action_requests)")}
         if "request_json" not in columns:
             connection.execute("ALTER TABLE action_requests ADD COLUMN request_json TEXT NOT NULL DEFAULT ''")
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(runs)")}
+        if "scenario" not in columns:  # village (the game) or tutorial (D-50)
+            connection.execute("ALTER TABLE runs ADD COLUMN scenario TEXT NOT NULL DEFAULT 'village'")
         yield connection
         connection.commit()
     except Exception:
@@ -154,6 +157,7 @@ def db():
 def initial_state(run: sqlite3.Row) -> dict:
     state = {
         "run_id": run["id"], "mode": run["mode"], "seed_version": run["seed_version"],
+        "scenario": run["scenario"] if "scenario" in run.keys() else "village",
         "geometry_version": run["geometry_version"], "event_seq": 0, "tick": 0,
         "sim_time_ms": 0,
         "player": {"x": 48, "y": 68, "alive": True},
@@ -167,13 +171,16 @@ def initial_state(run: sqlite3.Row) -> dict:
     for obj in state["objects"].values():  # Everyone starts wearing and holding their own gear (seed 10, D-49).
         for slot in obj.pop("worn_slots", []):
             people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
+    if state["scenario"] == "tutorial":  # The first morning, with the device (D-50).
+        import tutorial
+        tutorial.setup(state)
     return state
 
 
 # Events the player causes. A request is stale only if the client hasn't seen the latest of
 # these; people thinking or the clock ticking in between never makes the player's request stale.
 PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "fight", "gear", "dev_gate",
-                "objective_complete"}
+                "objective_complete", "device"}
 
 
 def is_stale(state: dict, expected_version: int) -> bool:
@@ -222,6 +229,8 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
         state["journal"].extend(payload["journal_added"])
     elif event["kind"] == "gear":  # Equip, swap hands, treat (D-49): the resulting fields.
         apply_gear(state, payload)
+    elif event["kind"] in ("tutorial", "device"):  # The story moving on; the device answering (D-50).
+        apply_tutorial(state, payload)
     elif event["kind"] == "minds":
         state["npcs"] = payload["npcs"]
         state["player"] = payload["player"]
@@ -258,6 +267,17 @@ def apply_people(state: dict, payload: dict) -> None:
         state["fight"] = payload["fight"]
     if "barred_until" in payload:  # e.g. arrested after giving up a fight
         state["barred_until"] = payload["barred_until"]
+
+
+TUTORIAL_FIELDS = ("tutorial", "device_log", "objective", "npcs", "objects", "player", "fight", "pending_minds",
+                   "encounter")
+
+
+def apply_tutorial(state: dict, payload: dict) -> None:
+    for key in TUTORIAL_FIELDS:
+        if key in payload:
+            state[key] = payload[key]
+    state["journal"].extend(payload.get("journal_added", []))
 
 
 def apply_gear(state: dict, payload: dict, already_journaled: bool = False) -> None:

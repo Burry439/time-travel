@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import m2  # noqa: E402
+import tutorial  # noqa: E402
 from ai import config, illustrator  # noqa: E402
 
 OUT = ROOT / "assets" / "generated" / "materials"
@@ -25,7 +26,11 @@ def paintable() -> dict[str, dict]:
         materials, description, _, _ = m2.MATERIAL_SEED[object_id]
         records[object_id] = {"name": name, "description": description, "materials": materials}
     for spec in m2.WORLD_CONTENT["objects"]:
+        if spec.get("no_sprite"):
+            continue  # Drawn by something else (a building's art, the stranger's own painting).
         records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
+    for oid, name, _mass, _length, materials, description, *_rest in tutorial.PRACTICE_GEAR:
+        records[oid] = {"name": name, "description": description, "materials": materials}
     return records
 
 

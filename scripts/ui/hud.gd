@@ -14,6 +14,7 @@ var slots_box: HBoxContainer
 var weight: Label
 var inventory: PanelContainer
 var objective: PanelContainer
+var goal: Label
 var corner: HBoxContainer
 var condition_box: VBoxContainer
 var notices: VBoxContainer
@@ -58,7 +59,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	area = _wood_label("THE SOUTH ROAD", 12, UITheme.GOLD)
 	area.add_theme_font_override("font", UITheme.serif(true))
 	column.add_child(area)
-	var goal := _wood_label("Find a way into the city", 20)
+	goal = _wood_label("Find a way into the city", 20)
 	goal.add_theme_font_override("font", UITheme.serif(true))
 	column.add_child(goal)
 	status = _wood_label("", 13, Color(UITheme.CREAM, 0.8))
@@ -183,6 +184,16 @@ func refresh() -> void:
 	var leads: int = ui.open_leads().size()
 	status.text = ("The city gate is open ↑" if state.get("gate_open", false) else "The gate lies to the north ↑") + \
 		("  ·  %d open lead%s" % [leads, "" if leads == 1 else "s"] if leads > 0 else "")
+	var tutorial = state.get("tutorial")
+	if typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false): # The first morning (D-50).
+		var steps: Array = ui.device.story.get("steps", [])
+		var index := int(tutorial.get("step", 0))
+		goal.text = str(steps[index].get("title", "")) if index < steps.size() else "The first morning"
+		status.text = "%d / %d  ·  %s" % [index + 1, steps.size(), str(state.get("objective", ""))]
+		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		status.custom_minimum_size.x = 300
+	else:
+		goal.text = "Find a way into the city"
 	var carried := carried_objects()
 	var mass := 0.0
 	var signature := PackedStringArray()
@@ -226,11 +237,18 @@ func _condition(text: String, colour: Color) -> void:
 	condition_box.add_child(chip)
 
 
+## What's in the pack or hands (not what's worn: clothes and armour are on the body, D-49).
 func carried_objects() -> Array[Dictionary]:
 	var carried: Array[Dictionary] = []
+	var worn := {}
+	var kit = game.run_state.get("player", {}).get("equipped")
+	if typeof(kit) == TYPE_DICTIONARY:
+		for slot in kit:
+			if str(slot) in ["head", "neck", "body", "arms", "legs", "hands", "feet"]:
+				worn[str(kit[slot])] = true
 	for id in game.run_state.get("objects", {}):
 		var obj: Dictionary = game.run_state.objects[id]
-		if obj.get("holder_id") == "player":
+		if obj.get("holder_id") == "player" and not worn.has(str(id)):
 			carried.append(obj)
 	return carried
 

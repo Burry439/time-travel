@@ -16,13 +16,14 @@ import rounds
 import routes_craft
 import routes_gear
 import routes_minds
+import routes_tutorial
 import routes_world
 import store
 from ai import config as ai_config, decider, illustrator, judge, voice
 from store import GEOMETRY_VERSION, NPCS, SEED_VERSION, WORLD_GEOMETRY, db, initial_state, load_run
 
 app = FastAPI(title="The City Beyond", version="0.5.0")
-for module in (routes_world, routes_craft, rounds, routes_minds, routes_gear):
+for module in (routes_world, routes_craft, rounds, routes_minds, routes_gear, routes_tutorial):
     app.include_router(module.router)
 
 # What tests and tools reach through this module.

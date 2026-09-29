@@ -32,9 +32,15 @@ ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 SCENE_VERSION = "scene_v1"
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
+DEVICE_VERSION = "device_v1"  # The device from the future, answering the stranger (D-50).
+_DEVICE = (_PROMPTS / f"{DEVICE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
+
+
+class DeviceLine(BaseModel):
+    text: str
 
 
 class DialogueLine(BaseModel):
@@ -214,6 +220,21 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
         call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
     elif call.error is None:
         call.error = "The model returned no lines."
+    return call
+
+
+def device(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
+    """The device answers the stranger's question (D-50); its written hint if the model can't be asked."""
+    skipped = _unavailable(fallback, allowed, DEVICE_VERSION)
+    if skipped:
+        return skipped
+    call, parsed = _parse(_DEVICE, context, DeviceLine, DEVICE_VERSION)
+    call.text = fallback
+    spoken = " ".join(parsed.text.split())[:500] if parsed is not None else ""
+    if spoken:
+        call.status, call.text = "ok", spoken
+    elif call.error is None:
+        call.error = "The model returned no line."
     return call
 
 

@@ -21,6 +21,7 @@ router = APIRouter()
 
 class NewRun(BaseModel):
     mode: str = "normal"
+    scenario: str = "village"  # or "tutorial": the first morning, with the device (D-50)
 
 
 class Move(BaseModel):
@@ -62,11 +63,13 @@ def health():
 def create_run(request: NewRun):
     if request.mode not in ("normal", "developer"):
         raise HTTPException(422, "Mode must be normal or developer")
+    if request.scenario not in ("village", "tutorial"):
+        raise HTTPException(422, "Scenario must be village or tutorial")
     run_id = uuid4().hex
     with store.lock, store.db() as connection:
         connection.execute(
-            "INSERT INTO runs (id,mode,seed_version,geometry_version) VALUES (?,?,?,?)",
-            (run_id, request.mode, store.SEED_VERSION, store.GEOMETRY_VERSION),
+            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
+            (run_id, request.mode, store.SEED_VERSION, store.GEOMETRY_VERSION, request.scenario),
         )
         _, state = store.load_run(connection, run_id)
     return state
@@ -104,8 +107,9 @@ def rewind(run_id: str):
         run, state = store.load_run(connection, run_id)
         point = int(state.get("safe_seq", 0))
         new_id = uuid4().hex
-        connection.execute("INSERT INTO runs (id,mode,seed_version,geometry_version) VALUES (?,?,?,?)",
-                           (new_id, run["mode"], run["seed_version"], run["geometry_version"]))
+        connection.execute("INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
+                           (new_id, run["mode"], run["seed_version"], run["geometry_version"],
+                            run["scenario"] if "scenario" in run.keys() else "village"))
         connection.execute("INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
                            "SELECT ?,seq,tick,kind,payload,request_id FROM events WHERE run_id=? AND seq<=?",
                            (new_id, run_id, point))
@@ -221,6 +225,8 @@ def explore(run_id: str, request: ExploreClock):
         state["sim_time_ms"] = sim_time_ms
         state["npcs"] = payload["npcs"]
         store.apply_people(state, payload)
+        import routes_tutorial  # The tutorial moves on with the clock, too (D-50).
+        routes_tutorial.progress(connection, state)
         if state["event_seq"] % 64 == 0:
             connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
                                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))

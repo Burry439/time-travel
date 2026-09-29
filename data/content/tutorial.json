@@ -1,0 +1,260 @@
+{
+ "version": 1,
+ "notes": "The tutorial, 'The first morning' (GDD D-50). A fixed story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: objective (the HUD), start (the device's lines as the step begins), hints (shown by the client after hint_after_s of no progress), done (the device's line as it completes), check (an outcome in the world, checked by code), and triggers (things that happen once when their condition holds: someone speaks, lends something, a sparring bout begins). A step whose check already holds when it starts completes at once.",
+ "device_name": "the device",
+ "hint_after_s": [
+  45,
+  120,
+  240
+ ],
+ "steps": [
+  {
+   "id": "awake",
+   "title": "Awake",
+   "objective": "Walk a little way up the road, to where plants grow by the verge.",
+   "start": [
+    "…signal. There you are. Don't be alarmed: it's me, the device you came through with. I'm damaged, but I can still talk, and only you can hear me.",
+    "You're on a road below a walled city, a very long way back in time. Walk with WASD or the arrow keys; hold Shift to run. Walk a little way north, up the road."
+   ],
+   "hints": [
+    "Hover the mouse over anything to see what it is. Right-click it to look closer.",
+    "Walk north up the road a few paces. There are loose things all around: branches, a stone, a flint shard.",
+    "Keep walking north until you're among the plants growing at the road's edge."
+   ],
+   "done": "Everything here is real: it has weight, it's made of something, and someone may own it. Nothing is scenery just because it's small.",
+   "check": {
+    "kind": "near",
+    "cell": [
+     48,
+     62
+    ],
+    "within": 2.0
+   }
+  },
+  {
+   "id": "hands",
+   "title": "Your hands",
+   "objective": "Pick up two things.",
+   "start": [
+    "You arrived with nothing but your clothes, and there are loose things all along this road. Pick things up: click on them, or walk up and press E.",
+    "Your pack is along the bottom of the screen. Watch the weight: you can carry about twenty kilos."
+   ],
+   "hints": [
+    "Click on a loose thing to pick it up. You walk there first.",
+    "A branch, the flint shard, a stone: any two will do.",
+    "Stand next to something small and press E."
+   ],
+   "done": "Good. Right-click anything in your pack to look at it; drag it onto a person or a thing to use it.",
+   "check": {
+    "kind": "carrying",
+    "count": 2
+   }
+  },
+  {
+   "id": "smithy",
+   "title": "A cry from the smithy",
+   "objective": "Someone is hurt at the smithy, off to the north-west. Go and speak to them.",
+   "on_start": [
+    {
+     "kind": "hurt",
+     "npc": "npc_jory_venn",
+     "condition": {
+      "kind": "burn",
+      "area": "arm",
+      "severity": 18
+     }
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_jory_venn",
+     "text": "Ahh! The tongs slipped. My arm, it's burning!"
+    }
+   ],
+   "start": [
+    "Did you hear that? Someone's hurt, over by the smithy to the north-west.",
+    "Talking is simple: click on a person, or press T and type whatever you'd say. Anything at all. There are no lines to pick from, and they answer as themselves."
+   ],
+   "hints": [
+    "The smithy is up the path to the north-west, past the inn. Follow the smoke.",
+    "It's the apprentice, Jory. Click on him when you're close to start talking.",
+    "Stand beside Jory, press T, and say something: \"Let me see your arm.\""
+   ],
+   "done": "Notice Mara listening in: anyone near enough can join a conversation. They'll remember what you said, and how you said it.",
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_jory_venn"
+   }
+  },
+  {
+   "id": "remedy",
+   "title": "Something for the burn",
+   "objective": "Make something that will help Jory's burn.",
+   "start": [
+    "That burn needs dressing, or it will fester within the hour. You know more about burns than anyone alive here. What would you use?",
+    "To make something, press T and say what you do, in your own words. The world decides whether it works, and tells you why when it doesn't."
+   ],
+   "hints": [
+    "A burn wants to be cooled, kept clean and covered. Think leaves, clean cloth, honey, clean water.",
+    "Broad plantain leaves grow by the road where you woke. Darin the merchant has linen; Hessa at the inn keeps honey. You can ask, trade, or take, but people notice taking.",
+    "Pick up the plantain leaves, then press T and type: \"crush the plantain leaves into a poultice for a burn\"."
+   ],
+   "done": "That will do. You made it, so it's yours, and it exists now: nobody in this world had that until you did.",
+   "check": {
+    "kind": "carrying_remedy",
+    "treats": "burn"
+   }
+  },
+  {
+   "id": "treat",
+   "title": "Treat Jory",
+   "objective": "Treat Jory's burn.",
+   "start": [
+    "Now put it on him. Stand beside Jory and say what you do, or press I for Pack & gear and choose to treat him.",
+    "The same goes for you: cuts bleed until they're bound, burns fester, a broken arm holds nothing. Small hurts mend by themselves; those don't."
+   ],
+   "hints": [
+    "Go back to Jory at the smithy.",
+    "Beside him, press T and describe it: \"lay the poultice on Jory's burn and bind it\".",
+    "Or press I: your remedy is in the pack, and Pack & gear can treat whoever is next to you."
+   ],
+   "done": "He'll remember that. So will Mara. Kindness counts here the way evidence does: people trust what they've seen you do.",
+   "check": {
+    "kind": "condition_treated",
+    "npc": "npc_jory_venn",
+    "condition": "burn"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_mara_venn",
+     "text": "That was decent of you, stranger. Kade was asking after anyone who can hold a weapon. He'll want a look at you."
+    }
+   ]
+  },
+  {
+   "id": "arm",
+   "title": "Arm yourself",
+   "objective": "Kade is coming over. Take what he offers and hold a weapon.",
+   "on_start": [
+    {
+     "kind": "approach",
+     "npc": "npc_kade_east"
+    }
+   ],
+   "triggers": [
+    {
+     "id": "lent",
+     "when": {
+      "kind": "npc_near",
+      "npc": "npc_kade_east",
+      "within": 2.5
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_kade_east",
+       "text": "Mara says you've got steady hands. Here: a practice staff and a wicker shield. Let's see what you do with them."
+      },
+      {
+       "kind": "lend",
+       "npc": "npc_kade_east",
+       "objects": [
+        "practice_staff",
+        "wicker_shield"
+       ]
+      }
+     ]
+    }
+   ],
+   "start": [
+    "Here comes Kade, one of the guards. Guards here are not your friends yet, but they respect someone who can stand up for himself.",
+    "Press I for Pack & gear. Put a weapon in your right hand and a shield in your left. Space uses the right hand, F the left; X swaps them."
+   ],
+   "hints": [
+    "Wait for Kade to reach you, or walk to meet him.",
+    "Press I, find the practice staff in your pack, and choose Right hand.",
+    "Anything can be a weapon in a pinch: a branch, a stone. But the staff is what he's lending you."
+   ],
+   "done": "Weapons have a weight and a reach. A staff keeps them back; a knife needs you close. Armour matters more than anything: remember that when you meet the guards in mail.",
+   "check": {
+    "kind": "holding_weapon"
+   }
+  },
+  {
+   "id": "bout",
+   "title": "Kade's bout",
+   "objective": "Go up to Kade and spar.",
+   "triggers": [
+    {
+     "id": "spar",
+     "when": {
+      "kind": "ready_to_spar",
+      "npc": "npc_kade_east",
+      "within": 3.0
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_kade_east",
+       "text": "Right then. Only practice: nobody bleeds. Show me."
+      },
+      {
+       "kind": "spar",
+       "npc": "npc_kade_east"
+      }
+     ]
+    }
+   ],
+   "start": [
+    "Fights here happen in real time. Every blow winds up first: watch the red mark over their head, and step out of reach before it lands.",
+    "Space swings what's in your right hand. Hold F to raise the shield against blows from the front. If it goes badly, press T and say you give up."
+   ],
+   "hints": [
+    "Walk up to Kade with the staff in hand.",
+    "When he winds up, step back; swing as he recovers from his blow.",
+    "Hold F with the shield facing him to take his blows, then let go and strike with Space."
+   ],
+   "done": "Win or lose, you know how a fight goes now. A real one won't stop at 'enough'. Choose them carefully.",
+   "check": {
+    "kind": "bout_over"
+   }
+  },
+  {
+   "id": "wonder",
+   "title": "Something they've never seen",
+   "objective": "Show someone something that works, made from what you know.",
+   "start": [
+    "Here's your real advantage: you know things nobody here has worked out yet. When people see something work, it changes how they see you.",
+    "Make something from your own knowledge, then show it to someone: say \"show Hessa…\", or drag it onto them."
+   ],
+   "hints": [
+    "It doesn't need to be grand. Clever beats grand: a lever, clean water, a quicker way to make fire.",
+    "Ideas: a lever and a stone to lift something heavy; muddy water run through cloth, sand and charcoal; sparks from flint struck on iron into dry grass; a pulley from a rope.",
+    "Make it first (press T and describe it), then press T again: \"show Jory how it works\"."
+   ],
+   "done": "Did you see their face? That's worth more than any argument. Keep that in mind at the gate.",
+   "check": {
+    "kind": "demonstration_seen"
+   }
+  },
+  {
+   "id": "city",
+   "title": "The city",
+   "objective": "Find your own way inside the city.",
+   "start": [
+    "That's everything I can teach you. The city gate is to the north, and it's shut to strangers. How you get in is up to you: by what you make, what you show, who comes to trust you, or something nobody has thought of.",
+    "I'll stay quiet from here. If you're stuck, press H and ask me. I'll point you somewhere, but I won't solve it for you."
+   ],
+   "hints": [],
+   "done": "",
+   "check": {
+    "kind": "always"
+   }
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone, and everyone who saw it will remember. If that isn't what you meant, rewind from the menu: Rewind to the last calm moment.",
+  "arrested": "They've taken you away from the gate. It isn't over: you can still find another way. Or rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

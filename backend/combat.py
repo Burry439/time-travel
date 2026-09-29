@@ -17,6 +17,8 @@ import minds
 
 SUBDUE_DAMAGE = 15  # A spear butt, a fist, a shove to the ground: hurts, doesn't kill (D-44).
 SUBDUED_AT = 25  # Beaten down to this, the stranger is at their mercy: a guard arrests them; anyone else stops.
+SPAR_ENOUGH_AT = 40  # A sparring partner beaten down to this calls it: "Enough!" (D-50).
+SPAR_MAX_BLOW = 12  # Practice blows are pulled: they bruise, never cut or break.
 GIVE_UP_CELLS = minds.GIVE_UP_CELLS
 LOG_KEPT = 12
 HIT_RADIUS = 0.8  # A missile hits someone within this of where it was aimed when it arrives.
@@ -143,6 +145,8 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
         return active(state)
     fight = state.get("fight") or {"started_at": now, "attackers": [], "swings": {}, "log": [], "count": 0,
                                    "why": why}
+    if why == "spar":  # A practice bout (the tutorial): nobody means harm, and nobody is arrested (D-50).
+        fight["spar"] = True
     state["fight"] = fight
     state["encounter"] = None  # Words are over: no more rounds.
     for npc in people:
@@ -153,7 +157,8 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
         minds._set_job(npc, {"kind": "fight", "target": "player", "speed": "run"}, now)
         minds.mind(npc)["facing_player"] = True
         minds.mind(npc)["feelings"]["anger"] = max(minds.mind(npc)["feelings"].get("anger", 0.0), 0.67)
-        _log(state, npc["id"], "joins", f"{npc['name']} comes at you with {_their(state, npc)}!"
+        _log(state, npc["id"], "joins", f"{npc['name']} squares up to you with {_their(state, npc)}."
+             if fight.get("spar") else f"{npc['name']} comes at you with {_their(state, npc)}!"
              if fight["lethal"][npc["id"]] else f"{npc['name']} comes after you to put you on the ground!", now)
     ids = set(fight["attackers"])
     state["pending_minds"] = [p for p in state.get("pending_minds", [])
@@ -185,9 +190,26 @@ def gate_held_by(state: dict) -> dict | None:
     return min(guards, key=lambda g: math.dist(minds._cell(g), minds.m2.GATEWAY), default=None)
 
 
+def end_spar(state: dict, npc: dict | None, outcome: str, text: str, now: int,
+             journal: list[dict] | None = None) -> None:
+    """A practice bout is over: won, lost or yielded. Nobody is arrested; a good showing earns some respect."""
+    _log(state, npc["id"] if npc else "player", outcome, text, now, journal if journal is not None else state["journal"])
+    if npc is not None:
+        view = minds.regard(npc)
+        view["respect"] = round(min(1.0, view.get("respect", 0.0) + {"spar_won": 0.15, "spar_lost": 0.05}.get(
+            outcome, 0.0)), 3)
+    finish(state, now)
+
+
 def surrender(state: dict, now: int) -> dict:
     """The stranger gives up: a guard among the attackers arrests them; otherwise they're left be, for now."""
     fight = active(state)
+    if fight and fight.get("spar"):
+        partner = minds.find(state["npcs"], (fight.get("attackers") or [""])[0])
+        name = partner["name"] if partner else "They"
+        end_spar(state, partner, "spar_yielded", f"You lower your guard. {name} grins: \"Good enough. You'll learn.\"",
+                 now)
+        return {"arrested": False, "text": f"{name} lowers the staff and claps you on the shoulder."}
     guard = next((minds.find(state["npcs"], a) for a in (fight or {}).get("attackers", [])
                   if minds.card(minds.find(state["npcs"], a)).get("guard")), None)
     finish(state, now)
@@ -363,6 +385,10 @@ def _npc_lands(state: dict, fight: dict, npc: dict, swing: dict, profile: dict, 
             blunt = f"the butt of {arm}" if profile["type"] in ("cut", "pierce") else arm
             _log(state, npc["id"], "hit", f"{npc['name']} clubs you with {blunt}. You stagger.", at, journal)
             return
+        if fight.get("spar"):
+            end_spar(state, npc, "spar_lost", f"{npc['name']} knocks you down, then offers you a hand up: "
+                                              f"\"Enough. Not bad for a first time.\"", at, journal)
+            return
         _log(state, npc["id"], "subdued", f"{npc['name']} knocks you to the ground and pins you there.", at, journal)
         state["subdued_by"] = npc["id"]  # store.advance_people carries out the arrest (it touches the world).
         finish(state, at)
@@ -450,7 +476,18 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
         change_object(state, obj["id"], water_l=0.0)
     else:
         outcome = gear.hit(state, body(npc), profile, aware=aware)
+    sparring = bool(fight.get("spar")) and npc["id"] in fight.get("attackers", [])
+    if sparring:  # Practice: blows are pulled; they bruise, never cut, break or knock anyone out.
+        outcome.update(effective=min(outcome["effective"], SPAR_MAX_BLOW), conditions=[], kill=False, down=False,
+                       knockout=False)
+        if outcome["result"] in ("killed", "knocked_out", "disabled"):
+            outcome["result"] = "wounded"
     result = gear.apply(npc, outcome, at)
+    if sparring and npc.get("health", 100) <= SPAR_ENOUGH_AT:
+        _log(state, "player", "hit", _blow_words(npc, profile, result, outcome), at, journal)
+        end_spar(state, npc, "spar_won", f"{npc['name']} steps back and raises a hand: \"Enough! Good. "
+                                         f"Very good.\"", at, journal)
+        return
     _fell(npc, result, at)
     npc.setdefault("injuries", []).append(f"struck by the stranger's {profile['name']}")
     _log(state, "player", "hit" if result not in ("deflected",) else "glance", _blow_words(npc, profile, result, outcome),

@@ -144,6 +144,8 @@ def _gear_event(connection, state: dict, request_id: str, seconds: int, journal_
     payload.update(extra or {})
     store.append(connection, state, "gear", payload, request_id, payload.get("sim_time_ms", state["sim_time_ms"]) // 1000)
     store.apply_gear(state, payload, already_journaled=True)
+    import routes_tutorial  # The tutorial may move on (D-50).
+    routes_tutorial.progress(connection, state)
 
 
 @router.post("/runs/{run_id}/equip")

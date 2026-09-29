@@ -279,6 +279,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                                (run_id, state["event_seq"], round_trace["npc_id"], json.dumps(round_trace)))
     finally:
         attempts.busy_runs.discard(run_id)
+    import routes_tutorial  # The tutorial may move on (D-50): rounds is imported by it, indirectly.
+    routes_tutorial.after_action(state)
     timing["total_ms"] = round((time.perf_counter() - started) * 1000)
     response = {"state": state, "duplicate": False, "round": state["last_round"], "timing": timing}
     if run["mode"] == "developer":

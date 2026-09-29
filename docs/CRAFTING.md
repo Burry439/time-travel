@@ -1,5 +1,7 @@
 # Try Something
 
+**New here?** Choose **Tutorial (first time)** on the title screen. "The first morning" takes about 20 minutes: the device that brought you here talks you through moving, picking things up, talking, making a remedy, treating someone, a practice bout with Kade, and showing off an invention. Afterwards, press **H** any time to ask the device for a nudge. It never gives away the answers, and you can switch it off in Settings.
+
 **The mouse:**
 
 - **Hover** over anything to see what it is and what a click does.

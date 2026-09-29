@@ -172,12 +172,12 @@ func _build_ui() -> void:
 	layer.add_child(hurt_flash)
 
 
-func _start(mode: String) -> void:
+func _start(mode: String, scenario := "village") -> void:
 	if request_busy:
 		return
 	request_busy = true
 	message.text = "Connecting to local simulation…"
-	var reply := await _api(HTTPClient.METHOD_POST, "/runs", {"mode": mode})
+	var reply := await _api(HTTPClient.METHOD_POST, "/runs", {"mode": mode, "scenario": scenario})
 	request_busy = false
 	if not reply["ok"]:
 		message.text = "Backend unavailable. Run tools/run_m0.ps1, then try again."
@@ -190,7 +190,10 @@ func _check_health() -> void:
 	if reply["ok"] and typeof(reply["data"].get("ai")) == TYPE_DICTIONARY:
 		ai_status = reply["data"]["ai"]
 	if menu.visible:
+		var settings := ConfigFile.new()
+		var tutorial_done: bool = settings.load("user://presentation.cfg") == OK and settings.get_value("tutorial", "done", false)
 		message.text = ("Local simulation ready. Start or resume a run." + (
+			"" if tutorial_done else "\nNew here? Start with the tutorial.") + (
 			"" if ai_ready() else "\nAI crafting is off: add OPENAI_API_KEY to backend/.env and restart the backend.")
 			) if reply["ok"] else "Start the local backend first: tools/run_m0.ps1"
 
@@ -247,6 +250,7 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	player_visual.revive()
 	camera.reset_smoothing()
 	menu.hide()
+	ui.device.refresh()
 	_spawn_npcs()
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	_sync_display()
@@ -557,6 +561,12 @@ func _accept_state(new_state: Dictionary) -> void:
 	run_state = new_state
 	_sync_display()
 	fight.sync()
+	ui.device.refresh()
+	var was_tutorial = before.get("tutorial")
+	var now_tutorial = run_state.get("tutorial")
+	if typeof(was_tutorial) == TYPE_DICTIONARY and typeof(now_tutorial) == TYPE_DICTIONARY \
+			and not was_tutorial.get("done", false) and now_tutorial.get("done", false):
+		ui.device.closing_card() # The first morning is over (D-50).
 	_react_to(before)
 
 
@@ -1540,6 +1550,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_X:
 			if hands_free:
 				fight.swap()
+			else:
+				return
+		KEY_H:
+			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
+				ui.device.open_ask() # Ask the device (D-50).
 			else:
 				return
 		KEY_Q:

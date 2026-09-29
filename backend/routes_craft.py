@@ -18,6 +18,7 @@ import encounter
 import intent
 import minds
 import rounds
+import routes_tutorial
 import routes_world
 import talk
 import store
@@ -223,6 +224,7 @@ def _attempt(run_id: str, text: str, selected_ids: list[str], expected_version: 
                 new_objects, background)
     finally:
         attempts.busy_runs.discard(run_id)
+    routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
     return _craft_response(run, state, trace, duplicate=False)
 
 

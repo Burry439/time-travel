@@ -5,7 +5,7 @@ extends VBoxContainer
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const TABS := [["leads", "Leads"], ["said", "What people said"], ["attempts", "Attempts"],
-	["made", "Things made"], ["map", "Map"], ["notices", "Notices"]]
+	["made", "Things made"], ["map", "Map"], ["notices", "Notices"], ["device", "Device"]]
 
 var ui: Control
 var game: Node2D
@@ -60,6 +60,7 @@ func show_tab(name: String) -> void:
 		"attempts": _attempts(body)
 		"made": _made(body)
 		"notices": _notices(body)
+		"device": _device(body)
 
 
 func _heading(body: VBoxContainer, text: String) -> void:
@@ -114,6 +115,8 @@ func _attempts(body: VBoxContainer) -> void:
 		var entry: Dictionary = history[index]
 		if shown >= 40:
 			break
+		if str(entry.get("kind", "")) == "device":
+			continue # In its own tab.
 		shown += 1
 		var line: String = str(entry.get("reason", ""))
 		if entry.has("text") and entry.has("category"):
@@ -145,6 +148,19 @@ func _made(body: VBoxContainer) -> void:
 		ui.capability_lines(column, obj)
 	if not any:
 		ui.paragraph(body, "You haven't made anything yet. What could you make with what's around you?")
+
+
+## Everything the device has said, and what you asked it (D-50).
+func _device(body: VBoxContainer) -> void:
+	var lines: Array = game.run_state.get("device_log", [])
+	if lines.is_empty():
+		ui.paragraph(body, "The device has been quiet. Press H to ask it something.")
+	for index in range(lines.size() - 1, -1, -1):
+		var line: Dictionary = lines[index]
+		if line.has("question"):
+			var asked: Label = ui.paragraph(body, "You asked: “%s”" % str(line.question))
+			asked.modulate.a = 0.7
+		ui.paragraph(body, "◉  " + str(line.get("text", "")))
 
 
 func _notices(body: VBoxContainer) -> void:

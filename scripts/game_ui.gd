@@ -29,7 +29,10 @@ const CONTROLS := [
 	["E", "Act on whatever is nearest"],
 	["Esc", "Walk away · close · menu"],
 	["WASD / arrows,  Shift", "Walk, run"],
-	["I  ·  J", "Everything you carry · your journal"],
+	["I  ·  J", "Pack & gear (hold, wear, treat wounds) · your journal"],
+	["Space  ·  F", "Use what's in your right · left hand (hold F to raise a shield)"],
+	["X  ·  Q", "Swap hands · throw what's in your right hand"],
+	["H", "Ask the device"],
 	["Mouse wheel", "Zoom"],
 ]
 
@@ -40,6 +43,7 @@ var bar: PanelContainer
 var card: PanelContainer
 var cursor: Node
 var sounds: Node
+var device: Control # The device from the future (D-50): scripts/ui/device.gd.
 var modal: PanelContainer
 var modal_box: VBoxContainer
 var modal_kind := ""
@@ -108,6 +112,9 @@ func build(owner_game: Node2D) -> void:
 	hud = preload("res://scripts/ui/hud.gd").new()
 	root.add_child(hud)
 	hud.build(self, game)
+	device = preload("res://scripts/ui/device.gd").new()
+	root.add_child(device)
+	device.build(self, game)
 	bar = preload("res://scripts/ui/action_bar.gd").new()
 	root.add_child(bar)
 	bar.build(self, game)
@@ -138,6 +145,8 @@ func build(owner_game: Node2D) -> void:
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_box.add_child(intro)
 	menu_box.add_child(HSeparator.new())
+	var first_time := button("Tutorial (first time)", game._start.bind("normal", "tutorial"))
+	menu_box.add_child(first_time)
 	menu_box.add_child(button("Begin a journey", game._start.bind("normal")))
 	menu_box.add_child(button("Continue last journey", game._resume))
 	menu_box.add_child(button("Developer playtest", game._start.bind("developer")))
@@ -448,6 +457,17 @@ func open_menu(page := "main") -> void:
 			_slider(body, "Sound volume", 0.0, 1.0, 0.05, game.sound_volume, func(value: float) -> void:
 				game.sound_volume = value
 				game._save_settings())
+			paragraph(body, "The device (outside the tutorial)")
+			var device_modes := HBoxContainer.new()
+			device_modes.add_theme_constant_override("separation", 6)
+			body.add_child(device_modes)
+			var device_group := ButtonGroup.new()
+			for pair in [["When I ask (H)", "asked"], ["Off", "off"]]:
+				var choice := button(pair[0], func() -> void: device.set_mode(pair[1]), "Chip")
+				choice.toggle_mode = true
+				choice.button_group = device_group
+				choice.button_pressed = device.mode == pair[1]
+				device_modes.add_child(choice)
 			body.add_child(button("Show the first-time hints again", func() -> void:
 				hints.clear()
 				save_ui_settings()
@@ -459,6 +479,9 @@ func open_menu(page := "main") -> void:
 			body.add_child(button("Journal", open_journal.bind("leads")))
 			body.add_child(button("Controls", open_menu.bind("controls")))
 			body.add_child(button("Settings", open_menu.bind("settings")))
+			body.add_child(button("Rewind to the last calm moment", func() -> void:
+				close_modal_now()
+				game.rewind()))
 			body.add_child(button("Save and return to title", game._back_to_menu))
 			var saved := paragraph(body, "Every action and step is saved as you go.")
 			saved.theme_type_variation = "Small"

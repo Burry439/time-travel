@@ -1,6 +1,6 @@
 # The City Beyond — Game Design Document
 
-**Version 1.8 · 29 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49)
+**Version 1.9 · 29 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49; 1.9: the tutorial and the device, D-50)
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -126,13 +126,42 @@ Around 20–40 minutes for a first run, and about 5–10 minutes for a player wh
 
 ### Starting state
 
-The player is a healthy average adult who looks about 30. They wear period clothing and have no money, tools, or items. They start on the south road (cell 48, 68). The first screen states the objective: **Get inside the city.**
+The player is a healthy average adult who looks about 30. They wear period clothing and have no money, tools, or items. They start on the south road (cell 48, 68). The first screen states the objective: **Get inside the city.** A tutorial journey starts in the same place with the first step of "The first morning" instead (D-50).
 
 ### Opening text
 
 Keep it short, dismissible, and free of hints.
 
 > You come from the future. What you know may be useful here, but you have only the clothes you're wearing. Look around, talk to people, and try your ideas: describe what you want to do in your own words. People respond to what they see, what they understand, and what they want.
+
+### Tutorial and the device (D-50)
+
+**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json`, `backend/tutorial.py`.
+
+**The device** is the damaged machine that brought the stranger here. Only the stranger hears it. It knows modern science and the controls, but only what the stranger has seen or been told: never people's secrets or anything unseen.
+
+**The story's lines are written in advance**, so the tutorial never waits on a model. **H asks the device anything** (`device_v1`, one call). In the main game it answers only when asked, gives directions rather than solutions, and can be switched off in Settings.
+
+**Nine steps**, each checked by code as an outcome in the world (any way the player finds counts; a step already done completes at once):
+
+1. **Awake:** walk up the road.
+2. **Your hands:** pick up two things.
+3. **A cry from the smithy:** Jory has burnt his arm; speak to him. Mara joins in.
+4. **Something for the burn:** make any remedy that treats a burn.
+5. **Treat Jory.**
+6. **Arm yourself:** Kade lends a practice staff and a wicker shield.
+7. **Kade's bout:** a sparring bout with pulled blows. No bleeding, no crime, no arrest; win, lose or yield.
+8. **Something they've never seen:** show anyone a working invention.
+9. **The city:** the real goal, then **Carry on** or **Begin a fresh journey**.
+
+The story uses its own problems, never the gate beam, bar or compass, so the main game's routes stay undiscovered (A8).
+
+**Hints and mistakes:** stuck on a step, the device offers its written hints after 45 s, 2 min and 4 min. Mistakes stay real: the device reacts to a death or an arrest and points to **Rewind to the last calm moment**, now also in the pause menu.
+
+**On screen:**
+- the objective panel shows the step (1/9 and its goal);
+- the device's lines type out in their own steel-blue panel;
+- the journal has a **Device** tab.
 
 ### The loop
 
@@ -1230,7 +1259,7 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 **Goal:** a demo that strangers can play.
 
 **Build:**
-- Onboarding text and the objective reminder.
+- Onboarding text and the objective reminder. *(Built as the tutorial and the device, D-50.)*
 - Art pass on new manifest props and the result feedback.
 - Routing optimisations justified by telemetry.
 - Tuning; bug fixing; a clean-clone setup script.
@@ -1266,6 +1295,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-50 | 2026-09-29 | **A tutorial, and the device from the future.**<br><br>A prologue on the village map, "The first morning": 9 steps in about 20 minutes, taught through the tutorial's own problems (Jory's burn, Kade's bout, any invention), never the main game's routes. Each step is an outcome checked by code; triggers let the story act (Kade walks over and lends his gear; the bout begins).<br><br>**Progress is an event** (`tutorial`), checked on the clock and right after each action; questions to the device are `device` events. A `scenario` per journey (`village`, `tutorial`).<br><br>**The device** is written for the story and uses the voice model only for questions (H). It knows only what the stranger knows. In the main game it answers only when asked, and never with a solution; it can be switched off.<br><br>**Also:**<br>- a sparring bout (`fight.spar`) with pulled blows, ended by "Enough!" or yielding, without an arrest;<br>- Rewind in the pause menu;<br>- worn things are no longer counted as carried in the pack bar. | The user: "a tutorial mode that will have a fixed story line with an assistant guiding you through it and recommending things for first time users".<br><br>**Chosen:** a device from the future; a prologue on the same map; about 20 minutes, everything; the device stays afterwards, optional and quiet. A fixed story is allowed here because it's a separate scenario with outcome checks: the rules that protect the main game (no fixed recipes, A8) still hold. |
 | D-49 | 2026-09-29 | **Gear, real health, and finished real-time combat.**<br><br>**One gear table** (`gear.json`, `gear.py`): about 30 weapon classes, 14 kinds of armour and clothing, shields, ammunition and remedies. The judge proposes a class for what's made (`judge_v14`); code checks it against the thing's physics (then its near kin, then its own reading) and owns every number.<br><br>**Blows by physics:** weapon and edge material against the armour covering the spot, awareness, where it lands; the penetration law generalises D-41's mail law; laws for throats and hearts, chokes and bare-handed tricks. Described attacks: the judge rules whether and where it lands (and how long a choke is held); code works out what it does.<br><br>**Bodies:** bleeding, burns, broken limbs, infection and knockouts; ordinary damage mends slowly, conditions need a remedy you make; NPCs who help bind wounds.<br><br>**Real-time:** both hands (Space, F; X swaps; Q throws), wind-ups for the stranger too, shields raised by holding their key, bows, slings and throws as missiles that land as objects, pours.<br><br>**Everyone's gear is objects** (seed 10); what the fallen have can be taken.<br><br>**Pictures:** held views and worn sheets on the rig; procedural attack poses over the real wind-up; the item library reuses pictures of exactly the same thing. | The user: "I want to be able to equip the weapons that we create and have the player hold them and attack with them with animations"; armour "should be way stronger than not having armour"; "an iron sword is extremely dangerous and so is just a blunt rock"; a described sneak attack should do "way more damage than just normally attacking"; "it should be general enough to take into account things we haven't" (strangling with a rope, a knife to the throat); healing things you make; armour as equipped assets rather than repainting the character; controls for each hand; the same item never made twice.<br><br>**Chosen:** bleeding and healing; held items and worn sprites (the full repaint was dropped when the user asked for armour as assets); NPC gear as real objects; wind-ups both ways. |
 | D-48 | 2026-09-29 | **Group conversations, and one conversation system.**<br><br>**One scene per round.** One voice call (`scene_v1`) writes 1 to 3 lines for the people in the conversation and up to three free people within 5 cells. Each speaker reads the moment and picks their own move. Code checks each line (real person, near enough, legal move) and applies it as that person's exchange. A nearby person who speaks joins.<br><br>**Purpose per person.** An encounter keeps each participant's purpose (talk, joined, halt, confront, threaten, demand payment); hostility follows from any hostile purpose. A halt arriving at a friendly chat becomes "joined".<br><br>**No side channels:**<br>- no gate halt during a conversation, or within 60 s of dealing with a guard;<br>- no meetings or chatter within earshot of a conversation;<br>- the same pair doesn't meet again for 10 minutes without news.<br><br>**Also:**<br>- deeds aimed at a nearby person open a conversation with them;<br>- face to face, words about what you'll do are words;<br>- a social step with no details changes nothing instead of "could not be resolved";<br>- everyone knows everyone in town (role and usual place);<br>- a new `gather` action (`judge_v13`) takes a leaf, twig, bark or handful without destroying the source.<br><br>**Removed:** round intents and their questions, the "round" thinking kind, `voice.converse` (`voice_v5`), `talk.chosen`. | The user spoke to Roderic, and "while I was speaking the other two guards asked what I was doing". They asked for nearby people to really join, "like a group chat".<br><br>**From that game (run 6e88596f):**<br>- The gate watch sent Bren to shout "Halt!" mid-demonstration: it only checked for an open encounter.<br>- Oren made small talk with Roderic, and Bren and Tomas gossiped about the stranger's needle, a few steps away: they were "free" because they weren't participants.<br>- A halt joining a chat turned the whole conversation hostile.<br>- "I show Roderic the compass" ran as a Try Something with no reply.<br>- "…I need to show it to the guards" was read as a deed and came back "could not be resolved".<br>- Kade didn't know Hessa; Jory and Mara made the same small talk four times; there was no way to take a leaf off a tree. |
 | D-47 | 2026-09-29 | **Retire Jev: one model for every mind.** The decider is the language model (`gpt-6-luna`) answering the same typed questions over code-built options with a strict schema. The interface stays narrow so a typed engine could serve it again (crowds inside the city, or a cheap grader in evals). Removed: the TypeSafe/defapi route, `DECIDER`, `TYPESAFE_API_KEY`, `JEV_PROVIDER` and D-46's `background` split. | The user asked whether Jev is a technology that is useful to this game at all; credits were not the question.<br><br>**It isn't, here.** Jev picks from menus and gives calibrated typed answers: fast and cheap, best for high-volume, well-defined judgements. This game needs:<br>- open-ended understanding (the right response is often not on a menu: Kade's rope, Hessa's directions);<br>- one consistent mind per character (every split between a deciding model and a speaking model contradicted itself);<br>- judgement at a small scale (ten people, a few decisions a minute).<br><br>Its long menus under-picked the key option three times (M5, D-34, D-37). Its probabilities and confidence were read nowhere. At this volume Luna costs about the same (about $0.0002 against $0.00012 per decision).<br><br>**Also found:** Jev ran out of credit on 28 Sep at 23:37 local, minutes after D-44 went live. All 133 decisions since then fell back to Luna. |
@@ -1912,6 +1942,43 @@ Changes to this document: …
 - The helmet's front view sits large on the face; worn layers don't follow the arm and leg swing.
 - Held views exist only for new things (older items get one the first time they're equipped); NPCs don't draw what they pick up.
 - Seed-10 healing materials have no painted world sprites yet (run `tools/generate_material_art.py`).
+
+---
+
+### Retro: the tutorial and the device (D-50), 29 Sep 2026
+
+**Built:**
+
+- `data/content/tutorial.json` (the story, the device's lines, hints, checks and triggers) and `backend/tutorial.py` (setup, outcome checks, triggers, the device's context).
+- `routes_tutorial.py`: progress checked on every clock beat and right after equip, treat, crafting and rounds; developer skip; asking the device.
+- `voice.device` with `device_v1`; a `scenario` per journey; the sparring bout in `combat.py`.
+- Client: `scripts/ui/device.gd` (the panel, typed-out lines, hint timers, H to ask, the closing card), the tutorial on the title, the step in the objective panel, the journal's Device tab, a Settings choice, and Rewind in the pause menu.
+- Painted world art for the 26 seed-10 and tutorial things that had none: everyone's gear, the healing materials, and Kade's practice staff and shield.
+
+**Evidence:**
+
+- 201 backend tests pass, including 7 new tutorial tests: the whole story by outcomes, playing ahead, the bout's rules, the device's reactions and what it knows, and the routes with exact replay.
+- All Godot smoke tests pass on stub. The new `smoke_tutorial` starts from the title, walks, picks up, asks the device, skips what the stub can't do, gets Kade's gear, equips it in Pack & gear, wins the bout, and reaches the closing card.
+  - `smoke_talk` failed once while the machine was busy painting, then passed 3 of 3. Its thinking-indicator check is timing-sensitive.
+- **Live device evals:** 12/12 (6 cases × 2), median 1.6 s.
+  - Stuck on the remedy step, it points to the plantain.
+  - It explains holding F for the shield, and why a grass bow fails.
+  - In the main game it doesn't name any route ("look for someone who knows the city's customs").
+  - About Oren it says "I don't know what Oren is hiding".
+  - It stays in character.
+  - The first run's three misses were the checker's (a curly apostrophe; "AI" matching inside "repairs").
+
+**Lessons:**
+
+- Check the story wherever the player acts, not only on the clock: open panels pause the clock.
+- Start positions matter. The first check was 3 cells from the start and passed before the player moved.
+- Several steps can finish in one moment, so the device shows only the newest lines and moves on quickly.
+
+**To watch:**
+
+- The real test is a first-time player: time to finish, where they get stuck (the hint timers and the Device tab show it).
+- The device's first-ask answer in the tutorial can be the full written hint; fine for a tutorial, but watch that it stays a nudge in the main game.
+- Kade walks from his patrol to the stranger. If he's far away, step 6 waits a little.
 
 ---
 
