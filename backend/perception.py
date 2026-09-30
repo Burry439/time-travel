@@ -239,12 +239,7 @@ def gate_work_agreed(state: State) -> bool:
     for deal in (state.get("agreements") or {}).values():
         if deal.get("status") != "accepted":
             continue
-        issuer = cast.find(state["npcs"], deal.get("issuer") or "")
-        offer = next(
-            (o for o in (cast.card(issuer).get("offers", []) if issuer else []) if o["id"] == deal.get("template")),
-            {},
-        )
-        if (offer.get("done_when") or {}).get("installed"):
+        if (cast.offer_of(state, deal).get("done_when") or {}).get("kind") == "installed":
             return True
     return False
 

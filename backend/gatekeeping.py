@@ -8,8 +8,6 @@ import cast
 import reputation
 from shapes import Npc, State
 
-CAPTAIN = "npc_roderic_vale"
-
 
 def barred(state: State) -> bool:
     return (state.get("barred_until") or 0) > state.get("sim_time_ms", 0)
@@ -41,13 +39,13 @@ def grounds_to_admit(npc: Npc) -> bool:
     own motive may also go on trust earned over time; the captain's rule asks for the evidence."""
     if any(reputation.is_evidence(m) for m in cast.mind(npc).get("memories", [])):
         return True
-    return npc["id"] != CAPTAIN and reputation.standing(npc) in ("friendly", "would_speak")
+    return npc["id"] != cast.CAPTAIN and reputation.standing(npc) in ("friendly", "would_speak")
 
 
 def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int) -> None:
     """The person walks to the captain and speaks for the stranger (minds.advance_world delivers it)."""
     cast.set_job(
         npc,
-        {"kind": "vouch", "target": CAPTAIN, "speed": "walk", "why": why, "summary": summary, "event": event_id},
+        {"kind": "vouch", "target": cast.CAPTAIN, "speed": "walk", "why": why, "summary": summary, "event": event_id},
         now,
     )

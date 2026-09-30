@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import m2  # noqa: E402
-import tutorial  # noqa: E402
+import content  # noqa: E402
 from ai import config, illustrator  # noqa: E402
 
 OUT = ROOT / "assets" / "generated" / "materials"
@@ -29,8 +29,8 @@ def paintable() -> dict[str, dict]:
         if spec.get("no_sprite") or spec.get("art") == "scene":
             continue  # Drawn by something else (the scene itself, a building's art, the stranger's own painting).
         records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
-    for oid, name, _mass, _length, materials, description, *_rest in tutorial.PRACTICE_GEAR + tutorial.TUTORIAL_THINGS:
-        records[oid] = {"name": name, "description": description, "materials": materials}
+    for spec in content.TUTORIAL.get("things", []):  # The first morning's own things.
+        records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
     return records
 
 

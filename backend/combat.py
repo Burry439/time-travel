@@ -19,6 +19,8 @@ import m2
 import paths
 import perception
 import reputation
+import rules
+import speech
 import tuning
 from shapes import Npc, State, Thing
 
@@ -603,11 +605,23 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
 
 
 def _spar_instead(state: State, npc: Npc, at: int) -> None:
-    """In the tutorial, a blow at Kade while he's teaching is the bout, not an assault (D-53)."""
-    if state.get("tutorial") and not active(state):
-        import tutorial
+    """A blow at someone the scenario has sparring with the stranger (Kade, teaching, D-53) is the bout, not an
+    assault: they say so, and it begins (standing for the story's own start of it)."""
+    part = rules.role(state, npc).get("spars")
+    if not part or active(state) or state.get("fight"):
+        return
+    rules.note_fired(state, part.get("marks", []))
+    speech.say(npc, part["says"], at, state, state["journal"])
+    cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": part["says"], "at": at})
+    start_spar(state, npc, at, part.get("with"))
 
-        tutorial.spar_now(state, npc, at)
+
+def start_spar(state: State, npc: Npc, now: int, weapon_id: str | None = None) -> None:
+    """A practice bout with this person (D-50), with their practice weapon in hand if they hold it."""
+    weapon = state["objects"].get(weapon_id or "")
+    if weapon and weapon.get("holder_id") == npc["id"]:
+        npc.setdefault("equipped", {})["right"] = weapon["id"]
+    start(state, [npc["id"]], now, "spar", lethal=False)
 
 
 def in_front(state: State, npcs: list[Npc], facing: list[float] | None, reach: float) -> dict | None:

@@ -4,6 +4,8 @@ What they are is content (data/content/world_objects.json); picking up and putti
 
 from __future__ import annotations
 
+import copy
+
 import content
 import gear
 import tuning
@@ -23,7 +25,7 @@ def seed_objects() -> dict[str, dict]:
     """Every thing in the world at the start: the authored ones (data/content/world_objects.json), then every map
     tree as a fellable object. What each portable thing is good for in a fight or for the body is read once, here,
     as code reads it (D-49)."""
-    objects = {spec["id"]: _authored(spec) for spec in WORLD_CONTENT["objects"]}
+    objects = {spec["id"]: authored(spec) for spec in WORLD_CONTENT["objects"]}
     objects.update(_trees())
     for obj in objects.values():
         if "gear" not in obj and "carry" in obj["capabilities"] and obj.get("materials"):
@@ -73,7 +75,7 @@ def object_record(
     return record
 
 
-def _authored(spec: dict) -> dict:
+def authored(spec: dict) -> dict:
     """One authored thing as the world holds it: where it lies or who has it, and what it can do."""
     record = object_record(
         spec["id"],
@@ -100,7 +102,7 @@ def _authored(spec: dict) -> dict:
         "readable",
     ):  # Fires, building art, gear, books.
         if spec.get(extra):
-            record[extra] = spec[extra]
+            record[extra] = copy.deepcopy(spec[extra])  # The world's own copy, never the content's.
     if spec.get("worn_by") or spec.get("carried_by"):  # Someone's own gear (D-49): on them.
         record["holder_id"] = spec.get("worn_by") or spec.get("carried_by")
         record["capabilities"] = ["carry"] + [c for c in record["capabilities"] if c != "carry"]

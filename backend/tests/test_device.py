@@ -5,9 +5,9 @@ from test_encounter import post, world  # noqa: F401
 
 import app as service
 import cast
+import device
 import reputation
 import tuning
-import tutorial
 from ai import voice
 
 
@@ -27,15 +27,15 @@ def village_state():
 def test_it_remembers_the_conversation_and_keeps_a_long_history():
     state = village_state()
     for i in range(30):
-        tutorial.device_says(state, f"answer {i}", "answer", f"question {i}")
+        device.says(state, f"answer {i}", "answer", f"question {i}")
     assert len(state["device_log"]) == 30
-    context = tutorial.device_context(state, "and now?")
-    assert len(context["our_conversation"]) == tutorial.CONVERSATION_KEPT
+    context = device.context(state, "and now?")
+    assert len(context["our_conversation"]) == device.CONVERSATION_KEPT
     assert context["our_conversation"][-1] == {"you_asked": "question 29", "i_said": "answer 29"}
     assert context["earlier_questions"][-1] == "question 13"
     for _i in range(500):
-        tutorial.device_says(state, "x", "answer", "y")
-    assert len(state["device_log"]) == tutorial.DEVICE_LOG_KEPT
+        device.says(state, "x", "answer", "y")
+    assert len(state["device_log"]) == device.DEVICE_LOG_KEPT
 
 
 def test_the_coach_knows_what_the_stranger_knows_and_no_more():
@@ -45,7 +45,7 @@ def test_the_coach_knows_what_the_stranger_knows_and_no_more():
     state.setdefault("learned", []).append(
         {"npc_id": "npc_hessa_marr", "name": "Hessa", "said": "…", "lead": "Hessa needs water hauled from the trough."}
     )
-    context = tutorial.device_context(state, "what now?")
+    context = device.context(state, "what now?")
     assert context["leads_newest_first"][0] == {"lead": "Hessa needs water hauled from the trough.", "from": "Hessa"}
     assert {"name": "Hessa", "role": cast.card(hessa)["role"], "stands": "Neutral"} in context["people_met"]
     flat = str(context)
@@ -79,11 +79,11 @@ def test_a_moment_is_worth_a_word_only_sometimes(world, monkeypatch):
     """Remarks: only with something to say, at most every two minutes, never face to face, never a written
     stand-in (stub mode has no model, so nothing is said)."""
     state = village_state()
-    assert tutorial.moment_detail(state, "new_lead") is None and tutorial.moment_allowed(state)
-    tutorial.device_says(state, "Hm.", "remark")
-    assert not tutorial.moment_allowed(state)
+    assert device.moment_detail(state, "new_lead") is None and device.moment_allowed(state)
+    device.says(state, "Hm.", "remark")
+    assert not device.moment_allowed(state)
     state["sim_time_ms"] += tuning.MOMENT_GAP_MS
-    assert tutorial.moment_allowed(state)
+    assert device.moment_allowed(state)
     run = world.http.post("/runs", json={"mode": "developer"}).json()
     body = post(world, run, "device/ask", {"moment": "stuck"})
     assert body["skipped"] and not body["state"].get("device_log")  # Stub: no model, no remark.

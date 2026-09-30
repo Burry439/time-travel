@@ -1,6 +1,6 @@
 {
  "version": 6,
- "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard', 'weapon' and 'armor' to decide what actions are legal and how fights go (GDD D-41: real time, no dice). armor: none, padded or mail (armor_text: what it looks like, for the judge). weapons: each weapon's fixed damage against the unarmoured stranger (health 100), its wind-up (time to step out of reach) and its reach in cells. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry. knowledge.*.lead: how the fact reads in the player's journal (Leads). persuaded_by: what would change this person's mind, which they may say in their own words when they refuse. style: how they talk, for the voice. offers.*.done_when: a world condition that must hold before the deal can count as done. offers.*.lends: the person's own things the job needs, lent to the stranger when they ask (D-55): using them for it isn't theft. Character sheets (GDD D-38): mood (starting mood word), voice {samples: example lines in their own words, never to be copied; habits: turns of phrase; never: things they wouldn't say}, goals (current wants that drive agendas and talk), secrets ({text, reveal}: kept to themselves unless the condition is met), likes, dislikes, opinions ({npc_id: {text, warmth -1..1}}, which change as people talk), tasks ({id, place (data/places.json), activity, dwell_s, doing}: what they may choose to go and do). A task may have when/unless: {installed: object_id}, so the world changes what people choose to do. superstition ({kind: reverent | wary | none, text}): what awe at an uncanny wonder does to them (D-43: reverence raises trust; wariness means fear and suspicion). admits: a guard's own reasons for letting the stranger through the gate (any guard with one can, D-43; the captain's is decides).",
+ "notes": "Authored NPC cards (GDD section 5). The decider reads these to judge what each person would do; code reads 'guard', 'weapon' and 'armor' to decide what actions are legal and how fights go (GDD D-41: real time, no dice). armor: none, padded or mail (armor_text: what it looks like, for the judge). weapons: each weapon's fixed damage against the unarmoured stranger (health 100), its wind-up (time to step out of reach) and its reach in cells. tones: which voices from lines.json suit them. relations: how they refer to people they know; family members are listed in 'family'. knowledge: things the person can tell the stranger (text: the fact, as the decider and the journal see it; line: how they might say it if the voice model is unavailable; trusted: only told to someone they trust). concerns: what is on their mind (never a quest). regard: how they see the stranger at first (GDD 5.1). refers: people they might send the stranger to. offers: deals this person might propose when it suits them (GDD 6.6). task: what they'd ask; reward: vouch (they go and speak for the stranger to the captain) or hire (the merchant takes them on as a hired hand under his trade permit); check: the yes/no question the decider answers from what this person has seen or been given. decides: how the captain judges entry. knowledge.*.lead: how the fact reads in the player's journal (Leads). persuaded_by: what would change this person's mind, which they may say in their own words when they refuse. style: how they talk, for the voice. offers.*.done_when: a condition (the rule language) that must hold before the deal can count as done. offers.*.lends: the person's own things the job needs, lent to the stranger when they ask (D-55): using them for it isn't theft. Character sheets (GDD D-38): mood (starting mood word), voice {samples: example lines in their own words, never to be copied; habits: turns of phrase; never: things they wouldn't say}, goals (current wants that drive agendas and talk), secrets ({text, reveal}: kept to themselves unless the condition is met), likes, dislikes, opinions ({npc_id: {text, warmth -1..1}}, which change as people talk), tasks ({id, place (data/places.json), activity, dwell_s, doing}: what they may choose to go and do). A task may have when/unless, conditions in the rule language (backend/rules.py), e.g. {\"kind\": \"installed\", \"thing\": \"gate_beam\"}, so the world changes what people choose to do. superstition ({kind: reverent | wary | none, text}): what awe at an uncanny wonder does to them (D-43: reverence raises trust; wariness means fear and suspicion). admits: a guard's own reasons for letting the stranger through the gate (any guard with one can, D-43; the captain's is decides).",
  "npcs": {
   "npc_roderic_vale": {
    "name": "Roderic",
@@ -147,7 +147,8 @@
      "dwell_s": 50,
      "doing": "looking over the new beam with some satisfaction",
      "when": {
-      "installed": "gate_beam"
+      "kind": "installed",
+      "thing": "gate_beam"
      }
     }
    ],
@@ -890,7 +891,8 @@
      "task": "get the cracked bar down off the gate and the new 60 kg gate beam safely up into its iron brackets",
      "check": "Did the stranger get the gate beam up into its brackets, safely?",
      "done_when": {
-      "installed": "gate_beam"
+      "kind": "installed",
+      "thing": "gate_beam"
      },
      "lends": [
       "gate_beam",
@@ -973,7 +975,8 @@
      "dwell_s": 45,
      "doing": "measuring the gate beam again",
      "unless": {
-      "installed": "gate_beam"
+      "kind": "installed",
+      "thing": "gate_beam"
      }
     },
     {
@@ -983,7 +986,8 @@
      "dwell_s": 60,
      "doing": "celebrating the raised beam at the inn",
      "when": {
-      "installed": "gate_beam"
+      "kind": "installed",
+      "thing": "gate_beam"
      }
     }
    ],

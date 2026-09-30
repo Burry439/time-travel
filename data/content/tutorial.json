@@ -1,8 +1,163 @@
 {
  "version": 3,
- "notes": "The tutorial, 'The first morning' (GDD D-50, D-52, D-57): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). It ends the way the main game is meant to be won: Kade, who trusts only what he sees, watches the stranger help, fight and make fire, and speaks for them to the captain, who lets them in (himself if Kade told him the stranger wants in, otherwise when asked). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), mode (say or do, D-55), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}. Conditions (D-57): all/any/not of others; flag (something the story noted); heard_from with after_s; talked_to with since_step; holding_shield; made_seen (something with this flag made this step, seen by this person); vouched (this person has spoken for the stranger to the captain); admitted. Actions: hold (stand and talk a moment), keep (stay with the stranger), approach with stop, vouch (Kade's word to the captain, noting whether the stranger told him they want in), admit (the captain lets them in on a word he holds).",
+ "notes": "The tutorial, 'The first morning' (GDD D-50, D-52, D-57): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). It ends the way the main game is meant to be won: Kade, who trusts only what he sees, watches the stranger help, fight and make fire, and speaks for them to the captain, who lets them in (himself if Kade told him the stranger wants in, otherwise when asked). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), mode (say or do, D-55), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}. Conditions are the rule language (backend/rules.py, D-58): all/any/not of others; flag (something the story noted); heard_from with after_s; talked_to with since_step; holding_shield; made_seen (something with this flag made this step, seen by this person); vouched (this person has spoken for the stranger to the captain); admitted. Effects (backend/scenario.py), each only if its optional when holds: npc_says, hold (stand and talk a moment), keep (stay with the stranger for seconds), approach with stop, lend, hurt, errand, spar (with a practice weapon), vouch (a speech's words to the captain; its notes are what the story remembers they knew), admit (the captain lets them in on a word he holds). A trigger with skippable false isn't run by the developer's skip. things: the story's own objects (carried_by someone, or at x, y). roles: what the story asks of a person during some steps: stays (renew their stay with the stranger while this holds), withholds (moves they won't make in conversation), spars (a blow at them starts the bout: says, with, marks the triggers it stands for). speeches: words used by more than one effect, which may depend on what the story noted (when).",
  "device_name": "the device",
  "stuck_after_s": 60,
+ "things": [
+  {
+   "id": "practice_sword",
+   "name": "practice sword",
+   "mass_kg": 0.9,
+   "length_m": 0.9,
+   "materials": [
+    "wood"
+   ],
+   "description": "A wooden practice sword of ash, its edges rounded and its tip padded with leather.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_kade_east",
+   "carried_by": "npc_kade_east",
+   "no_overlay": true
+  },
+  {
+   "id": "practice_sword_kade",
+   "name": "practice sword",
+   "mass_kg": 0.9,
+   "length_m": 0.9,
+   "materials": [
+    "wood"
+   ],
+   "description": "Kade's own wooden practice sword, its grip worn smooth and its padding thin.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_kade_east",
+   "carried_by": "npc_kade_east",
+   "no_overlay": true
+  },
+  {
+   "id": "wicker_shield",
+   "name": "wicker shield",
+   "mass_kg": 2.0,
+   "materials": [
+    "willow",
+    "wood"
+   ],
+   "description": "A round shield of woven willow on a wooden rim, light and springy.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "shield",
+    "class": "improvised",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_kade_east",
+   "carried_by": "npc_kade_east",
+   "no_overlay": true
+  },
+  {
+   "id": "steel_file",
+   "name": "broken steel file",
+   "x": 25,
+   "y": 28,
+   "mass_kg": 0.2,
+   "length_m": 0.15,
+   "materials": [
+    "steel"
+   ],
+   "description": "Half of a smith's worn-out file, snapped off: hard, high-carbon steel, still gritty with its teeth.",
+   "flags": [
+    "rigid"
+   ]
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_kade_east",
+   "during": [
+    "kade",
+    "arm",
+    "bout",
+    "why",
+    "steel",
+    "fire"
+   ],
+   "stays": {
+    "kind": "fired",
+    "key": "kade:lent"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell",
+    "vouch",
+    "call_guard",
+    "admit"
+   ],
+   "spars": {
+    "says": "Ha! Straight in, is it? Only practice, then: nobody bleeds.",
+    "with": "practice_sword_kade",
+    "marks": [
+     "bout:spar"
+    ]
+   }
+  }
+ ],
+ "speeches": {
+  "kade_to_the_captain": {
+   "notes": {
+    "wants_in": {
+     "kind": "said_to",
+     "npc": "npc_kade_east",
+     "words": [
+      "city",
+      "gate",
+      "inside",
+      "enter",
+      "get in",
+      "let me in",
+      "go in",
+      "come in",
+      "through the gate"
+     ]
+    }
+   },
+   "why": [
+    "they dressed Jory's burn, held their own in a bout with me, and struck fire from flint and steel in front of me. Practical hands.",
+    {
+     "text": " And they want to come into the city.",
+     "when": {
+      "kind": "flag",
+      "key": "wants_in"
+     }
+    }
+   ],
+   "summary": [
+    "Kade vouched for the stranger: saw them dress Jory's burn, hold their own in a bout with Kade, and strike fire from flint and steel.",
+    {
+     "text": " The stranger wants to come into the city.",
+     "when": {
+      "kind": "flag",
+      "key": "wants_in"
+     }
+    }
+   ]
+  }
+ },
  "steps": [
   {
    "id": "welcome",
@@ -356,7 +511,8 @@
       },
       {
        "kind": "keep",
-       "npc": "npc_kade_east"
+       "npc": "npc_kade_east",
+       "seconds": 900
       }
      ]
     }
@@ -426,9 +582,11 @@
       },
       {
        "kind": "spar",
-       "npc": "npc_kade_east"
+       "npc": "npc_kade_east",
+       "with": "practice_sword_kade"
       }
-     ]
+     ],
+     "skippable": false
     }
    ],
    "check": {
@@ -452,7 +610,8 @@
     },
     {
      "kind": "keep",
-     "npc": "npc_kade_east"
+     "npc": "npc_kade_east",
+     "seconds": 900
     }
    ],
    "cards": [
@@ -530,7 +689,8 @@
     },
     {
      "kind": "vouch",
-     "npc": "npc_kade_east"
+     "npc": "npc_kade_east",
+     "speech": "kade_to_the_captain"
     }
    ],
    "done": "Did you see his face? Kade doesn't care for tricks, but he respects work that works. That's worth more than any argument.",
@@ -627,7 +787,8 @@
      "do": [
       {
        "kind": "vouch",
-       "npc": "npc_kade_east"
+       "npc": "npc_kade_east",
+       "speech": "kade_to_the_captain"
       }
      ]
     }

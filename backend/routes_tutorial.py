@@ -14,7 +14,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 import commands
-import tutorial
+import device
+import scenario
 from ai import config as ai_config
 from ai import telemetry, voice
 from shapes import State
@@ -59,12 +60,12 @@ def _moved_on(cmd: commands.Command, change) -> bool:
 
 def progress(cmd: commands.Command) -> bool:
     """Check the story (inside a command that holds the lock) and save whatever moved on."""
-    return tutorial.active(cmd.state) and _moved_on(cmd, tutorial.tick)
+    return scenario.active(cmd.state) and _moved_on(cmd, scenario.tick)
 
 
 def after_action(state: State) -> None:
     """Right after the stranger does something (not only on the next clock beat, which a panel may pause)."""
-    if tutorial.active(state):
+    if scenario.active(state):
         with commands.open(state["run_id"], playable=False) as cmd:
             if progress(cmd):
                 state.clear()
@@ -90,8 +91,8 @@ class UiDone(BaseModel):
 def read(run_id: str, request: Read):
     """The player pressed through this step's cards (D-52): its check counts from now, and may already hold."""
     with commands.open(run_id, playable=False) as cmd:
-        if tutorial.active(cmd.state) and request.step == cmd.state["tutorial"]["step"]:
-            _moved_on(cmd, tutorial.read_cards)
+        if scenario.active(cmd.state) and request.step == cmd.state["tutorial"]["step"]:
+            _moved_on(cmd, scenario.read_cards)
             progress(cmd)
     return {"state": cmd.state, "duplicate": False}
 
@@ -100,8 +101,8 @@ def read(run_id: str, request: Read):
 def ui(run_id: str, request: UiDone):
     """Something the tutorial teaches happened on screen (the pack opened, a closer look, the book read)."""
     with commands.open(run_id, playable=False) as cmd:
-        if tutorial.active(cmd.state):
-            _moved_on(cmd, lambda probe: tutorial.ui_done(probe, request.key))
+        if scenario.active(cmd.state):
+            _moved_on(cmd, lambda probe: scenario.ui_done(probe, request.key))
             progress(cmd)
     return {"state": cmd.state, "duplicate": False}
 
@@ -110,8 +111,8 @@ def ui(run_id: str, request: UiDone):
 def skip(run_id: str):
     """Developer only: complete the current step (for testing each step)."""
     with commands.open(run_id, developer=True, playable=False) as cmd:
-        if tutorial.active(cmd.state):
-            _moved_on(cmd, lambda probe: tutorial.skip(probe) or True)
+        if scenario.active(cmd.state):
+            _moved_on(cmd, lambda probe: scenario.skip(probe) or True)
             progress(cmd)
     return {"state": cmd.state, "duplicate": False}
 
@@ -128,10 +129,10 @@ def ask(run_id: str, request: Ask):
     with commands.open(run_id, request, playable=False) as cmd:
         state = cmd.state
         moment = None if question else request.moment
-        if moment and (not tutorial.moment_allowed(state) or tutorial.moment_detail(state, moment) is None):
+        if moment and (not device.moment_allowed(state) or device.moment_detail(state, moment) is None):
             return {"state": state, "duplicate": False, "skipped": True}
-        context = tutorial.device_context(state, question, moment)
-        fallback = "" if moment else tutorial.fallback_answer(state)
+        context = device.context(state, question, moment)
+        fallback = "" if moment else device.fallback_answer(state)
         allowed = telemetry.calls_for_run(cmd.connection, run_id) < ai_config.max_calls_per_run()
     call = voice.device(context, fallback, allowed)  # Outside the lock.
     if moment and call.status != "ok":
@@ -139,7 +140,7 @@ def ask(run_id: str, request: Ask):
     with commands.reopen(run_id, request, stale=False) as cmd:
         if call.model and call.model != "stub":
             telemetry.log(cmd.connection, run_id, "voice", call)
-        tutorial.device_says(cmd.state, call.text, "remark" if moment else "answer", question or None)
+        device.says(cmd.state, call.text, "remark" if moment else "answer", question or None)
         cmd.save("device")
     reply = {"state": cmd.state, "duplicate": False, "answer": call.text, "status": call.status}
     if cmd.developer:

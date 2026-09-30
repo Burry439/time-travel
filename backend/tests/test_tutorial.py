@@ -9,10 +9,12 @@ import cast
 import clock
 import combat
 import conversation
+import device
 import encounter
 import gear
 import reputation
-import tutorial
+import rules
+import scenario
 import village
 
 
@@ -38,7 +40,7 @@ def npc(state, npc_id):
 
 
 def at_step(state):
-    return tutorial.STEPS[state["tutorial"]["step"]]["id"] if tutorial.active(state) else "done"
+    return scenario.STEPS[state["tutorial"]["step"]]["id"] if scenario.active(state) else "done"
 
 
 def carry(state, oid, **fields):
@@ -49,8 +51,8 @@ def carry(state, oid, **fields):
 
 def read_and_tick(state):
     """The player presses through the step's cards; then the clock beat checks it."""
-    tutorial.read_cards(state)
-    return tutorial.tick(state)
+    scenario.read_cards(state)
+    return scenario.tick(state)
 
 
 def beat(state, ms=500):
@@ -85,11 +87,11 @@ def test_nothing_counts_until_the_cards_are_read_and_it_is_one_step_at_a_time():
     state = tutorial_state()
     state["player"].update(x=48, y=62)
     carry(state, "plantain_a")
-    assert not tutorial.tick(state) and at_step(state) == "welcome"
+    assert not scenario.tick(state) and at_step(state) == "welcome"
     assert read_and_tick(state) and at_step(state) == "walk"
-    assert not tutorial.tick(state) and at_step(state) == "walk"  # In the ring already, but its cards come first.
+    assert not scenario.tick(state) and at_step(state) == "walk"  # In the ring already, but its cards come first.
     assert read_and_tick(state) and at_step(state) == "look"
-    tutorial.ui_done(state, "inspect")
+    scenario.ui_done(state, "inspect")
     read_and_tick(state)
     assert at_step(state) == "take"  # Never two steps in one tick.
     read_and_tick(state)
@@ -101,7 +103,7 @@ def test_the_whole_story_moves_on_by_outcomes():
     read_and_tick(state)  # welcome
     state["player"].update(x=48, y=62)
     read_and_tick(state)
-    tutorial.ui_done(state, "inspect")
+    scenario.ui_done(state, "inspect")
     read_and_tick(state)
     carry(state, "plantain_a")
     read_and_tick(state)
@@ -111,7 +113,7 @@ def test_the_whole_story_moves_on_by_outcomes():
     carry(state, "grass_a")
     read_and_tick(state)
     assert at_step(state) == "pack"
-    tutorial.ui_done(state, "pack")
+    scenario.ui_done(state, "pack")
     read_and_tick(state)
     assert at_step(state) == "smithy"
     jory = npc(state, "npc_jory_venn")
@@ -136,7 +138,7 @@ def test_the_whole_story_moves_on_by_outcomes():
     held_while_told = None
     for _ in range(120):  # She walks over and tells him; then they come (D-53: people pass things on).
         beat(state, 1000)
-        tutorial.tick(state)
+        scenario.tick(state)
         kade = npc(state, "npc_kade_east")
         if held_while_told is None and "kade:reply" in state["tutorial"]["fired"]:
             held_while_told = ((kade.get("mind") or {}).get("job") or {}).get("kind")
@@ -160,7 +162,7 @@ def test_the_whole_story_moves_on_by_outcomes():
     read_and_tick(state)
     assert state["fight"] and state["fight"]["spar"]  # ...then, armed and beside him, it begins.
     assert not encounter.surrender(state, state["sim_time_ms"])["arrested"] and state["fight"] is None
-    tutorial.tick(state)
+    scenario.tick(state)
     assert at_step(state) == "why" and "doing on this road" in kade["mind"]["said"]["text"]
     read_and_tick(state)
     assert at_step(state) == "why"  # Nothing said to him yet this step.
@@ -173,9 +175,9 @@ def test_the_whole_story_moves_on_by_outcomes():
     carry(state, "steel_file")
     read_and_tick(state)
     assert at_step(state) == "fire"
-    tutorial.read_cards(state)
+    scenario.read_cards(state)
     # A thing made earlier in front of someone (the poultice) isn't the fire (seen in play, 30 Sep 2026).
-    assert not tutorial.tick(state) and at_step(state) == "fire"
+    assert not scenario.tick(state) and at_step(state) == "fire"
     state["event_seq"] = state["tutorial"]["started_seq"] + 3
     state["objects"]["fire_made"] = {
         "id": "fire_made",
@@ -203,13 +205,13 @@ def test_the_whole_story_moves_on_by_outcomes():
             "source": "witnessed",
         },
     )
-    tutorial.tick(state)
+    scenario.tick(state)
     assert at_step(state) == "captain" and state["tutorial"]["flags"]["wants_in"]
     assert kade["mind"]["job"]["kind"] == "vouch" and "want to come into the city" in kade["mind"]["job"]["why"]
     read_and_tick(state)
     for _ in range(300):  # Kade walks to the gate and speaks; Roderic, who now knows they want in, comes over.
         beat(state, 1000)
-        tutorial.tick(state)
+        scenario.tick(state)
         if state.get("admitted"):
             break
     roderic = npc(state, "npc_roderic_vale")  # A beat brings everyone's latest record.
@@ -225,10 +227,10 @@ def test_the_whole_story_moves_on_by_outcomes():
 def at_captain(told_kade: str):
     """The story at its last task, Kade's word given to the captain after hearing this from the stranger."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "fire")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "fire")
     kade = npc(state, "npc_kade_east")
     cast.mind(kade).setdefault("talk", []).append({"who": "stranger", "text": told_kade, "at": 0})
-    tutorial._do(state, [{"kind": "vouch", "npc": "npc_kade_east"}], 0)
+    scenario.run(state, [{"kind": "vouch", "npc": "npc_kade_east", "speech": "kade_to_the_captain"}], 0)
     state["tutorial"]["step"] += 1
     state["tutorial"]["read"] = state["tutorial"]["step"]
     return state, kade
@@ -245,11 +247,11 @@ def test_the_captain_needs_asking_if_nobody_told_him_the_stranger_wants_in():
     assert "admit" not in conversation.moves(state, roderic)  # Nothing to go on yet.
     for _ in range(120):
         beat(state, 1000)
-        tutorial.tick(state)
+        scenario.tick(state)
         roderic = npc(state, "npc_roderic_vale")
         if any(m["kind"] == "vouch" for m in (roderic.get("mind") or {}).get("memories", [])):
             break
-    tutorial.tick(state)
+    scenario.tick(state)
     assert "captain:comes" not in state["tutorial"]["fired"] and not state.get("admitted")
     assert "admit" in conversation.moves(state, roderic)  # Asked, he may: Kade's word is something real to go on.
     state, _ = at_captain("I want to get inside the city walls.")
@@ -260,25 +262,25 @@ def test_kade_stays_for_his_lessons_and_does_not_let_them_in_himself():
 
     state = tutorial_state()
     kade = npc(state, "npc_kade_east")
-    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "why")
-    assert tutorial.keeps(state, kade)
+    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "why")
+    assert rules.role(state, kade)
     moves = conversation.replies(state, kade)
     assert not any(o["act"] in ("go_tell", "vouch", "call_guard", "admit") for o in moves.values())
     state["tutorial"]["fired"].append("kade:lent")  # He has come over.
     cast.set_job(kade, {"kind": "watch", "until": 20_000}, 0)  # What a talk leaves him with...
-    assert tutorial.tick(state) and kade["mind"]["job"]["until"] >= 600_000  # ...renewed: he stays for his lessons.
-    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "captain")
-    assert not tutorial.keeps(state, kade)
+    assert scenario.tick(state) and kade["mind"]["job"]["until"] >= 600_000  # ...renewed: he stays for his lessons.
+    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "captain")
+    assert not rules.role(state, kade)
 
 
 def test_an_older_tutorial_journey_simply_carries_on_as_a_journey():
     state = tutorial_state()
     state["tutorial"]["version"] = 2  # Its steps no longer line up with the story.
-    assert not tutorial.active(state) and not tutorial.tick(state)
+    assert not scenario.active(state) and not scenario.tick(state)
 
 
 def test_every_step_is_well_formed():
-    for step in tutorial.STEPS:
+    for step in scenario.STEPS:
         assert step["cards"] and all(isinstance(c, str) and c for c in step["cards"]), step["id"]
         if step["check"]["kind"] != "always":
             assert step["task"] and step.get("help"), step["id"]
@@ -296,7 +298,7 @@ def test_the_bout_is_practice_no_crime_no_blood_no_arrest():
     kade.update(x=49, y=60)
     sword = carry(state, "practice_sword")
     gear.equip(state, state["player"], sword, "right")
-    tutorial._do(state, [{"kind": "spar", "npc": "npc_kade_east"}], 0)
+    scenario.run(state, [{"kind": "spar", "npc": "npc_kade_east", "with": "practice_sword_kade"}], 0)
     assert state["fight"]["spar"] and gear.held(state, kade, "right")["id"] == "practice_sword_kade"
     for _ in range(40):
         if not state["fight"]:
@@ -305,9 +307,7 @@ def test_the_bout_is_practice_no_crime_no_blood_no_arrest():
         combat.strike(state, "right", "npc_kade_east", state["sim_time_ms"])
         beat(state)
     outcomes = [
-        e["category"]
-        for e in state["journal"]
-        if e.get("kind") == "fight" and e.get("category") in tutorial.SPAR_OUTCOMES
+        e["category"] for e in state["journal"] if e.get("kind") == "fight" and e.get("category") in rules.SPAR_OUTCOMES
     ]
     assert outcomes and state["fight"] is None
     assert not state.get("barred_until") and not state.get("subdued_by")  # Nobody arrests anybody.
@@ -320,21 +320,21 @@ def test_the_bout_is_practice_no_crime_no_blood_no_arrest():
 def test_the_device_reacts_once_to_something_drastic_even_mid_cards():
     state = tutorial_state()
     npc(state, "npc_darin_ko")["alive"] = False
-    assert tutorial.tick(state)
+    assert scenario.tick(state)
     lines = [line["text"] for line in state["device_log"] if line["kind"] == "reaction"]
     assert len(lines) == 1 and "killed" in lines[0]
-    tutorial.tick(state)
+    scenario.tick(state)
     assert len([line for line in state["device_log"] if line["kind"] == "reaction"]) == 1
 
 
 def test_the_device_knows_only_what_the_stranger_does():
     state = tutorial_state()
     read_and_tick(state)
-    context = tutorial.device_context(state, "What is Oren hiding?")
+    context = device.context(state, "What is Oren hiding?")
     flat = str(context)
     assert "secrets" not in flat and "late shifts" not in flat  # Bren's secret about Oren is nowhere in it.
     assert context["tutorial"] and context["step"]["title"] == "Walking" and "Space" in context["controls"]
-    assert tutorial.fallback_answer(state) == tutorial.STEPS[1]["help"][0]
+    assert device.fallback_answer(state) == scenario.STEPS[1]["help"][0]
 
 
 # --- Over HTTP ------------------------------------------------------------------------------------------------
@@ -357,11 +357,11 @@ def test_a_tutorial_journey_over_http_reads_progresses_asks_and_replays(world):
     state = http.post(f"{run}/tutorial/ui", json={"key": "inspect"}).json()["state"]
     assert state["tutorial"]["step"] == 3 and "inspect" in state["tutorial"]["ui_done"]
     body = post(world, state, "device/ask", {"question": "What should I do?"})
-    assert body["answer"] == tutorial.STEPS[3]["help"][0]  # No model in tests: the step's written help.
+    assert body["answer"] == scenario.STEPS[3]["help"][0]  # No model in tests: the step's written help.
     state = body["state"]
     assert state["journal"][-1]["kind"] == "device" and state["journal"][-1]["question"] == "What should I do?"
     skipped = http.post(f"{run}/tutorial/skip").json()["state"]
-    assert skipped["tutorial"]["step"] == 4 and skipped["objective"] == tutorial.STEPS[4]["task"]
+    assert skipped["tutorial"]["step"] == 4 and skipped["objective"] == scenario.STEPS[4]["task"]
     assert http.get(run).json() == skipped  # Replays exactly.
     normal = http.post("/runs", json={"mode": "normal", "scenario": "tutorial"}).json()
     assert http.post(f"/runs/{normal['run_id']}/tutorial/skip").status_code == 403
@@ -372,7 +372,7 @@ def test_a_blow_at_kade_during_his_lessons_is_the_bout_not_an_assault():
     """Seen in play (30 Sep 2026): a punch at Kade with an empty left hand began a real fight, and he killed the
     stranger with his spear. While Kade is teaching, any blow at him starts the practice bout (D-53)."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "arm")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "arm")
     state["tutorial"]["read"] = state["tutorial"]["step"]
     kade = npc(state, "npc_kade_east")
     state["player"].update(x=48, y=60)
@@ -390,12 +390,12 @@ def test_in_a_bout_blows_reach_only_the_partner_and_a_late_swing_is_checked():
     the air as it ended hit her, and Kade fought for real. In a practice bout the stranger's blows are for the
     partner only, and one that lands after it's over is checked (D-57)."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "bout")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "bout")
     state["player"].update(x=48, y=60)
     npc(state, "npc_kade_east").update(x=49, y=60)
     npc(state, "npc_mara_venn").update(x=48, y=61)  # Right in front of the stranger, who faces south.
     gear.equip(state, state["player"], carry(state, "practice_sword"), "right")
-    tutorial._do(state, [{"kind": "spar", "npc": "npc_kade_east"}], 0)
+    scenario.run(state, [{"kind": "spar", "npc": "npc_kade_east", "with": "practice_sword_kade"}], 0)
     assert combat.strike(state, "right", None, state["sim_time_ms"], [0.0, 1.0])["ok"]
     assert state["player"]["swings"]["right"]["spar_with"] == "npc_kade_east"
     encounter.surrender(state, state["sim_time_ms"])  # The bout ends with the blow still winding up.

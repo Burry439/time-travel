@@ -26,7 +26,6 @@ import cast
 import combat
 import consequences
 import conversation
-import gatekeeping
 import minds
 import perception
 import reputation
@@ -360,7 +359,7 @@ def arrest_player(state: State, guard: Npc, now: int) -> str:
     )
     state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
     reputation.settle(state, "paid for with an arrest")  # The thefts are answered for (violence is not, D-46).
-    captain = cast.find(state["npcs"], gatekeeping.CAPTAIN)
+    captain = cast.find(state["npcs"], cast.CAPTAIN)
     if captain and captain.get("alive", True) and not captain.get("down"):
         reputation.remember(
             captain,

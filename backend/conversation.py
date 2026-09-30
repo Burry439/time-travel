@@ -11,6 +11,7 @@ import gatekeeping
 import gear
 import paths
 import reputation
+import rules
 import tuning
 from shapes import Deal, Npc, State
 
@@ -117,16 +118,7 @@ def open_trades(state: State, npc: Npc) -> list[dict]:
 
 def deal_possible(state: State, deal: Deal) -> bool:
     """A deal with a world condition (the beam in its brackets) can only be done once that holds."""
-    offer = next(
-        (
-            o
-            for o in cast.card(cast.find(state["npcs"], deal["issuer"])).get("offers", [])
-            if o["id"] == deal.get("template")
-        ),
-        {},
-    )
-    placed = (offer.get("done_when") or {}).get("installed")
-    return not placed or bool(state["objects"].get(placed, {}).get("installed_in"))
+    return rules.holds(state, cast.offer_of(state, deal).get("done_when"))
 
 
 def lendable(state: State, npc: Npc) -> list[dict]:
@@ -197,11 +189,8 @@ def replies(state: State, npc: Npc) -> dict[str, dict]:
     options: dict[str, dict] = {}
     for group in (_talking, _offering, _wrongs, _going, _parting):
         group(state, npc, options)
-    import tutorial
-
-    if tutorial.keeps(state, npc):  # Kade in the middle of his lessons stays put (D-57).
-        options = {k: o for k, o in options.items() if o["act"] not in ("go_tell", "vouch", "call_guard", "admit")}
-    return options
+    withheld = rules.role(state, npc).get("withholds", [])  # Kade in the middle of his lessons stays put (D-57).
+    return {k: o for k, o in options.items() if o["act"] not in withheld} if withheld else options
 
 
 def _option(act: str, description: str, target: str | None = None) -> dict:
@@ -311,17 +300,19 @@ def _going(state: State, npc: Npc, options: dict) -> None:
     """Going to do something for the stranger: speak for them, carry word, stop fighting, see to their own wound,
     let them in."""
     name, my_mind = npc["name"], cast.mind(npc)
-    captain = cast.find(state["npcs"], gatekeeping.CAPTAIN)
+    captain = cast.find(state["npcs"], cast.CAPTAIN)
     fighting = npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
     if (
-        npc["id"] != gatekeeping.CAPTAIN
+        npc["id"] != cast.CAPTAIN
         and captain
         and captain.get("alive", True)
         and not my_mind.get("vouched")
         and not fighting
         and (reputation.regard(npc)["trust"] >= tuning.VOUCH_TRUST or helped_by_stranger(npc))
     ):
-        options["vouch"] = _option("vouch", f"{name} goes to Captain Roderic now and speaks for the stranger.")
+        options["vouch"] = _option(
+            "vouch", f"{name} goes to Captain {captain['name']} now and speaks for the stranger."
+        )
     if not fighting and not npc.get("down"):
         options["go_tell"] = _option(
             "go_tell",
@@ -342,7 +333,7 @@ def _going(state: State, npc: Npc, options: dict) -> None:
         options["admit"] = _option(
             "admit",
             f"{name} admits the stranger into the city and orders the gate opened for them."
-            if npc["id"] == gatekeeping.CAPTAIN
+            if npc["id"] == cast.CAPTAIN
             else f"{name} lets the stranger through the gate on their own say-so, and has it opened for them.",
         )
 

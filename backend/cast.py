@@ -10,6 +10,8 @@ import gear
 from shapes import Job, Mind, Npc, State
 
 CARDS: dict[str, dict] = content.CARDS
+# The captain: whoever decides who enters the city (their card holds decides, D-43).
+CAPTAIN = next(npc_id for npc_id, card in CARDS.items() if card.get("decides"))
 
 
 def card(npc: Npc) -> dict:
@@ -47,6 +49,12 @@ def player_cell(state: State) -> tuple[int, int]:
 
 def cell(npc: Npc) -> tuple[int, int]:
     return npc["x"], npc["y"]
+
+
+def offer_of(state: State, deal: dict) -> dict:
+    """The offer on the issuer's card a deal came from ({} if it's gone)."""
+    issuer = find(state["npcs"], deal.get("issuer") or "")
+    return next((o for o in (card(issuer).get("offers", []) if issuer else []) if o["id"] == deal.get("template")), {})
 
 
 def distance(a, b) -> float:

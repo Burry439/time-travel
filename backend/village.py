@@ -15,6 +15,7 @@ import minds
 import paths
 import persona
 import reputation
+import rules
 import speech
 import tuning
 from shapes import Npc, State
@@ -43,17 +44,12 @@ def free(state: State, npc: Npc) -> bool:
     return not (encounter and cast.distance(npc, state["player"]) <= tuning.OVERHEAR_CELLS)
 
 
-def _world_holds(state: State, condition: dict | None) -> bool:
-    placed = (condition or {}).get("installed")
-    return bool(state["objects"].get(placed, {}).get("installed_in")) if placed else True
-
-
 def tasks(state: State, npc: Npc) -> list[dict]:
     """The card's tasks that make sense in the world as it is (the beam once raised, and so on)."""
     return [
         t
         for t in cast.card(npc).get("tasks", [])
-        if _world_holds(state, t.get("when")) and not (t.get("unless") and _world_holds(state, t["unless"]))
+        if rules.holds(state, t.get("when")) and not (t.get("unless") and rules.holds(state, t["unless"]))
     ]
 
 

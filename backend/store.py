@@ -21,7 +21,7 @@ import content
 import m2
 import npc_sim
 import patch
-import tutorial
+import scenario
 from shapes import State
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -189,7 +189,7 @@ def initial_state(run: sqlite3.Row) -> dict:
         for slot in obj.pop("worn_slots", []):
             people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
     if state["scenario"] == "tutorial":  # The first morning, with the device (D-50).
-        tutorial.setup(state)
+        scenario.setup(state)
     return state
 
 

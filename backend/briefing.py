@@ -195,14 +195,8 @@ def request(state: State, npc: Npc, text: str, happened: str | None = None) -> t
         }
     accepted = [d for d in accepted if conversation.deal_possible(state, d)]
     for deal in accepted:  # A change in the world they asked for is something they go and look at.
-        placed = next(
-            (
-                o.get("done_when", {}).get("installed")
-                for o in cast.card(npc).get("offers", [])
-                if o["id"] == deal.get("template")
-            ),
-            None,
-        )
+        done_when = cast.offer_of(state, deal).get("done_when") or {}
+        placed = done_when.get("thing") if done_when.get("kind") == "installed" else None
         if placed:
             thing = state["objects"][placed]
             fixture = state["objects"].get(thing["installed_in"], {}).get("name", "its place")
