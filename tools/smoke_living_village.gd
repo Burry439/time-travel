@@ -70,7 +70,7 @@ func _run() -> void:
 	if not saved.ok or saved.data.npcs != scene.run_state.npcs:
 		_fail("NPC state did not survive reload")
 		return
-	if DisplayServer.get_name() != "headless":
+	if DisplayServer.get_name() != "headless" and "--capture" in OS.get_cmdline_user_args():
 		scene.player.position = Vector2(1552, 650)
 		scene.camera.reset_smoothing()
 		await process_frame
