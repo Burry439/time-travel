@@ -20,10 +20,11 @@ from pydantic import BaseModel, Field
 
 import attempts
 import combat
+import commands
 import crafting
 import encounter
 import minds
-import patch
+import routes_tutorial
 import store
 import talk
 from ai import config as ai_config
@@ -266,50 +267,33 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
 
 
 def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
+    """One round: the stranger's part (judged if it's a deed), then the scene's answer, then time passing. The two
+    model calls happen outside the lock; the round is worked out again on the latest world before it's saved."""
     started, timing = time.perf_counter(), {}
-    request_json = json.dumps(
-        {
-            "kind": request.kind,
-            "text": request.text,
-            "target_id": request.target_id,
-            "selected_ids": request.selected_ids,
-        },
-        sort_keys=True,
-    )
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        prior = connection.execute(
-            "SELECT final_seq,request_json FROM action_requests WHERE run_id=? AND request_id=?",
-            (run_id, request.request_id),
-        ).fetchone()
-        if prior:
-            if prior["request_json"] != request_json:
-                raise HTTPException(409, {"reason": "request_id_conflict"})
-            replayed = store.state_at(connection, run, prior["final_seq"])
-            return {"state": replayed, "duplicate": True, "round": replayed.get("last_round")}
-        if connection.execute(
-            "SELECT 1 FROM events WHERE run_id=? AND request_id=?", (run_id, request.request_id)
-        ).fetchone():
-            raise HTTPException(409, {"reason": "request_id_conflict"})
-        if store.is_stale(state, request.expected_version):
-            raise HTTPException(409, {"reason": "stale_state", "state": state})
-        if state["inside_city"] or not state["player"]["alive"]:
-            raise HTTPException(409, "Run is no longer interactive")
-        walk = _round_setup(state, request)
-        if run_id in attempts.busy_runs:
-            raise HTTPException(409, {"reason": "in_progress"})
-        attempts.busy_runs.add(run_id)
-        seen = talk.standing_at(state, walk)
-        context = crafting.build_context(seen, request.text, request.selected_ids) if request.kind == "do" else None
-        calls_used = telemetry.calls_for_run(connection, run_id)
+    body = {
+        "kind": request.kind,
+        "text": request.text,
+        "target_id": request.target_id,
+        "selected_ids": request.selected_ids,
+    }
+
+    def repeated(run, saved: dict, connection) -> dict:
+        return {"state": saved, "duplicate": True, "round": saved.get("last_round")}
+
+    try:
+        with commands.open(run_id, request, body=body, duplicate=repeated) as cmd:
+            walk = _round_setup(cmd.state, request)
+            cmd.claim()
+            seen = talk.standing_at(cmd.state, walk)
+            context = crafting.build_context(seen, request.text, request.selected_ids) if request.kind == "do" else None
+            calls_used = telemetry.calls_for_run(cmd.connection, run_id)
+    except commands.Reply as reply:
+        return reply.body
     try:
         judged = attempts.judge_attempt(context, calls_used) if context else None  # Outside the lock.
         timing["judge_ms"] = judged.latency_ms if judged else 0
-        with store.lock, store.db() as connection:
-            run, state = store.load_run(connection, run_id)
-            if store.is_stale(state, request.expected_version):
-                raise HTTPException(409, {"reason": "stale_state", "state": state})
-            draft, record = _round_draft(state, run_id, request, walk, judged)
+        with commands.reopen(run_id, request) as cmd:
+            draft, record = _round_draft(cmd.state, run_id, request, walk, judged)
             happened = " ".join(record["happened"]) or None
             text = request.text if request.kind == "say" or request.speech else ""
         # The scene answers what actually happened (the person addressed, and anyone who joins in).
@@ -318,34 +302,10 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
         spoken = moment["call"] if moment else None
         timing["scene_ms"] = spoken.latency_ms if spoken else 0
         with store.lock, store.db() as connection:
-            run, state = store.load_run(connection, run_id)
             if judged and judged.attempts:
-                telemetry.record(
-                    connection,
-                    run_id,
-                    "judge",
-                    judged.model,
-                    judged.prompt_version,
-                    judged.latency_ms,
-                    judged.status == "ok",
-                    judged.error,
-                    judged.input_tokens,
-                    judged.output_tokens,
-                    judged.attempts,
-                )
+                telemetry.log(connection, run_id, "judge", judged)
             if spoken and spoken.model and spoken.model != "stub":
-                telemetry.record(
-                    connection,
-                    run_id,
-                    "voice",
-                    spoken.model,
-                    spoken.prompt_version,
-                    spoken.latency_ms,
-                    spoken.status == "ok",
-                    spoken.error,
-                    spoken.input_tokens,
-                    spoken.output_tokens,
-                )
+                telemetry.log(connection, run_id, "voice", spoken)
         # Only a real failure changes nothing; stub mode or a spent allowance answers with the authored line.
         broken = (
             spoken is not None
@@ -364,11 +324,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                     ),
                 },
             )
-        with store.lock, store.db() as connection:
-            run, state = store.load_run(connection, run_id)
-            if store.is_stale(state, request.expected_version):
-                raise HTTPException(409, {"reason": "stale_state", "state": state})
-            before = patch.snapshot(state)
+        with commands.reopen(run_id, request, body=body) as cmd:
+            state = cmd.state
             walk = _round_setup(state, request)
             draft, record = _round_draft(state, run_id, request, walk, judged)  # Redone on the latest world.
             now = draft["sim_time_ms"]
@@ -380,76 +337,116 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 elif act == "attack":
                     combat.start(draft, [line["npc_id"]], now, "attack")
             encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
-            elapsed = encounter.round_ms(record)
-            people = store.advance_people(draft, elapsed)
-            for obj in people.get("objects_added", []):
-                draft["objects"][obj["id"]] = dict(obj)
-            for object_id, fields in people.get("objects_changed", {}).items():
-                draft["objects"][object_id].update(fields)
-            draft.update(
-                npcs=people["npcs"],
-                player=people["player"],
-                pending_minds=people["pending_minds"],
-                encounter=people["encounter"],
-                fight=people["fight"],
-                sim_time_ms=now + elapsed,
-                projectiles=people.get("projectiles") or [],
-            )
-            draft["journal"].extend(people["people_journal"])
-            if "barred_until" in people:  # Beaten down and arrested as the round's time passed (D-44).
-                draft["barred_until"] = people["barred_until"]
-            payload = store.round_payload(state, draft, record)
-            payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
-            store.apply_round(state, payload)
-            store.record(connection, before, state, "round", request.request_id, payload["sim_time_ms"] // 1000)
-            connection.execute(
-                "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
-                (run_id, request.request_id, state["event_seq"], request_json),
-            )
-            craft_trace = None
-            if record.get("verdict"):
-                made = [state["objects"][i] for i in record["entry"].get("made_ids", []) if i in state["objects"]]
-                craft_trace = attempts.record_attempt(
-                    connection,
-                    run_id,
-                    request.request_id,
-                    state["event_seq"],
-                    request.text,
-                    request.selected_ids,
-                    context,
-                    judged,
-                    record["verdict"],
-                    made,
-                    background,
-                )
-            for line in said:
-                connection.execute(
-                    "INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
-                    (run_id, state["event_seq"], line["npc_id"], json.dumps(line["trace"])),
-                )
-            round_trace = {
-                "kind": "round",
-                "npc_id": record.get("replier") or "encounter",
-                "why": f"round {record['round']}",
-                "action": request.kind,
-                "entries": record["entries"],
-                "scene": {"inside": moment["inside"], "nearby": moment["nearby"], "lines": spoken.lines}
-                if moment
-                else None,
-                "timing": dict(timing, total_ms=round((time.perf_counter() - started) * 1000)),
-            }
-            connection.execute(
-                "INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
-                (run_id, state["event_seq"], round_trace["npc_id"], json.dumps(round_trace)),
+            _pass_round_time(draft, now, encounter.round_ms(record))
+            _adopt_round(state, draft, record, state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0))
+            cmd.save("round")
+            craft_trace = _traces(
+                cmd, request, context, judged, record, said, moment, spoken, timing, started, background
             )
     finally:
-        attempts.busy_runs.discard(run_id)
-    import routes_tutorial  # The tutorial may move on (D-50): rounds is imported by it, indirectly.
-
-    routes_tutorial.after_action(state)
+        commands.release(run_id)
+    routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
     timing["total_ms"] = round((time.perf_counter() - started) * 1000)
     response = {"state": state, "duplicate": False, "round": state["last_round"], "timing": timing}
-    if run["mode"] == "developer":
+    if cmd.developer:
         response["trace"] = (said[0]["trace"] if said else None) or craft_trace
         response["craft_trace"] = craft_trace
     return response
+
+
+# What a round may change (anything a Try Something can, a reply, people moving on): taken from its worked-out copy.
+ROUND_FIELDS = (
+    "objects",
+    "npcs",
+    "player",
+    "encounter",
+    "fight",
+    "pending_minds",
+    "agreements",
+    "sim_time_ms",
+    "water_spilled_l",
+    "last_action",
+    "gate_open",
+    "barred_until",
+    "trades",
+    "projectiles",
+)
+
+
+def _adopt_round(state: dict, draft: dict, record: dict, safe_seq: int) -> None:
+    """The round as worked out on the draft becomes the world: its fields, what was said and learned, an admission."""
+    journal_before, learned_before = len(state["journal"]), len(state.get("learned", []))
+    admitted_now = draft.get("admitted") and not state.get("admitted")
+    for key in ROUND_FIELDS:
+        state[key] = draft.get(key)
+    state["trades"] = draft.get("trades") or {}
+    state["journal"].extend(draft["journal"][journal_before:])
+    state.setdefault("learned", []).extend(draft.get("learned", [])[learned_before:])
+    if admitted_now:
+        state["admitted"] = draft["admitted"]
+    state["safe_seq"] = safe_seq
+    state["last_round"] = {
+        key: record.get(key)
+        for key in ("round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")
+    }
+
+
+def _pass_round_time(draft: dict, now: int, elapsed: int) -> None:
+    """The round takes time: everyone's day moves on by that much in the draft (routines, jobs, blows landing)."""
+    people = store.advance_people(draft, elapsed)
+    for obj in people.get("objects_added", []):
+        draft["objects"][obj["id"]] = dict(obj)
+    for object_id, fields in people.get("objects_changed", {}).items():
+        draft["objects"][object_id].update(fields)
+    draft.update(
+        npcs=people["npcs"],
+        player=people["player"],
+        pending_minds=people["pending_minds"],
+        encounter=people["encounter"],
+        fight=people["fight"],
+        sim_time_ms=now + elapsed,
+        projectiles=people.get("projectiles") or [],
+    )
+    draft["journal"].extend(people["people_journal"])
+    if "barred_until" in people:  # Beaten down and arrested as the round's time passed (D-44).
+        draft["barred_until"] = people["barred_until"]
+
+
+def _traces(cmd, request, context, judged, record, said, moment, spoken, timing, started, background) -> dict | None:
+    """The developer's view of the round: the judged deed (if any), each line's thinking, and the round itself."""
+    state, connection, run_id = cmd.state, cmd.connection, cmd.run_id
+    craft_trace = None
+    if record.get("verdict"):
+        made = [state["objects"][i] for i in record["entry"].get("made_ids", []) if i in state["objects"]]
+        craft_trace = attempts.record_attempt(
+            connection,
+            run_id,
+            request.request_id,
+            state["event_seq"],
+            request.text,
+            request.selected_ids,
+            context,
+            judged,
+            record["verdict"],
+            made,
+            background,
+        )
+    for line in said:
+        connection.execute(
+            "INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+            (run_id, state["event_seq"], line["npc_id"], json.dumps(line["trace"])),
+        )
+    round_trace = {
+        "kind": "round",
+        "npc_id": record.get("replier") or "encounter",
+        "why": f"round {record['round']}",
+        "action": request.kind,
+        "entries": record["entries"],
+        "scene": {"inside": moment["inside"], "nearby": moment["nearby"], "lines": spoken.lines} if moment else None,
+        "timing": dict(timing, total_ms=round((time.perf_counter() - started) * 1000)),
+    }
+    connection.execute(
+        "INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
+        (run_id, state["event_seq"], round_trace["npc_id"], json.dumps(round_trace)),
+    )
+    return craft_trace

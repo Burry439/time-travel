@@ -41,3 +41,21 @@ def recent(connection: sqlite3.Connection, run_id: str, limit: int = 50) -> list
         "SELECT * FROM model_calls WHERE run_id=? ORDER BY id DESC LIMIT ?", (run_id, limit)
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+def log(connection: sqlite3.Connection, run_id: str, role: str, call) -> None:
+    """Record any model call (a judge, voice, decider or picture call) from the call itself (D-58)."""
+    ok = call.ok if hasattr(call, "ok") else call.status in ("ok", "ready")
+    record(
+        connection,
+        run_id,
+        role,
+        call.model,
+        getattr(call, "prompt_version", None) or getattr(call, "provider", ""),
+        call.latency_ms,
+        ok,
+        call.error or getattr(call, "fallback_from", None),
+        getattr(call, "input_tokens", 0),
+        getattr(call, "output_tokens", 0),
+        getattr(call, "attempts", 1),
+    )

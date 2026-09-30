@@ -250,84 +250,6 @@ def apply_people(state: dict, payload: dict) -> None:
         state["barred_until"] = payload["barred_until"]
 
 
-TUTORIAL_FIELDS = (
-    "tutorial",
-    "device_log",
-    "objective",
-    "npcs",
-    "objects",
-    "player",
-    "fight",
-    "pending_minds",
-    "encounter",
-    "admitted",
-    "gate_open",
-)
-
-
-def apply_tutorial(state: dict, payload: dict) -> None:
-    for key in TUTORIAL_FIELDS:
-        if key in payload:
-            state[key] = payload[key]
-    state["journal"].extend(payload.get("journal_added", []))
-
-
-def apply_gear(state: dict, payload: dict, already_journaled: bool = False) -> None:
-    state["objects"] = payload["objects"]
-    state["npcs"] = payload["npcs"]
-    if "sim_time_ms" in payload:
-        state["sim_time_ms"] = payload["sim_time_ms"]
-    if not already_journaled:
-        state["journal"].extend(payload.get("journal_added", []))
-    apply_people(state, payload)
-
-
-# A round changes many things at once (anything a Try Something can, a reply, people moving on),
-# so its event carries the resulting fields rather than deltas.
-ROUND_FIELDS = (
-    "objects",
-    "npcs",
-    "player",
-    "encounter",
-    "fight",
-    "pending_minds",
-    "agreements",
-    "sim_time_ms",
-    "water_spilled_l",
-    "last_action",
-    "gate_open",
-    "barred_until",
-    "trades",
-    "projectiles",
-)
-
-
-def round_payload(before: dict, after: dict, record: dict) -> dict:
-    payload = {key: after.get(key) for key in ROUND_FIELDS}
-    payload["trades"] = after.get("trades") or {}
-    payload["journal_added"] = after["journal"][len(before["journal"]) :]
-    payload["learned_added"] = after.get("learned", [])[len(before.get("learned", [])) :]
-    if after.get("admitted") and not before.get("admitted"):
-        payload["admitted"] = after["admitted"]
-    payload["round"] = {
-        key: record.get(key)
-        for key in ("round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")
-    }
-    return payload
-
-
-def apply_round(state: dict, payload: dict) -> None:
-    for key in ROUND_FIELDS:
-        state[key] = payload.get(key)
-    state["journal"].extend(payload["journal_added"])
-    state.setdefault("learned", []).extend(payload["learned_added"])
-    if payload.get("admitted"):
-        state["admitted"] = payload["admitted"]
-    if "safe_seq" in payload:
-        state["safe_seq"] = payload["safe_seq"]
-    state["last_round"] = payload["round"]
-
-
 def advance_people(state: dict, elapsed_ms: int) -> dict:
     """Payload fields for time passing: routines, the jobs people chose, encounters starting."""
     probe = dict(state)
@@ -491,10 +413,13 @@ def save_checkpoint(connection: sqlite3.Connection, state: dict) -> None:
 
 
 def check_request(connection: sqlite3.Connection, state: dict, expected_version: int, request_id: str) -> int | None:
+    """The last event a repeat of this request already saved (its own and any it saved after, id+1, id+2...), or
+    None; a new request from a stale view is refused (409)."""
     prior = connection.execute(
-        "SELECT seq FROM events WHERE run_id=? AND request_id=?", (state["run_id"], request_id)
+        "SELECT MAX(seq) AS seq FROM events WHERE run_id=? AND (request_id=? OR substr(request_id, 1, ?)=?)",
+        (state["run_id"], request_id, len(request_id) + 1, request_id + "+"),
     ).fetchone()
-    if prior:
+    if prior["seq"] is not None:
         return int(prior["seq"])
     if is_stale(state, expected_version):
         raise HTTPException(409, {"reason": "stale_state", "state": state})

@@ -8,6 +8,7 @@ import math
 import re
 import sqlite3
 from collections.abc import Callable
+from types import SimpleNamespace
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -16,14 +17,13 @@ from pydantic import BaseModel, Field
 
 import attempts
 import combat
+import commands
 import crafting
 import encounter
 import intent
 import minds
-import patch
 import rounds
 import routes_tutorial
-import routes_world
 import store
 import talk
 from ai import config as ai_config
@@ -65,9 +65,9 @@ def _load_trace(connection: sqlite3.Connection, run_id: str, request_id: str) ->
 @router.post("/runs/{run_id}/craft")
 def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
     """Judge an attempt outside the lock, then revalidate and commit one event."""
-    with store.db() as connection:
-        _, peek = store.load_run(connection, run_id)
-    if encounter.active(peek):  # Face to face with someone: this is the stranger's part of a round.
+    with commands.peek(run_id) as peek:
+        face_to_face = encounter.active(peek)
+    if face_to_face:  # Face to face with someone: this is the stranger's part of a round.
         return rounds.play_round(
             run_id,
             rounds.EncounterAct(
@@ -103,9 +103,8 @@ class ActRequest(BaseModel):
 @router.post("/runs/{run_id}/act")
 def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     """Whatever the stranger typed: words, a deed, both, or waiting / giving up / walking away (GDD D-34)."""
-    with store.db() as connection:
-        _, state = store.load_run(connection, run_id)
-    current = encounter.active(state)
+    with commands.peek(run_id) as state:
+        current = encounter.active(state)
     here = minds.player_cell(state)
     near = sorted(
         (n for n in state["npcs"] if n.get("alive", True) and math.dist(minds._cell(n), here) <= talk.HEAR_TALK_CELLS),
@@ -123,18 +122,7 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
         )
     if call is not None:
         with store.lock, store.db() as connection:
-            telemetry.record(
-                connection,
-                run_id,
-                "decider",
-                call.model,
-                call.provider,
-                call.latency_ms,
-                call.ok,
-                call.error or call.fallback_from,
-                call.input_tokens,
-                call.output_tokens,
-            )
+            telemetry.log(connection, run_id, "decider", call)
     heard = {"kind": kind, "how": how}
     if combat.active(state) and kind in ("yield", "wait", "leave"):  # Giving up, holding still or running (D-41).
         return {**_fight_words(run_id, request, kind, state), "intent": heard}
@@ -201,26 +189,23 @@ def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dic
             "duplicate": False,
             "notice": {"wait": "You hold still. They don't.", "leave": "Then run: get out of their reach."}[kind],
         }
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        if not combat.active(state):
-            return {"state": state, "duplicate": False, "notice": "The fight is already over."}
-        before = patch.snapshot(state)
-        outcome = combat.surrender(state, state["sim_time_ms"])
-        routes_world.fight_event(connection, before, state, request.request_id)
-    return {"state": state, "duplicate": False, "notice": outcome["text"]}
+    try:
+        with commands.open(run_id, request, playable=False) as cmd:
+            if not combat.active(cmd.state):
+                return {"state": cmd.state, "duplicate": False, "notice": "The fight is already over."}
+            outcome = combat.surrender(cmd.state, cmd.state["sim_time_ms"])
+            cmd.save("fight", cmd.state["tick"])
+    except commands.Reply as reply:
+        return reply.body
+    return {"state": cmd.state, "duplicate": False, "notice": outcome["text"]}
 
 
 @router.post("/runs/{run_id}/quick")
 def quick(run_id: str, request: QuickRequest, background: BackgroundTasks):
     """Pick up or put down (E, the bag's Put down): decided by code, no model; seen and saved like any attempt."""
-    with store.db() as connection:
-        _, peek = store.load_run(connection, run_id)
-    if encounter.hostile(peek):
-        raise HTTPException(409, {"reason": "encounter_active", "state": peek})
+    with commands.peek(run_id) as peek:
+        if encounter.hostile(peek):
+            raise HTTPException(409, {"reason": "encounter_active", "state": peek})
     return _attempt(
         run_id,
         f"{request.verb} {request.object_id}",
@@ -243,53 +228,26 @@ def _attempt(
     background: BackgroundTasks,
     propose: Callable[[dict, dict, int], judge.JudgeCall],
 ) -> dict:
-    request_json = json.dumps({"text": text, "selected_ids": selected_ids}, sort_keys=True)
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        prior = connection.execute(
-            "SELECT final_seq,request_json FROM action_requests WHERE run_id=? AND request_id=?", (run_id, request_id)
-        ).fetchone()
-        if prior:
-            if prior["request_json"] != request_json:
-                raise HTTPException(409, {"reason": "request_id_conflict"})
-            return _craft_response(
-                run,
-                store.state_at(connection, run, prior["final_seq"]),
-                _load_trace(connection, run_id, request_id),
-                duplicate=True,
-            )
-        if connection.execute("SELECT 1 FROM events WHERE run_id=? AND request_id=?", (run_id, request_id)).fetchone():
-            raise HTTPException(409, {"reason": "request_id_conflict"})
-        if store.is_stale(state, expected_version):
-            raise HTTPException(409, {"reason": "stale_state", "state": state})
-        if state["inside_city"] or not state["player"]["alive"]:
-            raise HTTPException(409, "Run is no longer interactive")
-        if run_id in attempts.busy_runs:
-            raise HTTPException(409, {"reason": "in_progress"})
-        attempts.busy_runs.add(run_id)
-        context = crafting.build_context(state, text, selected_ids)
-        calls_used = telemetry.calls_for_run(connection, run_id)
-        snapshot = state
+    request = SimpleNamespace(expected_version=expected_version, request_id=request_id)
+    body = {"text": text, "selected_ids": selected_ids}
+
+    def repeated(run: sqlite3.Row, saved: dict, connection: sqlite3.Connection) -> dict:
+        return _craft_response(run, saved, _load_trace(connection, run_id, request_id), duplicate=True)
+
     try:
-        # Any model call happens outside the lock and outside any transaction.
-        judged = propose(snapshot, context, calls_used)
-        with store.lock, store.db() as connection:
-            run, state = store.load_run(connection, run_id)
-            before = patch.snapshot(state)
+        with commands.open(run_id, request, body=body, duplicate=repeated) as cmd:
+            cmd.claim()
+            context = crafting.build_context(cmd.state, text, selected_ids)
+            calls_used = telemetry.calls_for_run(cmd.connection, run_id)
+            seen = cmd.state
+    except commands.Reply as reply:
+        return reply.body
+    try:
+        judged = propose(seen, context, calls_used)  # Any model call happens outside the lock.
+        with commands.reopen(run_id, request, body=body, stale=False) as cmd:
+            state = cmd.state
             if judged.attempts:
-                telemetry.record(
-                    connection,
-                    run_id,
-                    "judge",
-                    judged.model,
-                    judged.prompt_version,
-                    judged.latency_ms,
-                    judged.status == "ok",
-                    judged.error,
-                    judged.input_tokens,
-                    judged.output_tokens,
-                    judged.attempts,
-                )
+                telemetry.log(cmd.connection, run_id, "judge", judged)
             # Validation runs against the state as it is now, not the snapshot the judge saw,
             # one step at a time, stopping at the first step that does not succeed.
             payload, verdict, after = crafting.resolve_attempt(
@@ -302,17 +260,13 @@ def _attempt(
             payload.update(store.advance_people(after, verdict["effort_seconds"] * 1000))
             crafting.apply_payload(state, payload)
             store.apply_people(state, payload)
-            store.record(connection, before, state, "craft", request_id, payload["sim_time_ms"] // 1000)
-            connection.execute(
-                "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
-                (run_id, request_id, state["event_seq"], request_json),
-            )
+            cmd.save("craft", payload["sim_time_ms"] // 1000)
             new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]
             trace = (
                 None
-                if judged.model == "code"
-                else attempts.record_attempt(  # No model: nothing to trace.
-                    connection,
+                if judged.model == "code"  # No model: nothing to trace.
+                else attempts.record_attempt(
+                    cmd.connection,
                     run_id,
                     request_id,
                     state["event_seq"],
@@ -326,9 +280,9 @@ def _attempt(
                 )
             )
     finally:
-        attempts.busy_runs.discard(run_id)
+        commands.release(run_id)
     routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
-    return _craft_response(run, state, trace, duplicate=False)
+    return _craft_response(cmd.run, state, trace, duplicate=False)
 
 
 @router.get("/assets/{asset_id}")

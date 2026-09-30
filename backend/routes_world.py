@@ -10,11 +10,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 import combat
+import commands
 import crafting
 import encounter
 import m2
 import minds
-import patch
+import routes_tutorial
 import store
 from ai import config as ai_config
 from ai import decider
@@ -137,20 +138,10 @@ def rewind(run_id: str):
 
 
 @router.post("/runs/{run_id}/move")
+@commands.answers
 def move(run_id: str, request: Move):
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            objective = connection.execute(
-                "SELECT seq FROM events WHERE run_id=? AND request_id=?",
-                (run_id, f"objective:{request.request_id}"),
-            ).fetchone()
-            end_seq = int(objective["seq"]) if objective else prior_seq
-            return {"state": store.state_at(connection, run, end_seq), "duplicate": True}
-        if state["inside_city"] or not state["player"]["alive"]:
-            raise HTTPException(409, "Run is no longer movable")
-        before = patch.snapshot(state)
+    with commands.open(run_id, request) as cmd:
+        state = cmd.state
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
         cells = request.cells or ([[request.x, request.y]] if request.x is not None and request.y is not None else [])
@@ -199,92 +190,61 @@ def move(run_id: str, request: Move):
                 break  # Inside the city.
         if not accepted:
             raise HTTPException(*problem)
-        sim_time_ms = state["sim_time_ms"]  # Walking takes no clock time: the exploration clock runs alongside.
-        tick = sim_time_ms // 1000  # One simulation tick is one second.
-        payload = {"x": x, "y": y, "running": request.running, "sim_time_ms": sim_time_ms}
+        tick = state["sim_time_ms"] // 1000  # Walking takes no clock time: the exploration clock runs alongside.
         if encounter.active(state):  # A conversation doesn't follow the stranger: walking off ends it for them.
             moved = copy.deepcopy(state)
             moved["player"].update(x=x, y=y)
             encounter.prune(moved)
             if moved.get("encounter") != state.get("encounter"):
-                payload.update(
+                state.update(
                     encounter=moved.get("encounter"), npcs=moved["npcs"], pending_minds=moved.get("pending_minds", [])
                 )
-        if len(accepted) > 1:
-            payload["path"] = accepted
-        state["sim_time_ms"] = sim_time_ms
         state["player"].update(x=x, y=y)
-        if "encounter" in payload:
-            state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
-        meta = {"running": request.running, "path": accepted}
-        before = store.record(connection, before, state, "move", request.request_id, tick, meta)
+        cmd.save("move", tick, {"running": request.running, "path": accepted})
         if y <= 3 and not state["inside_city"]:
-            how = "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
-            state["entered_by"] = how
+            state["entered_by"] = (
+                "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
+            )
             state["inside_city"] = True
-            store.record(connection, before, state, "objective_complete", f"objective:{request.request_id}", tick)
+            cmd.save("objective_complete", tick)
     if problem:
         return JSONResponse({"detail": problem[1], "state": state, "accepted": len(accepted)}, status_code=problem[0])
     return {"state": state, "duplicate": False}
 
 
 @router.post("/runs/{run_id}/explore")
+@commands.answers
 def explore(run_id: str, request: ExploreClock):
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        if state["inside_city"] or not state["player"]["alive"]:
-            raise HTTPException(409, "Run is no longer exploring")
+    with commands.open(run_id, request) as cmd:
+        state = cmd.state
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
-        before = patch.snapshot(state)
         sim_time_ms = state["sim_time_ms"] + request.elapsed_ms
-        payload = {"sim_time_ms": sim_time_ms, **store.advance_people(state, request.elapsed_ms)}
+        people = store.advance_people(state, request.elapsed_ms)
         state["sim_time_ms"] = sim_time_ms
-        state["npcs"] = payload["npcs"]
-        store.apply_people(state, payload)
-        store.record(connection, before, state, "explore", request.request_id, sim_time_ms // 1000)
-        import routes_tutorial  # The tutorial moves on with the clock, too (D-50).
-
-        routes_tutorial.progress(connection, state)
+        state["npcs"] = people["npcs"]
+        store.apply_people(state, people)
+        cmd.save("explore", sim_time_ms // 1000)
+        routes_tutorial.progress(cmd)  # The tutorial moves on with the clock, too (D-50).
     return {"state": state, "duplicate": False}
-
-
-def fight_event(connection, before: dict, state: dict, request_id: str) -> dict:
-    """Save a change made to the fight (state is already changed; before is the snapshot from before it)."""
-    return store.record(connection, before, state, "fight", request_id, state["tick"])
 
 
 @router.post("/runs/{run_id}/dev/gate")
+@commands.answers
 def developer_gate(run_id: str, request: GateCommand):
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        if run["mode"] != "developer":
-            raise HTTPException(403, "Developer control is unavailable in normal mode")
-        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        before = patch.snapshot(state)
-        state["gate_open"] = request.open
-        store.record(connection, before, state, "dev_gate", request.request_id, state["tick"])
-    return {"state": state, "duplicate": False}
+    with commands.open(run_id, request, developer=True, playable=False) as cmd:
+        cmd.state["gate_open"] = request.open
+        cmd.save("dev_gate", cmd.state["tick"])
+    return {"state": cmd.state, "duplicate": False}
 
 
 @router.post("/runs/{run_id}/dev/fight")
+@commands.answers
 def developer_fight(run_id: str, request: FightCommand):
     """Developer-only: these people come at the stranger now (for testing fights without a model)."""
-    with store.lock, store.db() as connection:
-        run, state = store.load_run(connection, run_id)
-        if run["mode"] != "developer":
-            raise HTTPException(403, "Developer control is unavailable in normal mode")
-        prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-        if prior_seq is not None:
-            return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        if any(minds.find(state["npcs"], npc_id) is None for npc_id in request.npc_ids):
+    with commands.open(run_id, request, developer=True, playable=False) as cmd:
+        if any(minds.find(cmd.state["npcs"], npc_id) is None for npc_id in request.npc_ids):
             raise HTTPException(422, "Unknown person")
-        before = patch.snapshot(state)
-        combat.start(state, request.npc_ids, state["sim_time_ms"], "developer")
-        fight_event(connection, before, state, request.request_id)
-    return {"state": state, "duplicate": False}
+        combat.start(cmd.state, request.npc_ids, cmd.state["sim_time_ms"], "developer")
+        cmd.save("fight", cmd.state["tick"])
+    return {"state": cmd.state, "duplicate": False}

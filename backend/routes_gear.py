@@ -1,6 +1,6 @@
 """The stranger's hands and body (D-49): strike, throw, guard, equip, swap hands, treat wounds. All code, no model.
 
-Blows and guarding are "fight" events (the resulting fields, like a punch was). Putting things on, changing hands
+Blows and guarding are "fight" events. Putting things on, changing hands
 and treating are "gear" events: they take time, so outside a fight the world moves on by that much; in a fight
 the clock is already running, so the hand is simply busy for that long.
 """
@@ -14,11 +14,11 @@ from pydantic import BaseModel, Field
 
 import attempts
 import combat
+import commands
 import gear
 import library
 import minds
-import patch
-import routes_world
+import routes_tutorial
 import store
 
 router = APIRouter()
@@ -60,17 +60,6 @@ class Treat(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
-def _open(connection, run_id: str, request) -> tuple[dict, dict, dict, dict | None]:
-    """The journey, a snapshot of it as saved (what the change is measured from), and a duplicate's reply if any."""
-    run, state = store.load_run(connection, run_id)
-    prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
-    if prior_seq is not None:
-        return run, state, {}, {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-    if state["inside_city"] or not state["player"]["alive"]:
-        raise HTTPException(409, "Run is no longer interactive")
-    return run, state, patch.snapshot(state), None
-
-
 def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
     """Whoever the stranger aims at (the client picks who they face); else whoever is in front within reach; else
     nobody: the blow goes where they face (D-51: swinging is never refused for want of a target)."""
@@ -82,13 +71,12 @@ def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | Non
 
 
 @router.post("/runs/{run_id}/strike")
+@commands.answers
 def strike(run_id: str, request: Strike):
     """Space (right hand) or F (left): a blow, shot, pour or throw, at someone or at the air, any time. It lands
     after its wind-up, on the clock; this only starts it (D-49: anyone can step out of reach)."""
-    with store.lock, store.db() as connection:
-        run, state, before, prior = _open(connection, run_id, request)
-        if prior:
-            return prior
+    with commands.open(run_id, request) as cmd:
+        state = cmd.state
         if state["player"].get("down"):
             raise HTTPException(409, {"reason": "down", "message": "You're on the ground and can't."})
         profile, _ = combat.hand_use(state, request.hand)
@@ -101,57 +89,48 @@ def strike(run_id: str, request: Strike):
         )
         if not result["ok"]:
             return {"state": state, "duplicate": False, "strike": result}
-        routes_world.fight_event(connection, before, state, request.request_id)
+        cmd.save("fight", state["tick"])
     return {"state": state, "duplicate": False, "strike": {**result, "target_id": target}}
 
 
 @router.post("/runs/{run_id}/guard")
+@commands.answers
 def guard(run_id: str, request: Guard):
     """Hold F (or the shield hand's key): the shield goes up facing that way; let go and it comes down."""
-    with store.lock, store.db() as connection:
-        run, state, before, prior = _open(connection, run_id, request)
-        if prior:
-            return prior
-        result = combat.guard(state, request.raised, request.facing, state["sim_time_ms"])
+    with commands.open(run_id, request) as cmd:
+        result = combat.guard(cmd.state, request.raised, request.facing, cmd.state["sim_time_ms"])
         if result["ok"]:
-            routes_world.fight_event(connection, before, state, request.request_id)
-    return {"state": state, "duplicate": False, "guard": result}
+            cmd.save("fight", cmd.state["tick"])
+    return {"state": cmd.state, "duplicate": False, "guard": result}
 
 
-def _gear_event(connection, before: dict, state: dict, request_id: str, seconds: int, journal_line: str | None) -> None:
+def _gear_event(cmd: commands.Command, seconds: int, journal_line: str | None) -> None:
     """Something done with the stranger's own things, taking this long: outside a fight the world moves on by
     that much; in one, the hands are busy for it."""
-    payload: dict = {"player": state["player"], "objects": state["objects"], "npcs": state["npcs"]}
+    state = cmd.state
     if journal_line:
-        entry = {"kind": "gear", "category": "success", "reason": journal_line}
-        state["journal"].append(entry)
-        payload["journal_added"] = [entry]
+        state["journal"].append({"kind": "gear", "category": "success", "reason": journal_line})
     if combat.active(state):
         ready = state["player"].setdefault("ready_at", {}) if isinstance(state["player"].get("ready_at"), dict) else {}
         state["player"]["ready_at"] = ready
         for hand in gear.HAND_SLOTS:
             ready[hand] = max(ready.get(hand, 0), state["sim_time_ms"] + seconds * 1000)
-        payload["player"] = state["player"]
     elif seconds > 0:
         people = store.advance_people(state, seconds * 1000)
-        payload.update(people)
-        payload["sim_time_ms"] = state["sim_time_ms"] + seconds * 1000
-    tick = payload.get("sim_time_ms", state["sim_time_ms"]) // 1000
-    store.apply_gear(state, payload, already_journaled=True)
-    store.record(connection, before, state, "gear", request_id, tick)
-    import routes_tutorial  # The tutorial may move on (D-50).
-
-    routes_tutorial.progress(connection, state)
+        state["npcs"] = people["npcs"]
+        state["sim_time_ms"] += seconds * 1000
+        store.apply_people(state, people)
+    cmd.save("gear")
+    routes_tutorial.progress(cmd)  # The tutorial may move on (D-50).
 
 
 @router.post("/runs/{run_id}/equip")
+@commands.answers
 def equip(run_id: str, request: Equip, background: BackgroundTasks):
     """Put something on or in a hand (slot), or take it off (no slot). Code only. Something that has never been
     drawn held or worn gets that picture now (from the item library if it's been painted before)."""
-    with store.lock, store.db() as connection:
-        run, state, before, prior = _open(connection, run_id, request)
-        if prior:
-            return prior
+    with commands.open(run_id, request) as cmd:
+        state = cmd.state
         obj = state["objects"].get(request.object_id)
         if obj is None:
             raise HTTPException(404, "Unknown object")
@@ -163,10 +142,10 @@ def equip(run_id: str, request: Equip, background: BackgroundTasks):
         view = _picture_needed(obj, request.slot)
         if view:
             state["objects"][obj["id"]] = obj = {**obj, f"{view}_asset_id": f"spr_{run_id[:8]}_{obj['id']}_{view}"}
-        _gear_event(connection, before, state, request.request_id, result["seconds"], None)
+        _gear_event(cmd, result["seconds"], None)
         if view:
             attempts.queue_picture(
-                connection, run_id, obj, view, obj[f"{view}_asset_id"], library.signature(obj), background
+                cmd.connection, run_id, obj, view, obj[f"{view}_asset_id"], library.signature(obj), background
             )
     return {"state": state, "duplicate": False, "equip": result}
 
@@ -183,25 +162,22 @@ def _picture_needed(obj: dict, slot: str | None) -> str | None:
 
 
 @router.post("/runs/{run_id}/swap")
+@commands.answers
 def swap(run_id: str, request: Swap):
     """X: what's in each hand changes places."""
-    with store.lock, store.db() as connection:
-        run, state, before, prior = _open(connection, run_id, request)
-        if prior:
-            return prior
-        result = gear.swap_hands(state, state["player"])
+    with commands.open(run_id, request) as cmd:
+        result = gear.swap_hands(cmd.state, cmd.state["player"])
         if result["ok"]:
-            _gear_event(connection, before, state, request.request_id, result["seconds"], None)
-    return {"state": state, "duplicate": False, "swap": result}
+            _gear_event(cmd, result["seconds"], None)
+    return {"state": cmd.state, "duplicate": False, "swap": result}
 
 
 @router.post("/runs/{run_id}/treat")
+@commands.answers
 def treat(run_id: str, request: Treat):
     """Bind, stitch, splint, dress or poultice a condition: the stranger's own, or someone within reach."""
-    with store.lock, store.db() as connection:
-        run, state, before, prior = _open(connection, run_id, request)
-        if prior:
-            return prior
+    with commands.open(run_id, request) as cmd:
+        state = cmd.state
         # Allowed mid-fight too (D-51): it takes the hands for as long as it takes, and blows keep coming.
         remedy = state["objects"].get(request.object_id)
         if remedy is None or remedy.get("holder_id") != "player":
@@ -245,5 +221,5 @@ def treat(run_id: str, request: Treat):
                 .replace("You treat the", f"You treat {patient['name']}'s")
                 .replace(f"{patient['name']}'s the", f"{patient['name']}'s")
             )
-        _gear_event(connection, before, state, request.request_id, result["seconds"], result["text"])
+        _gear_event(cmd, result["seconds"], result["text"])
     return {"state": state, "duplicate": False, "treat": result}
