@@ -176,6 +176,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
+| D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
 | **Quick action** | Pick up a loose stone, put something down, inspect | Deterministic rules, no AI | < 100 ms |
 | **Try Something** | "Tie the two branches together with the cord." "Rub the needle on the lodestone many times in one direction, then float it on a sliver of wood in the bowl of water." | Interpreter → validator → (rules, or physics judge if novel) → reducer | Rules: < 1 s. Judge: aim for p95 ≤ 12 s |
 | **Talk** | "Hessa, would your brother listen if you told him I'm harmless?" | Perception → NPC decision → voice → reducer | First words aim ≤ 2 s |
@@ -193,7 +194,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 | T or Enter | Open the dialogue bar |
 | E | Act on the nearest thing, as a left click would |
 | WASD / arrows, Shift | Move, run |
-| Space / F | Use what's in the right / left hand: a blow, a shot, a pour; empty hands punch. Hold F with a shield to raise it (D-49) |
+| Space / F | Use what's in the right / left hand: a blow, a shot, a pour; empty hands punch. Any time, at anyone or at thin air: the blow goes where you face and hits whoever is there when it lands (D-51). Hold F with a shield to raise it (D-49) |
 | X / Q | Swap hands / throw what's in the right hand |
 | I / J | Pack & gear (what you hold and wear, what you carry, your wounds and what treats them) / the journal |
 | Esc | Walk away, close, or the menu |
@@ -257,7 +258,9 @@ These appear in the result card, the journal, and the developer trace.
 > - While you're talking, and for 60 s after you've talked with or shown something to a guard, no guard is sent to halt you. A halt that arrives mid-conversation joins it instead.
 > - People within earshot of a conversation are listening, not free: no meetings or voiced chatter beside it.
 >
-> **Replies (D-46).** One call to the voice model (Luna) per reply (since D-48, one call per round for the whole group). As this person, it reads the moment: how the exchange changed their view of you, their suspicion, their anger, whether they believe you, whether a guard has reason enough to let you in and sees no threat, and whether a deal was agreed or done. It knows why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It says what they'd say and picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, forgive, arrest, attack, fetch a guard, refuse, send you away, end it, or simply talk. Code checks the move against that same reading (letting you in needs reason enough and no threat) and applies it. People within 5 cells overhear. The journal lists what people told you and your deals.
+> **Replies (D-46).** One call to the voice model (Luna) per reply (since D-48, one call per round for the whole group). As this person, it reads the moment: how the exchange changed their view of you, their suspicion, their anger, whether they believe you, whether a guard has reason enough to let you in and sees no threat, and whether a deal was agreed or done. It knows why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It says what they'd say and picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, forgive, arrest, attack, fetch a guard, go and tell someone something (`go_tell`, D-51), speak for you to the captain, stop attacking you, refuse, send you away, end it, or simply talk.
+
+> **Promises are kept (D-51).** If someone says they'll go and tell, ask or fetch someone, their move must be the one that does it: they walk over and say it, and the listener remembers it (and may act on it). Someone you helped (a wound treated, a gift) can speak for you to the captain whatever their trust. Each line also reports anything promised for later; if the move picked doesn't carry it out, code does when it can (an errand to the person named, or to the captain for "the guards"), and otherwise records the promise as unkept in the trace. `tools/audit_promises.py` scans saved conversations for unkept promises, and every live talk eval checks them. Code checks the move against that same reading (letting you in needs reason enough and no threat) and applies it. People within 5 cells overhear. The journal lists what people told you and your deals.
 >
 > **A fair baseline (D-46):**
 > - Ordinary talk leaves people unchanged or warmer.
@@ -268,7 +271,9 @@ These appear in the result card, the journal, and the developer trace.
 
 > **Walking off is answered by why they came.** A guard who came about a crime not yet put right gives chase, to put you down and arrest you (to kill only after real violence or an assault on the gate). Someone you wronged shouts for the guards. A plain halt or a chat just ends. **Space** punches, in a fight or starting one.
 >
-> **Fights are not rounds (D-41).** When anyone attacks, or the stranger's violence is clearly seen by a guard, words are over: the bar closes and the fight runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** and **F** use the right and left hands, with the same rules: your blow winds up (each weapon at its own speed) and lands only if they're still in reach; a raised shield takes blows from the front (D-49). Opening the bar to type ("I give up") doesn't stop the fight. Giving up to a guard is an arrest.
+> **Fights are not rounds, and not a mode (D-41, D-51).** A fight is only this: some people are attacking the stranger. It runs in real time on the clock. Each attacker closes in and winds up a blow (a pulsing red "!" over their head). If you're still within reach of their weapon when it lands, it hits; if you've stepped out, it misses. **Space** and **F** use the right and left hands, with the same rules, at any time, in a fight or not, at someone or at thin air: your blow winds up (each weapon at its own speed) and lands on whoever is in front of you within reach when it lands; a raised shield takes blows from the front (D-49).
+>
+> Everything else goes on (D-51). You can still talk to anyone, attackers included: words shouted mid-fight are a short round (2 s, not 5) while the blows keep coming. An attacker can be talked down (the `stop_fighting` move) or forgive; a bystander can plead, fetch a guard or stay out of it. You can treat a wound mid-fight; it takes your hands for as long as it takes. Nobody walks up to start a conversation of their own while they're fighting you. Giving up to a guard is an arrest.
 
 - A click on a person opens the **dialogue bar**: their portrait and name, a scrolling exchange, and the one text line.
 - Other NPCs nearby are listeners. They join by speaking in the round's scene when it makes sense for them (D-48), or when the player addresses them.
@@ -435,7 +440,7 @@ These are declared simulation assumptions, not real-world engineering data. The 
 
 ### 4.7 Object manifest for the demo
 
-> **Built so far (seed 6).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). **Seed 6 (D-27)** adds people's own stock: Darin's lodestone, linen, cordage and bronze mirror; Mara's iron needles and nails; Hessa's clay bowl and cup; and the public gate trough (60 L). Entries may carry `owner_id`, `since_seed` (older journeys replay unchanged) and `water_l`. Add materials by editing that file; `tools/generate_material_art.py` paints them. The rest of the table below is still the target.
+> **Built so far (seed 6).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). **Seed 6 (D-27)** adds people's own stock: Darin's lodestone, linen, cordage and bronze mirror; Mara's iron needles and nails; Hessa's clay bowl and cup; and the public gate trough (60 L). Entries may carry `owner_id`, `since_seed` (older journeys replay unchanged) and `water_l`. Add materials by editing that file; `tools/generate_material_art.py` paints them. **Seed 11 (D-51)** adds the old wainwright's yard in the bottom-right corner (cells 75–89, 52–66): 48 free, painted materials for experimenting with weapons and armour: iron bars, a steel billet, bronze, copper, iron plates, nails, rivets, chain and wire; an unfinished knife blade, a sickle blade, a spearhead and an axe head; flint, chert, obsidian, glass, river stones for a sling, a whetstone and a hammerstone; ash and yew staves, oak, elm planks, an axe haft, arrow shafts, withies and birch poles; rawhide, tanned leather, thongs, sinew, flax cord, hemp rope, linen, quilted padding and wool; antler, horn and bone; hide glue, pitch, beeswax, feathers and charcoal. The rest of the table below is still the target.
 
 **Status: CURRENT** (`data/content/objects.json`)
 
@@ -1979,6 +1984,37 @@ Changes to this document: …
 - The real test is a first-time player: time to finish, where they get stuck (the hint timers and the Device tab show it).
 - The device's first-ask answer in the tutorial can be the full written hint; fine for a tutorial, but watch that it stays a nudge in the main game.
 - Kade walks from his patrol to the stranger. If he's far away, step 6 waits a little.
+
+### Retro: fights aren't a mode, promises kept, the yard (D-51), 30 Sep 2026
+
+**Built:**
+
+- `combat.strike`/`throw` without a target (where the stranger faces), `combat.in_front`, `combat.withdraw`; attackers leave a conversation instead of ending it; `encounter` lets the stranger talk mid-fight (a 2 s round); treating mid-fight.
+- `talk`: `go_tell` (with `errand_to` / `errand_message`), `stop_fighting`, vouching after help; `minds._deliver_message` (the `tell` job); `rounds.keep_promise`; `scene_v2` with `fight_now` and `promised_later`.
+- Client: Space and F send the facing and always swing; the fight notice names who is attacking and says you can still talk. `painted_actor.set_gear` compares instance ids, not serialised textures.
+- Seed 11: the old wainwright's yard, 48 painted materials, and material facts for steel, copper, chert, obsidian, glass, sinew, horn, hide glue, wax and linen.
+- Tools: `tools/profile_combat.gd` (a long fight, watching frames, nodes and memory), `tools/clone_run.py` and `tools/probe_run.gd` (replaying a player's journey), `tools/audit_promises.py`, `tools/capture_yard.gd`.
+
+**Evidence:**
+
+- 208 backend tests pass. New: swings at nobody hit whoever is in front and never someone behind; an attacker talked down stops and the fight ends; errands are walked and remembered; a promise without its move is carried out (or noted unkept); the yard is free, reachable and read for a fight; older journeys replay without it.
+- All Godot smoke tests pass on stub.
+- On a copy of the player's journey, frames went from p95 ~740 ms (about 16 fps) to p95 15 ms; memory from 180 MB to 116 MB. A 90 s soak fight shows no growth in nodes or memory.
+- Live talk evals:
+  - 4 new cases, 8/8 (2 runs each): healed Jory vouches or goes to tell the captain; Hessa, asked to pass word to Tomas, sends the stranger instead; Hessa is talked down mid-fight when the bucket is handed back; Jory, as a bystander, fetches a guard.
+  - The full suite: 29/30. The one miss, `oren_in_awe`, was failing on and off before this change.
+- `audit_promises` over every saved conversation: 3 of 230 lines promised an errand the move didn't carry out (Jory's among them).
+
+**Lessons:**
+
+- Reproduce on the player's own journey. A fresh journey never showed the slowdown; theirs did within 15 s.
+- A move the model has no way to make gets said anyway. When people keep saying something the game can't do, add the move (or the guard that keeps it honest) rather than only forbidding the words.
+
+**To watch:**
+
+- Mara said "I'll pull him off if I can" mid-fight: helping the stranger in a fight has no move yet.
+- The Godot MCP bridge was stuck ("Too many open files"), so testing used the headless console tools.
+- Old journeys (seed 10) have no yard; start a new journey to use it.
 
 ---
 

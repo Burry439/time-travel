@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import statistics
 import sys
 import time
@@ -20,12 +21,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
+import combat  # noqa: E402
 import encounter  # noqa: E402
 import minds  # noqa: E402
 import rounds  # noqa: E402
 import talk  # noqa: E402
 
 LUNA_PER_MTOK = (0.1, 0.5)  # input, output USD
+# Words that promise a later errand (D-51): the line's move must carry it out.
+PROMISE = re.compile(r"\b(i'?ll|i will|i'm going to|i shall)\s+(go|run|head|walk|tell|ask|speak|talk|have a word|"
+                     r"fetch|bring|send|find|put in a word|mention|let \w+ know|pass)\b", re.IGNORECASE)
 
 
 def world_for(case: dict) -> tuple[dict, dict]:
@@ -46,6 +51,8 @@ def world_for(case: dict) -> tuple[dict, dict]:
         minds.mind(other)["job"] = None
     if case.get("reason"):  # They came up to the stranger for a reason (a halt, a confrontation).
         encounter.join(state, person, case["reason"], None, 0)
+    if case.get("fight"):  # These people are attacking the stranger right now (D-51: talk still reaches them).
+        combat.start(state, case["fight"], 0, "developer", lethal=False)
     return state, person
 
 
@@ -104,6 +111,10 @@ def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
         for t in turns:
             if word.lower() in f" {t.get('line', '').lower()} ":
                 problems.append(f"said '{word.strip()}': {t['line']}")
+    for t in turns:  # Always: a promise to go and do something is a move that does it (D-51).
+        for line in t.get("lines", []):
+            if PROMISE.search(line["line"]) and line["key"].split(":")[0] not in talk.ERRANDS:
+                problems.append(f"promised without doing it ({line['key']}): {line['line']}")
     speakers = {line["who"] for t in turns for line in t.get("lines", [])}
     if case.get("expect_speakers_any") and not speakers & set(case["expect_speakers_any"]):
         problems.append(f"none of {case['expect_speakers_any']} spoke (only {sorted(speakers)})")

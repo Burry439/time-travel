@@ -725,8 +725,12 @@ func _react_to_fight(before: Dictionary) -> void:
 				var joiner := get_node_or_null("NPCs/%s/PaintedActor" % entry.who)
 				if joiner:
 					joiner.play_gesture("gesture")
-		ui.notify("Fight! Step out of reach as they wind up. Space: right hand, F: left (hold with a shield). "
-			+ "Press T and say you give up to surrender.")
+		var names := PackedStringArray()
+		for who in run_state.fight.get("attackers", []):
+			names.append(str(ui.npc_record(str(who)).get("name", "Someone")))
+		ui.notify("%s %s coming at you! Step out of reach as they wind up; Space and F strike (hold F with a shield). "
+			% [" and ".join(names), "is" if names.size() == 1 else "are"]
+			+ "You can still talk (T): plead, explain, call for help, or say you give up.")
 	elif was_fighting and not in_fight() and run_state["player"].get("alive", true):
 		var now_cell := Vector2i(int(run_state.player.x), int(run_state.player.y))
 		if now_cell.distance_to(predicted_cell) > 3.0: # Marched off by the guards.

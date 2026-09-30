@@ -20,6 +20,7 @@
   "carpenter_edge": {"name": "the edge of the carpenter's yard", "cell": [62, 27]},
   "wagon": {"name": "Darin's wagon", "cell": [80, 30]},
   "wagon_side": {"name": "the far side of Darin's wagon", "cell": [83, 31]},
-  "wagon_front": {"name": "the front of Darin's wagon", "cell": [78, 31]}
+  "wagon_front": {"name": "the front of Darin's wagon", "cell": [78, 31]},
+  "wainwright_yard": {"name": "the old wainwright's yard", "cell": [80, 59]}
  }
 }

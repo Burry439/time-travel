@@ -189,11 +189,15 @@ func set_gear(new_held: Dictionary, new_worn: Dictionary) -> void:
 		worn_key[slot] = new_worn[slot].get_instance_id() if new_worn[slot] else 0
 	var held_key := {}
 	for hand in new_held:
-		held_key[hand] = [new_held[hand].get("texture"), new_held[hand].get("animation"), new_held[hand].get("kind")]
-	if var_to_str(held_key) == str(get_meta("held_key", "")) and var_to_str(worn_key) == str(get_meta("worn_key", "")):
+		var texture: Texture2D = new_held[hand].get("texture")
+		# Instance ids, never the texture itself: var_to_str() of a texture writes out every pixel (a 1024 px
+		# held picture took ~0.7 s on every world update, D-51).
+		held_key[hand] = [texture.get_instance_id() if texture else 0, new_held[hand].get("animation"),
+			new_held[hand].get("kind")]
+	var keys := str(held_key) + "|" + str(worn_key)
+	if keys == str(get_meta("gear_key", "")):
 		return
-	set_meta("held_key", var_to_str(held_key))
-	set_meta("worn_key", var_to_str(worn_key))
+	set_meta("gear_key", keys)
 	held = new_held
 	worn = {}
 	for slot in new_worn:

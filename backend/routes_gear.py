@@ -26,6 +26,7 @@ class Strike(BaseModel):
     hand: str = Field(default="right", pattern="^(right|left)$")
     target_id: str | None = Field(default=None, max_length=60)  # Whoever the stranger faces; else the nearest.
     throw: bool = False
+    facing: list[float] = Field(default_factory=lambda: [0.0, 1.0], min_length=2, max_length=2)
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -67,26 +68,20 @@ def _open(connection, run_id: str, request) -> tuple[dict, dict, dict | None]:
     return run, state, None
 
 
-def aim(state: dict, wanted: str | None, reach: float) -> str | None:
-    """Whoever the stranger aims at if they can; else the nearest attacker; else whoever is within reach."""
+def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
+    """Whoever the stranger aims at (the client picks who they face); else whoever is in front within reach; else
+    nobody: the blow goes where they face (D-51: swinging is never refused for want of a target)."""
     npc = minds.find(state["npcs"], wanted or "")
     if npc is not None and npc.get("alive", True):
         return npc["id"]
-    here = minds.player_cell(state)
-    fighters = [minds.find(state["npcs"], a) for a in (combat.active(state) or {}).get("attackers", [])]
-    fighters = [f for f in fighters if f is not None and not combat.down(f)]
-    if not fighters:
-        fighters = [n for n in state["npcs"] if n.get("alive", True) and not combat.down(n)
-                    and math.dist(minds._cell(n), here) <= reach]
-    if not fighters:
-        return None
-    return min(fighters, key=lambda f: math.dist(minds._cell(f), here))["id"]
+    ahead = combat.in_front(state, [n for n in state["npcs"] if not combat.down(n)], facing, reach)
+    return ahead["id"] if ahead else None
 
 
 @router.post("/runs/{run_id}/strike")
 def strike(run_id: str, request: Strike):
-    """Space (right hand) or F (left): a blow, shot, pour or throw at someone. It lands after its wind-up, on the
-    clock; this only starts it (D-49: anyone can step out of reach)."""
+    """Space (right hand) or F (left): a blow, shot, pour or throw, at someone or at the air, any time. It lands
+    after its wind-up, on the clock; this only starts it (D-49: anyone can step out of reach)."""
     with store.lock, store.db() as connection:
         run, state, prior = _open(connection, run_id, request)
         if prior:
@@ -94,12 +89,10 @@ def strike(run_id: str, request: Strike):
         if state["player"].get("down"):
             raise HTTPException(409, {"reason": "down", "message": "You're on the ground and can't."})
         profile, _ = combat.hand_use(state, request.hand)
-        target = aim(state, request.target_id, max(profile["reach"], profile.get("range") or 0))
-        if target is None:
-            raise HTTPException(409, {"reason": "no_target", "message": "There's nobody there to hit."})
+        target = aim(state, request.target_id, max(profile["reach"], profile.get("range") or 0), request.facing)
         now = state["sim_time_ms"]
-        result = combat.throw(state, request.hand, target, now) if request.throw else \
-            combat.strike(state, request.hand, target, now)
+        result = combat.throw(state, request.hand, target, now, request.facing) if request.throw else \
+            combat.strike(state, request.hand, target, now, request.facing)
         if not result["ok"]:
             return {"state": state, "duplicate": False, "strike": result}
         journal_before = len(state["journal"])
@@ -206,9 +199,7 @@ def treat(run_id: str, request: Treat):
         run, state, prior = _open(connection, run_id, request)
         if prior:
             return prior
-        if combat.active(state):
-            return {"state": state, "duplicate": False,
-                    "treat": {"ok": False, "reason": "Not while someone is trying to kill you."}}
+        # Allowed mid-fight too (D-51): it takes the hands for as long as it takes, and blows keep coming.
         remedy = state["objects"].get(request.object_id)
         if remedy is None or remedy.get("holder_id") != "player":
             return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "You don't have that."}}

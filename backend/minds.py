@@ -747,7 +747,7 @@ def _set_job(npc: dict, job: dict | None, now: int) -> None:
         controller.update(source="routine", activity="look", path=[], next_at_ms=now + 1500, step_carry_ms=0)
     else:
         controller.update(source="job", path=[], step_carry_ms=0,
-                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack", "vouch", "fight")
+                          activity="walk" if job["kind"] in ("flee", "report", "approach", "attack", "vouch", "tell", "fight")
                           else "look")
         if job["kind"] in ("encounter", "watch", "attack", "fight") or job.get("target") == "player":
             mind(npc)["facing_player"] = True  # Busy with the stranger: they keep an eye on them.
@@ -897,6 +897,22 @@ def _deliver_vouch(state: dict, npc: dict, captain: dict, now: int, journal: lis
                        "summary": job["summary"], "short": f"has {npc['name']}'s word"})
 
 
+def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: list[dict], job: dict) -> None:
+    """An errand promised in conversation (D-51): they found the person and told them. The listener remembers it,
+    and may do something about it."""
+    import persona
+    message = job["message"]
+    _say(npc, f"{target['name']}, a word. {message}", now, state, journal)
+    remember(target, {"kind": "told", "severity": 0, "by": npc["id"], "victim": None, "item": None,
+                      "event": job.get("event"), "clarity": "told", "source": f"told_by:{npc['id']}", "at": now,
+                      "summary": f"{npc['name']} came and told them: {message}", "short": f"heard about from {npc['name']}"})
+    heard = persona.knows(target).setdefault("heard", [])
+    heard.append({"from": npc["id"], "from_name": npc["name"], "text": message, "at": now})
+    del heard[:-8]
+    mind(target)["rethinks"] = 0
+    add_pending(state, target["id"], "decide", f"told by {npc['name']}")
+
+
 DEALT_WITH_MS = 60_000  # The stranger just talked to or showed something to a guard: nobody needs to halt them.
 
 
@@ -1033,6 +1049,11 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
             captain = find(npcs, job["target"])
             if captain:
                 _deliver_vouch(working, npc, captain, end, journal, job)
+            _set_job(npc, {"kind": "watch", "until": end + 15_000}, end)
+        elif job["kind"] == "tell":
+            target = find(npcs, job["target"])
+            if target and target.get("alive", True):
+                _deliver_message(working, npc, target, end, journal, job)
             _set_job(npc, {"kind": "watch", "until": end + 15_000}, end)
         elif job["kind"] == "approach" and job.get("then") == "halt" and working.get("encounter"):
             encounter.join(working, npc, "halt", None, end)  # A conversation is on: they step over and join it.

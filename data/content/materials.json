@@ -50,7 +50,17 @@
   "living trees": "Felling needs a cutting tool held firmly (a hafted or hand-held blade or axe); bare hands and loose stones cannot fell a tree. A sharp flint can cut through a wrist-thick sapling in a few minutes. A large tree takes an ordinary adult with stone tools many hours, and a crude flint tool may break first. A felled tree becomes a trunk (too heavy to carry if large), branches and a stump.",
   "people": "Ordinary unarmoured adults. Unarmed blows rarely do more than bruise. A sharp point or blade driven hard at close range can wound badly or kill; a clumsy or weak weapon may glance off. Guards are armed and alert; working craftspeople are not expecting an attack.",
   "water_heat": "Water heated over a fire gets hot, then boils after several minutes; off the fire it cools back over some minutes. Boiling water scalds skin badly.",
-  "cutting": "A sharp flint shard, held in the hand or hafted, saws and hacks through a sapling or a wrist-thick branch in a few minutes of work. It cannot fell a grown tree; that needs an axe and hours."
+  "cutting": "A sharp flint shard, held in the hand or hafted, saws and hacks through a sapling or a wrist-thick branch in a few minutes of work. It cannot fell a grown tree; that needs an axe and hours.",
+  "steel": "Iron made harder by the smith's craft; takes and holds a keener edge than iron; rare and costly here.",
+  "copper": "Soft, reddish metal; bends and hammers easily; too soft for a lasting edge.",
+  "chert": "Like flint: knaps into sharp, brittle edges.",
+  "obsidian": "Volcanic glass: knaps into the sharpest edges of all, but chips and shatters easily.",
+  "glass": "Brittle; broken, its edges are razor-sharp but chip and snap.",
+  "sinew": "Dried animal tendon; shredded and twisted it makes the strongest cord (bowstrings, lashings); shrinks tight as it dries.",
+  "horn": "Tough, slightly springy; can be softened in hot water and shaped; used in bows and handles.",
+  "hide glue": "Animal glue; melted in warm water it sets hard and strong, but softens when wet.",
+  "wax": "Soft, waterproofing, burns; seals and polishes.",
+  "linen": "Woven flax cloth: strong, absorbent; layered and quilted it stops cuts well."
  },
  "flag_meanings": {
   "rigid": "holds its shape under load",
@@ -99,6 +109,16 @@
   "charcoal": "stone",
   "chalk": "stone",
   "bramble": "fiber",
-  "leaf": "fiber"
+  "leaf": "fiber",
+  "steel": "metal",
+  "copper": "metal",
+  "chert": "stone",
+  "obsidian": "stone",
+  "glass": "stone",
+  "sinew": "fiber",
+  "horn": "stone",
+  "hide glue": "stone",
+  "wax": "stone",
+  "linen": "fiber"
  }
 }

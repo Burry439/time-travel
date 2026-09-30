@@ -38,6 +38,7 @@ You can describe several things in one go ("sharpen the branch into a spear with
 - **Say it and it can work**: "sneak up behind him and bash his head in with the stone", "cut his throat while his back is turned", "strangle him with the cord until he stops moving". Someone who sees you coming is much harder to catch, and a choke needs them unaware.
 - **Wounds.** Cuts bleed until you bind them, burns and open wounds fester after a while, a hard blow can break an arm (no shield, no two-handed weapon) or a leg (no running). Ordinary hurts mend slowly on their own, but not while a wound is untreated. Make what you need: linen strips for a **bandage**, a needle and thread for **stitches**, sticks and cord for a **splint**, crushed plantain or yarrow (by the road), moss (by the wall), garlic or honey (Hessa's) for a **poultice**. Treat yourself in Pack & gear, or someone else by saying so; people remember who helped them.
 - **Everyone's gear is real.** The guards' spears and mail, Roderic's sword: take them from someone down or dead (it's theft, and seen as such).
+- **There's no fighting mode.** Space and F swing whenever you like, at someone or at thin air; the blow lands on whoever is in front of you when it lands. When people attack you, you can still talk (plead, explain, call for help, give up), treat a wound, or run.
 
 Code always checks:
 
@@ -50,6 +51,7 @@ Code always checks:
 
 - **The south road start:** branches, cord, stones, flint, flat stone, dry grass, reeds, vine, bark, resin, hazel rod, pine cones and a birch sapling.
 - **The rest of the map:** feathers, wool, a bone, a gourd, wet clay, a pot shard, straw, leather, a **bent iron nail** and a **rusty horseshoe** (iron!), charcoal, chalk, bramble, burdock leaves, birch bark, a heavy log, and two more saplings.
+- **The old wainwright's yard (bottom-right corner, free to take):** 48 materials for trying out weapons and armour. Metal: iron bars, a steel billet, a bronze ingot, a copper sheet, iron plates, nails, rivets, chain and wire, an unfinished knife blade, a sickle blade, a spearhead and an axe head. Stone and glass: flint, chert, obsidian, green glass, river stones for a sling, a whetstone and a hammerstone. Wood: ash and yew staves, an oak billet, elm planks, an axe haft, arrow shafts, willow withies and birch poles. Hide and fibre: rawhide, tanned leather, thongs, sinew, flax cord, hemp rope, linen, quilted padding and wool. Also antler, horn, bones, hide glue, pine pitch, beeswax, goose feathers and charcoal.
 - **Everywhere:** all 19 big trees.
 - **Owned by NPCs:** Hessa's bucket, bowl and cup; Tomas's plank, rope, ladder, fulcrum stone and trestles; Darin's **lodestone**, linen, cordage and bronze mirror; Mara's **iron needles** and nails.
 - **At the gate:** the replacement **gate beam** (60 kg), the **iron brackets** it belongs in, some empty crates and a water trough.

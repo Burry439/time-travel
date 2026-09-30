@@ -29,7 +29,7 @@ IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "M
 SUSPICION = ["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
              "Much more suspicious"]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v1"
+SCENE_VERSION = "scene_v2"  # D-51: errands, promises kept, talk mid-fight.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
 DEVICE_VERSION = "device_v1"  # The device from the future, answering the stranger (D-50).
@@ -63,6 +63,9 @@ class SceneLine(BaseModel):
     reason_enough_to_let_them_through: bool
     agreed_to_the_deal: bool
     did_what_was_asked: bool
+    errand_to: str
+    errand_message: str
+    promised_later: str
     remember: str
 
 
@@ -214,7 +217,10 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
         spoken = tidy(line.text)
         if spoken:
             lines.append({"speaker_id": line.speaker_id.strip(), "text": spoken, "move": line.move.strip(),
-                          "answers": reading(line), "remember": " ".join(line.remember.split())[:300]})
+                          "answers": reading(line), "remember": " ".join(line.remember.split())[:300],
+                          "errand_to": line.errand_to.strip()[:60],
+                          "errand_message": " ".join(line.errand_message.split())[:240],
+                          "promised_later": " ".join(line.promised_later.split())[:240]})
     if lines:
         call.status, call.lines, call.text = "ok", lines, lines[0]["text"]
         call.stranger_name = " ".join(parsed.stranger_name.split())[:40]

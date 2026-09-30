@@ -64,7 +64,8 @@ def test_one_malformed_answer_is_asked_again(monkeypatch):
     line = voice.SceneLine(speaker_id="npc_kade_east", text="Haven't seen her. Ask at the inn.", move="answer",
                            impression="Unchanged", suspicion="Unchanged", anger="Calm", believes_what_was_said=True,
                            sees_the_stranger_as_a_threat=False, reason_enough_to_let_them_through=False,
-                           agreed_to_the_deal=False, did_what_was_asked=False, remember="")
+                           agreed_to_the_deal=False, did_what_was_asked=False, errand_to="", errand_message="",
+                           promised_later="", remember="")
     reply = voice.Scene(lines=[line], stranger_name="")
     flaky = _Flaky(reply)
     monkeypatch.setattr(config, "mode", lambda: "live")
@@ -93,7 +94,7 @@ def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
     line = {"speaker_id": "npc_kade_east", "text": "Inn door.", "move": "answer", "impression": "Unchanged",
             "suspicion": "Unchanged", "anger": "Calm", "believes_what_was_said": True,
             "sees_the_stranger_as_a_threat": False, "reason_enough_to_let_them_through": False,
-            "agreed_to_the_deal": False, "did_what_was_asked": False, "remember": ""}
+            "agreed_to_the_deal": False, "did_what_was_asked": False, "errand_to": "", "errand_message": "", "promised_later": "", "remember": ""}
     trailing = _Trailing(json.dumps({"lines": [line], "stranger_name": ""}))
     monkeypatch.setattr(config, "mode", lambda: "live")
     monkeypatch.setattr(config, "client", lambda: trailing)

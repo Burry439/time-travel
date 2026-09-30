@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import time
 from typing import Literal
 
@@ -131,6 +132,25 @@ def scene(draft: dict, addressed_id: str, text: str, happened: str | None, allow
             "inside": [n["id"] for n in inside], "nearby": [n["id"] for n in nearby]}
 
 
+def keep_promise(state: dict, npc: dict, promised: str, errand_to: str, errand_message: str
+                 ) -> tuple[str, str, str, str | None]:
+    """Someone said they'd do something later but the move picked doesn't do it (D-51). If it's an errand to a
+    person (named, or "the guards"/"the captain"), they go and do it, with their own words as the message.
+    Otherwise it's noted as a promise the game couldn't keep. Returns (key, errand_to, errand_message, unkept)."""
+    if "go_tell" in talk.replies(state, npc):
+        task = talk.errand(state, npc, errand_to, errand_message or promised)
+        if task is None:
+            words = set(re.findall(r"[a-z]+", promised.lower()))
+            named = next((n for n in state["npcs"] if n["id"] != npc["id"] and n.get("alive", True)
+                          and n["name"].split()[0].lower() in words), None)
+            if named is None and words & {"captain", "guard", "guards", "watch", "gate"}:
+                named = minds.find(state["npcs"], talk.CAPTAIN)
+            task = talk.errand(state, npc, named["id"], errand_message or promised) if named else None
+        if task is not None:
+            return "go_tell", task[0]["id"], task[1], None
+    return "answer", errand_to, errand_message, promised
+
+
 def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now: int) -> list[dict]:
     """Check the scene's lines against the world as it now stands and apply each as that person's exchange.
     Returns what was said: [{npc_id, name, line, kind, key, trace}]. A nearby person who speaks joins first."""
@@ -152,10 +172,18 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
             encounter.join(draft, npc, "joined", None, now)
         answers = line.get("answers") or {}
         key = talk.decided_reply(draft, npc, answers, line.get("move") or "answer")
+        errand_to, errand_message = line.get("errand_to", ""), line.get("errand_message", "")
+        promised = line.get("promised_later", "")
+        unkept = None
+        if promised and key.split(":")[0] not in talk.ERRANDS:  # Said they'd do something: hold them to it (D-51).
+            key, errand_to, errand_message, unkept = keep_promise(draft, npc, promised, errand_to, errand_message)
         moment_words = " ".join(heard) or None
         exchange = talk.exchange(draft, npc["id"], text, answers, key, line["text"], [], moment_words,
                                  note=line.get("remember", ""),
-                                 name_given=call.stranger_name if npc["id"] == moment["addressed"] else "")
+                                 name_given=call.stranger_name if npc["id"] == moment["addressed"] else "",
+                                 errand_to=errand_to, errand_message=errand_message)
+        if unkept:
+            exchange["journal_entry"]["unkept_promise"] = unkept
         draft.setdefault("learned", []).extend(exchange["learned"])
         draft["journal"].append(exchange["journal_entry"])
         heard.append(f"{npc['name']} just said: “{line['text']}”")
@@ -163,6 +191,7 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
                      "trace": {"kind": "talk", "npc_id": npc["id"], "text": text, "happened": moment_words,
                                "action": key, "voice_move": line.get("move"), "joined": joining,
                                "why": "addressed" if npc["id"] == moment["addressed"] else "in the scene",
+                               "promised_later": promised, "unkept_promise": unkept,
                                "reply": line["text"], "regard_change": exchange["regard_change"],
                                "situation": talk.request(draft, npc, text, moment_words)[0],
                                "call": {"provider": "voice", "model": call.model, "answers": answers},

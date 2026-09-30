@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate).",
+ "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate). Seed 11 (D-51): the old wainwright's yard in the bottom-right corner, 48 free materials (metals, stone, wood, hide, cord, bone, glue) for experimenting with weapons and armour.",
  "since_seed": 5,
  "objects": [
   {
@@ -1301,6 +1301,804 @@
    ],
    "since_seed": 10,
    "owner_id": "npc_hessa_marr"
+  },
+  {
+   "id": "yard_iron_bar",
+   "name": "iron bar",
+   "x": 75,
+   "y": 52,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.6,
+   "description": "A rough forged iron bar, square in section and as thick as a thumb.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_iron_bar_2",
+   "name": "iron bar",
+   "x": 77,
+   "y": 52,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.6,
+   "description": "A second forged iron bar, slightly bent at one end.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_steel_billet",
+   "name": "steel billet",
+   "x": 79,
+   "y": 52,
+   "mass_kg": 1.5,
+   "materials": [
+    "steel"
+   ],
+   "length_m": 0.3,
+   "description": "A short, hard billet of good steel, rare and costly; it rings when struck.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_bronze_ingot",
+   "name": "bronze ingot",
+   "x": 81,
+   "y": 52,
+   "mass_kg": 2.0,
+   "materials": [
+    "bronze"
+   ],
+   "length_m": 0.2,
+   "description": "A small cast bronze ingot, golden-brown and heavy for its size.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_copper_sheet",
+   "name": "copper sheet",
+   "x": 83,
+   "y": 52,
+   "mass_kg": 1.2,
+   "materials": [
+    "copper"
+   ],
+   "length_m": 0.5,
+   "description": "A thin hammered sheet of copper, soft enough to bend over a knee.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_iron_plates",
+   "name": "iron plates",
+   "x": 75,
+   "y": 54,
+   "mass_kg": 5.0,
+   "materials": [
+    "iron"
+   ],
+   "description": "Four small hammered iron plates, each a hand wide, with a hole punched at every corner.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_nails",
+   "name": "handful of iron nails",
+   "x": 77,
+   "y": 54,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "description": "Twenty square-shanked iron nails, a little rusty.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_rivets",
+   "name": "bag of iron rivets",
+   "x": 79,
+   "y": 54,
+   "mass_kg": 0.5,
+   "materials": [
+    "iron",
+    "leather"
+   ],
+   "description": "Soft iron rivets in a small leather bag, for joining plates or straps.",
+   "flags": [
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_chain",
+   "name": "length of iron chain",
+   "x": 81,
+   "y": 54,
+   "mass_kg": 4.0,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 2.0,
+   "description": "Two metres of heavy iron chain with hand-forged links.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_iron_wire",
+   "name": "coil of iron wire",
+   "x": 83,
+   "y": 54,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 5.0,
+   "description": "A coil of soft drawn iron wire, about five metres of it.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_blade_blank",
+   "name": "unfinished knife blade",
+   "x": 75,
+   "y": 56,
+   "mass_kg": 0.3,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.2,
+   "description": "A forged iron knife blade with no edge yet and a bare tang where a handle should go.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_sickle_blade",
+   "name": "old sickle blade",
+   "x": 77,
+   "y": 56,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.45,
+   "description": "A curved sickle blade with a broken grip, still sharp along the inside edge.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_spearhead",
+   "name": "iron spearhead",
+   "x": 79,
+   "y": 56,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.25,
+   "description": "A leaf-shaped iron spearhead with an empty socket for a shaft.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_axe_head",
+   "name": "iron axe head",
+   "x": 81,
+   "y": 56,
+   "mass_kg": 1.2,
+   "materials": [
+    "iron"
+   ],
+   "length_m": 0.2,
+   "description": "A bearded axe head with an empty eye for a haft.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_horseshoes",
+   "name": "pair of horseshoes",
+   "x": 83,
+   "y": 56,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "description": "Two worn iron horseshoes with their nails pulled.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_iron_pot",
+   "name": "iron cooking pot",
+   "x": 75,
+   "y": 58,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "description": "A heavy three-legged iron pot, sooty inside.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "ferromagnetic"
+   ],
+   "since_seed": 11,
+   "capacity_l": 4.0
+  },
+  {
+   "id": "yard_flint_nodules",
+   "name": "flint nodules",
+   "x": 77,
+   "y": 58,
+   "mass_kg": 2.0,
+   "materials": [
+    "flint"
+   ],
+   "description": "Three fist-sized flint nodules with chalky crusts; knapped, they give very sharp edges.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_chert",
+   "name": "chert cobble",
+   "x": 79,
+   "y": 58,
+   "mass_kg": 1.5,
+   "materials": [
+    "chert"
+   ],
+   "description": "A grey chert cobble, fine-grained and good for knapping.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_obsidian",
+   "name": "obsidian chunk",
+   "x": 81,
+   "y": 58,
+   "mass_kg": 0.8,
+   "materials": [
+    "obsidian"
+   ],
+   "description": "A glassy black chunk of obsidian traded from far away; its broken edges are sharper than any blade, and brittle.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_glass",
+   "name": "shards of green glass",
+   "x": 83,
+   "y": 58,
+   "mass_kg": 0.2,
+   "materials": [
+    "glass"
+   ],
+   "description": "A few thick shards of a broken green glass jar, razor-edged.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_river_stones",
+   "name": "pile of river stones",
+   "x": 75,
+   "y": 60,
+   "mass_kg": 2.4,
+   "materials": [
+    "stone"
+   ],
+   "description": "A dozen smooth, egg-sized river stones, just right for a sling.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_whetstone",
+   "name": "whetstone",
+   "x": 77,
+   "y": 60,
+   "mass_kg": 0.4,
+   "materials": [
+    "stone"
+   ],
+   "description": "A fine-grained sharpening stone, worn hollow in the middle.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_hammerstone",
+   "name": "hammerstone",
+   "x": 79,
+   "y": 60,
+   "mass_kg": 1.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A hard, rounded quartzite cobble for knapping and pounding.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_ash_stave",
+   "name": "ash stave",
+   "x": 81,
+   "y": 60,
+   "mass_kg": 1.6,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 2.2,
+   "description": "A straight, seasoned ash pole, springy and tough: a spear shaft or a quarterstaff.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_yew_stave",
+   "name": "yew stave",
+   "x": 83,
+   "y": 60,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 1.8,
+   "description": "A seasoned yew stave, heartwood on one side and sapwood on the other: bow wood.",
+   "flags": [
+    "flexible",
+    "combustible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_oak_billet",
+   "name": "oak billet",
+   "x": 75,
+   "y": 62,
+   "mass_kg": 2.5,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 0.8,
+   "description": "A split, seasoned length of oak as thick as a forearm.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_elm_planks",
+   "name": "elm planks",
+   "x": 77,
+   "y": 62,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 0.9,
+   "description": "Three short elm planks, tough and hard to split: good shield boards.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_axe_haft",
+   "name": "axe haft",
+   "x": 79,
+   "y": 62,
+   "mass_kg": 0.8,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 0.75,
+   "description": "A shaped ash handle for an axe, curved to the hand.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_arrow_shafts",
+   "name": "bundle of arrow shafts",
+   "x": 81,
+   "y": 62,
+   "mass_kg": 0.4,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 0.75,
+   "description": "Twenty straight dogwood shoots, peeled and dried.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_withies",
+   "name": "willow withies",
+   "x": 83,
+   "y": 62,
+   "mass_kg": 1.0,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 1.5,
+   "description": "A bundle of long, whippy willow withies for weaving.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_birch_poles",
+   "name": "birch poles",
+   "x": 75,
+   "y": 64,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "length_m": 2.5,
+   "description": "Three thin birch poles, light and straight.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_rawhide",
+   "name": "rawhide",
+   "x": 77,
+   "y": 64,
+   "mass_kg": 3.0,
+   "materials": [
+    "leather"
+   ],
+   "description": "A stiff, untanned cattle hide; soaked, it goes soft, and it shrinks hard as it dries.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_leather_hide",
+   "name": "tanned leather hide",
+   "x": 79,
+   "y": 64,
+   "mass_kg": 2.5,
+   "materials": [
+    "leather"
+   ],
+   "description": "A thick tanned ox hide, good for straps, sheaths or armour.",
+   "flags": [
+    "flexible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_thongs",
+   "name": "leather thongs",
+   "x": 81,
+   "y": 64,
+   "mass_kg": 0.2,
+   "materials": [
+    "leather"
+   ],
+   "length_m": 1.5,
+   "description": "A bunch of narrow leather laces.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_sinew",
+   "name": "bundle of sinew",
+   "x": 83,
+   "y": 64,
+   "mass_kg": 0.1,
+   "materials": [
+    "sinew"
+   ],
+   "length_m": 0.5,
+   "description": "Dried deer tendon, shredded into fibres: the strongest cord there is, for bowstrings and lashings.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_flax_cord",
+   "name": "hank of flax cord",
+   "x": 75,
+   "y": 66,
+   "mass_kg": 0.3,
+   "materials": [
+    "plant fiber"
+   ],
+   "length_m": 10.0,
+   "description": "A hank of strong twisted flax cord.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_hemp_rope",
+   "name": "coil of hemp rope",
+   "x": 77,
+   "y": 66,
+   "mass_kg": 2.0,
+   "materials": [
+    "plant fiber"
+   ],
+   "length_m": 10.0,
+   "description": "Ten metres of stout hemp rope.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_linen",
+   "name": "bolt of linen",
+   "x": 79,
+   "y": 66,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen"
+   ],
+   "description": "A folded bolt of undyed linen cloth.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_padding",
+   "name": "quilted padding",
+   "x": 81,
+   "y": 66,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "description": "A stack of quilted linen layers stuffed with wool, the stuff of padded armour.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_wool",
+   "name": "raw wool fleece",
+   "x": 83,
+   "y": 66,
+   "mass_kg": 1.5,
+   "materials": [
+    "wool"
+   ],
+   "description": "A greasy, unwashed sheep's fleece.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_antler",
+   "name": "red deer antler",
+   "x": 85,
+   "y": 52,
+   "mass_kg": 1.2,
+   "materials": [
+    "bone"
+   ],
+   "length_m": 0.7,
+   "description": "A shed red deer antler with sturdy tines, hard as bone.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_horn",
+   "name": "cattle horn",
+   "x": 85,
+   "y": 54,
+   "mass_kg": 0.5,
+   "materials": [
+    "horn"
+   ],
+   "length_m": 0.35,
+   "description": "A hollow cattle horn, tough and a little springy.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_bones",
+   "name": "pile of bones",
+   "x": 85,
+   "y": 56,
+   "mass_kg": 1.5,
+   "materials": [
+    "bone"
+   ],
+   "description": "Cattle long bones and shoulder blades, cleaned and dried.",
+   "flags": [
+    "rigid"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_hide_glue",
+   "name": "pot of hide glue",
+   "x": 87,
+   "y": 52,
+   "mass_kg": 0.6,
+   "materials": [
+    "hide glue",
+    "fired clay"
+   ],
+   "description": "A small clay pot of hide glue; warmed, it sets hard and strong.",
+   "flags": [
+    "adhesive"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_pitch",
+   "name": "pot of pine pitch",
+   "x": 87,
+   "y": 54,
+   "mass_kg": 0.8,
+   "materials": [
+    "pine resin",
+    "fired clay"
+   ],
+   "description": "Thick black pine pitch in a clay pot; heated, it glues and seals.",
+   "flags": [
+    "adhesive",
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_beeswax",
+   "name": "cake of beeswax",
+   "x": 87,
+   "y": 56,
+   "mass_kg": 0.3,
+   "materials": [
+    "wax"
+   ],
+   "description": "A cake of yellow beeswax.",
+   "flags": [
+    "combustible"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_feathers",
+   "name": "grey goose feathers",
+   "x": 89,
+   "y": 52,
+   "mass_kg": 0.05,
+   "materials": [
+    "feather"
+   ],
+   "description": "A bunch of grey goose flight feathers, good for fletching.",
+   "flags": [
+    "flexible",
+    "floats"
+   ],
+   "since_seed": 11
+  },
+  {
+   "id": "yard_charcoal",
+   "name": "sack of charcoal",
+   "x": 89,
+   "y": 54,
+   "mass_kg": 5.0,
+   "materials": [
+    "charcoal",
+    "cloth"
+   ],
+   "description": "A sack of good oak charcoal.",
+   "flags": [
+    "combustible"
+   ],
+   "since_seed": 11
   }
  ],
  "trees": {

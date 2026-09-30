@@ -148,7 +148,12 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
     if why == "spar":  # A practice bout (the tutorial): nobody means harm, and nobody is arrested (D-50).
         fight["spar"] = True
     state["fight"] = fight
-    state["encounter"] = None  # Words are over: no more rounds.
+    talking = state.get("encounter")  # Those who attack leave the conversation; anyone else can still talk (D-51).
+    if talking:
+        talking["participants"] = [n for n in talking["participants"] if n not in npc_ids]
+        talking["purpose"] = {k: v for k, v in (talking.get("purpose") or {}).items() if k not in npc_ids}
+        if not talking["participants"] or any(v != "talk" and v != "joined" for v in talking["purpose"].values()):
+            state["encounter"] = None
     for npc in people:
         if npc["id"] in fight["attackers"]:
             continue
@@ -233,9 +238,18 @@ def finish(state: dict, now: int) -> None:
 
 # --- The stranger acts: strike, shoot, throw, pour, guard, swap ------------------------------------------------
 
-def strike(state: dict, hand: str, target_id: str | None, now: int) -> dict:
-    """Space (right) or F (left): start this hand's blow, shot, throw or pour at someone. It lands after the
-    wind-up, on the clock (tick), like anyone's. Returns {ok, reason?, swing?}."""
+def _ahead(state: dict, facing: list[float] | None, cells: float) -> list[float]:
+    """The spot this many cells in front of the stranger (where a swing or throw at nobody goes)."""
+    fx, fy = (facing or [0.0, 1.0])[:2]
+    length = math.hypot(fx, fy) or 1.0
+    x, y = minds.player_cell(state)
+    return [round(x + fx / length * cells, 2), round(y + fy / length * cells, 2)]
+
+
+def strike(state: dict, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
+    """Space (right) or F (left): start this hand's blow, shot, throw or pour. It lands after the wind-up, on the
+    clock (tick), like anyone's. There is no fighting mode (D-51): anyone can swing at any time. Aimed at nobody,
+    the blow goes where the stranger faces and hits whoever is there when it lands. Returns {ok, reason?, swing?}."""
     player = state["player"]
     hand = hand if hand in gear.HAND_SLOTS else "right"
     problem = hand_free(state, hand)
@@ -247,42 +261,59 @@ def strike(state: dict, hand: str, target_id: str | None, now: int) -> dict:
     if hand in swings or now < player["ready_at"].get(hand, 0):
         return {"ok": False, "reason": "You're still recovering from the last swing."}
     npc = minds.find(state["npcs"], target_id) if target_id else None
-    if npc is None or not npc.get("alive", True):
-        return {"ok": False, "reason": "There's nobody there to hit."}
+    if npc is not None and not npc.get("alive", True):
+        npc = None
     profile, obj = hand_use(state, hand)
-    distance = math.dist(minds._cell(npc), minds.player_cell(state))
     ranged = bool(profile.get("range"))
     if ranged and profile.get("ammo"):
         ammo = state["objects"].get(gear.equipped(player).get("ammo") or "")
         if ammo is None or gear.of(ammo).get("class") != profile["ammo"] or ammo.get("count", 1) <= 0:
             return {"ok": False, "reason": f"You have no {gear.GEAR['ammo'][profile['ammo']]['name']} ready."}
-    if ranged and distance > profile["range"]:
+    if ranged and npc is not None and math.dist(minds._cell(npc), minds.player_cell(state)) > profile["range"]:
         return {"ok": False, "reason": f"{npc['name']} is out of range."}
-    swing = {"hand": hand, "target": npc["id"], "started": now, "lands_at": now + int(profile["windup_ms"]),
-             "animation": profile["animation"], "object_id": (obj or {}).get("id"), "ranged": ranged,
-             "aim": list(minds._cell(npc))}
+    aim = list(minds._cell(npc)) if npc else _ahead(state, facing, profile["range"] if ranged else profile["reach"])
+    swing = {"hand": hand, "target": npc["id"] if npc else None, "started": now,
+             "lands_at": now + int(profile["windup_ms"]), "animation": profile["animation"],
+             "object_id": (obj or {}).get("id"), "ranged": ranged, "aim": aim, "facing": list(facing or [0.0, 1.0])}
     swings[hand] = swing
     return {"ok": True, "swing": swing, "profile": {k: profile[k] for k in ("class", "animation", "windup_ms",
                                                                               "reach", "type")}}
 
 
-def throw(state: dict, hand: str, target_id: str, now: int) -> dict:
-    """Throw what's in a hand at someone (a stone, a knife, a javelin): it leaves the hand."""
+def throw(state: dict, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
+    """Throw what's in a hand (a stone, a knife, a javelin): at someone, or as far as it goes the way the stranger
+    faces. It leaves the hand."""
     player = state["player"]
     obj = gear.held(state, player, hand)
-    npc = minds.find(state["npcs"], target_id)
-    if obj is None or npc is None:
-        return {"ok": False, "reason": "You have nothing in that hand to throw." if obj is None else "Nobody's there."}
+    npc = minds.find(state["npcs"], target_id) if target_id else None
+    if obj is None:
+        return {"ok": False, "reason": "You have nothing in that hand to throw."}
     if obj.get("mass_kg", 0) > gear.GEAR["thrown"]["max_mass"]:
         return {"ok": False, "reason": f"The {obj['name']} is too heavy to throw."}
     profile = gear.thrown(obj)
-    if math.dist(minds._cell(npc), minds.player_cell(state)) > profile["range"]:
+    if npc is not None and math.dist(minds._cell(npc), minds.player_cell(state)) > profile["range"]:
         return {"ok": False, "reason": f"{npc['name']} is out of range."}
-    player.setdefault("swings", {})[hand] = {"hand": hand, "target": npc["id"], "started": now,
+    aim = list(minds._cell(npc)) if npc else _ahead(state, facing, min(6.0, profile["range"]))
+    player.setdefault("swings", {})[hand] = {"hand": hand, "target": npc["id"] if npc else None, "started": now,
                                              "lands_at": now + int(profile["windup_ms"]), "animation": "throw",
-                                             "object_id": obj["id"], "ranged": True, "thrown": True,
-                                             "aim": list(minds._cell(npc))}
+                                             "object_id": obj["id"], "ranged": True, "thrown": True, "aim": aim}
     return {"ok": True}
+
+
+def withdraw(state: dict, npc_id: str, now: int) -> None:
+    """Someone stops attacking the stranger (talked down, or they've made their point); the rest fight on."""
+    fight = active(state)
+    if fight is None or npc_id not in fight["attackers"]:
+        return
+    fight["attackers"].remove(npc_id)
+    fight["swings"].pop(npc_id, None)
+    npc = minds.find(state["npcs"], npc_id)
+    if npc is not None and not down(npc):
+        minds._set_job(npc, {"kind": "watch", "until": now + 20_000}, now)
+        _log(state, npc_id, "stops", f"{npc['name']} lowers their {weapon_name(state, npc)} and backs off.", now,
+             state.get("journal"))
+    if not fight["attackers"]:
+        finish(state, now)
 
 
 def guard(state: dict, raised: bool, facing: list[float] | None, now: int) -> dict:
@@ -450,12 +481,14 @@ def _player_swings(state: dict, npcs: list[dict], end: int, journal: list[dict])
 
 
 def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict]) -> None:
-    """The stranger's blow (or pour) lands on the one they aimed at, if they're still there."""
-    npc = minds.find(npcs, swing["target"])
+    """The stranger's blow (or pour) lands on the one they aimed at, if they're still there; a blow aimed at
+    nobody lands on whoever is now in front of them within reach, or on thin air."""
     at = swing["lands_at"]
+    profile, obj = hand_use(state, swing["hand"])
+    npc = minds.find(npcs, swing["target"]) if swing.get("target") else in_front(state, npcs, swing.get("facing"),
+                                                                                  profile["reach"])
     if npc is None or not npc.get("alive", True):
         return
-    profile, obj = hand_use(state, swing["hand"])
     distance = math.dist(minds._cell(npc), minds.player_cell(state))
     if distance > profile["reach"] + 0.01:
         _log(state, "player", "miss", f"You swing at {npc['name']} and hit nothing but air.", at, journal)
@@ -493,6 +526,24 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
     _log(state, "player", "hit" if result not in ("deflected",) else "glance", _blow_words(npc, profile, result, outcome),
          at, journal)
     _react(state, npc, result, swing, at)
+
+
+def in_front(state: dict, npcs: list[dict], facing: list[float] | None, reach: float) -> dict | None:
+    """The nearest living person within reach on the side the stranger faces."""
+    here = minds.player_cell(state)
+    fx, fy = (facing or [0.0, 1.0])[:2]
+    length = math.hypot(fx, fy) or 1.0
+    best = None
+    for npc in npcs:
+        there = minds._cell(npc)
+        distance = math.dist(there, here)
+        if not npc.get("alive", True) or distance > reach + 0.01:
+            continue
+        if distance > 0.5 and ((there[0] - here[0]) * fx + (there[1] - here[1]) * fy) / (distance * length) < 0.3:
+            continue  # Behind or beside them.
+        if best is None or distance < best[0]:
+            best = (distance, npc)
+    return best[1] if best else None
 
 
 def _blow_words(npc: dict, profile: dict, result: str, outcome: dict) -> str:
@@ -590,7 +641,9 @@ def _missiles(state: dict, npcs: list[dict], end: int, journal: list[dict]) -> N
 def _missile_lands(state: dict, npcs: list[dict], shot: dict, journal: list[dict]) -> None:
     import crafting
     at, profile = shot["lands_at"], shot["profile"]
-    npc = minds.find(npcs, shot["target"])
+    npc = minds.find(npcs, shot["target"]) if shot.get("target") else min(
+        (n for n in npcs if n.get("alive", True) and math.dist(minds._cell(n), tuple(shot["to"])) <= HIT_RADIUS),
+        key=lambda n: math.dist(minds._cell(n), tuple(shot["to"])), default=None)  # Thrown at nobody: whoever is there.
     hit = npc is not None and npc.get("alive", True) and math.dist(minds._cell(npc), tuple(shot["to"])) <= HIT_RADIUS
     landing = tuple(shot["to"])
     if hit:
@@ -607,7 +660,7 @@ def _missile_lands(state: dict, npcs: list[dict], shot: dict, journal: list[dict
             _log(state, "player", "hit", _blow_words(npc, profile, result, outcome), at, journal)
             _react(state, npc, result, {"object_id": shot.get("object_id")}, at)
         landing = minds._cell(npc)
-    else:
+    elif shot.get("target"):
         name = npc["name"] if npc else "them"
         _log(state, "player", "miss", f"Your shot misses {name}.", at, journal)
         if npc is not None:

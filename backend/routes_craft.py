@@ -100,12 +100,13 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
             telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
                              call.error or call.fallback_from, call.input_tokens, call.output_tokens)
     heard = {"kind": kind, "how": how}
-    if combat.active(state) and kind in ("yield", "say", "wait", "leave"):  # Mid-fight: no rounds (D-41).
+    if combat.active(state) and kind in ("yield", "wait", "leave"):  # Giving up, holding still or running (D-41).
         return {**_fight_words(run_id, request, kind, state), "intent": heard}
-    if not current and kind in ("do", "both") and not combat.active(state):
+    # Words and deeds still reach people mid-fight (D-51): a fight is only some people attacking the stranger.
+    if not current and kind in ("do", "both"):
         # A deed shown or handed to someone nearby ("I show Roderic the compass") is a round with them, so they answer (D-48).
         target = request.target_id or named(request.text, near)
-    if current or kind == "say" or (kind in ("do", "both") and target and not combat.active(state)):
+    if current or kind == "say" or (kind in ("do", "both") and target):
         if not current:
             target = target or (near[0]["id"] if near else None)
             if kind == "say" and not target:
@@ -138,10 +139,9 @@ def named(text: str, near: list[dict]) -> str | None:
 
 
 def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dict:
-    """Words in a fight: giving up is an event (guards arrest you); anything else, nobody stops to listen."""
+    """Giving up in a fight is an event (guards arrest you); holding still or running are yours to do."""
     if kind != "yield":
         return {"state": seen, "duplicate": False, "notice": {
-            "say": "Nobody stops to listen: they're trying to kill you. Say you give up, or fight, or run.",
             "wait": "You hold still. They don't.", "leave": "Then run: get out of their reach."}[kind]}
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)

@@ -569,6 +569,98 @@
     "who's hessa",
     "who is hessa"
    ]
+  },
+  {
+   "id": "jory_healed_speaks_up",
+   "group": "promises",
+   "npc": "npc_jory_venn",
+   "memories": [
+    {
+     "kind": "help",
+     "severity": 1,
+     "victim": "npc_jory_venn",
+     "item": "poultice",
+     "clarity": "clear",
+     "source": "received",
+     "summary": "The stranger treated my burnt arm with a poultice they made.",
+     "short": "treated my burn"
+    }
+   ],
+   "lines": [
+    "How's the arm?",
+    "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "Could you go and tell him now?"
+   ],
+   "expect_any": [
+    "vouch",
+    "go_tell"
+   ]
+  },
+  {
+   "id": "hessa_passes_word",
+   "group": "promises",
+   "npc": "npc_hessa_marr",
+   "lines": [
+    "Good day. I'm looking for honest work.",
+    "Could you let Tomas the carpenter know I'm willing to help with his beam? I'll wait here."
+   ],
+   "expect_any": [
+    "go_tell",
+    "refer",
+    "answer",
+    "ask_back"
+   ]
+  },
+  {
+   "id": "talked_down_mid_fight",
+   "group": "fight",
+   "npc": "npc_hessa_marr",
+   "fight": [
+    "npc_hessa_marr"
+   ],
+   "memories": [
+    {
+     "kind": "theft",
+     "severity": 2,
+     "victim": "npc_hessa_marr",
+     "item": "wooden bucket",
+     "clarity": "clear",
+     "source": "victim",
+     "summary": "The stranger took my wooden bucket without asking.",
+     "short": "stole my bucket"
+    }
+   ],
+   "lines": [
+    "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    {
+     "say": "Here, it's yours. I'm sorry.",
+     "happened": "The stranger holds the bucket out to Hessa."
+    }
+   ],
+   "expect_any": [
+    "stop_fighting",
+    "forgive"
+   ]
+  },
+  {
+   "id": "bystander_mid_fight",
+   "group": "fight",
+   "npc": "npc_jory_venn",
+   "fight": [
+    "npc_tomas_reed"
+   ],
+   "nearby": [
+    {
+     "npc": "npc_tomas_reed",
+     "dx": 1
+    }
+   ],
+   "lines": [
+    "Jory! Help me, he's gone mad! Get someone!"
+   ],
+   "expect_speakers_any": [
+    "npc_jory_venn"
+   ]
   }
  ]
 }

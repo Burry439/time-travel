@@ -64,8 +64,10 @@ func strike(hand: String, throw := false) -> void:
 	var obj := in_hand(game.run_state.player, hand)
 	var spec := weapon_spec(obj)
 	var target := _aim(float(spec.get("range", spec.get("reach", 1.5))) if not throw else 8.0)
-	var body := {"hand": hand, "throw": throw, "expected_version": game.run_state.event_seq,
-		"request_id": game._request_id("strike")}
+	var ahead: Vector2 = facing_vector()
+	# There's no fighting mode (D-51): a swing at nobody still happens, where you face.
+	var body := {"hand": hand, "throw": throw, "facing": [ahead.x, ahead.y],
+		"expected_version": game.run_state.event_seq, "request_id": game._request_id("strike")}
 	if not target.is_empty():
 		body["target_id"] = target
 	while game.movement_sync_active: # Our steps first: the blow starts where we stand now.
@@ -145,10 +147,14 @@ func treat(object_id: String, condition: int, patient := "player") -> Dictionary
 	return reply.data.get("treat", {})
 
 
+func facing_vector() -> Vector2:
+	return ([Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT, Vector2(1, 1), Vector2(-1, 1),
+		Vector2(-1, -1), Vector2(1, -1)][game.facing_row] as Vector2).normalized()
+
+
 ## Whoever you face within this range (the nearest attacker in a fight), else "".
 func _aim(range_cells: float) -> String:
-	var ahead: Vector2 = [Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT, Vector2(1, 1), Vector2(-1, 1),
-		Vector2(-1, -1), Vector2(1, -1)][game.facing_row]
+	var ahead: Vector2 = facing_vector()
 	var hovered: Dictionary = game.ui.cursor.pick(game.get_global_mouse_position())
 	if range_cells > 3.0 and not hovered.is_empty() and str(hovered.get("kind", "")) == "npc":
 		return str(hovered.id)

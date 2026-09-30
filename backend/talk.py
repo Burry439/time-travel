@@ -67,7 +67,8 @@ FALLBACK = {"answer": "Hm. I hear you.", "ask_back": "And who might you be?", "r
             "vouch": "Right. I'll go and have a word with the captain for you.",
             "admit": "Very well. Open the gate for this one.", "demand": "That's not yours. Hand it back. Now.",
             "take_back": "I'll have that back, thank you.", "seize": "That's enough. You're coming with me.",
-            "attack": "Right. You asked for it.", "forgive": "Well. We'll say no more about it."}
+            "attack": "Right. You asked for it.", "forgive": "Well. We'll say no more about it.",
+            "stop_fighting": "All right. Enough.", "go_tell": "Wait here. I'll go and tell them."}
 
 
 def clean(text: str) -> str:
@@ -222,6 +223,18 @@ def lendable(state: dict, npc: dict) -> list[dict]:
     return sorted(things, key=lambda o: (math.dist((o["x"], o["y"]), minds._cell(npc)), o["id"]))[:4]
 
 
+def helped_by_stranger(npc: dict) -> bool:
+    """The stranger has done this person (or their family) a real kindness they saw or felt: a wound treated,
+    a gift. Reason enough to speak up for them, whatever words were said (D-51)."""
+    family = {npc["id"], *minds.card(npc).get("family", [])}
+    return any(m["kind"] in ("help", "gift") and m.get("victim") in family and m.get("clarity") != "vague"
+               for m in minds.mind(npc).get("memories", []))
+
+
+ERRANDS = ("vouch", "go_tell", "call_guard", "refer", "lend", "give", "offer", "accept_trade", "take_back", "seize",
+           "attack", "admit", "stop_fighting", "forgive")  # Moves that carry something out.
+
+
 def replies(state: dict, npc: dict) -> dict[str, dict]:
     """Every reply code can carry out for this person now: {key: {act, target, description}}."""
     name, me, my_mind = npc["name"], minds.card(npc), minds.mind(npc)
@@ -282,15 +295,23 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
     if crime is not None and me.get("guard") and here <= REACH_TAKE and state["player"].get("alive", True):
         options["seize"] = option("seize", f"{name} arrests the stranger: anything stolen goes back, and the stranger is "
                                            f"marched off down the south road and kept from the gate for a while.")
-    if crime is not None and state["player"].get("alive", True) and (me.get("guard") or me.get("weapon")):
+    if crime is not None and state["player"].get("alive", True) and (me.get("guard") or me.get("weapon")) \
+            and npc["id"] not in ((state.get("fight") or {}).get("attackers") or []):
         deadly = minds.knows_a_crime(npc)
         options["attack"] = option("attack", f"{name} attacks the stranger " + (
             f"to kill, with their {me.get('weapon') or 'fists'}." if deadly else
             f"to beat them into submission{' and arrest them' if me.get('guard') else ''}, not to kill."))
     captain = minds.find(state["npcs"], CAPTAIN)
-    if npc["id"] != CAPTAIN and captain and captain.get("alive", True) and trust >= VOUCH_TRUST \
-            and not my_mind.get("vouched"):
-        options["vouch"] = option("vouch", f"{name} offers to go to Captain Roderic now and speak for the stranger.")
+    fighting = npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
+    if npc["id"] != CAPTAIN and captain and captain.get("alive", True) and not my_mind.get("vouched") \
+            and not fighting and (trust >= VOUCH_TRUST or helped_by_stranger(npc)):
+        options["vouch"] = option("vouch", f"{name} goes to Captain Roderic now and speaks for the stranger.")
+    if not fighting and not npc.get("down"):
+        options["go_tell"] = option("go_tell", f"{name} goes off now to find someone in town and tell them something "
+                                               f"(who: errand_to; what: errand_message). Choose this whenever {name} "
+                                               f"says they'll go and tell or ask someone.")
+    if fighting:
+        options["stop_fighting"] = option("stop_fighting", f"{name} stops attacking the stranger and backs off.")
     if can_admit(state, npc):
         options["admit"] = option("admit", f"{name} admits the stranger into the city and orders the gate opened "
                                            f"for them." if npc["id"] == CAPTAIN else
@@ -528,8 +549,13 @@ def scene_context(state: dict, addressed: dict | None, participants: list[dict],
                                          else "taking part")
         people.append(person)
     so_far = [e["text"] for e in encounter.get("log", [])[-12:] if e.get("kind") in ("say", "reply", "arrive", "do")]
+    attackers = [n["name"] for i in ((state.get("fight") or {}).get("attackers") or [])
+                 if (n := minds.find(state["npcs"], i))]
     return {"stranger_says": clean(text) if text.strip() else "(nothing)", "what_just_happened": happened or "",
-            "conversation_so_far": so_far, "people": people}
+            "conversation_so_far": so_far,
+            "fight_now": (f"{', '.join(attackers)} {'is' if len(attackers) == 1 else 'are'} attacking the stranger "
+                          f"right now." if attackers else "No one is fighting."),
+            "people": people}
 
 
 def fallback_line(state: dict, npc: dict, key: str) -> str:
@@ -616,8 +642,20 @@ def _remember_exchange(npc: dict, text: str, happened: str | None, line: str, no
         memory["claims"] = (memory["claims"] + [{"text": clean(text)[:160], "at": now}])[-6:]
 
 
+def errand(state: dict, npc: dict, to: str, message: str) -> tuple[dict, str] | None:
+    """A go-and-tell errand the voice described, if it names a real person (by id or name) and says something."""
+    words = " ".join((message or "").split())[:240]
+    other = minds.find(state["npcs"], to or "") or next(
+        (n for n in state["npcs"] if (to or "").strip().lower() in (n["name"].lower(), n["name"].split()[0].lower())),
+        None)
+    if other is None or other["id"] == npc["id"] or not other.get("alive", True) or not words:
+        return None
+    return other, words
+
+
 def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line: str,
-             walk: list[list[int]], happened: str | None = None, note: str = "", name_given: str = "") -> dict:
+             walk: list[list[int]], happened: str | None = None, note: str = "", name_given: str = "",
+             errand_to: str = "", errand_message: str = "") -> dict:
     """Commit one exchange on a draft world. Returns the talk fields of the event payload."""
     now, event_id = state["sim_time_ms"], state["event_seq"] + 1
     if walk:
@@ -627,6 +665,10 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     options = replies(state, npc)
     key = key if key in options else "answer"
     act, target = options[key]["act"], options[key]["target"]
+    task = errand(state, npc, errand_to, errand_message) if act == "go_tell" else None
+    if act == "go_tell" and task is None:
+        key, act, target = "answer", "answer", None  # An errand to nobody, or with nothing to say.
+    fighting = npc_id in ((state.get("fight") or {}).get("attackers") or [])
     my_mind["met"] = True
     change = _update_regard(npc, answers)
     if "anger" in answers:
@@ -712,6 +754,19 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     if reward_job and npc_id != CAPTAIN:
         my_mind["vouched"] = True
         speak_for(state, npc, reward_job[0], reward_job[1], event_id, now)
+    elif act == "go_tell":
+        other, words = task
+        minds._set_job(npc, {"kind": "tell", "target": other["id"], "speed": "walk", "message": words,
+                             "event": event_id}, now)
+        learned.append({"npc_id": npc_id, "name": name, "said": line, "errand": other["id"], "event_id": event_id,
+                        "lead": f"{name} went to tell {other['name']}: {words}"})
+    elif act == "stop_fighting":
+        import combat
+        combat.withdraw(state, npc_id, now)
+    elif act == "forgive" and fighting:
+        import combat
+        minds.settle(state, f"forgiven by {name}", kinds=("theft", "violence", "trouble"), npc_ids={npc_id})
+        combat.withdraw(state, npc_id, now)
     elif act == "forgive":
         minds.settle(state, f"forgiven by {name}", kinds=("theft", "violence", "trouble"), npc_ids={npc_id})
         minds._set_job(npc, {"kind": "watch", "until": now + TALK_WATCH_MS}, now)
@@ -721,8 +776,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         thing.update(holder_id=npc_id)  # The owner has it back; a guard holds it for them.
         lent.append({"id": target, "holder_id": npc_id, "owner_id": thing["owner_id"]})
         minds._set_job(npc, {"kind": "watch", "until": now + TALK_WATCH_MS}, now)
-    elif act in ("seize", "attack"):
-        pass  # The round carries these out (an arrest, or a fight): rounds.py.
+    elif act in ("seize", "attack") or fighting:
+        pass  # The round carries these out (an arrest, or a fight): rounds.py. An attacker fights on.
     elif act == "call_guard":
         minds.remember(npc, {"kind": "trouble", "severity": 1, "victim": npc_id, "item": None, "event": event_id,
                              "clarity": "clear", "source": "victim", "at": now,

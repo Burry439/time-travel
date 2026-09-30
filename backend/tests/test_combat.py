@@ -1,4 +1,4 @@
-"""Real-time fights (GDD D-41, D-49): no rounds, no dice. Blows land if you're still in reach when the wind-up
+﻿"""Real-time fights (GDD D-41, D-49): no rounds, no dice. Blows land if you're still in reach when the wind-up
 ends; what they do is the weapon against the armour (gear.json); code keeps the armour law over the judge."""
 import copy
 
@@ -269,7 +269,10 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
 
 def test_space_is_a_blow_on_the_clock_that_replays(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
-    assert post(world, state, "strike", {}, status=409)["detail"]["reason"] == "no_target"  # Nobody within reach.
+    air = post(world, state, "strike", {"facing": [1.0, 0.0]})  # Nobody within reach: a swing at thin air (D-51).
+    assert air["strike"]["ok"] and air["state"]["player"]["swings"]["right"]["target"] is None
+    state = post(world, air["state"], "explore", {"elapsed_ms": 1000})["state"]
+    assert not state["player"].get("swings") and not state.get("fight")
     while (state["player"]["x"], state["player"]["y"]) != (35, 52):  # Beside Hessa at the inn.
         px, py = state["player"]["x"], state["player"]["y"]
         state = post(world, state, "move", {"x": px + (35 > px) - (35 < px), "y": py + (52 > py) - (52 < py)})["state"]
@@ -279,6 +282,35 @@ def test_space_is_a_blow_on_the_clock_that_replays(world):
     hessa = next(n for n in state["npcs"] if n["id"] == "npc_hessa_marr")
     assert hessa["health"] < 100 and not state["player"].get("swings")
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
+
+
+def test_a_swing_at_nobody_lands_on_whoever_is_in_front():
+    """D-51: there's no fighting mode and no target needed. The blow goes where the stranger faces, and hits
+    whoever is there within reach when it lands; someone behind them is safe."""
+    state = open_ground(unit_state(), "npc_hessa_marr")
+    here, hessa = minds.player_cell(state), npc(state, "npc_hessa_marr")
+    facing = [hessa["x"] - here[0], hessa["y"] - here[1]]
+    assert combat.strike(state, "right", None, state["sim_time_ms"], facing)["ok"]
+    combat.tick(state, state["npcs"], 1000, state["sim_time_ms"], set(), state["journal"])
+    assert npc(state, "npc_hessa_marr")["health"] < 100
+    behind = open_ground(unit_state(), "npc_hessa_marr")
+    assert combat.strike(behind, "right", None, behind["sim_time_ms"], [-facing[0], -facing[1]])["ok"]
+    combat.tick(behind, behind["npcs"], 1000, behind["sim_time_ms"], set(), behind["journal"])
+    assert npc(behind, "npc_hessa_marr").get("health", 100) == 100 and not behind["journal"]
+
+
+def test_talking_mid_fight_and_being_talked_down():
+    """D-51: a fight is only some people attacking. The stranger can still speak (it's a short round, and the
+    fight runs on); an attacker can be talked down, and stops; the others fight on."""
+    import talk
+    state = open_ground(unit_state(), "npc_hessa_marr")
+    combat.start(state, ["npc_hessa_marr"], state["sim_time_ms"], "developer")
+    hessa = npc(state, "npc_hessa_marr")
+    options = talk.replies(state, hessa)
+    assert "stop_fighting" in options and "attack" not in options and "go_tell" not in options
+    talk.exchange(state, "npc_hessa_marr", "Please, I'm sorry, I'll put it right!", {}, "stop_fighting",
+                  "Fine. Enough.", [])
+    assert not state.get("fight") and hessa["mind"]["job"]["kind"] == "watch"
 
 
 def test_space_outside_a_fight_is_an_assault_like_any_other():

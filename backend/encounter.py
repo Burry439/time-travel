@@ -28,6 +28,7 @@ import minds
 import talk
 
 ROUND_MS = 5_000
+FIGHT_WORDS_MS = 2_000  # Words shouted mid-fight take a moment, not a whole round (D-51).
 BARRED_MS = 600_000  # How long the guards keep an arrested stranger away from the gate.
 SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LEAVE_MS = 1_000  # Walking away takes a moment.
@@ -63,12 +64,13 @@ def hostile(state: dict) -> bool:
 
 def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dict:
     """Open an encounter with this person, or bring them into the current one. An attack is a fight, not an
-    encounter; and while a fight is on, nobody stops to talk. A guard coming to halt a stranger who is already
-    in a conversation joins it instead (D-48): the stranger is plainly being dealt with."""
+    encounter. While a fight is on the stranger can still speak to anyone (D-51), but nobody walks up to start a
+    conversation of their own. A guard coming to halt a stranger who is already in a conversation joins it
+    instead (D-48): the stranger is plainly being dealt with."""
     if reason == "attack":
         combat.start(state, [npc["id"]], now, "attack")
         return active(state)
-    if combat.active(state):
+    if combat.active(state) and reason not in ("talk", "joined"):
         minds._set_job(npc, {"kind": "watch", "until": now + 15_000}, now)
         return active(state)
     encounter = active(state)
@@ -88,7 +90,7 @@ def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dic
     elif reason in HOSTILE_PURPOSES:
         encounter.setdefault("purpose", {})[npc["id"]] = reason  # Came back about something serious.
     encounter["reason"] = _reason(encounter)
-    if reason != "talk":
+    if reason != "talk" and not combat.fighting(state, npc):  # An attacker keeps attacking while they talk.
         minds._set_job(npc, {"kind": "encounter"}, now)
     # Face to face, people act in the scene: they don't also stop to think about what they saw.
     state["pending_minds"] = [p for p in state.get("pending_minds", [])
@@ -161,6 +163,7 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
     encounter = draft["encounter"]
     kind, text = action["kind"], action.get("text", "")
     record = {"round": encounter["round"], "entries": [], "effort_seconds": 0, "entry": None, "replier": None,
+              "fighting": bool(combat.active(draft)),
               "happened": [], "walked_away": False, "verdict": None, "seized_by": None,
               "cues_before": {n["id"]: ((n.get("mind") or {}).get("cue") or {}).get("key") for n in draft["npcs"]}}
 
@@ -207,8 +210,7 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
     # Who is addressed: the person named, else whoever opened the conversation, else the first there.
     target = action.get("target_id") if action.get("target_id") in encounter["participants"] else next(
         (n for n in [encounter["opened_by"]] + encounter["participants"] if n in encounter["participants"]), None)
-    if target and draft["player"].get("alive", True) and not record["walked_away"] and not combat.active(draft) \
-            and not record["seized_by"]:
+    if target and draft["player"].get("alive", True) and not record["walked_away"] and not record["seized_by"]:
         record["replier"] = target
     return draft, record
 
@@ -270,8 +272,9 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
     encounter["round"] += 1
     encounter["reason"] = _reason(encounter)
     for npc_id in encounter["participants"]:
-        if purpose(encounter, npc_id) != "talk":  # Stay face to face (a reply may have set a watch).
-            minds._set_job(minds.find(draft["npcs"], npc_id), {"kind": "encounter"}, now)
+        npc = minds.find(draft["npcs"], npc_id)
+        if purpose(encounter, npc_id) != "talk" and not combat.fighting(draft, npc):  # Stay face to face.
+            minds._set_job(npc, {"kind": "encounter"}, now)
 
 
 def arrest_player(state: dict, guard: dict, now: int) -> str:
@@ -315,4 +318,6 @@ def round_ms(record: dict) -> int:
         return LEAVE_MS
     if record["walked_away"]:
         return LEAVE_MS
+    if record.get("fighting"):
+        return max(FIGHT_WORDS_MS, record["effort_seconds"] * 1000)
     return max(ROUND_MS, record["effort_seconds"] * 1000)
