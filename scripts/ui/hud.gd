@@ -24,6 +24,8 @@ var tip_title: Label
 var tip_note: Label
 var hint_card: PanelContainer
 var drag_icon: TextureRect
+var prompt: PanelContainer # "[E] Pick up the flint shard" over whatever E would act on (D-55).
+var prompt_text: RichTextLabel
 var press_id := ""
 var press_at := Vector2.ZERO
 var dragging := ""
@@ -153,6 +155,22 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	drag_icon.hide()
 	add_child(drag_icon)
 
+	prompt = PanelContainer.new()
+	prompt.add_theme_stylebox_override("panel", UITheme.flat(Color(0.13, 0.08, 0.04, 0.82), Color(UITheme.GOLD, 0.7), 1, 6))
+	prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prompt_text = RichTextLabel.new()
+	prompt_text.bbcode_enabled = true
+	prompt_text.fit_content = true
+	prompt_text.autowrap_mode = TextServer.AUTOWRAP_OFF
+	prompt_text.scroll_active = false
+	prompt_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prompt_text.add_theme_font_size_override("normal_font_size", 15)
+	prompt_text.add_theme_font_size_override("bold_font_size", 15)
+	prompt_text.add_theme_color_override("default_color", UITheme.CREAM)
+	prompt.add_child(prompt_text)
+	prompt.hide()
+	add_child(prompt)
+
 
 ## Panels the stranger walks behind fade so they never hide him (a safety net for the map's edges).
 func _process(delta: float) -> void:
@@ -164,6 +182,31 @@ func _process(delta: float) -> void:
 	for panel in [inventory, objective, corner]:
 		var over: bool = Rect2(panel.position, panel.size).intersects(body)
 		panel.modulate.a = move_toward(panel.modulate.a, 0.3 if over else 1.0, delta * 4.0)
+	_update_prompt()
+
+
+## What E would do right now, over the thing or person it would act on (hidden while a panel or the bar is up).
+func _update_prompt() -> void:
+	var id: String = game.nearby_target
+	if id.is_empty() or ui.blocks_movement() or not game.gameplay_active or game.request_busy:
+		prompt.hide()
+		return
+	var hover: Dictionary = ui.cursor.describe(id)
+	if hover.is_empty() or not hover.get("reachable", false) or str(hover.get("verb", "")).is_empty():
+		prompt.hide()
+		return
+	var at: Vector2 = hover.get("at", Vector2.ZERO)
+	var person := str(hover.get("kind", "")) == "person"
+	var actor := game.get_node_or_null("NPCs/" + id) as Node2D
+	if actor:
+		at = actor.position
+	var screen: Vector2 = game.get_viewport().get_canvas_transform() * (at + Vector2(0, -150 if person else -46))
+	var steal := str(hover.get("tone", "")) == "steal"
+	prompt_text.text = "[b][color=#%s][ E ][/color][/b]  [color=#%s]%s[/color]" % [UITheme.GOLD.to_html(false),
+		(Color("f0a58c") if steal else UITheme.CREAM).to_html(false), str(hover.verb)]
+	prompt.reset_size()
+	prompt.position = screen / ui.ui_scale - Vector2(prompt.size.x * 0.5, prompt.size.y)
+	prompt.show()
 
 
 func _wood_label(text: String, font_size: int, colour := UITheme.CREAM) -> Label:

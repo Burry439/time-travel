@@ -106,4 +106,4 @@ func _recipe(recipe: Dictionary) -> void:
 	page.add_child(row)
 	row.add_child(ui.button("Type it for me", func() -> void:
 		ui.close_modal_now()
-		ui.bar.open("", str(recipe.say))))
+		ui.bar.open("", str(recipe.say), {}, "do")))

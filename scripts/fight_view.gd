@@ -60,8 +60,12 @@ func shield_hand() -> String:
 func strike(hand: String, throw := false) -> void:
 	if busy or not game.gameplay_active or game.sync_error or game.run_state.get("player", {}).get("down", false):
 		return
+	var held := in_hand(game.run_state.player, hand)
+	if held.get("readable") != null and not throw: # A book in that hand: Space (or F) reads it (D-55).
+		game.ui.open_book(held)
+		return
 	busy = true
-	var obj := in_hand(game.run_state.player, hand)
+	var obj := held
 	var spec := weapon_spec(obj)
 	var target := _aim(float(spec.get("range", spec.get("reach", 1.5))) if not throw else 8.0)
 	var ahead: Vector2 = facing_vector()

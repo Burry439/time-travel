@@ -589,6 +589,8 @@ func open_inventory() -> void:
 		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(words)
 		var id := str(obj.id)
+		if obj.get("readable") != null: # A book in hand: read it (D-55).
+			row.add_child(button("Read", open_book.bind(obj), "Chip"))
 		row.add_child(button("Take off" if slot in BODY_SLOTS else "Put away", func() -> void:
 			var result: Dictionary = await game.fight.equip(id, "")
 			if not result.get("ok", false):
@@ -610,6 +612,8 @@ func open_inventory() -> void:
 		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(words)
 		var id := str(obj.id)
+		if obj.get("readable") != null:
+			row.add_child(button("Read", open_book.bind(obj), "Chip"))
 		for slot in _slots_for(obj):
 			var chosen := str(slot)
 			var verb := "Wear" if chosen in BODY_SLOTS else "Ready" if chosen == "ammo" else "Right hand" if chosen == "right" else "Left hand"
@@ -617,6 +621,9 @@ func open_inventory() -> void:
 				var result: Dictionary = await game.fight.equip(id, chosen)
 				if not result.get("ok", false):
 					notify(str(result.get("reason", "")))
+				elif obj.get("readable") != null and chosen in ["right", "left"]:
+					open_book(game.run_state.objects.get(id, obj)) # A book taken in hand opens (D-55).
+					return
 				open_inventory(), "Chip"))
 		row.add_child(button("Use…", func() -> void:
 			close_modal()
@@ -778,7 +785,7 @@ func drop_on_world(item_id: String) -> void:
 
 ## Fill the dialogue bar's line for the player to check and send (Enter).
 func _write_line(text: String, person: String, refs: Array) -> void:
-	bar.open(person)
+	bar.open(person, "", {}, "do") # Dragging something onto someone or something is a deed.
 	for id in refs:
 		if str(id) not in bar.selected:
 			bar.selected.append(str(id))

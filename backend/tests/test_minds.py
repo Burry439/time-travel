@@ -92,7 +92,9 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     state["player"].update(x=40, y=40)
     place(state, "npc_tomas_reed", 41, 40)
     place(state, "npc_jory_venn", 45, 41)
-    bren = place(state, "npc_bren_marr", 52, 36)
+    bren = place(state, "npc_bren_marr", 63, 36)  # Out of sight (D-55: sight is 20 cells): he only hears of it.
+    place(state, "npc_elin_west", 90, 12)  # The patrols far off, so Bren is the nearest guard to run to.
+    place(state, "npc_kade_east", 92, 14)
     minds.apply_perceptions(state, minds.perceive(state, killing("npc_tomas_reed")))
     jory = npc(state, "npc_jory_venn")
     journal = []
@@ -253,7 +255,7 @@ def test_close_witnesses_see_clearly_and_distant_ones_see_a_scuffle():
     state["player"].update(x=40, y=40)
     place(state, "npc_tomas_reed", 41, 40)
     place(state, "npc_jory_venn", 44, 40)   # 3-4 cells: sees it all.
-    place(state, "npc_darin_ko", 49, 40)    # 8-9 cells: only a scuffle.
+    place(state, "npc_darin_ko", 53, 40)    # 12-13 cells: only a scuffle (D-55: clear sight to 10).
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
     memories = {p["npc_id"]: p["memory"] for p in minds.perceive(state, wounding)}
@@ -268,6 +270,8 @@ def test_everyone_deciding_shares_one_request():
     place(state, "npc_tomas_reed", 41, 40)
     place(state, "npc_jory_venn", 44, 40)
     place(state, "npc_darin_ko", 43, 42)
+    place(state, "npc_elin_west", 80, 20)  # The patrols far off (D-55: sight is 20 cells).
+    place(state, "npc_kade_east", 80, 24)
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
     minds.apply_perceptions(state, minds.perceive(state, wounding))

@@ -59,6 +59,22 @@ def obvious(text: str, talking: bool = False) -> str | None:
     return "do" if first in ACTION_VERBS and not SPEECH.search(t) else None
 
 
+QUOTED = re.compile(r"[\"“”]")
+
+
+def explicit(text: str, mode: str) -> str:
+    """The player chose Say or Do in the dialogue bar (D-55): no guessing. Giving up, walking away and waiting are
+    still themselves in either mode; a Do line with words in quotes is a deed with speech ("both")."""
+    t = " ".join(text.strip().lower().split())
+    core = LEAD_IN.sub("", t)
+    for kind, pattern in (("yield", YIELD), ("leave", LEAVE), ("wait", WAIT)):
+        if pattern.match(t) or pattern.match(core):
+            return kind
+    if mode == "say":
+        return "say"
+    return "both" if QUOTED.search(text) else "do"
+
+
 def unquote(text: str) -> str:
     """Words typed in quotes are just the words: “Good day.” is said as Good day."""
     t = text.strip()

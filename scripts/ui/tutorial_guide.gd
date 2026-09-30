@@ -318,7 +318,7 @@ func _show_page() -> void:
 	var offer := last and kind in ["card", "help"] and not suggest.is_empty()
 	suggest_box.visible = offer
 	if offer:
-		suggest_words.text = "“%s”" % str(suggest.text)
+		suggest_words.text = "%s  “%s”" % ["DO:" if str(suggest.get("mode", "say")) == "do" else "SAY:", str(suggest.text)]
 		type_button.visible = bool(suggest.get("button", false))
 	back_button.visible = page > 0
 	ask_button.visible = last and kind == "help"
@@ -383,7 +383,7 @@ func _type_it() -> void:
 	var suggest: Dictionary = steps[step].get("suggest", {})
 	await _finish()
 	var person := str(suggest.get("to", "")) if suggest.get("to") != null else ""
-	ui.bar.open(person, str(suggest.get("text", "")))
+	ui.bar.open(person, str(suggest.get("text", "")), {}, str(suggest.get("mode", "say" if not person.is_empty() else "do")))
 	ui.bar.line.caret_column = ui.bar.line.text.length()
 
 

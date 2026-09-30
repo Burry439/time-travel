@@ -69,3 +69,17 @@ def test_mid_conversation_only_a_first_person_deed_is_obvious():
     assert intent.obvious("float it on water and it turns north", talking=True) is None
     assert intent.obvious("I float the needle on the leaf", talking=True) == "do"
     assert intent.obvious("I give up", talking=True) == "yield"
+
+
+def test_the_players_say_or_do_is_final_and_needs_no_model(world, monkeypatch):
+    """D-55: the bar's Say/Do toggle. No guessing and no model call; giving up, walking away and waiting are still
+    themselves, and a Do line with words in quotes is a deed with speech."""
+    assert intent.explicit("float it on water and it turns north", "say") == "say"
+    assert intent.explicit("float it on water", "do") == "do"
+    assert intent.explicit('hand him the plank and say "it\'s a gift"', "do") == "both"
+    assert intent.explicit("I give up", "say") == "yield" and intent.explicit("walk away", "do") == "leave"
+    monkeypatch.setattr(intent.decider, "decide", lambda *a, **k: (_ for _ in ()).throw(AssertionError("asked")))
+    state = world.http.post("/runs", json={"mode": "developer"}).json()
+    world.rulings.append(attempt(judged("take", take_ids=["branch_a"])))
+    body = post(world, state, "act", {"text": "pick up the fallen branch", "mode": "do"})
+    assert body["intent"] == {"kind": "do", "how": "player"}

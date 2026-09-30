@@ -1,19 +1,15 @@
 extends PanelContainer
-## The dialogue bar (GDD D-34, D-35): one panel along the bottom and one text line for everything.
-## You type what you say or do; the backend (/act) works out whether it is speech, a deed, both,
-## waiting, giving up or walking away. Face to face, rounds play back here line by line; alone, your
-## attempts and their results appear in the same log. Esc (or ×) walks away or closes it.
+## The dialogue bar (GDD D-34, D-35, D-55): one panel along the bottom and one text line for everything.
+## A Say / Do switch beside the line (Tab flips it) says which it is: words spoken aloud, or something you do
+## (words in "quotes" inside a Do line are said as you do it). No guessing: the backend takes it as given.
+## Face to face, rounds play back here line by line; alone, your attempts and their results appear in the
+## same log. Esc (or ×) walks away or closes it.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const PaintedActor := preload("res://scripts/painted_actor.gd")
 const HEIGHT := 272.0
-const EXAMPLES := [
-	"Type anything: “Good day, is this your inn?”",
-	"Or do something: “show Hessa the gourd”, “lever the beam up”",
-	"Words and deeds together: “hand him the plank and say it's a gift”",
-	"“I wait”, “I give up”, or Esc to walk away",
-	"Click things in the world or on the right to point at them",
-]
+const SAY_COLOUR := Color("2c5a63") # Speech: a cool slate blue.
+const DO_COLOUR := Color("8a4b12") # Deeds: warm amber-brown.
 const WORK_STAGES := ["You look over what you have", "You set to work", "You work at it",
 	"You test what you've done", "Still at it"]
 
@@ -30,6 +26,8 @@ var last_text := ""
 var last_intent: Dictionary = {}
 var wait_clock := 0.0
 var hint_clock := 0.0
+var mode := "say" # "say" or "do" (D-55).
+var mode_chosen := false # The player picked it themselves this time the bar was open.
 
 var portrait: TextureRect
 var who: Label
@@ -43,6 +41,8 @@ var chip_box: HFlowContainer
 var line: LineEdit
 var hint: Label
 var pending: Control
+var say_button: Button
+var do_button: Button
 
 
 func build(owner_ui: Control, owner_game: Node2D) -> void:
@@ -111,15 +111,25 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	log_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	log_box.add_theme_constant_override("separation", 5)
 	scroll.add_child(log_box)
+	var entry := HBoxContainer.new()
+	entry.add_theme_constant_override("separation", 6)
+	middle.add_child(entry)
+	say_button = _mode_button("SAY", "say", "Words spoken aloud (Tab switches)")
+	entry.add_child(say_button)
+	do_button = _mode_button("DO", "do", "Something you do (Tab switches). Put words in “quotes” to say them as you do it.")
+	entry.add_child(do_button)
 	line = LineEdit.new()
 	line.max_length = 500
-	line.placeholder_text = "What do you say or do?"
-	line.custom_minimum_size.y = 38
+	line.placeholder_text = "What do you say?"
+	line.custom_minimum_size.y = 40
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_theme_font_size_override("font_size", 18)
 	if "keep_editing_on_text_submit" in line:
 		line.set("keep_editing_on_text_submit", true)
 	line.text_submitted.connect(func(_text: String) -> void: submit())
+	line.text_changed.connect(func(_text: String) -> void: _show_preview())
 	line.gui_input.connect(_on_line_key)
-	middle.add_child(line)
+	entry.add_child(line)
 	hint = Label.new()
 	hint.theme_type_variation = "Small"
 	hint.clip_text = true
@@ -131,7 +141,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	row.add_child(right)
 	var caption := Label.new()
 	caption.theme_type_variation = "Caption"
-	caption.text = "POINT AT SOMETHING"
+	caption.text = "CLICK TO MENTION"
 	right.add_child(caption)
 	var chip_scroll := ScrollContainer.new()
 	chip_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -142,7 +152,64 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	chip_box.add_theme_constant_override("h_separation", 4)
 	chip_box.add_theme_constant_override("v_separation", 4)
 	chip_scroll.add_child(chip_box)
+	set_mode("say")
 	hide()
+
+
+func _mode_button(text: String, value: String, tip: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.tooltip_text = tip
+	button.focus_mode = Control.FOCUS_NONE
+	button.custom_minimum_size = Vector2(64, 40)
+	button.add_theme_font_override("font", UITheme.serif(true))
+	button.add_theme_font_size_override("font_size", 16)
+	button.pressed.connect(func() -> void:
+		set_mode(value, true)
+		_focus_line())
+	return button
+
+
+## Say or Do (D-55): the switch, the line's colour, the placeholder and the preview all follow it.
+func set_mode(value: String, chosen := false) -> void:
+	mode = "do" if value == "do" else "say"
+	mode_chosen = mode_chosen or chosen
+	for pair in [[say_button, "say", SAY_COLOUR], [do_button, "do", DO_COLOUR]]:
+		var button: Button = pair[0]
+		var on: bool = mode == pair[1]
+		var colour: Color = pair[2]
+		var fill := UITheme.flat(colour if on else Color(colour, 0.08), colour, 2, 6)
+		for state_name in ["normal", "hover", "pressed", "focus"]:
+			button.add_theme_stylebox_override(state_name, fill)
+		for font_state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			button.add_theme_color_override(font_state, UITheme.CREAM if on else colour)
+	line.add_theme_color_override("font_color", SAY_COLOUR if mode == "say" else DO_COLOUR)
+	line.add_theme_color_override("caret_color", SAY_COLOUR if mode == "say" else DO_COLOUR)
+	line.placeholder_text = _placeholder()
+	_show_preview()
+
+
+## The mode that fits who you're facing, unless you picked one yourself.
+func _default_mode() -> void:
+	if not mode_chosen:
+		set_mode("say" if _is_person(target) or face_to_face() else "do")
+
+
+## Under the line: exactly how it will be taken, or what this mode is for.
+func _show_preview() -> void:
+	if hint == null or waiting or round_playing or encounter_over:
+		return
+	var text := line.text.strip_edges()
+	var colour: Color = SAY_COLOUR if mode == "say" else DO_COLOUR
+	hint.add_theme_color_override("font_color", colour)
+	var listener := str(ui.npc_record(target).get("name", "")) if _is_person(target) else ""
+	if text.is_empty():
+		hint.text = ("Words you say aloud%s.  Tab: do something instead." % (" to " + listener if listener else "")) \
+			if mode == "say" else "Something you do with your hands.  Put words in “quotes” to say them too.  Tab: say something instead."
+	elif mode == "say":
+		hint.text = "You'll say%s: “%s”" % [(" to " + listener) if listener else "", text.trim_prefix("\"").trim_suffix("\"")]
+	else:
+		hint.text = "You'll do: %s" % text
 
 
 func _process(delta: float) -> void:
@@ -161,12 +228,11 @@ func _process(delta: float) -> void:
 			hint.text = "%s%s  (%d s)" % [WORK_STAGES[mini(4, int(wait_clock / 2.5))], dots, int(wait_clock)]
 		hint.add_theme_color_override("font_color", UITheme.ACCENT)
 	elif encounter_over:
-		hint.text = "It's over. Esc to close, or type to carry on."
-	elif not round_playing:
 		hint.remove_theme_color_override("font_color")
-		var hostile := str(_encounter().get("reason", "talk")) != "talk"
-		hint.text = "Everyone acts at the same moment. “I give up” surrenders; Esc walks away." if hostile \
-			else EXAMPLES[int(hint_clock / 7.0) % EXAMPLES.size()]
+		hint.text = "It's over. Esc to close, or type to carry on."
+	elif not round_playing and str(_encounter().get("reason", "talk")) != "talk" and line.text.is_empty():
+		hint.add_theme_color_override("font_color", UITheme.BAD)
+		hint.text = "You're being dealt with: everyone acts at the same moment. Say “I give up” to surrender; Esc walks away."
 
 
 func _encounter() -> Dictionary:
@@ -188,10 +254,12 @@ func showing_encounter() -> bool:
 
 
 ## Open the bar: addressing a person, pointing at a thing, or (no id) just you.
-func open(id := "", prefill := "", playing: Dictionary = {}) -> void:
+func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") -> void:
 	if game.run_state.is_empty() or not game.gameplay_active:
 		return
 	var first_open := not visible
+	if first_open:
+		mode_chosen = false
 	var current := _encounter()
 	if not current.is_empty():
 		encounter_view = current
@@ -228,6 +296,8 @@ func open(id := "", prefill := "", playing: Dictionary = {}) -> void:
 	if not prefill.is_empty():
 		line.text = prefill
 		line.caret_column = prefill.length()
+	if with_mode in ["say", "do"]:
+		set_mode(with_mode, true)
 	render(playing)
 	if playing.get("entries", []).is_empty():
 		_focus_line.call_deferred()
@@ -265,6 +335,9 @@ func _on_line_key(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		line.accept_event()
 		escape()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB:
+		line.accept_event() # Tab flips Say / Do instead of moving focus (D-55).
+		set_mode("do" if mode == "say" else "say", true)
 
 
 func submit() -> void:
@@ -280,7 +353,7 @@ func submit() -> void:
 	var pointed := selected.duplicate()
 	if not target.is_empty() and not _is_person(target) and target not in pointed:
 		pointed.append(target)
-	game.act(text, addressed, pointed)
+	game.act(text, addressed, pointed, mode)
 
 
 ## While the world works out what happens: your line shows at once, the rest waits.
@@ -290,7 +363,8 @@ func wait(text: String) -> void:
 	line.editable = false
 	if is_instance_valid(pending):
 		pending.queue_free()
-	pending = _line("[color=#%s]You: %s[/color]" % [UITheme.INK_SOFT.to_html(false), esc(text)])
+	pending = _line(("[color=#%s]You say: “%s”[/color]" if mode == "say" else "[color=#%s][i]You: %s[/i][/color]")
+		% [(SAY_COLOUR if mode == "say" else DO_COLOUR).to_html(false), esc(text.trim_prefix("\"").trim_suffix("\""))])
 	log_box.add_child(pending)
 	_scroll_to_end.call_deferred()
 
@@ -394,7 +468,9 @@ func render(playing: Dictionary = {}) -> void:
 	else:
 		_render_alone()
 	close_button.text = "✕  Walk away" if showing_encounter() and not _encounter().is_empty() else "✕  Close"
+	_default_mode()
 	line.placeholder_text = _placeholder()
+	_show_preview()
 	if not hidden.is_empty():
 		_play_lines(hidden)
 	else:
@@ -402,12 +478,12 @@ func render(playing: Dictionary = {}) -> void:
 
 
 func _placeholder() -> String:
-	if _is_person(target):
-		return "What do you say or do?  (to %s)" % ui.npc_record(target).name
 	var obj: Dictionary = game.run_state.get("objects", {}).get(target, {})
+	if mode == "say":
+		return ("Say something to %s…" % ui.npc_record(target).name) if _is_person(target) else "Say something…"
 	if not obj.is_empty():
-		return "What do you do with the %s?" % obj.name
-	return "What do you say or do?"
+		return "Do something with the %s…" % obj.name
+	return "Do something…  (e.g. show Hessa the gourd, lever the beam up)"
 
 
 func _render_header() -> void:
@@ -507,7 +583,7 @@ func _render_alone() -> void:
 		if their_mind.get("talk", []).is_empty():
 			log_box.add_child(_line("[i]%s looks you over.[/i]" % esc(str(npc.name))))
 	if own_log.is_empty() and not _is_person(target):
-		log_box.add_child(_line("[i]Type what you say or do, in your own words. Click people and things to point at them; drag things from your pack onto them.[/i]"))
+		log_box.add_child(_line("[i]Choose [b]SAY[/b] for words or [b]DO[/b] for actions (Tab switches), then type in your own words. Click people and things, here or in the world, to mention them; drag things from your pack onto them.[/i]"))
 	for item in own_log.slice(-8):
 		match str(item.kind):
 			"result":
@@ -541,8 +617,10 @@ func _render_encounter(playing: Dictionary) -> Array:
 			node = _line("[i][color=#%s](%s)[/color][/i]" % [UITheme.INK_SOFT.to_html(false), esc(str(entry.text))])
 		else:
 			var theirs := str(entry.get("who", "")) != "player"
-			node = _line(("[color=#%s]%s[/color]" % [UITheme.THEIRS.to_html(false), esc(str(entry.text))]) if theirs
-				else esc(str(entry.text)))
+			var colour: Color = UITheme.THEIRS if theirs else (DO_COLOUR if entry.get("kind") == "do" else SAY_COLOUR)
+			var words := esc(str(entry.text))
+			node = _line(("[color=#%s][i]%s[/i][/color]" if not theirs and entry.get("kind") == "do"
+				else "[color=#%s]%s[/color]") % [colour.to_html(false), words])
 		log_box.add_child(node)
 		if entry in fresh:
 			node.visible = false

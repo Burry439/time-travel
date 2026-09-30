@@ -134,6 +134,7 @@ func _run() -> void:
 	if not check(not opening.is_empty() and str(opening[0].text).contains("“"), "The halt line is not in the log"):
 		return
 	# A round where you act (the stub judge rules on it) while the guard, listening, answers what happened.
+	scene.ui.bar.set_mode("do", true) # A deed (D-55: the player says which).
 	scene.ui.bar.line.text = "hand the guard a stone"
 	scene.ui.bar.submit()
 	if not check(await settle() and scene.run_state.encounter.round == 2, "The Do round did not resolve"):

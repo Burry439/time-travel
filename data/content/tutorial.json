@@ -1,6 +1,6 @@
 {
  "version": 2,
- "notes": "The tutorial, 'The first morning' (GDD D-50, D-52): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}.",
+ "notes": "The tutorial, 'The first morning' (GDD D-50, D-52): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), mode (say or do, D-55), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}.",
  "device_name": "the device",
  "stuck_after_s": 60,
  "steps": [
@@ -178,13 +178,15 @@
    "id": "talk",
    "title": "Talking",
    "cards": [
-    "Talking is simple: {Left-click} a person, or press {T}, and type whatever you'd say. Anything at all. There are no lines to choose from, and people answer as themselves.",
-    "Try these words, or your own:"
+    "Talking is simple: {Left-click} a person, or press {T}. The box at the bottom opens.",
+    "Beside the line are two switches: SAY for words you speak, DO for things you do. {Tab} flips between them. Anything at all: there are no lines to choose from, and people answer as themselves.",
+    "Try these words, with SAY on, or your own:"
    ],
    "suggest": {
     "text": "Let me see your arm.",
     "to": "npc_jory_venn",
-    "button": true
+    "button": true,
+    "mode": "say"
    },
    "task": "Talk to Jory: click him, type, press Enter",
    "focus": {
@@ -205,13 +207,14 @@
    "title": "Something for the burn",
    "cards": [
     "That burn needs dressing, or it will fester within the hour. You know more about burns than anyone alive here.",
-    "To make something, press {T} and say what you do, in your own words. The world decides whether it works, and tells you why when it doesn't.",
+    "To make something, switch to DO ({Tab}) and describe what you do, in your own words. The world decides whether it works, and tells you why when it doesn't.",
     "Try this:"
    ],
    "suggest": {
     "text": "crush the plantain leaves into a poultice for a burn",
     "to": null,
-    "button": true
+    "button": true,
+    "mode": "do"
    },
    "task": "Make a poultice from the plantain leaves",
    "check": {
@@ -234,7 +237,8 @@
    "suggest": {
     "text": "lay the poultice on Jory's burn and bind it",
     "to": "npc_jory_venn",
-    "button": true
+    "button": true,
+    "mode": "do"
    },
    "task": "Put the poultice on Jory's burn",
    "focus": {
@@ -426,7 +430,8 @@
    "suggest": {
     "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
     "to": "npc_jory_venn",
-    "button": false
+    "button": false,
+    "mode": "do"
    },
    "task": "Show Jory something that works",
    "focus": {

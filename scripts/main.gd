@@ -1166,7 +1166,7 @@ func owner_name(obj: Dictionary) -> String:
 ## The one text line (GDD D-34): whatever the stranger typed goes to /act, which works out whether it is
 ## speech, a deed, both, waiting, giving up or walking away. Rounds play back in the dialogue bar;
 ## attempts outside a face-to-face walk, play out in the world, and land in the bar's log.
-func act(text: String, target: String, selected_ids: Array) -> void:
+func act(text: String, target: String, selected_ids: Array, mode := "") -> void:
 	if request_busy or not gameplay_active or sync_error:
 		return
 	request_busy = true
@@ -1181,6 +1181,8 @@ func act(text: String, target: String, selected_ids: Array) -> void:
 		"request_id": _request_id("act")}
 	if not target.is_empty():
 		body["target_id"] = target
+	if mode in ["say", "do"]: # The bar's Say / Do switch (D-55): the backend takes it as given.
+		body["mode"] = mode
 	var reply := await _api(HTTPClient.METHOD_POST, path, body, 150.0)
 	if not reply.ok and (int(reply.status) == 0 or int(reply.status) >= 500) and int(reply.status) != 503:
 		reply = await _api(HTTPClient.METHOD_POST, path, body, 150.0)

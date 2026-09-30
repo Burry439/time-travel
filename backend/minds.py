@@ -35,12 +35,12 @@ SUSPICION_BANDS = (0.4, 0.6, 0.8)
 GEOMETRY = json.loads((ROOT / "data" / "world_geometry.json").read_text(encoding="utf-8"))
 WALLS = {(cx, cy) for b in GEOMETRY["buildings"] for x, y, w, h in [b["cells"]]
          for cx in range(x, x + w) for cy in range(y, y + h)}  # Buildings block sight; trees do not.
-SIGHT_CELLS = 10.0
-CLEAR_VIEW_CELLS = 5.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle.
+SIGHT_CELLS = 20.0  # D-55: doubled (was 10).
+CLEAR_VIEW_CELLS = 10.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle (D-55: was 5).
 HEAR_SHOUT_CELLS = 30.0  # A shout for help carries across the open road.
 WARN_CELLS = 12.0
 WHISTLE_CELLS = 45.0
-AMBIENT_CELLS = 8.0  # Wary people turn to face the stranger within this range.
+AMBIENT_CELLS = 16.0  # Wary people turn to face the stranger within this range (D-55: was 8).
 MAX_RETHINKS = 2  # Automatic reconsiderations per person after their latest memory.
 MEMORY_LIMIT = 12
 RUN_STEP_MS = 170

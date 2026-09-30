@@ -75,6 +75,7 @@ class ActRequest(BaseModel):
     text: str = Field(min_length=1, max_length=600)
     target_id: str | None = Field(default=None, max_length=60)
     selected_ids: list[str] = Field(default_factory=list, max_length=12)
+    mode: Literal["say", "do"] | None = None  # The bar's Say/Do toggle (D-55); None: the game works it out.
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -93,8 +94,11 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     if target == "player":  # A conversation the stranger began: whoever they last addressed answers.
         target = None
     talking_with = [n["name"] for i in (current or {}).get("participants", []) if (n := minds.find(state["npcs"], i))]
-    kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id),
-                                      talking_with)
+    if request.mode:  # The player said which it is: no guessing, no model call (D-55).
+        kind, how, call = intent.explicit(request.text, request.mode), "player", None
+    else:
+        kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id),
+                                          talking_with)
     if call is not None:
         with store.lock, store.db() as connection:
             telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,

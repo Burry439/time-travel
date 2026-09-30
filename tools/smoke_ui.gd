@@ -128,6 +128,7 @@ func _run() -> void:
 	ui.bar.add_reference("cord_a")
 	if not check("the short cord" in ui.bar.line.text and "cord_a" in ui.bar.selected, "Pointing did not reference the cord"):
 		return
+	ui.bar.set_mode("do", true) # D-55: the player says which.
 	ui.bar.line.text = "tie the short cord around the fallen branch"
 	ui.bar.submit()
 	if not check(await settle() and ui.bar.own_log[-1].kind == "result" and ui.bar.last_intent.kind == "do",
@@ -135,6 +136,7 @@ func _run() -> void:
 		return
 	await screenshot("ui-result-inline")
 	# Speech with nobody near is answered honestly.
+	ui.bar.set_mode("say", true)
 	ui.bar.line.text = "“Hello? Is anyone there?”"
 	ui.bar.submit()
 	if not check(await settle() and ui.bar.own_log[-1].kind == "note" and "Nobody" in str(ui.bar.own_log[-1].text)
