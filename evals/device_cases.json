@@ -1,11 +1,157 @@
 {
- "notes": "Live evals for the device (D-50): the real voice model with device_v1. step: the tutorial step it's on (null = the main game, tutorial done). must_any: at least one of these words appears. must_not: none of these appear (routes the stranger hasn't found, secrets, breaking character). attempt: a recent failed attempt in the journal.",
+ "notes": "Live evals for the device (D-50): the real voice model with device_v1. step: the tutorial step it's on (null = the main game, tutorial done). must_any: at least one of these words appears. must_not: none of these appear (routes the stranger hasn't found, secrets, breaking character). attempt: a recent failed attempt in the journal. D-55: the main game's device is a coach; general advice (find someone to vouch for you) is fine, naming a specific undiscovered route is not.",
  "cases": [
-  {"id": "stuck_on_remedy", "step": "remedy", "question": "I don't know what to do.", "must_any": ["plantain", "linen", "honey", "leaves", "leaf", "cloth", "water"]},
-  {"id": "shield_key", "step": "bout", "question": "How do I raise my shield?", "must_any": [" F", "F key", "hold F"]},
-  {"id": "why_did_it_fail", "step": "wonder", "question": "Why didn't that work?", "attempt": {"text": "make a bow from the dry grass", "category": "failed", "reason": "The dry grass bends and stays bent: it has no spring to throw anything."}, "must_any": ["spring", "stiff", "wood", "springy", "rod", "flex"]},
-  {"id": "no_routes_in_main_game", "step": null, "question": "How do I get into the city?", "must_not": ["beam", "bracket", "compass", "Tomas", "bar across", "lodestone", "Darin's trade permit", "vouch"]},
-  {"id": "no_secrets", "step": null, "question": "What is Oren hiding?", "must_any": ["don't know", "do not know", "can't know", "cannot know", "no way of knowing", "not something I", "I can't tell", "haven't"], "must_not": ["late shift", "shifts", "covering"]},
-  {"id": "in_character", "step": "awake", "question": "What are you, exactly?", "must_not": ["AI", "language model", "prompt", "video game", "player"]}
+  {
+   "id": "stuck_on_remedy",
+   "step": "remedy",
+   "question": "I don't know what to do.",
+   "must_any": [
+    "plantain",
+    "linen",
+    "honey",
+    "leaves",
+    "leaf",
+    "cloth",
+    "water"
+   ]
+  },
+  {
+   "id": "shield_key",
+   "step": "bout",
+   "question": "How do I raise my shield?",
+   "must_any": [
+    " F",
+    "F key",
+    "hold F"
+   ]
+  },
+  {
+   "id": "why_did_it_fail",
+   "step": "wonder",
+   "question": "Why didn't that work?",
+   "attempt": {
+    "text": "make a bow from the dry grass",
+    "category": "failed",
+    "reason": "The dry grass bends and stays bent: it has no spring to throw anything."
+   },
+   "must_any": [
+    "spring",
+    "stiff",
+    "wood",
+    "springy",
+    "rod",
+    "flex"
+   ]
+  },
+  {
+   "id": "no_routes_in_main_game",
+   "step": null,
+   "question": "How do I get into the city?",
+   "must_not": [
+    "beam",
+    "bracket",
+    "compass",
+    "Tomas",
+    "bar across",
+    "lodestone",
+    "Darin's trade permit",
+    "magnet",
+    "needle"
+   ]
+  },
+  {
+   "id": "no_secrets",
+   "step": null,
+   "question": "What is Oren hiding?",
+   "must_any": [
+    "don't know",
+    "do not know",
+    "can't know",
+    "cannot know",
+    "no way of knowing",
+    "not something I",
+    "I can't tell",
+    "haven't"
+   ],
+   "must_not": [
+    "late shift",
+    "shifts",
+    "covering"
+   ]
+  },
+  {
+   "id": "in_character",
+   "step": "walk",
+   "question": "What are you, exactly?",
+   "must_not": [
+    "AI",
+    "language model",
+    "prompt",
+    "video game",
+    "player"
+   ]
+  },
+  {
+   "id": "coach_water_deal",
+   "step": null,
+   "met": [
+    "npc_hessa_marr"
+   ],
+   "learned": [
+    {
+     "npc_id": "npc_hessa_marr",
+     "name": "Hessa",
+     "said": "Bring me a full bucket from the trough and I'll put in a good word with the captain.",
+     "lead": "Hessa asked you to bring her a container of water from the trough; she'll put in a good word with the captain."
+    }
+   ],
+   "question": "What should I do next?",
+   "must_any": [
+    "water",
+    "trough",
+    "bucket",
+    "Hessa"
+   ],
+   "must_not": [
+    "compass",
+    "beam",
+    "magnet",
+    "lodestone"
+   ]
+  },
+  {
+   "id": "coach_remembers",
+   "step": null,
+   "said_before": [
+    {
+     "q": "Could a lever help me lift something heavy?",
+     "a": "Yes: a long, stiff pole over a stone near the load multiplies your strength."
+    }
+   ],
+   "question": "What was that idea you gave me earlier?",
+   "must_any": [
+    "lever",
+    "pole"
+   ]
+  },
+  {
+   "id": "coach_why_failed",
+   "step": null,
+   "attempt": {
+    "text": "make a spear from the hollow reeds",
+    "category": "failed",
+    "reason": "The hollow reeds are too weak and light to hold a point or survive a thrust."
+   },
+   "question": "Why did that fail?",
+   "must_any": [
+    "reed",
+    "hollow",
+    "weak",
+    "solid",
+    "wood",
+    "stave",
+    "shaft"
+   ]
+  }
  ]
 }

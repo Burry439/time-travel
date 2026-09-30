@@ -159,9 +159,15 @@ def device_says(state: dict, text: str, kind: str, question: str | None = None) 
     if question:
         entry["question"] = question
     state.setdefault("device_log", []).append(entry)
-    state["device_log"] = state["device_log"][-60:]
+    state["device_log"] = state["device_log"][-DEVICE_LOG_KEPT:]  # Its memory of you (D-55): long, not the last few.
     state.setdefault("journal", []).append({"kind": "device", "category": kind, "reason": text,
                                             **({"question": question} if question else {})})
+
+
+DEVICE_LOG_KEPT = 400
+CONVERSATION_KEPT = 16  # Exchanges the device is given word for word; older questions are listed.
+MOMENT_GAP_MS = 120_000  # The device speaks up on its own at most this often (D-55).
+MOMENTS = ("new_lead", "failure", "angry", "news", "stuck")
 
 
 # --- Outcomes and triggers ------------------------------------------------------------------------------------
@@ -292,9 +298,72 @@ CONTROLS = ("Move: WASD or arrows, Shift to run. Hover to see what things are; r
             "or the menu. H: ask the device.")
 
 
-def device_context(state: dict, question: str) -> dict:
+def moment_detail(state: dict, moment: str) -> str | None:
+    """What just happened that's worth a word from the device, in words, from the world itself (never from the
+    client's text). None when there's nothing to say about it."""
+    if moment == "new_lead":
+        leads = [e for e in state.get("learned", []) if e.get("lead")]
+        return f"The stranger just learned: {leads[-1]['lead']}" if leads else None
+    if moment == "failure":
+        tried = [e for e in state.get("journal", []) if e.get("kind") == "craft"]
+        if tried and tried[-1].get("category") in ("failed", "blocked", "unsupported", "unresolved"):
+            return f"An attempt just failed. Tried: “{tried[-1].get('text', '')}”. Why: {tried[-1].get('reason', '')}"
+        return None
+    if moment == "angry":
+        angry = [n["name"] for n in state["npcs"] if n.get("alive", True)
+                 and ((n.get("mind") or {}).get("feelings") or {}).get("anger", 0.0) >= 0.67]
+        return f"{', '.join(angry)} {'is' if len(angry) == 1 else 'are'} angry with the stranger." if angry else None
+    if moment == "news":
+        going = [(n, minds.find(state["npcs"], n["mind"]["job"].get("target") or ""))
+                 for n in state["npcs"] if ((n.get("mind") or {}).get("job") or {}).get("kind") == "tell"]
+        going = [(n, other) for n, other in going if other]
+        return (f"{going[0][0]['name']} has gone to tell {going[0][1]['name']} something about the stranger."
+                if going else None)
+    if moment == "stuck":
+        return "The stranger hasn't made any progress for a few minutes."
+    return None
+
+
+def moment_allowed(state: dict) -> bool:
+    """Not too often, and never over a fight or someone face to face."""
+    if state.get("fight") or (state.get("encounter") or {}).get("participants"):
+        return False
+    remarks = [e for e in state.get("device_log", []) if e.get("kind") == "remark"]
+    return not remarks or state.get("sim_time_ms", 0) - remarks[-1].get("at", 0) >= MOMENT_GAP_MS
+
+
+def _place_name(state: dict) -> str:
+    import talk
+    here = minds.player_cell(state)
+    places = list(talk.PLACES.values()) if isinstance(talk.PLACES, dict) else []
+    nearest = min(places, key=lambda place: math.dist(here, tuple(place["cell"])), default=None)
+    return nearest["name"] if nearest else "the road"
+
+
+def _coach(state: dict) -> dict:
+    """The main game: what a coach needs, all of it things the stranger knows (D-55)."""
+    leads, seen_leads = [], set()
+    for entry in reversed(state.get("learned", [])):
+        lead = entry.get("lead")
+        if lead and lead not in seen_leads:
+            seen_leads.add(lead)
+            leads.append({"lead": lead, "from": entry.get("name", "")})
+    people = [{"name": n["name"], "role": minds.card(n).get("role", ""),
+               "stands": minds.STANDING_WORDS[minds.standing(n)]}
+              for n in state["npcs"] if (n.get("mind") or {}).get("met") or (n.get("mind") or {}).get("memories")]
+    deals = [{"with": (minds.find(state["npcs"], a.get("issuer") or "") or {}).get("name", "?"), "task": a.get("task", ""),
+              "status": {"proposed": "offered", "accepted": "agreed, not yet done", "fulfilled": "done"}.get(
+                  a.get("status"), a.get("status"))} for a in (state.get("agreements") or {}).values()]
+    made = [o["name"] for o in state["objects"].values() if o.get("created_by") == "player"][-10:]
+    return {"leads_newest_first": leads[:12], "people_met": people, "deals": deals, "things_you_made": made,
+            "where_you_are": _place_name(state),
+            "admitted_to_the_city": bool(state.get("admitted") or state.get("inside_city"))}
+
+
+def device_context(state: dict, question: str, moment: str | None = None) -> dict:
     """What the device can know: what the stranger carries, wears and has seen, what they tried, the story step
-    (with its written hints as guidance), and the controls. Never anyone's secrets or anything unseen."""
+    (with its written hints as guidance), and the controls. Never anyone's secrets or anything unseen. It also
+    remembers what the two of them have said (D-55), and in the main game it has what a coach needs."""
     here = minds.player_cell(state)
     player = state["player"]
     in_sight = [n for n in state["npcs"] if math.dist(minds._cell(n), here) <= minds.SIGHT_CELLS]
@@ -302,8 +371,17 @@ def device_context(state: dict, question: str) -> dict:
               and math.dist((o["x"], o["y"]), here) <= minds.SIGHT_CELLS]
     attempts = [e for e in state.get("journal", []) if e.get("kind") == "craft"][-3:]
     current = step(state)
+    log = state.get("device_log", [])
+    talked = [e for e in log if e.get("question") or e.get("kind") in ("answer", "remark")]
+    conversation = [{"you_asked": e["question"], "i_said": e["text"]} if e.get("question") else {"i_said": e["text"]}
+                    for e in talked[-CONVERSATION_KEPT:]]
+    earlier = [e["question"] for e in talked[:-CONVERSATION_KEPT] if e.get("question")][-20:]
     return {
         "question": question,
+        **({"moment": moment_detail(state, moment)} if moment else {}),
+        "our_conversation": conversation,
+        "earlier_questions": earlier,
+        **({} if current else _coach(state)),
         "tutorial": bool(current),
         "step": {"title": current["title"], "objective": current.get("task", ""),
                  "hints_you_may_give": current.get("help", []),

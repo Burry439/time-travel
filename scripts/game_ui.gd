@@ -25,14 +25,15 @@ const CONTROLS := [
 	["Left-click", "Talk to someone · pick something up (or steal it, in red) · use a thing"],
 	["Right-click", "Look closer at anyone or anything"],
 	["Drag from your pack", "Onto someone, something or the ground: give, use, fill, put down"],
-	["T  or  Enter", "Say or do anything, in your own words"],
+	["T  or  Enter", "Open the box to say or do anything, in your own words"],
+	["Tab  (in the box)", "Switch between SAY (words) and DO (actions)"],
 	["E", "Act on whatever is nearest"],
 	["Esc", "Walk away · close · menu"],
 	["WASD / arrows,  Shift", "Walk, run"],
 	["I  ·  J", "Pack & gear (hold, wear, treat wounds) · your journal"],
 	["Space  ·  F", "Use what's in your right · left hand (hold F to raise a shield)"],
 	["X  ·  Q", "Swap hands · throw what's in your right hand"],
-	["H", "Ask the device"],
+	["H", "Talk to the device (it remembers everything you've said)"],
 	["Mouse wheel", "Zoom"],
 ]
 
@@ -462,12 +463,12 @@ func open_menu(page := "main") -> void:
 			_slider(body, "Sound volume", 0.0, 1.0, 0.05, game.sound_volume, func(value: float) -> void:
 				game.sound_volume = value
 				game._save_settings())
-			paragraph(body, "The device (outside the tutorial)")
+			paragraph(body, "The device")
 			var device_modes := HBoxContainer.new()
 			device_modes.add_theme_constant_override("separation", 6)
 			body.add_child(device_modes)
 			var device_group := ButtonGroup.new()
-			for pair in [["When I ask (H)", "asked"], ["Off", "off"]]:
+			for pair in [["Speaks up at key moments", "speaks"], ["Only when I ask (H)", "asked"]]:
 				var choice := button(pair[0], func() -> void: device.set_mode(pair[1]), "Chip")
 				choice.toggle_mode = true
 				choice.button_group = device_group

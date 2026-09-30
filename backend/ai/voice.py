@@ -32,7 +32,7 @@ ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 SCENE_VERSION = "scene_v3"  # D-51: errands, promises kept, talk mid-fight. D-53: things change hands only by moves.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
-DEVICE_VERSION = "device_v1"  # The device from the future, answering the stranger (D-50).
+DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).
 _DEVICE = (_PROMPTS / f"{DEVICE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")

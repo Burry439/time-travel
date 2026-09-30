@@ -10,6 +10,8 @@ import copy
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 import store
@@ -20,7 +22,8 @@ router = APIRouter()
 
 
 class Ask(BaseModel):
-    question: str = Field(min_length=1, max_length=400)
+    question: str = Field(default="", max_length=400)
+    moment: Literal["new_lead", "failure", "angry", "news", "stuck"] | None = None  # It speaks up (D-55).
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -122,23 +125,33 @@ def skip(run_id: str):
 
 @router.post("/runs/{run_id}/device/ask")
 def ask(run_id: str, request: Ask):
-    """H: ask the device anything. It answers from what the stranger knows; its written hint without a model."""
+    """H: ask the device anything. It answers from what the stranger knows; its written hint without a model.
+    With a moment instead of a question (D-55), it may speak up on its own: at most every two minutes, never over a
+    fight or a conversation, and only with a model (no written stand-in for a remark)."""
+    question = request.question.strip()
+    if not question and not request.moment:
+        raise HTTPException(422, "Ask something, or name the moment")
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
         prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
         if prior_seq is not None:
             return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        context = tutorial.device_context(state, request.question.strip())
-        fallback = tutorial.fallback_answer(state)
+        moment = None if question else request.moment
+        if moment and (not tutorial.moment_allowed(state) or tutorial.moment_detail(state, moment) is None):
+            return {"state": state, "duplicate": False, "skipped": True}
+        context = tutorial.device_context(state, question, moment)
+        fallback = "" if moment else tutorial.fallback_answer(state)
         allowed = telemetry.calls_for_run(connection, run_id) < ai_config.max_calls_per_run()
     call = voice.device(context, fallback, allowed)  # Outside the lock.
+    if moment and call.status != "ok":
+        return {"state": state, "duplicate": False, "skipped": True}
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
         if call.model and call.model != "stub":
             telemetry.record(connection, run_id, "voice", call.model, call.prompt_version, call.latency_ms,
                              call.status == "ok", call.error, call.input_tokens, call.output_tokens)
         probe = copy.deepcopy(state)
-        tutorial.device_says(probe, call.text, "answer", request.question.strip())
+        tutorial.device_says(probe, call.text, "remark" if moment else "answer", question or None)
         payload = {"device_log": probe["device_log"], "journal_added": probe["journal"][len(state["journal"]):]}
         store.append(connection, state, "device", payload, request.request_id, state["sim_time_ms"] // 1000)
         store.apply_tutorial(state, payload)

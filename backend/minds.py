@@ -136,6 +136,44 @@ def knows_a_crime(npc: dict) -> bool:
     return unresolved_crime(npc, ("violence", "breach")) is not None
 
 
+STANDING_WORDS = {"unknown": "Doesn't know you", "hostile": "Hostile", "wary": "Wary", "neutral": "Neutral",
+                  "friendly": "Friendly", "would_speak": "Would speak for you"}
+
+
+def standing(npc: dict) -> str:
+    """How this person stands toward the stranger, in one word for the player (D-55; never numbers): from their
+    regard, their anger, and any crime they hold against them. The same rule everywhere (journal, toasts, device)."""
+    my_mind = npc.get("mind") or {}
+    view = my_mind.get("regard") or {}
+    anger = (my_mind.get("feelings") or {}).get("anger", 0.0)
+    if unresolved_crime(npc) is not None or anger >= 0.67:
+        return "hostile"
+    if not my_mind.get("met") and not my_mind.get("memories") and not view:
+        return "unknown"
+    view = regard(npc)
+    family = {npc["id"], *card(npc).get("family", [])}
+    helped = any(m["kind"] in ("help", "gift") and m.get("victim") in family and m.get("clarity") != "vague"
+                 for m in my_mind.get("memories", []))
+    if view["suspicion"] >= 0.6:
+        return "wary"
+    if view["trust"] >= 0.6 or (helped and view["trust"] >= 0.3):
+        return "would_speak"
+    if view["trust"] >= 0.45:
+        return "friendly"
+    return "neutral"
+
+
+def update_standing(npc: dict) -> bool:
+    """Keep mind.standing current; returns whether it changed (the client shows a toast when it does)."""
+    if not npc.get("alive", True):
+        return False
+    now = standing(npc)
+    if (npc.get("mind") or {}).get("standing") == now:
+        return False
+    mind(npc)["standing"] = now
+    return True
+
+
 def settle(state: dict, why: str, item: str | None = None, kinds: tuple = ("theft",),
            npc_ids: set | None = None) -> list[str]:
     """A matter is put right (the thing given back, forgiven, paid for with an arrest): everyone who held it
@@ -148,6 +186,7 @@ def settle(state: dict, why: str, item: str | None = None, kinds: tuple = ("thef
             if memory["kind"] in kinds and not memory.get("settled") and (item is None or memory.get("item") == item):
                 memory["settled"] = why
                 touched.append(npc["id"])
+        update_standing(npc)
     return sorted(set(touched))
 
 
@@ -1114,6 +1153,9 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     state["projectiles"] = working.get("projectiles") or []
     state["people_objects_changed"] = working.get("objects_changed") or {}
     state["people_objects_added"] = working.get("objects_added") or []
+    for npc in npcs:  # How each stands toward the stranger (D-55), kept current for the journal and toasts.
+        if npc.get("mind"):
+            update_standing(npc)
     return npcs, journal, working["player"]
 
 

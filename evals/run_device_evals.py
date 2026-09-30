@@ -32,6 +32,14 @@ def state_for(case: dict) -> dict:
         state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == case["step"])
     if case.get("attempt"):
         state["journal"].append({"kind": "craft", **case["attempt"]})
+    for entry in case.get("learned", []):  # What people told the stranger (D-55: the coach builds on it).
+        state.setdefault("learned", []).append(entry)
+    import minds
+    for npc in state["npcs"]:
+        if npc["id"] in case.get("met", []):
+            minds.mind(npc)["met"] = True
+    for pair in case.get("said_before", []):  # Earlier conversation with the device.
+        tutorial.device_says(state, pair["a"], "answer", pair["q"])
     return state
 
 
