@@ -1,8 +1,265 @@
 {
  "version": 1,
- "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate). Seed 11 (D-51): the old wainwright's yard in the bottom-right corner, 48 free materials (metals, stone, wood, hide, cord, bone, glue) for experimenting with weapons and armour. Seed 12 (D-52): the wainwright's notebook, a readable recipe book, at the yard's edge.",
- "since_seed": 5,
+ "notes": "Every authored thing in the world at the start (the map's trees are added in code). Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), water_l (a fixed water source such as a trough), capacity_l (what a container holds), length_m, capabilities (instead of what its flags give), feature 'fire' with burning true (a lasting heat source), no_sprite (part of a building's art), art 'scene' (drawn in the scene itself), installed_in (a fixture it starts fitted into: the cracked bar across the gate), worn_by or carried_by with slots (someone's own gear, D-49), gear, readable (a book, D-52), count. The old wainwright's yard (D-51) is in the bottom-right corner. A change to the starting world is a new seed: raise SEED_VERSION in backend/store.py, which retires journeys begun on the older world.",
  "objects": [
+  {
+   "id": "branch_a",
+   "name": "fallen branch",
+   "x": 47,
+   "y": 67,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "length_m": 1.5,
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "art": "scene"
+  },
+  {
+   "id": "branch_b",
+   "name": "fallen branch",
+   "x": 50,
+   "y": 67,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A dry fallen branch about 1.5 m long, slightly crooked at one end.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "length_m": 1.5,
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "art": "scene"
+  },
+  {
+   "id": "cord_a",
+   "name": "short cord",
+   "x": 49,
+   "y": 66,
+   "mass_kg": 0.2,
+   "materials": [
+    "plant fiber"
+   ],
+   "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "length_m": 1.0,
+   "art": "scene"
+  },
+  {
+   "id": "stone_a",
+   "name": "loose stone",
+   "x": 47,
+   "y": 65,
+   "mass_kg": 2.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A loose, rounded stone the size of a fist, heavy for its size.",
+   "flags": [
+    "rigid"
+   ],
+   "capabilities": [
+    "carry",
+    "support"
+   ],
+   "art": "scene"
+  },
+  {
+   "id": "bucket_hessa",
+   "name": "wooden bucket",
+   "x": 35,
+   "y": 52,
+   "mass_kg": 0.5,
+   "owner_id": "npc_hessa_marr",
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "Hessa's wooden bucket with an iron band and rope handle.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 1.0,
+   "capabilities": [
+    "carry",
+    "fill",
+    "pour"
+   ],
+   "art": "scene"
+  },
+  {
+   "id": "trough_hessa",
+   "name": "water trough",
+   "x": 36,
+   "y": 52,
+   "mass_kg": 80.0,
+   "owner_id": "npc_hessa_marr",
+   "materials": [
+    "wood"
+   ],
+   "description": "A long wooden water trough in Hessa's yard.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "water_l": 80.0,
+   "art": "scene"
+  },
+  {
+   "id": "wood_tomas",
+   "name": "wood plank",
+   "x": 64,
+   "y": 28,
+   "mass_kg": 4.0,
+   "owner_id": "npc_tomas_reed",
+   "materials": [
+    "wood"
+   ],
+   "description": "A sawn plank, 2 m long, 20 cm wide and 4 cm thick.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats",
+    "stable_support"
+   ],
+   "length_m": 2.0,
+   "capabilities": [
+    "carry",
+    "tie",
+    "support"
+   ],
+   "art": "scene"
+  },
+  {
+   "id": "flint_a",
+   "name": "flint shard",
+   "x": 45,
+   "y": 66,
+   "mass_kg": 0.3,
+   "materials": [
+    "flint"
+   ],
+   "description": "A palm-sized shard of grey flint with a thin, glassy, very sharp edge.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ]
+  },
+  {
+   "id": "stone_b",
+   "name": "flat stone",
+   "x": 51,
+   "y": 65,
+   "mass_kg": 1.5,
+   "materials": [
+    "stone"
+   ],
+   "description": "A flat, heavy stone about as wide as two hands.",
+   "flags": [
+    "rigid",
+    "stable_support"
+   ]
+  },
+  {
+   "id": "grass_a",
+   "name": "bundle of dry grass",
+   "x": 44,
+   "y": 64,
+   "mass_kg": 0.2,
+   "materials": [
+    "dry grass"
+   ],
+   "description": "An armful-sized bundle of dry, brittle grass.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ]
+  },
+  {
+   "id": "reeds_a",
+   "name": "hollow reeds",
+   "x": 53,
+   "y": 66,
+   "mass_kg": 0.3,
+   "materials": [
+    "reed"
+   ],
+   "description": "A handful of hollow reed stems, each about 1.2 m long.",
+   "flags": [
+    "rigid",
+    "floats",
+    "combustible"
+   ],
+   "length_m": 1.2
+  },
+  {
+   "id": "vine_a",
+   "name": "length of vine",
+   "x": 43,
+   "y": 67,
+   "mass_kg": 0.4,
+   "materials": [
+    "vine"
+   ],
+   "description": "A tough, fresh length of climbing vine about 2 m long.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "length_m": 2.0
+  },
+  {
+   "id": "bark_a",
+   "name": "strip of bark",
+   "x": 52,
+   "y": 63,
+   "mass_kg": 0.2,
+   "materials": [
+    "bark"
+   ],
+   "description": "A long strip of pliable bark peeled from a fallen trunk.",
+   "flags": [
+    "flexible",
+    "floats",
+    "combustible"
+   ],
+   "length_m": 0.6
+  },
+  {
+   "id": "resin_a",
+   "name": "lump of pine resin",
+   "x": 46,
+   "y": 63,
+   "mass_kg": 0.1,
+   "materials": [
+    "pine resin"
+   ],
+   "description": "A sticky amber lump of pine resin the size of a walnut.",
+   "flags": [
+    "adhesive",
+    "combustible"
+   ]
+  },
   {
    "id": "hazel_rod",
    "name": "hazel rod",
@@ -342,8 +599,7 @@
     "rigid",
     "magnet_source"
    ],
-   "owner_id": "npc_darin_ko",
-   "since_seed": 6
+   "owner_id": "npc_darin_ko"
   },
   {
    "id": "cloth_darin",
@@ -359,8 +615,7 @@
     "flexible",
     "combustible"
    ],
-   "owner_id": "npc_darin_ko",
-   "since_seed": 6
+   "owner_id": "npc_darin_ko"
   },
   {
    "id": "cordage_darin",
@@ -378,7 +633,6 @@
     "combustible"
    ],
    "owner_id": "npc_darin_ko",
-   "since_seed": 6,
    "length_m": 10.0
   },
   {
@@ -395,8 +649,7 @@
     "rigid",
     "reflective"
    ],
-   "owner_id": "npc_darin_ko",
-   "since_seed": 6
+   "owner_id": "npc_darin_ko"
   },
   {
    "id": "needles_mara",
@@ -413,7 +666,6 @@
     "ferromagnetic"
    ],
    "owner_id": "npc_mara_venn",
-   "since_seed": 6,
    "length_m": 0.06
   },
   {
@@ -431,8 +683,7 @@
     "rigid",
     "ferromagnetic"
    ],
-   "owner_id": "npc_mara_venn",
-   "since_seed": 6
+   "owner_id": "npc_mara_venn"
   },
   {
    "id": "bowl_hessa",
@@ -450,7 +701,6 @@
     "watertight"
    ],
    "owner_id": "npc_hessa_marr",
-   "since_seed": 6,
    "capacity_l": 1.0
   },
   {
@@ -470,7 +720,6 @@
     "floats"
    ],
    "owner_id": "npc_hessa_marr",
-   "since_seed": 6,
    "capacity_l": 0.3
   },
   {
@@ -488,7 +737,6 @@
     "watertight"
    ],
    "owner_id": null,
-   "since_seed": 6,
    "feature": "water",
    "water_l": 60.0,
    "capacity_l": 60.0
@@ -508,7 +756,6 @@
     "combustible"
    ],
    "owner_id": null,
-   "since_seed": 9,
    "feature": "beam",
    "length_m": 3.0,
    "installed_in": "gate_brackets"
@@ -529,7 +776,6 @@
     "stable_support"
    ],
    "owner_id": "npc_tomas_reed",
-   "since_seed": 7,
    "feature": "beam",
    "length_m": 3.0
   },
@@ -548,7 +794,6 @@
     "ferromagnetic"
    ],
    "owner_id": null,
-   "since_seed": 7,
    "feature": "fixture"
   },
   {
@@ -567,7 +812,6 @@
     "combustible"
    ],
    "owner_id": "npc_tomas_reed",
-   "since_seed": 7,
    "length_m": 6.0
   },
   {
@@ -585,7 +829,6 @@
     "combustible"
    ],
    "owner_id": "npc_tomas_reed",
-   "since_seed": 7,
    "length_m": 3.0
   },
   {
@@ -603,8 +846,7 @@
     "fulcrum",
     "stable_support"
    ],
-   "owner_id": "npc_tomas_reed",
-   "since_seed": 7
+   "owner_id": "npc_tomas_reed"
   },
   {
    "id": "trestles_gate",
@@ -621,8 +863,7 @@
     "stable_support",
     "combustible"
    ],
-   "owner_id": "npc_tomas_reed",
-   "since_seed": 7
+   "owner_id": "npc_tomas_reed"
   },
   {
    "id": "crates_gate",
@@ -641,7 +882,6 @@
     "combustible"
    ],
    "owner_id": null,
-   "since_seed": 7,
    "capacity_l": 40.0
   },
   {
@@ -660,7 +900,6 @@
     "light_source"
    ],
    "owner_id": "npc_mara_venn",
-   "since_seed": 8,
    "feature": "fire",
    "burning": true,
    "no_sprite": true
@@ -681,7 +920,6 @@
     "light_source"
    ],
    "owner_id": "npc_hessa_marr",
-   "since_seed": 8,
    "feature": "fire",
    "burning": true
   },
@@ -701,7 +939,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_roderic_vale",
    "worn_by": "npc_roderic_vale",
    "slots": [
@@ -729,7 +966,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_roderic_vale",
    "worn_by": "npc_roderic_vale",
    "slots": [
@@ -759,7 +995,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_roderic_vale",
    "worn_by": "npc_roderic_vale",
    "slots": [
@@ -789,7 +1024,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_bren_marr",
    "worn_by": "npc_bren_marr",
    "slots": [
@@ -817,7 +1051,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_bren_marr",
    "worn_by": "npc_bren_marr",
    "slots": [
@@ -847,7 +1080,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_bren_marr",
    "worn_by": "npc_bren_marr",
    "slots": [
@@ -877,7 +1109,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_oren_dast",
    "worn_by": "npc_oren_dast",
    "slots": [
@@ -905,7 +1136,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_oren_dast",
    "worn_by": "npc_oren_dast",
    "slots": [
@@ -935,7 +1165,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_oren_dast",
    "worn_by": "npc_oren_dast",
    "slots": [
@@ -965,7 +1194,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_kade_east",
    "worn_by": "npc_kade_east",
    "slots": [
@@ -993,7 +1221,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_kade_east",
    "worn_by": "npc_kade_east",
    "slots": [
@@ -1023,7 +1250,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_elin_west",
    "worn_by": "npc_elin_west",
    "slots": [
@@ -1051,7 +1277,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_elin_west",
    "worn_by": "npc_elin_west",
    "slots": [
@@ -1080,7 +1305,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_mara_venn",
    "worn_by": "npc_mara_venn",
    "slots": [
@@ -1108,7 +1332,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_tomas_reed",
    "worn_by": "npc_tomas_reed",
    "slots": [
@@ -1137,7 +1360,6 @@
     "rigid",
     "sharp_edge"
    ],
-   "since_seed": 10,
    "owner_id": "npc_darin_ko",
    "worn_by": "npc_darin_ko",
    "slots": [
@@ -1165,7 +1387,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "player",
    "worn_by": "player",
    "slots": [
@@ -1195,7 +1416,6 @@
    "flags": [
     "flexible"
    ],
-   "since_seed": 10,
    "owner_id": "npc_bren_marr",
    "carried_by": "npc_bren_marr",
    "gear": {
@@ -1218,8 +1438,7 @@
    "description": "A handful of broad, ribbed plantain leaves from beside the road.",
    "flags": [
     "flexible"
-   ],
-   "since_seed": 10
+   ]
   },
   {
    "id": "yarrow_a",
@@ -1235,8 +1454,7 @@
    "flags": [
     "flexible",
     "combustible"
-   ],
-   "since_seed": 10
+   ]
   },
   {
    "id": "moss_a",
@@ -1250,8 +1468,7 @@
    "description": "A soft, damp clump of green moss from the foot of the wall.",
    "flags": [
     "flexible"
-   ],
-   "since_seed": 10
+   ]
   },
   {
    "id": "garlic_hessa",
@@ -1264,7 +1481,6 @@
    ],
    "description": "A string of papery garlic bulbs hung to dry.",
    "flags": [],
-   "since_seed": 10,
    "owner_id": "npc_hessa_marr"
   },
   {
@@ -1281,7 +1497,6 @@
    "flags": [
     "rigid"
    ],
-   "since_seed": 10,
    "owner_id": "npc_hessa_marr"
   },
   {
@@ -1299,7 +1514,6 @@
     "flexible",
     "tieable"
    ],
-   "since_seed": 10,
    "owner_id": "npc_hessa_marr"
   },
   {
@@ -1316,8 +1530,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_iron_bar_2",
@@ -1333,8 +1546,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_steel_billet",
@@ -1350,8 +1562,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_bronze_ingot",
@@ -1366,8 +1577,7 @@
    "description": "A small cast bronze ingot, golden-brown and heavy for its size.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_copper_sheet",
@@ -1382,8 +1592,7 @@
    "description": "A thin hammered sheet of copper, soft enough to bend over a knee.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_iron_plates",
@@ -1398,8 +1607,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_nails",
@@ -1414,8 +1622,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_rivets",
@@ -1430,8 +1637,7 @@
    "description": "Soft iron rivets in a small leather bag, for joining plates or straps.",
    "flags": [
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_chain",
@@ -1448,8 +1654,7 @@
     "flexible",
     "tieable",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_iron_wire",
@@ -1466,8 +1671,7 @@
     "flexible",
     "tieable",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_blade_blank",
@@ -1483,8 +1687,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_sickle_blade",
@@ -1501,8 +1704,7 @@
     "rigid",
     "sharp_edge",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_spearhead",
@@ -1519,8 +1721,7 @@
     "rigid",
     "sharp_edge",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_axe_head",
@@ -1537,8 +1738,7 @@
     "rigid",
     "sharp_edge",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_horseshoes",
@@ -1553,8 +1753,7 @@
    "flags": [
     "rigid",
     "ferromagnetic"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_iron_pot",
@@ -1572,7 +1771,6 @@
     "watertight",
     "ferromagnetic"
    ],
-   "since_seed": 11,
    "capacity_l": 4.0
   },
   {
@@ -1587,8 +1785,7 @@
    "description": "Three fist-sized flint nodules with chalky crusts; knapped, they give very sharp edges.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_chert",
@@ -1602,8 +1799,7 @@
    "description": "A grey chert cobble, fine-grained and good for knapping.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_obsidian",
@@ -1618,8 +1814,7 @@
    "flags": [
     "rigid",
     "sharp_edge"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_glass",
@@ -1634,8 +1829,7 @@
    "flags": [
     "rigid",
     "sharp_edge"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_river_stones",
@@ -1649,8 +1843,7 @@
    "description": "A dozen smooth, egg-sized river stones, just right for a sling.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_whetstone",
@@ -1664,8 +1857,7 @@
    "description": "A fine-grained sharpening stone, worn hollow in the middle.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_hammerstone",
@@ -1679,8 +1871,7 @@
    "description": "A hard, rounded quartzite cobble for knapping and pounding.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_ash_stave",
@@ -1697,8 +1888,7 @@
     "rigid",
     "combustible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_yew_stave",
@@ -1715,8 +1905,7 @@
     "flexible",
     "combustible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_oak_billet",
@@ -1732,8 +1921,7 @@
    "flags": [
     "rigid",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_elm_planks",
@@ -1750,8 +1938,7 @@
     "rigid",
     "combustible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_axe_haft",
@@ -1767,8 +1954,7 @@
    "flags": [
     "rigid",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_arrow_shafts",
@@ -1785,8 +1971,7 @@
     "rigid",
     "combustible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_withies",
@@ -1803,8 +1988,7 @@
     "flexible",
     "tieable",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_birch_poles",
@@ -1821,8 +2005,7 @@
     "rigid",
     "combustible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_rawhide",
@@ -1836,8 +2019,7 @@
    "description": "A stiff, untanned cattle hide; soaked, it goes soft, and it shrinks hard as it dries.",
    "flags": [
     "flexible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_leather_hide",
@@ -1851,8 +2033,7 @@
    "description": "A thick tanned ox hide, good for straps, sheaths or armour.",
    "flags": [
     "flexible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_thongs",
@@ -1868,8 +2049,7 @@
    "flags": [
     "flexible",
     "tieable"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_sinew",
@@ -1885,8 +2065,7 @@
    "flags": [
     "flexible",
     "tieable"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_flax_cord",
@@ -1903,8 +2082,7 @@
     "flexible",
     "tieable",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_hemp_rope",
@@ -1921,8 +2099,7 @@
     "flexible",
     "tieable",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_linen",
@@ -1937,8 +2114,7 @@
    "flags": [
     "flexible",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_padding",
@@ -1954,8 +2130,7 @@
    "flags": [
     "flexible",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_wool",
@@ -1970,8 +2145,7 @@
    "flags": [
     "flexible",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_antler",
@@ -1986,8 +2160,7 @@
    "description": "A shed red deer antler with sturdy tines, hard as bone.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_horn",
@@ -2002,8 +2175,7 @@
    "description": "A hollow cattle horn, tough and a little springy.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_bones",
@@ -2017,8 +2189,7 @@
    "description": "Cattle long bones and shoulder blades, cleaned and dried.",
    "flags": [
     "rigid"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_hide_glue",
@@ -2033,8 +2204,7 @@
    "description": "A small clay pot of hide glue; warmed, it sets hard and strong.",
    "flags": [
     "adhesive"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_pitch",
@@ -2050,8 +2220,7 @@
    "flags": [
     "adhesive",
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_beeswax",
@@ -2065,8 +2234,7 @@
    "description": "A cake of yellow beeswax.",
    "flags": [
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_feathers",
@@ -2081,8 +2249,7 @@
    "flags": [
     "flexible",
     "floats"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_charcoal",
@@ -2097,8 +2264,7 @@
    "description": "A sack of good oak charcoal.",
    "flags": [
     "combustible"
-   ],
-   "since_seed": 11
+   ]
   },
   {
    "id": "yard_recipe_book",
@@ -2115,7 +2281,6 @@
     "flexible",
     "combustible"
    ],
-   "since_seed": 12,
    "readable": "recipe_book"
   }
  ],

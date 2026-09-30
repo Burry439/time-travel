@@ -23,14 +23,11 @@ OUT = ROOT / "assets" / "generated" / "materials"
 
 
 def paintable() -> dict[str, dict]:
-    """Every seeded public object without scene art: seed-4 road items and data/content/world_objects.json."""
+    """Every authored object without scene art (data/content/world_objects.json)."""
     records = {}
-    for object_id, (name, *_rest) in m2.NEW_PUBLIC_MATERIALS.items():
-        materials, description, _, _ = m2.MATERIAL_SEED[object_id]
-        records[object_id] = {"name": name, "description": description, "materials": materials}
     for spec in m2.WORLD_CONTENT["objects"]:
-        if spec.get("no_sprite"):
-            continue  # Drawn by something else (a building's art, the stranger's own painting).
+        if spec.get("no_sprite") or spec.get("art") == "scene":
+            continue  # Drawn by something else (the scene itself, a building's art, the stranger's own painting).
         records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
     for oid, name, _mass, _length, materials, description, *_rest in tutorial.PRACTICE_GEAR + tutorial.TUTORIAL_THINGS:
         records[oid] = {"name": name, "description": description, "materials": materials}

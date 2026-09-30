@@ -26,7 +26,7 @@ OPERATION_CAPABILITIES = {"tieable": "tie", "container": "fill"}
 
 def gate_after(state: dict, fixture_id: str, barred: bool) -> dict | None:
     """The gate stands open while nothing bars it (or the stranger has been let in); None if unaffected."""
-    if fixture_id != m2.GATE_FIXTURE or state.get("seed_version", 0) < m2.GATE_BAR_SEED:
+    if fixture_id != m2.GATE_FIXTURE:
         return None
     return {"open": bool(state.get("admitted")) or not barred, **({} if barred else {"unbarred_by": "player"})}
 
@@ -237,55 +237,28 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     elif verdict["action"] == "harm":
         harm = verdict["harm"]
         npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
-        if "effective" in harm:  # D-49: what gear.hit worked out, carried out on the person.
-            body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
-            body["health"] = body["health"] if body["health"] is not None else 100
-            body["alive"] = body["alive"] if body["alive"] is not None else True
-            body["conditions"] = body["conditions"] or []
-            if harm["result"] not in ("missed", "deflected"):
-                gear.apply(body, harm, state["sim_time_ms"])
-            health, down = body["health"], bool(body.get("down"))
-            if harm["result"] == "killed":
-                health = 0
-            injuries = npc.get("injuries", []) + (
-                [harm["injury"]] if harm["result"] not in ("missed", "deflected") else []
-            )
-            npc_updates.append(
-                {
-                    "id": npc["id"],
-                    "alive": health > 0,
-                    "health": health,
-                    "injuries": injuries,
-                    "conditions": body["conditions"],
-                    **({"down": True} if down and health > 0 else {}),
-                }
-            )
-        else:  # Older journeys' events (before D-49): fixed damage by result.
-            health = npc.get("health", 100)
-            down = bool(npc.get("down"))
-            if harm["result"] == "killed":
-                health = 0
-            elif harm["result"] == "disabled":
-                health, down = min(health, tuning.DISABLED_HEALTH), True
-            elif harm["result"] == "wounded":
-                health = max(0, health - tuning.WOUND_DAMAGE)
-                if health == 0:
-                    harm["result"] = "killed"
-                    verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
-                    verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
-            injuries = npc.get("injuries", []) + (
-                [harm["injury"]] if harm["result"] not in ("missed", "deflected") else []
-            )
-            npc_updates.append(
-                {
-                    "id": npc["id"],
-                    "alive": health > 0,
-                    "health": health,
-                    "injuries": injuries,
-                    **({"down": True} if down and health > 0 else {}),
-                }
-            )
-        if harm["result"] == "killed" and "effective" in harm and not verdict["reason"].rstrip().endswith("."):
+        # What gear.hit worked out (D-49), carried out on the person.
+        body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
+        body["health"] = body["health"] if body["health"] is not None else 100
+        body["alive"] = body["alive"] if body["alive"] is not None else True
+        body["conditions"] = body["conditions"] or []
+        if harm["result"] not in ("missed", "deflected"):
+            gear.apply(body, harm, state["sim_time_ms"])
+        health, down = body["health"], bool(body.get("down"))
+        if harm["result"] == "killed":
+            health = 0
+        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
+        npc_updates.append(
+            {
+                "id": npc["id"],
+                "alive": health > 0,
+                "health": health,
+                "injuries": injuries,
+                "conditions": body["conditions"],
+                **({"down": True} if down and health > 0 else {}),
+            }
+        )
+        if harm["result"] == "killed" and not verdict["reason"].rstrip().endswith("."):
             verdict["reason"] = verdict["reason"].rstrip() + "."
         taken = verdict["take_ids"]  # A weapon picked up on the way.
         if harm["method"] == "thrown" and harm["weapon_id"]:
@@ -380,7 +353,7 @@ def apply_step(state: dict, deltas: dict) -> None:
             state["objects"][landed["id"]].update(holder_id="used", condition="used up")
             continue
         state["objects"][landed["id"]].update(x=landed["x"], y=landed["y"], holder_id=None)
-    new_objects = deltas.get("new_objects") or ([deltas["new_object"]] if deltas.get("new_object") else [])
+    new_objects = deltas.get("new_objects") or []
     if new_objects:
         for item_id in deltas["consumed_ids"]:
             # Its water went into the new thing (or spilled): see _step_deltas.
@@ -447,8 +420,6 @@ def apply_step(state: dict, deltas: dict) -> None:
             npc["injuries"] = list(update["injuries"])
         if "conditions" in update:
             npc["conditions"] = copy.deepcopy(update["conditions"])
-        elif update.get("injury"):  # Seed-5 payloads before multi-step recorded one injury at a time.
-            npc.setdefault("injuries", []).append(update["injury"])
         if not update["alive"] and npc.get("controller"):
             npc["controller"].update(activity="dead", path=[], source="dead")
         elif update.get("down") and not npc.get("down"):
@@ -619,7 +590,7 @@ def apply_payload(state: dict, payload: dict) -> None:
     # People first, so wounds and deaths recorded by the steps are applied on top of their movement.
     if "npcs" in payload:
         state["npcs"] = payload["npcs"]
-    for deltas in payload.get("steps", [payload]):  # Older events are one step.
+    for deltas in payload["steps"]:
         apply_step(state, deltas)
     state["journal"].append(payload["journal_entry"])
     state["last_action"] = payload["journal_entry"]

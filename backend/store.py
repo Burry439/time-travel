@@ -50,7 +50,9 @@ PATROL_GUARDS = [
     {"id": "npc_elin_west", "name": "Elin", "role": "Watch scout", "x": 47, "y": 23},
     {"id": "npc_kade_east", "name": "Kade", "role": "Patrol guard", "x": 52, "y": 35},
 ]
-OLDEST_SEED = 5  # Journeys begun before this are retired (GDD D-04: no save compatibility between prototypes).
+# A journey replays on the world it began with, so a new starting world (a seed bump) retires the journeys
+# begun on an older one (GDD D-04: no save compatibility between prototypes; D-58).
+OLDEST_SEED = SEED_VERSION
 SAVE_FORMAT = 2  # 2: events store only what changed (D-58). Journeys saved in an older format are retired too.
 lock = threading.RLock()
 
@@ -178,11 +180,11 @@ def initial_state(run: sqlite3.Row) -> dict:
         "objective": "Get inside the city",
         "npcs": npc_sim.seed_npcs(NPCS + PATROL_GUARDS),
     }
-    state.update(m2.seed_m2(run["seed_version"]))
+    state.update(m2.seed_m2())
     for npc in state["npcs"]:
         npc.update(alive=True, health=100, injuries=[])
     people = {n["id"]: n for n in state["npcs"]} | {"player": state["player"]}
-    for obj in state["objects"].values():  # Everyone starts wearing and holding their own gear (seed 10, D-49).
+    for obj in state["objects"].values():  # Everyone starts wearing and holding their own gear (D-49).
         for slot in obj.pop("worn_slots", []):
             people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
     if state["scenario"] == "tutorial":  # The first morning, with the device (D-50).

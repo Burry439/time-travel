@@ -234,18 +234,9 @@ def test_disabled_ai_is_honest_and_older_journeys_are_refused(world, monkeypatch
 
 
 def test_new_road_materials_are_reachable_and_described():
-    objects = service.m2.seed_objects(4)
-    for oid in service.m2.NEW_PUBLIC_MATERIALS:
+    objects = service.m2.seed_objects()
+    for oid in ("flint_a", "stone_b", "grass_a", "reeds_a", "vine_a", "bark_a", "resin_a"):
         assert objects[oid]["owner_id"] is None and objects[oid]["materials"]
-    assert set(service.m2.seed_objects(3)) == {
-        "branch_a",
-        "branch_b",
-        "cord_a",
-        "stone_a",
-        "bucket_hessa",
-        "trough_hessa",
-        "wood_tomas",
-    }
     assert consequences.placeholder_category(["flint"]) == "stone"
 
 
@@ -570,23 +561,6 @@ def test_people_near_death_are_described_to_the_judge():
     darin = next(p for p in judge_view.people_nearby(state) if p["id"] == "npc_darin_ko")
     assert darin["condition"] == "badly wounded (near death)" and len(darin["injuries"]) == 1
     assert any("cut" in c for c in darin["conditions"])  # The judge sees the bleeding cut.
-
-
-def test_single_step_events_from_before_multi_step_still_replay():
-    state = fresh_state()
-    legacy = {
-        "consumed_ids": [],
-        "new_objects": [],
-        "taken_ids": ["branch_a"],
-        "transformed": None,
-        "npc_updates": [{"id": "npc_bren_marr", "alive": True, "health": 55, "injury": "a cut"}],
-        "journal_entry": {"kind": "craft", "text": "old", "category": "success", "reason": "old"},
-        "sim_time_ms": 5000,
-        "npcs": state["npcs"],
-    }
-    consequences.apply_payload(state, legacy)
-    bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
-    assert state["objects"]["branch_a"]["holder_id"] == "player" and bren["injuries"] == ["a cut"]
 
 
 # --- Acting at a distance: walking there first, or throwing ------------------------------

@@ -23,8 +23,6 @@ def test_the_yard_is_free_reachable_and_read_for_a_fight():
         assert obj["owner_id"] is None and "carry" in obj["capabilities"] and "gear" in obj, obj["id"]
         assert 74 <= obj["x"] <= 93 and 50 <= obj["y"] <= 70  # The bottom-right corner.
         cells.add(cell)
-    older = store.initial_state({"id": "old0", "mode": "developer", "seed_version": 10, "geometry_version": 3})
-    assert not any(o.startswith("yard_") for o in older["objects"])  # Older journeys replay the world they began with.
 
 
 def test_the_wainwrights_notebook_is_readable_and_names_real_things():
@@ -36,8 +34,6 @@ def test_the_wainwrights_notebook_is_readable_and_names_real_things():
     blocked = paths.blocked_cells(state)
     _, steps = paths.bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
     assert (book["x"], book["y"]) in steps
-    seed11 = store.initial_state({"id": "old1", "mode": "developer", "seed_version": 11, "geometry_version": 3})
-    assert "yard_recipe_book" not in seed11["objects"] and "yard_iron_bar" in seed11["objects"]
     content = json.loads((store.ROOT / "data" / "content" / "recipe_book.json").read_text(encoding="utf-8"))
     names = {o["name"] for o in state["objects"].values()}
     recipes = [r for chapter in content["chapters"] for r in chapter["recipes"]]

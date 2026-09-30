@@ -29,7 +29,7 @@ def test_building_and_tree_geometry_rejects_moves_without_mutating_save(tmp_path
 
 def test_geometry_leaves_all_npcs_and_resources_accessible():
     rectangles = service.WORLD_GEOMETRY["buildings"] + service.WORLD_GEOMETRY["obstacles"]
-    objects = list(service.m2.seed_m2(service.SEED_VERSION)["objects"].values())
+    objects = list(service.m2.seed_m2()["objects"].values())
     # Map trees are objects standing on their own obstacle cell; the player must reach a neighbouring cell.
     trees = [o for o in objects if o.get("geometry_name")]
     points = service.NPCS + [
