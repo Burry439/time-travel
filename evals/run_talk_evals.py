@@ -51,6 +51,11 @@ def world_for(case: dict) -> tuple[dict, dict]:
         minds.mind(other)["job"] = None
     if case.get("reason"):  # They came up to the stranger for a reason (a halt, a confrontation).
         encounter.join(state, person, case["reason"], None, 0)
+    for condition in case.get("hurt", []):  # e.g. Jory's burn
+        import gear
+        gear.add_condition(person, condition, 0)
+    for object_id, fields in case.get("objects", {}).items():  # e.g. a poultice, in someone's hands
+        state["objects"][object_id].update(fields)
     if case.get("fight"):  # These people are attacking the stranger right now (D-51: talk still reaches them).
         combat.start(state, case["fight"], 0, "developer", lethal=False)
     return state, person

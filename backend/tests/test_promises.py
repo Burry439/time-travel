@@ -61,3 +61,37 @@ def test_a_promise_without_its_move_is_kept_by_code():
     assert key == "go_tell" and to == "npc_roderic_vale"
     key, _, _, unkept = rounds.keep_promise(state, jory, "think about it overnight", "", "")
     assert key == "answer" and unkept == "think about it overnight"  # Nothing to carry out: noted, not faked.
+
+
+def test_someone_given_a_remedy_can_put_it_on_themselves():
+    """Jory, handed a poultice, can use it on his own burn (D-53); without it he can't pretend to."""
+    import gear
+    state = unit_state()
+    jory = npc(state, "npc_jory_venn")
+    gear.add_condition(jory, {"kind": "burn", "area": "arm", "severity": 18}, 0)
+    assert not any(k.startswith("treat_self") for k in talk.replies(state, jory))
+    context = talk.voice_context(state, jory, "put it on your burn", "answer")
+    assert context["what_they_have"] == ["nothing in their hands"]
+    poultice = state["objects"]["plantain_a"]
+    poultice.update(holder_id="npc_jory_venn", gear={"kind": "remedy", "class": "poultice", "covers": [],
+                                                    "quality": "fair"})
+    assert "treat_self:plantain_a" in talk.replies(state, jory)
+    talk.exchange(state, "npc_jory_venn", "put it on your burn", {}, "treat_self:plantain_a", "There. Cooler.", [])
+    burn = next(c for c in npc(state, "npc_jory_venn")["conditions"] if c["kind"] == "burn")
+    assert burn["treated"] > 0 and state["objects"]["plantain_a"]["holder_id"] == "used"
+
+
+def test_good_news_travels_too():
+    """Someone who clearly saw the stranger do a kindness may go and tell a friend or a guard (D-53)."""
+    import village
+    state = unit_state()
+    hessa = npc(state, "npc_hessa_marr")
+    minds.remember(hessa, {"kind": "help", "severity": 1, "victim": "npc_jory_venn", "item": "poultice", "event": 41,
+                           "clarity": "clear", "source": "witnessed", "at": 0,
+                           "summary": "The stranger treated Jory's burn with a poultice.", "short": "treated Jory"})
+    options = village.agenda_options(state, hessa)
+    tells = [k for k, o in options.items() if k.startswith("tell:") and o["plan"]["kind"] == "tell"]
+    assert tells
+    village.apply_agenda(state, hessa, {"agenda": {"choice": tells[0]}, "tell_someone": {"noul": 0.9}}, 0)
+    job = hessa["mind"]["job"]
+    assert job["kind"] == "tell" and "Jory's burn" in job["message"] and job["event"] == 41

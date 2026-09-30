@@ -1216,6 +1216,14 @@ func _play_attempt_reply(data: Dictionary) -> void:
 			await get_tree().create_timer(1.2).timeout # Let the fall or the blow play out in view.
 	request_busy = false
 	ui.bar.result(entry, last_trace)
+	_story_moved_on()
+
+
+## After an attempt or a round (their states arrive outside _accept_state): the device and the tutorial's cards
+## catch up at once, not when the bar closes (D-53).
+func _story_moved_on() -> void:
+	ui.device.refresh()
+	ui.guide.refresh()
 
 
 ## A round: walk over first if the server planned it, then the bar plays it back line by line.
@@ -1240,6 +1248,8 @@ func _play_round_reply(data: Dictionary, target: String) -> void:
 		ui.bar.open(target, "", round)
 	else:
 		ui.bar.ended(round)
+	if not ui.bar.round_playing: # Nothing to play back: the story catches up now (else when playback ends).
+		_story_moved_on()
 
 
 ## Nothing happened: say why honestly, reconcile with the server, and hand the words back.
@@ -1418,6 +1428,7 @@ func round_beat(entry: Dictionary) -> void:
 ## After the round has played out: the death screen if the stranger fell.
 func round_played() -> void:
 	played_action = {}
+	_story_moved_on()
 	var last = run_state.get("last_round")
 	if typeof(last) == TYPE_DICTIONARY and last.get("arrested", false) and run_state["player"].get("alive", true):
 		request_busy = true # Nothing else happens while the guards march you off.

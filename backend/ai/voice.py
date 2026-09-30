@@ -29,7 +29,7 @@ IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "M
 SUSPICION = ["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
              "Much more suspicious"]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v2"  # D-51: errands, promises kept, talk mid-fight.
+SCENE_VERSION = "scene_v3"  # D-51: errands, promises kept, talk mid-fight. D-53: things change hands only by moves.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
 DEVICE_VERSION = "device_v1"  # The device from the future, answering the stranger (D-50).

@@ -111,8 +111,17 @@ def test_the_whole_story_moves_on_by_outcomes():
     assert gear.treat(jory, burn, poultice, state["sim_time_ms"])["ok"]
     read_and_tick(state)
     assert at_step(state) == "kade"
-    kade = npc(state, "npc_kade_east")
-    assert kade["mind"]["job"]["kind"] == "approach"  # He comes over.
+    mara, kade = npc(state, "npc_mara_venn"), npc(state, "npc_kade_east")
+    assert mara["mind"]["job"]["kind"] == "tell" and mara["mind"]["job"]["target"] == "npc_kade_east"  # She goes.
+    read_and_tick(state)
+    for _ in range(120):  # She walks over and tells him; then he comes (D-53: people pass things on).
+        beat(state, 1000)
+        tutorial.tick(state)
+        kade = npc(state, "npc_kade_east")
+        if ((kade.get("mind") or {}).get("job") or {}).get("kind") == "approach":
+            break
+    assert any(h["from"] == "npc_mara_venn" for h in kade["mind"]["knows"]["heard"])
+    assert kade["mind"]["job"]["kind"] == "approach" and "kade:called" in state["tutorial"]["fired"]
     kade.update(x=state["player"]["x"] + 1, y=state["player"]["y"])
     read_and_tick(state)
     assert state["objects"]["practice_staff"]["lent_to"] == "player" and at_step(state) == "arm"  # Lent, not stolen.
@@ -127,7 +136,8 @@ def test_the_whole_story_moves_on_by_outcomes():
     carry(state, "nail_a")
     read_and_tick(state)
     assert at_step(state) == "wonder"
-    minds.remember(jory, {"kind": "demonstration", "works": True, "clarity": "clear", "severity": 1, "event": 99,
+    minds.remember(npc(state, "npc_jory_venn"), {"kind": "demonstration", "works": True, "clarity": "clear",
+                                                 "severity": 1, "event": 99,
                           "summary": "The stranger struck sparks.", "short": "struck sparks", "victim": None,
                           "source": "witnessed"})
     read_and_tick(state)
@@ -221,3 +231,20 @@ def test_a_tutorial_journey_over_http_reads_progresses_asks_and_replays(world):
     normal = http.post("/runs", json={"mode": "normal", "scenario": "tutorial"}).json()
     assert http.post(f"/runs/{normal['run_id']}/tutorial/skip").status_code == 403
     assert http.post("/runs", json={"mode": "normal", "scenario": "moon"}).status_code == 422
+
+
+def test_a_blow_at_kade_during_his_lessons_is_the_bout_not_an_assault():
+    """Seen in play (30 Sep 2026): a punch at Kade with an empty left hand began a real fight, and he killed the
+    stranger with his spear. While Kade is teaching, any blow at him starts the practice bout (D-53)."""
+    state = tutorial_state()
+    state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "arm")
+    state["tutorial"]["read"] = state["tutorial"]["step"]
+    kade = npc(state, "npc_kade_east")
+    state["player"].update(x=48, y=60)
+    kade.update(x=49, y=60)
+    assert combat.strike(state, "left", "npc_kade_east", state["sim_time_ms"])["ok"]  # Bare fists.
+    beat(state, 1000)
+    assert state["fight"] and state["fight"]["spar"] and state["fight"]["lethal"]["npc_kade_east"] is False
+    assert gear.held(state, npc(state, "npc_kade_east"), "right")["id"] == "practice_staff_kade"  # Not his spear.
+    assert not any(m["kind"] == "violence" for n in state["npcs"] for m in (n.get("mind") or {}).get("memories", []))
+    assert "bout:spar" in state["tutorial"]["fired"]

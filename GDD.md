@@ -160,9 +160,9 @@ Keep it short, dismissible, and free of hints.
 8. Talk to him.
 9. Make a poultice.
 10. Treat his burn.
-11. Kade comes over and lends his staff and shield.
+11. Mara goes and tells Kade about you, and he comes over and lends his staff and shield (D-53: people pass things on, on screen; he comes anyway after 90 s).
 12. Hold the staff.
-13. Kade's bout: pulled blows, no crime, no arrest.
+13. Kade's bout: pulled blows, no crime, no arrest. From the moment Kade comes over until the bout is done, any blow at him (fists, a thrown stone) starts the bout instead of a real fight (D-53).
 14. Pick up the bent iron nail.
 15. Show Jory sparks from flint and iron catching in dry grass (or anything else that works).
 16. The city: the yard and the wainwright's notebook, then **Carry on** or **Begin a fresh journey**.
@@ -186,6 +186,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
+| D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
 | D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
 | D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
 | **Quick action** | Pick up a loose stone, put something down, inspect | Deterministic rules, no AI | < 100 ms |
@@ -271,7 +272,11 @@ These appear in the result card, the journal, and the developer trace.
 >
 > **Replies (D-46).** One call to the voice model (Luna) per reply (since D-48, one call per round for the whole group). As this person, it reads the moment: how the exchange changed their view of you, their suspicion, their anger, whether they believe you, whether a guard has reason enough to let you in and sees no threat, and whether a deal was agreed or done. It knows why they're here ("came about Tomas's stolen rope"), where things are in town, and the conversation so far. It says what they'd say and picks one move code offers: tell a fact, send you to someone, offer a deal, lend or give, demand stolen goods back, take them back, forgive, arrest, attack, fetch a guard, go and tell someone something (`go_tell`, D-51), speak for you to the captain, stop attacking you, refuse, send you away, end it, or simply talk.
 
-> **Promises are kept (D-51).** If someone says they'll go and tell, ask or fetch someone, their move must be the one that does it: they walk over and say it, and the listener remembers it (and may act on it). Someone you helped (a wound treated, a gift) can speak for you to the captain whatever their trust. Each line also reports anything promised for later; if the move picked doesn't carry it out, code does when it can (an errand to the person named, or to the captain for "the guards"), and otherwise records the promise as unkept in the trace. `tools/audit_promises.py` scans saved conversations for unkept promises, and every live talk eval checks them. Code checks the move against that same reading (letting you in needs reason enough and no threat) and applies it. People within 5 cells overhear. The journal lists what people told you and your deals.
+> **Promises are kept (D-51).** If someone says they'll go and tell, ask or fetch someone, their move must be the one that does it: they walk over and say it, and the listener remembers it (and may act on it). Someone you helped (a wound treated, a gift) can speak for you to the captain whatever their trust. Each line also reports anything promised for later; if the move picked doesn't carry it out, code does when it can (an errand to the person named, or to the captain for "the guards"), and otherwise records the promise as unkept in the trace. `tools/audit_promises.py` scans saved conversations for unkept promises, and every live talk eval checks them.
+
+> **Things change hands only by moves (D-53).** Each person is told what they have (`what_they_have`) and what the stranger has (`the_stranger_has`). Nobody says they are holding, using or putting on something they don't have: told to "apply it" while the stranger still has the poultice, Jory asks for it. Someone who holds a remedy for their own wound can put it on (`treat_self`).
+
+Code checks the move against that same reading (letting you in needs reason enough and no threat) and applies it. People within 5 cells overhear. The journal lists what people told you and your deals.
 >
 > **A fair baseline (D-46):**
 > - Ordinary talk leaves people unchanged or warmer.
@@ -775,6 +780,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Agendas** (`backend/village.py`, D-37).
 >   - The decider asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
 >   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
+>   - **Good news travels too (D-53).** Someone who clearly saw the stranger help, give or show something that worked may walk over and tell family, a friend or a guard (a `tell` errand: they say it aloud on arrival, and the listener remembers who told them).
 >   - The gate never drops below two guards.
 >   - The same errand isn't offered twice in a row.
 >   - The decider also picks their mood.
@@ -2061,6 +2067,38 @@ Changes to this document: …
 - A first-time player, start to finish: time taken, and which help cards they open.
 - Kade walks from his patrol at step 11; if he's far off, the wait is visible.
 - Future painted art needs `tools/shrink_material_art.gd` (the art tool now says so).
+
+### Retro: the tutorial in order, people passing things on (D-53), 30 Sep 2026
+
+**Built:**
+
+- Client: `_story_moved_on` after every attempt and round (and after a round's playback).
+- `tutorial.spar_partner` and `spar_now`, called from `combat` before a blow or missile lands.
+- Tutorial actions `errand`; checks `any`, `heard_from` and `step_time`; Mara fetches Kade.
+- `village.good_news` with a `tell` plan; `talk.holding`, `talk.self_remedies` and the `treat_self` move; `scene_v3`.
+- Talk evals: `hurt` and `objects` set-ups, and two honesty cases.
+- The Ziva MCP registered for this project (`ziva-godot`, `http://127.0.0.1:7012/api/mcp`, while the Godot editor runs).
+
+**Evidence:**
+
+- 213 backend tests pass. New:
+  - a fist at Kade during his lessons is the bout (his practice staff, not his spear; no violence remembered);
+  - Mara walks to Kade and tells him, and he comes;
+  - a poultice handed to Jory can go on his burn, and he can't claim one he doesn't have;
+  - good news becomes a `tell` errand.
+- All Godot smoke tests pass on stub.
+- Live talk evals:
+  - honesty cases 6/6: told to apply what the stranger holds, Jory asks for it ("I can't take it from you while you've still got it in your hands"); handed it, he puts it on himself (`treat_self`) 3/3;
+  - the full suite: 30/32. The misses, `oren_in_awe` and `group_compass_at_gate`, both failed on earlier days too.
+
+**Lessons:**
+
+- Every path that changes the state has to tell every view. Rounds and attempts set the state directly and skipped the guide.
+- A tutorial's fixed story still lives in the real world: an assault, an item in the wrong hands, a person who never heard. Each needs a rule that keeps the fiction honest, not a special case.
+
+**To watch:**
+
+- Whether villagers now pass news on too often, or at odd moments (the agenda decides; watch it in play).
 
 ---
 

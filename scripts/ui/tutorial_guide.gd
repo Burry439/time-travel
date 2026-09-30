@@ -357,8 +357,11 @@ func _back() -> void:
 func _close() -> void:
 	if panel == null:
 		return
+	var was_open := panel.visible
 	panel.hide()
 	shade.hide()
+	if was_open and ui.bar.visible: # Back to the conversation where it was.
+		ui.bar._focus_line.call_deferred()
 
 
 ## The cards are read: close them, and tell the story the current step's cards are read (so its task counts).

@@ -661,6 +661,77 @@
    "expect_speakers_any": [
     "npc_jory_venn"
    ]
+  },
+  {
+   "id": "jory_told_to_apply_what_stranger_holds",
+   "group": "honesty",
+   "npc": "npc_jory_venn",
+   "hurt": [
+    {
+     "kind": "burn",
+     "area": "arm",
+     "severity": 18
+    }
+   ],
+   "objects": {
+    "plantain_a": {
+     "gear": {
+      "kind": "remedy",
+      "class": "poultice",
+      "covers": [],
+      "quality": "fair"
+     },
+     "name": "plantain poultice",
+     "holder_id": "player"
+    }
+   },
+   "lines": [
+    "I made a poultice for your burn. Yes, apply it to the burn."
+   ],
+   "forbid": [
+    "treat_self"
+   ],
+   "line_must_not_contain": [
+    " feels cool",
+    " it stings",
+    " i'm holding",
+    " i'll hold",
+    " feels better",
+    " there, it's on"
+   ]
+  },
+  {
+   "id": "jory_given_a_poultice",
+   "group": "honesty",
+   "npc": "npc_jory_venn",
+   "hurt": [
+    {
+     "kind": "burn",
+     "area": "arm",
+     "severity": 18
+    }
+   ],
+   "objects": {
+    "plantain_a": {
+     "gear": {
+      "kind": "remedy",
+      "class": "poultice",
+      "covers": [],
+      "quality": "fair"
+     },
+     "name": "plantain poultice",
+     "holder_id": "npc_jory_venn"
+    }
+   },
+   "lines": [
+    {
+     "say": "Here, it's yours. Put it on your burn.",
+     "happened": "The stranger hands Jory the plantain poultice."
+    }
+   ],
+   "expect_any": [
+    "treat_self"
+   ]
   }
  ]
 }

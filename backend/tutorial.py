@@ -182,6 +182,15 @@ def holds(state: dict, condition: dict) -> bool:
     here = minds.player_cell(state)
     if kind == "always":
         return True
+    if kind == "any":
+        return any(holds(state, c) for c in condition["of"])
+    if kind == "heard_from":  # Someone has come and told them (an errand, D-51).
+        npc = minds.find(state["npcs"], condition["npc"])
+        return bool(npc) and any(h.get("from") == condition["from"]
+                                 for h in (npc.get("mind") or {}).get("knows", {}).get("heard", []))
+    if kind == "step_time":  # A fallback: this long since the step began.
+        tutorial = state.get("tutorial") or {}
+        return state.get("sim_time_ms", 0) - tutorial.get("started_at", 0) >= condition["seconds"] * 1000
     if kind == "near":
         return math.dist(here, tuple(condition["cell"])) <= condition["within"]
     if kind == "carrying":
@@ -243,6 +252,35 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
             if staff and staff.get("holder_id") == npc["id"]:
                 npc.setdefault("equipped", {})["right"] = staff["id"]
             combat.start(state, [npc["id"]], now, "spar", lethal=False)
+        elif kind == "errand" and npc and npc.get("alive", True):  # Someone goes and tells someone (D-51).
+            minds._set_job(npc, {"kind": "tell", "target": action["to"], "speed": "walk", "message": action["message"],
+                                 "event": None, "quiet": True}, now)
+
+
+def spar_partner(state: dict) -> str | None:
+    """Kade, while he is the stranger's teacher (from when he comes over until the bout is done): a blow at him then
+    is sparring, never an assault (D-53). A first blow with fists or before his cards is still a bout."""
+    if not active(state):
+        return None
+    ids = [step["id"] for step in STEPS]
+    here = state["tutorial"]["step"]
+    if "kade" in ids and "bout" in ids and ids.index("kade") <= here <= ids.index("bout"):
+        return KADE
+    return None
+
+
+def spar_now(state: dict, npc: dict, now: int) -> bool:
+    """The stranger struck at Kade during his lessons: it becomes the bout (pulled blows, no crime). Returns whether
+    it did."""
+    if npc["id"] != spar_partner(state) or state.get("fight"):
+        return False
+    tutorial = state["tutorial"]
+    bout = next(step for step in STEPS if step["id"] == "bout")
+    for trigger in bout.get("triggers", []):
+        tutorial["fired"].append(f"bout:{trigger['id']}")
+    _do(state, [{"kind": "npc_says", "npc": KADE, "text": "Ha! Straight in, is it? Only practice, then: nobody bleeds."},
+                {"kind": "spar", "npc": KADE}], now)
+    return True
 
 
 # --- What the device is told when asked -----------------------------------------------------------------------

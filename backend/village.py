@@ -105,6 +105,21 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
                 options[f"tell:{other['id']}"] = {
                     "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} what "
                                    f"happened: {grievance['summary']}", "plan": {"kind": "visit", "target": other["id"]}}
+        good = None if grievance else good_news(npc)
+        if good:  # Good news travels too (D-53): family, friends, then the guards.
+            listeners = sorted((o for o in state["npcs"] if o["id"] != npc["id"] and o.get("alive", True)
+                                and not o.get("down") and not minds.knows(o, good.get("event"))
+                                and math.dist(minds._cell(o), minds._cell(npc)) > MEET_CELLS),
+                               key=lambda o: (not minds.is_family(npc, o["id"]),
+                                              persona.opinions(npc).get(o["id"], {}).get("warmth", 0.0) < 0.4,
+                                              not minds.card(o).get("guard"),
+                                              math.dist(minds._cell(o), minds._cell(npc))))
+            for other in listeners[:2]:
+                options[f"tell:{other['id']}"] = {
+                    "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} about "
+                                   f"it: {good['summary']}",
+                    "plan": {"kind": "tell", "target": other["id"], "message": good["summary"],
+                             "event": good.get("event")}}
         wronged = next((m for m in minds.mind(npc)["memories"] if m["kind"] in minds.CRIME_KINDS
                         and m.get("victim") == npc["id"] and m.get("source") == "victim" and not m.get("settled")), None)
         player = state["player"]
@@ -125,6 +140,14 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
     if last.startswith(("visit:", "tell:", "stranger", "confront")):  # Not the same errand twice in a row.
         options.pop(last, None)
     return options
+
+
+def good_news(npc: dict) -> dict | None:
+    """The latest good thing this person saw or was given from the stranger, clearly, worth passing on (D-53)."""
+    good = [m for m in minds.mind(npc)["memories"] if m["kind"] in ("help", "gift", "demonstration")
+            and m.get("clarity") == "clear" and m.get("works", True) and m.get("event") is not None
+            and m.get("source") in ("received", "witnessed", "shown", "victim")]
+    return good[-1] if good else None
 
 
 def _grievance(npc: dict) -> dict | None:
@@ -183,6 +206,11 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
         minds._set_job(npc, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "confront",
                              "line": line, "line_id": line_id}, now)
         my_mind["doing"] = "going to have it out with the stranger"
+    elif plan["kind"] == "tell":  # Walk over and tell them (minds' tell errand delivers it and they remember).
+        other = minds.find(state["npcs"], plan["target"])
+        minds._set_job(npc, {"kind": "tell", "target": plan["target"], "speed": "walk", "message": plan["message"],
+                             "event": plan.get("event")}, now)
+        my_mind["doing"] = f"on the way to tell {other['name'] if other else 'someone'} about the stranger"
     elif plan["kind"] == "stranger":
         minds._set_job(npc, {"kind": "approach", "target": "player", "stop": 3.0, "speed": "walk", "then": None,
                              "line": None, "line_id": None}, now)

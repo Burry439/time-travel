@@ -489,6 +489,7 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
                                                                                   profile["reach"])
     if npc is None or not npc.get("alive", True):
         return
+    _spar_instead(state, npc, at)
     distance = math.dist(minds._cell(npc), minds.player_cell(state))
     if distance > profile["reach"] + 0.01:
         _log(state, "player", "miss", f"You swing at {npc['name']} and hit nothing but air.", at, journal)
@@ -526,6 +527,13 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
     _log(state, "player", "hit" if result not in ("deflected",) else "glance", _blow_words(npc, profile, result, outcome),
          at, journal)
     _react(state, npc, result, swing, at)
+
+
+def _spar_instead(state: dict, npc: dict, at: int) -> None:
+    """In the tutorial, a blow at Kade while he's teaching is the bout, not an assault (D-53)."""
+    if state.get("tutorial") and not active(state):
+        import tutorial
+        tutorial.spar_now(state, npc, at)
 
 
 def in_front(state: dict, npcs: list[dict], facing: list[float] | None, reach: float) -> dict | None:
@@ -647,6 +655,7 @@ def _missile_lands(state: dict, npcs: list[dict], shot: dict, journal: list[dict
     hit = npc is not None and npc.get("alive", True) and math.dist(minds._cell(npc), tuple(shot["to"])) <= HIT_RADIUS
     landing = tuple(shot["to"])
     if hit:
+        _spar_instead(state, npc, at)
         shield = gear.shield_of(state, npc)
         aware = crafting._aware(state, npc)
         if shield is not None and aware and gear.SHIELDS.get(gear.of(shield).get("class") or "", {}).get("block_ranged"):

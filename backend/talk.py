@@ -232,7 +232,28 @@ def helped_by_stranger(npc: dict) -> bool:
 
 
 ERRANDS = ("vouch", "go_tell", "call_guard", "refer", "lend", "give", "offer", "accept_trade", "take_back", "seize",
-           "attack", "admit", "stop_fighting", "forgive")  # Moves that carry something out.
+           "attack", "admit", "stop_fighting", "forgive", "treat_self")  # Moves that carry something out.
+
+
+def holding(state: dict, person_id: str) -> list[dict]:
+    """What someone has on them or in their hands (not what they wear)."""
+    import gear
+    person = state["player"] if person_id == "player" else minds.find(state["npcs"], person_id) or {}
+    worn = {oid for slot, oid in (person.get("equipped") or {}).items() if slot in gear.COVERS}
+    return [o for o in state["objects"].values() if o.get("holder_id") == person_id and o["id"] not in worn]
+
+
+def self_remedies(state: dict, npc: dict) -> list[tuple[dict, int]]:
+    """Remedies this person holds that treat one of their own untreated wounds: [(remedy, condition index)]."""
+    import gear
+    found = []
+    for obj in holding(state, npc["id"]):
+        spec = gear.remedy_for(obj)
+        for index, condition in enumerate(npc.get("conditions") or []):
+            if spec and spec["treats"].get(condition["kind"]) and condition in gear.untreated(npc):
+                found.append((obj, index))
+                break
+    return found
 
 
 def replies(state: dict, npc: dict) -> dict[str, dict]:
@@ -312,6 +333,11 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
                                                f"says they'll go and tell or ask someone.")
     if fighting:
         options["stop_fighting"] = option("stop_fighting", f"{name} stops attacking the stranger and backs off.")
+    import gear
+    for obj, index in self_remedies(state, npc):  # Something they were given for their own wound (D-53).
+        options[f"treat_self:{obj['id']}"] = option(
+            "treat_self", f"{name} puts the {obj['name']} on their own "
+                          f"{gear.describe(npc['conditions'][index]).removeprefix('the ')}.", obj["id"])
     if can_admit(state, npc):
         options["admit"] = option("admit", f"{name} admits the stranger into the city and orders the gate opened "
                                            f"for them." if npc["id"] == CAPTAIN else
@@ -470,6 +496,8 @@ def voice_context(state: dict, npc: dict, text: str, key: str, answers: dict | N
                                     "suspicion": _words(view["suspicion"], ["none", "slight", "wary", "very wary"]),
                                     "anger": _words(anger, minds.ANGER_LEVELS)},
         "what_they_know": known,
+        "what_they_have": [o["name"] for o in holding(state, npc["id"])] or ["nothing in their hands"],
+        "the_stranger_has": [o["name"] for o in holding(state, "player")] or ["nothing"],
         "keeps_to_themselves": private,
         "conversation_so_far": [{"speaker": "stranger" if t["who"] == "stranger" else me["name"], "words": t["text"]}
                                 for t in persona.current_talk(npc)],
@@ -763,6 +791,15 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     elif act == "stop_fighting":
         import combat
         combat.withdraw(state, npc_id, now)
+    elif act == "treat_self":
+        import gear
+        remedy = state["objects"][target]
+        index = next((i for obj, i in self_remedies(state, npc) if obj["id"] == target), None)
+        result = gear.treat(npc, index, remedy, now) if index is not None else {"ok": False}
+        if result.get("ok") and result.get("consumed"):
+            state["objects"][target] = {**remedy, "holder_id": "used", "condition": "used up"}
+            lent.append({"id": target, "holder_id": "used", "owner_id": remedy.get("owner_id")})
+        minds._set_job(npc, {"kind": "watch", "until": now + TALK_WATCH_MS}, now)
     elif act == "forgive" and fighting:
         import combat
         minds.settle(state, f"forgiven by {name}", kinds=("theft", "violence", "trouble"), npc_ids={npc_id})

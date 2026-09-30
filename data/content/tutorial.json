@@ -1,208 +1,458 @@
 {
  "version": 2,
- "notes": "The tutorial, 'The first morning' (GDD D-50, D-52): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}.",
+ "notes": "The tutorial, 'The first morning' (GDD D-50, D-52): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}.",
  "device_name": "the device",
  "stuck_after_s": 60,
  "steps": [
   {
-   "id": "welcome", "title": "Awake",
+   "id": "welcome",
+   "title": "Awake",
    "cards": [
     "…signal. There you are. Don't be alarmed: it's me, the device you came through with. I'm damaged, but I can still talk, and only you can hear me.",
     "You're on a road below a walled city, a very long way back in time. I'll show you how things work here, one thing at a time.",
     "While I'm talking, the world waits for you. Read at your own pace, then press {Enter} or click Next."
    ],
    "task": "",
-   "check": {"kind": "always"},
+   "check": {
+    "kind": "always"
+   },
    "done": ""
   },
   {
-   "id": "walk", "title": "Walking",
+   "id": "walk",
+   "title": "Walking",
    "cards": [
     "First, walking. Use {W} {A} {S} {D} or the arrow keys. Hold {Shift} to run.",
     "See the glowing ring a little way up the road? Walk into it."
    ],
    "task": "Walk into the glowing ring up the road",
-   "focus": {"cell": [48, 62]},
-   "check": {"kind": "near", "cell": [48, 62], "within": 1.5},
+   "focus": {
+    "cell": [
+     48,
+     62
+    ]
+   },
+   "check": {
+    "kind": "near",
+    "cell": [
+     48,
+     62
+    ],
+    "within": 1.5
+   },
    "done": "Good. You can go anywhere you like here.",
-   "help": ["Press {W} (or the up arrow) to walk north, towards the top of the screen.", "The ring is just a few steps up the road from where you started. The arrow at the edge of the screen points to it when it's out of sight."]
+   "help": [
+    "Press {W} (or the up arrow) to walk north, towards the top of the screen.",
+    "The ring is just a few steps up the road from where you started. The arrow at the edge of the screen points to it when it's out of sight."
+   ]
   },
   {
-   "id": "look", "title": "Looking closer",
+   "id": "look",
+   "title": "Looking closer",
    "cards": [
     "Everything here is real: it has weight, it's made of something, and someone may own it. Nothing is scenery just because it's small.",
     "Hover the mouse over anything to see its name. {Right-click} it to look closer. Try it on the plantain leaves, in the ring."
    ],
    "task": "Right-click the plantain leaves to look closer",
-   "focus": {"object": "plantain_a"},
-   "check": {"kind": "ui", "key": "inspect"},
+   "focus": {
+    "object": "plantain_a"
+   },
+   "check": {
+    "kind": "ui",
+    "key": "inspect"
+   },
    "done": "That card tells you what a thing is, what it's made of, and whose it is. Click anywhere else to close it.",
-   "help": ["Move the mouse over the plantain leaves (in the ring), then press the right mouse button."]
+   "help": [
+    "Move the mouse over the plantain leaves (in the ring), then press the right mouse button."
+   ]
   },
   {
-   "id": "take", "title": "Your hands",
+   "id": "take",
+   "title": "Your hands",
    "cards": [
     "You arrived with nothing but your clothes. Let's change that.",
     "{Left-click} something to pick it up (you walk there first), or stand next to it and press {E}. Pick up the plantain leaves."
    ],
    "task": "Pick up the plantain leaves: left-click them",
-   "focus": {"object": "plantain_a"},
-   "check": {"kind": "carrying_id", "ids": ["plantain_a"]},
+   "focus": {
+    "object": "plantain_a"
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "plantain_a"
+    ]
+   },
    "done": "In your pack now, along the bottom of the screen. Plantain is a healing herb: keep it.",
-   "help": ["Point at the plantain leaves and press the left mouse button. Or walk right up to them and press {E}."]
+   "help": [
+    "Point at the plantain leaves and press the left mouse button. Or walk right up to them and press {E}."
+   ]
   },
   {
-   "id": "gather", "title": "Two more things",
+   "id": "gather",
+   "title": "Two more things",
    "cards": [
     "Two more: the flint shard and the bundle of dry grass. Both are marked. You'll want them later."
    ],
    "task": "Pick up the flint shard and the dry grass",
-   "focus": {"objects": ["flint_a", "grass_a"]},
-   "check": {"kind": "carrying_id", "ids": ["flint_a", "grass_a"]},
+   "focus": {
+    "objects": [
+     "flint_a",
+     "grass_a"
+    ]
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "flint_a",
+     "grass_a"
+    ]
+   },
    "done": "Watch the weight on the right of your pack: you can carry about twenty kilos.",
-   "help": ["Both are just beside the road, a little west of where you woke. Follow the rings.", "{Left-click} each one."]
+   "help": [
+    "Both are just beside the road, a little west of where you woke. Follow the rings.",
+    "{Left-click} each one."
+   ]
   },
   {
-   "id": "pack", "title": "Your pack",
+   "id": "pack",
+   "title": "Your pack",
    "cards": [
     "Press {I} to open Pack & gear. It shows what's in your hands, what you wear, what you carry, and any wounds you have.",
     "Have a look, then close it again with {Esc}."
    ],
    "task": "Press I to open Pack & gear",
-   "check": {"kind": "ui", "key": "pack"},
+   "check": {
+    "kind": "ui",
+    "key": "pack"
+   },
    "done": "You'll use Pack & gear to hold weapons and to treat wounds. Close it with {Esc} whenever you like.",
-   "help": ["Press the {I} key on your keyboard."]
+   "help": [
+    "Press the {I} key on your keyboard."
+   ]
   },
   {
-   "id": "smithy", "title": "A cry from the smithy",
+   "id": "smithy",
+   "title": "A cry from the smithy",
    "on_start": [
-    {"kind": "hurt", "npc": "npc_jory_venn", "condition": {"kind": "burn", "area": "arm", "severity": 18}},
-    {"kind": "npc_says", "npc": "npc_jory_venn", "text": "Ahh! The tongs slipped. My arm, it's burning!"}
+    {
+     "kind": "hurt",
+     "npc": "npc_jory_venn",
+     "condition": {
+      "kind": "burn",
+      "area": "arm",
+      "severity": 18
+     }
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_jory_venn",
+     "text": "Ahh! The tongs slipped. My arm, it's burning! Aunt Mara!"
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_mara_venn",
+     "text": "Jory! Hold still, let me see. That's a bad one, and I've nothing here for burns."
+    }
    ],
    "cards": [
     "Did you hear that? Someone's hurt, over at the smithy to the north-west.",
     "It's Jory, the smith's apprentice. He's marked: follow the arrow at the edge of the screen. Hold {Shift} to run."
    ],
    "task": "Go to Jory at the smithy",
-   "focus": {"npc": "npc_jory_venn"},
-   "check": {"kind": "npc_near", "npc": "npc_jory_venn", "within": 3.0},
+   "focus": {
+    "npc": "npc_jory_venn"
+   },
+   "check": {
+    "kind": "npc_near",
+    "npc": "npc_jory_venn",
+    "within": 3.0
+   },
    "done": "There he is. The woman with him is Mara, his aunt, the smith.",
-   "help": ["Follow the arrow at the edge of the screen: north-west, past the inn.", "Hold {Shift} while you walk to run."]
+   "help": [
+    "Follow the arrow at the edge of the screen: north-west, past the inn.",
+    "Hold {Shift} while you walk to run."
+   ]
   },
   {
-   "id": "talk", "title": "Talking",
+   "id": "talk",
+   "title": "Talking",
    "cards": [
     "Talking is simple: {Left-click} a person, or press {T}, and type whatever you'd say. Anything at all. There are no lines to choose from, and people answer as themselves.",
     "Try these words, or your own:"
    ],
-   "suggest": {"text": "Let me see your arm.", "to": "npc_jory_venn", "button": true},
+   "suggest": {
+    "text": "Let me see your arm.",
+    "to": "npc_jory_venn",
+    "button": true
+   },
    "task": "Talk to Jory: click him, type, press Enter",
-   "focus": {"npc": "npc_jory_venn"},
-   "check": {"kind": "talked_to", "npc": "npc_jory_venn"},
+   "focus": {
+    "npc": "npc_jory_venn"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_jory_venn"
+   },
    "done": "Notice Mara listening in: anyone near enough can join a conversation. They'll remember what you said, and how you said it.",
-   "help": ["{Left-click} Jory to open the dialogue bar, type something, and press {Enter}.", "Or press Type it for me on the card, then {Enter}."]
+   "help": [
+    "{Left-click} Jory to open the dialogue bar, type something, and press {Enter}.",
+    "Or press Type it for me on the card, then {Enter}."
+   ]
   },
   {
-   "id": "remedy", "title": "Something for the burn",
+   "id": "remedy",
+   "title": "Something for the burn",
    "cards": [
     "That burn needs dressing, or it will fester within the hour. You know more about burns than anyone alive here.",
     "To make something, press {T} and say what you do, in your own words. The world decides whether it works, and tells you why when it doesn't.",
     "Try this:"
    ],
-   "suggest": {"text": "crush the plantain leaves into a poultice for a burn", "to": null, "button": true},
+   "suggest": {
+    "text": "crush the plantain leaves into a poultice for a burn",
+    "to": null,
+    "button": true
+   },
    "task": "Make a poultice from the plantain leaves",
-   "check": {"kind": "carrying_remedy", "treats": "burn"},
+   "check": {
+    "kind": "carrying_remedy",
+    "treats": "burn"
+   },
    "done": "You made that. It exists now: nobody in this world had one until you did.",
-   "help": ["Press {T}, type what you do with the plantain leaves, and press {Enter}.", "If it didn't work, the dialogue bar says why. Try again with the words on the card: \"crush the plantain leaves into a poultice for a burn\"."]
+   "help": [
+    "Press {T}, type what you do with the plantain leaves, and press {Enter}.",
+    "If it didn't work, the dialogue bar says why. Try again with the words on the card: \"crush the plantain leaves into a poultice for a burn\"."
+   ]
   },
   {
-   "id": "treat", "title": "Treat Jory",
+   "id": "treat",
+   "title": "Treat Jory",
    "cards": [
-    "Now put it on him. Stand beside Jory and say what you do:"
+    "Now put it on him yourself. Telling Jory what to do isn't the same as doing it: say what you do.",
+    "Stand beside Jory and try this:"
    ],
-   "suggest": {"text": "lay the poultice on Jory's burn and bind it", "to": "npc_jory_venn", "button": true},
+   "suggest": {
+    "text": "lay the poultice on Jory's burn and bind it",
+    "to": "npc_jory_venn",
+    "button": true
+   },
    "task": "Put the poultice on Jory's burn",
-   "focus": {"npc": "npc_jory_venn"},
-   "check": {"kind": "condition_treated", "npc": "npc_jory_venn", "condition": "burn"},
-   "on_done": [{"kind": "npc_says", "npc": "npc_mara_venn", "text": "That was decent of you, stranger. Kade was asking after anyone who can hold a weapon. He'll want a look at you."}],
-   "done": "He'll remember that. So will Mara. Kindness counts here the way evidence does: people trust what they've seen you do. The same goes for you: cuts, burns and breaks need something made for them.",
-   "help": ["Stand right beside Jory, press {T}, and describe putting the poultice on his burn.", "Or press Type it for me on the card, then {Enter}."]
-  },
-  {
-   "id": "kade", "title": "A guard comes over",
-   "on_start": [{"kind": "approach", "npc": "npc_kade_east"}],
-   "cards": [
-    "Here comes Kade, one of the guards. Mara told him about you. Wait for him, or walk to meet him."
+   "focus": {
+    "npc": "npc_jory_venn"
+   },
+   "check": {
+    "kind": "condition_treated",
+    "npc": "npc_jory_venn",
+    "condition": "burn"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_mara_venn",
+     "text": "That was decent of you, stranger. Kade was asking after anyone who can hold a weapon. Wait here: I'll fetch him."
+    },
+    {
+     "kind": "errand",
+     "npc": "npc_mara_venn",
+     "to": "npc_kade_east",
+     "message": "There's a stranger at the smithy who just dressed Jory's burn, and did it well. You were asking after anyone who can hold a weapon."
+    }
    ],
-   "task": "Wait for Kade (or walk to meet him)",
-   "focus": {"npc": "npc_kade_east"},
-   "triggers": [{"id": "lent", "when": {"kind": "npc_near", "npc": "npc_kade_east", "within": 2.5},
-                 "do": [{"kind": "npc_says", "npc": "npc_kade_east", "text": "Mara says you've got steady hands. Here: a practice staff and a wicker shield. Let's see what you do with them."},
-                        {"kind": "lend", "npc": "npc_kade_east", "objects": ["practice_staff", "wicker_shield"]}]}],
-   "check": {"kind": "carrying_id", "ids": ["practice_staff"]},
-   "done": "A practice staff and a wicker shield, lent to you. Lent things are yours to use, not to keep.",
-   "help": ["Kade is marked: walk towards him and he'll hand you his practice gear."]
+   "done": "He'll remember that. So will Mara. Kindness counts here the way evidence does: people trust what they've seen you do. The same goes for you: cuts, burns and breaks need something made for them.",
+   "help": [
+    "Say what YOU do, not what Jory should do: \"lay the poultice on Jory's burn and bind it\".",
+    "Or hand it to him (drag it from your pack onto Jory) and he can put it on himself.",
+    "Or press Type it for me on the card, then {Enter}."
+   ]
   },
   {
-   "id": "arm", "title": "Arm yourself",
+   "id": "kade",
+   "title": "A guard comes over",
+   "cards": [
+    "Mara has gone to fetch Kade, one of the guards. Watch: people here pass things on to each other, good and bad.",
+    "Wait for them, or walk to meet them."
+   ],
+   "task": "Wait for Mara to bring Kade (or walk to meet him)",
+   "focus": {
+    "npc": "npc_kade_east"
+   },
+   "triggers": [
+    {
+     "id": "called",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "heard_from",
+        "npc": "npc_kade_east",
+        "from": "npc_mara_venn"
+       },
+       {
+        "kind": "step_time",
+        "seconds": 90
+       }
+      ]
+     },
+     "do": [
+      {
+       "kind": "approach",
+       "npc": "npc_kade_east"
+      }
+     ]
+    },
+    {
+     "id": "lent",
+     "when": {
+      "kind": "npc_near",
+      "npc": "npc_kade_east",
+      "within": 2.5
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_kade_east",
+       "text": "Mara says you've got steady hands. Here: a practice staff and a wicker shield. Let's see what you do with them."
+      },
+      {
+       "kind": "lend",
+       "npc": "npc_kade_east",
+       "objects": [
+        "practice_staff",
+        "wicker_shield"
+       ]
+      }
+     ]
+    }
+   ],
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "practice_staff"
+    ]
+   },
+   "done": "A practice staff and a wicker shield, lent to you. Lent things are yours to use, not to keep.",
+   "help": [
+    "Mara walks to Kade and tells him about you; then he comes over. Both are marked.",
+    "If it's taking too long, walk towards Kade: he's marked with a ring."
+   ]
+  },
+  {
+   "id": "arm",
+   "title": "Arm yourself",
    "cards": [
     "Press {I} for Pack & gear. Click the practice staff and choose Right hand. Then click the wicker shield and choose Left hand.",
     "Out in the world, {Space} uses your right hand and {F} your left. Hold {F} with a shield to raise it. {X} swaps your hands."
    ],
    "task": "Press I and put the staff in your right hand",
-   "check": {"kind": "holding_weapon"},
+   "check": {
+    "kind": "holding_weapon"
+   },
    "done": "Weapons have a weight and a reach. A staff keeps them back; a knife needs you close. Armour matters more than anything: remember that when you meet the guards in mail.",
-   "help": ["Press {I}. In the list of things you carry, find the practice staff and press its Right hand button."]
+   "help": [
+    "Press {I}. In the list of things you carry, find the practice staff and press its Right hand button."
+   ]
   },
   {
-   "id": "bout", "title": "Kade's bout",
+   "id": "bout",
+   "title": "Kade's bout",
    "cards": [
     "Kade wants to see what you can do. It's only practice: nobody bleeds.",
     "Fights happen in real time. Every blow winds up first: watch for the red mark over his head, and step back out of reach before it lands. Swing with {Space} while he recovers.",
     "Hold {F} to raise the shield against blows from the front. If it goes badly, press {T} and say you give up. Walk up to Kade to begin."
    ],
    "task": "Walk up to Kade and spar: Space swings, hold F to block",
-   "focus": {"npc": "npc_kade_east"},
-   "triggers": [{"id": "spar", "when": {"kind": "ready_to_spar", "npc": "npc_kade_east", "within": 3.0},
-                 "do": [{"kind": "npc_says", "npc": "npc_kade_east", "text": "Right then. Only practice: nobody bleeds. Show me."},
-                        {"kind": "spar", "npc": "npc_kade_east"}]}],
-   "check": {"kind": "bout_over"},
+   "focus": {
+    "npc": "npc_kade_east"
+   },
+   "triggers": [
+    {
+     "id": "spar",
+     "when": {
+      "kind": "ready_to_spar",
+      "npc": "npc_kade_east",
+      "within": 3.0
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_kade_east",
+       "text": "Right then. Only practice: nobody bleeds. Show me."
+      },
+      {
+       "kind": "spar",
+       "npc": "npc_kade_east"
+      }
+     ]
+    }
+   ],
+   "check": {
+    "kind": "bout_over"
+   },
    "done": "Win or lose, you know how a fight goes now. A real one won't stop at 'enough'. Choose your fights carefully.",
-   "help": ["Walk right up to Kade with the staff in your right hand.", "When the red mark shows over his head, step back. Then step in and press {Space}.", "Hold {F} with the shield facing him to take his blows."]
+   "help": [
+    "Walk right up to Kade with the staff in your right hand.",
+    "When the red mark shows over his head, step back. Then step in and press {Space}.",
+    "Hold {F} with the shield facing him to take his blows."
+   ]
   },
   {
-   "id": "nail", "title": "Your real advantage",
+   "id": "nail",
+   "title": "Your real advantage",
    "cards": [
     "Here's your real advantage: you know things nobody here has worked out yet. When people see something work, it changes how they see you.",
     "Let's show them something. First, pick up the bent iron nail lying near the smithy."
    ],
    "task": "Pick up the bent iron nail near the smithy",
-   "focus": {"object": "nail_a"},
-   "check": {"kind": "carrying_id", "ids": ["nail_a"]},
+   "focus": {
+    "object": "nail_a"
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "nail_a"
+    ]
+   },
    "done": "Flint, iron and dry grass: you have everything you need.",
-   "help": ["The nail is marked with a ring, a little east of the smithy."]
+   "help": [
+    "The nail is marked with a ring, a little east of the smithy."
+   ]
   },
   {
-   "id": "wonder", "title": "Something they've never seen",
+   "id": "wonder",
+   "title": "Something they've never seen",
    "cards": [
     "Now show Jory something he's never seen. Stand near him, press {T}, and type it yourself this time:"
    ],
-   "suggest": {"text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch", "to": "npc_jory_venn", "button": false},
+   "suggest": {
+    "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
+    "to": "npc_jory_venn",
+    "button": false
+   },
    "task": "Show Jory something that works",
-   "focus": {"npc": "npc_jory_venn"},
-   "check": {"kind": "demonstration_seen"},
+   "focus": {
+    "npc": "npc_jory_venn"
+   },
+   "check": {
+    "kind": "demonstration_seen"
+   },
    "done": "Did you see their face? That's worth more than any argument. Keep it in mind at the gate.",
-   "help": ["Walk up to Jory, press {T}, type the words from the card, and press {Enter}.", "Anything that really works counts: you don't have to use my idea."]
+   "help": [
+    "Walk up to Jory, press {T}, type the words from the card, and press {Enter}.",
+    "Anything that really works counts: you don't have to use my idea."
+   ]
   },
   {
-   "id": "city", "title": "The city",
+   "id": "city",
+   "title": "The city",
    "cards": [
     "That's everything I can teach you. The city gate is to the north, and it's shut to strangers. How you get in is up to you: by what you make, what you show, who comes to trust you, or something nobody has thought of.",
     "One more thing: in the bottom-right corner of the map is an old wainwright's yard, full of materials anyone may take, and the wainwright's notebook, full of ways to make weapons, armour and remedies. Pick it up and click it in your pack to read it.",
     "I'll stay quiet from here. If you're stuck, press {H} and ask me. I'll point you somewhere, but I won't solve it for you."
    ],
    "task": "",
-   "check": {"kind": "always"},
+   "check": {
+    "kind": "always"
+   },
    "done": ""
   }
  ],

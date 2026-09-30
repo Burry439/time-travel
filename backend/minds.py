@@ -909,8 +909,9 @@ def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: li
     heard = persona.knows(target).setdefault("heard", [])
     heard.append({"from": npc["id"], "from_name": npc["name"], "text": message, "at": now})
     del heard[:-8]
-    mind(target)["rethinks"] = 0
-    add_pending(state, target["id"], "decide", f"told by {npc['name']}")
+    if not job.get("quiet"):  # The tutorial's errands only move its story on.
+        mind(target)["rethinks"] = 0
+        add_pending(state, target["id"], "decide", f"told by {npc['name']}")
 
 
 DEALT_WITH_MS = 60_000  # The stranger just talked to or showed something to a guard: nobody needs to halt them.
