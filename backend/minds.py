@@ -355,6 +355,16 @@ def _describe(state: dict, entry: dict) -> list[dict]:
                                 "severity": 1},
                       "vague": {"summary": "The stranger was showing people something; it was hard to see what.",
                                 "short": "was showing something", "severity": 0}})
+    made = entry.get("made_ids") or []
+    if made and not isinstance(shown, dict) and entry.get("category") in ("success", "partial_success") \
+            and not isinstance(entry.get("harm"), dict):  # Watching something being made is being shown it (D-54).
+        name = entry.get("made_name") or "something"
+        views.append({"kind": "demonstration", "victim": None, "item": name, "audience": [], "think": False,
+                      "works": True, "wonder": "ordinary",
+                      "clear": {"summary": f"The stranger made a {name} in front of them: {entry.get('reason', '')}",
+                                "short": f"made a {name}", "severity": 1},
+                      "vague": {"summary": "The stranger was making something; it was hard to see what.",
+                                "short": "was making something", "severity": 0}})
     placed = entry.get("install")
     if isinstance(placed, dict):
         aids = f" using the {' and the '.join(placed['aid_names'])}" if placed["aid_names"] else ""

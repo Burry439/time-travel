@@ -95,3 +95,26 @@ def test_good_news_travels_too():
     village.apply_agenda(state, hessa, {"agenda": {"choice": tells[0]}, "tell_someone": {"noul": 0.9}}, 0)
     job = hessa["mind"]["job"]
     assert job["kind"] == "tell" and "Jory's burn" in job["message"] and job["event"] == 41
+
+
+def test_a_word_in_passing_does_not_cancel_an_errand():
+    """Seen in play (30 Sep 2026): Jory set off to tell Kade, the stranger spoke to him again, and his reply put him
+    back to standing about; Kade never heard. An errand survives a word in passing (D-54)."""
+    state = unit_state()
+    talk.exchange(state, "npc_jory_venn", "Tell Kade about me?", {}, "go_tell", "I'll go now.", [],
+                  errand_to="npc_kade_east", errand_message="The stranger knows things worth hearing.")
+    talk.exchange(state, "npc_jory_venn", "Was that impressive?", {}, "answer", "It was!", [])
+    job = npc(state, "npc_jory_venn")["mind"]["job"]
+    assert job["kind"] == "tell" and job["target"] == "npc_kade_east"
+
+
+def test_watching_something_made_counts_as_being_shown_it():
+    """The fire made in front of Jory (not 'shown' in so many words) is still something he saw work (D-54)."""
+    state = unit_state()
+    jory = npc(state, "npc_jory_venn")
+    state["player"].update(x=jory["x"], y=jory["y"] + 1)
+    entry = {"event_id": 88, "category": "success", "action": "make", "made_ids": ["made_88"], "made_name": "small fire",
+             "reason": "Sparks catch in the dry grass.", "property": []}
+    minds.apply_perceptions(state, minds.perceive(state, entry))
+    seen = [m for m in npc(state, "npc_jory_venn")["mind"]["memories"] if m["kind"] == "demonstration"]
+    assert seen and seen[-1]["clarity"] == "clear" and "small fire" in seen[-1]["summary"]

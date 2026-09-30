@@ -233,6 +233,7 @@ def helped_by_stranger(npc: dict) -> bool:
 
 ERRANDS = ("vouch", "go_tell", "call_guard", "refer", "lend", "give", "offer", "accept_trade", "take_back", "seize",
            "attack", "admit", "stop_fighting", "forgive", "treat_self")  # Moves that carry something out.
+ERRAND_JOBS = ("tell", "vouch", "report")  # Jobs that take someone somewhere to do something (D-54).
 
 
 def holding(state: dict, person_id: str) -> list[dict]:
@@ -697,6 +698,7 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
     if act == "go_tell" and task is None:
         key, act, target = "answer", "answer", None  # An errand to nobody, or with nothing to say.
     fighting = npc_id in ((state.get("fight") or {}).get("attackers") or [])
+    errand_before = dict(my_mind["job"]) if (my_mind.get("job") or {}).get("kind") in ERRAND_JOBS else None
     my_mind["met"] = True
     change = _update_regard(npc, answers)
     if "anger" in answers:
@@ -823,6 +825,8 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         minds._set_job(npc, {"kind": "report", "target": target, "speed": "walk", "line": None, "line_id": None}, now)
     else:
         minds._set_job(npc, {"kind": "watch", "until": now + TALK_WATCH_MS}, now)
+    if errand_before and ((my_mind.get("job") or {}).get("kind") in (None, "watch")):
+        minds._set_job(npc, errand_before, now)  # A word in passing doesn't cancel an errand (D-54).
     for other in state["npcs"]:  # People close by overhear; they remember it but don't stop to think.
         if other["id"] == npc_id or not other.get("alive", True) \
                 or math.dist(minds._cell(other), minds.player_cell(state)) > HEAR_TALK_CELLS:
