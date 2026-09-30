@@ -13,18 +13,26 @@ import content
 import paths
 from shapes import Npc
 
-# Each anchor is (cell x, cell y, activity at arrival, dwell milliseconds).
-# This file also drives the editor's visible activity-anchor overlay.
+# Each person: role (the short title shown over them), step_ms (their walking pace), goal and anchors, each anchor
+# (cell x, cell y, activity at arrival, dwell milliseconds). The file also drives the editor's anchor overlay.
 ROUTINES = {npc_id: (spec["goal"], spec["anchors"]) for npc_id, spec in content.ROUTINES.items()}
 
 
-def seed_npcs(npcs: list[Npc]) -> list[dict]:
-    seeded = deepcopy(npcs)
+def seed_npcs() -> list[Npc]:
+    """Everyone in the world at the start (data/npc_routines.json, in its order): who they are from their card,
+    the short title shown over them, at their day's first place."""
     blocked = paths.obstacle_cells()
-    for index, npc in enumerate(seeded):
-        goal, anchors = ROUTINES[npc["id"]]
-        assert (npc["x"], npc["y"]) == tuple(anchors[0][:2])
+    seeded = []
+    for index, (npc_id, spec) in enumerate(content.ROUTINES.items()):
+        goal, anchors = ROUTINES[npc_id]
         assert all((x, y) not in blocked for x, y, _, _ in anchors)
+        npc = {
+            "id": npc_id,
+            "name": content.CARDS[npc_id]["name"],
+            "role": spec["role"],
+            "x": anchors[0][0],
+            "y": anchors[0][1],
+        }
         npc["controller"] = {
             "source": "routine",
             "goal": goal,
@@ -33,11 +41,10 @@ def seed_npcs(npcs: list[Npc]) -> list[dict]:
             "destination": [npc["x"], npc["y"]],
             "path": [],
             "step_carry_ms": 0,
-            "step_ms": 360
-            if "guard" in npc["role"].lower() or npc["id"] in ("npc_elin_west", "npc_kade_east")
-            else 440,
+            "step_ms": spec["step_ms"],
             "next_at_ms": anchors[0][3] + index * 170,
         }
+        seeded.append(npc)
     return seeded
 
 

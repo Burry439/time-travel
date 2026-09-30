@@ -22,13 +22,15 @@ from shapes import State
 SPAR_OUTCOMES = ("spar_won", "spar_lost", "spar_yielded")  # How a practice bout can end (combat.end_spar).
 Condition = Callable[[State, dict, dict], bool]
 CONDITIONS: dict[str, Condition] = {}
+NEEDS: dict[str, tuple[str, ...]] = {}  # The fields each kind must have (the content check reads these).
 
 
-def condition(kind: str) -> Callable[[Condition], Condition]:
-    """Register a condition kind: fn(state, spec, ctx) -> bool."""
+def condition(kind: str, *needs: str) -> Callable[[Condition], Condition]:
+    """Register a condition kind, fn(state, spec, ctx) -> bool, and the fields its spec must have."""
 
     def register(fn: Condition) -> Condition:
         CONDITIONS[kind] = fn
+        NEEDS[kind] = needs
         return fn
 
     return register
@@ -61,17 +63,17 @@ def _always(state, spec, ctx):
     return True
 
 
-@condition("all")
+@condition("all", "of")
 def _all(state, spec, ctx):
     return all(holds(state, c, ctx) for c in spec["of"])
 
 
-@condition("any")
+@condition("any", "of")
 def _any(state, spec, ctx):
     return any(holds(state, c, ctx) for c in spec["of"])
 
 
-@condition("not")
+@condition("not", "of")
 def _not(state, spec, ctx):
     return not holds(state, spec["of"], ctx)
 
@@ -79,25 +81,25 @@ def _not(state, spec, ctx):
 # --- Where a scenario stands -------------------------------------------------------------------------------------
 
 
-@condition("flag")
+@condition("flag", "key")
 def _flag(state, spec, ctx):
     """Something the story noted (D-57): whether Kade told the captain the stranger wants in."""
     return bool(_progress(ctx).get("flags", {}).get(spec["key"]))
 
 
-@condition("fired")
+@condition("fired", "key")
 def _fired(state, spec, ctx):
     """A step's trigger has happened ("step:trigger")."""
     return spec["key"] in _progress(ctx).get("fired", [])
 
 
-@condition("step_time")
+@condition("step_time", "seconds")
 def _step_time(state, spec, ctx):
     """A fallback: this long since the step began."""
     return state.get("sim_time_ms", 0) - _progress(ctx).get("started_at", 0) >= spec["seconds"] * 1000
 
 
-@condition("ui")
+@condition("ui", "key")
 def _ui(state, spec, ctx):
     """Something the client reports the stranger did on screen (the pack opened, a closer look, the book read)."""
     return spec["key"] in _progress(ctx).get("ui_done", [])
@@ -119,23 +121,23 @@ def holding(state: State, kind: str) -> bool:
     )
 
 
-@condition("near")
+@condition("near", "cell", "within")
 def _near(state, spec, ctx):
     return math.dist(cast.player_cell(state), tuple(spec["cell"])) <= spec["within"]
 
 
-@condition("carrying")
+@condition("carrying", "count")
 def _carrying(state, spec, ctx):
     return len(carried(state)) >= spec["count"]
 
 
-@condition("carrying_id")
+@condition("carrying_id", "ids")
 def _carrying_id(state, spec, ctx):
     held = {o["id"] for o in carried(state)}
     return all(i in held for i in spec["ids"])
 
 
-@condition("carrying_remedy")
+@condition("carrying_remedy", "treats")
 def _carrying_remedy(state, spec, ctx):
     return any((remedy := gear.remedy_for(o)) and spec["treats"] in remedy["treats"] for o in carried(state))
 
@@ -165,13 +167,13 @@ def _able(state, spec, ctx):
     return bool(npc) and npc.get("alive", True) and not npc.get("down")
 
 
-@condition("npc_near")
+@condition("npc_near", "npc", "within")
 def _npc_near(state, spec, ctx):
     npc = _npc(state, spec, ctx)
     return bool(npc) and npc.get("alive", True) and cast.distance(npc, state["player"]) <= spec["within"]
 
 
-@condition("talked_to")
+@condition("talked_to", "npc")
 def _talked_to(state, spec, ctx):
     """The stranger has said something to them (since_step: since this step began, D-57)."""
     npc = _npc(state, spec, ctx)
@@ -181,7 +183,7 @@ def _talked_to(state, spec, ctx):
     )
 
 
-@condition("said_to")
+@condition("said_to", "words")
 def _said_to(state, spec, ctx):
     """The stranger's own words to them included any of these (whole words, any case)."""
     npc = _npc(state, spec, ctx)
@@ -192,7 +194,7 @@ def _said_to(state, spec, ctx):
     )
 
 
-@condition("heard_from")
+@condition("heard_from", "npc", "from")
 def _heard_from(state, spec, ctx):
     """Someone has come and told them (an errand, D-51), at least after_s seconds ago."""
     npc = _npc(state, spec, ctx)
@@ -203,7 +205,7 @@ def _heard_from(state, spec, ctx):
     )
 
 
-@condition("condition_treated")
+@condition("condition_treated", "npc", "condition")
 def _condition_treated(state, spec, ctx):
     """None of their wounds of this kind is left untreated."""
     npc = _npc(state, spec, ctx)
@@ -211,7 +213,7 @@ def _condition_treated(state, spec, ctx):
     return bool(npc) and (not wounds or all(c.get("treated", 0) > 0 for c in wounds))
 
 
-@condition("ready_to_spar")
+@condition("ready_to_spar", "npc", "within")
 def _ready_to_spar(state, spec, ctx):
     npc = _npc(state, spec, ctx)
     return (
@@ -238,7 +240,7 @@ def _demonstration_seen(state, spec, ctx):
     )
 
 
-@condition("made_seen")
+@condition("made_seen", "flag", "by")
 def _made_seen(state, spec, ctx):
     """Something with this flag made by the stranger in this step, and this person saw it."""
     progress = _progress(ctx)
@@ -261,7 +263,7 @@ def _made_seen(state, spec, ctx):
     )
 
 
-@condition("vouched")
+@condition("vouched", "npc")
 def _vouched(state, spec, ctx):
     """This person has spoken for the stranger to the captain."""
     captain = cast.find(state["npcs"], cast.CAPTAIN)
@@ -273,7 +275,7 @@ def _vouched(state, spec, ctx):
 # --- Things ------------------------------------------------------------------------------------------------------
 
 
-@condition("installed")
+@condition("installed", "thing")
 def _installed(state, spec, ctx):
     """This thing is fitted in place (the new beam up in the gate's brackets)."""
     return bool((state["objects"].get(spec["thing"]) or {}).get("installed_in"))

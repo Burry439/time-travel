@@ -1,5 +1,7 @@
 {
   "npc_roderic_vale": {
+    "role": "Gate captain",
+    "step_ms": 440,
     "goal": "watch the gate",
     "anchors": [
       [
@@ -23,6 +25,8 @@
     ]
   },
   "npc_bren_marr": {
+    "role": "Gate guard",
+    "step_ms": 360,
     "goal": "patrol the west approach",
     "anchors": [
       [
@@ -52,6 +56,8 @@
     ]
   },
   "npc_oren_dast": {
+    "role": "Gate guard",
+    "step_ms": 360,
     "goal": "patrol the east approach",
     "anchors": [
       [
@@ -81,6 +87,8 @@
     ]
   },
   "npc_hessa_marr": {
+    "role": "Innkeeper",
+    "step_ms": 440,
     "goal": "tend the inn yard",
     "anchors": [
       [
@@ -104,6 +112,8 @@
     ]
   },
   "npc_mara_venn": {
+    "role": "Blacksmith",
+    "step_ms": 440,
     "goal": "work at the smithy",
     "anchors": [
       [
@@ -127,6 +137,8 @@
     ]
   },
   "npc_jory_venn": {
+    "role": "Smith apprentice",
+    "step_ms": 440,
     "goal": "help around the forge",
     "anchors": [
       [
@@ -150,6 +162,8 @@
     ]
   },
   "npc_tomas_reed": {
+    "role": "Carpenter",
+    "step_ms": 440,
     "goal": "work at the carpentry yard",
     "anchors": [
       [
@@ -173,6 +187,8 @@
     ]
   },
   "npc_darin_ko": {
+    "role": "Merchant",
+    "step_ms": 440,
     "goal": "tend the merchant wagon",
     "anchors": [
       [
@@ -196,6 +212,8 @@
     ]
   },
   "npc_elin_west": {
+    "role": "Watch scout",
+    "step_ms": 360,
     "goal": "watch the south road",
     "anchors": [
       [
@@ -225,6 +243,8 @@
     ]
   },
   "npc_kade_east": {
+    "role": "Patrol guard",
+    "step_ms": 360,
     "goal": "patrol the village approach",
     "anchors": [
       [

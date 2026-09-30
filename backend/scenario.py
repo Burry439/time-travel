@@ -60,7 +60,7 @@ def setup(state: State) -> None:
 
 
 def _ctx(state: State, now: int) -> dict:
-    return {"now": now, "progress": state["tutorial"]}
+    return {"now": now, "progress": state.get("tutorial") or {}}
 
 
 # --- The story moving on -------------------------------------------------------------------------------------
@@ -187,13 +187,15 @@ def _stay(state: State, now: int) -> bool:
 
 Effect = Callable[[State, dict, dict], None]
 EFFECTS: dict[str, Effect] = {}
+NEEDS: dict[str, tuple[str, ...]] = {}  # The fields each kind must have (the content check reads these).
 
 
-def effect(kind: str) -> Callable[[Effect], Effect]:
-    """Register an effect kind: fn(state, spec, ctx)."""
+def effect(kind: str, *needs: str) -> Callable[[Effect], Effect]:
+    """Register an effect kind, fn(state, spec, ctx), and the fields its spec must have."""
 
     def register(fn: Effect) -> Effect:
         EFFECTS[kind] = fn
+        NEEDS[kind] = needs
         return fn
 
     return register
@@ -223,7 +225,7 @@ def _text(state: State, parts, ctx: dict) -> str:
     )
 
 
-@effect("npc_says")
+@effect("npc_says", "npc", "text")
 def _says(state, spec, ctx):
     npc = _person(state, spec)
     if npc and npc.get("alive", True):
@@ -231,7 +233,7 @@ def _says(state, spec, ctx):
         cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": spec["text"], "at": ctx["now"]})
 
 
-@effect("approach")
+@effect("approach", "npc")
 def _approach(state, spec, ctx):
     npc = _person(state, spec)
     if npc and npc.get("alive", True) and not npc.get("down"):
@@ -245,7 +247,7 @@ def _approach(state, spec, ctx):
         cast.set_job(npc, job, ctx["now"])
 
 
-@effect("hold")
+@effect("hold", "npc", "seconds")
 def _hold(state, spec, ctx):
     """Stand and talk a moment: nobody walks off mid-word."""
     npc, now = _person(state, spec), ctx["now"]
@@ -257,7 +259,7 @@ def _hold(state, spec, ctx):
                 cast.watch(person, now, spec["seconds"] * 1000)
 
 
-@effect("keep")
+@effect("keep", "npc", "seconds")
 def _keep(state, spec, ctx):
     """Stay with the stranger a while (Kade for his lessons)."""
     npc = _person(state, spec)
@@ -265,7 +267,7 @@ def _keep(state, spec, ctx):
         cast.watch(npc, ctx["now"], spec["seconds"] * 1000)
 
 
-@effect("vouch")
+@effect("vouch", "npc")
 def _vouch(state, spec, ctx):
     """Off to the captain to speak for the stranger (D-57). What they say may depend on what they know: a speech's
     notes are what the story remembers they knew when they went."""
@@ -279,7 +281,7 @@ def _vouch(state, spec, ctx):
     gatekeeping.speak_for(state, npc, why, summary, None, ctx["now"])
 
 
-@effect("admit")
+@effect("admit", "npc")
 def _admit(state, spec, ctx):
     """The captain lets them in on a word he holds."""
     npc = _person(state, spec)
@@ -288,7 +290,7 @@ def _admit(state, spec, ctx):
         state.update(admitted={"by": npc["id"], "event_id": None, "because": because}, gate_open=True)
 
 
-@effect("lend")
+@effect("lend", "npc", "objects")
 def _lend(state, spec, ctx):
     npc = _person(state, spec)
     if npc:
@@ -298,7 +300,7 @@ def _lend(state, spec, ctx):
                 obj.update(holder_id="player", lent_to="player")
 
 
-@effect("hurt")
+@effect("hurt", "npc", "condition")
 def _hurt(state, spec, ctx):
     """The story's own problem: Jory's burn."""
     npc = _person(state, spec)
@@ -309,14 +311,14 @@ def _hurt(state, spec, ctx):
             npc["health"] = max(1, npc.get("health", 100) - wound.get("severity", 10))
 
 
-@effect("spar")
+@effect("spar", "npc")
 def _spar(state, spec, ctx):
     npc = _person(state, spec)
     if npc:
         combat.start_spar(state, npc, ctx["now"], spec.get("with"))
 
 
-@effect("errand")
+@effect("errand", "npc", "to", "message")
 def _errand(state, spec, ctx):
     """Someone goes and tells someone (D-51): one written line, and only the story moves on."""
     npc = _person(state, spec)

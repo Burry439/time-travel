@@ -37,20 +37,6 @@ SEED_VERSION = (
 )
 # 11: the old wainwright's yard, a free stock of materials for weapons and armour (D-51).
 # 12: the wainwright's notebook, a readable recipe book (D-52).
-NPCS = [
-    {"id": "npc_roderic_vale", "name": "Roderic", "role": "Gate captain", "x": 48, "y": 11},
-    {"id": "npc_bren_marr", "name": "Bren", "role": "Gate guard", "x": 44, "y": 14},
-    {"id": "npc_oren_dast", "name": "Oren", "role": "Gate guard", "x": 52, "y": 14},
-    {"id": "npc_hessa_marr", "name": "Hessa", "role": "Innkeeper", "x": 34, "y": 51},
-    {"id": "npc_mara_venn", "name": "Mara", "role": "Blacksmith", "x": 18, "y": 25},
-    {"id": "npc_jory_venn", "name": "Jory", "role": "Smith apprentice", "x": 21, "y": 28},
-    {"id": "npc_tomas_reed", "name": "Tomas", "role": "Carpenter", "x": 64, "y": 26},
-    {"id": "npc_darin_ko", "name": "Darin", "role": "Merchant", "x": 80, "y": 30},
-]
-PATROL_GUARDS = [
-    {"id": "npc_elin_west", "name": "Elin", "role": "Watch scout", "x": 47, "y": 23},
-    {"id": "npc_kade_east", "name": "Kade", "role": "Patrol guard", "x": 52, "y": 35},
-]
 # A journey replays on the world it began with, so a new starting world (a seed bump) retires the journeys
 # begun on an older one (GDD D-04: no save compatibility between prototypes; D-58).
 OLDEST_SEED = SEED_VERSION
@@ -179,7 +165,7 @@ def initial_state(run: sqlite3.Row) -> dict:
         "gate_open": False,
         "inside_city": False,
         "objective": "Get inside the city",
-        "npcs": npc_sim.seed_npcs(NPCS + PATROL_GUARDS),
+        "npcs": npc_sim.seed_npcs(),
     }
     state.update(m2.seed_m2())
     for npc in state["npcs"]:
