@@ -18,244 +18,215 @@ def _describe(state: dict, entry: dict) -> list[dict]:
     Violence and theft make people think about what to do; seeing something shown or given is only
     remembered (it counts as evidence about the stranger when they next talk).
     """
-    names = {n["id"]: n["name"] for n in state["npcs"]}
     if entry.get("category") not in ("success", "partial_success"):
         return []
-    views = []
-    harm = entry.get("harm")
-    if isinstance(harm, dict):
-        victim = names.get(harm["target_id"], "someone")
-        weapon = state["objects"].get(harm.get("weapon_id") or "", {}).get("name")
-        how = f" with a {weapon}" if weapon else " with bare hands"
-        verb = "threw a " + weapon + " at" if harm.get("method") == "thrown" and weapon else "attacked"
-        poured = harm.get("method") == "poured"
-        verb = "threw water over" if poured else verb
-        verb = "strangled" if harm.get("family") == "choke" else verb
-        outcome = {
-            "killed": f"{victim} fell and did not get up.",
-            "wounded": f"{victim} was hurt.",
-            "disabled": f"{victim} went down, badly hurt, and could not fight on.",
-            "knocked_out": f"{victim} dropped senseless.",
-            "deflected": f"The blow glanced off {victim}'s armour.",
-            "missed": f"{victim} was soaked." if poured else f"The blow missed {victim}.",
-        }[harm["result"]]
-        short = {
-            "killed": f"killed {victim}",
-            "disabled": f"struck down {victim}",
-            "knocked_out": f"knocked {victim} senseless",
-        }.get(harm["result"], f"attacked {victim}")
-        severity = {"killed": 3, "wounded": 2, "disabled": 3, "knocked_out": 3, "deflected": 1, "missed": 1}[
-            harm["result"]
-        ]
-        views.append(
-            {
-                "kind": "violence",
-                "victim": harm["target_id"],
-                "clear": {
-                    "summary": f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}",
-                    "short": short,
-                    "severity": severity,
-                },
-                "vague": {
-                    "summary": (
-                        f"There was a scuffle near the stranger and {victim} went down."
-                        if harm["result"] in ("killed", "disabled", "knocked_out")
-                        else f"There was a scuffle near the stranger; {victim} cried out."
-                    ),
-                    "short": f"was in a fight with {victim}",
-                    "severity": max(1, severity - 1),
-                },
-            }
-        )
+    names = {n["id"]: n["name"] for n in state["npcs"]}
+    harm = entry.get("harm") if isinstance(entry.get("harm"), dict) else None
+    shown = entry.get("demonstration") if isinstance(entry.get("demonstration"), dict) else None
+    views = [
+        _violence(state, harm, names) if harm else None,
+        None if harm else _theft(entry, names),  # A weapon grabbed for an attack is part of the attack.
+        _demonstration(shown) if shown else None,
+        None if shown or harm else _making(entry),
+        _installing(entry.get("install")),
+        _lifting(state, entry.get("lift_out")),
+        _gift(entry.get("give")),
+        _help(entry.get("treated")),
+    ]
+    return [view for view in views if view]
+
+
+def _view(kind: str, victim: str | None, item: str | None, clear: tuple, vague: tuple, **extra) -> dict:
+    """One thing onlookers can see: clearly (summary, short, severity) when close, vaguely from further off."""
+    return {
+        "kind": kind,
+        "victim": victim,
+        "item": item,
+        **extra,
+        "clear": dict(zip(("summary", "short", "severity"), clear)),
+        "vague": dict(zip(("summary", "short", "severity"), vague)),
+    }
+
+
+SHOWN = {"think": False, "works": True, "audience": []}  # Seen and remembered, not reacted to.
+
+
+def _violence(state: dict, harm: dict, names: dict) -> dict:
+    victim = names.get(harm["target_id"], "someone")
+    weapon = state["objects"].get(harm.get("weapon_id") or "", {}).get("name")
+    how = f" with a {weapon}" if weapon else " with bare hands"
+    verb = "threw a " + weapon + " at" if harm.get("method") == "thrown" and weapon else "attacked"
+    poured = harm.get("method") == "poured"
+    verb = "threw water over" if poured else verb
+    verb = "strangled" if harm.get("family") == "choke" else verb
+    outcome = {
+        "killed": f"{victim} fell and did not get up.",
+        "wounded": f"{victim} was hurt.",
+        "disabled": f"{victim} went down, badly hurt, and could not fight on.",
+        "knocked_out": f"{victim} dropped senseless.",
+        "deflected": f"The blow glanced off {victim}'s armour.",
+        "missed": f"{victim} was soaked." if poured else f"The blow missed {victim}.",
+    }[harm["result"]]
+    short = {
+        "killed": f"killed {victim}",
+        "disabled": f"struck down {victim}",
+        "knocked_out": f"knocked {victim} senseless",
+    }.get(harm["result"], f"attacked {victim}")
+    severity = {"killed": 3, "wounded": 2, "disabled": 3, "knocked_out": 3, "deflected": 1, "missed": 1}[harm["result"]]
+    fell = harm["result"] in ("killed", "disabled", "knocked_out")
+    return _view(
+        "violence",
+        harm["target_id"],
+        None,
+        (f"The stranger {verb} {victim}{'' if 'threw' in verb else how}. {outcome}", short, severity),
+        (
+            f"There was a scuffle near the stranger and {victim} went down."
+            if fell
+            else f"There was a scuffle near the stranger; {victim} cried out.",
+            f"was in a fight with {victim}",
+            max(1, severity - 1),
+        ),
+    )
+
+
+def _theft(entry: dict, names: dict) -> dict | None:
     claims = [c for c in entry.get("property") or [] if c.get("how") != "used"]  # Using isn't taking (D-46).
-    if claims and not isinstance(harm, dict):  # A weapon grabbed for an attack is part of the attack.
-        claim = claims[0]
-        owner = names.get(claim["owner_id"], "someone")
-        verb = {
-            "taken": "took",
-            "used up": "used up",
-            "used": "used",
-            "given away": "gave away",
-            "gathered from": "took some of",
-        }.get(claim["how"], f"{claim['how']}")
-        views.append(
-            {
-                "kind": "theft",
-                "victim": claim["owner_id"],
-                "item": claim["name"],
-                "clear": {
-                    "summary": f"The stranger {verb} {owner}'s {claim['name']} without asking.",
-                    "short": f"stole {owner}'s {claim['name']}",
-                    "severity": 2,
-                },
-                "vague": {
-                    "summary": f"The stranger was handling {owner}'s things.",
-                    "short": f"was handling {owner}'s things",
-                    "severity": 1,
-                },
-            }
+    if not claims:
+        return None
+    claim = claims[0]
+    owner = names.get(claim["owner_id"], "someone")
+    verb = {
+        "taken": "took",
+        "used up": "used up",
+        "used": "used",
+        "given away": "gave away",
+        "gathered from": "took some of",
+    }.get(claim["how"], f"{claim['how']}")
+    return _view(
+        "theft",
+        claim["owner_id"],
+        claim["name"],
+        (f"The stranger {verb} {owner}'s {claim['name']} without asking.", f"stole {owner}'s {claim['name']}", 2),
+        (f"The stranger was handling {owner}'s things.", f"was handling {owner}'s things", 1),
+    )
+
+
+def _demonstration(shown: dict) -> dict:
+    return _view(
+        "demonstration",
+        None,
+        shown["object_name"],
+        (shown["observed"], f"showed off a {shown['object_name']}", 1),
+        ("The stranger was showing people something; it was hard to see what.", "was showing something", 0),
+        audience=shown.get("audience_ids", []),
+        think=False,
+        works=shown["works"],
+        wonder=shown.get("wonder", "ordinary"),
+    )
+
+
+def _making(entry: dict) -> dict | None:
+    """Watching something being made is being shown it (D-54)."""
+    if not entry.get("made_ids"):
+        return None
+    name = entry.get("made_name") or "something"
+    return _view(
+        "demonstration",
+        None,
+        name,
+        (f"The stranger made a {name} in front of them: {entry.get('reason', '')}", f"made a {name}", 1),
+        ("The stranger was making something; it was hard to see what.", "was making something", 0),
+        **SHOWN,
+        wonder="ordinary",
+    )
+
+
+def _aids(plan: dict) -> str:
+    return f" using the {' and the '.join(plan['aid_names'])}" if plan["aid_names"] else ""
+
+
+def _installing(placed) -> dict | None:
+    if not isinstance(placed, dict):
+        return None
+    return _view(
+        "demonstration",
+        None,
+        placed["object_name"],
+        (
+            f"The stranger got the {placed['object_name']} up into the {placed['into_name']}{_aids(placed)}.",
+            f"put the {placed['object_name']} in place",
+            1,
+        ),
+        ("The stranger was heaving something heavy into place.", "was working on something heavy", 0),
+        **SHOWN,
+        clear_cells=tuning.SIGHT_CELLS,  # A beam going up: anyone can see it.
+    )
+
+
+def _lifting(state: dict, lifted) -> dict | None:
+    """Taking the bar off the city gate is an assault on it, unless it's work someone asked for (Tomas's swap)."""
+    if not isinstance(lifted, dict):
+        return None
+    name = lifted["object_name"]
+    if lifted["from_id"] == m2.GATE_FIXTURE and not gate_work_agreed(state):
+        return _view(
+            "breach",
+            None,
+            name,
+            (
+                f"The stranger lifted the {name} off the city gate{_aids(lifted)}: the gate is unbarred.",
+                "unbarred the city gate",
+                3,
+            ),
+            ("The stranger was doing something at the gate.", "was meddling at the gate", 2),
+            clear_cells=tuning.SIGHT_CELLS,
         )
-    shown = entry.get("demonstration")
-    if isinstance(shown, dict):
-        views.append(
-            {
-                "kind": "demonstration",
-                "victim": None,
-                "item": shown["object_name"],
-                "audience": shown.get("audience_ids", []),
-                "think": False,
-                "works": shown["works"],
-                "wonder": shown.get("wonder", "ordinary"),
-                "clear": {"summary": shown["observed"], "short": f"showed off a {shown['object_name']}", "severity": 1},
-                "vague": {
-                    "summary": "The stranger was showing people something; it was hard to see what.",
-                    "short": "was showing something",
-                    "severity": 0,
-                },
-            }
-        )
-    made = entry.get("made_ids") or []
-    if (
-        made
-        and not isinstance(shown, dict)
-        and entry.get("category") in ("success", "partial_success")
-        and not isinstance(entry.get("harm"), dict)
-    ):  # Watching something being made is being shown it (D-54).
-        name = entry.get("made_name") or "something"
-        views.append(
-            {
-                "kind": "demonstration",
-                "victim": None,
-                "item": name,
-                "audience": [],
-                "think": False,
-                "works": True,
-                "wonder": "ordinary",
-                "clear": {
-                    "summary": f"The stranger made a {name} in front of them: {entry.get('reason', '')}",
-                    "short": f"made a {name}",
-                    "severity": 1,
-                },
-                "vague": {
-                    "summary": "The stranger was making something; it was hard to see what.",
-                    "short": "was making something",
-                    "severity": 0,
-                },
-            }
-        )
-    placed = entry.get("install")
-    if isinstance(placed, dict):
-        aids = f" using the {' and the '.join(placed['aid_names'])}" if placed["aid_names"] else ""
-        views.append(
-            {
-                "kind": "demonstration",
-                "victim": None,
-                "item": placed["object_name"],
-                "think": False,
-                "works": True,
-                "audience": [],
-                "clear_cells": tuning.SIGHT_CELLS,  # A beam going up: anyone can see it.
-                "clear": {
-                    "summary": f"The stranger got the {placed['object_name']} up into the {placed['into_name']}{aids}.",
-                    "short": f"put the {placed['object_name']} in place",
-                    "severity": 1,
-                },
-                "vague": {
-                    "summary": "The stranger was heaving something heavy into place.",
-                    "short": "was working on something heavy",
-                    "severity": 0,
-                },
-            }
-        )
-    lifted = entry.get("lift_out")
-    if isinstance(lifted, dict):
-        aids = f" using the {' and the '.join(lifted['aid_names'])}" if lifted["aid_names"] else ""
-        if lifted["from_id"] == m2.GATE_FIXTURE and not gate_work_agreed(state):
-            views.append(
-                {
-                    "kind": "breach",
-                    "victim": None,
-                    "item": lifted["object_name"],
-                    "clear_cells": tuning.SIGHT_CELLS,
-                    "clear": {
-                        "summary": f"The stranger lifted the {lifted['object_name']} off the city gate"
-                        f"{aids}: the gate is unbarred.",
-                        "short": "unbarred the city gate",
-                        "severity": 3,
-                    },
-                    "vague": {
-                        "summary": "The stranger was doing something at the gate.",
-                        "short": "was meddling at the gate",
-                        "severity": 2,
-                    },
-                }
-            )
-        else:  # Work someone asked for (Tomas's swap): seen, not feared.
-            views.append(
-                {
-                    "kind": "demonstration",
-                    "victim": None,
-                    "item": lifted["object_name"],
-                    "think": False,
-                    "works": True,
-                    "audience": [],
-                    "clear_cells": tuning.SIGHT_CELLS,
-                    "clear": {
-                        "summary": f"The stranger got the {lifted['object_name']} out of the "
-                        f"{lifted['from_name']}{aids}.",
-                        "short": f"took the {lifted['object_name']} down",
-                        "severity": 1,
-                    },
-                    "vague": {
-                        "summary": "The stranger was heaving something heavy down.",
-                        "short": "was working on something heavy",
-                        "severity": 0,
-                    },
-                }
-            )
-    give = entry.get("give")
-    if isinstance(give, dict):
-        things = " and ".join(give["names"])
-        views.append(
-            {
-                "kind": "gift",
-                "victim": give["recipient_id"],
-                "item": things,
-                "think": False,
-                "clear": {
-                    "summary": f"The stranger gave {give['recipient_name']} a {things}.",
-                    "short": f"gave {give['recipient_name']} a {things}",
-                    "severity": 1,
-                },
-                "vague": {
-                    "summary": f"The stranger handed something to {give['recipient_name']}.",
-                    "short": f"handed something to {give['recipient_name']}",
-                    "severity": 0,
-                },
-            }
-        )
-    treated = entry.get("treated")
-    if isinstance(treated, dict):  # Binding someone's wound, splinting a limb (D-49): help, seen and remembered.
-        views.append(
-            {
-                "kind": "help",
-                "victim": treated["patient_id"],
-                "item": treated["remedy"],
-                "think": False,
-                "clear": {
-                    "summary": f"The stranger treated {treated['patient_name']}'s {treated['what']} "
-                    f"with a {treated['remedy']}.",
-                    "short": f"treated {treated['patient_name']}'s wound",
-                    "severity": 1,
-                },
-                "vague": {
-                    "summary": f"The stranger was tending to {treated['patient_name']}.",
-                    "short": f"tended to {treated['patient_name']}",
-                    "severity": 0,
-                },
-            }
-        )
-    return views
+    return _view(
+        "demonstration",
+        None,
+        name,
+        (
+            f"The stranger got the {name} out of the {lifted['from_name']}{_aids(lifted)}.",
+            f"took the {name} down",
+            1,
+        ),
+        ("The stranger was heaving something heavy down.", "was working on something heavy", 0),
+        **SHOWN,
+        clear_cells=tuning.SIGHT_CELLS,
+    )
+
+
+def _gift(give) -> dict | None:
+    if not isinstance(give, dict):
+        return None
+    things, to = " and ".join(give["names"]), give["recipient_name"]
+    return _view(
+        "gift",
+        give["recipient_id"],
+        things,
+        (f"The stranger gave {to} a {things}.", f"gave {to} a {things}", 1),
+        (f"The stranger handed something to {to}.", f"handed something to {to}", 0),
+        think=False,
+    )
+
+
+def _help(treated) -> dict | None:
+    """Binding someone's wound, splinting a limb (D-49): help, seen and remembered."""
+    if not isinstance(treated, dict):
+        return None
+    patient = treated["patient_name"]
+    return _view(
+        "help",
+        treated["patient_id"],
+        treated["remedy"],
+        (
+            f"The stranger treated {patient}'s {treated['what']} with a {treated['remedy']}.",
+            f"treated {patient}'s wound",
+            1,
+        ),
+        (f"The stranger was tending to {patient}.", f"tended to {patient}", 0),
+        think=False,
+    )
 
 
 SOURCES = {"violence": "victim", "theft": "victim", "gift": "received", "help": "received"}

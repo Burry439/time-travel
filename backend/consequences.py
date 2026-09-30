@@ -109,240 +109,274 @@ def _object(
 
 def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
     """World changes for one validated step; ids stay unique across the steps of one attempt."""
-    suffix = "" if number == 1 else f"_{number}"
     walk = verdict.get("walk") or []
     px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
-    new_objects, consumed, taken, transformed, npc_updates, moved = [], [], [], None, [], []
-    water, known, given, spilled, installed, trade, lifted, gate = [], None, None, 0.0, None, None, None, None
-    if verdict["action"] == "make":
-        spec = verdict["new_spec"]
-        consumed = verdict["consumed_ids"]
-        carried_consumed = sum(
-            state["objects"][i]["mass_kg"] + state["objects"][i]["water_l"]
-            for i in consumed
-            if state["objects"][i]["holder_id"] == "player"
-        )
-        fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
-        if not fits:
-            verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
-        new_objects.append(
-            _object(
-                f"made_{event_id}{suffix}",
-                run_id,
-                spec,
-                px,
-                py,
-                "player",
-                "player" if fits else None,
-                text,
-                event_id,
-                consumed,
-                verdict["tool_ids"],
-            )
-        )
-        if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
-            span = max(
-                tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(spec["mass_kg"] * tuning.FIRE_MS_PER_KG))
-            )
-            new_objects[-1].update(
-                burning=True,
-                feature="fire",
-                capabilities=[],
-                holder_id=None,
-                burns_until=state["sim_time_ms"] + verdict["effort_seconds"] * 1000 + span,
-            )
-        # Water in anything built in stays in the new thing if it holds water; otherwise it spills.
-        held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
-        kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
-        new_objects[-1]["water_l"] = kept
-        spilled = round(held - kept, 3)
-    elif verdict["action"] == "take":
-        taken = verdict["take_ids"]
-    elif verdict["action"] == "gather":  # New small things in hand; the source stays as it was.
-        plan = verdict["gather"]
-        source = state["objects"][plan["source_id"]]
-        owner = source["owner_id"] if source["owner_id"] not in (None, "player") else "player"
-        asset_id = None
-        for index in range(1, plan["piece"]["count"] + 1):
-            obj = _object(
-                f"gathered_{event_id}{suffix}_{index}",
-                run_id,
-                plan["piece"],
-                px,
-                py,
-                owner,
-                "player",
-                text,
-                event_id,
-                [plan["source_id"]],
-                verdict["tool_ids"],
-                asset_id,
-            )
-            asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
-            new_objects.append(obj)
-        if "carry" in source["capabilities"]:  # A small source is that much smaller; a tree doesn't notice.
-            left = max(0.01, round(source["mass_kg"] - plan["piece"]["mass_kg"] * plan["piece"]["count"], 3))
-            water = [{"id": source["id"], "mass_kg": left}]
-    elif verdict["action"] == "treat":
-        treated = verdict["treat"]
-        if treated["patient_id"] == "player":
-            water.append({"id": "__player__", "conditions": treated["conditions"]})
-        else:
-            npc_updates.append({"id": treated["patient_id"], "conditions": treated["conditions"]})
-        if treated["consumed"]:
-            moved.append({"id": treated["consumed"], "used_up": True})
-    elif verdict["action"] == "equip":
-        water.append({"id": "__player__", "equipped": verdict["equip"]["equipped"]})
-    elif verdict["action"] == "drop":
-        moved = [{"id": i, "x": px, "y": py} for i in verdict["drop_ids"]]  # At the stranger's feet.
-    elif verdict["action"] == "transform":
-        plan = verdict["transform"]
-        target = state["objects"][plan["target_id"]]
-        cleared = paths.cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
-        in_hand = target["holder_id"] == "player"
-        load = m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)
-        total = sum(p["count"] for p in plan["pieces"])
-        cells = iter(
-            paths.open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"], cleared, total)
-        )
-        index = 0
-        for piece in plan["pieces"]:
-            asset_id = None
-            for _ in range(piece["count"]):
-                index += 1
-                keep = in_hand and load + piece["mass_kg"] <= tuning.CARRY_LIMIT_KG
-                load += piece["mass_kg"] if keep else 0
-                x, y = next(cells)
-                obj = _object(
-                    f"piece_{event_id}{suffix}_{index}",
-                    run_id,
-                    piece,
-                    x,
-                    y,
-                    "player" if target["owner_id"] == "player" else target["owner_id"],
-                    "player" if keep else None,
-                    text,
-                    event_id,
-                    [plan["target_id"]],
-                    verdict["tool_ids"],
-                    asset_id,
-                )
-                asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
-                new_objects.append(obj)
-        transformed = {
-            "id": plan["target_id"],
-            "result_state": plan["result_state"],
-            "into": [o["id"] for o in new_objects],
-        }
-    elif verdict["action"] == "harm":
-        harm = verdict["harm"]
-        npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
-        # What gear.hit worked out (D-49), carried out on the person.
-        body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
-        body["health"] = body["health"] if body["health"] is not None else 100
-        body["alive"] = body["alive"] if body["alive"] is not None else True
-        body["conditions"] = body["conditions"] or []
-        if harm["result"] not in ("missed", "deflected"):
-            gear.apply(body, harm, state["sim_time_ms"])
-        health, down = body["health"], bool(body.get("down"))
-        if harm["result"] == "killed":
-            health = 0
-        injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
-        npc_updates.append(
-            {
-                "id": npc["id"],
-                "alive": health > 0,
-                "health": health,
-                "injuries": injuries,
-                "conditions": body["conditions"],
-                **({"down": True} if down and health > 0 else {}),
-            }
-        )
-        if harm["result"] == "killed" and not verdict["reason"].rstrip().endswith("."):
-            verdict["reason"] = verdict["reason"].rstrip() + "."
-        taken = verdict["take_ids"]  # A weapon picked up on the way.
-        if harm["method"] == "thrown" and harm["weapon_id"]:
-            x, y = paths.open_cells_near(state, npc["x"], npc["y"], paths.cleared_obstacles(state), 1)[0]
-            moved.append({"id": harm["weapon_id"], "x": x, "y": y})
-        if harm["method"] == "poured" and harm["weapon_id"]:  # Emptied over them.
-            spilled = state["objects"][harm["weapon_id"]].get("water_l", 0.0)
-            water = [{"id": harm["weapon_id"], "water_l": 0.0, "temperature": "cold", "heated_at": None}]
-    elif verdict["action"] == "fill":
-        fill = verdict["fill"]
-        container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
-        water = [
-            {"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
-            {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)},
-        ]
-    elif verdict["action"] == "change":
-        change = verdict["change"]
-        water = [{"id": change["id"], **change["fields"]}] + change["pour"]
-        spilled = change["spilled_l"]
-    elif verdict["action"] == "demonstrate":
-        shown = verdict["demonstration"]
-        known = {
-            "id": shown["object_id"],
-            "known_capabilities": _known_after(state["objects"][shown["object_id"]], shown["results"], event_id),
-        }
-    elif verdict["action"] == "install":
-        plan = verdict["install"]
-        into = state["objects"][plan["into_id"]]
-        installed = {"id": plan["object_id"], "into": plan["into_id"], "x": into["x"], "y": into["y"]}
-        gate = gate_after(state, plan["into_id"], barred=True)
-    elif verdict["action"] == "lift_out":
-        plan = verdict["lift_out"]
-        fixture = state["objects"][plan["from_id"]]
-        x, y = paths.open_cells_near(state, fixture["x"], fixture["y"] + 2, paths.cleared_obstacles(state), 1)[0]
-        lifted = {"id": plan["object_id"], "x": x, "y": y}
-        gate = gate_after(state, plan["from_id"], barred=False)
-    elif verdict["action"] == "offer_trade":
-        trade = {
-            **verdict["offer_trade"],
-            "id": f"trade_{event_id}{suffix}",
-            "status": "offered",
-            "offered_event": event_id,
-        }
-    elif verdict["action"] == "give":
-        give = verdict["give"]
-        # A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs.
-        given = {
-            "ids": give["item_ids"],
-            "to": give["recipient_id"],
-            "owners": {
-                i: give["recipient_id"]
-                if state["objects"][i]["owner_id"] in (None, "player")
-                else state["objects"][i]["owner_id"]
-                for i in give["item_ids"]
-            },
-        }
+    step = {
+        "run_id": run_id,
+        "text": text,
+        "event_id": event_id,
+        "suffix": "" if number == 1 else f"_{number}",
+        "at": (px, py),
+    }
+    work = CHANGES.get(verdict["action"])
+    parts = work(state, verdict, step) if work else {}
     deltas = {
-        "consumed_ids": consumed,
-        "new_objects": new_objects,
-        "taken_ids": taken,
-        "transformed": transformed,
-        "npc_updates": npc_updates,
-        "moved": moved,
+        "consumed_ids": parts.get("consumed_ids", []),
+        "new_objects": parts.get("new_objects", []),
+        "taken_ids": parts.get("taken_ids", []),
+        "transformed": parts.get("transformed"),
+        "npc_updates": parts.get("npc_updates", []),
+        "moved": parts.get("moved", []),
         "walk": walk,
         "player_to": [px, py] if walk else None,
     }
     deltas.update(
         {
-            k: v
-            for k, v in (
-                ("water", water),
-                ("capabilities", known),
-                ("given", given),
-                ("spilled_l", spilled),
-                ("installed", installed),
-                ("trade", trade),
-                ("lifted_out", lifted),
-            )
-            if v
+            key: parts[key]
+            for key in ("water", "capabilities", "given", "spilled_l", "installed", "trade", "lifted_out")
+            if parts.get(key)
         }
     )
-    if gate is not None:
-        deltas["gate"] = gate
+    if parts.get("gate") is not None:
+        deltas["gate"] = parts["gate"]
     return deltas
+
+
+def _made(state: dict, verdict: dict, step: dict) -> dict:
+    """Something new, from what went into it: in hand if it can be carried with the rest, else at their feet."""
+    spec = verdict["new_spec"]
+    consumed = verdict["consumed_ids"]
+    carried_consumed = sum(
+        state["objects"][i]["mass_kg"] + state["objects"][i]["water_l"]
+        for i in consumed
+        if state["objects"][i]["holder_id"] == "player"
+    )
+    fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
+    if not fits:
+        verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
+    made = _object(
+        f"made_{step['event_id']}{step['suffix']}",
+        step["run_id"],
+        spec,
+        *step["at"],
+        "player",
+        "player" if fits else None,
+        step["text"],
+        step["event_id"],
+        consumed,
+        verdict["tool_ids"],
+    )
+    if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
+        span = max(tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(spec["mass_kg"] * tuning.FIRE_MS_PER_KG)))
+        made.update(
+            burning=True,
+            feature="fire",
+            capabilities=[],
+            holder_id=None,
+            burns_until=state["sim_time_ms"] + verdict["effort_seconds"] * 1000 + span,
+        )
+    # Water in anything built in stays in the new thing if it holds water; otherwise it spills.
+    held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
+    kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
+    made["water_l"] = kept
+    return {"consumed_ids": consumed, "new_objects": [made], "spilled_l": round(held - kept, 3)}
+
+
+def _pieces(verdict: dict, step: dict, prefix: str, piece: dict, numbers: range, where, owner, keep, source_id):
+    """Identical pieces, numbered as given and sharing one painting: where() gives each one's cell, keep(piece)
+    whether it stays in hand."""
+    made, asset_id = [], None
+    for index in numbers:
+        obj = _object(
+            f"{prefix}_{step['event_id']}{step['suffix']}_{index}",
+            step["run_id"],
+            piece,
+            *where(),
+            owner,
+            "player" if keep(piece) else None,
+            step["text"],
+            step["event_id"],
+            [source_id],
+            verdict["tool_ids"],
+            asset_id,
+        )
+        asset_id = obj["sprite_asset_id"]
+        made.append(obj)
+    return made
+
+
+def _gathered(state: dict, verdict: dict, step: dict) -> dict:
+    """New small things in hand; the source stays as it was (a small one is that much smaller)."""
+    plan = verdict["gather"]
+    source = state["objects"][plan["source_id"]]
+    owner = source["owner_id"] if source["owner_id"] not in (None, "player") else "player"
+    piece, count = plan["piece"], plan["piece"]["count"]
+    numbers = range(1, count + 1)
+    made = _pieces(verdict, step, "gathered", piece, numbers, lambda: step["at"], owner, lambda _: True, source["id"])
+    parts = {"new_objects": made}
+    if "carry" in source["capabilities"]:  # A tree doesn't notice.
+        left = max(0.01, round(source["mass_kg"] - piece["mass_kg"] * count, 3))
+        parts["water"] = [{"id": source["id"], "mass_kg": left}]
+    return parts
+
+
+def _treated(state: dict, verdict: dict, step: dict) -> dict:
+    treated = verdict["treat"]
+    parts: dict = {"water": [], "npc_updates": [], "moved": []}
+    if treated["patient_id"] == "player":
+        parts["water"].append({"id": "__player__", "conditions": treated["conditions"]})
+    else:
+        parts["npc_updates"].append({"id": treated["patient_id"], "conditions": treated["conditions"]})
+    if treated["consumed"]:
+        parts["moved"].append({"id": treated["consumed"], "used_up": True})
+    return parts
+
+
+def _transformed(state: dict, verdict: dict, step: dict) -> dict:
+    """Cut, broken, felled: the pieces lie around it (or stay in hand while they can be carried)."""
+    plan = verdict["transform"]
+    target = state["objects"][plan["target_id"]]
+    cleared = paths.cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
+    in_hand = target["holder_id"] == "player"
+    load = [m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)]
+    total = sum(p["count"] for p in plan["pieces"])
+    px, py = step["at"]
+    cells = iter(
+        paths.open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"], cleared, total)
+    )
+    owner = "player" if target["owner_id"] == "player" else target["owner_id"]
+
+    def keep(piece: dict) -> bool:
+        kept = in_hand and load[0] + piece["mass_kg"] <= tuning.CARRY_LIMIT_KG
+        load[0] += piece["mass_kg"] if kept else 0
+        return kept
+
+    made = []
+    for piece in plan["pieces"]:  # Numbered across every kind of piece.
+        numbers = range(len(made) + 1, len(made) + piece["count"] + 1)
+        made += _pieces(verdict, step, "piece", piece, numbers, lambda: next(cells), owner, keep, plan["target_id"])
+    transformed = {"id": plan["target_id"], "result_state": plan["result_state"], "into": [o["id"] for o in made]}
+    return {"new_objects": made, "transformed": transformed}
+
+
+def _harmed(state: dict, verdict: dict, step: dict) -> dict:
+    """What gear.hit worked out (D-49), carried out on the person; a thrown weapon lands by them, a poured one is
+    emptied over them."""
+    harm = verdict["harm"]
+    npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
+    body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
+    body["health"] = body["health"] if body["health"] is not None else 100
+    body["alive"] = body["alive"] if body["alive"] is not None else True
+    body["conditions"] = body["conditions"] or []
+    if harm["result"] not in ("missed", "deflected"):
+        gear.apply(body, harm, state["sim_time_ms"])
+    health, down = body["health"], bool(body.get("down"))
+    if harm["result"] == "killed":
+        health = 0
+    injuries = npc.get("injuries", []) + ([harm["injury"]] if harm["result"] not in ("missed", "deflected") else [])
+    update = {
+        "id": npc["id"],
+        "alive": health > 0,
+        "health": health,
+        "injuries": injuries,
+        "conditions": body["conditions"],
+        **({"down": True} if down and health > 0 else {}),
+    }
+    if harm["result"] == "killed" and not verdict["reason"].rstrip().endswith("."):
+        verdict["reason"] = verdict["reason"].rstrip() + "."
+    parts = {"npc_updates": [update], "taken_ids": verdict["take_ids"], "moved": []}  # A weapon picked up on the way.
+    if harm["method"] == "thrown" and harm["weapon_id"]:
+        x, y = paths.open_cells_near(state, npc["x"], npc["y"], paths.cleared_obstacles(state), 1)[0]
+        parts["moved"].append({"id": harm["weapon_id"], "x": x, "y": y})
+    if harm["method"] == "poured" and harm["weapon_id"]:  # Emptied over them.
+        parts["spilled_l"] = state["objects"][harm["weapon_id"]].get("water_l", 0.0)
+        parts["water"] = [{"id": harm["weapon_id"], "water_l": 0.0, "temperature": "cold", "heated_at": None}]
+    return parts
+
+
+def _filled(state: dict, verdict: dict, step: dict) -> dict:
+    fill = verdict["fill"]
+    container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
+    return {
+        "water": [
+            {"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
+            {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)},
+        ]
+    }
+
+
+def _changed(state: dict, verdict: dict, step: dict) -> dict:
+    change = verdict["change"]
+    return {"water": [{"id": change["id"], **change["fields"]}] + change["pour"], "spilled_l": change["spilled_l"]}
+
+
+def _shown(state: dict, verdict: dict, step: dict) -> dict:
+    shown = verdict["demonstration"]
+    known = _known_after(state["objects"][shown["object_id"]], shown["results"], step["event_id"])
+    return {"capabilities": {"id": shown["object_id"], "known_capabilities": known}}
+
+
+def _installed(state: dict, verdict: dict, step: dict) -> dict:
+    plan = verdict["install"]
+    into = state["objects"][plan["into_id"]]
+    return {
+        "installed": {"id": plan["object_id"], "into": plan["into_id"], "x": into["x"], "y": into["y"]},
+        "gate": gate_after(state, plan["into_id"], barred=True),
+    }
+
+
+def _lifted(state: dict, verdict: dict, step: dict) -> dict:
+    plan = verdict["lift_out"]
+    fixture = state["objects"][plan["from_id"]]
+    x, y = paths.open_cells_near(state, fixture["x"], fixture["y"] + 2, paths.cleared_obstacles(state), 1)[0]
+    return {
+        "lifted_out": {"id": plan["object_id"], "x": x, "y": y},
+        "gate": gate_after(state, plan["from_id"], barred=False),
+    }
+
+
+def _trade_offered(state: dict, verdict: dict, step: dict) -> dict:
+    trade = {
+        **verdict["offer_trade"],
+        "id": f"trade_{step['event_id']}{step['suffix']}",
+        "status": "offered",
+        "offered_event": step["event_id"],
+    }
+    return {"trade": trade}
+
+
+def _given(state: dict, verdict: dict, step: dict) -> dict:
+    """A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs."""
+    give = verdict["give"]
+    owners = {
+        i: give["recipient_id"]
+        if state["objects"][i]["owner_id"] in (None, "player")
+        else state["objects"][i]["owner_id"]
+        for i in give["item_ids"]
+    }
+    return {"given": {"ids": give["item_ids"], "to": give["recipient_id"], "owners": owners}}
+
+
+# What each kind of step changes in the world (a step with nothing to change, like waiting, has no entry).
+CHANGES = {
+    "make": _made,
+    "take": lambda state, verdict, step: {"taken_ids": verdict["take_ids"]},
+    "gather": _gathered,
+    "treat": _treated,
+    "equip": lambda state, verdict, step: {"water": [{"id": "__player__", "equipped": verdict["equip"]["equipped"]}]},
+    "drop": lambda state, verdict, step: {
+        "moved": [{"id": i, "x": step["at"][0], "y": step["at"][1]} for i in verdict["drop_ids"]]
+    },
+    "transform": _transformed,
+    "harm": _harmed,
+    "fill": _filled,
+    "change": _changed,
+    "demonstrate": _shown,
+    "install": _installed,
+    "lift_out": _lifted,
+    "offer_trade": _trade_offered,
+    "give": _given,
+}
 
 
 def apply_step(state: dict, deltas: dict) -> None:

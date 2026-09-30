@@ -117,6 +117,10 @@ def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: li
         pending.append({"npc_id": target["id"], "kind": "told", "why": npc["id"], "message": message, "at": now})
 
 
+# What someone on an errand does when they reach the person it was for.
+DELIVERIES = {"report": _deliver_report, "vouch": _deliver_vouch, "tell": _deliver_message}
+
+
 def dealt_with_recently(npcs: list[dict], now: int) -> bool:
     """A guard has just been speaking with the stranger or been shown something by them (D-48)."""
     for guard in npcs:
@@ -226,84 +230,11 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
     end = now + elapsed_ms
     talking = set((working.get("encounter") or {}).get("participants", []))
     for npc in npcs:
-        job = (npc.get("mind") or {}).get("job")
         if not npc.get("alive", True) or npc.get("down"):
             continue
         if ((npc.get("mind") or {}).get("knows") or {}).get("notes") and npc["id"] not in talking:
             cast.add_pending(working, npc["id"], "recollect", "the conversation ended")  # Remember it (D-36).
-        if not job:
-            _ambient(working, npc, end, blocked)
-            continue
-        if job["kind"] in ("encounter", "fight"):
-            continue  # Face to face in rounds, or fighting (combat.tick moves them): not on the clock here.
-        if job.get("wait_until", 0) > end:
-            continue  # e.g. an attacker the stranger just walked away from, a moment before they give chase.
-        if job["kind"] == "watch":
-            if end >= job["until"]:
-                cast.set_job(npc, None, end)
-                _maybe_reconsider(working, npc, "still shaken")
-            continue
-        goal = _target_cell(working, npcs, job)
-        if goal is None or (job["kind"] == "attack" and cast.distance(npc, goal) > tuning.GIVE_UP_CELLS):
-            cast.set_job(npc, None, end)
-            continue
-        stop = {"flee": 0.0, "report": 1.5, "attack": 1.5, "vouch": 1.5}.get(job["kind"], job.get("stop", 1.5))
-        controller = npc.get("controller") or {}
-        carry = controller.get("step_carry_ms", 0) + elapsed_ms
-        step_ms = tuning.RUN_STEP_MS if job.get("speed") == "run" else tuning.WALK_STEP_MS
-        while carry >= step_ms and cast.distance(npc, goal) > stop:
-            carry -= step_ms
-            step = paths.next_step(cast.cell(npc), goal, stop, blocked)
-            if step is None:
-                break
-            npc["x"], npc["y"] = step
-        controller["step_carry_ms"] = carry if cast.distance(npc, goal) > stop else 0
-        if cast.distance(npc, goal) > stop:
-            continue
-        # Arrived.
-        if job["kind"] == "flee":
-            cast.watch(npc, end, tuning.WATCH_MS)
-        elif job["kind"] == "report":
-            target = cast.find(npcs, job["target"])
-            if target:
-                _deliver_report(working, npc, target, end, journal, job)
-            cast.watch(npc, end, tuning.WATCH_SHORT_MS)
-        elif job["kind"] == "vouch":
-            captain = cast.find(npcs, job["target"])
-            if captain:
-                _deliver_vouch(working, npc, captain, end, journal, job)
-            cast.watch(npc, end, tuning.WATCH_SHORT_MS)
-        elif job["kind"] == "tell":
-            target = cast.find(npcs, job["target"])
-            if target and target.get("alive", True):
-                _deliver_message(working, npc, target, end, journal, job)
-            cast.watch(npc, end, tuning.WATCH_SHORT_MS)
-        elif job["kind"] == "approach" and job.get("then") == "halt" and working.get("encounter"):
-            encounter.join(working, npc, "halt", None, end)  # A conversation is on: they step over and join it.
-        elif job["kind"] == "approach" and job.get("then") == "halt" and dealt_with_recently(npcs, end):
-            cast.watch(npc, end, tuning.WATCH_MS)  # Already being dealt with.
-        elif job["kind"] == "approach" and job.get("then") == "halt":
-            choices = speech.choose_lines(working, npc, "halt", {})
-            line_id, text = choices[0] if choices else (None, "Halt! State your business.")
-            speech.say(npc, text, end, working, journal, line_id, category="halt")
-            cast.mind(npc)["halted_at"] = end
-            cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
-            encounter.join(working, npc, "halt", text, end)
-        elif job["kind"] == "approach" and job.get("then") in ("confront", "threaten", "demand_payment"):
-            text = job.get("line") or "What do you think you're doing?!"
-            speech.say(npc, text, end, working, journal, job.get("line_id"), category="address")
-            cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
-            encounter.join(working, npc, job["then"], text, end)
-        elif job["kind"] == "approach":
-            if job.get("line"):
-                speech.say(npc, job["line"], end, working, journal, job.get("line_id"))
-            cast.watch(npc, end, tuning.WATCH_MS)
-            controller["activity"] = "work"
-            if job.get("then") == "help":
-                _tend(working, npc, cast.find(npcs, job.get("target") or ""), end, journal)
-            _maybe_reconsider(working, npc, "tending the hurt person")
-        elif job["kind"] == "attack":
-            encounter.join(working, npc, "attack", None, end)  # An older chase arriving: it's a fight now.
+        _on_the_job(working, npcs, npc, elapsed_ms, end, blocked, journal)
     combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Real-time fighting: wind-ups, blows, misses (D-41).
     _bodies(working, npcs, elapsed_ms, now, journal)  # Bleeding, festering, waking, mending (D-49).
     if not working.get("encounter") and not working.get("fight"):
@@ -322,6 +253,93 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
         if npc.get("mind"):
             reputation.update_standing(npc)
     return npcs, journal, working["player"]
+
+
+def _on_the_job(
+    state: dict, npcs: list[dict], npc: dict, elapsed_ms: int, end: int, blocked: set, journal: list[dict]
+) -> None:
+    """One person's job for this stretch of time: keep watching, give up, or walk on toward where it takes them
+    and do it when they get there. Without a job, the calm rules apply."""
+    job = (npc.get("mind") or {}).get("job")
+    if not job:
+        _ambient(state, npc, end, blocked)
+        return
+    if job["kind"] in ("encounter", "fight"):
+        return  # Face to face in rounds, or fighting (combat.tick moves them): not on the clock here.
+    if job.get("wait_until", 0) > end:
+        return  # e.g. an attacker the stranger just walked away from, a moment before they give chase.
+    if job["kind"] == "watch":
+        if end >= job["until"]:
+            cast.set_job(npc, None, end)
+            _maybe_reconsider(state, npc, "still shaken")
+        return
+    goal = _target_cell(state, npcs, job)
+    if goal is None or (job["kind"] == "attack" and cast.distance(npc, goal) > tuning.GIVE_UP_CELLS):
+        cast.set_job(npc, None, end)
+        return
+    stop = {"flee": 0.0, "report": 1.5, "attack": 1.5, "vouch": 1.5}.get(job["kind"], job.get("stop", 1.5))
+    if _walk(npc, goal, stop, elapsed_ms, job, blocked):
+        _arrived(state, npcs, npc, job, end, journal)
+
+
+def _walk(npc: dict, goal: tuple[int, int], stop: float, elapsed_ms: int, job: dict, blocked: set) -> bool:
+    """Step toward the goal at their pace (running or walking) for this long; whether they're there now."""
+    controller = npc.get("controller") or {}
+    carry = controller.get("step_carry_ms", 0) + elapsed_ms
+    step_ms = tuning.RUN_STEP_MS if job.get("speed") == "run" else tuning.WALK_STEP_MS
+    while carry >= step_ms and cast.distance(npc, goal) > stop:
+        carry -= step_ms
+        step = paths.next_step(cast.cell(npc), goal, stop, blocked)
+        if step is None:
+            break
+        npc["x"], npc["y"] = step
+    controller["step_carry_ms"] = carry if cast.distance(npc, goal) > stop else 0
+    return cast.distance(npc, goal) <= stop
+
+
+def _arrived(state: dict, npcs: list[dict], npc: dict, job: dict, end: int, journal: list[dict]) -> None:
+    """They got where their job took them: safe (and watching), the person they had word for, or the stranger."""
+    kind, then = job["kind"], job.get("then")
+    if kind == "flee":
+        cast.watch(npc, end, tuning.WATCH_MS)
+    elif kind in DELIVERIES:
+        target = cast.find(npcs, job["target"])
+        if target and (kind != "tell" or target.get("alive", True)):
+            DELIVERIES[kind](state, npc, target, end, journal, job)
+        cast.watch(npc, end, tuning.WATCH_SHORT_MS)
+    elif kind == "approach" and then == "halt":
+        _halt(state, npcs, npc, end, journal)
+    elif kind == "approach" and then in ("confront", "threaten", "demand_payment"):
+        text = job.get("line") or "What do you think you're doing?!"
+        speech.say(npc, text, end, state, journal, job.get("line_id"), category="address")
+        cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
+        encounter.join(state, npc, then, text, end)
+    elif kind == "approach":
+        if job.get("line"):
+            speech.say(npc, job["line"], end, state, journal, job.get("line_id"))
+        cast.watch(npc, end, tuning.WATCH_MS)
+        (npc.get("controller") or {})["activity"] = "work"
+        if then == "help":
+            _tend(state, npc, cast.find(npcs, job.get("target") or ""), end, journal)
+        _maybe_reconsider(state, npc, "tending the hurt person")
+    elif kind == "attack":
+        encounter.join(state, npc, "attack", None, end)  # An older chase arriving: it's a fight now.
+
+
+def _halt(state: dict, npcs: list[dict], npc: dict, end: int, journal: list[dict]) -> None:
+    """A guard who came to stop the stranger at the gate: joins a conversation that's already on, stands by if a
+    guard has just dealt with them, or halts them."""
+    if state.get("encounter"):
+        encounter.join(state, npc, "halt", None, end)
+    elif dealt_with_recently(npcs, end):
+        cast.watch(npc, end, tuning.WATCH_MS)
+    else:
+        choices = speech.choose_lines(state, npc, "halt", {})
+        line_id, text = choices[0] if choices else (None, "Halt! State your business.")
+        speech.say(npc, text, end, state, journal, line_id, category="halt")
+        cast.mind(npc)["halted_at"] = end
+        cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": end})
+        encounter.join(state, npc, "halt", text, end)
 
 
 def _tend(state: dict, helper: dict, patient: dict | None, now: int, journal: list[dict]) -> None:
