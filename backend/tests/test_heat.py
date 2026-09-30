@@ -5,7 +5,7 @@ cold water can't scald) and time cools things and burns fires down. Names follow
 from test_craft import commit, judged
 from test_talk import npc, unit_state
 
-import crafting
+import heat
 
 
 def beside(state, x, y):
@@ -55,7 +55,7 @@ def test_hot_things_cool_back_over_time():
     start = bowl["heated_at"]
     names = []
     for minutes in (1, 3, 8, 20, 40):
-        fields = crafting.age_objects(state, 0, start + minutes * 60_000).get("bowl_hessa", {})
+        fields = heat.age_objects(state, 0, start + minutes * 60_000).get("bowl_hessa", {})
         names.append(fields.get("name", bowl["name"]))
     assert names == [
         "clay bowl of boiling water",
@@ -93,7 +93,7 @@ def test_fire_needs_real_sparks_and_burns_down():
     commit(state, judged("make", new_object={**campfire, "tools_used": ["flint_a", "horseshoe_a"]}))
     fire = state["objects"][f"made_{state['event_seq']}"]
     assert fire["burning"] and "heat_source" in fire["flags"] and fire["holder_id"] is None
-    later = crafting.age_objects(state, 0, fire["burns_until"] + 1)[fire["id"]]
+    later = heat.age_objects(state, 0, fire["burns_until"] + 1)[fire["id"]]
     assert later["burning"] is False and "heat_source" not in later["flags"]
 
 

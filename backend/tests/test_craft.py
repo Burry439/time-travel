@@ -8,7 +8,9 @@ from fastapi.testclient import TestClient
 
 import app as service
 import cast
+import consequences
 import crafting
+import judge_view
 import tuning
 from ai import illustrator, judge
 
@@ -244,7 +246,7 @@ def test_new_road_materials_are_reachable_and_described():
         "trough_hessa",
         "wood_tomas",
     }
-    assert crafting.placeholder_category(["flint"]) == "stone"
+    assert consequences.placeholder_category(["flint"]) == "stone"
 
 
 def test_stub_mode_runs_the_real_pipeline_without_a_model(tmp_path, monkeypatch):
@@ -295,18 +297,18 @@ def judged(action, **fields):
 
 def commit(state, *steps, text="try"):
     """Resolve judge steps the way the /craft endpoint does and apply them to state."""
-    payload, summary, after = crafting.resolve_attempt(
+    payload, summary, after = consequences.resolve_attempt(
         state, "unit0000", text, attempt(*steps), None, "trace", state["sim_time_ms"]
     )
     payload["npcs"] = after["npcs"]
     state["event_seq"] += 1
-    crafting.apply_payload(state, payload)
+    consequences.apply_payload(state, payload)
     return summary
 
 
 def test_other_peoples_property_is_offered_usable_and_recorded():
     state = fresh_state(63, 28)  # Beside Tomas's plank at (64, 28).
-    offered = {i["id"]: i for i in crafting.build_context(state, "x", [])["available_items"]}
+    offered = {i["id"]: i for i in judge_view.build_context(state, "x", [])["available_items"]}
     assert offered["wood_tomas"]["belongs_to"] == "Tomas" and offered["wood_tomas"]["portable"]
     shield = {
         "name": "plank shield",
@@ -557,7 +559,7 @@ def test_a_failed_first_step_changes_nothing():
 
 def test_leaked_ids_are_replaced_with_names():
     state = fresh_state()
-    text = crafting.humanize("You thrust branch_a at npc_tomas_reed, then drop the flint_a.", state, {})
+    text = consequences.humanize("You thrust branch_a at npc_tomas_reed, then drop the flint_a.", state, {})
     assert text == "You thrust the fallen branch at Tomas, then drop the flint shard."
 
 
@@ -565,7 +567,7 @@ def test_people_near_death_are_described_to_the_judge():
     state = fresh_state()
     beside(state, "npc_darin_ko")
     commit(state, harm("npc_darin_ko", "wounded", knife(state)))  # 100 -> 30, and bleeding.
-    darin = next(p for p in crafting.people_nearby(state) if p["id"] == "npc_darin_ko")
+    darin = next(p for p in judge_view.people_nearby(state) if p["id"] == "npc_darin_ko")
     assert darin["condition"] == "badly wounded (near death)" and len(darin["injuries"]) == 1
     assert any("cut" in c for c in darin["conditions"])  # The judge sees the bleeding cut.
 
@@ -582,7 +584,7 @@ def test_single_step_events_from_before_multi_step_still_replay():
         "sim_time_ms": 5000,
         "npcs": state["npcs"],
     }
-    crafting.apply_payload(state, legacy)
+    consequences.apply_payload(state, legacy)
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert state["objects"]["branch_a"]["holder_id"] == "player" and bren["injuries"] == ["a cut"]
 
@@ -592,7 +594,7 @@ def test_single_step_events_from_before_multi_step_still_replay():
 
 def test_far_items_are_reached_by_walking_first():
     state = fresh_state()  # The flint at (45, 66) is 3.6 cells away: beyond arm's reach.
-    assert crafting.walk_costs(state)["flint_a"] > 0
+    assert judge_view.walk_costs(state)["flint_a"] > 0
     summary = commit(state, judged("take", take_ids=["flint_a"]))
     assert summary["category"] == "success"
     assert state["objects"]["flint_a"]["holder_id"] == "player"

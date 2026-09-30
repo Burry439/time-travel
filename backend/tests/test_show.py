@@ -5,7 +5,9 @@ from test_craft import commit, fresh_state, judged
 
 import cast
 import crafting
+import judge_view
 import perception
+import reputation
 import talk
 import tuning
 
@@ -44,7 +46,7 @@ def water_total(state):
 def test_water_is_filled_from_a_source_and_conserved():
     state = fresh_state(34, 53)  # By Hessa's bowl (32, 52) and trough (36, 52).
     before = water_total(state)
-    context = crafting.build_context(state, "fill the bowl", [])
+    context = judge_view.build_context(state, "fill the bowl", [])
     assert [w["id"] for w in context["water_sources"]] == ["trough_hessa"]
     bowl = next(i for i in context["available_items"] if i["id"] == "bowl_hessa")
     assert bowl["capacity_l"] == 1.0 and bowl["water_l"] == 0.0
@@ -116,8 +118,8 @@ def test_showing_updates_what_it_is_known_to_do_and_who_saw_it():
     assert not state["pending_minds"]  # Seeing something shown is remembered, not an alarm.
     # What she saw is evidence: she can now come to trust the stranger beyond what words earn.
     for _ in range(10):
-        talk._update_regard(hessa, {"impression": {"score": 4}, "suspicion": {"score": 0}})
-    assert talk.regard(hessa)["trust"] > 0.4 + tuning.TALK_GOODWILL
+        talk.update_regard(hessa, {"impression": {"score": 4}, "suspicion": {"score": 0}})
+    assert reputation.regard(hessa)["trust"] > 0.4 + tuning.TALK_GOODWILL
 
 
 def test_a_failed_showing_is_seen_but_earns_nothing():
@@ -140,8 +142,8 @@ def test_a_failed_showing_is_seen_but_earns_nothing():
     hessa = cast.find(state["npcs"], "npc_hessa_marr")
     assert hessa["mind"]["memories"][-1]["works"] is False
     for _ in range(10):
-        talk._update_regard(hessa, {"impression": {"score": 4}})
-    assert talk.regard(hessa)["trust"] <= 0.4 + tuning.TALK_GOODWILL + 1e-9
+        talk.update_regard(hessa, {"impression": {"score": 4}})
+    assert reputation.regard(hessa)["trust"] <= 0.4 + tuning.TALK_GOODWILL + 1e-9
 
 
 def test_giving_hands_things_over_and_the_receiver_notices():
@@ -155,7 +157,7 @@ def test_giving_hands_things_over_and_the_receiver_notices():
     assert summary["category"] == "success"
     assert state["objects"]["flint_a"]["holder_id"] == "npc_tomas_reed"
     assert state["objects"]["flint_a"]["owner_id"] == "npc_tomas_reed"  # A gift of something unowned.
-    assert "flint_a" not in {i["id"] for i in crafting.available_items(state)}
+    assert "flint_a" not in {i["id"] for i in judge_view.available_items(state)}
     perceptions = perception.perceive(state, state["last_action"])
     mine = next(p for p in perceptions if p["npc_id"] == "npc_tomas_reed")
     assert mine["memory"]["kind"] == "gift" and mine["memory"]["source"] == "received" and not mine["think"]

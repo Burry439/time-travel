@@ -13,14 +13,15 @@ from __future__ import annotations
 import math
 import re
 
+import briefing
 import cast
 import combat
 import content
+import gatekeeping
 import gear
 import m2
 import reputation
 import speech
-import talk
 import tuning
 
 STORY = content.TUTORIAL
@@ -420,7 +421,7 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
                 f"{npc['name']} vouched for the stranger: saw them dress Jory's burn, hold their own in a bout with "
                 f"{npc['name']}, and strike fire from flint and steel."
             ) + (" The stranger wants to come into the city." if wants else "")
-            talk.speak_for(state, npc, why, summary, None, now)
+            gatekeeping.speak_for(state, npc, why, summary, None, now)
         elif kind == "admit" and npc and npc.get("alive", True) and not state.get("admitted"):  # On a word he holds.
             because = [m["summary"] for m in cast.mind(npc)["memories"] if reputation.is_evidence(m)][-4:]
             state.update(admitted={"by": npc["id"], "event_id": None, "because": because}, gate_open=True)
@@ -539,7 +540,7 @@ def moment_allowed(state: dict) -> bool:
 
 def _place_name(state: dict) -> str:
     here = cast.player_cell(state)
-    places = list(talk.PLACES.values()) if isinstance(talk.PLACES, dict) else []
+    places = list(briefing.PLACES.values()) if isinstance(briefing.PLACES, dict) else []
     nearest = min(places, key=lambda place: math.dist(here, tuple(place["cell"])), default=None)
     return nearest["name"] if nearest else "the road"
 

@@ -24,12 +24,13 @@ import copy
 
 import cast
 import combat
-import crafting
+import consequences
+import conversation
+import gatekeeping
 import minds
 import perception
 import reputation
 import speech
-import talk
 import tuning
 
 SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
@@ -204,7 +205,7 @@ def resolve(
             record["happened"].append(seen)
 
     if kind == "say":
-        note("player", "say", f"You: “{talk.clean(text)}”")
+        note("player", "say", f"You: “{conversation.clean(text)}”")
     elif kind == "wait":
         note("player", "wait", "You wait and say nothing.", "The stranger waits and says nothing.")
     elif kind == "leave":
@@ -224,8 +225,8 @@ def resolve(
                 "A guard took the stranger into custody.",
             )
     elif kind == "do":
-        payload, verdict, _ = crafting.resolve_attempt(draft, run_id, text, judged, service_error, trace_id, now)
-        crafting.apply_payload(draft, payload)
+        payload, verdict, _ = consequences.resolve_attempt(draft, run_id, text, judged, service_error, trace_id, now)
+        consequences.apply_payload(draft, payload)
         draft["sim_time_ms"] = now  # Time passes once, for the whole round.
         entry = payload["journal_entry"]
         record["entry"], record["effort_seconds"], record["verdict"] = entry, verdict["effort_seconds"], verdict
@@ -244,7 +245,7 @@ def resolve(
             ),
             None,
         )
-        note("player", "do", entry["reason"], seen or f"The stranger tried to: “{talk.clean(text)}”")
+        note("player", "do", entry["reason"], seen or f"The stranger tried to: “{conversation.clean(text)}”")
     if record["walked_away"] and draft["player"].get("alive", True):
         _walked_off(draft, encounter, now, journal, note)
     draft["journal"].extend(journal)
@@ -358,7 +359,7 @@ def arrest_player(state: dict, guard: dict, now: int) -> str:
     )
     state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
     reputation.settle(state, "paid for with an arrest")  # The thefts are answered for (violence is not, D-46).
-    captain = cast.find(state["npcs"], talk.CAPTAIN)
+    captain = cast.find(state["npcs"], gatekeeping.CAPTAIN)
     if captain and captain.get("alive", True) and not captain.get("down"):
         reputation.remember(
             captain,

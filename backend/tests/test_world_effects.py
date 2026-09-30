@@ -5,6 +5,8 @@ import copy
 from test_craft import commit, fresh_state, judged
 from test_talk import npc, said
 
+import briefing
+import conversation
 import crafting
 import patch
 import perception
@@ -66,9 +68,12 @@ def test_tomas_counts_the_deal_done_only_once_the_beam_is_up():
     talk.exchange(state, "npc_tomas_reed", "Work?", said("offer:beam_help"), "offer:beam_help", "Get it up.", [])
     deal = next(iter(state["agreements"].values()))
     deal["status"] = "accepted"
-    assert not talk.deal_possible(state, deal)
+    assert not conversation.deal_possible(state, deal)
     state["objects"]["gate_beam"]["installed_in"] = "gate_brackets"
-    assert talk.deal_possible(state, deal) and "done" in talk.request(state, npc(state, "npc_tomas_reed"), "Done.")[1]
+    assert (
+        conversation.deal_possible(state, deal)
+        and "done" in briefing.request(state, npc(state, "npc_tomas_reed"), "Done.")[1]
+    )
     assert tomas
 
 
@@ -87,9 +92,9 @@ def test_an_offered_trade_happens_only_if_they_accept():
     (offer,) = state["trades"].values()
     assert offer["status"] == "offered" and state["objects"]["lodestone_darin"]["owner_id"] == "npc_darin_ko"
     darin = npc(state, "npc_darin_ko")
-    options = talk.replies(state, darin)
+    options = conversation.replies(state, darin)
     assert f"accept_trade:{offer['id']}" in options
-    assert "offering Darin a trade" in talk.request(state, darin, "Well?")[0]
+    assert "offering Darin a trade" in briefing.request(state, darin, "Well?")[0]
     before = copy.deepcopy(state)
     talk.exchange(
         state, "npc_darin_ko", "Deal?", said(f"accept_trade:{offer['id']}"), f"accept_trade:{offer['id']}", "Done.", []
@@ -100,7 +105,7 @@ def test_an_offered_trade_happens_only_if_they_accept():
         state["objects"]["flint_a"]["owner_id"] == "npc_darin_ko"
         and state["trades"][offer["id"]]["status"] == "accepted"
     )
-    assert not talk.open_trades(state, npc(state, "npc_darin_ko"))
+    assert not conversation.open_trades(state, npc(state, "npc_darin_ko"))
     replayed = patch.snapshot(before)  # What the event saves replays to the same world (D-58).
     patch.apply(replayed, patch.diff(patch.snapshot(before), patch.snapshot(state)))
     assert replayed == patch.snapshot(state)
@@ -109,9 +114,9 @@ def test_an_offered_trade_happens_only_if_they_accept():
 def test_people_give_things_only_to_someone_they_trust():
     state = fresh_state(79, 32)
     darin = npc(state, "npc_darin_ko")
-    assert not any(k.startswith("give:") for k in talk.replies(state, darin))
+    assert not any(k.startswith("give:") for k in conversation.replies(state, darin))
     reputation.regard(darin)["trust"] = 0.6
-    key = next(k for k in talk.replies(state, darin) if k.startswith("give:"))
+    key = next(k for k in conversation.replies(state, darin) if k.startswith("give:"))
     item = key.split(":")[1]
     talk.exchange(state, "npc_darin_ko", "Could you spare it?", said(key), key, "Take it.", [])
     assert state["objects"][item]["holder_id"] == "player" and state["objects"][item]["owner_id"] == "player"

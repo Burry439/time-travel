@@ -6,6 +6,7 @@ from test_encounter import post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import npc, said, unit_state
 
+import briefing
 import persona
 import talk
 from ai import voice
@@ -65,7 +66,7 @@ def test_a_name_is_only_learned_when_the_stranger_said_it():
         [],
     )
     assert persona.knows(bren)["claims"][-1]["text"] == "I'm the king's own cousin."
-    situation, _ = talk.request(state, bren, "Well?")
+    situation, _ = briefing.request(state, bren, "Well?")
     assert "didn't believe it" in situation and "king's own cousin" in situation
 
 
@@ -86,9 +87,9 @@ def test_a_finished_conversation_becomes_an_episode_both_models_see(world, monke
     assert known["notes"] == [] and known["talks"] == 1 and "smith looking for work" in known["episodes"][0]["text"]
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
     kade = npc(state, "npc_kade_east")
-    situation, _ = talk.request(state, kade, "Remember me?")
+    situation, _ = briefing.request(state, kade, "Remember me?")
     assert "Ash" in situation and "An earlier conversation" in situation and "new conversation" in situation
-    context = talk.voice_context(state, kade, "Remember me?", "answer")
+    context = briefing.voice_context(state, kade, "Remember me?", "answer")
     assert any("Ash" in line for line in context["remembers_the_stranger"]) and context["conversation_so_far"] == []
 
 

@@ -18,12 +18,15 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 import attempts
+import briefing
 import cast
 import clock
 import combat
 import commands
-import crafting
+import conversation
 import encounter
+import gatekeeping
+import judge_view
 import routes_tutorial
 import store
 import talk
@@ -37,7 +40,7 @@ router = APIRouter()
 class SayRequest(BaseModel):
     model_config = {"extra": "forbid"}
     npc_id: str = Field(min_length=1, max_length=60)
-    text: str = Field(min_length=1, max_length=talk.MAX_TEXT)
+    text: str = Field(min_length=1, max_length=conversation.MAX_TEXT)
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -47,8 +50,8 @@ def _talk_problem(state: dict, npc_id: str) -> tuple[dict, list[list[int]]]:
     npc = cast.find(state["npcs"], npc_id)
     if npc is None:
         raise HTTPException(404, "Unknown person")
-    problem = talk.busy(npc)
-    walk = talk.walk_to(state, npc) if problem is None else None
+    problem = conversation.busy(npc)
+    walk = conversation.walk_to(state, npc) if problem is None else None
     if problem is None and walk is None:
         problem = f"{npc['name']} is too far away to talk to."
     if problem:
@@ -102,7 +105,7 @@ def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
         npc = cast.find(state["npcs"], request.target_id)
         if npc is None:
             raise HTTPException(404, "Unknown person")
-        problem = talk.busy(npc)
+        problem = conversation.busy(npc)
         if problem is None and cast.distance(npc, state["player"]) > tuning.HEAR_TALK_CELLS:
             if not encounter.hostile(state):  # A friendly talk moves with you: walk over to them (D-48).
                 return _talk_problem(state, request.target_id)[1]
@@ -116,7 +119,7 @@ def _round_draft(
     state: dict, run_id: str, request: EncounterAct, walk: list[list[int]], judged: judge.JudgeCall | None
 ) -> tuple[dict, dict]:
     """The stranger's part of a round on the latest world (deterministic: safe to redo after model calls)."""
-    seen = talk.standing_at(state, walk)
+    seen = conversation.standing_at(state, walk)
     now = seen["sim_time_ms"]
     current = encounter.active(seen)
     if current is None:
@@ -146,10 +149,10 @@ def scene(
     inside = [cast.find(draft["npcs"], n) for n in current["participants"]]
     inside = [n for n in inside if n is not None]
     nearby = [
-        n for n in (talk.bystanders(draft) if nearby is None else nearby) if n["id"] not in current["participants"]
+        n for n in (briefing.bystanders(draft) if nearby is None else nearby) if n["id"] not in current["participants"]
     ]
-    context = talk.scene_context(draft, addressed, inside, nearby, text, happened)
-    call = voice.scene(context, talk.fallback_line(draft, addressed, "answer"), allowed=allowed)
+    context = briefing.scene_context(draft, addressed, inside, nearby, text, happened)
+    call = voice.scene(context, briefing.fallback_line(draft, addressed, "answer"), allowed=allowed)
     return {
         "call": call,
         "context": context,
@@ -165,7 +168,7 @@ def keep_promise(
     """Someone said they'd do something later but the move picked doesn't do it (D-51). If it's an errand to a
     person (named, or "the guards"/"the captain"), they go and do it, with their own words as the message.
     Otherwise it's noted as a promise the game couldn't keep. Returns (key, errand_to, errand_message, unkept)."""
-    if "go_tell" in talk.replies(state, npc):
+    if "go_tell" in conversation.replies(state, npc):
         task = talk.errand(state, npc, errand_to, errand_message or promised)
         if task is None:
             words = set(re.findall(r"[a-z]+", promised.lower()))
@@ -178,7 +181,7 @@ def keep_promise(
                 None,
             )
             if named is None and words & {"captain", "guard", "guards", "watch", "gate"}:
-                named = cast.find(state["npcs"], talk.CAPTAIN)
+                named = cast.find(state["npcs"], gatekeeping.CAPTAIN)
             task = talk.errand(state, npc, named["id"], errand_message or promised) if named else None
         if task is not None:
             return "go_tell", task[0]["id"], task[1], None
@@ -203,17 +206,21 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
             continue  # Not a real person here, the conversation is over, or they've already spoken.
         joining = npc["id"] not in current["participants"]
         if joining and (
-            npc["id"] not in moment["nearby"] or talk.busy(npc) or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
+            npc["id"] not in moment["nearby"]
+            or conversation.busy(npc)
+            or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
         ):
             continue  # Only someone who was really near enough to hear can join in.
         if joining:
             encounter.join(draft, npc, "joined", None, now)
         answers = line.get("answers") or {}
-        key = talk.decided_reply(draft, npc, answers, line.get("move") or "answer")
+        key = conversation.decided_reply(draft, npc, answers, line.get("move") or "answer")
         errand_to, errand_message = line.get("errand_to", ""), line.get("errand_message", "")
         promised = line.get("promised_later", "")
         unkept = None
-        if promised and key.split(":")[0] not in talk.ERRANDS:  # Said they'd do something: hold them to it (D-51).
+        if (
+            promised and key.split(":")[0] not in conversation.ERRANDS
+        ):  # Said they'd do something: hold them to it (D-51).
             key, errand_to, errand_message, unkept = keep_promise(draft, npc, promised, errand_to, errand_message)
         moment_words = " ".join(heard) or None
         exchange = talk.exchange(
@@ -255,7 +262,7 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
                     "unkept_promise": unkept,
                     "reply": line["text"],
                     "regard_change": exchange["regard_change"],
-                    "situation": talk.request(draft, npc, text, moment_words)[0],
+                    "situation": briefing.request(draft, npc, text, moment_words)[0],
                     "call": {"provider": "voice", "model": call.model, "answers": answers},
                     "voice": call.as_dict(),
                     "voice_context": moment["context"],
@@ -283,8 +290,10 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
         with commands.open(run_id, request, body=body, duplicate=repeated) as cmd:
             walk = _round_setup(cmd.state, request)
             cmd.claim()
-            seen = talk.standing_at(cmd.state, walk)
-            context = crafting.build_context(seen, request.text, request.selected_ids) if request.kind == "do" else None
+            seen = conversation.standing_at(cmd.state, walk)
+            context = (
+                judge_view.build_context(seen, request.text, request.selected_ids) if request.kind == "do" else None
+            )
             calls_used = telemetry.calls_for_run(cmd.connection, run_id)
     except commands.Reply as reply:
         return reply.body

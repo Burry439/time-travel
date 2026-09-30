@@ -3,7 +3,9 @@ can speak for the stranger, and a promise the voice made without the move is car
 
 from test_talk import npc, unit_state
 
+import briefing
 import clock
+import conversation
 import perception
 import reputation
 import rounds
@@ -37,11 +39,11 @@ def treated(state, npc_id):
 def test_someone_helped_can_speak_for_the_stranger_whatever_their_trust():
     state = unit_state()
     jory = npc(state, "npc_jory_venn")
-    talk.regard(jory)["trust"] = 0.3
-    assert "vouch" not in talk.replies(state, jory)
+    reputation.regard(jory)["trust"] = 0.3
+    assert "vouch" not in conversation.replies(state, jory)
     treated(state, "npc_jory_venn")
-    talk.regard(jory)["trust"] = 0.3  # Evidence raised it; the help alone must be enough.
-    assert "vouch" in talk.replies(state, jory)
+    reputation.regard(jory)["trust"] = 0.3  # Evidence raised it; the help alone must be enough.
+    assert "vouch" in conversation.replies(state, jory)
 
 
 def test_go_tell_walks_over_and_the_listener_remembers():
@@ -97,14 +99,14 @@ def test_someone_given_a_remedy_can_put_it_on_themselves():
     state = unit_state()
     jory = npc(state, "npc_jory_venn")
     gear.add_condition(jory, {"kind": "burn", "area": "arm", "severity": 18}, 0)
-    assert not any(k.startswith("treat_self") for k in talk.replies(state, jory))
-    context = talk.voice_context(state, jory, "put it on your burn", "answer")
+    assert not any(k.startswith("treat_self") for k in conversation.replies(state, jory))
+    context = briefing.voice_context(state, jory, "put it on your burn", "answer")
     assert context["what_they_have"] == ["nothing in their hands"]
     poultice = state["objects"]["plantain_a"]
     poultice.update(
         holder_id="npc_jory_venn", gear={"kind": "remedy", "class": "poultice", "covers": [], "quality": "fair"}
     )
-    assert "treat_self:plantain_a" in talk.replies(state, jory)
+    assert "treat_self:plantain_a" in conversation.replies(state, jory)
     talk.exchange(state, "npc_jory_venn", "put it on your burn", {}, "treat_self:plantain_a", "There. Cooler.", [])
     burn = next(c for c in npc(state, "npc_jory_venn")["conditions"] if c["kind"] == "burn")
     assert burn["treated"] > 0 and state["objects"]["plantain_a"]["holder_id"] == "used"

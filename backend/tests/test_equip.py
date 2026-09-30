@@ -6,10 +6,11 @@ from test_craft import commit, fresh_state, judged
 from test_encounter import post, world  # noqa: F401
 
 import cast
-import crafting
+import consequences
 import gear
+import judge_view
 import perception
-import talk
+import reputation
 
 
 def carried(state, oid, name, materials, mass, gear_record, flags=("rigid",), length=None):
@@ -41,9 +42,9 @@ def test_everyone_starts_in_their_own_gear_and_it_is_real():
     assert gear.held(state, bren, "right")["name"] == "iron-headed spear"
     assert {layer["class"] for layer in gear.layers(state, bren, "body")} == {"mail"}
     assert gear.worn(state, state["player"], "body")["name"] == "travelling clothes"
-    assert crafting.people_nearby(fresh_state(bren["x"], bren["y"] + 1))  # (and the judge sees it, below)
+    assert judge_view.people_nearby(fresh_state(bren["x"], bren["y"] + 1))  # (and the judge sees it, below)
     near = fresh_state(bren["x"], bren["y"] + 1)
-    view = next(p for p in crafting.people_nearby(near) if p["id"] == "npc_bren_marr")
+    view = next(p for p in judge_view.people_nearby(near) if p["id"] == "npc_bren_marr")
     assert "mail shirt" in view["armour"] and "spear" in view["weapon"]
 
 
@@ -51,9 +52,9 @@ def test_a_downed_guards_sword_can_be_taken_and_that_is_theft():
     state = fresh_state()
     roderic = cast.find(state["npcs"], "npc_roderic_vale")
     state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
-    assert "sword_roderic" not in {o["id"] for o in crafting.available_items(state)}  # On his hip, not yours.
+    assert "sword_roderic" not in {o["id"] for o in judge_view.available_items(state)}  # On his hip, not yours.
     roderic.update(down=True, health=20)
-    assert "sword_roderic" in {o["id"] for o in crafting.available_items(state)}
+    assert "sword_roderic" in {o["id"] for o in judge_view.available_items(state)}
     summary = commit(state, judged("take", take_ids=["sword_roderic"]))
     assert summary["category"] == "success" and state["objects"]["sword_roderic"]["holder_id"] == "player"
     assert summary["property"][0]["owner_id"] == "npc_roderic_vale"  # Theft, recorded against him.
@@ -146,8 +147,8 @@ def test_treating_someone_earns_their_trust_like_a_gift():
         {"kind": "remedy", "class": "bandage", "covers": [], "quality": "fair"},
         flags=("flexible",),
     )
-    before = talk.regard(kade)["trust"]
-    payload, summary, after = crafting.resolve_attempt(
+    before = reputation.regard(kade)["trust"]
+    payload, summary, after = consequences.resolve_attempt(
         state,
         "unit0000",
         "bind Kade's leg",
@@ -169,7 +170,7 @@ def test_treating_someone_earns_their_trust_like_a_gift():
     assert kade_after["conditions"][0]["treated"] == 1
     perception.apply_perceptions(after, perception.perceive(after, payload["journal_entry"]))
     kade_after = cast.find(after["npcs"], "npc_kade_east")
-    assert talk.regard(kade_after)["trust"] > before
+    assert reputation.regard(kade_after)["trust"] > before
     assert any(m["kind"] == "help" for m in kade_after["mind"]["memories"])
 
 

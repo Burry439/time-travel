@@ -5,6 +5,7 @@ from test_craft import commit, judged
 from test_encounter import face_to_face, play
 from test_talk import npc, said, unit_state
 
+import conversation
 import encounter
 import perception
 import reputation
@@ -50,7 +51,7 @@ def test_giving_it_back_settles_it_for_everyone_who_knew():
     reputation.after_deed(state, state["last_action"])
     assert reputation.unresolved_crime(npc(state, "npc_tomas_reed")) is None
     assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is None
-    assert "seize" not in talk.moves(state, npc(state, "npc_kade_east"))
+    assert "seize" not in conversation.moves(state, npc(state, "npc_kade_east"))
 
 
 def test_an_arrest_answers_for_the_theft():
@@ -65,7 +66,7 @@ def test_forgiving_settles_their_own_grudge():
     rope_theft(state)
     tomas = npc(state, "npc_tomas_reed")
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
-    assert "forgive" in talk.moves(state, tomas)
+    assert "forgive" in conversation.moves(state, tomas)
     state["event_seq"] = 9
     talk.exchange(
         state, tomas["id"], "I'm sorry. I'll make it right.", said("forgive"), "forgive", "Fine. Let it go.", []
@@ -78,10 +79,10 @@ def test_guards_arrest_or_attack_only_for_a_crime_not_put_right():
     state = unit_state()
     kade = npc(state, "npc_kade_east")
     state["player"].update(x=kade["x"], y=kade["y"] + 1)
-    plain = talk.moves(state, kade)
+    plain = conversation.moves(state, kade)
     assert "seize" not in plain and "attack" not in plain  # Vague answers about family are not a crime.
     rope_theft(state)
-    assert {"seize", "attack"} <= set(talk.moves(state, kade))
+    assert {"seize", "attack"} <= set(conversation.moves(state, kade))
 
 
 def test_walking_off_after_making_amends_is_just_walking_off():
@@ -96,10 +97,10 @@ def test_walking_off_after_making_amends_is_just_walking_off():
 def test_words_alone_sour_someone_only_so_far():
     state = unit_state()
     oren = npc(state, "npc_oren_dast")
-    start = dict(talk.regard(oren))
+    start = dict(reputation.regard(oren))
     for _ in range(20):  # Vague, suspicious-sounding answers, over and over.
-        talk._update_regard(oren, said("answer", impression=0, suspicion=4))
-    assert talk.regard(oren)["suspicion"] <= start["suspicion"] + tuning.TALK_ILLWILL + 1e-9
+        talk.update_regard(oren, said("answer", impression=0, suspicion=4))
+    assert reputation.regard(oren)["suspicion"] <= start["suspicion"] + tuning.TALK_ILLWILL + 1e-9
 
 
 def test_no_second_decision_per_round():

@@ -234,3 +234,7 @@ def hearsay(memory: dict) -> bool:
     doesn't mean the guards have dealt with them (D-55)."""
     source = str(memory.get("source", ""))
     return source.startswith(("told_by", "heard")) or source == "overheard"
+
+
+def in_words(value: float, levels: list[str]) -> str:
+    return levels[min(len(levels) - 1, int(value * len(levels)))]

@@ -9,9 +9,12 @@ from test_craft import attempt, judged
 from test_talk import npc, said, unit_state, walk_to
 
 import app as service
+import briefing
 import cast
 import clock
+import conversation
 import crafting
+import gatekeeping
 import paths
 import reputation
 import talk
@@ -35,10 +38,10 @@ def answers(reply, **yes):
 def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
     state = unit_state()
     roderic, bren = npc(state, "npc_roderic_vale"), npc(state, "npc_bren_marr")
-    assert "admit" in talk.replies(state, roderic) and "admit" in talk.replies(state, bren)  # D-43.
-    assert "admit" not in talk.replies(state, npc(state, "npc_hessa_marr"))  # Not a guard: not hers to give.
+    assert "admit" in conversation.replies(state, roderic) and "admit" in conversation.replies(state, bren)  # D-43.
+    assert "admit" not in conversation.replies(state, npc(state, "npc_hessa_marr"))  # Not a guard: not hers to give.
     bren["down"] = True
-    assert "admit" not in talk.replies(state, bren)
+    assert "admit" not in conversation.replies(state, bren)
     reputation.remember(
         roderic,
         {
@@ -51,20 +54,20 @@ def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
             "source": "witnessed",
         },
     )
-    assert "admit" not in talk.replies(state, roderic)
+    assert "admit" not in conversation.replies(state, roderic)
     roderic["mind"]["memories"][-1]["doubted"] = True  # He doesn't believe it.
-    assert "admit" in talk.replies(state, roderic)
+    assert "admit" in conversation.replies(state, roderic)
 
 
 def test_offers_come_from_authored_needs_and_vouching_needs_trust():
     state = unit_state()
     tomas = npc(state, "npc_tomas_reed")
-    options = talk.replies(state, tomas)
+    options = conversation.replies(state, tomas)
     assert "offer:beam_help" in options and "gate beam" in options["offer:beam_help"]["description"]
     assert "vouch" not in options
-    talk.regard(tomas)["trust"] = 0.65
-    assert "vouch" in talk.replies(state, tomas)
-    assert "vouch" not in talk.replies(state, npc(state, "npc_roderic_vale"))  # He is who they vouch to.
+    reputation.regard(tomas)["trust"] = 0.65
+    assert "vouch" in conversation.replies(state, tomas)
+    assert "vouch" not in conversation.replies(state, npc(state, "npc_roderic_vale"))  # He is who they vouch to.
 
 
 def test_a_deal_is_offered_accepted_done_and_rewarded_once():
@@ -82,16 +85,16 @@ def test_a_deal_is_offered_accepted_done_and_rewarded_once():
     )
     (deal,) = state["agreements"].values()
     assert deal["status"] == "proposed" and deal["issuer"] == "npc_tomas_reed"
-    assert "offer:beam_help" not in talk.replies(state, npc(state, "npc_tomas_reed"))  # Offered once.
-    situation, questions = talk.request(state, npc(state, "npc_tomas_reed"), "Deal.")
+    assert "offer:beam_help" not in conversation.replies(state, npc(state, "npc_tomas_reed"))  # Offered once.
+    situation, questions = briefing.request(state, npc(state, "npc_tomas_reed"), "Deal.")
     assert "accepts" in questions and "offered, not yet agreed" in situation
     state["event_seq"] += 1
     talk.exchange(state, "npc_tomas_reed", "Deal.", answers("answer", accepts=0.9), "answer", "Good.", [])
     assert deal["status"] == "accepted"
-    _, questions = talk.request(state, npc(state, "npc_tomas_reed"), "It's done.")
+    _, questions = briefing.request(state, npc(state, "npc_tomas_reed"), "It's done.")
     assert "done" not in questions  # The beam isn't up yet: no words can make it done.
     state["objects"]["gate_beam"]["installed_in"] = "gate_brackets"
-    _, questions = talk.request(state, npc(state, "npc_tomas_reed"), "It's done.")
+    _, questions = briefing.request(state, npc(state, "npc_tomas_reed"), "It's done.")
     assert "done" in questions and "never from the stranger's word" in questions["done"]["instructions"]
     state["event_seq"] += 1
     talk.exchange(state, "npc_tomas_reed", "Trust me, it's done.", answers("answer", done=0.2), "answer", "Is it?", [])
@@ -118,7 +121,7 @@ def run(state, done, limit_ms=90_000, beat=500):
 def test_a_vouch_walks_to_the_captain_and_becomes_his_evidence():
     state = unit_state()
     tomas = npc(state, "npc_tomas_reed")
-    talk.speak_for(state, tomas, "they did what I asked.", "Tomas vouched for the stranger.", 7, 0)
+    gatekeeping.speak_for(state, tomas, "they did what I asked.", "Tomas vouched for the stranger.", 7, 0)
     assert run(state, lambda: any(m["kind"] == "vouch" for m in cast.mind(npc(state, "npc_roderic_vale"))["memories"]))
     memory = npc(state, "npc_roderic_vale")["mind"]["memories"][-1]
     assert memory["by"] == "npc_tomas_reed" and memory["source"] == "told_by:npc_tomas_reed"
@@ -367,7 +370,7 @@ def test_lent_things_can_be_used_without_theft():
     state = unit_state()
     state["player"].update(x=79, y=32)
     darin = npc(state, "npc_darin_ko")
-    assert "lend:lodestone_darin" in talk.replies(state, darin)
+    assert "lend:lodestone_darin" in conversation.replies(state, darin)
     talk.exchange(
         state,
         "npc_darin_ko",
@@ -379,7 +382,7 @@ def test_lent_things_can_be_used_without_theft():
     )
     stone = state["objects"]["lodestone_darin"]
     assert stone["lent_to"] == "player" and stone["owner_id"] == "npc_darin_ko"
-    assert "lend:lodestone_darin" not in talk.replies(state, npc(state, "npc_darin_ko"))
+    assert "lend:lodestone_darin" not in conversation.replies(state, npc(state, "npc_darin_ko"))
     taken = crafting.validate(state, judged("take", take_ids=["lodestone_darin"]))
     assert taken["category"] == "success" and taken["property"] == []  # Not recorded as theft.
     other = crafting.validate(state, judged("take", take_ids=["cloth_darin"]))
@@ -390,12 +393,12 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     state = unit_state()
     roderic = npc(state, "npc_roderic_vale")
     state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
-    _, questions = talk.request(state, roderic, "May I enter?")
+    _, questions = briefing.request(state, roderic, "May I enter?")
     assert {"threat", "reason"} <= set(questions)
     # The stranger's word alone never opens the gate, however the reading goes (D-55): "Hessa spoke for me" isn't
     # Hessa speaking for them.
-    assert talk.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "answer"
-    assert "admit" not in talk.moves(state, roderic) and "why_not_yet" in talk.converse_context(
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "answer"
+    assert "admit" not in conversation.moves(state, roderic) and "why_not_yet" in briefing.converse_context(
         state, roderic, "Let me in.", {}
     )
     reputation.remember(
@@ -414,14 +417,19 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
             "short": "has Hessa's word",
         },
     )
-    assert "admit" in talk.moves(state, roderic) and "why_not_yet" not in talk.converse_context(state, roderic, "x", {})
+    assert "admit" in conversation.moves(state, roderic) and "why_not_yet" not in briefing.converse_context(
+        state, roderic, "x", {}
+    )
     # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
-    assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
-    assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
-    assert talk.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
     # Beliefs alone never open the gate on words that refuse.
-    assert talk.decided_reply(state, roderic, answers("x", reason=0.9, threat=0.1), "tell_to_leave") == "tell_to_leave"
-    _, questions = talk.request(state, npc(state, "npc_bren_marr"), "May I enter?")
+    assert (
+        conversation.decided_reply(state, roderic, answers("x", reason=0.9, threat=0.1), "tell_to_leave")
+        == "tell_to_leave"
+    )
+    _, questions = briefing.request(state, npc(state, "npc_bren_marr"), "May I enter?")
     assert "Hessa has vouched" in questions["reason"]["instructions"]  # Bren weighs it by his own lights.
-    _, questions = talk.request(state, npc(state, "npc_hessa_marr"), "May I enter?")
+    _, questions = briefing.request(state, npc(state, "npc_hessa_marr"), "May I enter?")
     assert "reason" not in questions

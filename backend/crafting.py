@@ -9,20 +9,17 @@ from __future__ import annotations
 
 import copy
 import math
-import re
 
 import cast
 import combat
-import content
 import gear
+import heat
+import judge_view
 import m2
 import paths
 import tuning
 
-CONTENT = content.MATERIALS
 MAX_PIECES = 8
-MAX_STEPS = 4
-PRIOR_RULINGS = 10
 # Flags describing an active state need an input that can cause it. Without one the
 # flag becomes an untested capability instead of a physical fact.
 ACTIVE_FLAGS = {
@@ -31,208 +28,9 @@ ACTIVE_FLAGS = {
     "light_source": ({"light_source", "heat_source"}, "could give light if lit"),
     "heat_source": ({"heat_source"}, "could give heat if lit"),
 }
-OPERATION_CAPABILITIES = {"tieable": "tie", "container": "fill"}
 
 
-def _names(state: dict) -> dict[str, str]:
-    return {npc["id"]: npc["name"] for npc in state["npcs"]}
-
-
-def owner_label(state: dict, obj: dict) -> str:
-    owner = obj["owner_id"]
-    return "nobody" if owner is None else "you" if owner == "player" else _names(state).get(owner, owner)
-
-
-def walk_costs(state: dict) -> dict[str, int]:
-    """Steps the player must walk to be within reach of each loose object and person nearby."""
-    start = (state["player"]["x"], state["player"]["y"])
-    _, steps = paths.bfs(start, paths.blocked_cells(state), tuning.NEARBY_WALK_STEPS)
-
-    def cost(x: int, y: int) -> int | None:
-        options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= tuning.REACH_CELLS]
-        return min(options) if options else None
-
-    costs = {}
-    fallen = fallen_holders(state)
-    for obj in state["objects"].values():
-        if obj["holder_id"] == "player":
-            costs[obj["id"]] = 0
-        elif obj["holder_id"] in fallen:  # On someone down or dead: reach them to take it (D-49).
-            npc = fallen[obj["holder_id"]]
-            if cast.distance(start, npc) <= tuning.NEARBY_WALK_STEPS + 3:
-                found = cost(npc["x"], npc["y"])
-                if found is not None:
-                    costs[obj["id"]] = found
-        elif obj["holder_id"] is None and cast.distance(start, obj) <= tuning.NEARBY_WALK_STEPS + 3:
-            found = cost(obj["x"], obj["y"])
-            if found is not None:
-                costs[obj["id"]] = found
-    for npc in state["npcs"]:
-        if cast.distance(start, npc) <= tuning.NEARBY_WALK_STEPS + 3:
-            found = cost(npc["x"], npc["y"])
-            if found is not None:
-                costs[npc["id"]] = found
-    return costs
-
-
-def fallen_holders(state: dict) -> dict[str, dict]:
-    """People down or dead: what they hold or wear can be taken from them (D-49)."""
-    return {n["id"]: n for n in state["npcs"] if n.get("down") or not n.get("alive", True)}
-
-
-def available_items(state: dict, costs: dict | None = None) -> list[dict]:
-    """Carried items plus anything intact the player can walk to nearby, whoever owns it (including what someone
-    down or dead has on them)."""
-    costs = walk_costs(state) if costs is None else costs
-    fallen = fallen_holders(state)
-    return [
-        _on_body(obj, fallen)
-        for obj in state["objects"].values()
-        if obj["id"] in costs
-        and (obj["holder_id"] in (None, "player") or obj["holder_id"] in fallen)
-        and "water_source" not in obj["capabilities"]
-        and obj["condition"] in ("usable", "installed")
-    ]
-
-
-def _on_body(obj: dict, fallen: dict[str, dict]) -> dict:
-    """Something on a fallen person is where they lie."""
-    npc = fallen.get(obj["holder_id"])
-    return {**obj, "x": npc["x"], "y": npc["y"], "on_person": npc["id"]} if npc else obj
-
-
-def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
-    costs = walk_costs(state) if costs is None else costs
-    people = []
-    for npc in state["npcs"]:
-        distance = cast.distance(state["player"], npc)
-        if distance <= tuning.PEOPLE_RADIUS:
-            health = npc.get("health", 100)
-            people.append(
-                {
-                    "id": npc["id"],
-                    "name": npc["name"],
-                    "role": npc["role"],
-                    "distance_cells": round(distance, 1),
-                    "within_reach": distance <= tuning.REACH_CELLS,
-                    "walk_steps": costs.get(npc["id"]),
-                    "condition": (
-                        "dead"
-                        if not npc.get("alive", True)
-                        else "down (disabled, can't fight)"
-                        if npc.get("down")
-                        else "unhurt"
-                        if health >= 100
-                        else "wounded"
-                        if health > 30
-                        else "badly wounded (near death)"
-                    ),
-                    "injuries": npc.get("injuries", []),
-                    "armour": _worn_words(state, npc),
-                    "weapon": _held_words(state, npc),
-                    **({"conditions": [gear.describe(c) for c in npc["conditions"]]} if npc.get("conditions") else {}),
-                    "aware_of_you": cast.aware(state, npc),
-                    "activity": (npc.get("controller") or {}).get("activity", "standing"),
-                }
-            )
-    return people
-
-
-def _worn_words(state: dict, npc: dict) -> str:
-    """What someone has on, in words, for the judge (their card's description for journeys before seed 10)."""
-    if not npc.get("equipped"):
-        return minds_card(npc).get("armor_text", "no armour")
-    names = []
-    for slot in gear.BODY_SLOTS:
-        obj = gear.worn(state, npc, slot)
-        if obj is not None and obj["name"] not in names:
-            names.append(obj["name"])
-    return ", ".join(names) or "no armour"
-
-
-def _held_words(state: dict, npc: dict) -> str:
-    if not npc.get("equipped"):
-        return minds_card(npc).get("weapon") or "none"
-    held = [o["name"] for h in gear.HAND_SLOTS if (o := gear.held(state, npc, h))]
-    return ", ".join(dict.fromkeys(held)) or "none"
-
-
-def minds_card(npc: dict) -> dict:
-
-    return cast.card(npc)
-
-
-def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
-    return {
-        "id": obj["id"],
-        "name": obj["name"],
-        "kind": obj.get("feature", "item"),
-        "walk_steps": costs.get(obj["id"], 0),
-        "distance_cells": 0 if obj["holder_id"] == "player" else round(cast.distance(state["player"], obj), 1),
-        "description": obj.get("description", ""),
-        "materials": obj.get("materials", []),
-        "mass_kg": obj["mass_kg"],
-        "length_m": obj.get("length_m"),
-        "flags": obj.get("flags", []),
-        "carried_by_player": obj["holder_id"] == "player",
-        "portable": "carry" in obj["capabilities"],
-        **({"on_someone_down": obj["on_person"]} if obj.get("on_person") else {}),
-        "belongs_to": owner_label(state, obj) + (" (lent to the player)" if obj.get("lent_to") == "player" else ""),
-        **({"capacity_l": obj["capacity_l"], "water_l": obj.get("water_l", 0.0)} if obj.get("capacity_l") else {}),
-        **({"temperature": obj["temperature"]} if obj.get("temperature", "cold") != "cold" else {}),
-        **({"burning": True} if obj.get("burning") else {}),
-        **({"installed_in": obj["installed_in"]} if obj.get("installed_in") else {}),
-        **({"known_capabilities": obj["known_capabilities"]} if obj.get("known_capabilities") else {}),
-    }
-
-
-def water_sources(state: dict, costs: dict) -> list[dict]:
-    return [
-        {
-            "id": o["id"],
-            "name": o["name"],
-            "water_l": o["water_l"],
-            "walk_steps": costs[o["id"]],
-            "belongs_to": owner_label(state, o),
-        }
-        for o in state["objects"].values()
-        if "water_source" in o["capabilities"] and o["id"] in costs
-    ]
-
-
-def prior_rulings(state: dict) -> list[dict]:
-    rulings = [
-        {
-            "intention": e["text"],
-            "action": e.get("action", "make"),
-            "outcome": e["category"],
-            "reason": e["reason"],
-            "made": e.get("made_name"),
-            "precedent_key": e.get("precedent_key"),
-        }
-        for e in state["journal"]
-        if e.get("kind") == "craft" and e["category"] != "unresolved"
-    ]
-    return rulings[-PRIOR_RULINGS:]
-
-
-def build_context(state: dict, text: str, selected_ids: list[str]) -> dict:
-    costs = walk_costs(state)
-    items = available_items(state, costs)
-    people = people_nearby(state, costs)
-    known = {o["id"] for o in items} | {p["id"] for p in people}
-    return {
-        "player_intention": text,
-        "highlighted_ids": [i for i in selected_ids if i in known],
-        "player_cell": [state["player"]["x"], state["player"]["y"]],
-        "available_items": [_judge_view(state, o, costs) for o in items],
-        "water_sources": water_sources(state, costs),
-        "people_nearby": people,
-        "prior_rulings": prior_rulings(state),
-    }
-
-
-def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **extra) -> dict:
+def ruling(category: str, reason: str, notes: list[str], effort: int = 0, **extra) -> dict:
     base = {
         "category": category,
         "reason": reason,
@@ -263,8 +61,8 @@ def _verdict(category: str, reason: str, notes: list[str], effort: int = 0, **ex
     return base
 
 
-def _unresolved(notes: list[str], note: str) -> dict:
-    return _verdict("unresolved", "The attempt could not be resolved. Nothing changed.", notes + [f"Rejected: {note}"])
+def unresolved(notes: list[str], note: str) -> dict:
+    return ruling("unresolved", "The attempt could not be resolved. Nothing changed.", notes + [f"Rejected: {note}"])
 
 
 def _dedupe(ids: list[str]) -> list[str]:
@@ -329,7 +127,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     """Turn a judge proposal into what code will actually commit, against the current state."""
     notes: list[str] = []
     if judged is None:
-        return _verdict("unresolved", service_error or "The judge could not be reached. Nothing changed.", notes)
+        return ruling("unresolved", service_error or "The judge could not be reached. Nothing changed.", notes)
     action = judged.get("action", "make")
     outcome, reason = judged["outcome"], judged["reason"].strip() or "Nothing happens."
     effort = max(0, min(tuning.MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
@@ -353,14 +151,14 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     if outcome != "success" and proposed_change:
         notes.append(f"Ignored proposed changes because outcome is '{outcome}'.")
     if outcome == "needs_clarification":
-        return _verdict(outcome, judged.get("clarifying_question") or reason, notes, action=action, precedent_key=key)
+        return ruling(outcome, judged.get("clarifying_question") or reason, notes, action=action, precedent_key=key)
     if outcome in ("blocked", "unsupported"):
         if effort:
             notes.append(f"Effort {effort}s ignored: '{outcome}' spends no time.")
-        return _verdict(outcome, reason, notes, action=action, precedent_key=key)
+        return ruling(outcome, reason, notes, action=action, precedent_key=key)
     if outcome == "failed":
-        return _verdict("failed", reason, notes, max(1, effort), action=action, precedent_key=key)
-    available = {o["id"]: o for o in available_items(state)}
+        return ruling("failed", reason, notes, max(1, effort), action=action, precedent_key=key)
+    available = {o["id"]: o for o in judge_view.available_items(state)}
     if effort < 1 and action != "other":
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
@@ -387,11 +185,11 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
         notes.append(f"action '{action}' without a {PAYLOAD[action]}: nothing changes.")
         action = "other"
     if action not in handlers:
-        return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
+        return ruling("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
     walk = paths.plan_walk(state, _walk_targets(state, action, judged, available))
     if walk is None:
-        return _verdict(
+        return ruling(
             "blocked",
             "That's too far away to get to from here.",
             notes + ["Blocked by code: no walkable path within range."],
@@ -466,23 +264,23 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
 def _make(state, judged, available, notes, reason, effort, key) -> dict:
     spec = judged.get("new_object")
     if not spec:
-        return _unresolved(notes, "action 'make' without a new_object")
+        return unresolved(notes, "action 'make' without a new_object")
     consumes = _dedupe(spec["consumes"])
     tools = [i for i in _dedupe(spec["tools_used"]) if i not in consumes]
     missing = [i for i in consumes + tools if i not in available]
     if missing:
-        return _unresolved(notes, f"proposal used items that are not available now: {missing}")
+        return unresolved(notes, f"proposal used items that are not available now: {missing}")
     if not consumes:
-        return _unresolved(notes, "a new object must be made from at least one consumed item")
+        return unresolved(notes, "a new object must be made from at least one consumed item")
     fixed = [i for i in consumes if "carry" not in available[i]["capabilities"]]
     if fixed:
-        return _unresolved(notes, f"{fixed} cannot be built into an object without being cut up first")
+        return unresolved(notes, f"{fixed} cannot be built into an object without being cut up first")
     for item_id in consumes:
         partners = set(state["objects"][item_id]["bound_to"]) | {
             o["id"] for o in state["objects"].values() if item_id in o["bound_to"]
         }
         if not partners <= set(consumes):
-            return _unresolved(
+            return unresolved(
                 notes, f"{item_id} is tied to {sorted(partners - set(consumes))}, which is not part of the new object"
             )
     input_materials = {m.lower() for i in consumes for m in available[i].get("materials", [])}
@@ -500,7 +298,7 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
         for f in available[i].get("flags", [])
         if f not in ("heat_source", "light_source") or available[i].get("burning")
     }
-    if can_kindle([available[i] for i in consumes + tools]):  # Sparks into tinder: a real way to make fire.
+    if heat.can_kindle([available[i] for i in consumes + tools]):  # Sparks into tinder: a real way to make fire.
         support |= {"heat_source", "light_source"}
     flags = _checked_flags(spec["flags"], materials, support, capabilities, notes)
     capacity = spec.get("capacity_l")
@@ -521,7 +319,7 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     }  # Made alight: a fire.
     new_spec["gear"] = gear.checked(_gear_proposal(spec.get("gear")), new_spec, notes)
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -535,80 +333,15 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
-def can_kindle(things: list[dict]) -> bool:
-    """Something already burning, or flint and iron to strike sparks with dry tinder to catch them."""
-    if any(t.get("burning") for t in things):
-        return True
-    flint = any("flint" in " ".join(t.get("materials", [])).lower() or "flint" in t["name"] for t in things)
-    iron = any(
-        "ferromagnetic" in t.get("flags", []) or "iron" in t.get("materials", []) or "steel" in t.get("materials", [])
-        for t in things
-    )
-    tinder = any("combustible" in t.get("flags", []) and t["mass_kg"] <= 1.0 for t in things)
-    return flint and iron and tinder
-
-
-HEAT_ORDER = ["cold", "warm", "hot", "boiling"]
-
-
-def display_name(obj: dict) -> str:
-    """The name follows the state: "clay bowl", "clay bowl of water", "clay bowl of boiling water"."""
-    base = obj.get("base_name") or obj["name"]
-    heat = obj.get("temperature", "cold")
-    if obj.get("capacity_l") and obj.get("water_l", 0) > 0 and "water_source" not in obj.get("capabilities", []):
-        return f"{base} of {'' if heat == 'cold' else heat + ' '}water"
-    if obj.get("burning") and obj.get("feature") != "fire":
-        return f"burning {base}"
-    if heat in ("hot", "boiling") and not obj.get("capacity_l"):
-        return f"hot {base}"
-    return base
-
-
-def rename(obj: dict) -> None:
-    obj.setdefault("base_name", obj["name"])
-    obj["name"] = display_name(obj)
-
-
-def age_objects(state: dict, elapsed_ms: int, now: int) -> dict[str, dict]:
-    """Time passing for things (by code, no model): hot things cool back, fires burn down.
-    Returns {object_id: changed fields} for the event payload."""
-    changes: dict[str, dict] = {}
-    end = now + elapsed_ms
-    for obj in state.get("objects", {}).values():
-        fields = {}
-        heat = obj.get("temperature", "cold")
-        if heat != "cold" and obj.get("heated_at") is not None:
-            level, since = heat, obj["heated_at"]
-            while level != "cold" and end - since >= tuning.COOLING_MS[level]:
-                since += tuning.COOLING_MS[level]
-                level = HEAT_ORDER[HEAT_ORDER.index(level) - 1]
-            if level != heat:
-                fields.update(temperature=level, heated_at=None if level == "cold" else since)
-        if obj.get("burning") and obj.get("burns_until") is not None and end >= obj["burns_until"]:
-            fields.update(
-                burning=False,
-                burns_until=None,
-                flags=[f for f in obj.get("flags", []) if f not in ("heat_source", "light_source")],
-            )
-            if obj.get("feature") == "fire" or obj.get("created_by") == "player" and not obj.get("capacity_l"):
-                fields.update(condition="burnt out", description=f"The cold ashes of what was a {obj['name']}.")
-        if fields:
-            probe = {**obj, **fields}
-            probe.setdefault("base_name", obj["name"])
-            fields.update(base_name=probe["base_name"], name=display_name(probe))
-            changes[obj["id"]] = fields
-    return changes
-
-
 def _change(state, judged, available, notes, reason, effort, key) -> dict:
     """A thing changes in place (heat, cool, set alight, put out, pour). The judge says what; code keeps the laws:
     heat and flame only from something really burning within reach, water conserved, time enough to boil."""
     plan = judged.get("change")
     if not plan:
-        return _unresolved(notes, "action 'change' without a change")
+        return unresolved(notes, "action 'change' without a change")
     target = available.get(plan["target_id"])
     if target is None:
-        return _unresolved(notes, f"the thing to change is not within reach: {plan['target_id']}")
+        return unresolved(notes, f"the thing to change is not within reach: {plan['target_id']}")
     fields: dict = {}
     source = available.get(plan.get("heat_source_id") or "") or state["objects"].get(plan.get("heat_source_id") or "")
     lit = (
@@ -617,9 +350,9 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
         and cast.distance(state["player"], source) <= tuning.REACH_CELLS + 1
     )
     temperature = plan.get("temperature")
-    if temperature and HEAT_ORDER.index(temperature) > HEAT_ORDER.index(target.get("temperature", "cold")):
+    if temperature and heat.HEAT_ORDER.index(temperature) > heat.HEAT_ORDER.index(target.get("temperature", "cold")):
         if not lit:
-            return _verdict(
+            return ruling(
                 "blocked",
                 f"There's nothing burning here to heat the {target['name']} with.",
                 notes + ["Blocked by code: heat needs something burning within reach."],
@@ -636,7 +369,7 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
         )
     if plan.get("burning") is True and not target.get("burning"):
         if not lit:
-            return _verdict(
+            return ruling(
                 "blocked",
                 f"You have no flame to light the {target['name']} with.",
                 notes + ["Blocked by code: nothing burning within reach."],
@@ -644,7 +377,7 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
                 precedent_key=key,
             )
         if "combustible" not in target.get("flags", []):
-            return _verdict(
+            return ruling(
                 "failed",
                 f"The {target['name']} won't catch fire.",
                 notes,
@@ -685,8 +418,8 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
             )
         fields["water_l"] = round(held - litres, 3)
     if not fields and not pour:
-        return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
-    return _verdict(
+        return ruling("success", reason, notes, effort, action="other", precedent_key=key)
+    return ruling(
         "success",
         reason,
         notes,
@@ -740,26 +473,26 @@ def quick(state: dict, verb: str, object_id: str) -> dict:
 def _drop(state, judged, available, notes, reason, effort, key) -> dict:
     ids = [i for i in _dedupe(judged.get("drop_ids") or []) if state["objects"].get(i, {}).get("holder_id") == "player"]
     if not ids:
-        return _verdict("blocked", "You aren't carrying that.", notes, action="drop", precedent_key=key)
-    return _verdict("success", reason, notes, effort, action="drop", precedent_key=key, drop_ids=ids)
+        return ruling("blocked", "You aren't carrying that.", notes, action="drop", precedent_key=key)
+    return ruling("success", reason, notes, effort, action="drop", precedent_key=key, drop_ids=ids)
 
 
 def _take(state, judged, available, notes, reason, effort, key) -> dict:
     ids = _dedupe(judged.get("take_ids") or [])
     if not ids:
-        return _unresolved(notes, "action 'take' without take_ids")
+        return unresolved(notes, "action 'take' without take_ids")
     missing = [i for i in ids if i not in available]
     if missing:
-        return _unresolved(notes, f"cannot take items that are not within reach: {missing}")
+        return unresolved(notes, f"cannot take items that are not within reach: {missing}")
     carried = [i for i in ids if available[i]["holder_id"] == "player"]
     ids = [i for i in ids if i not in carried]
     if carried:
         notes.append(f"Already carried, skipped: {carried}.")
     if not ids:
-        return _verdict("blocked", "You are already carrying that.", notes, action="take", precedent_key=key)
+        return ruling("blocked", "You are already carrying that.", notes, action="take", precedent_key=key)
     fixed = [available[i]["name"] for i in ids if "carry" not in available[i]["capabilities"]]
     if fixed:
-        return _verdict(
+        return ruling(
             "blocked",
             f"The {fixed[0]} can't be picked up and carried.",
             notes + [f"Blocked by code: not portable {fixed}."],
@@ -768,14 +501,14 @@ def _take(state, judged, available, notes, reason, effort, key) -> dict:
         )
     load = m2.inventory_mass(state) + sum(available[i]["mass_kg"] + available[i]["water_l"] for i in ids)
     if load > tuning.CARRY_LIMIT_KG:
-        return _verdict(
+        return ruling(
             "blocked",
             f"That would be more than you can carry ({load:.1f} of {tuning.CARRY_LIMIT_KG:.0f} kg).",
             notes,
             action="take",
             precedent_key=key,
         )
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -794,14 +527,14 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
     """A small part off something larger that stays where it is: a leaf off a tree, a handful of clay (D-48)."""
     plan = judged.get("gather")
     if not plan:
-        return _unresolved(notes, "action 'gather' without a gather")
+        return unresolved(notes, "action 'gather' without a gather")
     source = available.get(plan["source_id"])
     if source is None:
-        return _unresolved(notes, f"gather source is not within reach: {plan['source_id']}")
+        return unresolved(notes, f"gather source is not within reach: {plan['source_id']}")
     tools = [i for i in _dedupe(plan["tools_used"]) if i != source["id"]]
     missing = [i for i in tools if i not in available]
     if missing:
-        return _unresolved(notes, f"gather used tools that are not available now: {missing}")
+        return unresolved(notes, f"gather used tools that are not available now: {missing}")
     piece = plan["piece"]
     allowed = {m.lower() for m in source.get("materials", [])}
     if source.get("feature") == "tree" or "sapling" in source["name"]:
@@ -822,7 +555,7 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
         notes.append(f"Gathered mass cut to {cap} kg: a part, not the whole {source['name']}.")
         each = round(cap / count, 3)
     if m2.inventory_mass(state) + each * count > tuning.CARRY_LIMIT_KG:
-        return _verdict("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
+        return ruling("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
     support = {f for i in [source["id"]] + tools for f in available[i].get("flags", [])}
     spec = {
         "name": piece["name"].strip().lower()[:60] or "piece",
@@ -838,7 +571,7 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
     }
     spec["gear"] = gear.checked(_gear_proposal(piece.get("gear")), spec, notes)
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -861,15 +594,15 @@ def _treat(state, judged, available, notes, reason, effort, key) -> dict:
     """A remedy on a condition (D-49): code checks the thing fits the condition and how well it works."""
     plan = judged.get("treat")
     if not plan:
-        return _unresolved(notes, "action 'treat' without a treat")
+        return unresolved(notes, "action 'treat' without a treat")
     remedy = available.get(plan["remedy_id"])
     if remedy is None or remedy["holder_id"] != "player":
-        return _verdict("blocked", "You don't have that with you.", notes, action="treat", precedent_key=key)
+        return ruling("blocked", "You don't have that with you.", notes, action="treat", precedent_key=key)
     patient = _patient(state, plan.get("patient_id"))
     if patient is None or not patient.get("alive", True):
-        return _verdict("blocked", "There's nobody there to treat.", notes, action="treat", precedent_key=key)
+        return ruling("blocked", "There's nobody there to treat.", notes, action="treat", precedent_key=key)
     if patient is not state["player"] and cast.distance(state["player"], patient) > tuning.REACH_CELLS:
-        return _verdict("blocked", f"{patient['name']} is too far away.", notes, action="treat", precedent_key=key)
+        return ruling("blocked", f"{patient['name']} is too far away.", notes, action="treat", precedent_key=key)
     items = patient.get("conditions") or []
     index = next(
         (
@@ -881,7 +614,7 @@ def _treat(state, judged, available, notes, reason, effort, key) -> dict:
     )
     if index is None:
         who = "You have" if patient is state["player"] else f"{patient['name']} has"
-        return _verdict(
+        return ruling(
             "blocked",
             f"{who} no {plan['condition'].replace('broken', 'broken bone')} to treat.",
             notes,
@@ -892,7 +625,7 @@ def _treat(state, judged, available, notes, reason, effort, key) -> dict:
     remedy_view = {**remedy, "gear": gear.checked(remedy.get("gear") or gear.classify(remedy), remedy)}
     result = gear.treat(probe, index, remedy_view, state["sim_time_ms"])
     if not result["ok"]:
-        return _verdict("failed", result["text"], notes, max(1, effort), action="treat", precedent_key=key)
+        return ruling("failed", result["text"], notes, max(1, effort), action="treat", precedent_key=key)
     effort = max(effort, result["seconds"])
     treat = {
         "patient_id": "player" if patient is state["player"] else patient["id"],
@@ -903,25 +636,25 @@ def _treat(state, judged, available, notes, reason, effort, key) -> dict:
         "what": gear.describe(items[index]).removeprefix("the "),
         "consumed": remedy["id"] if result["consumed"] else None,
     }
-    return _verdict("success", reason, notes, effort, action="treat", treat=treat, precedent_key=key)
+    return ruling("success", reason, notes, effort, action="treat", treat=treat, precedent_key=key)
 
 
 def _equip(state, judged, available, notes, reason, effort, key) -> dict:
     """Putting something on or in a hand, described in words (the same rules as the pack, D-49)."""
     plan = judged.get("equip")
     if not plan:
-        return _unresolved(notes, "action 'equip' without an equip")
+        return unresolved(notes, "action 'equip' without an equip")
     obj = available.get(plan["object_id"])
     if obj is None or obj["holder_id"] != "player":
-        return _verdict("blocked", "You aren't carrying that.", notes, action="equip", precedent_key=key)
+        return ruling("blocked", "You aren't carrying that.", notes, action="equip", precedent_key=key)
     probe = {
         "equipped": dict(state["player"].get("equipped") or {}),
         "conditions": state["player"].get("conditions") or [],
     }
     result = gear.equip(state, probe, obj, plan.get("slot"), fighting=bool(state.get("fight")))
     if not result["ok"]:
-        return _verdict("blocked", result["reason"], notes, action="equip", precedent_key=key)
-    return _verdict(
+        return ruling("blocked", result["reason"], notes, action="equip", precedent_key=key)
+    return ruling(
         "success",
         reason or result["text"],
         notes,
@@ -935,17 +668,17 @@ def _equip(state, judged, available, notes, reason, effort, key) -> dict:
 def _transform(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("transformation")
     if not plan:
-        return _unresolved(notes, "action 'transform' without a transformation")
+        return unresolved(notes, "action 'transform' without a transformation")
     target_id = plan["target_id"]
     if target_id not in available:
-        return _unresolved(notes, f"transform target is not within reach: {target_id}")
+        return unresolved(notes, f"transform target is not within reach: {target_id}")
     target = available[target_id]
     if state["objects"][target_id]["bound_to"] or any(target_id in o["bound_to"] for o in state["objects"].values()):
-        return _unresolved(notes, f"{target_id} is tied to something; untie it first")
+        return unresolved(notes, f"{target_id} is tied to something; untie it first")
     tools = [i for i in _dedupe(plan["tools_used"]) if i != target_id]
     missing = [i for i in tools if i not in available]
     if missing:
-        return _unresolved(notes, f"transform used tools that are not available now: {missing}")
+        return unresolved(notes, f"transform used tools that are not available now: {missing}")
     target_materials = {m.lower() for m in target.get("materials", [])}
     support = {f for i in [target_id] + tools for f in available[i].get("flags", [])}
     pieces, total = [], 0
@@ -972,7 +705,7 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
         made["gear"] = gear.checked(_gear_proposal(piece.get("gear")), made, notes)
         pieces.append(made)
     if not pieces:
-        return _unresolved(notes, "transform produced no pieces")
+        return unresolved(notes, "transform produced no pieces")
     produced = sum(p["mass_kg"] * p["count"] for p in pieces)
     if produced > target["mass_kg"]:
         scale = target["mass_kg"] / produced
@@ -984,7 +717,7 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
         )
     transform = {"target_id": target_id, "result_state": plan["result_state"], "pieces": pieces}
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1000,18 +733,18 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
 def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("harm")
     if not plan:
-        return _unresolved(notes, "action 'harm' without a harm")
+        return unresolved(notes, "action 'harm' without a harm")
     npc = next((n for n in state["npcs"] if n["id"] == plan["target_id"]), None)
     if npc is None:
-        return _unresolved(notes, f"harm target is not a person: {plan['target_id']}")
+        return unresolved(notes, f"harm target is not a person: {plan['target_id']}")
     if not npc.get("alive", True):
-        return _verdict("blocked", f"{npc['name']} is already dead.", notes, action="harm", precedent_key=key)
+        return ruling("blocked", f"{npc['name']} is already dead.", notes, action="harm", precedent_key=key)
     if npc.get("down") and plan["result"] == "disabled":
         plan = {**plan, "result": "wounded"}  # Already down: another blow can only wound or kill.
     method = plan.get("method", "melee")
     weapon = plan.get("weapon_id")
     if weapon is not None and weapon not in available:
-        return _unresolved(notes, f"weapon is not at hand: {weapon}")
+        return unresolved(notes, f"weapon is not at hand: {weapon}")
     result = plan["result"]
     if method == "poured" and weapon is None:  # Unnamed, but only one thing in hand holds water: that one.
         held = [o["id"] for o in available.values() if o["holder_id"] == "player" and o.get("water_l", 0) > 0]
@@ -1021,9 +754,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     if method == "poured":  # A law: only what's really hot can scald; cold water only soaks.
         container = available.get(weapon) if weapon else None
         if container is None or container.get("water_l", 0) <= 0:
-            return _verdict(
-                "blocked", "There's nothing in your hands to pour.", notes, action="harm", precedent_key=key
-            )
+            return ruling("blocked", "There's nothing in your hands to pour.", notes, action="harm", precedent_key=key)
         if container.get("temperature", "cold") in ("cold", "warm") and result != "missed":
             reason = f"The water only soaks {npc['name']}."
     distance = cast.distance(state["player"], npc)
@@ -1031,15 +762,15 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     if method == "thrown":
         thrown = available.get(weapon) if weapon else None
         if thrown is None or thrown["holder_id"] != "player":
-            return _verdict(
+            return ruling(
                 "blocked", "You need to be holding something to throw it.", notes, action="harm", precedent_key=key
             )
         if "carry" not in thrown["capabilities"] or thrown["mass_kg"] > tuning.MAX_THROW_KG:
-            return _verdict(
+            return ruling(
                 "blocked", f"The {thrown['name']} is too heavy to throw.", notes, action="harm", precedent_key=key
             )
         if distance > tuning.THROW_RANGE:
-            return _verdict(
+            return ruling(
                 "blocked",
                 f"{npc['name']} is too far away to throw at.",
                 notes + [f"Blocked by code: target {distance:.1f} cells away (throw range {tuning.THROW_RANGE:.0f})."],
@@ -1048,7 +779,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             )
     else:
         if distance > tuning.REACH_CELLS:
-            return _verdict(
+            return ruling(
                 "blocked",
                 f"{npc['name']} is too far away to reach.",
                 notes + [f"Blocked by code: target {distance:.1f} cells away (reach {tuning.REACH_CELLS})."],
@@ -1057,7 +788,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             )
         if weapon is not None and available[weapon]["holder_id"] != "player":
             if "carry" not in available[weapon]["capabilities"]:
-                return _verdict(
+                return ruling(
                     "blocked",
                     f"You can't wield the {available[weapon]['name']}.",
                     notes,
@@ -1094,7 +825,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
         else plan["injury"].strip()[:200],
         "witnesses": witnesses,
     }
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1169,32 +900,30 @@ def _blow(
 def _fill(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("fill")
     if not plan:
-        return _unresolved(notes, "action 'fill' without a fill")
+        return unresolved(notes, "action 'fill' without a fill")
     container, source = available.get(plan["container_id"]), state["objects"].get(plan["source_id"])
     if container is None:
-        return _unresolved(notes, f"container is not within reach: {plan['container_id']}")
+        return unresolved(notes, f"container is not within reach: {plan['container_id']}")
     if source is None or "water_source" not in source["capabilities"]:
-        return _unresolved(notes, f"not a water source: {plan['source_id']}")
+        return unresolved(notes, f"not a water source: {plan['source_id']}")
     if "container" not in container.get("flags", []) or not container.get("capacity_l"):
-        return _verdict(
-            "blocked", f"The {container['name']} can't hold water.", notes, action="fill", precedent_key=key
-        )
+        return ruling("blocked", f"The {container['name']} can't hold water.", notes, action="fill", precedent_key=key)
     if cast.distance(state["player"], source) > tuning.REACH_CELLS:
-        return _verdict("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
+        return ruling("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
     room = round(container["capacity_l"] - container.get("water_l", 0.0), 3)
     if room <= 0:
-        return _verdict("blocked", f"The {container['name']} is already full.", notes, action="fill", precedent_key=key)
+        return ruling("blocked", f"The {container['name']} is already full.", notes, action="fill", precedent_key=key)
     if source["water_l"] <= 0:
-        return _verdict("blocked", f"The {source['name']} is empty.", notes, action="fill", precedent_key=key)
+        return ruling("blocked", f"The {source['name']} is empty.", notes, action="fill", precedent_key=key)
     requested = float(plan["litres"]) if float(plan["litres"]) > 0 else room
     litres = round(min(requested, room, source["water_l"]), 3)
     if litres < requested:
         notes.append(f"Filled {litres} L, not {requested} L: limited by space or the water available.")
     if container["holder_id"] == "player" and m2.inventory_mass(state) + litres > tuning.CARRY_LIMIT_KG:
-        return _verdict(
+        return ruling(
             "blocked", "That much water would be more than you can carry.", notes, action="fill", precedent_key=key
         )
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1209,19 +938,19 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
 def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("demonstration")
     if not plan:
-        return _unresolved(notes, "action 'demonstrate' without a demonstration")
+        return unresolved(notes, "action 'demonstrate' without a demonstration")
     ids = _dedupe([plan["object_id"]] + list(plan["used_ids"]))
     water = [i for i in ids[1:] if "water_source" in state["objects"].get(i, {}).get("capabilities", [])]
     missing = [i for i in ids if i not in available and i not in water]
     if missing:
-        return _unresolved(notes, f"can only show things that are at hand: {missing}")
+        return unresolved(notes, f"can only show things that are at hand: {missing}")
     far = [
         state["objects"][i]["name"]
         for i in water
         if cast.distance(state["player"], state["objects"][i]) > tuning.REACH_CELLS
     ]
     if far:
-        return _verdict("blocked", f"The {far[0]} is too far away.", notes, action="demonstrate", precedent_key=key)
+        return ruling("blocked", f"The {far[0]} is too far away.", notes, action="demonstrate", precedent_key=key)
     shown = available[plan["object_id"]]
     living = {n["id"] for n in state["npcs"] if n.get("alive", True)}
     results = [
@@ -1240,7 +969,7 @@ def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
         "wonder": plan.get("wonder", "ordinary") if plan["works"] else "ordinary",
     }
     not_ours = [i for i in ids if i in water or available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1255,24 +984,24 @@ def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
 def _give(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("give")
     if not plan:
-        return _unresolved(notes, "action 'give' without a give")
+        return unresolved(notes, "action 'give' without a give")
     npc = next((n for n in state["npcs"] if n["id"] == plan["recipient_id"]), None)
     if npc is None:
-        return _unresolved(notes, f"give recipient is not a person: {plan['recipient_id']}")
+        return unresolved(notes, f"give recipient is not a person: {plan['recipient_id']}")
     if not npc.get("alive", True):
-        return _verdict("blocked", f"{npc['name']} is dead.", notes, action="give", precedent_key=key)
+        return ruling("blocked", f"{npc['name']} is dead.", notes, action="give", precedent_key=key)
     ids = _dedupe(plan["item_ids"])
     loose = [i for i in ids if state["objects"].get(i, {}).get("holder_id") != "player"]
     if not ids or loose:
         known = state["objects"].get(loose[0]) if loose else None
         what = f"the {known['name']}" if known else "that" if loose else "anything"
-        return _verdict("blocked", f"You aren't carrying {what} to give.", notes, action="give", precedent_key=key)
+        return ruling("blocked", f"You aren't carrying {what} to give.", notes, action="give", precedent_key=key)
     if cast.distance(state["player"], npc) > tuning.REACH_CELLS:
-        return _verdict(
+        return ruling(
             "blocked", f"{npc['name']} is too far away to hand anything to.", notes, action="give", precedent_key=key
         )
     others = [i for i in ids if state["objects"][i]["owner_id"] not in (None, "player", npc["id"])]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1300,14 +1029,14 @@ def _give(state, judged, available, notes, reason, effort, key) -> dict:
 def _install(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("install")
     if not plan:
-        return _unresolved(notes, "action 'install' without an install")
+        return unresolved(notes, "action 'install' without an install")
     obj, into = available.get(plan["object_id"]), available.get(plan["into_id"])
     if obj is None or into is None:
-        return _unresolved(
+        return unresolved(
             notes, f"install needs the object and the fixture at hand: {plan['object_id']}, {plan['into_id']}"
         )
     if into.get("feature") != "fixture":
-        return _verdict(
+        return ruling(
             "blocked",
             f"The {obj['name']} can't be fitted into the {into['name']}.",
             notes,
@@ -1315,12 +1044,10 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
             precedent_key=key,
         )
     if obj.get("installed_in"):
-        return _verdict(
-            "blocked", f"The {obj['name']} is already in place.", notes, action="install", precedent_key=key
-        )
+        return ruling("blocked", f"The {obj['name']} is already in place.", notes, action="install", precedent_key=key)
     held = next((o for o in state["objects"].values() if o.get("installed_in") == into["id"]), None)
     if held is not None:  # One thing at a time in a fixture: the old one has to come out first.
-        return _verdict(
+        return ruling(
             "blocked",
             f"The {into['name']} already hold the {held['name']}.",
             notes,
@@ -1330,9 +1057,9 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
     aids = [i for i in _dedupe(plan["aid_ids"]) if i not in (obj["id"], into["id"])]
     missing = [i for i in aids if i not in available]
     if missing:
-        return _unresolved(notes, f"aids that are not at hand: {missing}")
+        return unresolved(notes, f"aids that are not at hand: {missing}")
     if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
-        return _verdict(
+        return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift into place by hand.",
             notes + ["Blocked by code: heavier than one person can lift, and no aids."],
@@ -1349,7 +1076,7 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
     }
     # Putting something where it belongs isn't taking it; borrowing someone's tools to do it is.
     not_ours = [i for i in aids if available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1361,32 +1088,25 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
-def gate_after(state: dict, fixture_id: str, barred: bool) -> dict | None:
-    """The gate stands open while nothing bars it (or the stranger has been let in); None if unaffected."""
-    if fixture_id != m2.GATE_FIXTURE or state.get("seed_version", 0) < m2.GATE_BAR_SEED:
-        return None
-    return {"open": bool(state.get("admitted")) or not barred, **({} if barred else {"unbarred_by": "player"})}
-
-
 def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
     """The inverse of install: work something out of its fixture and down to the ground (D-42)."""
     plan = judged.get("lift_out")
     if not plan:
-        return _unresolved(notes, "action 'lift_out' without a lift_out")
+        return unresolved(notes, "action 'lift_out' without a lift_out")
     obj = available.get(plan["object_id"])
     if obj is None:
-        return _unresolved(notes, f"lift_out needs the object at hand: {plan['object_id']}")
+        return unresolved(notes, f"lift_out needs the object at hand: {plan['object_id']}")
     into = state["objects"].get(obj.get("installed_in") or "")
     if into is None:
-        return _verdict(
+        return ruling(
             "blocked", f"The {obj['name']} isn't fitted into anything.", notes, action="lift_out", precedent_key=key
         )
     aids = [i for i in _dedupe(plan["aid_ids"]) if i not in (obj["id"], into["id"])]
     missing = [i for i in aids if i not in available]
     if missing:
-        return _unresolved(notes, f"aids that are not at hand: {missing}")
+        return unresolved(notes, f"aids that are not at hand: {missing}")
     if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
-        return _verdict(
+        return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift out by hand.",
             notes + ["Blocked by code: heavier than one person can lift, and no aids."],
@@ -1402,7 +1122,7 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
         "aid_names": [available[i]["name"] for i in aids],
     }
     not_ours = [i for i in aids if available[i]["holder_id"] != "player"]
-    return _verdict(
+    return ruling(
         "success",
         reason,
         notes,
@@ -1417,12 +1137,12 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
 def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("offer_trade")
     if not plan:
-        return _unresolved(notes, "action 'offer_trade' without an offer_trade")
+        return unresolved(notes, "action 'offer_trade' without an offer_trade")
     npc = next((n for n in state["npcs"] if n["id"] == plan["recipient_id"]), None)
     if npc is None:
-        return _unresolved(notes, f"trade partner is not a person: {plan['recipient_id']}")
+        return unresolved(notes, f"trade partner is not a person: {plan['recipient_id']}")
     if not npc.get("alive", True):
-        return _verdict("blocked", f"{npc['name']} is dead.", notes, action="offer_trade", precedent_key=key)
+        return ruling("blocked", f"{npc['name']} is dead.", notes, action="offer_trade", precedent_key=key)
     give, want = _dedupe(plan["give_ids"]), _dedupe(plan["want_ids"])
     mine = [
         i
@@ -1430,7 +1150,7 @@ def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
         if (o := state["objects"].get(i)) and o["holder_id"] == "player" and o["owner_id"] in (None, "player")
     ]
     if not give or len(mine) != len(give):
-        return _verdict(
+        return ruling(
             "blocked",
             "You can only trade things that are yours and in your hands.",
             notes,
@@ -1446,9 +1166,9 @@ def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
         and "carry" in o["capabilities"]
     ]
     if not want or len(theirs) != len(want):
-        return _unresolved(notes, f"can only ask for {npc['name']}'s own portable things: {want}")
+        return unresolved(notes, f"can only ask for {npc['name']}'s own portable things: {want}")
     if cast.distance(state["player"], npc) > 5:
-        return _verdict(
+        return ruling(
             "blocked", f"{npc['name']} is too far away to bargain with.", notes, action="offer_trade", precedent_key=key
         )
     offer = {
@@ -1459,36 +1179,7 @@ def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
         "give_names": [state["objects"][i]["name"] for i in give],
         "want_names": [state["objects"][i]["name"] for i in want],
     }
-    return _verdict("success", reason, notes, effort, action="offer_trade", offer_trade=offer, precedent_key=key)
-
-
-def _known_after(obj: dict, results: list[dict], event_id: int) -> list[dict]:
-    """The object's capabilities with what a demonstration showed: matching ones updated, new ones added."""
-    known = [dict(c) for c in obj.get("known_capabilities", [])]
-    for result in results:
-        match = next((c for c in known if c["text"].casefold() == result["text"].casefold()), None)
-        if match is None:
-            if len(known) >= 6:
-                continue
-            match = {"text": result["text"]}
-            known.append(match)
-        match.update(status=result["status"], event_id=event_id)
-    return known
-
-
-def placeholder_category(materials: list[str]) -> str:
-    categories = CONTENT["placeholder_categories"]
-    return next((categories[m] for m in materials if m in categories), "bundle")
-
-
-def _picture_ids(spec: dict, sprite: str) -> dict:
-    """A weapon or shield is also drawn in the hand, armour and clothes on the body (D-49)."""
-    kind = (spec.get("gear") or {}).get("kind")
-    if kind in ("weapon", "shield") and (spec.get("gear") or {}).get("class") not in ("improvised", None):
-        return {"held_asset_id": f"{sprite}_held"}
-    if kind in ("armour", "clothing"):
-        return {"worn_asset_id": f"{sprite}_worn"}
-    return {}
+    return ruling("success", reason, notes, effort, action="offer_trade", offer_trade=offer, precedent_key=key)
 
 
 def _gear_proposal(judged: dict | None) -> dict | None:
@@ -1501,569 +1192,3 @@ def _gear_proposal(judged: dict | None) -> dict | None:
         "covers": judged.get("covers") or [],
         "quality": judged.get("quality", "fair"),
     }
-
-
-def _object(
-    new_id: str,
-    run_id: str,
-    spec: dict,
-    x: int,
-    y: int,
-    owner,
-    holder,
-    text: str,
-    event_id: int,
-    components: list[str],
-    tools: list[str],
-    asset_id: str | None = None,
-) -> dict:
-    portable = spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
-    caps = ["carry"] + [op for flag, op in OPERATION_CAPABILITIES.items() if flag in spec["flags"]] if portable else []
-    return {
-        "id": new_id,
-        "name": spec["name"],
-        "description": spec["description"],
-        "x": x,
-        "y": y,
-        "mass_kg": spec["mass_kg"],
-        "owner_id": owner,
-        "holder_id": holder if portable else None,
-        "capabilities": caps,
-        "bound_to": [],
-        "water_l": 0.0,
-        "capacity_l": spec.get("capacity_l") or 0.0,
-        "condition": "usable",
-        "materials": spec["materials"],
-        "flags": spec["flags"],
-        "length_m": spec.get("length_m"),
-        "rated_load_kg": spec.get("rated_load_kg"),
-        "known_capabilities": spec["known_capabilities"],
-        "components": components,
-        "tools_used": tools,
-        **({"gear": spec["gear"]} if spec.get("gear") else {}),
-        "created_by": "player",
-        "created_event_id": event_id,
-        "created_text": text,
-        "sprite_asset_id": asset_id or f"spr_{run_id[:8]}_{new_id}",
-        **_picture_ids(spec, asset_id or f"spr_{run_id[:8]}_{new_id}"),
-        "placeholder": placeholder_category(spec["materials"]),
-    }
-
-
-def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
-    """World changes for one validated step; ids stay unique across the steps of one attempt."""
-    suffix = "" if number == 1 else f"_{number}"
-    walk = verdict.get("walk") or []
-    px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
-    new_objects, consumed, taken, transformed, npc_updates, moved = [], [], [], None, [], []
-    water, known, given, spilled, installed, trade, lifted, gate = [], None, None, 0.0, None, None, None, None
-    if verdict["action"] == "make":
-        spec = verdict["new_spec"]
-        consumed = verdict["consumed_ids"]
-        carried_consumed = sum(
-            state["objects"][i]["mass_kg"] + state["objects"][i]["water_l"]
-            for i in consumed
-            if state["objects"][i]["holder_id"] == "player"
-        )
-        fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
-        if not fits:
-            verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
-        new_objects.append(
-            _object(
-                f"made_{event_id}{suffix}",
-                run_id,
-                spec,
-                px,
-                py,
-                "player",
-                "player" if fits else None,
-                text,
-                event_id,
-                consumed,
-                verdict["tool_ids"],
-            )
-        )
-        if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
-            span = max(
-                tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(spec["mass_kg"] * tuning.FIRE_MS_PER_KG))
-            )
-            new_objects[-1].update(
-                burning=True,
-                feature="fire",
-                capabilities=[],
-                holder_id=None,
-                burns_until=state["sim_time_ms"] + verdict["effort_seconds"] * 1000 + span,
-            )
-        # Water in anything built in stays in the new thing if it holds water; otherwise it spills.
-        held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
-        kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
-        new_objects[-1]["water_l"] = kept
-        spilled = round(held - kept, 3)
-    elif verdict["action"] == "take":
-        taken = verdict["take_ids"]
-    elif verdict["action"] == "gather":  # New small things in hand; the source stays as it was.
-        plan = verdict["gather"]
-        source = state["objects"][plan["source_id"]]
-        owner = source["owner_id"] if source["owner_id"] not in (None, "player") else "player"
-        asset_id = None
-        for index in range(1, plan["piece"]["count"] + 1):
-            obj = _object(
-                f"gathered_{event_id}{suffix}_{index}",
-                run_id,
-                plan["piece"],
-                px,
-                py,
-                owner,
-                "player",
-                text,
-                event_id,
-                [plan["source_id"]],
-                verdict["tool_ids"],
-                asset_id,
-            )
-            asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
-            new_objects.append(obj)
-        if "carry" in source["capabilities"]:  # A small source is that much smaller; a tree doesn't notice.
-            left = max(0.01, round(source["mass_kg"] - plan["piece"]["mass_kg"] * plan["piece"]["count"], 3))
-            water = [{"id": source["id"], "mass_kg": left}]
-    elif verdict["action"] == "treat":
-        treated = verdict["treat"]
-        if treated["patient_id"] == "player":
-            water.append({"id": "__player__", "conditions": treated["conditions"]})
-        else:
-            npc_updates.append({"id": treated["patient_id"], "conditions": treated["conditions"]})
-        if treated["consumed"]:
-            moved.append({"id": treated["consumed"], "used_up": True})
-    elif verdict["action"] == "equip":
-        water.append({"id": "__player__", "equipped": verdict["equip"]["equipped"]})
-    elif verdict["action"] == "drop":
-        moved = [{"id": i, "x": px, "y": py} for i in verdict["drop_ids"]]  # At the stranger's feet.
-    elif verdict["action"] == "transform":
-        plan = verdict["transform"]
-        target = state["objects"][plan["target_id"]]
-        cleared = paths.cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
-        in_hand = target["holder_id"] == "player"
-        load = m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)
-        total = sum(p["count"] for p in plan["pieces"])
-        cells = iter(
-            paths.open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"], cleared, total)
-        )
-        index = 0
-        for piece in plan["pieces"]:
-            asset_id = None
-            for _ in range(piece["count"]):
-                index += 1
-                keep = in_hand and load + piece["mass_kg"] <= tuning.CARRY_LIMIT_KG
-                load += piece["mass_kg"] if keep else 0
-                x, y = next(cells)
-                obj = _object(
-                    f"piece_{event_id}{suffix}_{index}",
-                    run_id,
-                    piece,
-                    x,
-                    y,
-                    "player" if target["owner_id"] == "player" else target["owner_id"],
-                    "player" if keep else None,
-                    text,
-                    event_id,
-                    [plan["target_id"]],
-                    verdict["tool_ids"],
-                    asset_id,
-                )
-                asset_id = obj["sprite_asset_id"]  # Identical pieces share one painting.
-                new_objects.append(obj)
-        transformed = {
-            "id": plan["target_id"],
-            "result_state": plan["result_state"],
-            "into": [o["id"] for o in new_objects],
-        }
-    elif verdict["action"] == "harm":
-        harm = verdict["harm"]
-        npc = next(n for n in state["npcs"] if n["id"] == harm["target_id"])
-        if "effective" in harm:  # D-49: what gear.hit worked out, carried out on the person.
-            body = {k: copy.deepcopy(npc.get(k)) for k in ("id", "health", "alive", "down", "conditions")}
-            body["health"] = body["health"] if body["health"] is not None else 100
-            body["alive"] = body["alive"] if body["alive"] is not None else True
-            body["conditions"] = body["conditions"] or []
-            if harm["result"] not in ("missed", "deflected"):
-                gear.apply(body, harm, state["sim_time_ms"])
-            health, down = body["health"], bool(body.get("down"))
-            if harm["result"] == "killed":
-                health = 0
-            injuries = npc.get("injuries", []) + (
-                [harm["injury"]] if harm["result"] not in ("missed", "deflected") else []
-            )
-            npc_updates.append(
-                {
-                    "id": npc["id"],
-                    "alive": health > 0,
-                    "health": health,
-                    "injuries": injuries,
-                    "conditions": body["conditions"],
-                    **({"down": True} if down and health > 0 else {}),
-                }
-            )
-        else:  # Older journeys' events (before D-49): fixed damage by result.
-            health = npc.get("health", 100)
-            down = bool(npc.get("down"))
-            if harm["result"] == "killed":
-                health = 0
-            elif harm["result"] == "disabled":
-                health, down = min(health, tuning.DISABLED_HEALTH), True
-            elif harm["result"] == "wounded":
-                health = max(0, health - tuning.WOUND_DAMAGE)
-                if health == 0:
-                    harm["result"] = "killed"
-                    verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
-                    verdict["notes"].append("Wound was fatal: the injuries added up (health reached 0).")
-            injuries = npc.get("injuries", []) + (
-                [harm["injury"]] if harm["result"] not in ("missed", "deflected") else []
-            )
-            npc_updates.append(
-                {
-                    "id": npc["id"],
-                    "alive": health > 0,
-                    "health": health,
-                    "injuries": injuries,
-                    **({"down": True} if down and health > 0 else {}),
-                }
-            )
-        if harm["result"] == "killed" and "effective" in harm and not verdict["reason"].rstrip().endswith("."):
-            verdict["reason"] = verdict["reason"].rstrip() + "."
-        taken = verdict["take_ids"]  # A weapon picked up on the way.
-        if harm["method"] == "thrown" and harm["weapon_id"]:
-            x, y = paths.open_cells_near(state, npc["x"], npc["y"], paths.cleared_obstacles(state), 1)[0]
-            moved.append({"id": harm["weapon_id"], "x": x, "y": y})
-        if harm["method"] == "poured" and harm["weapon_id"]:  # Emptied over them.
-            spilled = state["objects"][harm["weapon_id"]].get("water_l", 0.0)
-            water = [{"id": harm["weapon_id"], "water_l": 0.0, "temperature": "cold", "heated_at": None}]
-    elif verdict["action"] == "fill":
-        fill = verdict["fill"]
-        container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
-        water = [
-            {"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
-            {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)},
-        ]
-    elif verdict["action"] == "change":
-        change = verdict["change"]
-        water = [{"id": change["id"], **change["fields"]}] + change["pour"]
-        spilled = change["spilled_l"]
-    elif verdict["action"] == "demonstrate":
-        shown = verdict["demonstration"]
-        known = {
-            "id": shown["object_id"],
-            "known_capabilities": _known_after(state["objects"][shown["object_id"]], shown["results"], event_id),
-        }
-    elif verdict["action"] == "install":
-        plan = verdict["install"]
-        into = state["objects"][plan["into_id"]]
-        installed = {"id": plan["object_id"], "into": plan["into_id"], "x": into["x"], "y": into["y"]}
-        gate = gate_after(state, plan["into_id"], barred=True)
-    elif verdict["action"] == "lift_out":
-        plan = verdict["lift_out"]
-        fixture = state["objects"][plan["from_id"]]
-        x, y = paths.open_cells_near(state, fixture["x"], fixture["y"] + 2, paths.cleared_obstacles(state), 1)[0]
-        lifted = {"id": plan["object_id"], "x": x, "y": y}
-        gate = gate_after(state, plan["from_id"], barred=False)
-    elif verdict["action"] == "offer_trade":
-        trade = {
-            **verdict["offer_trade"],
-            "id": f"trade_{event_id}{suffix}",
-            "status": "offered",
-            "offered_event": event_id,
-        }
-    elif verdict["action"] == "give":
-        give = verdict["give"]
-        # A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs.
-        given = {
-            "ids": give["item_ids"],
-            "to": give["recipient_id"],
-            "owners": {
-                i: give["recipient_id"]
-                if state["objects"][i]["owner_id"] in (None, "player")
-                else state["objects"][i]["owner_id"]
-                for i in give["item_ids"]
-            },
-        }
-    deltas = {
-        "consumed_ids": consumed,
-        "new_objects": new_objects,
-        "taken_ids": taken,
-        "transformed": transformed,
-        "npc_updates": npc_updates,
-        "moved": moved,
-        "walk": walk,
-        "player_to": [px, py] if walk else None,
-    }
-    deltas.update(
-        {
-            k: v
-            for k, v in (
-                ("water", water),
-                ("capabilities", known),
-                ("given", given),
-                ("spilled_l", spilled),
-                ("installed", installed),
-                ("trade", trade),
-                ("lifted_out", lifted),
-            )
-            if v
-        }
-    )
-    if gate is not None:
-        deltas["gate"] = gate
-    return deltas
-
-
-def _apply_step(state: dict, deltas: dict) -> None:
-    if deltas.get("player_to"):
-        state["player"].update(x=deltas["player_to"][0], y=deltas["player_to"][1])
-    for landed in deltas.get("moved", []):
-        if landed.get("used_up"):  # A bandage or poultice, used (D-49).
-            state["objects"][landed["id"]].update(holder_id="used", condition="used up")
-            continue
-        state["objects"][landed["id"]].update(x=landed["x"], y=landed["y"], holder_id=None)
-    new_objects = deltas.get("new_objects") or ([deltas["new_object"]] if deltas.get("new_object") else [])
-    if new_objects:
-        for item_id in deltas["consumed_ids"]:
-            # Its water went into the new thing (or spilled): see _step_deltas.
-            state["objects"][item_id].update(holder_id=f"in:{new_objects[0]['id']}", water_l=0.0)
-        for obj in new_objects:
-            state["objects"][obj["id"]] = obj
-            rename(obj)
-    for item_id in deltas.get("taken_ids", []):
-        state["objects"][item_id]["holder_id"] = "player"
-    for change in deltas.get("water", []):  # Water moved, heated, poured; any change of state in place.
-        if change["id"] == "__player__":  # The stranger's own body and kit (D-49).
-            state["player"].update(copy.deepcopy({k: v for k, v in change.items() if k != "id"}))
-            continue
-        state["objects"][change["id"]].update({k: v for k, v in change.items() if k != "id"})
-        if not state["objects"][change["id"]].get("water_l"):
-            state["objects"][change["id"]].update(
-                temperature=state["objects"][change["id"]].get("temperature", "cold")
-                if not state["objects"][change["id"]].get("capacity_l")
-                else "cold"
-            )
-        rename(state["objects"][change["id"]])
-    if deltas.get("spilled_l"):
-        state["water_spilled_l"] = round(state.get("water_spilled_l", 0.0) + deltas["spilled_l"], 3)
-    if deltas.get("capabilities"):
-        state["objects"][deltas["capabilities"]["id"]]["known_capabilities"] = deltas["capabilities"][
-            "known_capabilities"
-        ]
-    if deltas.get("lifted_out"):
-        down = deltas["lifted_out"]
-        state["objects"][down["id"]].update(
-            installed_in=None, x=down["x"], y=down["y"], holder_id=None, condition="usable"
-        )
-    if deltas.get("gate"):  # The gate follows its bar (D-42).
-        state["gate_open"] = deltas["gate"]["open"]
-        if deltas["gate"].get("unbarred_by"):
-            state["gate_unbarred_by"] = deltas["gate"]["unbarred_by"]
-    if deltas.get("installed"):
-        placed = deltas["installed"]
-        state["objects"][placed["id"]].update(
-            installed_in=placed["into"], x=placed["x"], y=placed["y"], holder_id=None, condition="installed"
-        )
-    if deltas.get("trade"):
-        state.setdefault("trades", {})[deltas["trade"]["id"]] = dict(deltas["trade"])
-    given = deltas.get("given")
-    for item_id in (given or {}).get("ids", []):
-        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id])
-        if given["owners"][item_id] == given["to"]:
-            state["objects"][item_id].pop("lent_to", None)  # Back in its owner's hands: the loan is over.
-    transformed = deltas.get("transformed")
-    if transformed:
-        target = state["objects"][transformed["id"]]
-        target.update(
-            condition=transformed["result_state"],
-            holder_id=f"into:{transformed['into'][0]}",
-            became=transformed["into"],
-        )
-    for update in deltas.get("npc_updates", []):
-        npc = next(n for n in state["npcs"] if n["id"] == update["id"])
-        if "alive" not in update:  # Only their conditions changed (someone treated them, D-49).
-            npc["conditions"] = copy.deepcopy(update.get("conditions", npc.get("conditions", [])))
-            continue
-        npc.update(alive=update["alive"], health=update["health"])
-        if "injuries" in update:
-            npc["injuries"] = list(update["injuries"])
-        if "conditions" in update:
-            npc["conditions"] = copy.deepcopy(update["conditions"])
-        elif update.get("injury"):  # Seed-5 payloads before multi-step recorded one injury at a time.
-            npc.setdefault("injuries", []).append(update["injury"])
-        if not update["alive"] and npc.get("controller"):
-            npc["controller"].update(activity="dead", path=[], source="dead")
-        elif update.get("down") and not npc.get("down"):
-            npc["down"] = True
-            if npc.get("mind"):
-                npc["mind"]["job"] = None
-            if npc.get("controller"):
-                npc["controller"].update(activity="down", path=[], source="down")
-
-
-_REFERENCE = re.compile(r"^made_by_step_(\d+)$")
-
-
-def _resolve_references(step: dict, made_by_step: dict[int, str]) -> dict:
-    """Point 'made_by_step_N' at the object that step actually made, wherever a later step names it (the thing
-    to show, light, fill, give, fit or pour into as well as a weapon or ingredient)."""
-
-    def swap(value):
-        if isinstance(value, dict):
-            return {k: swap(v) for k, v in value.items()}
-        if isinstance(value, list):
-            return [swap(v) for v in value]
-        match = _REFERENCE.match(value) if isinstance(value, str) else None
-        return made_by_step.get(int(match.group(1)), value) if match else value
-
-    return swap(copy.deepcopy(step))
-
-
-def humanize(text: str, state: dict, made_by_step: dict[int, str]) -> str:
-    """Replace any id that leaked into player-facing text with the thing's name."""
-    names = {oid: ("the ", o["name"]) for oid, o in state["objects"].items()}
-    names.update({f"made_by_step_{n}": ("the ", state["objects"][oid]["name"]) for n, oid in made_by_step.items()})
-    names.update({n["id"]: ("", n["name"]) for n in state["npcs"]})
-    pattern = re.compile(
-        r"\b(the |your |a |an )?(" + "|".join(re.escape(key) for key in sorted(names, key=len, reverse=True)) + r")\b"
-    )
-
-    def swap(match):
-        article = match.group(1)
-        default, name = names[match.group(2)]
-        return ((article or default) if default else "") + name
-
-    return pattern.sub(swap, text)
-
-
-def resolve_attempt(
-    state: dict, run_id: str, text: str, judged: dict | None, service_error: str | None, trace_id: str, now_ms: int
-) -> tuple[dict, dict, dict]:
-    """Validate and apply the judge's steps in order on a draft world; stop at the first that fails.
-
-    Returns (event payload, summary verdict for the trace, draft state after the committed steps).
-    """
-    event_id = state["event_seq"] + 1
-    draft = copy.deepcopy(state)
-    verdicts, deltas, made_by_step = [], [], {}
-    if judged is None:
-        verdicts.append(validate(draft, None, service_error))
-    elif judged.get("clarifying_question"):
-        verdicts.append(_verdict("needs_clarification", judged["clarifying_question"], []))
-    elif not judged.get("steps"):
-        verdicts.append(_unresolved([], "the judge returned no steps"))
-    else:
-        for number, step in enumerate(judged["steps"][:MAX_STEPS], 1):
-            verdict = validate(draft, _resolve_references(step, made_by_step))
-            verdicts.append(verdict)
-            if verdict["category"] != "success":
-                break
-            step_deltas = _step_deltas(draft, run_id, text, verdict, event_id, number)
-            _apply_step(draft, step_deltas)
-            deltas.append(step_deltas)
-            if step_deltas["new_objects"]:
-                made_by_step[number] = step_deltas["new_objects"][0]["id"]
-        if len(judged["steps"]) > MAX_STEPS and verdicts[-1]["category"] == "success":
-            verdicts[-1]["notes"].append(f"Only the first {MAX_STEPS} steps were attempted.")
-    for verdict in verdicts:
-        verdict["reason"] = humanize(verdict["reason"], draft, made_by_step)
-    committed = [v for v in verdicts if v["category"] == "success"]
-    last = verdicts[-1]
-    category = "success" if last["category"] == "success" else "partial_success" if committed else last["category"]
-    made_ids = [o["id"] for d in deltas for o in d["new_objects"]]
-    crafted = next((d["new_objects"][0]["id"] for d, v in zip(deltas, committed) if v["action"] == "make"), None)
-    harm = next((v["harm"] for v in reversed(committed) if v["harm"]), None)
-    summary = {
-        "category": category,
-        "action": last["action"],
-        "reason": " ".join(v["reason"] for v in verdicts),
-        "effort_seconds": sum(v["effort_seconds"] for v in verdicts),
-        "notes": [n for v in verdicts for n in v["notes"]]
-        if len(verdicts) == 1
-        else [f"Step {i}: {n}" for i, v in enumerate(verdicts, 1) for n in v["notes"]],
-        "consumed_ids": [i for v in committed for i in v["consumed_ids"]],
-        "tool_ids": [i for v in committed for i in v["tool_ids"]],
-        "new_spec": next((v["new_spec"] for v in committed if v["new_spec"]), None),
-        "take_ids": [i for v in committed for i in v["take_ids"]],
-        "transform": next((v["transform"] for v in reversed(committed) if v["transform"]), None),
-        "harm": harm,
-        "property": [c for v in committed for c in v["property"]],
-        "fill": next((v["fill"] for v in reversed(committed) if v["fill"]), None),
-        "demonstration": next((v["demonstration"] for v in reversed(committed) if v["demonstration"]), None),
-        "give": next((v["give"] for v in reversed(committed) if v["give"]), None),
-        "treat": next((v["treat"] for v in reversed(committed) if v.get("treat")), None),
-        "install": next((v["install"] for v in reversed(committed) if v["install"]), None),
-        "lift_out": next((v["lift_out"] for v in reversed(committed) if v["lift_out"]), None),
-        "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
-        "gather": next((v["gather"] for v in reversed(committed) if v["gather"]), None),
-        "precedent_key": (judged or {}).get("precedent_key"),
-        "steps": [
-            {"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
-            for v in verdicts
-        ],
-    }
-    transformed = next((d["transformed"] for d in reversed(deltas) if d["transformed"]), None)
-    px, py = state["player"]["x"], state["player"]["y"]
-    entry = {
-        "kind": "craft",
-        "action": summary["action"],
-        "text": text,
-        "category": category,
-        "reason": summary["reason"],
-        "steps": summary["steps"],
-        "step": {
-            "step_id": "step_1",
-            "operation_key": "craft",
-            "actor_id": "player",
-            "input_refs": [
-                {"existing_entity_id": i}
-                for i in summary["consumed_ids"]
-                + summary["tool_ids"]
-                + summary["take_ids"]
-                + ([transformed["id"]] if transformed else [])
-            ],
-            "output_bindings": made_ids,
-            "depends_on": [],
-            "required_capabilities": [],
-            "required_skill": None,
-            "effort_seconds": summary["effort_seconds"],
-            "risk_tags": [],
-            "status": "completed" if category == "success" else category,
-        },
-        "player_cell": [px, py],
-        "event_id": event_id,
-        "made": crafted or (made_ids[0] if made_ids else None),
-        "crafted": crafted,
-        "made_name": draft["objects"][crafted or made_ids[0]]["name"] if made_ids else None,
-        "made_ids": made_ids,
-        "taken_ids": summary["take_ids"],
-        "transformed": transformed,
-        "harm": harm,
-        "fill": summary["fill"],
-        "demonstration": summary["demonstration"],
-        "give": summary["give"],
-        "install": summary["install"],
-        "lift_out": summary["lift_out"],
-        "offer_trade": summary["offer_trade"],
-        **(
-            {"treated": summary["treat"]} if summary.get("treat") and summary["treat"]["patient_id"] != "player" else {}
-        ),
-        "walk": [cell for d in deltas for cell in d.get("walk", [])],
-        "property": summary["property"],
-        "precedent_key": summary["precedent_key"],
-        "trace_id": trace_id,
-    }
-    payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}
-    return payload, summary, draft
-
-
-def apply_payload(state: dict, payload: dict) -> None:
-    # People first, so wounds and deaths recorded by the steps are applied on top of their movement.
-    if "npcs" in payload:
-        state["npcs"] = payload["npcs"]
-    for deltas in payload.get("steps", [payload]):  # Older events are one step.
-        _apply_step(state, deltas)
-    state["journal"].append(payload["journal_entry"])
-    state["last_action"] = payload["journal_entry"]
-    state["sim_time_ms"] = payload["sim_time_ms"]

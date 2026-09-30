@@ -6,9 +6,12 @@ from test_encounter import post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import npc, said, unit_state
 
+import briefing
 import clock
 import combat
+import conversation
 import encounter
+import gatekeeping
 import reputation
 import store
 import talk
@@ -40,10 +43,10 @@ def rope_stolen(state, holder="player"):
 def test_a_guard_who_heard_of_a_theft_can_demand_it_back_take_it_or_arrest():
     state = unit_state()
     kade = rope_stolen(state)
-    moves = talk.moves(state, kade, {})
+    moves = conversation.moves(state, kade, {})
     assert {"demand:rope_tomas", "take_back:rope_tomas", "seize", "attack"} <= set(moves)
     assert "not to kill" in moves["attack"]  # A theft: to subdue.
-    context = talk.converse_context(state, kade, "I'm sorry, I won't do it again.", {})
+    context = briefing.converse_context(state, kade, "I'm sorry, I won't do it again.", {})
     assert "coil of rope" in context["why_they_are_here"] and "carrying it openly" in context["why_they_are_here"]
     state["event_seq"] = 7
     talk.exchange(
@@ -51,7 +54,7 @@ def test_a_guard_who_heard_of_a_theft_can_demand_it_back_take_it_or_arrest():
     )
     rope = state["objects"]["rope_tomas"]
     assert rope["holder_id"] == "npc_kade_east" and rope["owner_id"] == "npc_tomas_reed"
-    assert "take_back:rope_tomas" not in talk.moves(state, kade, {})  # Nothing left to take back.
+    assert "take_back:rope_tomas" not in conversation.moves(state, kade, {})  # Nothing left to take back.
 
 
 def test_hessa_only_sees_her_own_things_and_nobody_offers_to_take_what_isnt_theirs():
@@ -59,7 +62,7 @@ def test_hessa_only_sees_her_own_things_and_nobody_offers_to_take_what_isnt_thei
     state["objects"]["rope_tomas"]["holder_id"] = "player"
     hessa = npc(state, "npc_hessa_marr")
     state["player"].update(x=hessa["x"], y=hessa["y"] + 1)
-    moves = talk.moves(state, hessa, {})
+    moves = conversation.moves(state, hessa, {})
     assert not any(k.startswith(("demand:", "take_back:", "seize")) for k in moves) and "attack" not in moves
 
 
@@ -67,7 +70,7 @@ def test_no_crime_no_arrest(world):
     """A guard may only arrest for a real crime not put right (D-46): with none, a scripted arrest is just talk."""
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     state = walk_near(world, state, "npc_kade_east")
-    assert "seize" not in talk.moves(state, npc(state, "npc_kade_east"))
+    assert "seize" not in conversation.moves(state, npc(state, "npc_kade_east"))
     world.replies.append(said("seize"))
     body = post(world, state, "act", {"text": "What are you looking at?", "target_id": "npc_kade_east"})
     assert not body["round"].get("arrested") and body["state"]["encounter"] is not None
@@ -90,6 +93,6 @@ def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():
     assert (
         state["player"]["alive"] and tuning.SUBDUED_AT <= state["player"]["health"] < tuning.SUBDUED_AT + 1
     )  # (mending)
-    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and talk.barred(state)
+    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and gatekeeping.barred(state)
     assert state["objects"]["rope_tomas"]["holder_id"] == "npc_tomas_reed"  # The rope goes back.
     assert any(e.get("kind") == "arrest" for e in state["journal"])

@@ -206,14 +206,13 @@ def situation(state: dict, npc: dict) -> str:
         ]
         lines.append(f"{me['name']}'s deal with the stranger ({status}): the stranger is to {deal['task']}.")
     feelings, view = my_mind["feelings"], reputation.regard(npc)
-    words = lambda value, levels: levels[min(len(levels) - 1, int(value * len(levels)))]  # noqa: E731
     lines.append(
         f"How {me['name']} feels about the stranger right now: "
-        f"{words(feelings['fear'], reputation.FEAR_LEVELS).lower()}, {words(feelings['anger'], reputation.ANGER_LEVELS).lower()}; "
-        f"trust {words(view['trust'], ['none', 'little', 'some', 'real'])}, "
-        f"suspicion {words(view['suspicion'], ['none', 'slight', 'wary', 'very wary'])}, "
-        f"respect for what they can do {words(view['respect'], ['none', 'a little', 'real', 'great'])}, "
-        f"awe {words(view['awe'], ['none', 'a touch', 'deep', 'overwhelming'])}."
+        f"{reputation.in_words(feelings['fear'], reputation.FEAR_LEVELS).lower()}, {reputation.in_words(feelings['anger'], reputation.ANGER_LEVELS).lower()}; "
+        f"trust {reputation.in_words(view['trust'], ['none', 'little', 'some', 'real'])}, "
+        f"suspicion {reputation.in_words(view['suspicion'], ['none', 'slight', 'wary', 'very wary'])}, "
+        f"respect for what they can do {reputation.in_words(view['respect'], ['none', 'a little', 'real', 'great'])}, "
+        f"awe {reputation.in_words(view['awe'], ['none', 'a touch', 'deep', 'overwhelming'])}."
     )
     others = [
         f"{n['name']} ({cast.relation(npc, n['id']) or cast.card(n)['role']}, "

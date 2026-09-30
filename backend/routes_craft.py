@@ -19,9 +19,11 @@ import cast
 import clock
 import combat
 import commands
+import consequences
 import crafting
 import encounter
 import intent
+import judge_view
 import perception
 import reputation
 import rounds
@@ -239,7 +241,7 @@ def _attempt(
     try:
         with commands.open(run_id, request, body=body, duplicate=repeated) as cmd:
             cmd.claim()
-            context = crafting.build_context(cmd.state, text, selected_ids)
+            context = judge_view.build_context(cmd.state, text, selected_ids)
             calls_used = telemetry.calls_for_run(cmd.connection, run_id)
             seen = cmd.state
     except commands.Reply as reply:
@@ -252,7 +254,7 @@ def _attempt(
                 telemetry.log(cmd.connection, run_id, "judge", judged)
             # Validation runs against the state as it is now, not the snapshot the judge saw,
             # one step at a time, stopping at the first step that does not succeed.
-            payload, verdict, after = crafting.resolve_attempt(
+            payload, verdict, after = consequences.resolve_attempt(
                 state, run_id, text, judged.result, attempts.service_message(judged), request_id, state["sim_time_ms"]
             )
             payload["perceptions"] = perception.perceive(after, payload["journal_entry"])
@@ -260,7 +262,7 @@ def _attempt(
             reputation.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
             payload["safe_seq"] = state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0)
             payload.update(clock.advance_people(after, verdict["effort_seconds"] * 1000))
-            crafting.apply_payload(state, payload)
+            consequences.apply_payload(state, payload)
             store.apply_people(state, payload)
             cmd.save("craft", payload["sim_time_ms"] // 1000)
             new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]

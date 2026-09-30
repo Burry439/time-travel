@@ -4,7 +4,10 @@ person's superstition), and any guard letting the stranger in for their own reas
 from test_gate import answers
 from test_talk import npc, unit_state
 
+import briefing
 import cast
+import conversation
+import gatekeeping
 import minds
 import perception
 import reputation
@@ -99,12 +102,12 @@ def test_bren_lets_you_in_on_his_own_rule():
     state = unit_state()
     bren = npc(state, "npc_bren_marr")
     state["player"].update(x=bren["x"], y=bren["y"] + 1)
-    assert not talk.grounds_to_admit(bren)  # A stranger he doesn't know: nothing to go on (D-55).
+    assert not gatekeeping.grounds_to_admit(bren)  # A stranger he doesn't know: nothing to go on (D-55).
     reputation.regard(bren).update(trust=0.7, suspicion=0.2)  # He has come to trust them himself.
     cast.mind(bren)["met"] = True
-    assert talk.grounds_to_admit(bren)
-    _, questions = talk.request(state, bren, "Will you let me through?")
-    key = talk.decided_reply(state, bren, answers("admit", reason=0.8, threat=0.1), "admit")
+    assert gatekeeping.grounds_to_admit(bren)
+    _, questions = briefing.request(state, bren, "Will you let me through?")
+    key = conversation.decided_reply(state, bren, answers("admit", reason=0.8, threat=0.1), "admit")
     assert key == "admit"
     state["event_seq"] = 3
     said = talk.exchange(

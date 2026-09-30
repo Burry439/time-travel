@@ -3,7 +3,10 @@
 from test_encounter import face_to_face, post, world  # noqa: F401  (the fixture is used by name)
 from test_talk import npc, said, unit_state
 
+import briefing
 import cast
+import consequences
+import conversation
 import crafting
 import reputation
 import talk
@@ -73,7 +76,7 @@ def test_a_job_lends_what_it_needs_so_using_it_is_not_theft():
     assert crafting._property(state, ["honey_hessa"], "taken")  # Only what the job needs.
     # Handed back to her, the loan is over: taking it again would be taking it.
     state["objects"]["bucket_hessa"]["holder_id"] = "player"
-    crafting._apply_step(
+    consequences.apply_step(
         state,
         {"given": {"ids": ["bucket_hessa"], "to": "npc_hessa_marr", "owners": {"bucket_hessa": "npc_hessa_marr"}}},
     )
@@ -114,9 +117,9 @@ def test_cues_show_only_when_regard_crosses_a_band():
 def test_refusals_carry_what_would_change_their_mind_and_everyone_has_a_voice():
     state = unit_state()
     darin = beside(state, "npc_darin_ko")
-    refusing = talk.voice_context(state, darin, "Lend me the stone.", "refuse")
+    refusing = briefing.voice_context(state, darin, "Lend me the stone.", "refuse")
     assert "sell" in refusing["what_would_change_their_mind"] and "friend" in refusing["how_they_talk"]["style"]
-    assert "what_would_change_their_mind" not in talk.voice_context(state, darin, "Hello.", "answer")
+    assert "what_would_change_their_mind" not in briefing.voice_context(state, darin, "Hello.", "answer")
     assert all(cast.card(n).get("style") and cast.card(n).get("persuaded_by") for n in state["npcs"])
     # Every character sheet is complete: a voice of their own, wants, likes, people they know, things to do.
     for n in state["npcs"]:
@@ -135,13 +138,15 @@ def test_refusals_carry_what_would_change_their_mind_and_everyone_has_a_voice():
 def test_asking_back_is_rare():
     state = unit_state()
     tomas = beside(state, "npc_tomas_reed")
-    talk.turns(tomas).extend(
+    conversation.turns(tomas).extend(
         [{"who": "stranger", "text": "Hi"}, {"who": "them", "text": "Who are you?", "reply": "ask_back"}]
     )
     for _ in range(2):
-        assert "ask_back" not in talk.replies(state, tomas)
-        talk.turns(tomas).extend(
+        assert "ask_back" not in conversation.replies(state, tomas)
+        conversation.turns(tomas).extend(
             [{"who": "stranger", "text": "..."}, {"who": "them", "text": "Hm.", "reply": "answer"}]
         )
-    talk.turns(tomas).extend([{"who": "stranger", "text": "..."}, {"who": "them", "text": "Hm.", "reply": "answer"}])
-    assert "ask_back" in talk.replies(state, tomas)  # Four of their replies later, they may ask again.
+    conversation.turns(tomas).extend(
+        [{"who": "stranger", "text": "..."}, {"who": "them", "text": "Hm.", "reply": "answer"}]
+    )
+    assert "ask_back" in conversation.replies(state, tomas)  # Four of their replies later, they may ask again.

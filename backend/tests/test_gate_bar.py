@@ -8,10 +8,11 @@ from test_encounter import post, world  # noqa: F401
 from test_talk import npc
 
 import combat
-import crafting
+import gatekeeping
+import judge_view
 import m2
 import perception
-import talk
+import reputation
 import village
 
 
@@ -32,7 +33,7 @@ def at_the_gate(state):
 def test_the_gate_starts_barred_and_opens_when_the_bar_is_off():
     state = at_the_gate(fresh_state())
     assert state["objects"]["gate_bar"]["installed_in"] == "gate_brackets" and m2.gate_barred(state)
-    view = next(i for i in crafting.build_context(state, "x", [])["available_items"] if i["id"] == "gate_bar")
+    view = next(i for i in judge_view.build_context(state, "x", [])["available_items"] if i["id"] == "gate_bar")
     assert view["installed_in"] == "gate_brackets"  # The judge sees what the bar is doing.
     commit(state, lift_out())
     assert state["gate_open"] and state["gate_unbarred_by"] == "player" and not m2.gate_barred(state)
@@ -48,7 +49,7 @@ def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
     assert memory["kind"] == "breach" and memory["severity"] == 3 and "unbarred" in memory["summary"]
     assert "npc_roderic_vale" in state["fight"]["attackers"] and len(state["fight"]["attackers"]) >= 2
     assert any("gate" in (n["mind"].get("said") or {}).get("text", "").lower() for n in state["npcs"] if n.get("mind"))
-    assert talk.knows_a_crime(roderic) and not talk.can_admit(state, roderic)
+    assert reputation.knows_a_crime(roderic) and not gatekeeping.can_admit(state, roderic)
 
 
 def test_doing_tomas_s_swap_is_work_not_an_assault():

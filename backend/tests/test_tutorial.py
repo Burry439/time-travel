@@ -8,6 +8,7 @@ import app as service
 import cast
 import clock
 import combat
+import conversation
 import encounter
 import gear
 import reputation
@@ -237,12 +238,11 @@ def test_the_captain_needs_asking_if_nobody_told_him_the_stranger_wants_in():
     """D-57: Kade tells Roderic what he saw. Only if the stranger told Kade they want to come into the city does
     Roderic know it, and come to let them in himself; otherwise the stranger has to ask, and Kade's word is the
     grounds his yes needs."""
-    import talk
 
     state, kade = at_captain("Just passing through, looking for work.")
     assert not state["tutorial"]["flags"]["wants_in"] and "want to come" not in kade["mind"]["job"]["why"]
     roderic = npc(state, "npc_roderic_vale")
-    assert "admit" not in talk.moves(state, roderic)  # Nothing to go on yet.
+    assert "admit" not in conversation.moves(state, roderic)  # Nothing to go on yet.
     for _ in range(120):
         beat(state, 1000)
         tutorial.tick(state)
@@ -251,19 +251,18 @@ def test_the_captain_needs_asking_if_nobody_told_him_the_stranger_wants_in():
             break
     tutorial.tick(state)
     assert "captain:comes" not in state["tutorial"]["fired"] and not state.get("admitted")
-    assert "admit" in talk.moves(state, roderic)  # Asked, he may: Kade's word is something real to go on.
+    assert "admit" in conversation.moves(state, roderic)  # Asked, he may: Kade's word is something real to go on.
     state, _ = at_captain("I want to get inside the city walls.")
     assert state["tutorial"]["flags"]["wants_in"]
 
 
 def test_kade_stays_for_his_lessons_and_does_not_let_them_in_himself():
-    import talk
 
     state = tutorial_state()
     kade = npc(state, "npc_kade_east")
     state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "why")
     assert tutorial.keeps(state, kade)
-    moves = talk.replies(state, kade)
+    moves = conversation.replies(state, kade)
     assert not any(o["act"] in ("go_tell", "vouch", "call_guard", "admit") for o in moves.values())
     state["tutorial"]["fired"].append("kade:lent")  # He has come over.
     cast.set_job(kade, {"kind": "watch", "until": 20_000}, 0)  # What a talk leaves him with...

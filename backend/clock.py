@@ -8,9 +8,9 @@ import copy
 
 import cast
 import combat
-import crafting
 import encounter
 import gear
+import heat
 import minds
 import npc_sim
 import paths
@@ -409,7 +409,7 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = advance_world(probe, elapsed_ms, state["sim_time_ms"])
 
-    changed = crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])
+    changed = heat.age_objects(state, elapsed_ms, state["sim_time_ms"])
     for object_id, fields in (probe.get("people_objects_changed") or {}).items():  # Arrows landing, shields worn.
         changed.setdefault(object_id, {}).update(fields)
     payload = {

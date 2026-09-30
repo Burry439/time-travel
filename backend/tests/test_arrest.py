@@ -4,9 +4,10 @@ from test_encounter import face_to_face, play, post, world  # noqa: F401
 from test_talk import npc, unit_state
 
 import combat
+import conversation
 import encounter
+import gatekeeping
 import reputation
-import talk
 
 
 def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
@@ -21,12 +22,12 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     assert draft["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko"
     assert draft["objects"]["lodestone_darin"]["holder_id"] == "player"
     assert (draft["player"]["x"], draft["player"]["y"]) == encounter.SOUTH_ROAD and draft["player"]["alive"]
-    assert talk.barred(draft) and draft["journal"][-1]["kind"] == "arrest"
+    assert gatekeeping.barred(draft) and draft["journal"][-1]["kind"] == "arrest"
     roderic = npc(draft, "npc_roderic_vale")
     assert roderic["mind"]["memories"][-1]["kind"] == "arrest"
-    assert "admit" not in talk.replies(draft, roderic)  # Not while barred...
+    assert "admit" not in conversation.replies(draft, roderic)  # Not while barred...
     draft["sim_time_ms"] = draft["barred_until"] + 1
-    assert "admit" in talk.replies(draft, roderic)  # ...but an arrest isn't the end of the road.
+    assert "admit" in conversation.replies(draft, roderic)  # ...but an arrest isn't the end of the road.
 
 
 def test_walking_off_from_someone_you_wronged():
@@ -85,7 +86,7 @@ def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():
     combat.start(state, ["npc_mara_venn", "npc_bren_marr"], 0, "test")
     outcome = encounter.surrender(state, 0)
     assert outcome["arrested"] and "Bren" in outcome["text"] and state["fight"] is None
-    assert state["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko" and talk.barred(state)
+    assert state["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko" and gatekeeping.barred(state)
 
 
 def test_only_violence_rules_out_entry_for_good():
@@ -104,7 +105,7 @@ def test_only_violence_rules_out_entry_for_good():
             "victim": None,
         },
     )
-    assert "admit" in talk.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
+    assert "admit" in conversation.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
     assert reputation.regard(roderic)["suspicion"] > 0.68
 
 

@@ -12,8 +12,10 @@ from test_talk import npc, unit_state
 import cast
 import clock
 import combat
-import crafting
+import consequences
+import conversation
 import gear
+import judge_view
 import perception
 import tuning
 import village
@@ -319,10 +321,10 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
     bren, oren = npc(state, "npc_bren_marr"), npc(state, "npc_oren_dast")
     bren.update(x=38, y=54)
     oren.update(x=40, y=53)
-    assert crafting.people_nearby(state)[0]["armour"]  # The judge sees what they wear...
-    view = {p["id"]: p for p in crafting.people_nearby(state)}
+    assert judge_view.people_nearby(state)[0]["armour"]  # The judge sees what they wear...
+    view = {p["id"]: p for p in judge_view.people_nearby(state)}
     assert "mail" in view["npc_bren_marr"]["armour"] and "aware_of_you" in view["npc_bren_marr"]
-    payload, summary, after = crafting.resolve_attempt(
+    payload, summary, after = consequences.resolve_attempt(
         state,
         "unit0000",
         "throw the boiling water in Bren's face",
@@ -396,7 +398,7 @@ def test_talking_mid_fight_and_being_talked_down():
     state = open_ground(unit_state(), "npc_hessa_marr")
     combat.start(state, ["npc_hessa_marr"], state["sim_time_ms"], "developer")
     hessa = npc(state, "npc_hessa_marr")
-    options = talk.replies(state, hessa)
+    options = conversation.replies(state, hessa)
     assert "stop_fighting" in options and "attack" not in options and "go_tell" not in options
     talk.exchange(
         state, "npc_hessa_marr", "Please, I'm sorry, I'll put it right!", {}, "stop_fighting", "Fine. Enough.", []
