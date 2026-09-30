@@ -3,19 +3,21 @@ can speak for the stranger, and a promise the voice made without the move is car
 
 from test_talk import npc, unit_state
 
-import minds
+import clock
+import perception
+import reputation
 import rounds
 import talk
 
 
 def advance(state, ms):
-    state["npcs"], heard, state["player"] = minds.advance_world(state, ms, state["sim_time_ms"])
+    state["npcs"], heard, state["player"] = clock.advance_world(state, ms, state["sim_time_ms"])
     state["sim_time_ms"] += ms
     state["journal"].extend(heard)
 
 
 def treated(state, npc_id):
-    minds.remember(
+    reputation.remember(
         npc(state, npc_id),
         {
             "kind": "help",
@@ -114,7 +116,7 @@ def test_good_news_travels_too():
 
     state = unit_state()
     hessa = npc(state, "npc_hessa_marr")
-    minds.remember(
+    reputation.remember(
         hessa,
         {
             "kind": "help",
@@ -171,7 +173,7 @@ def test_watching_something_made_counts_as_being_shown_it():
         "reason": "Sparks catch in the dry grass.",
         "property": [],
     }
-    minds.apply_perceptions(state, minds.perceive(state, entry))
+    perception.apply_perceptions(state, perception.perceive(state, entry))
     seen = [m for m in npc(state, "npc_jory_venn")["mind"]["memories"] if m["kind"] == "demonstration"]
     assert seen and seen[-1]["clarity"] == "clear" and "small fire" in seen[-1]["summary"]
 

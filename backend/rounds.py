@@ -10,7 +10,6 @@ lock and the round is redone on the latest world before it is committed as one e
 from __future__ import annotations
 
 import json
-import math
 import re
 import time
 from typing import Literal
@@ -19,14 +18,16 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 import attempts
+import cast
+import clock
 import combat
 import commands
 import crafting
 import encounter
-import minds
 import routes_tutorial
 import store
 import talk
+import tuning
 from ai import config as ai_config
 from ai import judge, telemetry, voice
 
@@ -43,7 +44,7 @@ class SayRequest(BaseModel):
 
 def _talk_problem(state: dict, npc_id: str) -> tuple[dict, list[list[int]]]:
     """The person and the walk to reach them, or an HTTP 409 saying why they can't be spoken to."""
-    npc = minds.find(state["npcs"], npc_id)
+    npc = cast.find(state["npcs"], npc_id)
     if npc is None:
         raise HTTPException(404, "Unknown person")
     problem = talk.busy(npc)
@@ -98,11 +99,11 @@ def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
             raise HTTPException(409, {"reason": "no_encounter", "message": "Nobody is face to face with you."})
         return _talk_problem(state, request.target_id)[1]  # Speaking or showing something to someone.
     if request.target_id and request.target_id not in current["participants"]:
-        npc = minds.find(state["npcs"], request.target_id)
+        npc = cast.find(state["npcs"], request.target_id)
         if npc is None:
             raise HTTPException(404, "Unknown person")
         problem = talk.busy(npc)
-        if problem is None and math.dist(minds._cell(npc), minds.player_cell(state)) > talk.HEAR_TALK_CELLS:
+        if problem is None and cast.distance(npc, state["player"]) > tuning.HEAR_TALK_CELLS:
             if not encounter.hostile(state):  # A friendly talk moves with you: walk over to them (D-48).
                 return _talk_problem(state, request.target_id)[1]
             problem = "Deal with who is in front of you first."  # Confronted, you can call out, not walk off.
@@ -119,9 +120,9 @@ def _round_draft(
     now = seen["sim_time_ms"]
     current = encounter.active(seen)
     if current is None:
-        encounter.open_for_talk(seen, minds.find(seen["npcs"], request.target_id), now)
+        encounter.open_for_talk(seen, cast.find(seen["npcs"], request.target_id), now)
     elif request.target_id and request.target_id not in current["participants"]:
-        encounter.join(seen, minds.find(seen["npcs"], request.target_id), "talk", None, now)
+        encounter.join(seen, cast.find(seen["npcs"], request.target_id), "talk", None, now)
     action = {"kind": request.kind, "text": request.text, "target_id": request.target_id}
     draft, record = encounter.resolve(
         seen,
@@ -141,8 +142,8 @@ def scene(
     """The group's moment (D-48): one voice call, outside the lock. Everyone in the conversation, plus up to
     three people near enough to hear it, may speak in turn, talk to each other or ask the stranger something."""
     current = encounter.active(draft) or {"participants": [addressed_id]}
-    addressed = minds.find(draft["npcs"], addressed_id)
-    inside = [minds.find(draft["npcs"], n) for n in current["participants"]]
+    addressed = cast.find(draft["npcs"], addressed_id)
+    inside = [cast.find(draft["npcs"], n) for n in current["participants"]]
     inside = [n for n in inside if n is not None]
     nearby = [
         n for n in (talk.bystanders(draft) if nearby is None else nearby) if n["id"] not in current["participants"]
@@ -177,7 +178,7 @@ def keep_promise(
                 None,
             )
             if named is None and words & {"captain", "guard", "guards", "watch", "gate"}:
-                named = minds.find(state["npcs"], talk.CAPTAIN)
+                named = cast.find(state["npcs"], talk.CAPTAIN)
             task = talk.errand(state, npc, named["id"], errand_message or promised) if named else None
         if task is not None:
             return "go_tell", task[0]["id"], task[1], None
@@ -193,18 +194,16 @@ def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now:
         if call.status == "ok"
         else [{"speaker_id": moment["addressed"], "text": call.text, "move": "answer", "answers": {}, "remember": ""}]
     )
-    here = minds.player_cell(draft)
+    here = cast.player_cell(draft)
     heard = [happened] if happened else []
     for line in lines:
-        npc = minds.find(draft["npcs"], line["speaker_id"])
+        npc = cast.find(draft["npcs"], line["speaker_id"])
         current = encounter.active(draft)
         if npc is None or current is None or any(s["npc_id"] == npc["id"] for s in said):
             continue  # Not a real person here, the conversation is over, or they've already spoken.
         joining = npc["id"] not in current["participants"]
         if joining and (
-            npc["id"] not in moment["nearby"]
-            or talk.busy(npc)
-            or math.dist(minds._cell(npc), here) > talk.HEAR_TALK_CELLS + 1
+            npc["id"] not in moment["nearby"] or talk.busy(npc) or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
         ):
             continue  # Only someone who was really near enough to hear can join in.
         if joining:
@@ -314,7 +313,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             and not spoken.error.startswith("Model call allowance")
         )
         if moment and broken and request.kind == "say":
-            name = minds.find(draft["npcs"], record["replier"])["name"]
+            name = cast.find(draft["npcs"], record["replier"])["name"]
             raise HTTPException(
                 503,
                 {
@@ -338,7 +337,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                     combat.start(draft, [line["npc_id"]], now, "attack")
             encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
             _pass_round_time(draft, now, encounter.round_ms(record))
-            _adopt_round(state, draft, record, state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0))
+            _adopt_round(state, draft, record, state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0))
             cmd.save("round")
             craft_trace = _traces(
                 cmd, request, context, judged, record, said, moment, spoken, timing, started, background
@@ -393,7 +392,7 @@ def _adopt_round(state: dict, draft: dict, record: dict, safe_seq: int) -> None:
 
 def _pass_round_time(draft: dict, now: int, elapsed: int) -> None:
     """The round takes time: everyone's day moves on by that much in the draft (routines, jobs, blows landing)."""
-    people = store.advance_people(draft, elapsed)
+    people = clock.advance_people(draft, elapsed)
     for obj in people.get("objects_added", []):
         draft["objects"][obj["id"]] = dict(obj)
     for object_id, fields in people.get("objects_changed", {}).items():

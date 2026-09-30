@@ -17,7 +17,7 @@ from test_encounter import blow, post, world  # noqa: F401  (the fixture is used
 from test_gate import answers, walk
 from test_talk import said, walk_to
 
-import minds
+import cast
 
 GOLDEN = Path(__file__).parent / "golden"
 UPDATE = os.environ.get("GOLDEN_UPDATE") == "1"
@@ -90,9 +90,9 @@ def test_golden_hessa_route(world):
     state = settle(
         world,
         state,
-        lambda s: any(m["kind"] == "vouch" for m in minds.mind(minds.find(s["npcs"], "npc_roderic_vale"))["memories"]),
+        lambda s: any(m["kind"] == "vouch" for m in cast.mind(cast.find(s["npcs"], "npc_roderic_vale"))["memories"]),
     )
-    roderic = minds.find(state["npcs"], "npc_roderic_vale")
+    roderic = cast.find(state["npcs"], "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
     world.replies.append(answers("admit", reason=0.8, threat=0.1))
     state = post(world, state, "say", {"npc_id": "npc_roderic_vale", "text": "Hessa has spoken for me."})["state"]

@@ -7,17 +7,17 @@ the clock is already running, so the hand is simply busy for that long.
 
 from __future__ import annotations
 
-import math
-
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 import attempts
+import cast
+import clock
 import combat
 import commands
 import gear
 import library
-import minds
+import perception
 import routes_tutorial
 import store
 
@@ -63,7 +63,7 @@ class Treat(BaseModel):
 def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
     """Whoever the stranger aims at (the client picks who they face); else whoever is in front within reach; else
     nobody: the blow goes where they face (D-51: swinging is never refused for want of a target)."""
-    npc = minds.find(state["npcs"], wanted or "")
+    npc = cast.find(state["npcs"], wanted or "")
     if npc is not None and npc.get("alive", True):
         return npc["id"]
     ahead = combat.in_front(state, [n for n in state["npcs"] if not combat.down(n)], facing, reach)
@@ -116,7 +116,7 @@ def _gear_event(cmd: commands.Command, seconds: int, journal_line: str | None) -
         for hand in gear.HAND_SLOTS:
             ready[hand] = max(ready.get(hand, 0), state["sim_time_ms"] + seconds * 1000)
     elif seconds > 0:
-        people = store.advance_people(state, seconds * 1000)
+        people = clock.advance_people(state, seconds * 1000)
         state["npcs"] = people["npcs"]
         state["sim_time_ms"] += seconds * 1000
         store.apply_people(state, people)
@@ -182,10 +182,10 @@ def treat(run_id: str, request: Treat):
         remedy = state["objects"].get(request.object_id)
         if remedy is None or remedy.get("holder_id") != "player":
             return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "You don't have that."}}
-        patient = state["player"] if request.patient_id == "player" else minds.find(state["npcs"], request.patient_id)
+        patient = state["player"] if request.patient_id == "player" else cast.find(state["npcs"], request.patient_id)
         if patient is None or not patient.get("alive", True):
             return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "There's nobody to treat."}}
-        if patient is not state["player"] and math.dist(minds._cell(patient), minds.player_cell(state)) > 2.5:
+        if patient is not state["player"] and cast.distance(patient, state["player"]) > 2.5:
             return {
                 "state": state,
                 "duplicate": False,
@@ -215,7 +215,7 @@ def treat(run_id: str, request: Treat):
                     "remedy": gear.REMEDIES[gear.of(remedy)["class"]]["name"],
                 },
             }
-            minds.apply_perceptions(state, minds.perceive(state, entry))
+            perception.apply_perceptions(state, perception.perceive(state, entry))
             result["text"] = (
                 result["text"]
                 .replace("You treat the", f"You treat {patient['name']}'s")

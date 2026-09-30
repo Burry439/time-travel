@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 import app as service
 import npc_sim
+import paths
 
 
 def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progress(tmp_path, monkeypatch):
@@ -25,7 +26,7 @@ def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progres
             assert retry["duplicate"] and retry["state"]["sim_time_ms"] == 500
     assert state["sim_time_ms"] == 6000
     assert any((a["x"], a["y"]) != (b["x"], b["y"]) for a, b in zip(initial["npcs"], state["npcs"]))
-    blocked = npc_sim.blocked_cells(service.WORLD_GEOMETRY)
+    blocked = paths.obstacle_cells()
     assert all((n["x"], n["y"]) not in blocked for n in state["npcs"])
 
     move = http.post(
@@ -60,10 +61,10 @@ def test_full_npc_routines_stay_on_open_cells_and_guards_patrol():
         {"id": "test", "mode": "normal", "seed_version": 3, "geometry_version": service.GEOMETRY_VERSION}
     )
     npcs = initial["npcs"]
-    blocked = npc_sim.blocked_cells(service.WORLD_GEOMETRY)
+    blocked = paths.obstacle_cells()
     visited = {npc["id"]: {(npc["x"], npc["y"])} for npc in npcs}
     for now_ms in range(0, 120_000, 500):
-        advanced = npc_sim.advance_npcs(npcs, 500, now_ms, service.WORLD_GEOMETRY)
+        advanced = npc_sim.advance_npcs(npcs, 500, now_ms)
         for before, after in zip(npcs, advanced):
             old_cell = (before["x"], before["y"])
             new_cell = (after["x"], after["y"])

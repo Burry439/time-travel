@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import difflib
 import json
-import math
 import re
 import sqlite3
 from collections.abc import Callable
@@ -16,16 +15,19 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 import attempts
+import cast
+import clock
 import combat
 import commands
 import crafting
 import encounter
 import intent
-import minds
+import perception
+import reputation
 import rounds
 import routes_tutorial
 import store
-import talk
+import tuning
 from ai import config as ai_config
 from ai import decider, judge, telemetry, voice
 
@@ -105,15 +107,15 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     """Whatever the stranger typed: words, a deed, both, or waiting / giving up / walking away (GDD D-34)."""
     with commands.peek(run_id) as state:
         current = encounter.active(state)
-    here = minds.player_cell(state)
+    here = cast.player_cell(state)
     near = sorted(
-        (n for n in state["npcs"] if n.get("alive", True) and math.dist(minds._cell(n), here) <= talk.HEAR_TALK_CELLS),
-        key=lambda n: math.dist(minds._cell(n), here),
+        (n for n in state["npcs"] if n.get("alive", True) and cast.distance(n, here) <= tuning.HEAR_TALK_CELLS),
+        key=lambda n: cast.distance(n, here),
     )
     target = request.target_id or (current.get("opened_by") if current else None)
     if target == "player":  # A conversation the stranger began: whoever they last addressed answers.
         target = None
-    talking_with = [n["name"] for i in (current or {}).get("participants", []) if (n := minds.find(state["npcs"], i))]
+    talking_with = [n["name"] for i in (current or {}).get("participants", []) if (n := cast.find(state["npcs"], i))]
     if request.mode:  # The player said which it is: no guessing, no model call (D-55).
         kind, how, call = intent.explicit(request.text, request.mode), "player", None
     else:
@@ -193,7 +195,7 @@ def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dic
         with commands.open(run_id, request, playable=False) as cmd:
             if not combat.active(cmd.state):
                 return {"state": cmd.state, "duplicate": False, "notice": "The fight is already over."}
-            outcome = combat.surrender(cmd.state, cmd.state["sim_time_ms"])
+            outcome = encounter.surrender(cmd.state, cmd.state["sim_time_ms"])
             cmd.save("fight", cmd.state["tick"])
     except commands.Reply as reply:
         return reply.body
@@ -253,11 +255,11 @@ def _attempt(
             payload, verdict, after = crafting.resolve_attempt(
                 state, run_id, text, judged.result, attempts.service_message(judged), request_id, state["sim_time_ms"]
             )
-            payload["perceptions"] = minds.perceive(after, payload["journal_entry"])
-            minds.apply_perceptions(after, payload["perceptions"])
-            minds.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
-            payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
-            payload.update(store.advance_people(after, verdict["effort_seconds"] * 1000))
+            payload["perceptions"] = perception.perceive(after, payload["journal_entry"])
+            perception.apply_perceptions(after, payload["perceptions"])
+            reputation.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
+            payload["safe_seq"] = state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0)
+            payload.update(clock.advance_people(after, verdict["effort_seconds"] * 1000))
             crafting.apply_payload(state, payload)
             store.apply_people(state, payload)
             cmd.save("craft", payload["sim_time_ms"] // 1000)
@@ -305,7 +307,7 @@ def get_asset(asset_id: str, background: BackgroundTasks):
         with attempts.asset_jobs_lock:
             running = asset_id in attempts.asset_jobs
         if not running:  # e.g. the backend restarted while painting
-            background.add_task(attempts._generate_asset, asset_id)
+            background.add_task(attempts.generate_asset, asset_id)
         return JSONResponse({"status": "pending"}, status_code=202)
     return JSONResponse({"status": status, "error": json.loads(row["trace_json"]).get("error")}, status_code=404)
 
@@ -369,5 +371,5 @@ def retry_asset(run_id: str, asset_id: str, background: BackgroundTasks):
         ).rowcount
     if not updated:
         raise HTTPException(404, "Unknown asset")
-    background.add_task(attempts._generate_asset, asset_id)
+    background.add_task(attempts.generate_asset, asset_id)
     return {"status": "pending"}

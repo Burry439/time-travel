@@ -10,17 +10,18 @@ from __future__ import annotations
 
 import copy
 import json
-import math
 from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+import cast
 import commands
 import minds
 import persona
 import store
+import tuning
 import village
 from ai import config as ai_config
 from ai import decider, telemetry, voice
@@ -43,12 +44,12 @@ _thinking_runs: set[tuple[str, str]] = set()
 
 def _meet_ready(state: dict, pending: dict) -> bool:
     """Both still free and close enough; otherwise the chat doesn't happen."""
-    a, b = minds.find(state["npcs"], pending["npc_id"]), minds.find(state["npcs"], pending["why"])
+    a, b = cast.find(state["npcs"], pending["npc_id"]), cast.find(state["npcs"], pending["why"])
     return (
         bool(a and b)
         and village.free(state, a)
         and village.free(state, b)
-        and math.dist(minds._cell(a), minds._cell(b)) <= village.VISIT_REACH + 1
+        and cast.distance(a, b) <= tuning.VISIT_REACH + 1
     )
 
 
@@ -60,15 +61,15 @@ def _choose(state: dict, lane: str = "any") -> tuple[list[dict], list[dict], lis
     alive = [
         p
         for p in state.get("pending_minds", [])
-        if p["kind"] in KINDS and (npc := minds.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)
+        if p["kind"] in KINDS and (npc := cast.find(state["npcs"], p["npc_id"])) and npc.get("alive", True)
     ]
     reacting = [p for p in alive if p["kind"] in REACTING]
     if lane == "react" or (lane == "any" and reacting):
-        return reacting[: minds.THINK_BATCH], [], []
+        return reacting[: tuning.THINK_BATCH], [], []
     stale = [p for p in alive if p["kind"] == "meet" and not _meet_ready(state, p)]  # They went their ways.
-    batch = [p for p in alive if p["kind"] == "meet" and _meet_ready(state, p)][: minds.THINK_BATCH]
-    batch += [p for p in alive if p["kind"] == "told"][: minds.THINK_BATCH]  # Someone was just told something (D-54).
-    batch += [p for p in alive if p["kind"] == "agenda"][: minds.THINK_BATCH - len(batch)]
+    batch = [p for p in alive if p["kind"] == "meet" and _meet_ready(state, p)][: tuning.THINK_BATCH]
+    batch += [p for p in alive if p["kind"] == "told"][: tuning.THINK_BATCH]  # Someone was just told something (D-54).
+    batch += [p for p in alive if p["kind"] == "agenda"][: tuning.THINK_BATCH - len(batch)]
     talking = set((state.get("encounter") or {}).get("participants") or [])
     recollecting = [p for p in alive if p["kind"] == "recollect" and p["npc_id"] not in talking][:RECOLLECT_BATCH]
     return batch, recollecting, stale
@@ -78,7 +79,7 @@ def _recollect_context(npc: dict) -> tuple[dict, dict]:
     known = persona.knows(npc)
     fold = [e["text"] for e in known["episodes"][: max(0, len(known["episodes"]) - persona.EPISODES_KEPT + 1)]]
     context = {
-        "character": {"name": npc["name"], "role": minds.card(npc)["role"]},
+        "character": {"name": npc["name"], "role": cast.card(npc)["role"]},
         "notes": list(known["notes"]),
         "long_memory": known.get("long_memory", ""),
         "to_fold": fold,
@@ -153,7 +154,7 @@ def _plan(cmd: commands.Command, lane: str) -> dict:
         and not (
             p["kind"] == "meet"
             and not village.has_news(
-                snapshot, minds.find(snapshot["npcs"], p["npc_id"]), minds.find(snapshot["npcs"], p["why"])
+                snapshot, cast.find(snapshot["npcs"], p["npc_id"]), cast.find(snapshot["npcs"], p["why"])
             )
         )
     ]
@@ -163,8 +164,8 @@ def _plan(cmd: commands.Command, lane: str) -> dict:
         "stale": stale,
         "snapshot": snapshot,
         "ask": ask,
-        "shared": minds.batch_request(snapshot, ask) if ask else None,
-        "memory_jobs": [(p, *_recollect_context(minds.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting],
+        "shared": batch_request(snapshot, ask) if ask else None,
+        "memory_jobs": [(p, *_recollect_context(cast.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting],
         "writing_allowed": writing_allowed,
     }
 
@@ -185,20 +186,20 @@ def _ask(plan: dict) -> dict:
             batch_call = decider.decide(text, questions)
             calls["batch"] = batch_call
             for pending in ask:
-                mine = minds.answers_for(batch_call.answers, prefixes[pending["npc_id"]])
-                if batch_call.ok and minds.ANSWER_KEY[pending["kind"]] in mine:
+                mine = answers_for(batch_call.answers, prefixes[pending["npc_id"]])
+                if batch_call.ok and ANSWER_KEY[pending["kind"]] in mine:
                     answers[pending["npc_id"]] = mine
         missing = [p for p in ask if p["npc_id"] not in answers]
-        for pending, call in zip(missing, decider.decide_many([minds.decision_request(snapshot, p) for p in missing])):
+        for pending, call in zip(missing, decider.decide_many([decision_request(snapshot, p) for p in missing])):
             calls[pending["npc_id"]] = call
             if call.ok:
                 answers[pending["npc_id"]] = call.answers
         chats = {}
         for pending in plan["batch"]:
-            a = minds.find(snapshot["npcs"], pending["npc_id"])
+            a = cast.find(snapshot["npcs"], pending["npc_id"])
             if pending["kind"] != "meet" or not village.chatter_allowed(snapshot, a, snapshot["sim_time_ms"]):
                 continue
-            b = minds.find(snapshot["npcs"], pending["why"])
+            b = cast.find(snapshot["npcs"], pending["why"])
             mine = answers.get(a["id"], {})
             topic = village.topics(snapshot, a, b)[village.chosen_topic(snapshot, a, b, mine)]
             chats[a["id"]] = pool.submit(
@@ -211,8 +212,8 @@ def _ask(plan: dict) -> dict:
         for pending in plan["batch"]:
             if pending["kind"] != "told":
                 continue
-            listener = minds.find(snapshot["npcs"], pending["npc_id"])
-            teller = minds.find(snapshot["npcs"], pending["why"])
+            listener = cast.find(snapshot["npcs"], pending["npc_id"])
+            teller = cast.find(snapshot["npcs"], pending["why"])
             if listener is None or teller is None:
                 continue
             message = str(pending.get("message", ""))
@@ -253,13 +254,13 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
         for p in working.get("pending_minds", [])
         if p["kind"] in KINDS
         and (p["npc_id"], p["kind"]) not in handled
-        and (n := minds.find(working["npcs"], p["npc_id"]))
+        and (n := cast.find(working["npcs"], p["npc_id"]))
         and n.get("alive", True)
         and not n.get("down")
     ]
     now, journal, learned = working["sim_time_ms"], [], []
     for pending in batch:
-        npc = minds.find(working["npcs"], pending["npc_id"])
+        npc = cast.find(working["npcs"], pending["npc_id"])
         call = calls.get(pending["npc_id"]) or calls.get("batch")
         record = {
             "npc_id": pending["npc_id"],
@@ -277,7 +278,7 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
             else:
                 record["skipped"] = "busy with something else now"
         elif pending["kind"] == "told":
-            teller = minds.find(working["npcs"], pending["why"])
+            teller = cast.find(working["npcs"], pending["why"])
             call_result = heard_back.get(npc["id"])
             if teller is None or call_result is None:
                 record["skipped"] = "the teller is gone"
@@ -290,7 +291,7 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
                 record["voice"] = call_result[0].as_dict()
         elif pending["kind"] == "meet":
             if _meet_ready(working, pending):
-                other = minds.find(working["npcs"], pending["why"])
+                other = cast.find(working["npcs"], pending["why"])
                 said = spoken.get(npc["id"])
                 record.update(village.apply_meeting(working, npc, other, mine or {}, said[1] if said else None, now))
                 learned += record.pop("learned")
@@ -309,7 +310,7 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
                 {k: v for k, v in shared[1].items() if k.startswith(shared[2][pending["npc_id"]])},
             )
         else:
-            situation, questions = minds.decision_request(snapshot, pending)
+            situation, questions = decision_request(snapshot, pending)
         trace = {
             **record,
             "situation": situation,
@@ -321,7 +322,7 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
             trace["chatter"] = spoken[pending["npc_id"]][0].as_dict()
         _trace(connection, cmd.run_id, state["event_seq"] + 1, pending["npc_id"], trace)
     for (pending, context, _), (call, result) in zip(plan["memory_jobs"], heard["remembered"]):
-        npc = minds.find(working["npcs"], pending["npc_id"])
+        npc = cast.find(working["npcs"], pending["npc_id"])
         if npc is None:
             continue
         record = _apply_recollection(npc, context, result, now)
@@ -349,3 +350,45 @@ def _trace(connection, run_id: str, event_seq: int, npc_id: str, trace: dict) ->
         "INSERT INTO mind_traces (run_id,event_seq,npc_id,trace_json) VALUES (?,?,?,?)",
         (run_id, event_seq, npc_id, json.dumps(trace)),
     )
+
+
+ANSWER_KEY = {"decide": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
+
+
+def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str, dict]:
+    """A person's situation and questions: reacting to what they saw, what to do next with their day, or what to
+    talk about with someone they've met (D-37)."""
+    if pending["kind"] in ("agenda", "meet"):
+        if pending["kind"] == "agenda":
+            return village.agenda_brief(state, npc, prefix)
+        return village.meet_brief(state, npc, cast.find(state["npcs"], pending["why"]), prefix)
+    return minds.situation(state, npc), minds.questions(state, npc, prefix)
+
+
+def decision_request(state: dict, pending: dict) -> tuple[str, dict]:
+    """One person's request (used when a batched answer is missing)."""
+    return _brief(state, cast.find(state["npcs"], pending["npc_id"]), pending)
+
+
+def batch_request(state: dict, batch: list[dict]) -> tuple[str, dict, dict[str, str]]:
+    """One request for everyone deciding now: a shared scene plus each person's brief and questions.
+
+    Returns (state text, questions, {npc_id: question prefix}).
+    """
+    prefixes, sections, questions = {}, [], {}
+    for pending in batch:
+        npc = cast.find(state["npcs"], pending["npc_id"])
+        prefix = npc["id"].split("_")[1] + "__"
+        prefixes[npc["id"]] = prefix
+        text, asked = _brief(state, npc, pending, prefix)
+        sections.append(f"=== {npc['name'].upper()} (questions starting '{prefix}') ===\n{text}")
+        questions.update(asked)
+    text = (
+        "Several people in a small premodern town are each deciding, independently, what they do. "
+        "Judge each person only from their own section.\n\n" + "\n\n".join(sections)
+    )
+    return text, questions, prefixes
+
+
+def answers_for(answers: dict, prefix: str) -> dict:
+    return {key[len(prefix) :]: value for key, value in answers.items() if key.startswith(prefix)}

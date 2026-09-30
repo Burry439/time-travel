@@ -8,11 +8,13 @@ from test_encounter import face_to_face, post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import npc, said, unit_state
 
+import cast
+import clock
 import encounter
-import minds
 import persona
 import rounds
 import routes_craft
+import tuning
 import village
 from ai import voice
 
@@ -23,7 +25,7 @@ def beside(state, npc_id, dx, dy=0):
     """Someone standing a step or two from the stranger, free to listen."""
     person = npc(state, npc_id)
     person.update(x=state["player"]["x"] + dx, y=state["player"]["y"] + dy)
-    minds.mind(person)["job"] = None
+    cast.mind(person)["job"] = None
     return person
 
 
@@ -97,7 +99,7 @@ def test_no_guard_is_sent_to_halt_someone_already_talking_to_the_captain():
     rod.update(x=48, y=15)
     encounter.join(state, rod, "talk", None, state["sim_time_ms"])
     for _ in range(60):
-        state["npcs"], _, state["player"] = minds.advance_world(state, 500, state["sim_time_ms"])
+        state["npcs"], _, state["player"] = clock.advance_world(state, 500, state["sim_time_ms"])
         state["sim_time_ms"] += 500
     assert encounter.purpose(state["encounter"], ROD) == "talk" and not encounter.hostile(state)
     assert not any(((g.get("mind") or {}).get("job") or {}).get("then") == "halt" for g in state["npcs"])
@@ -117,18 +119,18 @@ def test_the_same_two_do_not_make_the_same_small_talk_again_soon():
     state["player"].update(x=5, y=70)  # Far from everyone.
     jory, mara = npc(state, "npc_jory_venn"), npc(state, "npc_mara_venn")
     for person in (jory, mara):
-        minds.mind(person).update(job=None, last_met=-(10**9))
+        cast.mind(person).update(job=None, last_met=-(10**9))
         (person.get("controller") or {}).update(activity="idle")
     mara.update(x=jory["x"] + 1, y=jory["y"])
-    now = state["sim_time_ms"] + village.MEET_GAP_MS * 2
-    village.apply_meeting(state, jory, mara, {}, ("Morning.", "Morning."), now - village.MEET_GAP_MS - 1)
+    now = state["sim_time_ms"] + tuning.MEET_GAP_MS * 2
+    village.apply_meeting(state, jory, mara, {}, ("Morning.", "Morning."), now - tuning.MEET_GAP_MS - 1)
     for person in (jory, mara):
-        minds.mind(person)["last_met"] = -(10**9)  # Ready to talk to someone, just not each other.
-        minds.mind(person)["chatting_with"] = None
+        cast.mind(person)["last_met"] = -(10**9)  # Ready to talk to someone, just not each other.
+        cast.mind(person)["chatting_with"] = None
     state["pending_minds"] = []
     village.schedule(state, state["npcs"], now)
     assert not any(p["kind"] == "meet" and p["npc_id"] in (jory["id"], mara["id"]) for p in state["pending_minds"])
-    village.schedule(state, state["npcs"], now + village.PAIR_GAP_MS)
+    village.schedule(state, state["npcs"], now + tuning.PAIR_GAP_MS)
     assert any(p["kind"] == "meet" and p["npc_id"] in (jory["id"], mara["id"]) for p in state["pending_minds"])
 
 
@@ -182,8 +184,8 @@ def test_a_friendly_talk_moves_with_you_but_a_confrontation_holds_you(world):  #
     world.replies.append(said("answer"))
     state = post(world, state, "act", {"text": "Good day.", "target_id": "npc_kade_east"})["state"]
     far = next(n for n in state["npcs"] if n["id"] == "npc_elin_west")
-    assert math.dist((far["x"], far["y"]), (state["player"]["x"], state["player"]["y"])) > 5
+    assert cast.distance(far, state["player"]) > 5
     world.replies.append(said("answer"))
     state = post(world, state, "act", {"text": "Hello there!", "target_id": "npc_elin_west"})["state"]
     assert "npc_elin_west" in state["encounter"]["participants"]  # Walked over to her and she answered.
-    assert math.dist((far["x"], far["y"]), (state["player"]["x"], state["player"]["y"])) <= 5
+    assert cast.distance(far, state["player"]) <= 5

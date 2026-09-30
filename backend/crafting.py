@@ -8,29 +8,21 @@ Actions: make an object, take items, transform (cut, break, fell) one thing, har
 from __future__ import annotations
 
 import copy
-import json
 import math
 import re
-from collections import deque
-from pathlib import Path
 
+import cast
+import combat
+import content
 import gear
 import m2
+import paths
+import tuning
 
-ROOT = Path(__file__).resolve().parents[1]
-CONTENT = json.loads((ROOT / "data" / "content" / "materials.json").read_text(encoding="utf-8"))
-MAX_EFFORT_SECONDS = 14_400  # Felling a large tree by hand can take hours.
+CONTENT = content.MATERIALS
 MAX_PIECES = 8
 MAX_STEPS = 4
 PRIOR_RULINGS = 10
-PEOPLE_RADIUS = 8.0  # Cells within which the judge is told about people.
-WITNESS_RADIUS = 20.0  # Cells within which people are recorded as witnesses (D-55: was 10).
-WOUND_DAMAGE = 45
-DISABLED_HEALTH = 20  # Down and out of the fight, but alive (D-41).
-NEARBY_WALK_STEPS = 14  # Things this many steps away can be acted on; the player walks there first.
-WALK_CELLS_PER_SECOND = 7.1875  # Matches the backend walking speed.
-THROW_RANGE = 8.0  # Cells.
-MAX_THROW_KG = 5.0
 # Flags describing an active state need an input that can cause it. Without one the
 # flag becomes an untested capability instead of a physical fact.
 ACTIVE_FLAGS = {
@@ -51,66 +43,13 @@ def owner_label(state: dict, obj: dict) -> str:
     return "nobody" if owner is None else "you" if owner == "player" else _names(state).get(owner, owner)
 
 
-def _distance(state: dict, x: int, y: int) -> float:
-    return math.dist((state["player"]["x"], state["player"]["y"]), (x, y))
-
-
-def _blocked_cells(state: dict) -> set[tuple[int, int]]:
-    cleared = cleared_obstacles(state)
-    return {
-        (cx, cy)
-        for item in m2._GEOMETRY["buildings"] + m2._GEOMETRY["obstacles"]
-        if item["name"] not in cleared
-        for bx, by, w, h in [item["cells"]]
-        for cx in range(bx, bx + w)
-        for cy in range(by, by + h)
-    }
-
-
-def _walkable(cell: tuple[int, int], blocked: set) -> bool:
-    return 0 <= cell[0] < 96 and 9 <= cell[1] < 72 and cell not in blocked
-
-
-def _bfs(start: tuple[int, int], blocked: set, limit: int) -> tuple[dict, dict]:
-    previous, steps = {start: None}, {start: 0}
-    frontier = deque([start])
-    while frontier:
-        cell = frontier.popleft()
-        if steps[cell] >= limit:
-            continue
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            nxt = (cell[0] + dx, cell[1] + dy)
-            if nxt not in previous and _walkable(nxt, blocked):
-                previous[nxt], steps[nxt] = cell, steps[cell] + 1
-                frontier.append(nxt)
-    return previous, steps
-
-
-def _path_to_reach(
-    start: tuple[int, int], target: tuple[int, int], blocked: set, limit: int = NEARBY_WALK_STEPS
-) -> list[list[int]] | None:
-    """Shortest walk from start to any cell within reach of target; [] if already within reach."""
-    if math.dist(start, target) <= m2.REACH_CELLS:
-        return []
-    previous, steps = _bfs(start, blocked, limit)
-    goals = [c for c in steps if math.dist(c, target) <= m2.REACH_CELLS]
-    if not goals:
-        return None
-    cell = min(goals, key=lambda c: (steps[c], math.dist(c, target), c))
-    path = []
-    while cell != start:
-        path.append([cell[0], cell[1]])
-        cell = previous[cell]
-    return path[::-1]
-
-
 def walk_costs(state: dict) -> dict[str, int]:
     """Steps the player must walk to be within reach of each loose object and person nearby."""
     start = (state["player"]["x"], state["player"]["y"])
-    _, steps = _bfs(start, _blocked_cells(state), NEARBY_WALK_STEPS)
+    _, steps = paths.bfs(start, paths.blocked_cells(state), tuning.NEARBY_WALK_STEPS)
 
     def cost(x: int, y: int) -> int | None:
-        options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= m2.REACH_CELLS]
+        options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= tuning.REACH_CELLS]
         return min(options) if options else None
 
     costs = {}
@@ -120,16 +59,16 @@ def walk_costs(state: dict) -> dict[str, int]:
             costs[obj["id"]] = 0
         elif obj["holder_id"] in fallen:  # On someone down or dead: reach them to take it (D-49).
             npc = fallen[obj["holder_id"]]
-            if math.dist(start, (npc["x"], npc["y"])) <= NEARBY_WALK_STEPS + 3:
+            if cast.distance(start, npc) <= tuning.NEARBY_WALK_STEPS + 3:
                 found = cost(npc["x"], npc["y"])
                 if found is not None:
                     costs[obj["id"]] = found
-        elif obj["holder_id"] is None and math.dist(start, (obj["x"], obj["y"])) <= NEARBY_WALK_STEPS + 3:
+        elif obj["holder_id"] is None and cast.distance(start, obj) <= tuning.NEARBY_WALK_STEPS + 3:
             found = cost(obj["x"], obj["y"])
             if found is not None:
                 costs[obj["id"]] = found
     for npc in state["npcs"]:
-        if math.dist(start, (npc["x"], npc["y"])) <= NEARBY_WALK_STEPS + 3:
+        if cast.distance(start, npc) <= tuning.NEARBY_WALK_STEPS + 3:
             found = cost(npc["x"], npc["y"])
             if found is not None:
                 costs[npc["id"]] = found
@@ -166,8 +105,8 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
     costs = walk_costs(state) if costs is None else costs
     people = []
     for npc in state["npcs"]:
-        distance = _distance(state, npc["x"], npc["y"])
-        if distance <= PEOPLE_RADIUS:
+        distance = cast.distance(state["player"], npc)
+        if distance <= tuning.PEOPLE_RADIUS:
             health = npc.get("health", 100)
             people.append(
                 {
@@ -175,7 +114,7 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
                     "name": npc["name"],
                     "role": npc["role"],
                     "distance_cells": round(distance, 1),
-                    "within_reach": distance <= m2.REACH_CELLS,
+                    "within_reach": distance <= tuning.REACH_CELLS,
                     "walk_steps": costs.get(npc["id"]),
                     "condition": (
                         "dead"
@@ -192,7 +131,7 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
                     "armour": _worn_words(state, npc),
                     "weapon": _held_words(state, npc),
                     **({"conditions": [gear.describe(c) for c in npc["conditions"]]} if npc.get("conditions") else {}),
-                    "aware_of_you": _aware(state, npc),
+                    "aware_of_you": cast.aware(state, npc),
                     "activity": (npc.get("controller") or {}).get("activity", "standing"),
                 }
             )
@@ -219,21 +158,8 @@ def _held_words(state: dict, npc: dict) -> str:
 
 
 def minds_card(npc: dict) -> dict:
-    import minds  # minds imports crafting
 
-    return minds.card(npc)
-
-
-def _aware(state: dict, npc: dict) -> bool:
-    """Is this person watching the stranger (facing them, busy with them, or fighting them)? If not, they can
-    be taken by surprise."""
-    my_mind = npc.get("mind") or {}
-    return bool(
-        my_mind.get("facing_player")
-        or my_mind.get("job")
-        and my_mind["job"].get("target") == "player"
-        or npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
-    )
+    return cast.card(npc)
 
 
 def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
@@ -242,7 +168,7 @@ def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
         "name": obj["name"],
         "kind": obj.get("feature", "item"),
         "walk_steps": costs.get(obj["id"], 0),
-        "distance_cells": 0 if obj["holder_id"] == "player" else round(_distance(state, obj["x"], obj["y"]), 1),
+        "distance_cells": 0 if obj["holder_id"] == "player" else round(cast.distance(state["player"], obj), 1),
         "description": obj.get("description", ""),
         "materials": obj.get("materials", []),
         "mass_kg": obj["mass_kg"],
@@ -406,7 +332,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
         return _verdict("unresolved", service_error or "The judge could not be reached. Nothing changed.", notes)
     action = judged.get("action", "make")
     outcome, reason = judged["outcome"], judged["reason"].strip() or "Nothing happens."
-    effort = max(0, min(MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
+    effort = max(0, min(tuning.MAX_EFFORT_SECONDS, int(judged["effort_seconds"])))
     key = judged.get("precedent_key")
     proposed_change = any(
         judged.get(field)
@@ -463,7 +389,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     if action not in handlers:
         return _verdict("success", reason, notes, effort, action="other", precedent_key=key)
     # Things further than arm's reach are reached by walking there first.
-    walk = _plan_walk(state, _walk_targets(state, action, judged, available))
+    walk = paths.plan_walk(state, _walk_targets(state, action, judged, available))
     if walk is None:
         return _verdict(
             "blocked",
@@ -476,7 +402,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     if walk:
         probe = dict(state)
         probe["player"] = {**state["player"], "x": walk[-1][0], "y": walk[-1][1]}
-        seconds = math.ceil(len(walk) / WALK_CELLS_PER_SECOND)
+        seconds = math.ceil(len(walk) / tuning.WALK_CELLS_PER_SECOND)
         effort += seconds
         notes.append(f"Walked {len(walk)} cells first ({seconds} s).")
     verdict = handlers[action](probe, judged, available, notes, reason, effort, key)
@@ -535,29 +461,6 @@ def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> li
         if npc is not None:
             cells.append((npc["x"], npc["y"]))
     return cells
-
-
-def _plan_walk(state: dict, targets: list[tuple[int, int]]) -> list[list[int]] | None:
-    """Visit each target nearest-first; None if one cannot be reached."""
-    if not targets:
-        return []
-    blocked = _blocked_cells(state)
-    position = (state["player"]["x"], state["player"]["y"])
-    path: list[list[int]] = []
-    remaining = list(dict.fromkeys(targets))
-    while remaining:
-        options = [
-            (route, target)
-            for target in remaining
-            if (route := _path_to_reach(position, target, blocked, NEARBY_WALK_STEPS * 2)) is not None
-        ]
-        if not options:
-            return None
-        route, target = min(options, key=lambda option: len(option[0]))
-        path += route
-        position = tuple(route[-1]) if route else position
-        remaining.remove(target)
-    return path
 
 
 def _make(state, judged, available, notes, reason, effort, key) -> dict:
@@ -646,9 +549,6 @@ def can_kindle(things: list[dict]) -> bool:
 
 
 HEAT_ORDER = ["cold", "warm", "hot", "boiling"]
-COOLING_MS = {"boiling": 120_000, "hot": 300_000, "warm": 600_000}  # How long each lasts off the fire.
-FIRE_MS_PER_KG = 600_000  # A made fire burns about ten minutes per kilogram of fuel...
-FIRE_MS_RANGE = (120_000, 1_800_000)  # ...between two and thirty minutes.
 
 
 def display_name(obj: dict) -> str:
@@ -679,8 +579,8 @@ def age_objects(state: dict, elapsed_ms: int, now: int) -> dict[str, dict]:
         heat = obj.get("temperature", "cold")
         if heat != "cold" and obj.get("heated_at") is not None:
             level, since = heat, obj["heated_at"]
-            while level != "cold" and end - since >= COOLING_MS[level]:
-                since += COOLING_MS[level]
+            while level != "cold" and end - since >= tuning.COOLING_MS[level]:
+                since += tuning.COOLING_MS[level]
                 level = HEAT_ORDER[HEAT_ORDER.index(level) - 1]
             if level != heat:
                 fields.update(temperature=level, heated_at=None if level == "cold" else since)
@@ -714,7 +614,7 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
     lit = (
         source is not None
         and source.get("burning")
-        and _distance(state, source["x"], source["y"]) <= m2.REACH_CELLS + 1
+        and cast.distance(state["player"], source) <= tuning.REACH_CELLS + 1
     )
     temperature = plan.get("temperature")
     if temperature and HEAT_ORDER.index(temperature) > HEAT_ORDER.index(target.get("temperature", "cold")):
@@ -752,7 +652,9 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
                 action="change",
                 precedent_key=key,
             )
-        span = max(FIRE_MS_RANGE[0], min(FIRE_MS_RANGE[1], int(target["mass_kg"] * FIRE_MS_PER_KG)))
+        span = max(
+            tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(target["mass_kg"] * tuning.FIRE_MS_PER_KG))
+        )
         fields.update(
             burning=True,
             burns_until=state["sim_time_ms"] + effort * 1000 + span,
@@ -865,10 +767,10 @@ def _take(state, judged, available, notes, reason, effort, key) -> dict:
             precedent_key=key,
         )
     load = m2.inventory_mass(state) + sum(available[i]["mass_kg"] + available[i]["water_l"] for i in ids)
-    if load > m2.CARRY_LIMIT_KG:
+    if load > tuning.CARRY_LIMIT_KG:
         return _verdict(
             "blocked",
-            f"That would be more than you can carry ({load:.1f} of {m2.CARRY_LIMIT_KG:.0f} kg).",
+            f"That would be more than you can carry ({load:.1f} of {tuning.CARRY_LIMIT_KG:.0f} kg).",
             notes,
             action="take",
             precedent_key=key,
@@ -885,7 +787,6 @@ def _take(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
-GATHER_MAX_KG = 1.0  # A part taken off something larger: a leaf, a twig, a strip of bark, a handful (D-48).
 LIVING_PARTS = {"leaf", "bark", "resin", "wood"}  # What a living tree or sapling also gives.
 
 
@@ -916,11 +817,11 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
     )
     count = max(1, min(MAX_PIECES, int(piece["count"])))
     each = max(0.005, float(piece["mass_kg"]))
-    cap = min(GATHER_MAX_KG, source["mass_kg"] / 2)
+    cap = min(tuning.GATHER_MAX_KG, source["mass_kg"] / 2)
     if each * count > cap:
         notes.append(f"Gathered mass cut to {cap} kg: a part, not the whole {source['name']}.")
         each = round(cap / count, 3)
-    if m2.inventory_mass(state) + each * count > m2.CARRY_LIMIT_KG:
+    if m2.inventory_mass(state) + each * count > tuning.CARRY_LIMIT_KG:
         return _verdict("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
     support = {f for i in [source["id"]] + tools for f in available[i].get("flags", [])}
     spec = {
@@ -967,7 +868,7 @@ def _treat(state, judged, available, notes, reason, effort, key) -> dict:
     patient = _patient(state, plan.get("patient_id"))
     if patient is None or not patient.get("alive", True):
         return _verdict("blocked", "There's nobody there to treat.", notes, action="treat", precedent_key=key)
-    if patient is not state["player"] and _distance(state, patient["x"], patient["y"]) > m2.REACH_CELLS:
+    if patient is not state["player"] and cast.distance(state["player"], patient) > tuning.REACH_CELLS:
         return _verdict("blocked", f"{patient['name']} is too far away.", notes, action="treat", precedent_key=key)
     items = patient.get("conditions") or []
     index = next(
@@ -1125,7 +1026,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             )
         if container.get("temperature", "cold") in ("cold", "warm") and result != "missed":
             reason = f"The water only soaks {npc['name']}."
-    distance = _distance(state, npc["x"], npc["y"])
+    distance = cast.distance(state["player"], npc)
     picked_up = []
     if method == "thrown":
         thrown = available.get(weapon) if weapon else None
@@ -1133,24 +1034,24 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
             return _verdict(
                 "blocked", "You need to be holding something to throw it.", notes, action="harm", precedent_key=key
             )
-        if "carry" not in thrown["capabilities"] or thrown["mass_kg"] > MAX_THROW_KG:
+        if "carry" not in thrown["capabilities"] or thrown["mass_kg"] > tuning.MAX_THROW_KG:
             return _verdict(
                 "blocked", f"The {thrown['name']} is too heavy to throw.", notes, action="harm", precedent_key=key
             )
-        if distance > THROW_RANGE:
+        if distance > tuning.THROW_RANGE:
             return _verdict(
                 "blocked",
                 f"{npc['name']} is too far away to throw at.",
-                notes + [f"Blocked by code: target {distance:.1f} cells away (throw range {THROW_RANGE:.0f})."],
+                notes + [f"Blocked by code: target {distance:.1f} cells away (throw range {tuning.THROW_RANGE:.0f})."],
                 action="harm",
                 precedent_key=key,
             )
     else:
-        if distance > m2.REACH_CELLS:
+        if distance > tuning.REACH_CELLS:
             return _verdict(
                 "blocked",
                 f"{npc['name']} is too far away to reach.",
-                notes + [f"Blocked by code: target {distance:.1f} cells away (reach {m2.REACH_CELLS})."],
+                notes + [f"Blocked by code: target {distance:.1f} cells away (reach {tuning.REACH_CELLS})."],
                 action="harm",
                 precedent_key=key,
             )
@@ -1167,7 +1068,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
     witnesses = [
         n["id"]
         for n in state["npcs"]
-        if n["id"] != npc["id"] and n.get("alive", True) and _distance(state, n["x"], n["y"]) <= WITNESS_RADIUS
+        if n["id"] != npc["id"] and n.get("alive", True) and cast.distance(state["player"], n) <= tuning.WITNESS_RADIUS
     ]
     outcome = _blow(state, npc, plan, method, available.get(weapon) if weapon else None, result, notes, effort)
     if outcome["result"] == "deflected" and result not in ("missed", "deflected") and method != "poured":
@@ -1214,8 +1115,6 @@ def _blow(
 ) -> dict:
     """What a described attack does (D-49): the judge rules whether it lands, where, and (for a choke or anything
     else) how; code works out what that does to this person with gear.hit."""
-    import combat  # combat imports minds, which imports crafting
-
     family = plan.get("family") or FAMILY_OF_METHOD.get(method, "blow")
     area = plan.get("target_area") or "torso"
     landed = plan.get("outcome", "landed" if result not in ("missed",) else "missed")
@@ -1224,7 +1123,7 @@ def _blow(
         return {**base, "result": "missed"}
     if landed == "blocked":
         return {**base, "result": "deflected"}
-    aware = _aware(state, npc)
+    aware = cast.aware(state, npc)
     if family == "pour":
         profile = {}
     elif family == "missile" and weapon is not None:
@@ -1280,7 +1179,7 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
         return _verdict(
             "blocked", f"The {container['name']} can't hold water.", notes, action="fill", precedent_key=key
         )
-    if _distance(state, source["x"], source["y"]) > m2.REACH_CELLS:
+    if cast.distance(state["player"], source) > tuning.REACH_CELLS:
         return _verdict("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
     room = round(container["capacity_l"] - container.get("water_l", 0.0), 3)
     if room <= 0:
@@ -1291,7 +1190,7 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
     litres = round(min(requested, room, source["water_l"]), 3)
     if litres < requested:
         notes.append(f"Filled {litres} L, not {requested} L: limited by space or the water available.")
-    if container["holder_id"] == "player" and m2.inventory_mass(state) + litres > m2.CARRY_LIMIT_KG:
+    if container["holder_id"] == "player" and m2.inventory_mass(state) + litres > tuning.CARRY_LIMIT_KG:
         return _verdict(
             "blocked", "That much water would be more than you can carry.", notes, action="fill", precedent_key=key
         )
@@ -1319,7 +1218,7 @@ def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
     far = [
         state["objects"][i]["name"]
         for i in water
-        if _distance(state, state["objects"][i]["x"], state["objects"][i]["y"]) > m2.REACH_CELLS
+        if cast.distance(state["player"], state["objects"][i]) > tuning.REACH_CELLS
     ]
     if far:
         return _verdict("blocked", f"The {far[0]} is too far away.", notes, action="demonstrate", precedent_key=key)
@@ -1368,7 +1267,7 @@ def _give(state, judged, available, notes, reason, effort, key) -> dict:
         known = state["objects"].get(loose[0]) if loose else None
         what = f"the {known['name']}" if known else "that" if loose else "anything"
         return _verdict("blocked", f"You aren't carrying {what} to give.", notes, action="give", precedent_key=key)
-    if _distance(state, npc["x"], npc["y"]) > m2.REACH_CELLS:
+    if cast.distance(state["player"], npc) > tuning.REACH_CELLS:
         return _verdict(
             "blocked", f"{npc['name']} is too far away to hand anything to.", notes, action="give", precedent_key=key
         )
@@ -1432,7 +1331,7 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
     missing = [i for i in aids if i not in available]
     if missing:
         return _unresolved(notes, f"aids that are not at hand: {missing}")
-    if obj["mass_kg"] > m2.CARRY_LIMIT_KG and not aids:
+    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
         return _verdict(
             "blocked",
             f"The {obj['name']} is far too heavy to lift into place by hand.",
@@ -1486,7 +1385,7 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
     missing = [i for i in aids if i not in available]
     if missing:
         return _unresolved(notes, f"aids that are not at hand: {missing}")
-    if obj["mass_kg"] > m2.CARRY_LIMIT_KG and not aids:
+    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
         return _verdict(
             "blocked",
             f"The {obj['name']} is far too heavy to lift out by hand.",
@@ -1548,7 +1447,7 @@ def _offer_trade(state, judged, available, notes, reason, effort, key) -> dict:
     ]
     if not want or len(theirs) != len(want):
         return _unresolved(notes, f"can only ask for {npc['name']}'s own portable things: {want}")
-    if _distance(state, npc["x"], npc["y"]) > 5:
+    if cast.distance(state["player"], npc) > 5:
         return _verdict(
             "blocked", f"{npc['name']} is too far away to bargain with.", notes, action="offer_trade", precedent_key=key
         )
@@ -1580,32 +1479,6 @@ def _known_after(obj: dict, results: list[dict], event_id: int) -> list[dict]:
 def placeholder_category(materials: list[str]) -> str:
     categories = CONTENT["placeholder_categories"]
     return next((categories[m] for m in materials if m in categories), "bundle")
-
-
-def cleared_obstacles(state: dict) -> set[str]:
-    """Geometry obstacles removed by play, such as felled trees."""
-    return {
-        o["geometry_name"] for o in state["objects"].values() if o.get("geometry_name") and o["condition"] != "usable"
-    }
-
-
-def _open_cells_near(state: dict, x: int, y: int, cleared: set[str], count: int) -> list[tuple[int, int]]:
-    """Nearest open cells around (x, y), preferring ones without loose objects, for dropping pieces."""
-    blocked = {
-        (cx, cy)
-        for item in m2._GEOMETRY["buildings"] + m2._GEOMETRY["obstacles"]
-        if item["name"] not in cleared
-        for bx, by, w, h in [item["cells"]]
-        for cx in range(bx, bx + w)
-        for cy in range(by, by + h)
-    }
-    occupied = {(o["x"], o["y"]) for o in state["objects"].values() if o["holder_id"] is None}
-    ring = sorted(((dx, dy) for dx in range(-3, 4) for dy in range(-3, 4)), key=lambda d: (math.hypot(*d), d))
-    cells = [
-        (x + dx, y + dy) for dx, dy in ring if 0 <= x + dx < 96 and 9 <= y + dy < 72 and (x + dx, y + dy) not in blocked
-    ]
-    free = [c for c in cells if c not in occupied] + [c for c in cells if c in occupied]
-    return [free[i % len(free)] for i in range(count)] if free else [(x, y)] * count
 
 
 def _picture_ids(spec: dict, sprite: str) -> dict:
@@ -1644,7 +1517,7 @@ def _object(
     tools: list[str],
     asset_id: str | None = None,
 ) -> dict:
-    portable = spec["mass_kg"] <= m2.CARRY_LIMIT_KG
+    portable = spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
     caps = ["carry"] + [op for flag, op in OPERATION_CAPABILITIES.items() if flag in spec["flags"]] if portable else []
     return {
         "id": new_id,
@@ -1692,7 +1565,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             for i in consumed
             if state["objects"][i]["holder_id"] == "player"
         )
-        fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= m2.CARRY_LIMIT_KG
+        fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
         if not fits:
             verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
         new_objects.append(
@@ -1711,7 +1584,9 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             )
         )
         if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
-            span = max(FIRE_MS_RANGE[0], min(FIRE_MS_RANGE[1], int(spec["mass_kg"] * FIRE_MS_PER_KG)))
+            span = max(
+                tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(spec["mass_kg"] * tuning.FIRE_MS_PER_KG))
+            )
             new_objects[-1].update(
                 burning=True,
                 feature="fire",
@@ -1766,19 +1641,19 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     elif verdict["action"] == "transform":
         plan = verdict["transform"]
         target = state["objects"][plan["target_id"]]
-        cleared = cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
+        cleared = paths.cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
         in_hand = target["holder_id"] == "player"
         load = m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)
         total = sum(p["count"] for p in plan["pieces"])
         cells = iter(
-            _open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"], cleared, total)
+            paths.open_cells_near(state, px if in_hand else target["x"], py if in_hand else target["y"], cleared, total)
         )
         index = 0
         for piece in plan["pieces"]:
             asset_id = None
             for _ in range(piece["count"]):
                 index += 1
-                keep = in_hand and load + piece["mass_kg"] <= m2.CARRY_LIMIT_KG
+                keep = in_hand and load + piece["mass_kg"] <= tuning.CARRY_LIMIT_KG
                 load += piece["mass_kg"] if keep else 0
                 x, y = next(cells)
                 obj = _object(
@@ -1834,9 +1709,9 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             if harm["result"] == "killed":
                 health = 0
             elif harm["result"] == "disabled":
-                health, down = min(health, DISABLED_HEALTH), True
+                health, down = min(health, tuning.DISABLED_HEALTH), True
             elif harm["result"] == "wounded":
-                health = max(0, health - WOUND_DAMAGE)
+                health = max(0, health - tuning.WOUND_DAMAGE)
                 if health == 0:
                     harm["result"] = "killed"
                     verdict["reason"] = verdict["reason"].rstrip() + f" {npc['name']} does not survive this wound."
@@ -1857,7 +1732,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
             verdict["reason"] = verdict["reason"].rstrip() + "."
         taken = verdict["take_ids"]  # A weapon picked up on the way.
         if harm["method"] == "thrown" and harm["weapon_id"]:
-            x, y = _open_cells_near(state, npc["x"], npc["y"], cleared_obstacles(state), 1)[0]
+            x, y = paths.open_cells_near(state, npc["x"], npc["y"], paths.cleared_obstacles(state), 1)[0]
             moved.append({"id": harm["weapon_id"], "x": x, "y": y})
         if harm["method"] == "poured" and harm["weapon_id"]:  # Emptied over them.
             spilled = state["objects"][harm["weapon_id"]].get("water_l", 0.0)
@@ -1887,7 +1762,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     elif verdict["action"] == "lift_out":
         plan = verdict["lift_out"]
         fixture = state["objects"][plan["from_id"]]
-        x, y = _open_cells_near(state, fixture["x"], fixture["y"] + 2, cleared_obstacles(state), 1)[0]
+        x, y = paths.open_cells_near(state, fixture["x"], fixture["y"] + 2, paths.cleared_obstacles(state), 1)[0]
         lifted = {"id": plan["object_id"], "x": x, "y": y}
         gate = gate_after(state, plan["from_id"], barred=False)
     elif verdict["action"] == "offer_trade":

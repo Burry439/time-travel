@@ -6,6 +6,8 @@ from test_encounter import post, world  # noqa: F401
 from test_talk import npc, unit_state
 
 import minds
+import reputation
+import speech
 from ai import decider
 
 
@@ -25,13 +27,13 @@ def test_a_theft_is_answered_at_once_in_the_victims_own_words(world, monkeypatch
     assert hessa["mind"]["facing_player"] and hessa["mind"]["feelings"]["anger"] >= 0.67
     assert {"npc_id": "npc_hessa_marr", "kind": "decide", "why": "victim"} in state["pending_minds"]
     assert not asked  # All of that by code: the decider decides what she does next, in the reaction lane.
-    assert minds.worst_memory(hessa)["item"] == "clay bowl" and minds.worst_memory(hessa)["severity"] == 2
+    assert reputation.worst_memory(hessa)["item"] == "clay bowl" and reputation.worst_memory(hessa)["severity"] == 2
 
 
 def test_lines_about_a_victim_are_first_person_when_they_are_the_victim():
     state = unit_state()
     hessa = npc(state, "npc_hessa_marr")
-    minds.remember(
+    reputation.remember(
         hessa,
         {
             "kind": "violence",
@@ -44,9 +46,9 @@ def test_lines_about_a_victim_are_first_person_when_they_are_the_victim():
             "source": "victim",
         },
     )
-    words = minds.slots(state, hessa)
+    words = speech.slots(state, hessa)
     assert words["relation"] == "me" and words["owners"] == "mine"
-    lines = [o["line"] for o in minds._options(state, hessa).values() if o["line"]]
+    lines = [o["line"] for o in minds.options_for(state, hessa).values() if o["line"]]
     assert not any("Hessa" in line for line in lines), lines
-    situation = minds._situation(state, hessa)
+    situation = minds.situation(state, hessa)
     assert "trust" in situation and "fear 0.0" not in situation

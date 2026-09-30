@@ -9,12 +9,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+import cast
+import clock
 import combat
 import commands
-import crafting
 import encounter
 import m2
-import minds
+import paths
 import routes_tutorial
 import store
 from ai import config as ai_config
@@ -151,19 +152,14 @@ def move(run_id: str, request: Move):
         # Open because its bar was lifted off (not the captain's word, not the developer switch): a guard in the gap.
         holder = combat.gate_held_by(state) if state["gate_open"] and not m2.gate_barred(state) else None
 
+        blocked = paths.blocked_cells(state)  # Felled trees no longer block.
+
         def passable(x: int, y: int) -> bool:
             if not (0 <= x <= 95 and 0 <= y <= 71):
                 return False
             if 4 <= y <= 8:
                 return 46 <= x <= 50 and state["gate_open"] and holder is None
-            cleared = crafting.cleared_obstacles(state)  # e.g. felled trees
-            for building in store.WORLD_GEOMETRY["buildings"] + store.WORLD_GEOMETRY["obstacles"]:
-                if building["name"] in cleared:
-                    continue
-                bx, by, width, height = building["cells"]
-                if bx <= x < bx + width and by <= y < by + height:
-                    return False
-            return True
+            return (x, y) not in blocked
 
         # Walk the cells in order; stop at the first illegal step, keeping the legal ones before it.
         x, y = state["player"]["x"], state["player"]["y"]
@@ -220,7 +216,7 @@ def explore(run_id: str, request: ExploreClock):
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
         sim_time_ms = state["sim_time_ms"] + request.elapsed_ms
-        people = store.advance_people(state, request.elapsed_ms)
+        people = clock.advance_people(state, request.elapsed_ms)
         state["sim_time_ms"] = sim_time_ms
         state["npcs"] = people["npcs"]
         store.apply_people(state, people)
@@ -243,7 +239,7 @@ def developer_gate(run_id: str, request: GateCommand):
 def developer_fight(run_id: str, request: FightCommand):
     """Developer-only: these people come at the stranger now (for testing fights without a model)."""
     with commands.open(run_id, request, developer=True, playable=False) as cmd:
-        if any(minds.find(cmd.state["npcs"], npc_id) is None for npc_id in request.npc_ids):
+        if any(cast.find(cmd.state["npcs"], npc_id) is None for npc_id in request.npc_ids):
             raise HTTPException(422, "Unknown person")
         combat.start(cmd.state, request.npc_ids, cmd.state["sim_time_ms"], "developer")
         cmd.save("fight", cmd.state["tick"])

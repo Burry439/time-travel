@@ -5,9 +5,10 @@ import copy
 from test_craft import commit, fresh_state, judged
 from test_encounter import post, world  # noqa: F401
 
+import cast
 import crafting
 import gear
-import minds
+import perception
 import talk
 
 
@@ -36,7 +37,7 @@ def carried(state, oid, name, materials, mass, gear_record, flags=("rigid",), le
 
 def test_everyone_starts_in_their_own_gear_and_it_is_real():
     state = fresh_state()
-    bren = minds.find(state["npcs"], "npc_bren_marr")
+    bren = cast.find(state["npcs"], "npc_bren_marr")
     assert gear.held(state, bren, "right")["name"] == "iron-headed spear"
     assert {layer["class"] for layer in gear.layers(state, bren, "body")} == {"mail"}
     assert gear.worn(state, state["player"], "body")["name"] == "travelling clothes"
@@ -48,7 +49,7 @@ def test_everyone_starts_in_their_own_gear_and_it_is_real():
 
 def test_a_downed_guards_sword_can_be_taken_and_that_is_theft():
     state = fresh_state()
-    roderic = minds.find(state["npcs"], "npc_roderic_vale")
+    roderic = cast.find(state["npcs"], "npc_roderic_vale")
     state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
     assert "sword_roderic" not in {o["id"] for o in crafting.available_items(state)}  # On his hip, not yours.
     roderic.update(down=True, health=20)
@@ -133,7 +134,7 @@ def test_treating_yourself_and_someone_else(world):
 
 def test_treating_someone_earns_their_trust_like_a_gift():
     state = fresh_state()
-    kade = minds.find(state["npcs"], "npc_kade_east")
+    kade = cast.find(state["npcs"], "npc_kade_east")
     state["player"].update(x=kade["x"], y=kade["y"] + 1)
     kade["conditions"] = [{"kind": "bleeding", "area": "leg", "severity": 25, "heavy": False, "since": 0, "treated": 0}]
     carried(
@@ -164,10 +165,10 @@ def test_treating_someone_earns_their_trust_like_a_gift():
         0,
     )
     assert summary["category"] == "success"
-    kade_after = minds.find(after["npcs"], "npc_kade_east")
+    kade_after = cast.find(after["npcs"], "npc_kade_east")
     assert kade_after["conditions"][0]["treated"] == 1
-    minds.apply_perceptions(after, minds.perceive(after, payload["journal_entry"]))
-    kade_after = minds.find(after["npcs"], "npc_kade_east")
+    perception.apply_perceptions(after, perception.perceive(after, payload["journal_entry"]))
+    kade_after = cast.find(after["npcs"], "npc_kade_east")
     assert talk.regard(kade_after)["trust"] > before
     assert any(m["kind"] == "help" for m in kade_after["mind"]["memories"])
 
@@ -190,7 +191,7 @@ def test_putting_on_a_helmet_in_words_uses_the_same_rules():
 
 def test_a_described_strangling_on_someone_unaware():
     state = fresh_state()
-    oren = minds.find(state["npcs"], "npc_oren_dast")
+    oren = cast.find(state["npcs"], "npc_oren_dast")
     state["player"].update(x=oren["x"], y=oren["y"] + 1)
     carried(state, "cord_test", "cord", ["plant fiber"], 0.2, None, flags=("flexible", "tieable"), length=1.5)
     strangle = judged(
@@ -209,10 +210,10 @@ def test_a_described_strangling_on_someone_unaware():
     )
     alert = copy.deepcopy(state)
     summary = commit(state, strangle)
-    assert summary["harm"]["result"] == "killed" and not minds.find(state["npcs"], "npc_oren_dast")["alive"]
-    minds.find(alert["npcs"], "npc_oren_dast").setdefault("mind", {})["facing_player"] = True  # He sees it coming.
+    assert summary["harm"]["result"] == "killed" and not cast.find(state["npcs"], "npc_oren_dast")["alive"]
+    cast.find(alert["npcs"], "npc_oren_dast").setdefault("mind", {})["facing_player"] = True  # He sees it coming.
     summary = commit(alert, strangle)
-    assert summary["harm"]["result"] == "missed" and minds.find(alert["npcs"], "npc_oren_dast")["alive"]
+    assert summary["harm"]["result"] == "missed" and cast.find(alert["npcs"], "npc_oren_dast")["alive"]
 
 
 def test_the_same_thing_made_twice_is_painted_once(tmp_path, monkeypatch):

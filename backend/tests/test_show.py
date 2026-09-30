@@ -3,9 +3,11 @@
 import pytest
 from test_craft import commit, fresh_state, judged
 
+import cast
 import crafting
-import minds
+import perception
 import talk
+import tuning
 
 
 def carry(state, *ids):
@@ -101,21 +103,21 @@ def test_showing_updates_what_it_is_known_to_do_and_who_saw_it():
         text="show Hessa",
     )
     entry = state["last_action"]
-    hessa = minds.find(state["npcs"], "npc_hessa_marr")  # The committed world has fresh records.
+    hessa = cast.find(state["npcs"], "npc_hessa_marr")  # The committed world has fresh records.
     assert entry["demonstration"]["observed"] == seen
     known = state["objects"][made]["known_capabilities"]
     assert known[0]["status"] == "observed" and known[0]["event_id"] == entry["event_id"]
-    perceptions = minds.perceive(state, entry)
+    perceptions = perception.perceive(state, entry)
     by = {p["npc_id"]: p for p in perceptions}
     assert by["npc_hessa_marr"]["memory"]["summary"] == seen and by["npc_hessa_marr"]["memory"]["source"] == "shown"
     assert far["id"] not in by
     state.setdefault("pending_minds", [])
-    minds.apply_perceptions(state, [p for p in perceptions if p["memory"]["kind"] == "demonstration"])
+    perception.apply_perceptions(state, [p for p in perceptions if p["memory"]["kind"] == "demonstration"])
     assert not state["pending_minds"]  # Seeing something shown is remembered, not an alarm.
     # What she saw is evidence: she can now come to trust the stranger beyond what words earn.
     for _ in range(10):
         talk._update_regard(hessa, {"impression": {"score": 4}, "suspicion": {"score": 0}})
-    assert talk.regard(hessa)["trust"] > 0.4 + talk.TALK_GOODWILL
+    assert talk.regard(hessa)["trust"] > 0.4 + tuning.TALK_GOODWILL
 
 
 def test_a_failed_showing_is_seen_but_earns_nothing():
@@ -134,12 +136,12 @@ def test_a_failed_showing_is_seen_but_earns_nothing():
         text="show Hessa the magic shard",
     )
     state.setdefault("pending_minds", [])
-    minds.apply_perceptions(state, minds.perceive(state, state["last_action"]))
-    hessa = minds.find(state["npcs"], "npc_hessa_marr")
+    perception.apply_perceptions(state, perception.perceive(state, state["last_action"]))
+    hessa = cast.find(state["npcs"], "npc_hessa_marr")
     assert hessa["mind"]["memories"][-1]["works"] is False
     for _ in range(10):
         talk._update_regard(hessa, {"impression": {"score": 4}})
-    assert talk.regard(hessa)["trust"] <= 0.4 + talk.TALK_GOODWILL + 1e-9
+    assert talk.regard(hessa)["trust"] <= 0.4 + tuning.TALK_GOODWILL + 1e-9
 
 
 def test_giving_hands_things_over_and_the_receiver_notices():
@@ -154,7 +156,7 @@ def test_giving_hands_things_over_and_the_receiver_notices():
     assert state["objects"]["flint_a"]["holder_id"] == "npc_tomas_reed"
     assert state["objects"]["flint_a"]["owner_id"] == "npc_tomas_reed"  # A gift of something unowned.
     assert "flint_a" not in {i["id"] for i in crafting.available_items(state)}
-    perceptions = minds.perceive(state, state["last_action"])
+    perceptions = perception.perceive(state, state["last_action"])
     mine = next(p for p in perceptions if p["npc_id"] == "npc_tomas_reed")
     assert mine["memory"]["kind"] == "gift" and mine["memory"]["source"] == "received" and not mine["think"]
     assert mine["memory"]["short"] == "gave me a flint shard"

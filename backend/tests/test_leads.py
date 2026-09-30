@@ -3,8 +3,9 @@
 from test_encounter import face_to_face, post, world  # noqa: F401  (the fixture is used by name)
 from test_talk import npc, said, unit_state
 
+import cast
 import crafting
-import minds
+import reputation
 import talk
 
 
@@ -83,17 +84,17 @@ def test_a_job_lends_what_it_needs_so_using_it_is_not_theft():
 def test_cues_show_only_when_regard_crosses_a_band():
     state = unit_state()
     darin = npc(state, "npc_darin_ko")
-    view = minds.regard(darin)  # trust 0.30, suspicion 0.48
-    minds.regard_cue(darin, dict(view), {**view, "trust": 0.33})
+    view = reputation.regard(darin)  # trust 0.30, suspicion 0.48
+    reputation.regard_cue(darin, dict(view), {**view, "trust": 0.33})
     assert "cue" not in darin["mind"]  # Still the same band: nothing to see.
-    minds.regard_cue(darin, dict(view), {**view, "trust": 0.5})
+    reputation.regard_cue(darin, dict(view), {**view, "trust": 0.5})
     assert darin["mind"]["cue"]["kind"] == "warmer" and darin["mind"]["cue"]["text"].startswith("Darin")
     key = darin["mind"]["cue"]["key"]
-    minds.regard_cue(darin, dict(view), {**view, "suspicion": 0.65})
+    reputation.regard_cue(darin, dict(view), {**view, "suspicion": 0.65})
     assert darin["mind"]["cue"]["kind"] == "wary" and darin["mind"]["cue"]["key"] != key
     # Evidence moves regard, and so shows: a clear, working demonstration.
     hessa = npc(state, "npc_hessa_marr")
-    minds.remember(
+    reputation.remember(
         hessa,
         {
             "kind": "demonstration",
@@ -116,10 +117,10 @@ def test_refusals_carry_what_would_change_their_mind_and_everyone_has_a_voice():
     refusing = talk.voice_context(state, darin, "Lend me the stone.", "refuse")
     assert "sell" in refusing["what_would_change_their_mind"] and "friend" in refusing["how_they_talk"]["style"]
     assert "what_would_change_their_mind" not in talk.voice_context(state, darin, "Hello.", "answer")
-    assert all(minds.card(n).get("style") and minds.card(n).get("persuaded_by") for n in state["npcs"])
+    assert all(cast.card(n).get("style") and cast.card(n).get("persuaded_by") for n in state["npcs"])
     # Every character sheet is complete: a voice of their own, wants, likes, people they know, things to do.
     for n in state["npcs"]:
-        me = minds.card(n)
+        me = cast.card(n)
         assert (
             len(me["voice"]["samples"]) >= 4
             and me["voice"]["habits"]

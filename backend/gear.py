@@ -7,12 +7,11 @@ something made (and, for a described attack, how it lands); nothing here is ever
 
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-GEAR = json.loads((ROOT / "data" / "content" / "gear.json").read_text(encoding="utf-8"))
+import content
+
+GEAR = content.GEAR
 WEAPONS: dict[str, dict] = GEAR["weapons"]
 ARMOUR: dict[str, dict] = GEAR["armour"]
 SHIELDS: dict[str, dict] = GEAR["shields"]

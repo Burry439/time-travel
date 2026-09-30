@@ -5,7 +5,7 @@ from test_talk import npc, unit_state
 
 import combat
 import encounter
-import minds
+import reputation
 import talk
 
 
@@ -32,7 +32,7 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
 def test_walking_off_from_someone_you_wronged():
     state = unit_state()
     kade = face_to_face(state, "npc_kade_east", reason="confront")
-    minds.remember(
+    reputation.remember(
         kade,
         {
             "kind": "theft",
@@ -50,7 +50,7 @@ def test_walking_off_from_someone_you_wronged():
     assert "npc_kade_east" in draft["fight"]["attackers"]  # A guard who came about a theft gives chase.
     state = unit_state()
     tomas = face_to_face(state, "npc_tomas_reed", reason="confront")
-    minds.remember(
+    reputation.remember(
         tomas,
         {
             "kind": "theft",
@@ -77,13 +77,13 @@ def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():
     mara = npc(state, "npc_mara_venn")
     state["player"].update(x=mara["x"], y=mara["y"] + 1)
     combat.start(state, ["npc_mara_venn"], 0, "test")
-    outcome = combat.surrender(state, 0)
+    outcome = encounter.surrender(state, 0)
     assert not outcome["arrested"] and state["fight"] is None and state["player"].get("health", 100) == 100
     assert npc(state, "npc_mara_venn")["mind"]["job"]["kind"] == "watch"
     state = unit_state()
     state["objects"]["cloth_darin"]["holder_id"] = "player"
     combat.start(state, ["npc_mara_venn", "npc_bren_marr"], 0, "test")
-    outcome = combat.surrender(state, 0)
+    outcome = encounter.surrender(state, 0)
     assert outcome["arrested"] and "Bren" in outcome["text"] and state["fight"] is None
     assert state["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko" and talk.barred(state)
 
@@ -91,7 +91,7 @@ def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():
 def test_only_violence_rules_out_entry_for_good():
     state = unit_state()
     roderic = npc(state, "npc_roderic_vale")
-    minds.remember(
+    reputation.remember(
         roderic,
         {
             "kind": "theft",
@@ -105,7 +105,7 @@ def test_only_violence_rules_out_entry_for_good():
         },
     )
     assert "admit" in talk.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
-    assert minds.regard(roderic)["suspicion"] > 0.68
+    assert reputation.regard(roderic)["suspicion"] > 0.68
 
 
 def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):

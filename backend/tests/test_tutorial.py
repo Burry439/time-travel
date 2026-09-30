@@ -5,9 +5,12 @@ import pytest
 from test_encounter import post, world  # noqa: F401
 
 import app as service
+import cast
+import clock
 import combat
+import encounter
 import gear
-import minds
+import reputation
 import tutorial
 import village
 
@@ -30,7 +33,7 @@ def tutorial_state():
 
 
 def npc(state, npc_id):
-    return minds.find(state["npcs"], npc_id)
+    return cast.find(state["npcs"], npc_id)
 
 
 def at_step(state):
@@ -50,7 +53,7 @@ def read_and_tick(state):
 
 
 def beat(state, ms=500):
-    state["npcs"], heard, state["player"] = minds.advance_world(state, ms, state["sim_time_ms"])
+    state["npcs"], heard, state["player"] = clock.advance_world(state, ms, state["sim_time_ms"])
     for object_id, fields in state.pop("people_objects_changed", {}).items():
         state["objects"][object_id].update(fields)
     state.pop("people_objects_added", None)
@@ -115,7 +118,7 @@ def test_the_whole_story_moves_on_by_outcomes():
     state["player"].update(x=jory["x"], y=jory["y"] + 1)
     read_and_tick(state)
     assert at_step(state) == "talk"
-    minds.mind(jory).setdefault("talk", []).append({"who": "stranger", "text": "Let me see your arm.", "at": 0})
+    cast.mind(jory).setdefault("talk", []).append({"who": "stranger", "text": "Let me see your arm.", "at": 0})
     read_and_tick(state)
     assert at_step(state) == "remedy"
     poultice = state["objects"]["plantain_a"]
@@ -155,13 +158,13 @@ def test_the_whole_story_moves_on_by_outcomes():
     assert at_step(state) == "bout" and not state.get("fight")  # The bout waits for its cards...
     read_and_tick(state)
     assert state["fight"] and state["fight"]["spar"]  # ...then, armed and beside him, it begins.
-    assert not combat.surrender(state, state["sim_time_ms"])["arrested"] and state["fight"] is None
+    assert not encounter.surrender(state, state["sim_time_ms"])["arrested"] and state["fight"] is None
     tutorial.tick(state)
     assert at_step(state) == "why" and "doing on this road" in kade["mind"]["said"]["text"]
     read_and_tick(state)
     assert at_step(state) == "why"  # Nothing said to him yet this step.
     state["sim_time_ms"] += 1000
-    minds.mind(kade).setdefault("talk", []).append(
+    cast.mind(kade).setdefault("talk", []).append(
         {"who": "stranger", "text": "I'm trying to get into the city.", "at": state["sim_time_ms"]}
     )
     read_and_tick(state)
@@ -183,7 +186,7 @@ def test_the_whole_story_moves_on_by_outcomes():
         "x": state["player"]["x"],
         "y": state["player"]["y"],
     }
-    minds.remember(
+    reputation.remember(
         kade,
         {
             "kind": "demonstration",
@@ -223,7 +226,7 @@ def at_captain(told_kade: str):
     state = tutorial_state()
     state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "fire")
     kade = npc(state, "npc_kade_east")
-    minds.mind(kade).setdefault("talk", []).append({"who": "stranger", "text": told_kade, "at": 0})
+    cast.mind(kade).setdefault("talk", []).append({"who": "stranger", "text": told_kade, "at": 0})
     tutorial._do(state, [{"kind": "vouch", "npc": "npc_kade_east"}], 0)
     state["tutorial"]["step"] += 1
     state["tutorial"]["read"] = state["tutorial"]["step"]
@@ -263,7 +266,7 @@ def test_kade_stays_for_his_lessons_and_does_not_let_them_in_himself():
     moves = talk.replies(state, kade)
     assert not any(o["act"] in ("go_tell", "vouch", "call_guard", "admit") for o in moves.values())
     state["tutorial"]["fired"].append("kade:lent")  # He has come over.
-    minds._set_job(kade, {"kind": "watch", "until": 20_000}, 0)  # What a talk leaves him with...
+    cast.set_job(kade, {"kind": "watch", "until": 20_000}, 0)  # What a talk leaves him with...
     assert tutorial.tick(state) and kade["mind"]["job"]["until"] >= 600_000  # ...renewed: he stays for his lessons.
     state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "captain")
     assert not tutorial.keeps(state, kade)
@@ -396,7 +399,7 @@ def test_in_a_bout_blows_reach_only_the_partner_and_a_late_swing_is_checked():
     tutorial._do(state, [{"kind": "spar", "npc": "npc_kade_east"}], 0)
     assert combat.strike(state, "right", None, state["sim_time_ms"], [0.0, 1.0])["ok"]
     assert state["player"]["swings"]["right"]["spar_with"] == "npc_kade_east"
-    combat.surrender(state, state["sim_time_ms"])  # The bout ends with the blow still winding up.
+    encounter.surrender(state, state["sim_time_ms"])  # The bout ends with the blow still winding up.
     for _ in range(3):
         beat(state, 1000)
     mara = npc(state, "npc_mara_venn")

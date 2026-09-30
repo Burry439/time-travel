@@ -9,31 +9,18 @@ The authored routines stay as the fallback whenever the decider can't or needn't
 
 from __future__ import annotations
 
-import json
-import math
-from pathlib import Path
-
-import m2
+import cast
+import content
 import minds
-import npc_sim
+import paths
 import persona
+import reputation
+import speech
+import tuning
 
-PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))[
-    "places"
-]
-AGENDA_GAP_MS = 20_000  # Something fresh makes a free person reconsider their day, at most this often (D-39).
-MEET_GAP_MS = 120_000  # Nobody stops for another chat within this long of their last one.
-PAIR_GAP_MS = 600_000  # The same two don't fall into small talk again this soon, unless one has news (D-48).
-MEET_CELLS = 3.0  # Close enough to fall into conversation.
-VISIT_REACH = 3.0
-MIN_GATE_GUARDS = 2  # The gate is never left with fewer guards than this.
+PLACES = content.PLACES
 GATE_GUARDS = ("npc_roderic_vale", "npc_bren_marr", "npc_oren_dast")
-CHATTER_PER_MINUTE = 2  # Voiced meetings (only when the stranger can see them).
-OVERHEAR_CELLS = 5.0
-WARMTH_SHIFTS = [-0.1, -0.05, 0.0, 0.05, 0.1]
 REACTION_LEVELS = ["Put off by it", "A little cooler", "Unmoved", "A little warmer", "Glad of it"]
-HEARSAY_SHIFT = 0.05  # How much one person's view of the stranger rubs off on another (once per teller).
-CHAT_MS = 8_000
 
 
 def place_name(place_id: str) -> str:
@@ -52,7 +39,7 @@ def free(state: dict, npc: dict) -> bool:
     encounter = state.get("encounter") or {}
     if npc["id"] in (encounter.get("participants") or []):
         return False
-    return not (encounter and math.dist(minds._cell(npc), minds.player_cell(state)) <= OVERHEAR_CELLS)
+    return not (encounter and cast.distance(npc, state["player"]) <= tuning.OVERHEAR_CELLS)
 
 
 def _world_holds(state: dict, condition: dict | None) -> bool:
@@ -64,7 +51,7 @@ def tasks(state: dict, npc: dict) -> list[dict]:
     """The card's tasks that make sense in the world as it is (the beam once raised, and so on)."""
     return [
         t
-        for t in minds.card(npc).get("tasks", [])
+        for t in cast.card(npc).get("tasks", [])
         if _world_holds(state, t.get("when")) and not (t.get("unless") and _world_holds(state, t["unless"]))
     ]
 
@@ -87,7 +74,7 @@ def gate_cover(state: dict, leaving: dict) -> int:
 def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
     """Everything this person could sensibly do next with their day: {key: {description, plan}}."""
     name = npc["name"]
-    bound = npc["id"] in GATE_GUARDS and gate_cover(state, npc) < MIN_GATE_GUARDS
+    bound = npc["id"] in GATE_GUARDS and gate_cover(state, npc) < tuning.MIN_GATE_GUARDS
     goal = (npc.get("controller") or {}).get("goal") or "their usual round"
     options = {"carry_on": {"description": f"{name} carries on as usual ({goal}).", "plan": {"kind": "routine"}}}
     for task in tasks(state, npc):
@@ -101,12 +88,7 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
         feelings = persona.opinions(npc)
         for other in state["npcs"]:
             view = feelings.get(other["id"])
-            if (
-                view is None
-                or view["warmth"] < -0.2
-                or not free(state, other)
-                or math.dist(minds._cell(other), minds._cell(npc)) > 45
-            ):
+            if view is None or view["warmth"] < -0.2 or not free(state, other) or cast.distance(other, npc) > 45:
                 continue
             options[f"visit:{other['id']}"] = {
                 "description": f"{name} goes over to talk with {other['name']} ({view['text']}), who is "
@@ -119,17 +101,17 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
                 (
                     o
                     for o in state["npcs"]
-                    if o["id"] != npc["id"] and free(state, o) and not minds.knows(o, grievance.get("event"))
+                    if o["id"] != npc["id"] and free(state, o) and not reputation.knows(o, grievance.get("event"))
                 ),
                 key=lambda o: (
-                    not minds.is_family(npc, o["id"]),
-                    not minds.card(o).get("guard"),
-                    math.dist(minds._cell(o), minds._cell(npc)),
+                    not cast.is_family(npc, o["id"]),
+                    not cast.card(o).get("guard"),
+                    cast.distance(o, npc),
                 ),
             )
             for other in listeners[:2]:
                 options[f"tell:{other['id']}"] = {
-                    "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} what "
+                    "description": f"{name} goes to tell {cast.relation(npc, other['id']) or other['name']} what "
                     f"happened: {grievance['summary']}",
                     "plan": {"kind": "visit", "target": other["id"]},
                 }
@@ -142,19 +124,19 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
                     if o["id"] != npc["id"]
                     and o.get("alive", True)
                     and not o.get("down")
-                    and not minds.knows(o, good.get("event"))
-                    and math.dist(minds._cell(o), minds._cell(npc)) > MEET_CELLS
+                    and not reputation.knows(o, good.get("event"))
+                    and cast.distance(o, npc) > tuning.MEET_CELLS
                 ),
                 key=lambda o: (
-                    not minds.is_family(npc, o["id"]),
+                    not cast.is_family(npc, o["id"]),
                     persona.opinions(npc).get(o["id"], {}).get("warmth", 0.0) < 0.4,
-                    not minds.card(o).get("guard"),
-                    math.dist(minds._cell(o), minds._cell(npc)),
+                    not cast.card(o).get("guard"),
+                    cast.distance(o, npc),
                 ),
             )
             for other in listeners[:2]:
                 options[f"tell:{other['id']}"] = {
-                    "description": f"{name} goes to tell {minds.relation(npc, other['id']) or other['name']} about "
+                    "description": f"{name} goes to tell {cast.relation(npc, other['id']) or other['name']} about "
                     f"it: {good['summary']}",
                     "plan": {
                         "kind": "tell",
@@ -166,8 +148,8 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
         wronged = next(
             (
                 m
-                for m in minds.mind(npc)["memories"]
-                if m["kind"] in minds.CRIME_KINDS
+                for m in cast.mind(npc)["memories"]
+                if m["kind"] in reputation.CRIME_KINDS
                 and m.get("victim") == npc["id"]
                 and m.get("source") == "victim"
                 and not m.get("settled")
@@ -178,25 +160,25 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
         if (
             wronged
             and player.get("alive", True)
-            and not minds.card(npc).get("guard")
-            and state.get("sim_time_ms", 0) - minds.mind(npc).get("confronted_at", -(10**9)) > 60_000
+            and not cast.card(npc).get("guard")
+            and state.get("sim_time_ms", 0) - cast.mind(npc).get("confronted_at", -(10**9)) > 60_000
         ):
             options["confront"] = {
                 "description": f"{name} goes and has it out with the stranger: {wronged['summary']}",
                 "plan": {"kind": "confront"},
             }
-        met = persona.knows(npc).get("episodes") or minds.mind(npc).get("met")
+        met = persona.knows(npc).get("episodes") or cast.mind(npc).get("met")
         if (
             player.get("alive", True)
             and not state.get("inside_city")
-            and not minds.card(npc).get("guard")
-            and math.dist(minds.player_cell(state), minds._cell(npc)) <= 25
+            and not cast.card(npc).get("guard")
+            and cast.distance(state["player"], npc) <= 25
         ):
             options["stranger"] = {
                 "description": f"{name} wanders over to see what the stranger {'is up to now' if met else 'is up to'}.",
                 "plan": {"kind": "stranger"},
             }
-        if not minds.card(npc).get("guard"):
+        if not cast.card(npc).get("guard"):
             options["rest"] = {
                 "description": f"{name} takes a rest by the inn.",
                 "plan": {
@@ -207,7 +189,7 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
                     "doing": "resting a while by the inn",
                 },
             }
-    last = minds.mind(npc).get("last_agenda", "")
+    last = cast.mind(npc).get("last_agenda", "")
     if last.startswith(("visit:", "tell:", "stranger", "confront")):  # Not the same errand twice in a row.
         options.pop(last, None)
     return options
@@ -217,7 +199,7 @@ def good_news(npc: dict) -> dict | None:
     """The latest good thing this person saw or was given from the stranger, clearly, worth passing on (D-53)."""
     good = [
         m
-        for m in minds.mind(npc)["memories"]
+        for m in cast.mind(npc)["memories"]
         if m["kind"] in ("help", "gift", "demonstration")
         and m.get("clarity") == "clear"
         and m.get("works", True)
@@ -231,7 +213,7 @@ def _grievance(npc: dict) -> dict | None:
     """The most serious thing this person knows about the stranger that is worth telling someone."""
     serious = [
         m
-        for m in minds.mind(npc)["memories"]
+        for m in cast.mind(npc)["memories"]
         if m.get("severity", 0) >= 2 and m.get("event") is not None and not m.get("doubted") and not m.get("settled")
     ]
     return max(serious, key=lambda m: m["severity"], default=None)
@@ -241,7 +223,7 @@ def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
     name = npc["name"]
     minutes = state.get("sim_time_ms", 0) // 60_000
     text = (
-        minds._situation(state, npc) + f"\nIt is {minutes} minutes into the day. {name} is free to decide "
+        minds.situation(state, npc) + f"\nIt is {minutes} minutes into the day. {name} is free to decide "
         f"what to do next: carry on, see to something that matters to them, look up someone they know, or rest."
     )
     questions = {
@@ -271,7 +253,7 @@ def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
 
 def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
     """Turn the chosen option into a plan: a walk somewhere, and what they're doing when they get there."""
-    my_mind = minds.mind(npc)
+    my_mind = cast.mind(npc)
     mood = (answers.get("mood") or {}).get("choice")
     if mood in persona.MOODS:
         my_mind["mood"] = mood
@@ -284,22 +266,26 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
     plan = options[choice]["plan"]
     controller = npc.get("controller") or {}
     if plan["kind"] == "routine" or not controller:
-        minds._set_job(npc, None, now)
+        cast.set_job(npc, None, now)
         my_mind["doing"] = controller.get("goal")
     elif plan["kind"] == "confront":
         my_mind["confronted_at"] = now
         wronged = next(
-            (m for m in minds.mind(npc)["memories"] if m.get("victim") == npc["id"] and m["kind"] in minds.CRIME_KINDS),
+            (
+                m
+                for m in cast.mind(npc)["memories"]
+                if m.get("victim") == npc["id"] and m["kind"] in reputation.CRIME_KINDS
+            ),
             {},
         )
         # Their own grievance in their own words (the confront bank speaks up for someone else).
         own = (
-            minds._lines(state, npc, "demand_payment", minds.slots(state, npc))
+            speech.choose_lines(state, npc, "demand_payment", speech.slots(state, npc))
             if wronged.get("kind") == "theft"
             else []
         )
         line_id, line = own[0] if own else (None, "You! You'll answer for what you did to me.")
-        minds._set_job(
+        cast.set_job(
             npc,
             {
                 "kind": "approach",
@@ -314,8 +300,8 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
         )
         my_mind["doing"] = "going to have it out with the stranger"
     elif plan["kind"] == "tell":  # Walk over and tell them (minds' tell errand delivers it and they remember).
-        other = minds.find(state["npcs"], plan["target"])
-        minds._set_job(
+        other = cast.find(state["npcs"], plan["target"])
+        cast.set_job(
             npc,
             {
                 "kind": "tell",
@@ -328,7 +314,7 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
         )
         my_mind["doing"] = f"on the way to tell {other['name'] if other else 'someone'} about the stranger"
     elif plan["kind"] == "stranger":
-        minds._set_job(
+        cast.set_job(
             npc,
             {
                 "kind": "approach",
@@ -343,19 +329,19 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
         )
         my_mind["doing"] = "going to see what the stranger is up to"
     else:
-        blocked = npc_sim.blocked_cells(m2._GEOMETRY)
+        blocked = paths.obstacle_cells()
         try:
             if plan["kind"] == "visit":
-                other = minds.find(state["npcs"], plan["target"])
-                path = npc_sim.route(minds._cell(npc), minds._cell(other), blocked)[:-1]
+                other = cast.find(state["npcs"], plan["target"])
+                path = paths.route(cast.cell(npc), cast.cell(other), blocked)[:-1]
                 controller.update(visit=other["id"], arrive_activity="wait", dwell_ms=30_000)
                 my_mind["doing"] = f"on the way to see {other['name']}"
             else:
-                path = npc_sim.route(minds._cell(npc), tuple(PLACES[plan["place"]]["cell"]), blocked)
+                path = paths.route(cast.cell(npc), tuple(PLACES[plan["place"]]["cell"]), blocked)
                 controller.update(visit=None, arrive_activity=plan["activity"], dwell_ms=plan["dwell_s"] * 1000)
                 my_mind["doing"] = plan["doing"]
         except ValueError:  # No way there right now: carry on as usual instead.
-            minds._set_job(npc, None, now)
+            cast.set_job(npc, None, now)
             my_mind["doing"] = controller.get("goal")
             return {"npc_id": npc["id"], "agenda": "carry_on", "mood": my_mind.get("mood"), "doing": my_mind["doing"]}
         controller.update(
@@ -375,9 +361,9 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
     the stranger coming into view) reconsiders their day. Otherwise the routine goes on by code. Also queues
     meetings for people who arrived on a visit or bumped into someone they know."""
     for npc in npcs:
-        my_mind = minds.mind(npc)
+        my_mind = cast.mind(npc)
         my_mind.setdefault("mood", persona.mood(npc))  # So everyone (and the client) can see how they seem.
-        seen = near_stranger(state, npc, minds.SIGHT_CELLS)
+        seen = near_stranger(state, npc, tuning.SIGHT_CELLS)
         if seen and not my_mind.get("stranger_seen"):
             my_mind["fresh"] = my_mind.get("fresh") or "the stranger came into view"
         my_mind["stranger_seen"] = seen
@@ -388,15 +374,15 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
             and now >= my_mind.get("next_agenda_at", 0)
             and not any(p["npc_id"] == npc["id"] for p in state.get("pending_minds", []))
         ):
-            minds.add_pending(state, npc["id"], "agenda", str(my_mind["fresh"]))
+            cast.add_pending(state, npc["id"], "agenda", str(my_mind["fresh"]))
             my_mind["fresh"] = None
-            my_mind["next_agenda_at"] = now + AGENDA_GAP_MS
+            my_mind["next_agenda_at"] = now + tuning.AGENDA_GAP_MS
         controller = npc.get("controller") or {}
         visiting = controller.get("visit")
         if visiting and controller.get("activity") != "walk":
             controller["visit"] = None
-            other = minds.find(npcs, visiting)
-            if other and free(state, other) and math.dist(minds._cell(other), minds._cell(npc)) <= VISIT_REACH:
+            other = cast.find(npcs, visiting)
+            if other and free(state, other) and cast.distance(other, npc) <= tuning.VISIT_REACH:
                 _stop_to_talk(state, npc, other, now)
             else:
                 my_mind["doing"] = f"looking for {other['name'] if other else 'someone'}, who has gone"
@@ -405,16 +391,16 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
         for n in npcs
         if free(state, n)
         and (n.get("controller") or {}).get("activity") != "walk"
-        and now - minds.mind(n).get("last_met", -MEET_GAP_MS) >= MEET_GAP_MS
+        and now - cast.mind(n).get("last_met", -tuning.MEET_GAP_MS) >= tuning.MEET_GAP_MS
     ]
     for a in idle:
         for b in idle:
             if (
                 a["id"] < b["id"]
-                and math.dist(minds._cell(a), minds._cell(b)) <= MEET_CELLS
+                and cast.distance(a, b) <= tuning.MEET_CELLS
                 and (b["id"] in persona.opinions(a) or a["id"] in persona.opinions(b))
                 and (
-                    now - minds.mind(a).get("met_with", {}).get(b["id"], -PAIR_GAP_MS) >= PAIR_GAP_MS
+                    now - cast.mind(a).get("met_with", {}).get(b["id"], -tuning.PAIR_GAP_MS) >= tuning.PAIR_GAP_MS
                     or has_news(state, a, b)
                 )
                 and not any(
@@ -426,12 +412,12 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
 
 def _stop_to_talk(state: dict, a: dict, b: dict, now: int) -> None:
     """They fall into conversation: both stay where they are until it has been decided what they talk about."""
-    minds.add_pending(state, a["id"], "meet", b["id"])
+    cast.add_pending(state, a["id"], "meet", b["id"])
     for person, other in ((a, b), (b, a)):
         controller = person.get("controller") or {}
         if controller.get("activity") != "walk":
-            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 2 * CHAT_MS)
-        minds.mind(person)["chatting_with"] = {"id": other["id"], "until": now + 2 * CHAT_MS}
+            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 2 * tuning.CHAT_MS)
+        cast.mind(person)["chatting_with"] = {"id": other["id"], "until": now + 2 * tuning.CHAT_MS}
 
 
 # --- Meetings: two people talk, and news travels ---------------------------------------------------
@@ -439,16 +425,16 @@ def _stop_to_talk(state: dict, a: dict, b: dict, now: int) -> None:
 
 def _told(a: dict, b: dict) -> list[str]:
     """Topics A has already raised with B (nobody tells the same person the same thing twice)."""
-    return minds.mind(a).setdefault("told", {}).setdefault(b["id"], [])
+    return cast.mind(a).setdefault("told", {}).setdefault(b["id"], [])
 
 
 def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
     """What A could bring up with B: news B hasn't heard, the stranger, a worry, an opinion, small talk."""
     options: dict[str, dict] = {}
     told = _told(a, b)
-    for memory in minds.mind(a)["memories"]:
+    for memory in cast.mind(a)["memories"]:
         event = memory.get("event")
-        if event is None or minds.knows(b, event) or (memory["kind"] == "talk" and memory.get("severity", 0) < 1):
+        if event is None or reputation.knows(b, event) or (memory["kind"] == "talk" and memory.get("severity", 0) < 1):
             continue
         options[f"news:{event}"] = {
             "description": f"{a['name']} tells {b['name']}: {memory['summary']}",
@@ -467,7 +453,7 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
             "fact": latest,
             "kind": "stranger",
         }
-    goals = minds.card(a).get("goals") or []
+    goals = cast.card(a).get("goals") or []
     fresh = [i for i in range(len(goals)) if f"worry:{i}" not in told]
     if fresh:
         goal = goals[fresh[0]]
@@ -478,7 +464,7 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
             "told_key": f"worry:{fresh[0]}",
         }
     for other_id, view in persona.opinions(a).items():
-        other = minds.find(state["npcs"], other_id)
+        other = cast.find(state["npcs"], other_id)
         if other and other_id != b["id"] and abs(view["warmth"]) >= 0.4 and f"opinion:{other_id}" not in told:
             options[f"opinion:{other_id}"] = {
                 "description": f"{a['name']} tells {b['name']} what they think of {other['name']}: {view['text']}.",
@@ -498,7 +484,7 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
 def has_news(state: dict, a: dict, b: dict) -> bool:
     """Whether a meeting is worth asking the decider about: either has something to pass on (else it's a nod, by code)."""
     return bool(
-        news_pick(state, a, b) or news_pick(state, b, a) or minds.mind(a).get("fresh") or minds.mind(b).get("fresh")
+        news_pick(state, a, b) or news_pick(state, b, a) or cast.mind(a).get("fresh") or cast.mind(b).get("fresh")
     )
 
 
@@ -525,8 +511,8 @@ def chosen_topic(state: dict, a: dict, b: dict, answers: dict) -> str:
 def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, dict]:
     view_ab, view_ba = persona.opinions(a).get(b["id"]), persona.opinions(b).get(a["id"])
     text = (
-        minds._situation(state, a) + f"\n\n{a['name']} has fallen into conversation with {b['name']}, the "
-        f"{minds.card(b)['role']}. "
+        minds.situation(state, a) + f"\n\n{a['name']} has fallen into conversation with {b['name']}, the "
+        f"{cast.card(b)['role']}. "
         + (
             f"{a['name']} {persona.warmth_words(view_ab['warmth'])} {b['name']} ({view_ab['text']}). "
             if view_ab
@@ -537,7 +523,7 @@ def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, di
             if view_ba
             else ""
         )
-        + f"{b['name']}'s mood: {persona.mood(b)}; {b['name']} likes {minds.card(b).get('likes', 'little')}."
+        + f"{b['name']}'s mood: {persona.mood(b)}; {b['name']} likes {cast.card(b).get('likes', 'little')}."
     )
     questions = {
         f"{prefix}topic": {
@@ -574,24 +560,24 @@ def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, di
 
 
 def near_stranger(state: dict, npc: dict, cells: float) -> bool:
-    here = minds.player_cell(state)
+    here = cast.player_cell(state)
     return (
         state["player"].get("alive", True)
-        and math.dist(minds._cell(npc), here) <= cells
-        and minds.line_of_sight(minds._cell(npc), here)
+        and cast.distance(npc, here) <= cells
+        and paths.line_of_sight(cast.cell(npc), here)
     )
 
 
 def chatter_allowed(state: dict, a: dict, now: int) -> bool:
     recent = [t for t in _village(state)["chatter_at"] if now - t < 60_000]
-    return near_stranger(state, a, minds.SIGHT_CELLS) and len(recent) < CHATTER_PER_MINUTE
+    return near_stranger(state, a, tuning.SIGHT_CELLS) and len(recent) < tuning.CHATTER_PER_MINUTE
 
 
 def chatter_context(state: dict, a: dict, b: dict, topic: dict, answers: dict) -> dict:
     level = _level(answers)
     return {
-        "speaker": {"name": a["name"], "role": minds.card(a)["role"], **persona.voice_sheet(state, a)},
-        "listener": {"name": b["name"], "role": minds.card(b)["role"], **persona.voice_sheet(state, b)},
+        "speaker": {"name": a["name"], "role": cast.card(a)["role"], **persona.voice_sheet(state, a)},
+        "listener": {"name": b["name"], "role": cast.card(b)["role"], **persona.voice_sheet(state, b)},
         "topic": topic["description"],
         "listener_reaction": f"{REACTION_LEVELS[level]}; "
         f"{'believes it' if _believes(answers) else 'does not quite believe it'}",
@@ -632,10 +618,10 @@ def _pass_on(state: dict, teller: dict, listener: dict, topic: dict, believed: b
             "summary": f"{teller['name']} told them: {memory['summary']}",
             "doubted": not believed,
         }
-        minds.remember(listener, told)
+        reputation.remember(listener, told)
         if memory.get("severity", 0) >= 2 and believed:
-            minds.mind(listener)["rethinks"] = 0
-            minds.add_pending(state, listener["id"], "decide", f"told by {teller['name']}")
+            cast.mind(listener)["rethinks"] = 0
+            cast.add_pending(state, listener["id"], "decide", f"told by {teller['name']}")
     elif topic["kind"] == "stranger":
         heard = persona.knows(listener).setdefault("heard", [])
         heard.append(
@@ -651,14 +637,14 @@ def _pass_on(state: dict, teller: dict, listener: dict, topic: dict, believed: b
         name = persona.knows(teller).get("name") or persona.knows(teller).get("heard_name")
         if name and believed and not persona.knows(listener).get("name"):
             persona.knows(listener)["heard_name"] = name
-        view_t, view_l = minds.regard(teller), minds.regard(listener)
+        view_t, view_l = reputation.regard(teller), reputation.regard(listener)
         told_by = view_l.setdefault("heard_from", [])
         if believed and teller["id"] not in told_by:  # One person's view of the stranger rubs off a little.
             told_by.append(teller["id"])
             if view_t["trust"] >= 0.5:
-                view_l["trust"] = round(min(1.0, view_l["trust"] + HEARSAY_SHIFT), 3)
+                view_l["trust"] = round(min(1.0, view_l["trust"] + tuning.HEARSAY_SHIFT), 3)
             if view_t["suspicion"] >= 0.6:
-                view_l["suspicion"] = round(min(1.0, view_l["suspicion"] + HEARSAY_SHIFT), 3)
+                view_l["suspicion"] = round(min(1.0, view_l["suspicion"] + tuning.HEARSAY_SHIFT), 3)
     elif topic["kind"] == "opinion" and believed:
         feelings = persona.opinions(listener)
         if topic["about"] in feelings:
@@ -682,7 +668,7 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
         returned = topics(state, b, a)[back]
         _told(b, a).append(back)
         _pass_on(state, b, a, returned, True, now)
-    shift = WARMTH_SHIFTS[level]
+    shift = tuning.WARMTH_SHIFTS[level]
     for person, other, amount in ((b, a, shift), (a, b, shift / 2)):
         feelings = persona.opinions(person)
         if other["id"] in feelings:
@@ -690,23 +676,23 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
             view["warmth"] = round(max(-1.0, min(1.0, view["warmth"] + amount)), 2)
         elif amount:
             feelings[other["id"]] = {
-                "text": f"{other['name']} the {minds.card(other)['role']}",
+                "text": f"{other['name']} the {cast.card(other)['role']}",
                 "warmth": round(amount, 2),
             }
     learned = []
     for person, other in ((a, b), (b, a)):
-        my_mind = minds.mind(person)
+        my_mind = cast.mind(person)
         my_mind["last_met"] = now
         my_mind.setdefault("met_with", {})[other["id"]] = now
-        my_mind["chatting_with"] = {"id": other["id"], "until": now + CHAT_MS}
+        my_mind["chatting_with"] = {"id": other["id"], "until": now + tuning.CHAT_MS}
         controller = person.get("controller") or {}
         if controller.get("activity") != "walk":
-            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + CHAT_MS)
+            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + tuning.CHAT_MS)
     if lines:
         _village(state)["chatter_at"] = [t for t in _village(state)["chatter_at"] if now - t < 60_000] + [now]
-        minds.mind(a)["said"] = {"text": lines[0], "at": now, "key": f"{a['id']}:chat:{now}"}
-        minds.mind(b)["said"] = {"text": lines[1], "at": now, "key": f"{b['id']}:chat:{now}", "after_ms": 2200}
-        if near_stranger(state, a, OVERHEAR_CELLS):
+        cast.mind(a)["said"] = {"text": lines[0], "at": now, "key": f"{a['id']}:chat:{now}"}
+        cast.mind(b)["said"] = {"text": lines[1], "at": now, "key": f"{b['id']}:chat:{now}", "after_ms": 2200}
+        if near_stranger(state, a, tuning.OVERHEAR_CELLS):
             for person, line, other in ((a, lines[0], b), (b, lines[1], a)):
                 learned.append(
                     {
@@ -745,7 +731,7 @@ def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict
     }
     player = state["player"]
     if player.get("alive", True) and not state.get("inside_city"):
-        steps = round(math.dist(minds.player_cell(state), minds._cell(listener)))
+        steps = round(cast.distance(state["player"], listener))
         options["come_see"] = {
             "description": f"{name} goes over to see the stranger for themselves (about {steps} steps away).",
             "plan": {"kind": "come_see"},
@@ -761,15 +747,15 @@ def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict
             if o["id"] not in (listener["id"], teller["id"]) and o.get("alive", True) and not o.get("down")
         ),
         key=lambda o: (
-            not minds.is_family(listener, o["id"]),
+            not cast.is_family(listener, o["id"]),
             persona.opinions(listener).get(o["id"], {}).get("warmth", 0.0) < 0.4,
-            not minds.card(o).get("guard"),
-            math.dist(minds._cell(o), minds._cell(listener)),
+            not cast.card(o).get("guard"),
+            cast.distance(o, listener),
         ),
     )
     for other in listeners[:2]:
         options[f"tell:{other['id']}"] = {
-            "description": f"{name} goes to pass it on to {minds.relation(listener, other['id']) or other['name']}.",
+            "description": f"{name} goes to pass it on to {cast.relation(listener, other['id']) or other['name']}.",
             "plan": {"kind": "tell", "target": other["id"]},
         }
     return options
@@ -777,12 +763,12 @@ def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict
 
 def hearing_context(state: dict, listener: dict, teller: dict, message: str) -> dict:
     return {
-        "teller": {"name": teller["name"], "role": minds.card(teller)["role"], **persona.voice_sheet(state, teller)},
+        "teller": {"name": teller["name"], "role": cast.card(teller)["role"], **persona.voice_sheet(state, teller)},
         "listener": {
             "name": listener["name"],
-            "role": minds.card(listener)["role"],
+            "role": cast.card(listener)["role"],
             **persona.voice_sheet(state, listener),
-            "what_they_know": [m["summary"] for m in minds.mind(listener)["memories"]][-8:],
+            "what_they_know": [m["summary"] for m in cast.mind(listener)["memories"]][-8:],
         },
         "message": message,
         "listener_options": {k: o["description"] for k, o in hearing_options(state, listener, teller).items()},
@@ -804,9 +790,9 @@ def apply_hearing(
 ) -> dict:
     """Both lines are said aloud (bubbles; overheard if the stranger is near); the listener's choice becomes their
     plan, carried out by code."""
-    minds._say(teller, result["teller_line"], now, state, journal)
-    minds._say(listener, result["listener_line"], now + 1, state, journal)
-    minds.mind(listener)["said"]["after_ms"] = 2200  # The answer comes a beat after (the bubbles, D-54).
+    speech.say(teller, result["teller_line"], now, state, journal)
+    speech.say(listener, result["listener_line"], now + 1, state, journal)
+    cast.mind(listener)["said"]["after_ms"] = 2200  # The answer comes a beat after (the bubbles, D-54).
     if result.get("remember"):
         known = persona.knows(listener)
         known["notes"] = (known["notes"] + [result["remember"]])[-persona.NOTES_KEPT :]
@@ -814,7 +800,7 @@ def apply_hearing(
     move = result.get("move") if result.get("move") in options else "carry_on"
     plan = options[move]["plan"]
     if plan["kind"] == "come_see":
-        minds._set_job(
+        cast.set_job(
             listener,
             {
                 "kind": "approach",
@@ -827,10 +813,10 @@ def apply_hearing(
             },
             now,
         )
-        minds.mind(listener)["doing"] = "going to see the stranger"
+        cast.mind(listener)["doing"] = "going to see the stranger"
     elif plan["kind"] == "go_with":
         for person in (listener, teller):
-            minds._set_job(
+            cast.set_job(
                 person,
                 {
                     "kind": "approach",
@@ -843,14 +829,14 @@ def apply_hearing(
                 },
                 now,
             )
-            minds.mind(person)["doing"] = "going to see the stranger"
+            cast.mind(person)["doing"] = "going to see the stranger"
     elif plan["kind"] == "tell":
         words = result.get("pass_on_message") or message
-        minds._set_job(
+        cast.set_job(
             listener, {"kind": "tell", "target": plan["target"], "speed": "walk", "message": words, "event": None}, now
         )
-        other = minds.find(state["npcs"], plan["target"])
-        minds.mind(listener)["doing"] = f"on the way to tell {other['name'] if other else 'someone'}"
+        other = cast.find(state["npcs"], plan["target"])
+        cast.mind(listener)["doing"] = f"on the way to tell {other['name'] if other else 'someone'}"
     return {
         "npc_id": listener["id"],
         "kind": "told",

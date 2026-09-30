@@ -10,7 +10,7 @@ from test_talk import npc
 import combat
 import crafting
 import m2
-import minds
+import perception
 import talk
 import village
 
@@ -41,8 +41,8 @@ def test_the_gate_starts_barred_and_opens_when_the_bar_is_off():
 def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
     state = at_the_gate(fresh_state())
     commit(state, lift_out())
-    seen = minds.perceive(state, state["last_action"])
-    minds.apply_perceptions(state, seen)
+    seen = perception.perceive(state, state["last_action"])
+    perception.apply_perceptions(state, seen)
     roderic = npc(state, "npc_roderic_vale")
     memory = next(m for m in roderic["mind"]["memories"] if m["kind"] == "breach")
     assert memory["kind"] == "breach" and memory["severity"] == 3 and "unbarred" in memory["summary"]
@@ -63,8 +63,8 @@ def test_doing_tomas_s_swap_is_work_not_an_assault():
         }
     }
     commit(state, lift_out())
-    seen = minds.perceive(state, state["last_action"])
-    minds.apply_perceptions(state, seen)
+    seen = perception.perceive(state, state["last_action"])
+    perception.apply_perceptions(state, seen)
     assert all(p["memory"]["kind"] != "breach" for p in seen) and not state.get("fight")
     assert state["gate_open"]  # Still, the gate stands open while the old bar is down.
 

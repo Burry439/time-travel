@@ -6,17 +6,19 @@ from test_encounter import post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import npc, said, unit_state
 
+import clock
 import combat
 import encounter
-import minds
+import reputation
 import store
 import talk
+import tuning
 
 
 def rope_stolen(state, holder="player"):
     state["objects"]["rope_tomas"].update(holder_id=holder)
     kade = npc(state, "npc_kade_east")
-    minds.remember(
+    reputation.remember(
         kade,
         {
             "kind": "theft",
@@ -79,14 +81,14 @@ def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():
     combat.start(state, [kade["id"]], 0, "chase")
     assert state["fight"]["lethal"][kade["id"]] is False
     for _ in range(60):
-        payload = store.advance_people(state, 500)
+        payload = clock.advance_people(state, 500)
         state["sim_time_ms"] += 500
         state["npcs"] = payload["npcs"]
         store.apply_people(state, payload)
         if not state.get("fight"):
             break
     assert (
-        state["player"]["alive"] and combat.SUBDUED_AT <= state["player"]["health"] < combat.SUBDUED_AT + 1
+        state["player"]["alive"] and tuning.SUBDUED_AT <= state["player"]["health"] < tuning.SUBDUED_AT + 1
     )  # (mending)
     assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and talk.barred(state)
     assert state["objects"]["rope_tomas"]["holder_id"] == "npc_tomas_reed"  # The rope goes back.

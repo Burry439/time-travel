@@ -6,8 +6,9 @@ from test_craft import commit, fresh_state, judged
 from test_talk import npc, said
 
 import crafting
-import minds
 import patch
+import perception
+import reputation
 import talk
 
 
@@ -45,7 +46,7 @@ def test_the_cracked_bar_comes_out_before_the_new_beam_goes_in():
     assert beam["installed_in"] == "gate_brackets" and (beam["x"], beam["y"]) == (48, 9)
     assert not state["gate_open"]  # Barred again, with a sound beam.
     assert crafting.validate(state, install(["rope_tomas"]))["category"] in ("blocked", "unresolved")  # Already up.
-    seen = minds.perceive(state, state["last_action"])
+    seen = perception.perceive(state, state["last_action"])
     roderic = next(p for p in seen if p["npc_id"] == "npc_roderic_vale")
     assert roderic["memory"]["kind"] == "demonstration" and "beam" in roderic["memory"]["summary"]
     assert not roderic["think"]
@@ -109,7 +110,7 @@ def test_people_give_things_only_to_someone_they_trust():
     state = fresh_state(79, 32)
     darin = npc(state, "npc_darin_ko")
     assert not any(k.startswith("give:") for k in talk.replies(state, darin))
-    minds.regard(darin)["trust"] = 0.6
+    reputation.regard(darin)["trust"] = 0.6
     key = next(k for k in talk.replies(state, darin) if k.startswith("give:"))
     item = key.split(":")[1]
     talk.exchange(state, "npc_darin_ko", "Could you spare it?", said(key), key, "Take it.", [])

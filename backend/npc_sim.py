@@ -7,52 +7,19 @@ until they next decide (GDD D-37).
 
 from __future__ import annotations
 
-import json
-from collections import deque
 from copy import deepcopy
-from pathlib import Path
+
+import content
+import paths
 
 # Each anchor is (cell x, cell y, activity at arrival, dwell milliseconds).
 # This file also drives the editor's visible activity-anchor overlay.
-_SOURCE = json.loads((Path(__file__).resolve().parents[1] / "data" / "npc_routines.json").read_text())
-ROUTINES = {npc_id: (spec["goal"], spec["anchors"]) for npc_id, spec in _SOURCE.items()}
+ROUTINES = {npc_id: (spec["goal"], spec["anchors"]) for npc_id, spec in content.ROUTINES.items()}
 
 
-def blocked_cells(geometry: dict) -> set[tuple[int, int]]:
-    return {
-        (cx, cy)
-        for item in geometry["buildings"] + geometry["obstacles"]
-        for x, y, width, height in [item["cells"]]
-        for cx in range(x, x + width)
-        for cy in range(y, y + height)
-    }
-
-
-def route(start: tuple[int, int], goal: tuple[int, int], blocked: set[tuple[int, int]]) -> list[list[int]]:
-    if start == goal:
-        return []
-    frontier = deque([start])
-    previous: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
-    while frontier:
-        x, y = frontier.popleft()
-        for cell in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-            if cell in previous or cell in blocked or not (0 <= cell[0] < 96 and 9 <= cell[1] < 72):
-                continue
-            previous[cell] = (x, y)
-            if cell == goal:
-                path: list[list[int]] = []
-                cursor = goal
-                while cursor != start:
-                    path.append([cursor[0], cursor[1]])
-                    cursor = previous[cursor]  # type: ignore[assignment]
-                return list(reversed(path))
-            frontier.append(cell)
-    raise ValueError(f"No safe NPC route from {start} to {goal}")
-
-
-def seed_npcs(npcs: list[dict], geometry: dict) -> list[dict]:
+def seed_npcs(npcs: list[dict]) -> list[dict]:
     seeded = deepcopy(npcs)
-    blocked = blocked_cells(geometry)
+    blocked = paths.obstacle_cells()
     for index, npc in enumerate(seeded):
         goal, anchors = ROUTINES[npc["id"]]
         assert (npc["x"], npc["y"]) == tuple(anchors[0][:2])
@@ -81,14 +48,14 @@ def choose_routine_plan(npc: dict, blocked: set[tuple[int, int]]) -> None:
     x, y, _, _ = anchors[next_index]
     controller["anchor_index"] = next_index
     controller["destination"] = [x, y]
-    controller["path"] = route((npc["x"], npc["y"]), (x, y), blocked)
+    controller["path"] = paths.route((npc["x"], npc["y"]), (x, y), blocked)
     controller["activity"] = "walk"
     controller["step_carry_ms"] = 0
 
 
-def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int, geometry: dict) -> list[dict]:
+def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int) -> list[dict]:
     updated = deepcopy(npcs)
-    blocked = blocked_cells(geometry)
+    blocked = paths.obstacle_cells()
     arrival_time = now_ms + elapsed_ms
     for npc in updated:
         controller = npc.get("controller")

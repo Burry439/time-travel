@@ -9,10 +9,13 @@ from test_encounter import post, world  # noqa: F401
 from test_heat import bowl_of_water, change
 from test_talk import npc, unit_state
 
+import cast
+import clock
 import combat
 import crafting
 import gear
-import minds
+import perception
+import tuning
 import village
 
 
@@ -33,7 +36,7 @@ def open_ground(state, *people):
 
 
 def beat(state, ms=500):
-    state["npcs"], heard, state["player"] = minds.advance_world(state, ms, state["sim_time_ms"])
+    state["npcs"], heard, state["player"] = clock.advance_world(state, ms, state["sim_time_ms"])
     for obj in state.pop("people_objects_added", []):
         state["objects"][obj["id"]] = obj
     for object_id, fields in state.pop("people_objects_changed", {}).items():
@@ -150,7 +153,7 @@ def test_it_ends_when_every_attacker_is_down_or_the_stranger_gets_away():
     away = open_ground(unit_state(), "npc_mara_venn")
     combat.start(away, ["npc_mara_venn"], 0, "test")
     away["player"].update(x=48, y=60)
-    npc(away, "npc_mara_venn").update(x=48 + int(minds.GIVE_UP_CELLS) + 2, y=60)
+    npc(away, "npc_mara_venn").update(x=48 + int(tuning.GIVE_UP_CELLS) + 2, y=60)
     heard = beat(away)
     assert away["fight"] is None and any(h["category"] == "gives_up" for h in heard)
 
@@ -344,9 +347,9 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
         0,
     )
     assert summary["harm"]["result"] == "disabled"  # ...but boiling water gets past mail.
-    down = minds.find(after["npcs"], "npc_bren_marr")
+    down = cast.find(after["npcs"], "npc_bren_marr")
     assert down["alive"] and down["down"] and down["controller"]["activity"] == "down"
-    minds.apply_perceptions(after, minds.perceive(after, payload["journal_entry"]))
+    perception.apply_perceptions(after, perception.perceive(after, payload["journal_entry"]))
     assert after["fight"]["attackers"] == ["npc_oren_dast"]  # Oren saw it: he comes at you at once.
 
 
@@ -374,7 +377,7 @@ def test_a_swing_at_nobody_lands_on_whoever_is_in_front():
     """D-51: there's no fighting mode and no target needed. The blow goes where the stranger faces, and hits
     whoever is there within reach when it lands; someone behind them is safe."""
     state = open_ground(unit_state(), "npc_hessa_marr")
-    here, hessa = minds.player_cell(state), npc(state, "npc_hessa_marr")
+    here, hessa = cast.player_cell(state), npc(state, "npc_hessa_marr")
     facing = [hessa["x"] - here[0], hessa["y"] - here[1]]
     assert combat.strike(state, "right", None, state["sim_time_ms"], facing)["ok"]
     combat.tick(state, state["npcs"], 1000, state["sim_time_ms"], set(), state["journal"])

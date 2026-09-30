@@ -14,13 +14,13 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+import content
+import gear
+
 from . import config
 
 PROMPT_VERSION = "judge_v14"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
-_WORLD = json.loads(
-    (Path(__file__).resolve().parents[2] / "data" / "content" / "materials.json").read_text(encoding="utf-8")
-)
 
 Flag = Literal[
     "rigid",
@@ -241,8 +241,6 @@ class JudgeCall:
 
 def gear_classes() -> dict:
     """The gear classes the judge may name (code owns what each does: data/content/gear.json)."""
-    import gear  # backend/gear.py
-
     return {
         "weapon": {k: v["name"] for k, v in gear.WEAPONS.items() if k not in ("fists", "improvised")},
         "shield": {k: v["name"] for k, v in gear.SHIELDS.items()},
@@ -258,7 +256,9 @@ def gear_classes() -> dict:
 
 
 def system_prompt() -> str:
-    world = {key: _WORLD[key] for key in ("setting", "knowledge_baseline", "material_facts", "flag_meanings")}
+    world = {
+        key: content.MATERIALS[key] for key in ("setting", "knowledge_baseline", "material_facts", "flag_meanings")
+    }
     return _PROMPT.replace("{world}", json.dumps(world, indent=1)).replace(
         "{gear_classes}", json.dumps(gear_classes(), indent=1)
     )

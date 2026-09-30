@@ -120,7 +120,7 @@ def queue_picture(
         "INSERT INTO assets (asset_id,run_id,object_id,status,record_json) VALUES (?,?,?,'pending',?)",
         (asset_id, run_id, obj["id"], json.dumps(record)),
     )
-    background.add_task(_generate_asset, asset_id)
+    background.add_task(generate_asset, asset_id)
 
 
 def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
@@ -129,7 +129,7 @@ def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
     return judge.judge_craft(context)
 
 
-def _generate_asset(asset_id: str) -> None:
+def generate_asset(asset_id: str) -> None:
     """Paint one sprite. Runs after the response; failure leaves the placeholder in play."""
     with asset_jobs_lock:
         if asset_id in asset_jobs:

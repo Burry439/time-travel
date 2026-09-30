@@ -4,7 +4,9 @@ moments (not too often), and the one standing rule everyone uses."""
 from test_encounter import post, world  # noqa: F401
 
 import app as service
-import minds
+import cast
+import reputation
+import tuning
 import tutorial
 from ai import voice
 
@@ -38,14 +40,14 @@ def test_it_remembers_the_conversation_and_keeps_a_long_history():
 
 def test_the_coach_knows_what_the_stranger_knows_and_no_more():
     state = village_state()
-    hessa = minds.find(state["npcs"], "npc_hessa_marr")
-    minds.mind(hessa)["met"] = True
+    hessa = cast.find(state["npcs"], "npc_hessa_marr")
+    cast.mind(hessa)["met"] = True
     state.setdefault("learned", []).append(
         {"npc_id": "npc_hessa_marr", "name": "Hessa", "said": "…", "lead": "Hessa needs water hauled from the trough."}
     )
     context = tutorial.device_context(state, "what now?")
     assert context["leads_newest_first"][0] == {"lead": "Hessa needs water hauled from the trough.", "from": "Hessa"}
-    assert {"name": "Hessa", "role": minds.card(hessa)["role"], "stands": "Neutral"} in context["people_met"]
+    assert {"name": "Hessa", "role": cast.card(hessa)["role"], "stands": "Neutral"} in context["people_met"]
     flat = str(context)
     assert "secret" not in flat and "late shifts" not in flat and "eleven silver" not in flat  # Nobody's secrets.
     assert not any(p["name"] == "Oren" for p in context["people_met"])  # Only people the stranger has met.
@@ -53,20 +55,24 @@ def test_the_coach_knows_what_the_stranger_knows_and_no_more():
 
 def test_standing_is_one_word_from_regard_anger_and_crimes():
     state = village_state()
-    jory = minds.find(state["npcs"], "npc_jory_venn")
-    assert minds.standing(jory) == "unknown"
-    minds.mind(jory)["met"] = True
-    minds.regard(jory).update(trust=0.3, suspicion=0.2)
-    assert minds.standing(jory) == "neutral"
-    minds.regard(jory)["trust"] = 0.5
-    assert minds.standing(jory) == "friendly"
-    minds.regard(jory)["trust"] = 0.65
-    assert minds.standing(jory) == "would_speak"
-    minds.regard(jory)["suspicion"] = 0.7
-    assert minds.standing(jory) == "wary"
-    minds.mind(jory)["feelings"]["anger"] = 0.7
-    assert minds.standing(jory) == "hostile"
-    assert minds.update_standing(jory) and minds.mind(jory)["standing"] == "hostile" and not minds.update_standing(jory)
+    jory = cast.find(state["npcs"], "npc_jory_venn")
+    assert reputation.standing(jory) == "unknown"
+    cast.mind(jory)["met"] = True
+    reputation.regard(jory).update(trust=0.3, suspicion=0.2)
+    assert reputation.standing(jory) == "neutral"
+    reputation.regard(jory)["trust"] = 0.5
+    assert reputation.standing(jory) == "friendly"
+    reputation.regard(jory)["trust"] = 0.65
+    assert reputation.standing(jory) == "would_speak"
+    reputation.regard(jory)["suspicion"] = 0.7
+    assert reputation.standing(jory) == "wary"
+    cast.mind(jory)["feelings"]["anger"] = 0.7
+    assert reputation.standing(jory) == "hostile"
+    assert (
+        reputation.update_standing(jory)
+        and cast.mind(jory)["standing"] == "hostile"
+        and not reputation.update_standing(jory)
+    )
 
 
 def test_a_moment_is_worth_a_word_only_sometimes(world, monkeypatch):
@@ -76,7 +82,7 @@ def test_a_moment_is_worth_a_word_only_sometimes(world, monkeypatch):
     assert tutorial.moment_detail(state, "new_lead") is None and tutorial.moment_allowed(state)
     tutorial.device_says(state, "Hm.", "remark")
     assert not tutorial.moment_allowed(state)
-    state["sim_time_ms"] += tutorial.MOMENT_GAP_MS
+    state["sim_time_ms"] += tuning.MOMENT_GAP_MS
     assert tutorial.moment_allowed(state)
     run = world.http.post("/runs", json={"mode": "developer"}).json()
     body = post(world, run, "device/ask", {"moment": "stuck"})

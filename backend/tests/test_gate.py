@@ -9,8 +9,11 @@ from test_craft import attempt, judged
 from test_talk import npc, said, unit_state, walk_to
 
 import app as service
+import cast
+import clock
 import crafting
-import minds
+import paths
+import reputation
 import talk
 import village
 from ai import decider
@@ -36,7 +39,7 @@ def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
     assert "admit" not in talk.replies(state, npc(state, "npc_hessa_marr"))  # Not a guard: not hers to give.
     bren["down"] = True
     assert "admit" not in talk.replies(state, bren)
-    minds.remember(
+    reputation.remember(
         roderic,
         {
             "kind": "violence",
@@ -104,7 +107,7 @@ def test_a_deal_is_offered_accepted_done_and_rewarded_once():
 
 def run(state, done, limit_ms=90_000, beat=500):
     for _ in range(limit_ms // beat):
-        state["npcs"], heard, state["player"] = minds.advance_world(state, beat, state["sim_time_ms"])
+        state["npcs"], heard, state["player"] = clock.advance_world(state, beat, state["sim_time_ms"])
         state["sim_time_ms"] += beat
         state.setdefault("heard", []).extend(heard)
         if done():
@@ -116,7 +119,7 @@ def test_a_vouch_walks_to_the_captain_and_becomes_his_evidence():
     state = unit_state()
     tomas = npc(state, "npc_tomas_reed")
     talk.speak_for(state, tomas, "they did what I asked.", "Tomas vouched for the stranger.", 7, 0)
-    assert run(state, lambda: any(m["kind"] == "vouch" for m in minds.mind(npc(state, "npc_roderic_vale"))["memories"]))
+    assert run(state, lambda: any(m["kind"] == "vouch" for m in cast.mind(npc(state, "npc_roderic_vale"))["memories"]))
     memory = npc(state, "npc_roderic_vale")["mind"]["memories"][-1]
     assert memory["by"] == "npc_tomas_reed" and memory["source"] == "told_by:npc_tomas_reed"
     assert not state["pending_minds"]  # He weighs it when the stranger comes to him.
@@ -127,7 +130,7 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
     state["player"].update(x=48, y=16)
     assert run(state, lambda: any(e.get("category") == "halt" for e in state["heard"]), limit_ms=30_000)
     halt = next(e for e in state["heard"] if e["category"] == "halt")
-    assert minds.card(npc(state, halt["npc_id"]))["guard"]
+    assert cast.card(npc(state, halt["npc_id"]))["guard"]
     state["heard"].clear()
     assert not run(state, lambda: any(e.get("category") == "halt" for e in state["heard"]), limit_ms=20_000)
     admitted = unit_state()
@@ -139,7 +142,7 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
     # Someone speaking for the stranger to the captain isn't the guards dealing with them: they still stop them (D-55).
     vouched = unit_state()
     vouched["player"].update(x=48, y=16)
-    minds.remember(
+    reputation.remember(
         npc(vouched, "npc_roderic_vale"),
         {
             "kind": "vouch",
@@ -187,14 +190,14 @@ def world(tmp_path, monkeypatch):
         "judge_craft",
         lambda context: service.judge.JudgeCall(status="ok", result=rulings.pop(0), model="stub", attempts=1),
     )
-    monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
+    monkeypatch.setattr(service.attempts, "generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), script=script, rulings=rulings)
 
 
 def walk(http, state, x, y):
     """Walk around buildings (the gate rows count as open once the gate is)."""
     start = (state["player"]["x"], state["player"]["y"])
-    previous, steps = crafting._bfs(start, crafting._blocked_cells(state), 200)
+    previous, steps = paths.bfs(start, paths.blocked_cells(state), 200)
     goal = min(steps, key=lambda c: (abs(c[0] - x) + abs(c[1] - max(y, 9)), steps[c]))
     path = []
     while goal != start:
@@ -289,14 +292,14 @@ def test_bringing_hessa_water_earns_her_word_and_the_captain_lets_you_in(world):
     ).json()["state"]
     assert state["objects"]["gourd_a"]["holder_id"] == "npc_hessa_marr"
     hessa = npc(state, "npc_hessa_marr")
-    assert "with 1 L of water in it" in minds.worst_memory(hessa)["summary"] or any(
+    assert "with 1 L of water in it" in reputation.worst_memory(hessa)["summary"] or any(
         "water" in m["summary"] for m in hessa["mind"]["memories"] if m["kind"] == "gift"
     )
     state = settle(world, state, lambda s: not s.get("pending_minds"))
     state = say(world, state, "npc_hessa_marr", "Here's your water.", answers("answer", done=0.9))
     assert npc(state, "npc_hessa_marr")["mind"]["job"]["kind"] == "vouch"
     state = settle(
-        world, state, lambda s: any(m["kind"] == "vouch" for m in minds.mind(npc(s, "npc_roderic_vale"))["memories"])
+        world, state, lambda s: any(m["kind"] == "vouch" for m in cast.mind(npc(s, "npc_roderic_vale"))["memories"])
     )
     roderic = npc(state, "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
@@ -337,7 +340,7 @@ def test_business_and_demonstrated_value_are_routes_too():
     # Value: the captain saw something useful with his own eyes, and says why he let the stranger in.
     roderic = npc(state, "npc_roderic_vale")
     state["player"].update(x=48, y=13)
-    minds.remember(
+    reputation.remember(
         roderic,
         {
             "kind": "demonstration",
@@ -395,7 +398,7 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     assert "admit" not in talk.moves(state, roderic) and "why_not_yet" in talk.converse_context(
         state, roderic, "Let me in.", {}
     )
-    minds.remember(
+    reputation.remember(
         roderic,
         {
             "kind": "vouch",

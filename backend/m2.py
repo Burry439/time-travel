@@ -6,15 +6,13 @@ putting down is decided in code (crafting.quick).
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import content
+import gear
+import tuning
 
-REACH_CELLS = 2.5
-CARRY_LIMIT_KG = 20.0
 GATE_FIXTURE = "gate_brackets"  # Whatever rests in these holds the gate shut (seed 9, D-42).
 GATE_BAR_SEED = 9
 GATEWAY = (48, 8)  # The middle of the gate opening.
-GATE_HOLD_CELLS = 8.0  # A guard standing this close steps into the gap to stop anyone walking through.
 
 
 def gate_barred(state: dict) -> bool:
@@ -24,9 +22,7 @@ def gate_barred(state: dict) -> bool:
     return any(o.get("installed_in") == GATE_FIXTURE for o in state["objects"].values())
 
 
-_ROOT = Path(__file__).resolve().parents[1]
-WORLD_CONTENT = json.loads((_ROOT / "data" / "content" / "world_objects.json").read_text(encoding="utf-8"))
-_GEOMETRY = json.loads((_ROOT / "data" / "world_geometry.json").read_text(encoding="utf-8"))
+WORLD_CONTENT = content.WORLD_OBJECTS
 
 
 def seed_objects(seed_version: int = 3) -> dict[str, dict]:
@@ -69,15 +65,14 @@ def seed_objects(seed_version: int = 3) -> dict[str, dict]:
     if seed_version >= 5:
         objects.update(_seed5_objects(seed_version))
     if seed_version >= 10:
-        import gear  # What each portable thing is good for in a fight or for the body, as code reads it (D-49).
-
+        # What each portable thing is good for in a fight or for the body, as code reads it (D-49).
         for obj in objects.values():
             if "gear" not in obj and "carry" in obj["capabilities"] and obj.get("materials"):
                 obj["gear"] = gear.classify(obj)
     return objects
 
 
-def _object_record(
+def object_record(
     oid: str,
     name: str,
     x: int,
@@ -90,7 +85,7 @@ def _object_record(
     capacity_l: float = 0.0,
     feature: str | None = None,
 ) -> dict:
-    portable = feature is None and mass <= CARRY_LIMIT_KG
+    portable = feature is None and mass <= tuning.CARRY_LIMIT_KG
     caps = (
         ["carry"] + (["tie"] if "tieable" in flags else []) + (["fill"] if "container" in flags else [])
         if portable
@@ -125,7 +120,7 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
     for spec in WORLD_CONTENT["objects"]:
         if spec.get("since_seed", 5) > seed_version:
             continue  # Older journeys replay the world they began with.
-        record = _object_record(
+        record = object_record(
             spec["id"],
             spec["name"],
             spec["x"],
@@ -160,13 +155,13 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
             record.update(water_l=spec["water_l"], capabilities=["water_source"])
         objects[spec["id"]] = record
     kinds = WORLD_CONTENT["trees"]
-    for obstacle in _GEOMETRY["obstacles"]:
+    for obstacle in content.GEOMETRY["obstacles"]:
         if not obstacle["name"].startswith("Tree"):
             continue
         number = int(obstacle["name"][4:])
         kind = kinds["cypress" if number % 3 == 0 else "oak"]  # Matches the Foliage art in main.tscn.
         tree_id = f"tree_{number:02d}"
-        tree = _object_record(
+        tree = object_record(
             tree_id,
             kind["name"],
             obstacle["cells"][0],

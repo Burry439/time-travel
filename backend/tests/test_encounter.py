@@ -9,8 +9,10 @@ from test_craft import attempt, judged
 from test_talk import npc, said, unit_state
 
 import app as service
+import cast
+import clock
 import encounter
-import minds
+import tuning
 from ai import decider
 
 
@@ -49,17 +51,17 @@ def test_people_who_come_to_address_the_stranger_open_an_encounter():
     state = unit_state()
     state["player"].update(x=48, y=16)  # The gate approach: a guard comes to halt the stranger.
     for _ in range(80):
-        state["npcs"], _, state["player"] = minds.advance_world(state, 500, state["sim_time_ms"])
+        state["npcs"], _, state["player"] = clock.advance_world(state, 500, state["sim_time_ms"])
         state["sim_time_ms"] += 500
         if state.get("encounter"):
             break
     current = state["encounter"]
     guard = npc(state, current["participants"][0])
-    assert current["reason"] == "halt" and minds.card(guard)["guard"] and encounter.hostile(state)
+    assert current["reason"] == "halt" and cast.card(guard)["guard"] and encounter.hostile(state)
     assert guard["mind"]["job"]["kind"] == "encounter"
     assert current["log"][0]["text"].startswith(guard["name"] + ": “")
     where = (guard["x"], guard["y"])
-    state["npcs"], _, _ = minds.advance_world(state, 5_000, state["sim_time_ms"])
+    state["npcs"], _, _ = clock.advance_world(state, 5_000, state["sim_time_ms"])
     assert (npc(state, guard["id"])["x"], npc(state, guard["id"])["y"]) == where  # Holds still, face to face.
 
 
@@ -98,7 +100,7 @@ def test_someone_who_walks_up_mid_encounter_joins_it():
     face_to_face(state, "npc_hessa_marr", reason="talk")
     bren = npc(state, "npc_bren_marr")
     bren.update(x=state["player"]["x"] + 6, y=state["player"]["y"])
-    minds._set_job(
+    cast.set_job(
         bren,
         {
             "kind": "approach",
@@ -111,7 +113,7 @@ def test_someone_who_walks_up_mid_encounter_joins_it():
         },
         0,
     )
-    state["npcs"], _, _ = minds.advance_world(state, encounter.ROUND_MS, state["sim_time_ms"])
+    state["npcs"], _, _ = clock.advance_world(state, tuning.ROUND_MS, state["sim_time_ms"])
     assert state["encounter"]["participants"] == ["npc_hessa_marr", "npc_bren_marr"]
     assert state["encounter"]["reason"] == "confront"  # No longer just a chat.
 
@@ -155,7 +157,7 @@ def world(tmp_path, monkeypatch):
         "judge_craft",
         lambda context: service.judge.JudgeCall(status="ok", result=rulings.pop(0), model="stub", attempts=1),
     )
-    monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
+    monkeypatch.setattr(service.attempts, "generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), replies=replies, choices=choices, rulings=rulings)
 
 

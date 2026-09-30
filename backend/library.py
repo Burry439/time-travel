@@ -19,7 +19,7 @@ VIEWS = ("world", "held", "worn")
 
 def library_dir() -> Path:
     """Beside the journey's own pictures (data/assets/library)."""
-    import attempts  # attempts imports library
+    import attempts  # attempts imports this module; the journey's picture folder is its setting.
 
     return attempts.ASSET_DIR / "library"
 

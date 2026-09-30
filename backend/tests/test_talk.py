@@ -8,8 +8,10 @@ import scenes
 from fastapi.testclient import TestClient
 
 import app as service
-import minds
+import cast
+import reputation
 import talk
+import tuning
 from ai import decider, voice
 
 
@@ -27,7 +29,7 @@ def unit_state():
 
 
 def npc(state, npc_id):
-    return minds.find(state["npcs"], npc_id)
+    return cast.find(state["npcs"], npc_id)
 
 
 def said(reply, impression=2, suspicion=2, anger=0, believes=0.9):
@@ -51,7 +53,7 @@ def test_replies_come_from_code_and_follow_trust():
     talk.regard(darin)["trust"] = 0.6
     assert "share:oren_debt" in talk.replies(state, darin)
     assert not any(k.startswith("call_guard:") for k in talk.replies(state, npc(state, "npc_bren_marr")))
-    minds.mind(darin)["shared"] = ["lodestone"]
+    cast.mind(darin)["shared"] = ["lodestone"]
     assert "share:lodestone" not in talk.replies(state, darin)  # Nothing is told twice.
 
 
@@ -79,8 +81,8 @@ def test_words_alone_cannot_farm_trust_but_evidence_can():
     start = talk.regard(hessa)["trust"]
     for _ in range(20):
         talk._update_regard(hessa, said("answer", impression=4, suspicion=0))
-    assert talk.regard(hessa)["trust"] <= start + talk.TALK_GOODWILL + 1e-9
-    minds.remember(
+    assert talk.regard(hessa)["trust"] <= start + tuning.TALK_GOODWILL + 1e-9
+    reputation.remember(
         hessa,
         {
             "kind": "demonstration",
@@ -103,7 +105,7 @@ def test_words_alone_cannot_farm_trust_but_evidence_can():
 def test_talk_memories_never_push_out_serious_ones():
     state = unit_state()
     jory = npc(state, "npc_jory_venn")
-    minds.remember(
+    reputation.remember(
         jory,
         {
             "kind": "violence",
@@ -116,7 +118,7 @@ def test_talk_memories_never_push_out_serious_ones():
         },
     )
     for event in range(2, 40):
-        minds.remember(
+        reputation.remember(
             jory,
             {
                 "kind": "talk",
@@ -128,8 +130,8 @@ def test_talk_memories_never_push_out_serious_ones():
                 "source": "overheard",
             },
         )
-    assert len(jory["mind"]["memories"]) == minds.MEMORY_LIMIT
-    assert minds.worst_memory(jory)["kind"] == "violence"
+    assert len(jory["mind"]["memories"]) == tuning.MEMORY_LIMIT
+    assert reputation.worst_memory(jory)["kind"] == "violence"
 
 
 @pytest.fixture
@@ -250,7 +252,7 @@ def test_fetching_a_guard_makes_the_guard_think(world):
     )
     state = say(world.http, state, "npc_hessa_marr", "Give me your money or else.").json()["state"]
     hessa = npc(state, "npc_hessa_marr")
-    assert hessa["mind"]["job"]["kind"] == "report" and minds.worst_memory(hessa)["kind"] == "trouble"
+    assert hessa["mind"]["job"]["kind"] == "report" and reputation.worst_memory(hessa)["kind"] == "trouble"
     for _ in range(120):
         if any(p["kind"] == "decide" for p in state["pending_minds"]):
             break
@@ -263,7 +265,7 @@ def test_fetching_a_guard_makes_the_guard_think(world):
             },
         )
         state = reply.json()["state"]
-    assert any(p["kind"] == "decide" and minds.card(npc(state, p["npc_id"]))["guard"] for p in state["pending_minds"])
+    assert any(p["kind"] == "decide" and cast.card(npc(state, p["npc_id"]))["guard"] for p in state["pending_minds"])
 
 
 def test_the_dead_the_busy_and_the_distant_do_not_talk(world):

@@ -6,15 +6,17 @@ from test_encounter import face_to_face, play
 from test_talk import npc, said, unit_state
 
 import encounter
-import minds
+import perception
+import reputation
 import talk
+import tuning
 
 
 def rope_theft(state):
     """Tomas's rope, taken; Tomas saw it and told Kade."""
     state["objects"]["rope_tomas"]["holder_id"] = "player"
     for who, source in (("npc_tomas_reed", "victim"), ("npc_kade_east", "told_by:npc_tomas_reed")):
-        minds.remember(
+        reputation.remember(
             npc(state, who),
             {
                 "kind": "theft",
@@ -35,7 +37,7 @@ def test_fetching_water_from_her_trough_is_not_theft():
     state["player"].update(x=37, y=53)
     state["objects"]["gourd_a"]["holder_id"] = "player"
     commit(state, judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 1.0}))
-    seen = minds.perceive(state, state["last_action"])
+    seen = perception.perceive(state, state["last_action"])
     assert not any(p["memory"]["kind"] == "theft" for p in seen)  # Using isn't taking.
 
 
@@ -45,9 +47,9 @@ def test_giving_it_back_settles_it_for_everyone_who_knew():
     tomas = npc(state, "npc_tomas_reed")
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
     commit(state, judged("give", give={"item_ids": ["rope_tomas"], "recipient_id": "npc_tomas_reed"}))
-    minds.after_deed(state, state["last_action"])
-    assert minds.unresolved_crime(npc(state, "npc_tomas_reed")) is None
-    assert minds.unresolved_crime(npc(state, "npc_kade_east")) is None
+    reputation.after_deed(state, state["last_action"])
+    assert reputation.unresolved_crime(npc(state, "npc_tomas_reed")) is None
+    assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is None
     assert "seize" not in talk.moves(state, npc(state, "npc_kade_east"))
 
 
@@ -55,7 +57,7 @@ def test_an_arrest_answers_for_the_theft():
     state = unit_state()
     rope_theft(state)
     encounter.arrest_player(state, npc(state, "npc_kade_east"), 0)
-    assert minds.unresolved_crime(npc(state, "npc_kade_east")) is None  # Paid for: no second arrest over it.
+    assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is None  # Paid for: no second arrest over it.
 
 
 def test_forgiving_settles_their_own_grudge():
@@ -68,8 +70,8 @@ def test_forgiving_settles_their_own_grudge():
     talk.exchange(
         state, tomas["id"], "I'm sorry. I'll make it right.", said("forgive"), "forgive", "Fine. Let it go.", []
     )
-    assert minds.unresolved_crime(tomas) is None
-    assert minds.unresolved_crime(npc(state, "npc_kade_east")) is not None  # Kade still has his own view.
+    assert reputation.unresolved_crime(tomas) is None
+    assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is not None  # Kade still has his own view.
 
 
 def test_guards_arrest_or_attack_only_for_a_crime_not_put_right():
@@ -85,7 +87,7 @@ def test_guards_arrest_or_attack_only_for_a_crime_not_put_right():
 def test_walking_off_after_making_amends_is_just_walking_off():
     state = unit_state()
     rope_theft(state)
-    minds.settle(state, "given back", item="coil of rope")
+    reputation.settle(state, "given back", item="coil of rope")
     face_to_face(state, "npc_tomas_reed", reason="talk")
     draft, record = play(state, "leave")
     assert not draft.get("fight") and not any(e["kind"] == "shout_for_help" for e in record["entries"])
@@ -97,7 +99,7 @@ def test_words_alone_sour_someone_only_so_far():
     start = dict(talk.regard(oren))
     for _ in range(20):  # Vague, suspicious-sounding answers, over and over.
         talk._update_regard(oren, said("answer", impression=0, suspicion=4))
-    assert talk.regard(oren)["suspicion"] <= start["suspicion"] + talk.TALK_ILLWILL + 1e-9
+    assert talk.regard(oren)["suspicion"] <= start["suspicion"] + tuning.TALK_ILLWILL + 1e-9
 
 
 def test_no_second_decision_per_round():

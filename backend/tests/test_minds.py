@@ -1,13 +1,17 @@
 """NPC minds with a scripted decider: perception, the report chain, attacks on the player, rewind."""
 
-import math
 from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
 import app as service
+import cast
+import clock
 import minds
+import perception
+import routes_minds
+import tuning
 import village
 from ai import decider
 
@@ -33,7 +37,7 @@ def unit_state():
 
 
 def npc(state, npc_id):
-    return minds.find(state["npcs"], npc_id)
+    return cast.find(state["npcs"], npc_id)
 
 
 def place(state, npc_id, x, y):
@@ -78,8 +82,8 @@ def test_only_people_who_can_see_it_remember_it():
     place(state, "npc_tomas_reed", 41, 40)
     place(state, "npc_jory_venn", 45, 41)  # In the open, 5 cells away.
     place(state, "npc_mara_venn", 30, 46)  # Behind the inn (cells 25-43 x 44-49).
-    seen = minds.perceive(state, killing("npc_tomas_reed"))
-    minds.apply_perceptions(state, seen)
+    seen = perception.perceive(state, killing("npc_tomas_reed"))
+    perception.apply_perceptions(state, seen)
     witnesses = {p["npc_id"] for p in seen}
     assert "npc_jory_venn" in witnesses and "npc_mara_venn" not in witnesses
     memory = npc(state, "npc_jory_venn")["mind"]["memories"][-1]
@@ -100,7 +104,7 @@ def test_legal_actions_come_from_code():
 
 def run_until(state, done, limit_ms=60_000, beat=500):
     for _ in range(limit_ms // beat):
-        state["npcs"], heard, state["player"] = minds.advance_world(state, beat, state["sim_time_ms"])
+        state["npcs"], heard, state["player"] = clock.advance_world(state, beat, state["sim_time_ms"])
         state.setdefault("journal", []).extend(heard)
         state["sim_time_ms"] += beat
         if done():
@@ -116,7 +120,7 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     bren = place(state, "npc_bren_marr", 63, 36)  # Out of sight (D-55: sight is 20 cells): he only hears of it.
     place(state, "npc_elin_west", 90, 12)  # The patrols far off, so Bren is the nearest guard to run to.
     place(state, "npc_kade_east", 92, 14)
-    minds.apply_perceptions(state, minds.perceive(state, killing("npc_tomas_reed")))
+    perception.apply_perceptions(state, perception.perceive(state, killing("npc_tomas_reed")))
     jory = npc(state, "npc_jory_venn")
     journal = []
     record = minds.apply_decision(state, jory, answers("report:npc_bren_marr"), state["sim_time_ms"], journal)
@@ -128,7 +132,7 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     told = bren["mind"]["memories"][-1]
     assert told["source"] == "told_by:npc_jory_venn" and "Tomas" in told["summary"]
     assert "Bren" in npc(state, "npc_jory_venn")["mind"]["said"]["text"]
-    request_text, questions = minds.decision_request(state, state["pending_minds"][0])
+    request_text, questions = routes_minds.decision_request(state, state["pending_minds"][0])
     assert "believes" in questions and "Jory told them" in request_text
     state["pending_minds"] = []
     minds.apply_decision(state, bren, answers("attack"), state["sim_time_ms"], journal)
@@ -140,7 +144,7 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     categories = [e["category"] for e in hits]  # An iron spear: a few blows kill the unarmoured stranger.
     assert categories[-1] == "killed" and 2 <= len(categories) <= 3 and set(categories[:-1]) == {"hit"}
     bren = npc(state, "npc_bren_marr")
-    assert math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 2.3
+    assert cast.distance((bren["x"], bren["y"]), state["player"]) <= 2.3
     assert bren["mind"]["job"]["kind"] == "watch"  # Attackers stand down once the stranger is dead.
 
 
@@ -245,7 +249,7 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     scripted.script.extend(answers("attack") for _ in state["pending_minds"])
     body = think(http, state)
     state = body["state"]
-    hessa = minds.find(state["npcs"], "npc_hessa_marr")
+    hessa = cast.find(state["npcs"], "npc_hessa_marr")
     assert hessa["mind"]["job"]["kind"] == "fight" and hessa["mind"]["said"]["text"]
     assert any(e.get("npc_id") == "npc_hessa_marr" for e in state["journal"])  # The player heard her.
     for _ in range(200):  # Hessa punches (fists: 12 a blow), so this takes a while; the stranger stands still.
@@ -270,7 +274,7 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     )
     restored = http.post(f"/runs/{state['run_id']}/rewind").json()
     assert restored["run_id"] != state["run_id"] and restored["event_seq"] == calm_seq
-    assert restored["player"].get("alive", True) and minds.find(restored["npcs"], "npc_hessa_marr").get("health") == 100
+    assert restored["player"].get("alive", True) and cast.find(restored["npcs"], "npc_hessa_marr").get("health") == 100
     assert http.get(f"/runs/{state['run_id']}").json() == state  # The original journey is untouched.
 
 
@@ -281,7 +285,7 @@ def test_shaken_people_reconsider_a_limited_number_of_times():
     place(state, "npc_jory_venn", 45, 41)
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
-    minds.apply_perceptions(state, minds.perceive(state, wounding))
+    perception.apply_perceptions(state, perception.perceive(state, wounding))
     state["pending_minds"] = []
     rethinks = 0
     for _ in range(5):
@@ -290,7 +294,7 @@ def test_shaken_people_reconsider_a_limited_number_of_times():
         if state["pending_minds"]:
             rethinks += 1
             state["pending_minds"] = []
-    assert rethinks == minds.MAX_RETHINKS
+    assert rethinks == tuning.MAX_RETHINKS
 
 
 def test_shouts_about_known_events_do_not_echo_forever():
@@ -301,7 +305,7 @@ def test_shouts_about_known_events_do_not_echo_forever():
     place(state, "npc_hessa_marr", 44, 38)  # Both saw the same attack.
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
-    minds.apply_perceptions(state, minds.perceive(state, wounding))
+    perception.apply_perceptions(state, perception.perceive(state, wounding))
     state["pending_minds"] = []
     minds.apply_decision(state, npc(state, "npc_jory_venn"), answers("shout_for_help"), 0, [])
     assert not any(p["npc_id"] == "npc_hessa_marr" for p in state["pending_minds"])  # Old news to Hessa.
@@ -318,7 +322,7 @@ def test_close_witnesses_see_clearly_and_distant_ones_see_a_scuffle():
     place(state, "npc_darin_ko", 53, 40)  # 12-13 cells: only a scuffle (D-55: clear sight to 10).
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
-    memories = {p["npc_id"]: p["memory"] for p in minds.perceive(state, wounding)}
+    memories = {p["npc_id"]: p["memory"] for p in perception.perceive(state, wounding)}
     assert memories["npc_jory_venn"]["clarity"] == "clear" and "attacked Tomas" in memories["npc_jory_venn"]["summary"]
     assert memories["npc_darin_ko"]["clarity"] == "vague" and "scuffle" in memories["npc_darin_ko"]["summary"]
     assert memories["npc_darin_ko"]["severity"] < memories["npc_jory_venn"]["severity"]
@@ -334,13 +338,13 @@ def test_everyone_deciding_shares_one_request():
     place(state, "npc_kade_east", 80, 24)
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
-    minds.apply_perceptions(state, minds.perceive(state, wounding))
-    text, questions, prefixes = minds.batch_request(state, state["pending_minds"])
+    perception.apply_perceptions(state, perception.perceive(state, wounding))
+    text, questions, prefixes = routes_minds.batch_request(state, state["pending_minds"])
     assert set(prefixes) == {"npc_tomas_reed", "npc_jory_venn", "npc_darin_ko"}
     assert all(f"{prefix}action" in questions for prefix in prefixes.values())
     assert "=== JORY" in text and "=== DARIN" in text
     reply = {f"{prefixes['npc_jory_venn']}action": {"choice": "watch"}, f"{prefixes['npc_darin_ko']}fear": {"score": 1}}
-    assert minds.answers_for(reply, prefixes["npc_jory_venn"]) == {"action": {"choice": "watch"}}
+    assert routes_minds.answers_for(reply, prefixes["npc_jory_venn"]) == {"action": {"choice": "watch"}}
 
 
 def test_voices_fit_the_person_and_never_repeat():
@@ -350,7 +354,7 @@ def test_voices_fit_the_person_and_never_repeat():
     mara = place(state, "npc_mara_venn", 43, 41)
     wounding = killing("npc_jory_venn")
     wounding["harm"]["result"] = "wounded"
-    minds.apply_perceptions(state, minds.perceive(state, wounding))
+    perception.apply_perceptions(state, perception.perceive(state, wounding))
     npc(state, "npc_jory_venn")["health"] = 55
     shouts = {k: v for k, v in minds.legal_actions(state, mara).items() if k.startswith("shout_for_help|")}
     assert shouts and any("my nephew" in text for text in shouts.values())  # Protective of her nephew.
@@ -368,5 +372,5 @@ def test_victims_speak_in_the_first_person():
     place(state, "npc_jory_venn", 41, 40)
     wounding = killing("npc_jory_venn")
     wounding["harm"]["result"] = "wounded"
-    memory = next(p["memory"] for p in minds.perceive(state, wounding) if p["npc_id"] == "npc_jory_venn")
+    memory = next(p["memory"] for p in perception.perceive(state, wounding) if p["npc_id"] == "npc_jory_venn")
     assert memory["short"] == "attacked me"

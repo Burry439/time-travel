@@ -5,7 +5,7 @@ import json
 
 from test_talk import unit_state
 
-import crafting
+import paths
 import store
 
 
@@ -13,8 +13,8 @@ def test_the_yard_is_free_reachable_and_read_for_a_fight():
     state = unit_state()
     yard = [o for o in state["objects"].values() if o["id"].startswith("yard_")]
     assert len(yard) >= 40 and state["seed_version"] >= 11
-    blocked = crafting._blocked_cells(state)
-    _, steps = crafting._bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
+    blocked = paths.blocked_cells(state)
+    _, steps = paths.bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
     cells = set()
     for obj in yard:
         cell = (obj["x"], obj["y"])
@@ -33,8 +33,8 @@ def test_the_wainwrights_notebook_is_readable_and_names_real_things():
     state = unit_state()
     book = state["objects"]["yard_recipe_book"]
     assert book["readable"] == "recipe_book" and book["owner_id"] is None and "carry" in book["capabilities"]
-    blocked = crafting._blocked_cells(state)
-    _, steps = crafting._bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
+    blocked = paths.blocked_cells(state)
+    _, steps = paths.bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
     assert (book["x"], book["y"]) in steps
     seed11 = store.initial_state({"id": "old1", "mode": "developer", "seed_version": 11, "geometry_version": 3})
     assert "yard_recipe_book" not in seed11["objects"] and "yard_iron_bar" in seed11["objects"]
