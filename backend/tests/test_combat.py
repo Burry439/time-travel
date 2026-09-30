@@ -16,7 +16,9 @@ import consequences
 import conversation
 import gear
 import judge_view
+import minds
 import perception
+import speech
 import tuning
 import village
 
@@ -417,3 +419,21 @@ def test_space_outside_a_fight_is_an_assault_like_any_other():
     assert hessa["health"] < 100 and not villager.get("fight")
     assert hessa["mind"]["memories"][-1]["kind"] == "violence"  # She remembers, and decides what to do (the decider).
     assert any(p["npc_id"] == "npc_hessa_marr" and p["kind"] == "decide" for p in villager["pending_minds"])
+
+
+def test_what_is_taken_from_someone_no_longer_arms_or_protects_them():
+    """A card says what someone began with; what they fight with and wear is what they have now (D-49)."""
+    state = unit_state()
+    bren = npc(state, "npc_bren_marr")
+    for oid in set(bren["equipped"].values()):
+        state["objects"][oid]["holder_id"] = "player"
+    bren["equipped"] = {}
+    assert combat.npc_weapon(state, bren)["class"] == "fists"
+    assert gear.layers(state, bren, "body") == []
+    state["player"].update(x=bren["x"] + 1, y=bren["y"])
+    seen = next(p for p in judge_view.people_nearby(state) if p["id"] == "npc_bren_marr")
+    assert seen["armour"] == "no armour" and seen["weapon"] == "none"
+    assert cast.armed_with(state, bren) is None and speech.slots(state, bren)["weapon"] == "fists"
+    assert not any(key.startswith("threaten") for key in minds.options_for(state, bren))  # Nothing to brandish.
+    armed = npc(state, "npc_oren_dast")
+    assert cast.armed_with(state, armed) == "spear"  # Still holding his own: his card's word for it.

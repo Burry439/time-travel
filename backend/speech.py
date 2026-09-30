@@ -78,6 +78,6 @@ def slots(state: dict, npc: dict) -> dict:
         "item": (worst or {}).get("item") or "things",
         "owner": name,
         "owners": "mine" if me else f"{victim['name']}'s" if victim else "someone's",
-        "weapon": cast.card(npc).get("weapon") or "fists",
+        "weapon": cast.armed_with(state, npc) or "fists",
         "guard": "friend",
     }

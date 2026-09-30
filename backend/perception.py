@@ -365,7 +365,7 @@ def _react_at_once(state: dict, npc: dict, memory: dict, barked: bool) -> bool:
     guard = cast.card(npc).get("guard")
     if memory["kind"] == "theft":
         feelings["anger"] = max(feelings.get("anger", 0.0), 0.67 if victim else 0.34)
-    elif guard or victim and cast.card(npc).get("weapon"):
+    elif guard or victim and cast.armed_with(state, npc):
         feelings["anger"] = max(feelings.get("anger", 0.0), 0.67)
     else:
         feelings["fear"] = max(feelings.get("fear", 0.0), 0.67)

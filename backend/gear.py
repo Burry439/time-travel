@@ -28,18 +28,6 @@ COVERS = BODY_SLOTS + ("neck",)  # A coif or gorget covers the throat; nothing i
 AREAS = tuple(SIT["areas"])
 FAMILIES = ("blow", "missile", "pour", "choke", "other")
 RESULTS = ("missed", "blocked", "deflected", "wounded", "knocked_out", "disabled", "killed")
-# Card strings from before seed 10 (D-41), for journeys that began then.
-LEGACY_WEAPONS = {
-    "fists": "fists",
-    "knife": "knife",
-    "smith's hammer": "hammer",
-    "carpenter's hammer": "hammer",
-    "spear": "short_spear",
-    "short spear": "short_spear",
-    "sword": "long_sword",
-    "bow": "bow",
-}
-LEGACY_ARMOUR = {"mail": "mail", "padded": "padded", "none": None}
 
 
 # --- What a thing is ---------------------------------------------------------------------------------------------
@@ -352,8 +340,17 @@ def held(state: dict, person: dict, hand: str = "right") -> dict | None:
     return worn(state, person, hand)
 
 
+def weapon_in_hand(state: dict, person: dict) -> dict | None:
+    """The weapon in either hand (the right first), if any."""
+    for hand in HAND_SLOTS:
+        obj = held(state, person, hand)
+        if obj is not None and of(obj)["kind"] == "weapon":
+            return obj
+    return None
+
+
 def layers(state: dict, person: dict, slot: str) -> list[dict]:
-    """The armour profiles covering a body slot, outermost last (legacy card armour for older journeys)."""
+    """The armour profiles covering a body slot, outermost last."""
     found, seen = [], set()
     for key in (k for k in equipped(person) if k in COVERS):
         obj = worn(state, person, key)
@@ -366,10 +363,6 @@ def layers(state: dict, person: dict, slot: str) -> list[dict]:
         ):
             seen.add(obj["id"])  # A mail shirt fills the body and arms slots but is one layer.
             found.append(armour_profile(obj, record))
-    if not found and slot == "body" and person.get("card_armour"):
-        cls = LEGACY_ARMOUR.get(person["card_armour"])
-        if cls:
-            found.append(armour_profile(None, {"class": cls, "quality": "fair"}))
     return found
 
 

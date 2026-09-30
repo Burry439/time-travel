@@ -119,9 +119,7 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
 
 
 def _worn_words(state: dict, npc: dict) -> str:
-    """What someone has on, in words, for the judge (their card's description for journeys before seed 10)."""
-    if not npc.get("equipped"):
-        return cast.card(npc).get("armor_text", "no armour")
+    """What someone has on, in words, for the judge."""
     names = []
     for slot in gear.BODY_SLOTS:
         obj = gear.worn(state, npc, slot)
@@ -131,8 +129,6 @@ def _worn_words(state: dict, npc: dict) -> str:
 
 
 def _held_words(state: dict, npc: dict) -> str:
-    if not npc.get("equipped"):
-        return cast.card(npc).get("weapon") or "none"
     held = [o["name"] for h in gear.HAND_SLOTS if (o := gear.held(state, npc, h))]
     return ", ".join(dict.fromkeys(held)) or "none"
 

@@ -56,41 +56,14 @@ def down(npc: dict) -> bool:
 # --- Who holds what --------------------------------------------------------------------------------------------
 
 
-def body(npc: dict) -> dict:
-    """A person as gear.hit sees them: what they wear, or (journeys from before seed 10) their card's armour."""
-    if npc.get("equipped"):
-        return npc
-    return {**npc, "card_armour": cast.card(npc).get("armor", "none")}
-
-
 def npc_weapon(state: dict, npc: dict) -> dict:
-    for hand in gear.HAND_SLOTS:
-        obj = gear.held(state, npc, hand)
-        if obj is not None and gear.of(obj)["kind"] == "weapon":
-            return gear.weapon(obj)
-    name = cast.card(npc).get("weapon") or "fists"
-    cls = gear.LEGACY_WEAPONS.get(name, "fists")
-    if cls == "fists":
-        return gear.weapon(None)
-    spec = gear.WEAPONS[cls]
-    stand_in = {
-        "id": None,
-        "name": name,
-        "materials": ["iron", "wood"],
-        "mass_kg": spec.get("ref_mass", 1.5),
-        "length_m": None,
-        "flags": ["rigid", "sharp_edge"],
-        "gear": {"kind": "weapon", "class": cls, "covers": [], "quality": "fair"},
-    }
-    return {**gear.weapon(stand_in), "name": name}
+    """What this person fights with: the weapon in their hands, or their fists (never what their card began with)."""
+    return gear.weapon(gear.weapon_in_hand(state, npc))
 
 
 def weapon_name(state: dict, npc: dict) -> str:
-    for hand in gear.HAND_SLOTS:
-        obj = gear.held(state, npc, hand)
-        if obj is not None and gear.of(obj)["kind"] == "weapon":
-            return obj["name"]
-    return cast.card(npc).get("weapon") or "fists"
+    obj = gear.weapon_in_hand(state, npc)
+    return obj["name"] if obj else "fists"
 
 
 def _their(state: dict, npc: dict) -> str:
@@ -588,10 +561,10 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
         _react(state, npc, "deflected", swing, at)
         return
     if profile["class"] == "container":
-        outcome = gear.hit(state, body(npc), profile, family="pour", liquid=obj or {})
+        outcome = gear.hit(state, npc, profile, family="pour", liquid=obj or {})
         change_object(state, obj["id"], water_l=0.0)
     else:
-        outcome = gear.hit(state, body(npc), profile, aware=aware)
+        outcome = gear.hit(state, npc, profile, aware=aware)
     sparring = bool(fight.get("spar")) and npc["id"] in fight.get("attackers", [])
     if sparring:  # Practice: blows are pulled; they bruise, never cut, break or knock anyone out.
         outcome.update(
@@ -803,7 +776,7 @@ def _missile_lands(state: dict, npcs: list[dict], shot: dict, journal: list[dict
             _log(state, "player", "blocked", f"{npc['name']} catches it on the {shield['name']}." + worn, at, journal)
             _react(state, npc, "deflected", {"object_id": shot.get("object_id")}, at)
         else:
-            outcome = gear.hit(state, body(npc), profile, aware=aware)
+            outcome = gear.hit(state, npc, profile, aware=aware)
             result = gear.apply(npc, outcome, at)
             _fell(npc, result, at)
             _log(state, "player", "hit", _blow_words(npc, profile, result, outcome), at, journal)

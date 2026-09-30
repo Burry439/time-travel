@@ -271,7 +271,7 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
     if (
         crime is not None
         and state["player"].get("alive", True)
-        and (me.get("guard") or me.get("weapon"))
+        and (me.get("guard") or cast.armed_with(state, npc))
         and npc["id"] not in ((state.get("fight") or {}).get("attackers") or [])
     ):
         deadly = reputation.knows_a_crime(npc)

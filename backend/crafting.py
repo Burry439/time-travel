@@ -11,7 +11,6 @@ import copy
 import math
 
 import cast
-import combat
 import gear
 import heat
 import judge_view
@@ -863,7 +862,7 @@ def _blow(
         profile = gear.weapon(weapon)
     outcome = gear.hit(
         state,
-        combat.body(npc),
+        npc,
         profile,
         area=area,
         aware=aware,

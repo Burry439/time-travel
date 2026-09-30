@@ -49,6 +49,7 @@ ACTIVITY_WORDS = {
 def options_for(state: dict, npc: dict) -> dict[str, dict]:
     """Every option code can carry out for this person right now: action, target, line, description."""
     name, me = npc["name"], cast.card(npc)
+    armed = cast.armed_with(state, npc)
     worst = reputation.worst_memory(npc)
     victim = cast.find(state["npcs"], (worst or {}).get("victim") or "")
     slots_ = speech.slots(state, npc)
@@ -77,11 +78,11 @@ def options_for(state: dict, npc: dict) -> dict[str, dict]:
         recently = (cast.mind(npc).get("confronted_at") or -(10**9)) > state["sim_time_ms"] - 60_000
         if not recently:
             bases.append(("confront", f"{name} walks up to the stranger and demands an explanation.", "confront", None))
-            if me.get("weapon"):
+            if armed:
                 bases.append(
                     (
                         "threaten",
-                        f"{name} walks up to the stranger brandishing their {me['weapon']}, "
+                        f"{name} walks up to the stranger brandishing their {armed}, "
                         "warning them off without striking yet.",
                         "threaten",
                         None,
@@ -96,7 +97,7 @@ def options_for(state: dict, npc: dict) -> dict[str, dict]:
                         None,
                     )
                 )
-        weapon = f" with their {me['weapon']}" if me.get("weapon") else " with bare hands"
+        weapon = f" with their {armed}" if armed else " with bare hands"
         bases.append(
             ("attack", f"{name} attacks the stranger{weapon} ({me.get('combat', 'no fighter')}).", "attack", None)
         )
@@ -161,7 +162,9 @@ def situation(state: dict, npc: dict) -> str:
         f"{me['personality']}",
         f"Values: {me['values']}. Fears: {me['fears']}.",
         f"Authority: {me['authority']}",
-        f"Armed with a {me['weapon']}; {me['combat']}." if me.get("weapon") else f"Unarmed; {me['combat']}.",
+        f"Armed with a {armed}; {me['combat']}."
+        if (armed := cast.armed_with(state, npc))
+        else f"Unarmed; {me['combat']}.",
         *persona.sheet_lines(state, npc),
         f"{me['name']} is {cast.condition(npc.get('health', 100), npc.get('alive', True))} and was "
         f"{ACTIVITY_WORDS.get((npc.get('controller') or {}).get('activity'), 'standing about')}.",

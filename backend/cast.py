@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 import content
+import gear
 
 CARDS: dict[str, dict] = content.CARDS
 
@@ -54,6 +55,17 @@ def distance(a, b) -> float:
 
 def _at(where) -> tuple:
     return (where["x"], where["y"]) if isinstance(where, dict) else where
+
+
+def armed_with(state: dict, npc: dict) -> str | None:
+    """What this person is armed with, in words: their own weapon as their card names it, anything else they've
+    picked up by its name, or None when their hands hold no weapon (D-49: what they have now, not what they began
+    with)."""
+    obj = gear.weapon_in_hand(state, npc)
+    if obj is None:
+        return None
+    own = card(npc).get("weapon") if obj.get("owner_id") == npc["id"] else None
+    return own or obj["name"]
 
 
 def condition(health: float, alive: bool = True) -> str:
