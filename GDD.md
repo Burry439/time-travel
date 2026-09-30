@@ -134,34 +134,44 @@ Keep it short, dismissible, and free of hints.
 
 > You come from the future. What you know may be useful here, but you have only the clothes you're wearing. Look around, talk to people, and try your ideas: describe what you want to do in your own words. People respond to what they see, what they understand, and what they want.
 
-### Tutorial and the device (D-50)
+### Tutorial and the device (D-50, D-52)
 
-**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json`, `backend/tutorial.py`.
+**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json`, `backend/tutorial.py`, `scripts/ui/tutorial_guide.gd`.
 
-**The device** is the damaged machine that brought the stranger here. Only the stranger hears it. It knows modern science and the controls, but only what the stranger has seen or been told: never people's secrets or anything unseen.
+**The device** is the damaged machine that brought the stranger here. Only the stranger hears it. It knows modern science and the controls, but only what the stranger has seen or been told: never people's secrets or anything unseen. **H asks it anything** (`device_v1`, one call). In the main game it answers only when asked, gives directions rather than solutions, and can be switched off in Settings.
 
-**The story's lines are written in advance**, so the tutorial never waits on a model. **H asks the device anything** (`device_v1`, one call). In the main game it answers only when asked, gives directions rather than solutions, and can be switched off in Settings.
+**A guided, linear walk-through (D-52):**
+- **Cards.** Each step opens with the device's cards: big, in the centre of the screen, with the **whole world paused** (the clock, people, even a fight). Keys are drawn as key caps. **Next** (Enter or Space) and **Back**; the player reads at their own pace.
+- **One task.** Then a single task sits on a banner at the top ("4/16 · Pick up the plantain leaves: left-click them"), and a pulsing **ring** marks what it's about, with an **arrow** at the screen's edge when it's out of sight.
+- **Linear.** A step counts only once its cards are read (`tutorial/read`), and only one step completes at a time, so every step's cards are seen. A task already done completes the moment its cards are read.
+- **Praise.** When a task is done, a short praise card, then the next step's cards.
+- **Help on demand.** **H** (or "Stuck?") shows the step's written help as cards, most specific last, and offers to ask the device. After 60 s the banner pulses "Stuck? Press H". Nothing appears unasked.
+- **Type it for me.** Where a step gives exact words ("crush the plantain leaves into a poultice for a burn"), a button fills the dialogue bar, addressed to the right person, and the player presses Enter. The last making step shows the words without the button.
+- **UI lessons** (a closer look, the pack) are reported by the client (`tutorial/ui`) and saved as events.
 
-**Nine steps**, each checked by code as an outcome in the world (any way the player finds counts; a step already done completes at once):
+**Sixteen steps**, each checked by code:
+1. Welcome.
+2. Walk into the ring.
+3. Right-click the plantain.
+4. Pick it up.
+5. Pick up the flint and the dry grass.
+6. Open the pack.
+7. Jory's cry: go to him.
+8. Talk to him.
+9. Make a poultice.
+10. Treat his burn.
+11. Kade comes over and lends his staff and shield.
+12. Hold the staff.
+13. Kade's bout: pulled blows, no crime, no arrest.
+14. Pick up the bent iron nail.
+15. Show Jory sparks from flint and iron catching in dry grass (or anything else that works).
+16. The city: the yard and the wainwright's notebook, then **Carry on** or **Begin a fresh journey**.
 
-1. **Awake:** walk up the road.
-2. **Your hands:** pick up two things.
-3. **A cry from the smithy:** Jory has burnt his arm; speak to him. Mara joins in.
-4. **Something for the burn:** make any remedy that treats a burn.
-5. **Treat Jory.**
-6. **Arm yourself:** Kade lends a practice staff and a wicker shield.
-7. **Kade's bout:** a sparring bout with pulled blows. No bleeding, no crime, no arrest; win, lose or yield.
-8. **Something they've never seen:** show anyone a working invention.
-9. **The city:** the real goal, then **Carry on** or **Begin a fresh journey**.
+The suggested words for 9, 10 and 15 are checked against the live judge (`evals/run_tutorial_live.py`). The story uses its own problems, never the gate beam, bar or compass, so the main game's routes stay undiscovered (A8).
 
-The story uses its own problems, never the gate beam, bar or compass, so the main game's routes stay undiscovered (A8).
+**Mistakes stay real:** a death or an arrest becomes a card, with **Rewind to the last calm moment** on it (also in the pause menu).
 
-**Hints and mistakes:** stuck on a step, the device offers its written hints after 45 s, 2 min and 4 min. Mistakes stay real: the device reacts to a death or an arrest and points to **Rewind to the last calm moment**, now also in the pause menu.
-
-**On screen:**
-- the objective panel shows the step (1/9 and its goal);
-- the device's lines type out in their own steel-blue panel;
-- the journal has a **Device** tab.
+**Also on screen:** the objective panel steps aside in the tutorial; the journal has a **Device** tab with everything it said.
 
 ### The loop
 
@@ -176,6 +186,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
+| D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
 | D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
 | **Quick action** | Pick up a loose stone, put something down, inspect | Deterministic rules, no AI | < 100 ms |
 | **Try Something** | "Tie the two branches together with the cord." "Rub the needle on the lodestone many times in one direction, then float it on a sliver of wood in the bowl of water." | Interpreter → validator → (rules, or physics judge if novel) → reducer | Rules: < 1 s. Judge: aim for p95 ≤ 12 s |
@@ -440,7 +451,7 @@ These are declared simulation assumptions, not real-world engineering data. The 
 
 ### 4.7 Object manifest for the demo
 
-> **Built so far (seed 6).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). **Seed 6 (D-27)** adds people's own stock: Darin's lodestone, linen, cordage and bronze mirror; Mara's iron needles and nails; Hessa's clay bowl and cup; and the public gate trough (60 L). Entries may carry `owner_id`, `since_seed` (older journeys replay unchanged) and `water_l`. Add materials by editing that file; `tools/generate_material_art.py` paints them. **Seed 11 (D-51)** adds the old wainwright's yard in the bottom-right corner (cells 75–89, 52–66): 48 free, painted materials for experimenting with weapons and armour: iron bars, a steel billet, bronze, copper, iron plates, nails, rivets, chain and wire; an unfinished knife blade, a sickle blade, a spearhead and an axe head; flint, chert, obsidian, glass, river stones for a sling, a whetstone and a hammerstone; ash and yew staves, oak, elm planks, an axe haft, arrow shafts, withies and birch poles; rawhide, tanned leather, thongs, sinew, flax cord, hemp rope, linen, quilted padding and wool; antler, horn and bone; hide glue, pitch, beeswax, feathers and charcoal. The rest of the table below is still the target.
+> **Built so far (seed 6).** The 7 hand-placed props, 7 seed-4 road materials, and the entries in `data/content/world_objects.json`: 18 public materials spread across the map (including two iron items), 3 fellable saplings, and all 19 map trees as fellable objects (oak 900 kg, cypress 350 kg). **Seed 6 (D-27)** adds people's own stock: Darin's lodestone, linen, cordage and bronze mirror; Mara's iron needles and nails; Hessa's clay bowl and cup; and the public gate trough (60 L). Entries may carry `owner_id`, `since_seed` (older journeys replay unchanged) and `water_l`. Add materials by editing that file; `tools/generate_material_art.py` paints them. **Seed 11 (D-51)** adds the old wainwright's yard in the bottom-right corner (cells 75–89, 52–66): 48 free, painted materials for experimenting with weapons and armour: iron bars, a steel billet, bronze, copper, iron plates, nails, rivets, chain and wire; an unfinished knife blade, a sickle blade, a spearhead and an axe head; flint, chert, obsidian, glass, river stones for a sling, a whetstone and a hammerstone; ash and yew staves, oak, elm planks, an axe haft, arrow shafts, withies and birch poles; rawhide, tanned leather, thongs, sinew, flax cord, hemp rope, linen, quilted padding and wool; antler, horn and bone; hide glue, pitch, beeswax, feathers and charcoal. **Seed 12 (D-52)** adds **the wainwright's notebook** at the yard's edge, a readable object (`readable: recipe_book`): click it in the pack (or **Read it** on its card) and it opens as a book, with 33 ways to make weapons, missiles, shields, armour, remedies and tools from what lies in the yard. Each has what you need, how, what it's good for, and words to try, with **Type it for me** (`data/content/recipe_book.json`). It is advice in the world, not a recipe system: every attempt is still judged, nothing is keyed to its words, and it covers no way into the city. The rest of the table below is still the target.
 
 **Status: CURRENT** (`data/content/objects.json`)
 
@@ -2015,6 +2026,41 @@ Changes to this document: …
 - Mara said "I'll pull him off if I can" mid-fight: helping the stranger in a fight has no move yet.
 - The Godot MCP bridge was stuck ("Too many open files"), so testing used the headless console tools.
 - Old journeys (seed 10) have no yard; start a new journey to use it.
+
+### Retro: the guided tutorial and the wainwright's notebook (D-52), 30 Sep 2026
+
+**Built:**
+
+- `data/content/tutorial.json` v2: 16 steps, each with cards, a task, a focus, help, and optional suggested words.
+- `tutorial.read_cards`, `tutorial.ui_done`, and a `tick` that completes one read step at a time; checks `carrying_id` and `ui`; routes `tutorial/read` and `tutorial/ui`.
+- Client: `scripts/ui/tutorial_guide.gd` (cards, banner, help, reactions, Type it for me, key caps), `scripts/ui/tutorial_focus.gd` (the ring), `scripts/ui/book.gd`, and the Read button on the inspect card. Cards pause everything, fights included. The device panel and the objective panel step aside in the tutorial.
+- `data/content/recipe_book.json` (33 recipes) and the notebook object (seed 12), painted.
+- `tools/shrink_material_art.gd`: the committed art went from 154 MB to 11 MB.
+- `evals/run_tutorial_live.py`.
+
+**Evidence:**
+
+- 210 backend tests pass. They include: nothing counts until the cards are read; one step per tick; the whole story by outcomes; ui checks over HTTP with exact replay; every step well formed; the notebook readable, reachable, seed 12 only, with every ingredient named as it lies in the world and no city routes.
+- **Live:** the suggested words work 9/9 (3 runs each): the poultice, putting it on Jory's burn, and sparks from flint and iron catching in dry grass shown to Jory.
+- **Smoke tests:** `smoke_tutorial`, rewritten, passes on stub:
+  - the first card is centred and the clock stays still behind it;
+  - a help card stops even the bout's clock;
+  - the ring, a closer look, picking up and the pack each move the story on;
+  - Type it for me fills the bar for Jory;
+  - the notebook opens, and its words reach the bar.
+  - All other smoke tests pass.
+- Screenshots: `tutorial_card`, `tutorial_banner`, `tutorial_keys`, `recipe_book`, `wainwright_yard`.
+
+**Lessons:**
+
+- A frame long enough stalls the network too: Godot's request timers run on frame time, so one 5 s frame timed out the first request of a journey. The yard's 48 pictures tipped it over.
+- For a tutorial, pausing is kinder than timers. Whatever the player has to read should wait for them.
+
+**To watch:**
+
+- A first-time player, start to finish: time taken, and which help cards they open.
+- Kade walks from his patrol at step 11; if he's far off, the wait is visible.
+- Future painted art needs `tools/shrink_material_art.gd` (the art tool now says so).
 
 ---
 

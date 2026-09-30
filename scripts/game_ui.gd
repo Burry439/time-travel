@@ -44,6 +44,7 @@ var card: PanelContainer
 var cursor: Node
 var sounds: Node
 var device: Control # The device from the future (D-50): scripts/ui/device.gd.
+var guide: Control # The tutorial's cards, task banner and marker (D-52): scripts/ui/tutorial_guide.gd.
 var modal: PanelContainer
 var modal_box: VBoxContainer
 var modal_kind := ""
@@ -203,6 +204,9 @@ func build(owner_game: Node2D) -> void:
 	win_box.add_child(game.victory_route)
 	win_box.add_child(button("Return to title", game._back_to_menu))
 	game.victory_panel.hide()
+	guide = preload("res://scripts/ui/tutorial_guide.gd").new()
+	root.add_child(guide) # Above everything else: while a card is up, the world waits.
+	guide.build(self, game)
 
 	cursor = preload("res://scripts/world_cursor.gd").new()
 	cursor.game = game
@@ -274,7 +278,7 @@ func refresh() -> void:
 
 ## Movement stops while a panel is open or the dialogue bar has you typing.
 func blocks_movement() -> bool:
-	return modal.visible or bar.visible or game.menu.visible or game.victory_panel.visible
+	return modal.visible or bar.visible or game.menu.visible or game.victory_panel.visible or guide.is_open()
 
 
 ## Screen pixels covered along the bottom: the dialogue bar when it's open, otherwise the pack.
@@ -305,7 +309,8 @@ func enter_run(state: Dictionary) -> void:
 	load_visited(str(state.get("run_id", "")))
 	note_cell(Vector2i(int(state.player.x), int(state.player.y)))
 	hud.refresh()
-	hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
+	if state.get("scenario", "village") != "tutorial": # The tutorial teaches these one at a time (D-52).
+		hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
 
 
 func leave_run() -> void:
@@ -510,6 +515,19 @@ func open_journal(tab := "leads") -> void:
 	var book := preload("res://scripts/ui/journal_book.gd").new()
 	body.add_child(book)
 	book.build(self, game, tab)
+	guide.report("journal")
+
+
+## A readable thing (the wainwright's notebook, D-52): the book, big, with the world paused.
+func open_book(obj: Dictionary) -> void:
+	if game.run_state.is_empty() or game.request_busy or obj.get("readable") == null:
+		return
+	card.hide()
+	var body := begin_modal(str(obj.name).capitalize(), "book", Vector2(1060, 660), false)
+	var book := preload("res://scripts/ui/book.gd").new()
+	body.add_child(book)
+	book.build(self, game, str(obj.readable))
+	guide.report("book")
 
 
 ## Everything you carry, when there's more than the pack bar shows (I).
@@ -523,6 +541,7 @@ func open_inventory() -> void:
 	if game.run_state.is_empty() or game.request_busy:
 		return
 	var body := begin_modal("Pack & gear", "inventory", Vector2(760, 620))
+	guide.report("pack")
 	var player: Dictionary = game.run_state.get("player", {})
 	var carried: Array[Dictionary] = hud.carried_objects()
 	var conditions: Array = player.get("conditions", []) if typeof(player.get("conditions")) == TYPE_ARRAY else []
@@ -705,6 +724,10 @@ func inspect(id: String) -> void:
 
 ## A left click on something in your pack: point at it in the dialogue bar.
 func item_clicked(id: String) -> void:
+	var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
+	if obj.get("readable") != null and not bar.visible:
+		open_book(obj) # A book is for reading (D-52).
+		return
 	if bar.visible:
 		bar.add_reference(id)
 	else:

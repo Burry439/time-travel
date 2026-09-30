@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate). Seed 11 (D-51): the old wainwright's yard in the bottom-right corner, 48 free materials (metals, stone, wood, hide, cord, bone, glue) for experimenting with weapons and armour.",
+ "notes": "Loose public materials and fixed features added in seed 5. Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), since_seed (added in that world seed, so older journeys replay unchanged), water_l (a fixed water source such as a trough). feature 'fire' with burning true: a lasting heat source (seed 8). no_sprite: part of a building's art. installed_in: a fixture it starts fitted into (seed 9: the cracked bar across the gate). Seed 11 (D-51): the old wainwright's yard in the bottom-right corner, 48 free materials (metals, stone, wood, hide, cord, bone, glue) for experimenting with weapons and armour. Seed 12 (D-52): the wainwright's notebook, a readable recipe book, at the yard's edge.",
  "since_seed": 5,
  "objects": [
   {
@@ -2099,6 +2099,24 @@
     "combustible"
    ],
    "since_seed": 11
+  },
+  {
+   "id": "yard_recipe_book",
+   "name": "wainwright's notebook",
+   "x": 79,
+   "y": 50,
+   "mass_kg": 0.4,
+   "materials": [
+    "leather",
+    "cloth"
+   ],
+   "description": "A battered leather-bound notebook of how to make weapons, armour, remedies and tools from what lies in the yard. Click it in your pack to read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "since_seed": 12,
+   "readable": "recipe_book"
   }
  ],
  "trees": {

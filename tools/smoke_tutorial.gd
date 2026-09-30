@@ -1,11 +1,13 @@
 extends SceneTree
-## The tutorial, "The first morning" (GDD D-50). Needs the backend with AI_MODE=stub:
+## The tutorial, "The first morning" (GDD D-50, D-52). Needs the backend with AI_MODE=stub:
 ##   $env:AI_MODE='stub'; ./tools/run_m0.ps1
 ##   Godot --headless --path . --script res://tools/smoke_tutorial.gd  [-- --capture]
-## The title's Tutorial button starts one; the device speaks; walking up the road and picking up two things moves
-## the story on; asking the device answers (its written hint on stub); then, in a developer tutorial journey, the
-## steps the stub judge can't do are skipped, Kade walks over and lends his staff, Pack & gear puts it in hand,
-## the bout is fought, and the closing card appears.
+## The title's Tutorial button starts one. The first card is up, big and centred, and the world waits (no clock).
+## Next through the cards; the banner and the marker show the task; walking into the ring, a closer look, picking
+## things up and opening the pack each move the story on, one step at a time. Then, in a developer tutorial
+## journey: "Type it for me" fills the dialogue bar for Jory; the steps the stub judge can't do are skipped; Kade
+## lends his staff, Pack & gear puts it in hand, the bout is fought (and a help card stops even the bout's clock);
+## the last cards lead to the closing card. Finally the wainwright's notebook opens, and its Type it for me works.
 var scene: Node2D
 var capture := false
 
@@ -25,7 +27,7 @@ func check(condition: bool, reason: String) -> bool:
 func screenshot(name: String) -> void:
 	if not capture:
 		return
-	await create_timer(0.4).timeout
+	await create_timer(0.5).timeout
 	await RenderingServer.frame_post_draw
 	check(root.get_texture().get_image().save_png("res://docs/screenshots/" + name + ".png") == OK, "Screenshot failed")
 
@@ -44,7 +46,7 @@ func step_id() -> String:
 	var tutorial = scene.run_state.get("tutorial")
 	if typeof(tutorial) != TYPE_DICTIONARY or tutorial.get("done", false):
 		return "done"
-	return str(scene.ui.device.story.steps[int(tutorial.step)].id)
+	return str(scene.ui.guide.steps[int(tutorial.step)].id)
 
 
 func wait_for_step(wanted: String, seconds := 20.0) -> bool:
@@ -53,6 +55,18 @@ func wait_for_step(wanted: String, seconds := 20.0) -> bool:
 		await create_timer(0.25).timeout
 		waited += 0.25
 	return step_id() == wanted
+
+
+## Press Next through whatever cards are up (praise, then the step's own), and wait for the story to hear it.
+func read_cards() -> void:
+	for _i in 30:
+		await create_timer(0.15).timeout
+		if scene.ui.guide.is_open():
+			scene.ui.guide._next()
+		elif not scene.ui.guide.sending:
+			await create_timer(0.3).timeout
+			if not scene.ui.guide.is_open():
+				return
 
 
 func walk(cells: Array) -> bool:
@@ -80,6 +94,7 @@ func skip() -> void:
 	var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/tutorial/skip" % scene.run_state.run_id, {})
 	if reply.ok:
 		scene._accept_state(reply.data.state)
+	await read_cards() # The next step counts only once its cards are read.
 
 
 func _run() -> void:
@@ -89,7 +104,6 @@ func _run() -> void:
 	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
-	# The title's Tutorial button: a tutorial journey, and the device speaks.
 	var start := find_button(scene.menu, "Tutorial (first time)")
 	if not check(start != null, "No Tutorial button on the title"):
 		return
@@ -98,47 +112,102 @@ func _run() -> void:
 		await create_timer(0.1).timeout
 		if not scene.run_state.is_empty():
 			break
-	if not check(scene.run_state.get("scenario") == "tutorial" and step_id() == "awake", "The tutorial didn't start"):
+	if not check(scene.run_state.get("scenario") == "tutorial" and step_id() == "welcome", "The tutorial didn't start"):
 		return
-	await create_timer(1.5).timeout
-	if not check(scene.ui.device.panel.visible and not str(scene.ui.device.words.text).is_empty(), "The device didn't speak"):
+	# The first card: big, centred, and the world waits.
+	await create_timer(0.3).timeout
+	var guide: Control = scene.ui.guide
+	if not check(guide.is_open() and "device" in str(guide.words.text), "No first card"):
 		return
-	if not check(scene.ui.hud.goal.text == "Awake", "The objective panel doesn't show the step: " + scene.ui.hud.goal.text):
+	var centre: Vector2 = guide.panel.get_global_rect().get_center()
+	var view: Vector2 = scene.ui.root.size
+	if not check(absf(centre.x - view.x * 0.5) < view.x * 0.1 and guide.panel.size.x >= 700, "The card isn't big and centred"):
 		return
-	await screenshot("tutorial_awake")
-	# Walk up the road to the verge: the clock beat moves the story on.
+	var clock := int(scene.run_state.sim_time_ms)
+	await create_timer(2.0).timeout
+	if not check(int(scene.run_state.sim_time_ms) == clock and scene.ui.blocks_movement(), "The world didn't wait while the card was up"):
+		return
+	await screenshot("tutorial_card")
+	await read_cards()
+	if not check(await wait_for_step("walk"), "Reading the welcome didn't move on: " + step_id()):
+		return
+	await read_cards()
+	if not check(guide.banner.visible and "ring" in guide.banner_text.text and guide.focus.visible, "No banner or marker for walking"):
+		return
+	await screenshot("tutorial_banner")
 	if not check(await walk([[48, 67], [48, 66], [48, 65], [48, 64], [48, 63], [48, 62]]), "Could not walk up the road"):
 		return
-	if not check(await wait_for_step("hands"), "Reaching the verge didn't move the story on: " + step_id()):
+	if not check(await wait_for_step("look"), "Reaching the ring didn't move the story on: " + step_id()):
 		return
-	if not check(await take("branch_a") and await take("flint_a"), "Could not pick things up"):
+	await read_cards()
+	scene.ui.card.show_for("plantain_a") # Right-click: a closer look.
+	if not check(await wait_for_step("take"), "A closer look didn't count: " + step_id()):
 		return
-	if not check(await wait_for_step("smithy"), "Carrying two things didn't move the story on: " + step_id()):
+	scene.ui.card.hide()
+	await read_cards()
+	if not check(await take("plantain_a"), "Could not pick up the plantain"):
 		return
-	# Ask the device (H): on stub it answers with the step's written hint.
-	scene.ui.device.open_ask()
-	await scene.ui.device._ask("Where do I go?")
-	var said: Array = scene.run_state.get("device_log", [])
-	if not check(not said.is_empty() and str(said[-1].get("question", "")) == "Where do I go?", "Asking the device didn't answer"):
+	if not check(await wait_for_step("gather"), "Picking up the plantain didn't count: " + step_id()):
 		return
-	await screenshot("tutorial_device")
-	# A developer tutorial journey for the rest: skip what the stub judge can't do.
+	await read_cards()
+	if not check(await take("flint_a") and await take("grass_a"), "Could not pick up the flint and grass"):
+		return
+	if not check(await wait_for_step("pack"), "Picking up two more didn't count: " + step_id()):
+		return
+	await read_cards()
+	scene.ui.open_inventory()
+	if not check(await wait_for_step("smithy"), "Opening the pack didn't count: " + step_id()):
+		return
+	await read_cards()
+	scene.ui.close_modal_now()
+	# H: the step's help, as cards.
+	guide.open_help()
+	if not check(guide.is_open() and "arrow" in str(guide.words.text), "H didn't show the step's help"):
+		return
+	guide._next()
+	await screenshot("tutorial_keys") # "Hold {Shift}...": a key cap.
+	await read_cards()
+	# A developer tutorial journey for the rest.
 	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer", "scenario": "tutorial"})
 	scene._enter_run(created.data, false)
 	await process_frame
-	for _i in 5: # awake, hands, smithy, remedy, treat
+	for _i in 8: # welcome, walk, look, take, gather, pack, smithy
+		if step_id() == "talk":
+			break
 		await skip()
-	if not check(step_id() == "arm", "Skipping didn't reach 'Arm yourself': " + step_id()):
+	if not check(step_id() == "talk", "Skipping didn't reach 'Talking': " + step_id()):
 		return
-	# Kade walks over and lends his practice staff and shield.
+	# The talk step's cards end with the words and Type it for me.
+	guide.pages.clear()
+	for text in guide.steps[guide.current_step()].cards:
+		guide.pages.append({"text": text, "kind": "card", "step": guide.current_step()})
+	guide.page = guide.pages.size() - 1
+	guide._show_page()
+	if not check(guide.suggest_box.visible and guide.type_button.visible, "No Type it for me on the talk card"):
+		return
+	await guide._type_it()
+	if not check(scene.ui.bar.visible and scene.ui.bar.target == "npc_jory_venn" and
+			scene.ui.bar.line.text == "Let me see your arm.", "Type it for me didn't fill the bar for Jory"):
+		return
+	scene.ui.bar.close()
+	for _i in 4: # talk, remedy, treat (the stub judge can't make a poultice)
+		if step_id() == "kade":
+			break
+		await skip()
+	if not check(step_id() == "kade", "Skipping didn't reach Kade: " + step_id()):
+		return
+	await read_cards()
 	var lent := false
-	for _i in 120:
+	for _i in 160:
 		await create_timer(0.25).timeout
 		if str(scene.run_state.objects.get("practice_staff", {}).get("holder_id", "")) == "player":
 			lent = true
 			break
 	if not check(lent, "Kade never lent the practice staff"):
 		return
+	if not check(await wait_for_step("arm"), "Being lent the staff didn't move on: " + step_id()):
+		return
+	await read_cards()
 	scene.ui.open_inventory()
 	await process_frame
 	var right := find_button(scene.ui.modal, "Right hand")
@@ -148,12 +217,22 @@ func _run() -> void:
 	if not check(await wait_for_step("bout"), "Holding the staff didn't move the story on: " + step_id()):
 		return
 	scene.ui.close_modal_now()
-	# The bout: Kade squares up (he's beside you), and it's fought to "enough" either way.
+	await read_cards()
 	var fought := false
-	for _i in 120:
+	var paused_checked := false
+	for _i in 160:
 		await create_timer(0.25).timeout
 		if scene.in_fight():
 			fought = true
+			if not paused_checked: # A help card stops even the bout's clock.
+				paused_checked = true
+				guide.open_help()
+				await create_timer(0.6).timeout
+				var during := int(scene.run_state.sim_time_ms)
+				await create_timer(1.5).timeout
+				if not check(int(scene.run_state.sim_time_ms) == during, "The bout's clock ran while a card was up"):
+					return
+				await read_cards()
 			var kade: Dictionary = scene.ui.npc_record("npc_kade_east")
 			var toward := Vector2(float(kade.x), float(kade.y)) - Vector2(scene.run_state.player.x, scene.run_state.player.y)
 			if toward.length() > 0.5:
@@ -163,9 +242,10 @@ func _run() -> void:
 			break
 	if not check(fought, "The bout never started"):
 		return
-	if not check(await wait_for_step("wonder"), "The bout's end didn't move the story on: " + step_id()):
+	if not check(await wait_for_step("nail"), "The bout's end didn't move the story on: " + step_id()):
 		return
-	await skip() # The demonstration (the stub judge can't show a real one).
+	await skip() # nail
+	await skip() # wonder (the stub judge can't show a real one); then the last step's cards are read.
 	for _i in 20:
 		await create_timer(0.2).timeout
 		if scene.ui.modal_kind == "tutorial_end":
@@ -173,7 +253,30 @@ func _run() -> void:
 	if not check(step_id() == "done" and scene.ui.modal_kind == "tutorial_end", "No closing card: " + step_id()):
 		return
 	await screenshot("tutorial_end")
-	print("TUTORIAL SMOKE PASSED: %d device lines, bout: %s" % [scene.run_state.get("device_log", []).size(),
+	# The wainwright's notebook (D-52).
+	scene.ui.close_modal_now()
+	var village: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene._enter_run(village.data, false)
+	await process_frame
+	var notebook: Dictionary = scene.run_state.objects.get("yard_recipe_book", {})
+	if not check(str(notebook.get("readable", "")) == "recipe_book", "No wainwright's notebook in a new journey"):
+		return
+	scene.ui.open_book(notebook)
+	await process_frame
+	var spear := find_button(scene.ui.modal, "Spear")
+	if not check(scene.ui.modal_kind == "book" and spear != null, "The notebook didn't open with its recipes"):
+		return
+	spear.pressed.emit()
+	await process_frame
+	await screenshot("recipe_book")
+	var type_it := find_button(scene.ui.modal, "Type it for me")
+	if not check(type_it != null, "No Type it for me on a recipe"):
+		return
+	type_it.pressed.emit()
+	await process_frame
+	if not check(scene.ui.bar.visible and "spearhead" in scene.ui.bar.line.text, "The recipe's words didn't reach the bar"):
+		return
+	print("TUTORIAL SMOKE PASSED: %d steps, bout: %s" % [guide.steps.size(),
 		str(scene.run_state.journal.filter(func(e) -> bool: return str(e.get("category", "")).begins_with("spar_")).map(
 			func(e) -> String: return str(e.category)))])
 	quit(0)

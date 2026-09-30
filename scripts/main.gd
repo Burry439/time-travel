@@ -251,6 +251,7 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	camera.reset_smoothing()
 	menu.hide()
 	ui.device.refresh()
+	ui.guide.refresh()
 	_spawn_npcs()
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	_sync_display()
@@ -412,7 +413,8 @@ func _physics_process(delta: float) -> void:
 			and ui.modal_kind != "death":
 		ui.close_modal_now()
 		ui.bar.open()
-	if in_fight() and gameplay_active and not sync_error and (request_busy or ui.blocks_movement()):
+	if in_fight() and gameplay_active and not sync_error and (request_busy or ui.blocks_movement()) \
+			and not ui.guide.is_open(): # The tutorial's cards stop even a fight (D-52).
 		# A fight doesn't wait while you type or think: the clock and the blows run on (D-41).
 		_animate_npcs(delta)
 		clock_pending_ms += delta * 1000.0
@@ -562,6 +564,7 @@ func _accept_state(new_state: Dictionary) -> void:
 	_sync_display()
 	fight.sync()
 	ui.device.refresh()
+	ui.guide.refresh()
 	var was_tutorial = before.get("tutorial")
 	var now_tutorial = run_state.get("tutorial")
 	if typeof(was_tutorial) == TYPE_DICTIONARY and typeof(now_tutorial) == TYPE_DICTIONARY \
@@ -1557,7 +1560,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				return
 		KEY_H:
-			if gameplay_active and not ui.modal.visible and not ui.bar.visible:
+			if gameplay_active and not ui.modal.visible and not ui.bar.visible and ui.guide.active():
+				ui.guide.open_help() # In the tutorial: the step's help, as cards (D-52).
+			elif gameplay_active and not ui.modal.visible and not ui.bar.visible:
 				ui.device.open_ask() # Ask the device (D-50).
 			else:
 				return

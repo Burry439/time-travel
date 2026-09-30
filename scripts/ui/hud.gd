@@ -185,15 +185,9 @@ func refresh() -> void:
 	status.text = ("The city gate is open ↑" if state.get("gate_open", false) else "The gate lies to the north ↑") + \
 		("  ·  %d open lead%s" % [leads, "" if leads == 1 else "s"] if leads > 0 else "")
 	var tutorial = state.get("tutorial")
-	if typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false): # The first morning (D-50).
-		var steps: Array = ui.device.story.get("steps", [])
-		var index := int(tutorial.get("step", 0))
-		goal.text = str(steps[index].get("title", "")) if index < steps.size() else "The first morning"
-		status.text = "%d / %d  ·  %s" % [index + 1, steps.size(), str(state.get("objective", ""))]
-		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		status.custom_minimum_size.x = 300
-	else:
-		goal.text = "Find a way into the city"
+	# The first morning (D-50): its task is on the guide's banner (D-52), so the objective panel steps aside.
+	objective.visible = not (typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false))
+	goal.text = "Find a way into the city"
 	var carried := carried_objects()
 	var mass := 0.0
 	var signature := PackedStringArray()

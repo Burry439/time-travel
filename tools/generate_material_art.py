@@ -3,6 +3,9 @@
 Run once after adding OPENAI_API_KEY to backend/.env, then let Godot import the files:
     backend/.venv/Scripts/python.exe tools/generate_material_art.py [--force] [object_id ...]
 Writes assets/generated/materials/<object_id>.png (committed art; Godot prefers it over placeholders).
+Then trim and shrink the new pictures to the size the game shows (D-52), and import:
+    Godot --headless --path . --script res://tools/shrink_material_art.gd
+    Godot --headless --path . --import
 """
 from __future__ import annotations
 
@@ -50,6 +53,7 @@ def main(argv: list[str]) -> int:
         call = illustrator.generate_sprite(records[object_id], destination)
         failures += call.status != "ready"
         print(f"{call.status:6} {object_id}: {call.model} {call.latency_ms} ms {call.error or ''}")
+    print("Now run tools/shrink_material_art.gd and import (see the top of this file).")
     return 1 if failures else 0
 
 

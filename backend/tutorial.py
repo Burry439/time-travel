@@ -1,9 +1,11 @@
-"""The tutorial, "The first morning" (GDD D-50), and the device from the future that guides it.
+"""The tutorial, "The first morning" (GDD D-50, D-52), and the device from the future that guides it.
 
 A fixed story on the village map with its own small problems (Jory's burn, a sparring bout with Kade, anything the
-stranger invents), never the main game's routes. Each step's check is an outcome in the world, decided by code, so
-any way the player finds counts. Progress happens only through `tick`, whose changes are saved as a `tutorial`
-event (see routes_tutorial), so replay is exact.
+stranger invents), never the main game's routes. It is linear (D-52): each step's cards are read first (the client
+says so: `read`), and only then does its check count, one step at a time. Checks are outcomes in the world decided
+by code (so any way the player finds counts), or a ui action the client reports (`ui`: the pack opened, a closer
+look). Progress happens only through `tick`, `read` and `ui`, saved as `tutorial` events (see routes_tutorial), so
+replay is exact.
 """
 from __future__ import annotations
 
@@ -49,7 +51,8 @@ def setup(state: dict) -> None:
         obj = m2._object_record(oid, name, kade["x"], kade["y"], mass, materials, description, flags, length)
         obj.update(owner_id=KADE, holder_id=KADE, capabilities=["carry"], gear=dict(record), no_overlay=True)
         state["objects"][oid] = obj
-    state["tutorial"] = {"step": 0, "started_at": 0, "fired": [], "done": False, "reacted": []}
+    state["tutorial"] = {"step": 0, "started_at": 0, "fired": [], "done": False, "reacted": [], "read": -1,
+                         "ui_done": []}
     state["device_log"] = []
     state["journal"] = state.get("journal") or []
     _start_step(state, 0)
@@ -57,35 +60,56 @@ def setup(state: dict) -> None:
 
 # --- The story moving on -------------------------------------------------------------------------------------
 
+def read_cards(state: dict) -> bool:
+    """The step's cards have been read (the client's Next): from now its check counts."""
+    if not active(state) or state["tutorial"].get("read", -1) >= state["tutorial"]["step"]:
+        return False
+    state["tutorial"]["read"] = state["tutorial"]["step"]
+    return True
+
+
+def ui_done(state: dict, key: str) -> bool:
+    """A ui action the tutorial teaches happened (the pack opened, a closer look, the book read)."""
+    if not active(state) or key in state["tutorial"].setdefault("ui_done", []):
+        return False
+    state["tutorial"]["ui_done"].append(key)
+    return True
+
+
 def tick(state: dict) -> bool:
-    """Fire any triggers that now hold, complete steps whose outcome has happened (several at once if the player
-    is ahead), and react to anything drastic. Returns whether anything changed."""
+    """React to anything drastic; then, once the current step's cards are read, fire its triggers and complete it
+    if its outcome has happened. One step at a time (D-52): the next step waits for its own cards."""
     if not active(state):
         return False
     tutorial = state["tutorial"]
     now = state.get("sim_time_ms", 0)
     changed = _react(state, now)
-    for _ in range(len(STEPS)):
-        current = STEPS[tutorial["step"]]
-        for trigger in current.get("triggers", []):
-            key = f"{current['id']}:{trigger['id']}"
-            if key not in tutorial["fired"] and holds(state, trigger["when"]):
-                tutorial["fired"].append(key)
-                _do(state, trigger["do"], now)
-                changed = True
-        if not holds(state, current["check"]):
-            break
-        changed = True
-        if current.get("done"):
-            device_says(state, current["done"], "story")
-        _do(state, current.get("on_done", []), now)
-        if tutorial["step"] + 1 >= len(STEPS):
-            tutorial["done"] = True
-            state["objective"] = "Get inside the city"
-            break
-        tutorial["step"] += 1
-        _start_step(state, now)
-    return changed
+    current = STEPS[tutorial["step"]]
+    if tutorial.get("read", tutorial["step"]) < tutorial["step"]:
+        return changed  # Still reading its cards.
+    for trigger in current.get("triggers", []):
+        key = f"{current['id']}:{trigger['id']}"
+        if key not in tutorial["fired"] and holds(state, trigger["when"]):
+            tutorial["fired"].append(key)
+            _do(state, trigger["do"], now)
+            changed = True
+    if not holds(state, current["check"]):
+        return changed
+    _complete(state, current, now)
+    return True
+
+
+def _complete(state: dict, current: dict, now: int) -> None:
+    tutorial = state["tutorial"]
+    if current.get("done"):
+        device_says(state, current["done"], "story")
+    _do(state, current.get("on_done", []), now)
+    if tutorial["step"] + 1 >= len(STEPS):
+        tutorial["done"] = True
+        state["objective"] = "Get inside the city"
+        return
+    tutorial["step"] += 1
+    _start_step(state, now)
 
 
 def skip(state: dict) -> None:
@@ -100,20 +124,15 @@ def skip(state: dict) -> None:
         if key not in tutorial["fired"] and trigger["id"] != "spar":
             tutorial["fired"].append(key)
             _do(state, trigger["do"], now)
-    _do(state, current.get("on_done", []), now)
-    if tutorial["step"] + 1 >= len(STEPS):
-        tutorial["done"] = True
-        state["objective"] = "Get inside the city"
-        return
-    tutorial["step"] += 1
-    _start_step(state, now)
+    tutorial["read"] = tutorial["step"]
+    _complete(state, current, now)
 
 
 def _start_step(state: dict, now: int) -> None:
     current = STEPS[state["tutorial"]["step"]]
     state["tutorial"]["started_at"] = now
-    state["objective"] = current["objective"]
-    for line in current.get("start", []):
+    state["objective"] = current.get("task") or current["title"]
+    for line in current.get("cards", []):
         device_says(state, line, "story")
     _do(state, current.get("on_start", []), now)
 
@@ -167,6 +186,11 @@ def holds(state: dict, condition: dict) -> bool:
         return math.dist(here, tuple(condition["cell"])) <= condition["within"]
     if kind == "carrying":
         return len(carried(state)) >= condition["count"]
+    if kind == "carrying_id":
+        held = {o["id"] for o in carried(state)}
+        return all(i in held for i in condition["ids"])
+    if kind == "ui":
+        return condition["key"] in (state.get("tutorial") or {}).get("ui_done", [])
     if kind == "talked_to":
         npc = minds.find(state["npcs"], condition["npc"])
         return bool(npc) and any(t.get("who") == "stranger" for t in (npc.get("mind") or {}).get("talk", []))
@@ -243,8 +267,10 @@ def device_context(state: dict, question: str) -> dict:
     return {
         "question": question,
         "tutorial": bool(current),
-        "step": {"title": current["title"], "objective": current["objective"],
-                 "hints_you_may_give": current.get("hints", [])} if current else None,
+        "step": {"title": current["title"], "objective": current.get("task", ""),
+                 "hints_you_may_give": current.get("help", []),
+                 **({"words_suggested": current["suggest"]["text"]} if current.get("suggest") else {})}
+        if current else None,
         "goal": "Get inside the city (the gate to the north is shut to strangers)",
         "you_carry": [{"name": o["name"], "what_it_is": gear.words(o)} for o in carried(state)],
         "you_wear": sorted({state["objects"][oid]["name"] for slot, oid in (player.get("equipped") or {}).items()
@@ -264,6 +290,6 @@ def device_context(state: dict, question: str) -> dict:
 def fallback_answer(state: dict) -> str:
     """When the model can't be asked: the current step's first hint, or the controls."""
     current = step(state)
-    if current and current.get("hints"):
-        return current["hints"][0]
+    if current and current.get("help"):
+        return current["help"][0]
     return "I can't reach far right now. Look around, talk to people, and try what you know. H asks me again."

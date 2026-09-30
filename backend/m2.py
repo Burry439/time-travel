@@ -85,7 +85,7 @@ def _seed5_objects(seed_version: int = 5) -> dict[str, dict]:
             spec["description"], spec["flags"], spec.get("length_m"), spec.get("capacity_l", 0.0),
             spec.get("feature"))
         record["owner_id"] = spec.get("owner_id")
-        for extra in ("burning", "no_sprite", "gear", "no_overlay", "count"):  # Lasting fires, building art, gear.
+        for extra in ("burning", "no_sprite", "gear", "no_overlay", "count", "readable"):  # Fires, building art, gear, books.
             if spec.get(extra):
                 record[extra] = spec[extra]
         if spec.get("worn_by") or spec.get("carried_by"):  # Someone's own gear (seed 10, D-49): on them.

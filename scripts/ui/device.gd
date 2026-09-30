@@ -1,8 +1,8 @@
 extends Control
 ## The device from the future (GDD D-50): the small machine that brought the stranger here, and the only voice
-## only they can hear. In the tutorial it tells the story's lines and, if you're stuck, hints (after 45 s, 2 min
-## and 4 min without progress); in the main game it speaks only when asked (H), or not at all if switched off.
-## Its lines come from the saved state (device_log); the hints are presentation only, from tutorial.json.
+## only they can hear. In the tutorial it speaks through the guide's cards (scripts/ui/tutorial_guide.gd, D-52);
+## this panel shows only its answers when asked (H, from the guide's help). In the main game it speaks only when
+## asked (H), or not at all if switched off. Its lines come from the saved state (device_log).
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const STEEL := Color(0.11, 0.16, 0.2, 0.93)
@@ -23,9 +23,6 @@ var seen_lines := 0
 var typing := ""
 var shown_chars := 0.0
 var hold := 0.0
-var step_index := -1
-var step_clock := 0.0
-var hints_shown := 0
 var mode := "asked" # when asked | off (main game only; the tutorial always speaks)
 var asking := false
 var run_id := ""
@@ -116,22 +113,17 @@ func refresh() -> void:
 		seen_lines = 0
 		queue.clear()
 		typing = ""
-		step_index = -1
 		var log: Array = state.get("device_log", [])
 		seen_lines = maxi(0, log.size() - 2) # Replay only the last couple of lines on entering a journey.
 	var lines: Array = state.get("device_log", [])
 	for index in range(seen_lines, lines.size()):
-		queue.append(str(lines[index].get("text", "")))
+		if not in_tutorial() or lines[index].has("question"): # The story's lines are the guide's cards (D-52).
+			queue.append(str(lines[index].get("text", "")))
 	seen_lines = lines.size()
-	while queue.size() > 3: # Several steps at once: only the newest lines are worth reading (the journal has all).
+	while queue.size() > 3: # Only the newest lines are worth reading (the journal has all).
 		queue.pop_front()
-	var tutorial = state.get("tutorial")
-	if typeof(tutorial) == TYPE_DICTIONARY and int(tutorial.get("step", 0)) != step_index:
-		step_index = int(tutorial.get("step", 0))
-		step_clock = 0.0
-		hints_shown = 0
-	panel.visible = has_device() and (in_tutorial() or not typing.is_empty() or not queue.is_empty() or asking
-		or mode == "asked")
+	panel.visible = has_device() and (not typing.is_empty() or not queue.is_empty() or asking
+		or (mode == "asked" and not in_tutorial()))
 
 
 func _process(delta: float) -> void:
@@ -139,16 +131,6 @@ func _process(delta: float) -> void:
 		return
 	pulse += delta
 	badge.modulate.a = 0.75 + 0.25 * sin(pulse * 3.0) if not queue.is_empty() else 1.0
-	# Stuck on a step: the next written hint, after 45 s, 2 min and 4 min.
-	if in_tutorial() and not ui.modal.visible:
-		step_clock += delta
-		var after: Array = story.get("hint_after_s", [45, 120, 240])
-		var steps: Array = story.get("steps", [])
-		if step_index >= 0 and step_index < steps.size() and hints_shown < after.size():
-			var hints: Array = steps[step_index].get("hints", [])
-			if hints_shown < hints.size() and step_clock >= float(after[hints_shown]):
-				queue.append(str(hints[hints_shown]))
-				hints_shown += 1
 	# Type out the current line; hold it; then the next.
 	if typing.is_empty() and not queue.is_empty():
 		typing = queue.pop_front()
@@ -164,10 +146,10 @@ func _process(delta: float) -> void:
 			var waiting := not queue.is_empty() and LINE_HOLD_S - hold >= QUEUED_HOLD_S
 			if (hold <= 0.0 and not queue.is_empty()) or waiting:
 				typing = ""
-			elif hold <= 0.0 and not in_tutorial() and not asking:
+			elif hold <= 0.0 and not asking:
 				typing = ""
 				words.text = ""
-				panel.visible = has_device() and mode == "asked"
+				panel.visible = has_device() and mode == "asked" and not in_tutorial()
 
 
 ## H: ask the device something.

@@ -1,0 +1,510 @@
+{
+ "version": 1,
+ "notes": "The wainwright's notebook (GDD D-52): a readable object in the old wainwright's yard. Advice in the world, not a recipe system: every attempt is still judged, nothing is keyed to these words, and it covers no way into the city. 'need' names things as they lie in the yard (tests check every one exists); 'say' is a sentence the reader can send with Type it for me.",
+ "title": "The Wainwright's Notebook",
+ "intro": [
+  "Whoever finds this: the yard is free to anyone. Take what you need.",
+  "These are ways of making things that have worked for me and for the smiths I've known. They are not spells. Good wood, sound lashing and patience matter more than the words. If a thing won't hold, look at why and try again.",
+  "The world decides whether it works. Nothing here is guaranteed."
+ ],
+ "chapters": [
+  {
+   "title": "Blades and points",
+   "recipes": [
+    {
+     "name": "Knife from the blade blank",
+     "need": [
+      "unfinished knife blade",
+      "whetstone",
+      "oak billet",
+      "leather thongs"
+     ],
+     "steps": [
+      "Grind an edge on the blank with the whetstone: long, even strokes, both sides.",
+      "Split a short piece of oak for a handle and bore or split it to take the tang.",
+      "Push the tang in and bind the handle tight with thongs."
+     ],
+     "say": "sharpen the unfinished knife blade on the whetstone and fit it with an oak handle bound with leather thongs",
+     "good_for": "Close work. Deadly to an unarmoured body; useless against mail except at the gaps."
+    },
+    {
+     "name": "Flint knife",
+     "need": [
+      "flint nodules",
+      "hammerstone",
+      "leather thongs"
+     ],
+     "steps": [
+      "Strike a nodule with the hammerstone to knock off a long, thin flake.",
+      "Keep the flake with the sharpest edge; blunt the back so you can hold it.",
+      "Wrap the blunt end in thongs for a grip."
+     ],
+     "say": "knap a long flake from the flint nodules with the hammerstone and wrap the back in leather thongs for a grip",
+     "good_for": "Wickedly sharp but brittle. Cuts cloth and flesh; chips on anything hard."
+    },
+    {
+     "name": "Obsidian dagger",
+     "need": [
+      "obsidian chunk",
+      "hammerstone",
+      "axe haft",
+      "pot of hide glue",
+      "bundle of sinew"
+     ],
+     "steps": [
+      "Knock a long blade-shaped flake off the obsidian with the hammerstone.",
+      "Cut a notch in the end of the axe haft (or a shorter stick) to take it.",
+      "Glue it in with warmed hide glue and bind it with sinew."
+     ],
+     "say": "knap a blade from the obsidian chunk and haft it in a notched stick with hide glue and sinew",
+     "good_for": "The sharpest edge there is. Shatters against armour."
+    },
+    {
+     "name": "Spear",
+     "need": [
+      "iron spearhead",
+      "ash stave",
+      "handful of iron nails"
+     ],
+     "steps": [
+      "Shave one end of the ash stave until it fits the spearhead's socket.",
+      "Push the socket on hard.",
+      "Drive a nail through the socket's hole into the wood so it can't come off."
+     ],
+     "say": "fit the iron spearhead onto the ash stave and nail it through the socket",
+     "good_for": "Reach: you can hit them before they reach you. The best weapon against a sword for someone untrained."
+    },
+    {
+     "name": "Fire-hardened wooden spear",
+     "need": [
+      "ash stave"
+     ],
+     "fire": true,
+     "steps": [
+      "Carve one end of the ash stave to a point.",
+      "Turn the point slowly in the embers of a fire until it browns and hardens; don't let it burn."
+     ],
+     "say": "carve a point on the ash stave and harden it in the fire",
+     "good_for": "Cheap reach. Dangerous to an unarmoured man, useless against mail."
+    },
+    {
+     "name": "Axe",
+     "need": [
+      "iron axe head",
+      "axe haft",
+      "oak billet"
+     ],
+     "steps": [
+      "Shave the top of the haft until it fits the axe head's eye tightly.",
+      "Push the head on.",
+      "Split a thin wedge from the oak billet and drive it into the top of the haft to spread it."
+     ],
+     "say": "fit the iron axe head onto the axe haft and wedge it tight with a sliver of oak",
+     "good_for": "A heavy, chopping blow. Bites through padding, and hurts badly even through mail."
+    },
+    {
+     "name": "Sickle sword",
+     "need": [
+      "old sickle blade",
+      "oak billet",
+      "leather thongs"
+     ],
+     "steps": [
+      "Straighten nothing: use the curve. Fit the broken tang into a split oak handle.",
+      "Bind the handle hard with leather thongs."
+     ],
+     "say": "fit the old sickle blade with a new oak handle bound with leather thongs",
+     "good_for": "A hooking, slashing blade. Grim at close quarters, poor against armour."
+    }
+   ]
+  },
+  {
+   "title": "Striking weapons",
+   "recipes": [
+    {
+     "name": "Club",
+     "need": [
+      "oak billet",
+      "leather thongs"
+     ],
+     "steps": [
+      "Shave one end of the oak billet into a grip.",
+      "Wrap the grip with thongs so it won't slip."
+     ],
+     "say": "shave a grip on the oak billet and wrap it with leather thongs",
+     "good_for": "A blunt blow. Hurts through padding; to the head of someone who doesn't see it coming, it can kill."
+    },
+    {
+     "name": "Mace from iron plates",
+     "need": [
+      "oak billet",
+      "iron plates",
+      "handful of iron nails"
+     ],
+     "steps": [
+      "Nail the iron plates around the end of the oak billet like flanges.",
+      "Leave a hand's length bare below them for the grip."
+     ],
+     "say": "nail the iron plates around the end of the oak billet to make a flanged mace",
+     "good_for": "Iron on a heavy head: the answer to mail."
+    },
+    {
+     "name": "War hammer",
+     "need": [
+      "iron bar",
+      "axe haft",
+      "coil of iron wire"
+     ],
+     "steps": [
+      "Lay the iron bar across the top of the haft.",
+      "Bind it on with tight turns of iron wire, crossing over and under."
+     ],
+     "say": "bind the iron bar across the top of the axe haft with iron wire to make a hammer",
+     "good_for": "Crushing. Heavy and slow, but mail doesn't save the bones underneath."
+    },
+    {
+     "name": "Flail",
+     "need": [
+      "birch poles",
+      "length of iron chain",
+      "handful of iron nails"
+     ],
+     "steps": [
+      "Cut a handle from one birch pole.",
+      "Nail one end of the chain to the handle's tip; leave a short length swinging."
+     ],
+     "say": "nail a short length of the iron chain to the end of a birch pole to make a flail",
+     "good_for": "Wraps around a shield's edge. Hard to control."
+    },
+    {
+     "name": "Quarterstaff",
+     "need": [
+      "ash stave"
+     ],
+     "steps": [
+      "Take the ash stave as it is, or trim it to your height.",
+      "Hold it in both hands, a third of the way from each end."
+     ],
+     "say": "trim the ash stave to my height for a quarterstaff",
+     "good_for": "Reach and speed, and hard to disarm. It bruises; it rarely kills."
+    }
+   ]
+  },
+  {
+   "title": "Missiles",
+   "recipes": [
+    {
+     "name": "Sling",
+     "need": [
+      "tanned leather hide",
+      "hank of flax cord",
+      "pile of river stones"
+     ],
+     "steps": [
+      "Cut a palm-sized pouch from the leather and pierce both ends.",
+      "Tie an arm's length of cord to each end; make a finger loop at the end of one.",
+      "Put a river stone in the pouch, swing, and let go of the loose cord."
+     ],
+     "say": "cut a leather pouch from the tanned hide and tie two lengths of flax cord to it to make a sling",
+     "good_for": "Range, and cheap ammunition. A stone to the head is deadly at thirty paces."
+    },
+    {
+     "name": "Bow",
+     "need": [
+      "yew stave",
+      "bundle of sinew",
+      "whetstone"
+     ],
+     "steps": [
+      "Shave the yew stave so it bends evenly along its length, thicker at the middle for the grip.",
+      "Cut a notch near each end.",
+      "Twist sinew into a bowstring and string it between the notches."
+     ],
+     "say": "shave the yew stave into a bow and string it with twisted sinew",
+     "good_for": "Kills at a distance. Needs arrows."
+    },
+    {
+     "name": "Arrows",
+     "need": [
+      "bundle of arrow shafts",
+      "grey goose feathers",
+      "handful of iron nails",
+      "pot of hide glue",
+      "bundle of sinew"
+     ],
+     "steps": [
+      "Split three feathers per arrow and glue them near one end of each shaft; bind them with fine sinew.",
+      "Cut a notch for the string.",
+      "For heads, hammer a nail flat to a point and bind it into a split at the front."
+     ],
+     "say": "fletch the arrow shafts with the goose feathers and hide glue, and fit them with points hammered from the iron nails",
+     "good_for": "What makes a bow a weapon. Iron points go through padding."
+    },
+    {
+     "name": "Javelin",
+     "need": [
+      "birch poles",
+      "iron spearhead"
+     ],
+     "steps": [
+      "Take a light birch pole.",
+      "Fit the spearhead to one end, or simply sharpen it."
+     ],
+     "say": "fit the iron spearhead to a light birch pole to make a throwing javelin",
+     "good_for": "Thrown at close range: a heavy hit, then you're without it."
+    }
+   ]
+  },
+  {
+   "title": "Shields",
+   "recipes": [
+    {
+     "name": "Round shield",
+     "need": [
+      "elm planks",
+      "rawhide",
+      "handful of iron nails",
+      "leather thongs"
+     ],
+     "steps": [
+      "Lay the elm planks side by side and nail two cross-battens behind them.",
+      "Cut it round.",
+      "Soak the rawhide, stretch it over the face and nail it round the rim; it shrinks tight as it dries.",
+      "Make a handle of thongs across the back."
+     ],
+     "say": "nail the elm planks together into a round shield, face it with soaked rawhide and fit a leather handle",
+     "good_for": "Stops blows and arrows from the front. Hold {F} to raise it."
+    },
+    {
+     "name": "Wicker shield",
+     "need": [
+      "willow withies",
+      "rawhide",
+      "leather thongs"
+     ],
+     "steps": [
+      "Weave the withies round and round into a disc, as for a basket.",
+      "Stretch wet rawhide over it and lace it on with thongs."
+     ],
+     "say": "weave the willow withies into a round shield and cover it with wet rawhide laced on with thongs",
+     "good_for": "Light and quick to make. Takes a few blows, then splits."
+    }
+   ]
+  },
+  {
+   "title": "Armour",
+   "recipes": [
+    {
+     "name": "Quilted jacket",
+     "need": [
+      "quilted padding",
+      "bolt of linen",
+      "hank of flax cord"
+     ],
+     "steps": [
+      "Cut the padding into front, back and sleeves.",
+      "Cover it with linen and stitch it through in lines with flax cord."
+     ],
+     "say": "sew the quilted padding and linen into a padded jacket with flax cord",
+     "good_for": "Stops cuts well and softens blows. Worn under mail, or alone."
+    },
+    {
+     "name": "Leather jerkin",
+     "need": [
+      "tanned leather hide",
+      "leather thongs"
+     ],
+     "steps": [
+      "Cut a front and a back from the hide.",
+      "Lace them together at the shoulders and sides with thongs."
+     ],
+     "say": "cut the tanned leather hide into a jerkin and lace it at the shoulders and sides with thongs",
+     "good_for": "Turns glancing cuts. Light."
+    },
+    {
+     "name": "Iron-plate coat",
+     "need": [
+      "iron plates",
+      "tanned leather hide",
+      "bag of iron rivets"
+     ],
+     "steps": [
+      "Cut a leather vest from the hide.",
+      "Rivet the iron plates onto it, overlapping like scales from the bottom up."
+     ],
+     "say": "rivet the iron plates onto a vest cut from the tanned leather hide, overlapping like scales",
+     "good_for": "Iron over the chest: stops most cuts and thrusts. Heavy."
+    },
+    {
+     "name": "Rawhide helmet",
+     "need": [
+      "rawhide",
+      "quilted padding",
+      "iron cooking pot"
+     ],
+     "steps": [
+      "Soak the rawhide and mould it over a round stone or a pot.",
+      "Let it dry hard; line it with padding."
+     ],
+     "say": "mould soaked rawhide over the iron cooking pot into a helmet and line it with quilted padding",
+     "good_for": "A blow to the head is the one that kills. Anything is better than nothing."
+    },
+    {
+     "name": "Leather bracers",
+     "need": [
+      "tanned leather hide",
+      "leather thongs"
+     ],
+     "steps": [
+      "Cut two strips of leather that wrap your forearms.",
+      "Lace them on with thongs."
+     ],
+     "say": "cut two bracers from the tanned leather hide and lace them on with thongs",
+     "good_for": "Guards the arms that hold your weapon and shield."
+    }
+   ]
+  },
+  {
+   "title": "Remedies",
+   "recipes": [
+    {
+     "name": "Bandage",
+     "need": [
+      "bolt of linen"
+     ],
+     "steps": [
+      "Tear clean linen into long strips.",
+      "Press a pad on the wound and bind it firmly, not so tight the hand goes cold."
+     ],
+     "say": "tear the linen into strips for bandages",
+     "good_for": "Stops bleeding. Treat a cut from Pack & gear ({I}), or someone else by saying so."
+    },
+    {
+     "name": "Poultice",
+     "need": [
+      "plantain leaves (by the road)",
+      "yarrow (by the road)"
+     ],
+     "steps": [
+      "Crush the leaves by hand or between stones into a damp mash.",
+      "Lay it on the wound and cover it."
+     ],
+     "say": "crush the plantain leaves into a poultice",
+     "good_for": "Cools burns and keeps a wound from festering."
+    },
+    {
+     "name": "Salve",
+     "need": [
+      "cake of beeswax",
+      "pot of pine pitch",
+      "plantain leaves (by the road)"
+     ],
+     "fire": true,
+     "steps": [
+      "Warm the beeswax until soft.",
+      "Stir in crushed plantain and a little pitch.",
+      "Let it set in a pot."
+     ],
+     "say": "melt the beeswax and stir in crushed plantain leaves to make a salve",
+     "good_for": "Burns and festering wounds."
+    },
+    {
+     "name": "Splint",
+     "need": [
+      "birch poles",
+      "bolt of linen"
+     ],
+     "steps": [
+      "Cut two straight lengths of birch as long as the broken bone.",
+      "Pad them with linen and bind them either side of the limb."
+     ],
+     "say": "make a splint from two lengths of birch pole padded and bound with linen",
+     "good_for": "A broken arm or leg: it can take weight again, and it will knit."
+    },
+    {
+     "name": "Stitches",
+     "need": [
+      "bundle of sinew",
+      "iron needles (Mara's)"
+     ],
+     "steps": [
+      "Shred the sinew into fine thread.",
+      "Ask Mara for a needle, or trade for one.",
+      "Close the wound with small, even stitches."
+     ],
+     "say": "shred the sinew into thread for stitching wounds",
+     "good_for": "A deep cut that won't stop bleeding."
+    }
+   ]
+  },
+  {
+   "title": "Joining and tools",
+   "recipes": [
+    {
+     "name": "Hide glue",
+     "need": [
+      "pot of hide glue",
+      "iron cooking pot"
+     ],
+     "fire": true,
+     "steps": [
+      "Warm the glue in water in the pot until it runs.",
+      "Spread it on both parts, press them together and bind them while it sets."
+     ],
+     "say": "warm the hide glue in the iron pot so it runs",
+     "good_for": "Sets hard. Softens again if it gets wet."
+    },
+    {
+     "name": "Pitch",
+     "need": [
+      "pot of pine pitch"
+     ],
+     "fire": true,
+     "steps": [
+      "Warm the pitch until it's soft.",
+      "Smear it over a lashing to seal it, or use it to glue."
+     ],
+     "say": "warm the pine pitch and seal the lashing with it",
+     "good_for": "Keeps water out of a binding; glues stone to wood."
+    },
+    {
+     "name": "Sinew lashing",
+     "need": [
+      "bundle of sinew"
+     ],
+     "steps": [
+      "Soak the sinew in your mouth or in water until soft.",
+      "Wrap it tight around the joint; it shrinks as it dries and grips like iron."
+     ],
+     "say": "soak the sinew and lash the joint tight with it",
+     "good_for": "The strongest way to bind a head to a shaft."
+    },
+    {
+     "name": "Sharpening",
+     "need": [
+      "whetstone"
+     ],
+     "steps": [
+      "Wet the whetstone.",
+      "Draw the edge across it at a shallow angle, the same number of strokes each side."
+     ],
+     "say": "sharpen the blade on the wet whetstone",
+     "good_for": "A keen edge cuts deeper."
+    },
+    {
+     "name": "Cord from fibre",
+     "need": [
+      "hank of flax cord",
+      "raw wool fleece"
+     ],
+     "steps": [
+      "Twist two strands the same way.",
+      "Let them twist back around each other; tie off the ends."
+     ],
+     "say": "twist the flax cord into a stronger two-ply cord",
+     "good_for": "Bowstrings, lashings, sling cords."
+    }
+   ]
+  }
+ ]
+}

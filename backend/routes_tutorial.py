@@ -58,6 +58,48 @@ def check(run_id: str):
     return {"state": state, "duplicate": False}
 
 
+class Read(BaseModel):
+    step: int = Field(ge=0)
+
+
+class UiDone(BaseModel):
+    key: str = Field(pattern="^(pack|inspect|journal|book)$")
+
+
+def _save(connection, state: dict, change, request_id: str) -> bool:
+    """Apply a tutorial change to a copy of the world and save it as a `tutorial` event (with the result fields)."""
+    probe = copy.deepcopy(state)
+    if not change(probe):
+        return False
+    payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
+    payload["journal_added"] = probe["journal"][len(state["journal"]):]
+    store.append(connection, state, "tutorial", payload, request_id, state["sim_time_ms"] // 1000)
+    store.apply_tutorial(state, payload)
+    return True
+
+
+@router.post("/runs/{run_id}/tutorial/read")
+def read(run_id: str, request: Read):
+    """The player pressed through this step's cards (D-52): its check counts from now, and may already hold."""
+    with store.lock, store.db() as connection:
+        _, state = store.load_run(connection, run_id)
+        if tutorial.active(state) and request.step == state["tutorial"]["step"]:
+            _save(connection, state, tutorial.read_cards, f"tutorial-read:{uuid4().hex}")
+            progress(connection, state)
+    return {"state": state, "duplicate": False}
+
+
+@router.post("/runs/{run_id}/tutorial/ui")
+def ui(run_id: str, request: UiDone):
+    """Something the tutorial teaches happened on screen (the pack opened, a closer look, the book read)."""
+    with store.lock, store.db() as connection:
+        _, state = store.load_run(connection, run_id)
+        if tutorial.active(state):
+            _save(connection, state, lambda probe: tutorial.ui_done(probe, request.key), f"tutorial-ui:{uuid4().hex}")
+            progress(connection, state)
+    return {"state": state, "duplicate": False}
+
+
 @router.post("/runs/{run_id}/tutorial/skip")
 def skip(run_id: str):
     """Developer only: complete the current step (for testing each step)."""

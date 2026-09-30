@@ -43,6 +43,7 @@ func show_for(id: String, _at = null) -> void:
 		_person(npc)
 	ui.sounds.play("open")
 	show()
+	ui.guide.report("inspect") # The tutorial's "look closer" (D-52).
 	size = Vector2.ZERO
 	reset_size()
 	var parent := get_parent() as Control
@@ -137,6 +138,10 @@ func _object(obj: Dictionary) -> void:
 		if game.is_placeholder(obj):
 			_text("Its picture is still being painted." if game.sprite_status(obj) == "polling"
 				else "Its picture couldn't be painted; a stand-in is shown.", "Small")
+	if obj.get("readable") != null:
+		var read: Button = ui.button("Read it", func() -> void: ui.open_book(obj))
+		read.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		body.add_child(read)
 	var hover: Dictionary = ui.cursor.describe(str(obj.id)) if obj.get("holder_id") == null else {}
 	var hint := "Drag it onto someone or something to use it." if obj.get("holder_id") == "player" else \
 		("Left-click: " + str(hover.get("verb", "")) if hover.get("reachable", false) else "Walk closer to reach it.")
