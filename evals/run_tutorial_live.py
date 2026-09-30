@@ -3,8 +3,9 @@ work with the real judge, in the world as the tutorial leaves it at that step.
 
     backend/.venv/Scripts/python.exe evals/run_tutorial_live.py [--runs 3] [--demo "other words to try"]
 
-The chain: make the poultice (step "remedy"), put it on Jory's burn ("treat"), then show someone something
-("wonder"), each judged and applied as a real attempt beside Jory. Costs about a cent per run.
+The chain: make the poultice (step "remedy"), put it on Jory's burn ("treat"), then make a fire where Kade can
+see it ("fire", D-57: flint, the broken steel file and dry grass), each judged and applied as a real attempt. The fire
+is also tried in the words players really type (FIRE_WORDS). Costs about two cents per run.
 """
 from __future__ import annotations
 
@@ -24,6 +25,10 @@ import gear  # noqa: E402
 import minds  # noqa: E402
 import tutorial  # noqa: E402
 from ai import config, judge  # noqa: E402
+
+
+FIRE_WORDS = ["I strike the steel file with the flint over the dried grass",
+              "make a fire with the flint, the steel file and the dry grass"]
 
 
 def suggestion(step_id: str) -> str:
@@ -62,16 +67,22 @@ def main() -> int:
     if config.mode() != "live":
         print(f"AI mode is '{config.mode()}': add OPENAI_API_KEY to backend/.env first.")
         return 1
-    demo_text = args.demo or suggestion("wonder")
+    fire_check = {"kind": "made_seen", "flag": "heat_source", "by": "npc_kade_east"}
     steps = [("remedy", suggestion("remedy"), {"kind": "carrying_remedy", "treats": "burn"}),
              ("treat", suggestion("treat"), {"kind": "condition_treated", "npc": "npc_jory_venn", "condition": "burn"}),
-             ("wonder", demo_text, {"kind": "demonstration_seen"})]
+             ("fire", args.demo or suggestion("fire"), fire_check)]
     report, failures = [], 0
     for run in range(args.runs):
         state = world()
-        for step_id, text, check in steps:
-            if step_id == "wonder":
-                state["objects"]["nail_a"]["holder_id"] = "player"
+        chain = steps + [("fire", words, fire_check) for words in ([] if args.demo else FIRE_WORDS)]
+        for step_id, text, check in chain:
+            if step_id == "fire":  # By now: the steel file in hand, and Kade beside the stranger (D-57).
+                if any(o.get("created_by") == "player" and "heat_source" in o.get("flags", [])
+                       for o in state["objects"].values()):
+                    state = world()  # Each wording tried on its own, from before any fire.
+                state["objects"]["steel_file"]["holder_id"] = "player"
+                kade = minds.find(state["npcs"], "npc_kade_east")
+                kade.update(x=state["player"]["x"] + 2, y=state["player"]["y"])
             verdict = attempt(state, text)
             ok = tutorial.holds(state, check)
             failures += not ok

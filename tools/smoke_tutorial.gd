@@ -42,6 +42,19 @@ func find_button(node: Node, text: String) -> Button:
 	return null
 
 
+## The button on the Pack & gear row for this thing (its label names it).
+func row_button(root_node: Node, item: String, text: String) -> Button:
+	for row in root_node.find_children("*", "HBoxContainer", true, false):
+		var named := false
+		for child in row.get_children():
+			named = named or (child is Label and item in (child as Label).text.to_lower())
+		if named:
+			for child in row.get_children():
+				if child is Button and (child as Button).text == text:
+					return child
+	return null
+
+
 func step_id() -> String:
 	var tutorial = scene.run_state.get("tutorial")
 	if typeof(tutorial) != TYPE_DICTIONARY or tutorial.get("done", false):
@@ -200,21 +213,34 @@ func _run() -> void:
 	var lent := false
 	for _i in 160:
 		await create_timer(0.25).timeout
-		if str(scene.run_state.objects.get("practice_staff", {}).get("holder_id", "")) == "player":
+		if str(scene.run_state.objects.get("practice_sword", {}).get("holder_id", "")) == "player":
 			lent = true
 			break
-	if not check(lent, "Kade never lent the practice staff"):
+	if not check(lent, "Kade never lent the practice sword"):
 		return
-	if not check(await wait_for_step("arm"), "Being lent the staff didn't move on: " + step_id()):
+	if not check(await wait_for_step("arm"), "Being lent the sword didn't move on: " + step_id()):
 		return
 	await read_cards()
 	scene.ui.open_inventory()
 	await process_frame
-	var right := find_button(scene.ui.modal, "Right hand")
-	if not check(right != null, "No 'Right hand' button in Pack & gear"):
+	var right := row_button(scene.ui.modal, "practice sword", "Right hand")
+	if not check(right != null, "No 'Right hand' button for the sword in Pack & gear"):
 		return
 	right.pressed.emit()
-	if not check(await wait_for_step("bout"), "Holding the staff didn't move the story on: " + step_id()):
+	for _i in 40: # The sword in hand, and Pack & gear drawn again, before the shield.
+		await create_timer(0.1).timeout
+		if scene.run_state.player.get("equipped", {}).get("right") == "practice_sword" and not scene.request_busy:
+			break
+	await create_timer(0.3).timeout
+	var left := row_button(scene.ui.modal, "wicker shield", "Left hand")
+	if not check(left != null, "No 'Left hand' button for the shield in Pack & gear"):
+		return
+	left.pressed.emit()
+	if not check(await wait_for_step("bout"), "Sword and shield in hand didn't move the story on: " + step_id()):
+		return
+	var kit: Dictionary = scene.run_state.player.get("equipped", {})
+	if not check(kit.get("right") == "practice_sword" and kit.get("left") == "wicker_shield",
+			"Both hands aren't full (D-57): " + str(kit)):
 		return
 	scene.ui.close_modal_now()
 	await read_cards()
@@ -242,10 +268,14 @@ func _run() -> void:
 			break
 	if not check(fought, "The bout never started"):
 		return
-	if not check(await wait_for_step("nail"), "The bout's end didn't move the story on: " + step_id()):
+	if not check(await wait_for_step("why"), "The bout's end didn't move the story on: " + step_id()):
 		return
-	await skip() # nail
-	await skip() # wonder (the stub judge can't show a real one); then the last step's cards are read.
+	await skip() # why (Kade asks what brings you here)
+	await skip() # steel
+	if not check(await wait_for_step("fire"), "Not at the fire: " + step_id()):
+		return
+	await skip() # fire (the stub judge can't make a real one)
+	await skip() # captain (Kade's word; the stub voice can't let you in); then the last step's cards are read.
 	for _i in 20:
 		await create_timer(0.2).timeout
 		if scene.ui.modal_kind == "tutorial_end":

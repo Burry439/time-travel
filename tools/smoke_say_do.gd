@@ -63,6 +63,36 @@ func _run() -> void:
 	if not check(bar.hint.text.begins_with("You'll say"), "No speech preview: " + bar.hint.text):
 		return
 	await screenshot("bar_say")
+	# One line, both (D-57): Tab halfway through quotes the words said so far; the deed goes on in red.
+	bar.line.put("", "say")
+	bar.line.insert_text_at_caret("Look at this")
+	tab()
+	bar.line.insert_text_at_caret("hold up the flint shard")
+	if not check(bar.line.text == "“Look at this” hold up the flint shard" and bar.mode == "do",
+			"Tab mid-line didn't quote the words and switch to Do: " + bar.line.text):
+		return
+	tab()
+	bar.line.insert_text_at_caret("Ever seen one this sharp?")
+	var sent: Dictionary = bar.line.payload()
+	if not check(bar.mode == "say" and sent.mode == "do"
+			and sent.text == "“Look at this” hold up the flint shard “Ever seen one this sharp?”",
+			"A mixed line didn't go out as a deed with words: " + str(sent)):
+		return
+	var colours: Dictionary = bar.line.colours_for(bar.line.text)
+	if not check(colours[0].color == bar.SAY_COLOUR and colours[14].color == bar.DO_COLOUR, "The line isn't blue and red: " + str(colours)):
+		return
+	bar._show_preview()
+	if not check("blue" in bar.hint.text, "No preview for a line that's both: " + bar.hint.text):
+		return
+	await screenshot("bar_both")
+	tab() # Out of the empty-quoted words at the end...
+	bar.line.put("", "do")
+	bar.line.insert_text_at_caret("wave")
+	tab()
+	tab() # ...and an empty pair of quotes, switched straight back, is taken away again.
+	if not check(bar.line.text == "wave", "Empty quotes weren't taken away: " + bar.line.text):
+		return
+	bar.line.put("", "say")
 	tab()
 	bar.line.text = "pick up the fallen branch"
 	bar._show_preview()

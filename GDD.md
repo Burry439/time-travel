@@ -156,7 +156,7 @@ Keep it short, dismissible, and free of hints.
 - **Type it for me.** Where a step gives exact words ("crush the plantain leaves into a poultice for a burn"), a button fills the dialogue bar, addressed to the right person, and the player presses Enter. The last making step shows the words without the button.
 - **UI lessons** (a closer look, the pack) are reported by the client (`tutorial/ui`) and saved as events.
 
-**Sixteen steps**, each checked by code:
+**Eighteen steps**, each checked by code (story version 3, D-57):
 1. Welcome.
 2. Walk into the ring.
 3. Right-click the plantain.
@@ -167,14 +167,30 @@ Keep it short, dismissible, and free of hints.
 8. Talk to him.
 9. Make a poultice.
 10. Treat his burn.
-11. Mara goes and tells Kade about you, and he comes over and lends his staff and shield (D-53: people pass things on, on screen; he comes anyway after 90 s).
-12. Hold the staff.
+11. Mara goes to fetch Kade (D-53: people pass things on, on screen).
+    - Kade answers her and the two stand a moment together, so nobody walks off mid-word.
+    - Then both come back. He comes anyway after 90 s.
+    - Kade sizes the stranger up ("No name, no papers, and walking this road alone? It's thick with cutpurses") and lends a practice sword and a wicker shield.
+12. The sword in the right hand, the shield in the left. The practice sword takes one hand (D-57): a staff or spear takes both, and then there's no hand for a shield.
 13. Kade's bout: pulled blows, no crime, no arrest. From the moment Kade comes over until the bout is done, any blow at him (fists, a thrown stone) starts the bout instead of a real fight (D-53).
-14. Pick up the bent iron nail.
-15. Show Jory sparks from flint and iron catching in dry grass (or anything else that works).
-16. The city: the yard and the wainwright's notebook, then **Carry on** or **Begin a fresh journey**.
+14. Kade asks what brings the stranger to this road; tell him (Type it for me offers "I'm trying to get into the city.").
+15. Pick up the broken steel file by the smithy. It's hard steel: flint throws good sparks only off steel.
+16. Make a fire where Kade can see it.
+    - It counts only if the stranger makes a heat source in this step and Kade sees it clearly (`made_seen`). Something made earlier (the poultice in front of Jory) no longer counts.
+    - Kade: "I've seen enough: the captain should hear about you." He walks to Roderic and speaks for the stranger, saying they want to come into the city only if the stranger told him so.
+17. The captain's word.
+    - If Kade told him the stranger wants in, Roderic walks over and lets them in himself.
+    - If not, the stranger has to go to the gate and ask. Kade's word is the grounds Roderic's yes needs, and the voice decides.
+    - Kade speaks again if a minute passes without him reaching the captain.
+18. The city: the gate is open to you, a new journey is harder, the yard and the notebook. Then **Walk into the city** or **Begin a fresh journey**.
 
-The suggested words for 9, 10 and 15 are checked against the live judge (`evals/run_tutorial_live.py`). The story uses its own problems, never the gate beam, bar or compass, so the main game's routes stay undiscovered (A8).
+While Kade is teaching (steps 11 to 16) he stays with the stranger (a `watch` job). The voice isn't offered moves that would send him off or have him let the stranger in himself (`tutorial.keeps`).
+
+The suggested words for 9, 10 and 16 are checked against the live judge (`evals/run_tutorial_live.py`), and so are two wordings players really type for the fire.
+
+The story uses its own problems, never the gate beam, bar or compass (A8). It ends the way the main game is meant to be won (D-57): someone who has watched you do real things speaks for you, and the captain lets you in. The people and the route are the tutorial's own: Jory's burn and the fire exist only in it.
+
+A tutorial journey saved under an older story version simply carries on as a journey: its steps no longer line up.
 
 **Mistakes stay real:** a death or an arrest becomes a card, with **Rewind to the last calm moment** on it (also in the pause menu).
 
@@ -193,6 +209,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
+| D-57 | 2026-09-30 | **Say and do in one line; the first morning ends at the gate; two hands.** *(D-56 is the parked storylines work.)*<br><br>**One line, both:** spoken words blue in quotes, deeds red, with Tab switching mid-line and putting the quotes in. The backend already took a Do line with quotes as `both`; with nobody addressed, the nearest person now hears the words.<br><br>**The tutorial (story v3):**<br>- Mara fetches Kade, and they stand a moment before both come back.<br>- Kade sizes the stranger up and lends a one-handed practice sword and a shield, then the bout.<br>- He asks why they're here.<br>- A steel file and a fire he sees.<br>- He speaks for the stranger to Roderic.<br>- Roderic lets them in: himself if Kade told him they want in, otherwise when asked, on Kade's word.<br><br>**Fixed from play:**<br>- the fire step counted the earlier poultice as the demonstration, so it ended before any fire;<br>- flint on a soft iron nail was ruled sparkless;<br>- Kade walked off while Mara was talking to him.<br><br>**Found by the live tutorial playthrough (`tools/playtest_tutorial.gd`):** Mara stood beside the stranger during the bout, and a swing still in the air as it ended hit her; Kade then fought for real and killed the stranger. Now:<br>- in a practice bout the stranger's blows reach only the partner;<br>- a swing that lands after the bout is over is checked;<br>- Mara stands clear;<br>- Kade's protection (a blow at him is a bout, not an assault) lasts through all his lessons, and a talk with him no longer sends him back to his day mid-lesson.<br><br>**Two hands:** a two-handed weapon still takes both, but whatever is let go of is now named ("The wicker shield goes back in your pack: the practice staff takes both hands"), in the reply and atop Pack & gear. | The user: "we should be able to say and do things in the same dialogue … half of it will be red the other half can be blue"; "the practice combat doesn't really make sense and Kade walks away from Mara while she's talking to him"; "it said I showed them the fire before I actually made the fire and when I made the fire it just got stuck"; "the tutorial should end with Kade telling Roderic about you and then Roderic letting you in. But you still need to ask if Roderic doesn't know you want to enter the city"; "when I equip the shield in my left hand it unequips the staff".<br><br>**Live:** the fire 10/10, including the player's own wording, with Kade seeing it each time. |
 | D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A to D of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map.<br><br>**Bug bash (D):** a scripted live playthrough (`tools/playtest_demo.gd`) found and fixed:<br>- theft at a bucket Hessa had offered: jobs now lend what they need;<br>- admission on the stranger's claim alone: code now requires evidence the guard holds (`grounds_to_admit`);<br>- no halt after a vouch: hearsay isn't the guards dealing with the stranger;<br>- the tracker showing facts instead of things to do.<br><br>The whole Hessa route now plays through live. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
 | D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
 | D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
@@ -213,7 +230,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 | Right click | The inspect card |
 | Drag from the pack | Onto a person ("give the gourd to Hessa"), a thing ("use the lodestone on the nail", "fill the gourd at the trough"), another item, or the ground (put it down). It writes the line; you check it and press Enter. |
 | T or Enter | Open the dialogue bar |
-| Tab (in the bar) | Switch between **SAY** (words spoken aloud) and **DO** (something you do) (D-55) |
+| Tab (in the bar) | Switch between **SAY** (words spoken aloud, blue) and **DO** (something you do, red), even halfway through a line (D-55, D-57) |
 | E | Act on the nearest thing, as a left click would. A tag over it says what E will do ("[E] Pick up the fallen branch") (D-55) |
 | WASD / arrows, Shift | Move, run |
 | Space / F | Use what's in the right / left hand: a blow, a shot, a pour; empty hands punch. Any time, at anyone or at thin air: the blow goes where you face and hits whoever is there when it lands (D-51). Hold F with a shield to raise it (D-49). With a book in that hand, it opens the book (D-55) |
@@ -228,7 +245,11 @@ Tab cycling and a separate inspect key are gone. Panels never hide the stranger:
 
 > **Built (D-34, D-35).** Talking, Try Something and waiting are one panel with **one text line** and no action buttons.
 
-- **Layout.** A parchment panel along the bottom. It shows the addressed person's painted portrait (or the thing you pointed at, or you), their role and condition, and what they did last round. Beside that are a log and a single line with a **SAY / DO** switch (D-55): Say for words spoken aloud, Do for something you do (words in "quotes" inside a Do line are said as you do it). Tab flips it; it starts on Say when you face someone and on Do otherwise. A preview under the line reads *You'll say: "…"* or *You'll do: …*, and the log shows speech and deeds differently. The backend takes the mode as given: no guessing and no model call. A line sent without a mode (tools, older clients) is still worked out as before On the right is "Point at something": what you carry, what's within reach, and people nearby. While it is open, the view shifts up so you stay in sight.
+- **Layout.** A parchment panel along the bottom. It shows the addressed person's painted portrait (or the thing you pointed at, or you), their role and condition, and what they did last round. Beside that are a log and a single line with a **SAY / DO** switch (D-55).
+  - **One line, both (D-57):** what you say shows blue, in “quotes”; what you do shows red. Tab (or the switch) changes which you're typing, even halfway through, and puts the quotes in or steps out of them for you. So `“Hold still.” lay the poultice on his arm` is one turn (`scripts/ui/say_do_line.gd`).
+  - A line with only words is Say; only a deed is Do; both is a deed with the words said as you do it (`both`). With nobody addressed, the nearest person hears the words.
+  - The switch lights up for what's under the caret. It starts on Say when you face someone and on Do otherwise.
+  - A preview under the line reads *You'll say: "…"*, *You'll do: …* or *You'll say the blue and do the red*, and the log shows your words in blue and your deeds in red. The backend takes the mode as given: no guessing and no model call. A line sent without a mode (tools, older clients) is still worked out as before On the right is "Point at something": what you carry, what's within reach, and people nearby. While it is open, the view shifts up so you stay in sight.
 - **Whatever you type goes to `/act`, which decides what it is:**
   - speech ("Good day", or anything in quotes);
   - a deed ("lever the beam up");
@@ -2238,6 +2259,54 @@ Changes to this document: …
 - `oren_in_awe`: the voice rarely lets awe open the gate. Oren's `admits` may need stronger wording, or awe needs to reach his regard in the context.
 - Hessa's "wooden bucket" holds only 1 L (seed data); a full bucket reads oddly.
 - The playtest moves through the API, so it has to wait for the client's clock sync. A real player's clicks during a resync are dropped without a word.
+
+### Retro: say and do in one line, the first morning ends at the gate (D-57), 30 Sep 2026
+
+**Built:**
+
+- `scripts/ui/say_do_line.gd`: one line in two colours. Spoken words are blue in quotes and deeds are red; Tab switches mid-line and puts the quotes in. It sends say, do, or a deed with the words said as you do it. With nobody addressed, the nearest person hears.
+- Two hands: `gear.equip` names what a two-handed grip lets go of, shown atop Pack & gear.
+- The tutorial, story version 3:
+  - Mara and Kade stand a moment, then come back together.
+  - Kade tests the stranger with a one-handed practice sword and a shield, then asks why they're here.
+  - A steel file, and a fire made in front of Kade.
+  - Kade speaks to the captain, and Roderic lets the stranger in.
+  - New conditions (`all`, `not`, `flag`, `made_seen`, `vouched`, `admitted`, `holding_shield`) and actions (`hold`, `keep`, `vouch`, `admit`).
+  - While Kade teaches, he stays and keeps to his lessons.
+  - Art for the practice sword and the steel file.
+- Practice bouts: blows reach only the partner, a late swing is checked, and the bruises fade when it's over.
+- `tools/playtest_tutorial.gd`: the tutorial's second half, played live and reported like `playtest_demo`. It walks with the server's own planner rules.
+
+**Evidence:**
+
+- 228 backend tests pass. New:
+  - a line that's both is heard by the nearest person;
+  - two hands, and what's let go of;
+  - the whole story to Roderic letting the stranger in;
+  - the captain needs asking when he doesn't know the stranger wants in;
+  - Kade stays for his lessons;
+  - an older tutorial journey carries on;
+  - blows in a bout reach only the partner.
+- All 13 Godot smoke tests pass on stub. The Say/Do smoke types a mixed line and checks its colours and what it sends.
+- **Live:**
+  - The tutorial's words: 10/10, the fire included, and two ways players really phrase it.
+  - The live tutorial playthrough, no blockers:
+    - Kade stood still while Mara told him (0 cells), and both came back;
+    - sword and shield were both in hand, and Kade called the bout;
+    - the fire counted, and Kade reached Roderic in 17 s;
+    - Roderic, told the stranger wants in, walked over and let them in 33 s after the fire.
+
+**Lessons:**
+
+- The first live run of the new tutorial found what no test had: Mara standing in the swing, and a blow in the air as the bout ended. It turned a friendly spar into the stranger's death. Every story beat needs a live run, not only its checks.
+- Checks written against "anything seen" (any demonstration, ever) pass on the wrong thing. They must name the time (this step), the thing (a fire) and the witness (Kade).
+- Several systems each set someone's job after a talk (20 s here, 15 s there). A story that needs someone to stay should renew the stay itself, not patch each system.
+
+**To watch:**
+
+- `WANTS_IN` reads the stranger's own words to Kade with a word list. A player who says "I need to see the captain" won't count, and must ask Roderic themselves (the fallback the user asked for).
+- A human may wander off before the fire. Kade stays, but the marker is the only guide back.
+- The practice sword's reach (1.6) is shorter than a staff's. Kade uses the same sword, so it's fair.
 
 ---
 

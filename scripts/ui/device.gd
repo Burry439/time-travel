@@ -372,12 +372,15 @@ func closing_card() -> void:
 	settings.load("user://presentation.cfg")
 	settings.set_value("tutorial", "done", true)
 	settings.save("user://presentation.cfg")
-	var body: VBoxContainer = ui.begin_modal("The first morning", "tutorial_end", Vector2(560, 300), false)
-	ui.paragraph(body, "That's everything the device can teach you. The city gate is to the north, shut to strangers; how you get inside is up to you.\n\nThe device stays with you: press H any time to talk to it.\n\nYou can carry on from here, with everyone remembering this morning, or begin a fresh journey on the south road.")
+	var admitted = game.run_state.get("admitted")
+	var by := str(ui.npc_record(str(admitted.get("by", ""))).get("name", "")) if typeof(admitted) == TYPE_DICTIONARY else ""
+	var body: VBoxContainer = ui.begin_modal("The first morning", "tutorial_end", Vector2(600, 330), false)
+	ui.paragraph(body, ("You're in: %s has let you into the city. That's how it works here: people watch what you do, pass it on, and speak for you.\n\n" % by if not by.is_empty() else "That's everything the device can teach you.\n\n")
+		+ "A fresh journey starts again on the south road, with other people's problems and nobody handing you the answer. The device stays with you: press H any time to talk to it.")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)
-	row.add_child(ui.button("Carry on in this journey", func() -> void: ui.close_modal()))
+	row.add_child(ui.button("Walk into the city" if not by.is_empty() else "Carry on in this journey", func() -> void: ui.close_modal()))
 	row.add_child(ui.button("Begin a fresh journey", func() -> void:
 		ui.close_modal_now()
 		game._start("normal")))

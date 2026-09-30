@@ -352,6 +352,9 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
             "call_guard", f"{name} breaks off and goes to fetch {guard['name']} the guard about the stranger.",
             guard["id"])
     options["end"] = option("end", f"{name} politely ends the conversation.")
+    import tutorial
+    if tutorial.keeps(state, npc):  # Kade in the middle of his lessons stays put (D-57).
+        options = {k: o for k, o in options.items() if o["act"] not in ("go_tell", "vouch", "call_guard", "admit")}
     return options
 
 

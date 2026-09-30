@@ -272,7 +272,7 @@ def apply_people(state: dict, payload: dict) -> None:
 
 
 TUTORIAL_FIELDS = ("tutorial", "device_log", "objective", "npcs", "objects", "player", "fight", "pending_minds",
-                   "encounter")
+                   "encounter", "admitted", "gate_open")
 
 
 def apply_tutorial(state: dict, payload: dict) -> None:

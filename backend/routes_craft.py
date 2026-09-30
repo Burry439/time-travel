@@ -110,6 +110,8 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     if not current and kind in ("do", "both"):
         # A deed shown or handed to someone nearby ("I show Roderic the compass") is a round with them, so they answer (D-48).
         target = request.target_id or named(request.text, near)
+        if kind == "both" and not target and near:  # Words said aloud as you do it: the nearest person hears (D-57).
+            target = near[0]["id"]
     if current or kind == "say" or (kind in ("do", "both") and target):
         if not current:
             target = target or (near[0]["id"] if near else None)

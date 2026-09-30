@@ -23,6 +23,7 @@ var seen_deeds := {}
 var seen_made := {}
 var seen_tellers := {}
 var pinned := "" # The pinned lead's text, this journey (the goal tracker and the marker follow it).
+var waiting_reveal: Array[Dictionary] = [] # Made while a tutorial card was up: shown once it's read (D-57).
 
 
 func build(owner_ui: Control, owner_game: Node2D) -> void:
@@ -186,8 +187,11 @@ func _toast(icon: Texture2D, title: String, text: String, colour: Color, sound :
 	fade.tween_callback(card.queue_free)
 
 
-## Something you made, shown off for a moment (click to dismiss).
+## Something you made, shown off for a moment (click to dismiss). Not over the tutorial's cards: after them.
 func _reveal(obj: Dictionary) -> void:
+	if ui.guide.is_open():
+		waiting_reveal.append(obj)
+		return
 	for old in reveal_icon.get_children():
 		reveal_icon.remove_child(old)
 		old.queue_free()
@@ -242,6 +246,9 @@ func _process(_delta: float) -> void:
 	if game == null or game.run_state.is_empty():
 		ring.hide()
 		return
+	if not waiting_reveal.is_empty() and not ui.guide.is_open():
+		_reveal(waiting_reveal.pop_back())
+		waiting_reveal.clear()
 	var claim := pinned_claim()
 	var person := lead_person(claim) if not claim.is_empty() else ""
 	var actor := game.get_node_or_null("NPCs/" + person) as Node2D if not person.is_empty() else null

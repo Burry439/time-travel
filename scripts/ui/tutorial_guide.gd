@@ -384,7 +384,6 @@ func _type_it() -> void:
 	await _finish()
 	var person := str(suggest.get("to", "")) if suggest.get("to") != null else ""
 	ui.bar.open(person, str(suggest.get("text", "")), {}, str(suggest.get("mode", "say" if not person.is_empty() else "do")))
-	ui.bar.line.caret_column = ui.bar.line.text.length()
 
 
 ## H in the tutorial: the step's written help, most specific last; the last card offers to ask the device.

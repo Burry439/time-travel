@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 
 import gear
@@ -21,23 +22,36 @@ ROOT = Path(__file__).resolve().parents[1]
 STORY = json.loads((ROOT / "data" / "content" / "tutorial.json").read_text(encoding="utf-8"))
 STEPS: list[dict] = STORY["steps"]
 SPAR_OUTCOMES = ("spar_won", "spar_lost", "spar_yielded")
-JORY, KADE, MARA = "npc_jory_venn", "npc_kade_east", "npc_mara_venn"
+JORY, KADE, MARA, RODERIC = "npc_jory_venn", "npc_kade_east", "npc_mara_venn", "npc_roderic_vale"
+TEACHING = ("kade", "arm", "bout", "why", "steel", "fire")  # Kade's lessons: he stays with the stranger (D-57).
+WANTS_IN = re.compile(r"\b(city|gate|inside|enter|get in|let me in|go in|come in|through the gate)\b", re.I)
 
 
-# Kade's practice gear, the tutorial's own (lent to the stranger for the bout). The art tool paints these too.
+# Kade's practice gear, the tutorial's own (lent to the stranger for the bout). A practice sword takes one hand, so
+# the shield fits in the other (D-57: a staff takes both). The art tool paints these too.
 PRACTICE_GEAR = (
-    ("practice_staff", "practice staff", 1.2, 1.5, ["wood"], "A smooth ash staff with padded ends, for practice bouts.",
-     ["rigid"], {"kind": "weapon", "class": "staff", "covers": [], "quality": "fair"}),
-    ("practice_staff_kade", "practice staff", 1.2, 1.5, ["wood"], "Kade's own practice staff, its padding worn thin.",
-     ["rigid"], {"kind": "weapon", "class": "staff", "covers": [], "quality": "fair"}),
+    ("practice_sword", "practice sword", 0.9, 0.9, ["wood"],
+     "A wooden practice sword of ash, its edges rounded and its tip padded with leather.",
+     ["rigid"], {"kind": "weapon", "class": "club", "covers": [], "quality": "fair"}),
+    ("practice_sword_kade", "practice sword", 0.9, 0.9, ["wood"],
+     "Kade's own wooden practice sword, its grip worn smooth and its padding thin.",
+     ["rigid"], {"kind": "weapon", "class": "club", "covers": [], "quality": "fair"}),
     ("wicker_shield", "wicker shield", 2.0, None, ["willow", "wood"],
      "A round shield of woven willow on a wooden rim, light and springy.", ["rigid"],
      {"kind": "shield", "class": "improvised", "covers": [], "quality": "fair"}),
 )
+# The tutorial's own things lying in the world (id, name, mass, length, materials, description, flags, cell).
+TUTORIAL_THINGS = (
+    ("steel_file", "broken steel file", 0.2, 0.15, ["steel"],
+     "Half of a smith's worn-out file, snapped off: hard, high-carbon steel, still gritty with its teeth.",
+     ["rigid"], (25, 28)),
+)
 
 
 def active(state: dict) -> bool:
-    return bool(state.get("tutorial")) and not state["tutorial"].get("done")
+    """The first morning is on, and from this version of the story (an older journey's steps no longer line up)."""
+    return bool(state.get("tutorial")) and not state["tutorial"].get("done") \
+        and state["tutorial"].get("version", 2) == STORY["version"]
 
 
 def step(state: dict) -> dict | None:
@@ -51,8 +65,12 @@ def setup(state: dict) -> None:
         obj = m2._object_record(oid, name, kade["x"], kade["y"], mass, materials, description, flags, length)
         obj.update(owner_id=KADE, holder_id=KADE, capabilities=["carry"], gear=dict(record), no_overlay=True)
         state["objects"][oid] = obj
+    for oid, name, mass, length, materials, description, flags, (x, y) in TUTORIAL_THINGS:
+        obj = m2._object_record(oid, name, x, y, mass, materials, description, flags, length)
+        obj.update(capabilities=["carry"])
+        state["objects"][oid] = obj
     state["tutorial"] = {"step": 0, "started_at": 0, "fired": [], "done": False, "reacted": [], "read": -1,
-                         "ui_done": []}
+                         "ui_done": [], "flags": {}, "version": STORY["version"]}
     state["device_log"] = []
     state["journal"] = state.get("journal") or []
     _start_step(state, 0)
@@ -84,6 +102,7 @@ def tick(state: dict) -> bool:
     tutorial = state["tutorial"]
     now = state.get("sim_time_ms", 0)
     changed = _react(state, now)
+    changed = _keep_teacher(state, now) or changed
     current = STEPS[tutorial["step"]]
     if tutorial.get("read", tutorial["step"]) < tutorial["step"]:
         return changed  # Still reading its cards.
@@ -131,6 +150,7 @@ def skip(state: dict) -> None:
 def _start_step(state: dict, now: int) -> None:
     current = STEPS[state["tutorial"]["step"]]
     state["tutorial"]["started_at"] = now
+    state["tutorial"]["started_seq"] = state.get("event_seq", 0)  # Anything made after this is this step's.
     state["objective"] = current.get("task") or current["title"]
     for line in current.get("cards", []):
         device_says(state, line, "story")
@@ -183,6 +203,36 @@ def holding_weapon(state: dict) -> bool:
                for hand in gear.HAND_SLOTS)
 
 
+def holding_shield(state: dict) -> bool:
+    return any((obj := gear.held(state, state["player"], hand)) and gear.of(obj)["kind"] == "shield"
+               for hand in gear.HAND_SLOTS)
+
+
+def keeps(state: dict, npc: dict) -> bool:
+    """Kade during his lessons (D-57): he stays with the stranger. No errands, no letting them in himself: the
+    story's end is his word to the captain."""
+    return active(state) and npc["id"] == KADE and STEPS[state["tutorial"]["step"]]["id"] in TEACHING
+
+
+def _keep_teacher(state: dict, now: int) -> bool:
+    """Once Kade has come over, he stays with the stranger until he goes to the captain: whenever he's only standing
+    or watching (after a talk, after the bout), his stay is renewed. Anything else he's doing is left alone."""
+    kade = minds.find(state["npcs"], KADE)
+    if kade is None or not keeps(state, kade) or "kade:lent" not in state["tutorial"].get("fired", []):
+        return False
+    job = (kade.get("mind") or {}).get("job") or {}
+    if job.get("kind") not in (None, "watch") or job.get("until", 0) >= now + 60_000:
+        return False
+    minds._set_job(kade, {"kind": "watch", "until": now + 900_000}, now)
+    return True
+
+
+def _told_wants_in(npc: dict) -> bool:
+    """Whether the stranger has told this person they want to come into the city (their own words to them)."""
+    return any(t.get("who") == "stranger" and WANTS_IN.search(str(t.get("text", "")))
+               for t in (npc.get("mind") or {}).get("talk", []))
+
+
 def holds(state: dict, condition: dict) -> bool:
     kind = condition["kind"]
     here = minds.player_cell(state)
@@ -190,9 +240,16 @@ def holds(state: dict, condition: dict) -> bool:
         return True
     if kind == "any":
         return any(holds(state, c) for c in condition["of"])
-    if kind == "heard_from":  # Someone has come and told them (an errand, D-51).
+    if kind == "all":
+        return all(holds(state, c) for c in condition["of"])
+    if kind == "not":
+        return not holds(state, condition["of"])
+    if kind == "flag":  # Something the story noted (D-57): whether Kade told the captain the stranger wants in.
+        return bool((state.get("tutorial") or {}).get("flags", {}).get(condition["key"]))
+    if kind == "heard_from":  # Someone has come and told them (an errand, D-51), at least after_s seconds ago.
         npc = minds.find(state["npcs"], condition["npc"])
-        return bool(npc) and any(h.get("from") == condition["from"]
+        wait = condition.get("after_s", 0) * 1000
+        return bool(npc) and any(h.get("from") == condition["from"] and state.get("sim_time_ms", 0) - h.get("at", 0) >= wait
                                  for h in (npc.get("mind") or {}).get("knows", {}).get("heard", []))
     if kind == "step_time":  # A fallback: this long since the step began.
         tutorial = state.get("tutorial") or {}
@@ -206,9 +263,11 @@ def holds(state: dict, condition: dict) -> bool:
         return all(i in held for i in condition["ids"])
     if kind == "ui":
         return condition["key"] in (state.get("tutorial") or {}).get("ui_done", [])
-    if kind == "talked_to":
+    if kind == "talked_to":  # since_step: only what was said since this step began (D-57).
         npc = minds.find(state["npcs"], condition["npc"])
-        return bool(npc) and any(t.get("who") == "stranger" for t in (npc.get("mind") or {}).get("talk", []))
+        since = (state.get("tutorial") or {}).get("started_at", 0) if condition.get("since_step") else -1
+        return bool(npc) and any(t.get("who") == "stranger" and t.get("at", 0) >= since
+                                 for t in (npc.get("mind") or {}).get("talk", []))
     if kind == "carrying_remedy":
         return any((remedy := gear.remedy_for(o)) and condition["treats"] in remedy["treats"] for o in carried(state))
     if kind == "condition_treated":
@@ -217,6 +276,8 @@ def holds(state: dict, condition: dict) -> bool:
         return bool(npc) and (not wounds or all(c.get("treated", 0) > 0 for c in wounds))
     if kind == "holding_weapon":
         return holding_weapon(state)
+    if kind == "holding_shield":
+        return holding_shield(state)
     if kind == "npc_near":
         npc = minds.find(state["npcs"], condition["npc"])
         return bool(npc) and npc.get("alive", True) and math.dist(minds._cell(npc), here) <= condition["within"]
@@ -229,6 +290,21 @@ def holds(state: dict, condition: dict) -> bool:
     if kind == "demonstration_seen":
         return any(m.get("kind") == "demonstration" and m.get("works", True) and m.get("clarity") == "clear"
                    for n in state["npcs"] for m in (n.get("mind") or {}).get("memories", []))
+    if kind == "made_seen":  # Something with this flag made by the stranger in this step, and this person saw it.
+        tutorial = state.get("tutorial") or {}
+        made = any(o.get("created_by") == "player" and condition["flag"] in o.get("flags", [])
+                   and int(o.get("created_event_id") or 0) > tutorial.get("started_seq", 0)
+                   for o in state["objects"].values())
+        npc = minds.find(state["npcs"], condition["by"])
+        return made and bool(npc) and any(
+            m.get("kind") == "demonstration" and m.get("clarity") != "vague"
+            and m.get("at", 0) >= tutorial.get("started_at", 0) for m in (npc.get("mind") or {}).get("memories", []))
+    if kind == "vouched":  # This person has spoken for the stranger to the captain.
+        captain = minds.find(state["npcs"], RODERIC)
+        return bool(captain) and any(m.get("kind") == "vouch" and m.get("by") == condition["npc"]
+                                     for m in (captain.get("mind") or {}).get("memories", []))
+    if kind == "admitted":
+        return bool(state.get("admitted"))
     raise ValueError(f"Unknown tutorial condition {kind}")
 
 
@@ -241,8 +317,29 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
             minds._say(npc, action["text"], now, state, state["journal"])
             minds.mind(npc).setdefault("talk", []).append({"who": "them", "text": action["text"], "at": now})
         elif kind == "approach" and npc and npc.get("alive", True) and not npc.get("down"):
-            minds._set_job(npc, {"kind": "approach", "target": "player", "stop": 1.5, "speed": "walk",
-                                 "then": "tutorial"}, now)
+            minds._set_job(npc, {"kind": "approach", "target": "player", "stop": action.get("stop", 1.5),
+                                 "speed": "walk", "then": "tutorial"}, now)
+        elif kind == "hold" and npc and npc.get("alive", True):  # Stand and talk a moment: nobody walks off mid-word.
+            for person in [npc] + [minds.find(state["npcs"], other) for other in action.get("with", [])]:
+                if person:
+                    controller = person.get("controller") or {}
+                    controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + action["seconds"] * 1000)
+                    minds._set_job(person, {"kind": "watch", "until": now + action["seconds"] * 1000}, now)
+        elif kind == "keep" and npc and npc.get("alive", True):  # Kade stays with the stranger for his lessons.
+            minds._set_job(npc, {"kind": "watch", "until": now + 900_000}, now)
+        elif kind == "vouch" and npc and npc.get("alive", True) and not npc.get("down"):  # Off to the captain (D-57).
+            import talk
+            wants = _told_wants_in(npc)
+            state["tutorial"].setdefault("flags", {})["wants_in"] = wants
+            saw = "dressed Jory's burn, held their own in a bout with me, and struck fire from flint and steel in front of me"
+            why = f"they {saw}. Practical hands." + (" And they want to come into the city." if wants else "")
+            summary = (f"{npc['name']} vouched for the stranger: saw them dress Jory's burn, hold their own in a bout with "
+                       f"{npc['name']}, and strike fire from flint and steel.") + (
+                " The stranger wants to come into the city." if wants else "")
+            talk.speak_for(state, npc, why, summary, None, now)
+        elif kind == "admit" and npc and npc.get("alive", True) and not state.get("admitted"):  # On a word he holds.
+            because = [m["summary"] for m in minds.mind(npc)["memories"] if minds.is_evidence(m)][-4:]
+            state.update(admitted={"by": npc["id"], "event_id": None, "because": because}, gate_open=True)
         elif kind == "lend" and npc:
             for oid in action["objects"]:
                 obj = state["objects"].get(oid)
@@ -254,9 +351,9 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
                 gear.add_condition(npc, wound, now)
                 npc["health"] = max(1, npc.get("health", 100) - wound.get("severity", 10))
         elif kind == "spar" and npc:
-            staff = state["objects"].get("practice_staff_kade")
-            if staff and staff.get("holder_id") == npc["id"]:
-                npc.setdefault("equipped", {})["right"] = staff["id"]
+            sword = state["objects"].get("practice_sword_kade")
+            if sword and sword.get("holder_id") == npc["id"]:
+                npc.setdefault("equipped", {})["right"] = sword["id"]
             combat.start(state, [npc["id"]], now, "spar", lethal=False)
         elif kind == "errand" and npc and npc.get("alive", True):  # Someone goes and tells someone (D-51).
             minds._set_job(npc, {"kind": "tell", "target": action["to"], "speed": "walk", "message": action["message"],
@@ -264,15 +361,12 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
 
 
 def spar_partner(state: dict) -> str | None:
-    """Kade, while he is the stranger's teacher (from when he comes over until the bout is done): a blow at him then
-    is sparring, never an assault (D-53). A first blow with fists or before his cards is still a bout."""
+    """Kade, while he is the stranger's teacher (from when he comes over until he goes to the captain): a blow at
+    him then is sparring, never an assault (D-53, D-57). A first blow with fists or before his cards is still a
+    bout; a late swing after it is another."""
     if not active(state):
         return None
-    ids = [step["id"] for step in STEPS]
-    here = state["tutorial"]["step"]
-    if "kade" in ids and "bout" in ids and ids.index("kade") <= here <= ids.index("bout"):
-        return KADE
-    return None
+    return KADE if STEPS[state["tutorial"]["step"]]["id"] in TEACHING else None
 
 
 def spar_now(state: dict, npc: dict, now: int) -> bool:

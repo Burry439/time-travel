@@ -1,6 +1,6 @@
 {
- "version": 2,
- "notes": "The tutorial, 'The first morning' (GDD D-50, D-52): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), mode (say or do, D-55), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}.",
+ "version": 3,
+ "notes": "The tutorial, 'The first morning' (GDD D-50, D-52, D-57): a guided, linear story on the village map that teaches the systems through its own small problems (never the gate beam, the bar or the compass). It ends the way the main game is meant to be won: Kade, who trusts only what he sees, watches the stranger help, fight and make fire, and speaks for them to the captain, who lets them in (himself if Kade told him the stranger wants in, otherwise when asked). Each step: title; cards (what the device says, shown big in the centre with the game paused, read with Next); task (the one line on the banner until it's done); focus (what the world marker points at: {cell}, {object} or [objects], {npc}); suggest (exact words to try: text, to (the person addressed, or null), mode (say or do, D-55), button (offer 'Type it for me')); check (an outcome in the world or a ui action, checked by code, and only once the step's cards are read); done (the praise card); help (shown on H, most specific last); triggers, on_start and on_done (the story acting: someone speaks, walks over, lends something, goes to tell someone, a bout begins). Text may use {KEY} for a key cap: {W} {A} {S} {D} {Shift} {E} {I} {T} {H} {F} {X} {Q} {Space} {Esc} {Enter} {Left-click} {Right-click}. Conditions (D-57): all/any/not of others; flag (something the story noted); heard_from with after_s; talked_to with since_step; holding_shield; made_seen (something with this flag made this step, seen by this person); vouched (this person has spoken for the stranger to the captain); admitted. Actions: hold (stand and talk a moment), keep (stay with the stranger), approach with stop, vouch (Kade's word to the captain, noting whether the stranger told him they want in), admit (the captain lets them in on a word he holds).",
  "device_name": "the device",
  "stuck_after_s": 60,
  "steps": [
@@ -179,8 +179,8 @@
    "title": "Talking",
    "cards": [
     "Talking is simple: {Left-click} a person, or press {T}. The box at the bottom opens.",
-    "Beside the line are two switches: SAY for words you speak, DO for things you do. {Tab} flips between them. Anything at all: there are no lines to choose from, and people answer as themselves.",
-    "Try these words, with SAY on, or your own:"
+    "Type in your own words. What you SAY shows blue; what you DO shows red. {Tab} switches between them, even halfway through a line, so you can say something and do something in one go. There are no lines to choose from: people answer as themselves.",
+    "Try these words, or your own:"
    ],
    "suggest": {
     "text": "Let me see your arm.",
@@ -207,7 +207,7 @@
    "title": "Something for the burn",
    "cards": [
     "That burn needs dressing, or it will fester within the hour. You know more about burns than anyone alive here.",
-    "To make something, switch to DO ({Tab}) and describe what you do, in your own words. The world decides whether it works, and tells you why when it doesn't.",
+    "To make something, press {Tab} until DO is lit (your words turn red), then describe what you do. The world decides whether it works, and tells you why when it doesn't.",
     "Try this:"
    ],
    "suggest": {
@@ -253,13 +253,13 @@
     {
      "kind": "npc_says",
      "npc": "npc_mara_venn",
-     "text": "That was decent of you, stranger. Kade was asking after anyone who can hold a weapon. Wait here: I'll fetch him."
+     "text": "That was decent of you, stranger. Kade from the gate should meet you: he sizes up everyone new on this road, and he's fair to anyone who can really do things. Wait here: I'll bring him."
     },
     {
      "kind": "errand",
      "npc": "npc_mara_venn",
      "to": "npc_kade_east",
-     "message": "There's a stranger at the smithy who just dressed Jory's burn, and did it well. You were asking after anyone who can hold a weapon."
+     "message": "There's a stranger at the smithy who just dressed Jory's burn, and did it well. You'll want to see them for yourself."
     }
    ],
    "done": "He'll remember that. So will Mara. Kindness counts here the way evidence does: people trust what they've seen you do. The same goes for you: cuts, burns and breaks need something made for them.",
@@ -273,14 +273,37 @@
    "id": "kade",
    "title": "A guard comes over",
    "cards": [
-    "Mara has gone to fetch Kade, one of the guards. Watch: people here pass things on to each other, good and bad.",
-    "Wait for them, or walk to meet them."
+    "Mara has gone to fetch Kade, one of the gate guards. People here pass things on to each other, good and bad.",
+    "Kade trusts only what he sees people do with his own eyes. Wait here for them, or walk to meet them."
    ],
-   "task": "Wait for Mara to bring Kade (or walk to meet him)",
+   "task": "Wait for Mara to bring Kade (or walk to meet them)",
    "focus": {
     "npc": "npc_kade_east"
    },
    "triggers": [
+    {
+     "id": "reply",
+     "when": {
+      "kind": "heard_from",
+      "npc": "npc_kade_east",
+      "from": "npc_mara_venn"
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_kade_east",
+       "text": "Handy with a burn, are they? I'll come and see."
+      },
+      {
+       "kind": "hold",
+       "npc": "npc_kade_east",
+       "with": [
+        "npc_mara_venn"
+       ],
+       "seconds": 4
+      }
+     ]
+    },
     {
      "id": "called",
      "when": {
@@ -289,7 +312,8 @@
        {
         "kind": "heard_from",
         "npc": "npc_kade_east",
-        "from": "npc_mara_venn"
+        "from": "npc_mara_venn",
+        "after_s": 4
        },
        {
         "kind": "step_time",
@@ -301,6 +325,11 @@
       {
        "kind": "approach",
        "npc": "npc_kade_east"
+      },
+      {
+       "kind": "approach",
+       "npc": "npc_mara_venn",
+       "stop": 4.5
       }
      ]
     },
@@ -315,15 +344,19 @@
       {
        "kind": "npc_says",
        "npc": "npc_kade_east",
-       "text": "Mara says you've got steady hands. Here: a practice staff and a wicker shield. Let's see what you do with them."
+       "text": "So you're the one who dressed Jory's arm. No name, no papers, and walking this road alone? It's thick with cutpurses. Let's see if you can look after yourself. Here: a practice sword and a wicker shield."
       },
       {
        "kind": "lend",
        "npc": "npc_kade_east",
        "objects": [
-        "practice_staff",
+        "practice_sword",
         "wicker_shield"
        ]
+      },
+      {
+       "kind": "keep",
+       "npc": "npc_kade_east"
       }
      ]
     }
@@ -331,12 +364,12 @@
    "check": {
     "kind": "carrying_id",
     "ids": [
-     "practice_staff"
+     "practice_sword"
     ]
    },
-   "done": "A practice staff and a wicker shield, lent to you. Lent things are yours to use, not to keep.",
+   "done": "A practice sword and a wicker shield, lent to you. Lent things are yours to use, not to keep.",
    "help": [
-    "Mara walks to Kade and tells him about you; then he comes over. Both are marked.",
+    "Mara walks to Kade and tells him about you; then they both come back. Kade is marked.",
     "If it's taking too long, walk towards Kade: he's marked with a ring."
    ]
   },
@@ -344,23 +377,32 @@
    "id": "arm",
    "title": "Arm yourself",
    "cards": [
-    "Press {I} for Pack & gear. Click the practice staff and choose Right hand. Then click the wicker shield and choose Left hand.",
+    "Press {I} for Pack & gear. Click the practice sword and choose Right hand. Then click the wicker shield and choose Left hand.",
     "Out in the world, {Space} uses your right hand and {F} your left. Hold {F} with a shield to raise it. {X} swaps your hands."
    ],
-   "task": "Press I and put the staff in your right hand",
+   "task": "Press I: the sword in your right hand, the shield in your left",
    "check": {
-    "kind": "holding_weapon"
+    "kind": "all",
+    "of": [
+     {
+      "kind": "holding_weapon"
+     },
+     {
+      "kind": "holding_shield"
+     }
+    ]
    },
-   "done": "Weapons have a weight and a reach. A staff keeps them back; a knife needs you close. Armour matters more than anything: remember that when you meet the guards in mail.",
+   "done": "A sword like this needs one hand, so the other can hold a shield. A staff or a spear reaches further, but takes both hands. Armour matters more than anything: remember that when you meet the guards in mail.",
    "help": [
-    "Press {I}. In the list of things you carry, find the practice staff and press its Right hand button."
+    "Press {I}. Find the practice sword and press Right hand; then the wicker shield and press Left hand.",
+    "Some weapons, like a staff or a spear, take both hands: then there's no hand left for a shield."
    ]
   },
   {
    "id": "bout",
    "title": "Kade's bout",
    "cards": [
-    "Kade wants to see what you can do. It's only practice: nobody bleeds.",
+    "Kade wants to see whether you can look after yourself. It's only practice: nobody bleeds.",
     "Fights happen in real time. Every blow winds up first: watch for the red mark over his head, and step back out of reach before it lands. Swing with {Space} while he recovers.",
     "Hold {F} to raise the shield against blows from the front. If it goes badly, press {T} and say you give up. Walk up to Kade to begin."
    ],
@@ -394,63 +436,218 @@
    },
    "done": "Win or lose, you know how a fight goes now. A real one won't stop at 'enough'. Choose your fights carefully.",
    "help": [
-    "Walk right up to Kade with the staff in your right hand.",
-    "When the red mark shows over his head, step back. Then step in and press {Space}.",
+    "Walk right up to Kade with the sword in your right hand.",
+    "When the red mark shows over his head, step back or hold {F}. Then step in and press {Space}.",
     "Hold {F} with the shield facing him to take his blows."
    ]
   },
   {
-   "id": "nail",
+   "id": "why",
+   "title": "What brings you here?",
+   "on_start": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_kade_east",
+     "text": "Not bad. You're no soldier, but you keep your head. So what's someone like you doing on this road?"
+    },
+    {
+     "kind": "keep",
+     "npc": "npc_kade_east"
+    }
+   ],
+   "cards": [
+    "Kade wants to know what you're after. Tell him, in your own words: people act on what they know about you, and pass it on."
+   ],
+   "suggest": {
+    "text": "I'm trying to get into the city.",
+    "to": "npc_kade_east",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Tell Kade why you're here",
+   "focus": {
+    "npc": "npc_kade_east"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_kade_east",
+    "since_step": true
+   },
+   "done": "Whatever you told him, he'll remember, and he may pass it on to someone who matters.",
+   "help": [
+    "Click Kade, type why you're here, and press {Enter}.",
+    "Or press Type it for me on the card, then {Enter}."
+   ]
+  },
+  {
+   "id": "steel",
    "title": "Your real advantage",
    "cards": [
-    "Here's your real advantage: you know things nobody here has worked out yet. When people see something work, it changes how they see you.",
-    "Let's show them something. First, pick up the bent iron nail lying near the smithy."
+    "Here's your real advantage: you know things nobody here has worked out yet. Kade trusts only what he sees people do, so let's show him.",
+    "First, pick up the broken steel file lying by the smithy. Steel, not iron: flint throws good sparks only off hard steel."
    ],
-   "task": "Pick up the bent iron nail near the smithy",
+   "task": "Pick up the broken steel file by the smithy",
    "focus": {
-    "object": "nail_a"
+    "object": "steel_file"
    },
    "check": {
     "kind": "carrying_id",
     "ids": [
-     "nail_a"
+     "steel_file"
     ]
    },
-   "done": "Flint, iron and dry grass: you have everything you need.",
+   "done": "Flint, steel and dry grass: you have everything you need to make fire.",
    "help": [
-    "The nail is marked with a ring, a little east of the smithy."
+    "The file is marked with a ring, just by the smithy."
    ]
   },
   {
-   "id": "wonder",
-   "title": "Something they've never seen",
+   "id": "fire",
+   "title": "Fire from a stone",
    "cards": [
-    "Now show Jory something he's never seen. Stand near him, press {T}, and type it yourself this time:"
+    "Now make a fire where Kade can see it. Stand near him, make sure DO is lit, and type it yourself this time:"
    ],
    "suggest": {
-    "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
-    "to": "npc_jory_venn",
+    "text": "strike the flint against the steel file so the sparks fall into the dry grass, then blow on it until it catches",
+    "to": null,
     "button": false,
     "mode": "do"
    },
-   "task": "Show Jory something that works",
+   "task": "Make a fire where Kade can see it",
    "focus": {
-    "npc": "npc_jory_venn"
+    "npc": "npc_kade_east"
    },
    "check": {
-    "kind": "demonstration_seen"
+    "kind": "made_seen",
+    "flag": "heat_source",
+    "by": "npc_kade_east"
    },
-   "done": "Did you see their face? That's worth more than any argument. Keep it in mind at the gate.",
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_kade_east",
+     "text": "Fire in a few strikes, from a scrap of steel and a stone. That's useful work. I've seen enough: the captain should hear about you."
+    },
+    {
+     "kind": "vouch",
+     "npc": "npc_kade_east"
+    }
+   ],
+   "done": "Did you see his face? Kade doesn't care for tricks, but he respects work that works. That's worth more than any argument.",
    "help": [
-    "Walk up to Jory, press {T}, type the words from the card, and press {Enter}.",
-    "Anything that really works counts: you don't have to use my idea."
+    "Stand within a few steps of Kade, press {T}, make sure DO is lit (red), type the words from the card and press {Enter}.",
+    "If it doesn't catch, the bar says why. Hold the flint and the file low over the grass, and blow on the sparks.",
+    "Anything that really makes a fire counts: you don't have to use my words."
+   ]
+  },
+  {
+   "id": "captain",
+   "title": "The captain's word",
+   "cards": [
+    "Kade is off to the gate to tell Captain Roderic about you. Only the captain decides who enters the city.",
+    "If Kade told him you want to come in, Roderic may come to you himself. If not, go to the gate and ask him: he can't let you in if he doesn't know you want to come."
+   ],
+   "task": "Get Captain Roderic to let you into the city",
+   "focus": {
+    "npc": "npc_roderic_vale"
+   },
+   "triggers": [
+    {
+     "id": "comes",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "vouched",
+        "npc": "npc_kade_east"
+       },
+       {
+        "kind": "flag",
+        "key": "wants_in"
+       }
+      ]
+     },
+     "do": [
+      {
+       "kind": "approach",
+       "npc": "npc_roderic_vale"
+      }
+     ]
+    },
+    {
+     "id": "lets_in",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "vouched",
+        "npc": "npc_kade_east"
+       },
+       {
+        "kind": "flag",
+        "key": "wants_in"
+       },
+       {
+        "kind": "npc_near",
+        "npc": "npc_roderic_vale",
+        "within": 2.5
+       }
+      ]
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_roderic_vale",
+       "text": "Kade tells me you dressed the smith's boy's burn, stood a bout with him, and struck fire from a stone in front of him. And that you want to come into the city. His word is good enough for me: you may enter."
+      },
+      {
+       "kind": "admit",
+       "npc": "npc_roderic_vale"
+      }
+     ]
+    },
+    {
+     "id": "again",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "not",
+        "of": {
+         "kind": "vouched",
+         "npc": "npc_kade_east"
+        }
+       },
+       {
+        "kind": "step_time",
+        "seconds": 60
+       }
+      ]
+     },
+     "do": [
+      {
+       "kind": "vouch",
+       "npc": "npc_kade_east"
+      }
+     ]
+    }
+   ],
+   "check": {
+    "kind": "admitted"
+   },
+   "done": "You're in. That's how it works here: people watch what you do, pass it on, and speak for you.",
+   "help": [
+    "Kade walks to the gate and speaks to the captain. Roderic is marked.",
+    "If Roderic hasn't come to you, walk to the gate, click him, and ask to be let into the city.",
+    "Tell him Kade can speak for you. He listens to people he trusts."
    ]
   },
   {
    "id": "city",
    "title": "The city",
    "cards": [
-    "That's everything I can teach you. The city gate is to the north, and it's shut to strangers. How you get in is up to you: by what you make, what you show, who comes to trust you, or something nobody has thought of.",
+    "That's everything I can teach you. The gate is open to you: walk through it whenever you're ready.",
+    "A new journey starts again on the south road, with other people's problems and nobody handing you the answer. How you get in is up to you: by what you make, what you show, who comes to trust you, or something nobody has thought of.",
     "One more thing: in the bottom-right corner of the map is an old wainwright's yard, full of materials anyone may take, and the wainwright's notebook, full of ways to make weapons, armour and remedies. Pick it up and click it in your pack to read it.",
     "I'll stay quiet from here. If you're stuck, press {H} and ask me. I'll point you somewhere, but I won't solve it for you."
    ],

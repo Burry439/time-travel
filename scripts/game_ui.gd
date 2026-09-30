@@ -47,6 +47,7 @@ var sounds: Node
 var device: Control # The device from the future (D-50): scripts/ui/device.gd.
 var guide: Control # The tutorial's cards, task banner and marker (D-52): scripts/ui/tutorial_guide.gd.
 var layers: Control # Toasts, deeds, the reveal card and the pinned goal's marker (D-55): scripts/ui/game_layers.gd.
+var gear_note := "" # What equipping something let go of (a two-handed grip), shown atop Pack & gear (D-57).
 var modal: PanelContainer
 var modal_box: VBoxContainer
 var modal_kind := ""
@@ -554,6 +555,13 @@ func open_inventory() -> void:
 		return
 	var body := begin_modal("Pack & gear", "inventory", Vector2(760, 620))
 	guide.report("pack")
+	if not gear_note.is_empty(): # What the last change let go of, and why (D-57): never silently.
+		var note := label(gear_note, 15)
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.add_theme_color_override("font_color", UITheme.ACCENT)
+		note.add_theme_font_override("font", UITheme.serif(false, true))
+		body.add_child(note)
+		gear_note = ""
 	var player: Dictionary = game.run_state.get("player", {})
 	var carried: Array[Dictionary] = hud.carried_objects()
 	var conditions: Array = player.get("conditions", []) if typeof(player.get("conditions")) == TYPE_ARRAY else []
@@ -608,6 +616,7 @@ func open_inventory() -> void:
 			if not result.get("ok", false):
 				notify(str(result.get("reason", "")))
 			open_inventory(), "Chip"))
+
 	if shown == 0:
 		small(body, "Empty-handed. Space and F use what's in your right and left hands; X swaps them.")
 	body.add_child(_section("In your pack"))
@@ -633,7 +642,9 @@ func open_inventory() -> void:
 				var result: Dictionary = await game.fight.equip(id, chosen)
 				if not result.get("ok", false):
 					notify(str(result.get("reason", "")))
-				elif obj.get("readable") != null and chosen in ["right", "left"]:
+				elif "goes back in your pack" in str(result.get("text", "")):
+					gear_note = str(result.text)
+				if result.get("ok", false) and obj.get("readable") != null and chosen in ["right", "left"]:
 					open_book(game.run_state.objects.get(id, obj)) # A book taken in hand opens (D-55).
 					return
 				open_inventory(), "Chip"))
@@ -801,8 +812,7 @@ func _write_line(text: String, person: String, refs: Array) -> void:
 	for id in refs:
 		if str(id) not in bar.selected:
 			bar.selected.append(str(id))
-	bar.line.text = text + " "
-	bar.line.caret_column = bar.line.text.length()
+	bar.line.put(text + " ", "do")
 	bar.render_chips()
 	hud.show_hint("drag", "Check the words, change anything you like, then press Enter.")
 

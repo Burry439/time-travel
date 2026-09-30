@@ -138,3 +138,22 @@ def test_a_judged_class_that_does_not_fit_the_thing_is_replaced_by_codes_reading
     assert gear.checked({"kind": "weapon", "class": "stake", "covers": [], "quality": "fair"}, stick)["class"] == "stake"
     assert gear.classify({"name": "rock", "materials": ["stone"], "mass_kg": 1.5, "flags": ["rigid"]})["class"] in (
         "hand_stone", "club")
+
+
+def test_two_hands_or_one_and_the_player_is_told_what_was_let_go():
+    """D-57: a staff takes both hands, so a shield can't go with it; a one-handed weapon and a shield can. Whatever
+    has to be let go of is named, with the reason, instead of silently vanishing from a hand."""
+    staff = thing("practice staff", ["wood"], 1.5, 1.8, ("rigid",), "staff", oid="staff")
+    stick = thing("practice sword", ["wood"], 0.9, 0.9, ("rigid",), "club", oid="stick")
+    shield = thing("wicker shield", ["willow"], 2.0, None, ("rigid",), "improvised", "shield", oid="shield")
+    state = {"objects": {o["id"]: {**o, "holder_id": "player"} for o in (staff, stick, shield)}}
+    me = {"id": "player", "alive": True, "equipped": {}}
+    assert gear.equip(state, me, state["objects"]["staff"], "right")["ok"]
+    held = gear.equip(state, me, state["objects"]["shield"], "left")
+    assert held["ok"] and "The practice staff goes back in your pack: the practice staff takes both hands." in held["text"]
+    assert me["equipped"] == {"left": "shield"}
+    both = gear.equip(state, me, state["objects"]["staff"], "right")
+    assert "The wicker shield goes back in your pack: the practice staff takes both hands." in both["text"]
+    assert gear.equip(state, me, state["objects"]["stick"], "right")["ok"]
+    assert gear.equip(state, me, state["objects"]["shield"], "left")["ok"]
+    assert me["equipped"] == {"right": "stick", "left": "shield"}  # One hand each.

@@ -83,3 +83,10 @@ def test_the_players_say_or_do_is_final_and_needs_no_model(world, monkeypatch):
     world.rulings.append(attempt(judged("take", take_ids=["branch_a"])))
     body = post(world, state, "act", {"text": "pick up the fallen branch", "mode": "do"})
     assert body["intent"] == {"kind": "do", "how": "player"}
+    # One line, both (D-57): the words are heard by whoever is nearest, even with nobody addressed.
+    state = walk_near(world, body["state"], "npc_kade_east")
+    world.rulings.append(attempt(judged("other")))
+    world.replies.append(said("answer"))
+    body = post(world, state, "act", {"text": "“Look at this.” wave the fallen branch", "mode": "do"})
+    assert body["intent"] == {"kind": "both", "how": "player"}
+    assert body["state"]["encounter"]["participants"] == ["npc_kade_east"]

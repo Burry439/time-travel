@@ -147,6 +147,8 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
                                    "why": why}
     if why == "spar":  # A practice bout (the tutorial): nobody means harm, and nobody is arrested (D-50).
         fight["spar"] = True
+        fight["health_before"] = {"player": state["player"].get("health", 100),  # Its bruises fade after (D-57).
+                                  **{n["id"]: n.get("health", 100) for n in people}}
     state["fight"] = fight
     talking = state.get("encounter")  # Those who attack leave the conversation; anyone else can still talk (D-51).
     if talking:
@@ -203,6 +205,11 @@ def end_spar(state: dict, npc: dict | None, outcome: str, text: str, now: int,
         view = minds.regard(npc)
         view["respect"] = round(min(1.0, view.get("respect", 0.0) + {"spar_won": 0.15, "spar_lost": 0.05}.get(
             outcome, 0.0)), 3)
+    before = (active(state) or {}).get("health_before") or {}
+    for who, health in before.items():  # Pulled blows: only bruises, and they fade once it's over (D-57).
+        person = state["player"] if who == "player" else minds.find(state["npcs"], who)
+        if person is not None and person.get("alive", True):
+            person["health"] = max(person.get("health", 100), health)
     finish(state, now)
 
 
@@ -275,6 +282,9 @@ def strike(state: dict, hand: str, target_id: str | None, now: int, facing: list
     swing = {"hand": hand, "target": npc["id"] if npc else None, "started": now,
              "lands_at": now + int(profile["windup_ms"]), "animation": profile["animation"],
              "object_id": (obj or {}).get("id"), "ranged": ranged, "aim": aim, "facing": list(facing or [0.0, 1.0])}
+    fight = active(state) or {}
+    if fight.get("spar"):  # A practice bout: the blow is meant for the partner and nobody else (D-57).
+        swing["spar_with"] = (fight.get("attackers") or [None])[0]
     swings[hand] = swing
     return {"ok": True, "swing": swing, "profile": {k: profile[k] for k in ("class", "animation", "windup_ms",
                                                                               "reach", "type")}}
@@ -485,8 +495,14 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
     nobody lands on whoever is now in front of them within reach, or on thin air."""
     at = swing["lands_at"]
     profile, obj = hand_use(state, swing["hand"])
-    npc = minds.find(npcs, swing["target"]) if swing.get("target") else in_front(state, npcs, swing.get("facing"),
-                                                                                  profile["reach"])
+    if swing.get("spar_with"):  # Swung in a practice bout: only ever at the partner, and only while it lasts (D-57).
+        if not (active(state) or {}).get("spar"):
+            _log(state, "player", "miss", "You check your swing: the bout is over.", at, journal)
+            return
+        npc = minds.find(npcs, swing["spar_with"])
+    else:
+        npc = minds.find(npcs, swing["target"]) if swing.get("target") else in_front(state, npcs, swing.get("facing"),
+                                                                                      profile["reach"])
     if npc is None or not npc.get("alive", True):
         return
     _spar_instead(state, npc, at)

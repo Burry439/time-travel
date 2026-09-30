@@ -32,7 +32,7 @@ def paintable() -> dict[str, dict]:
         if spec.get("no_sprite"):
             continue  # Drawn by something else (a building's art, the stranger's own painting).
         records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
-    for oid, name, _mass, _length, materials, description, *_rest in tutorial.PRACTICE_GEAR:
+    for oid, name, _mass, _length, materials, description, *_rest in tutorial.PRACTICE_GEAR + tutorial.TUTORIAL_THINGS:
         records[oid] = {"name": name, "description": description, "materials": materials}
     return records
 

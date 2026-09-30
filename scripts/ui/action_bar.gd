@@ -1,15 +1,17 @@
 extends PanelContainer
-## The dialogue bar (GDD D-34, D-35, D-55): one panel along the bottom and one text line for everything.
-## A Say / Do switch beside the line (Tab flips it) says which it is: words spoken aloud, or something you do
-## (words in "quotes" inside a Do line are said as you do it). No guessing: the backend takes it as given.
+## The dialogue bar (GDD D-34, D-35, D-55, D-57): one panel along the bottom and one text line for everything.
+## What you SAY shows blue and what you DO shows red, in the same line: Tab (or the switch beside the line) changes
+## which you're typing, even halfway through, so one turn can be both (say_do_line.gd). No guessing: the backend
+## takes it as given.
 ## Face to face, rounds play back here line by line; alone, your attempts and their results appear in the
 ## same log. Esc (or ×) walks away or closes it.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const PaintedActor := preload("res://scripts/painted_actor.gd")
 const HEIGHT := 272.0
-const SAY_COLOUR := Color("2c5a63") # Speech: a cool slate blue.
-const DO_COLOUR := Color("8a4b12") # Deeds: warm amber-brown.
+const SayDoLine := preload("res://scripts/ui/say_do_line.gd")
+const SAY_COLOUR := Color("1f5fa8") # Speech: blue.
+const DO_COLOUR := Color("b03a1a") # Deeds: brick red.
 const WORK_STAGES := ["You look over what you have", "You set to work", "You work at it",
 	"You test what you've done", "Still at it"]
 
@@ -23,10 +25,12 @@ var encounter_over := false
 var round_playing := false
 var waiting := false
 var last_text := ""
+var last_raw := "" # The line exactly as typed (quotes and all), given back if it couldn't be sent.
 var last_intent: Dictionary = {}
 var wait_clock := 0.0
 var hint_clock := 0.0
-var mode := "say" # "say" or "do" (D-55).
+var mode := "say" # What you're typing at the caret: "say" or "do" (D-55).
+var sent_mode := "say" # How the last line went: "say", or "do" (with any quoted words said as you do it).
 var mode_chosen := false # The player picked it themselves this time the bar was open.
 
 var portrait: TextureRect
@@ -38,7 +42,7 @@ var close_button: Button
 var scroll: ScrollContainer
 var log_box: VBoxContainer
 var chip_box: HFlowContainer
-var line: LineEdit
+var line: SayDoLine
 var hint: Label
 var pending: Control
 var say_button: Button
@@ -114,20 +118,20 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	var entry := HBoxContainer.new()
 	entry.add_theme_constant_override("separation", 6)
 	middle.add_child(entry)
-	say_button = _mode_button("SAY", "say", "Words spoken aloud (Tab switches)")
+	say_button = _mode_button("SAY", "say", "Words you say aloud, in blue. Tab switches, even halfway through a line.")
 	entry.add_child(say_button)
-	do_button = _mode_button("DO", "do", "Something you do (Tab switches). Put words in “quotes” to say them as you do it.")
+	do_button = _mode_button("DO", "do", "Something you do, in red. Tab switches, even halfway through a line.")
 	entry.add_child(do_button)
-	line = LineEdit.new()
-	line.max_length = 500
+	line = SayDoLine.new()
+	line.say_colour = SAY_COLOUR
+	line.do_colour = DO_COLOUR
 	line.placeholder_text = "What do you say?"
 	line.custom_minimum_size.y = 40
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_theme_font_size_override("font_size", 18)
-	if "keep_editing_on_text_submit" in line:
-		line.set("keep_editing_on_text_submit", true)
-	line.text_submitted.connect(func(_text: String) -> void: submit())
-	line.text_changed.connect(func(_text: String) -> void: _show_preview())
+	line.submitted.connect(submit)
+	line.text_changed.connect(_show_preview)
+	line.mode_changed.connect(func(_now: String) -> void: _show_mode())
 	line.gui_input.connect(_on_line_key)
 	entry.add_child(line)
 	hint = Label.new()
@@ -165,15 +169,30 @@ func _mode_button(text: String, value: String, tip: String) -> Button:
 	button.add_theme_font_override("font", UITheme.serif(true))
 	button.add_theme_font_size_override("font_size", 16)
 	button.pressed.connect(func() -> void:
-		set_mode(value, true)
+		choose(value)
 		_focus_line())
 	return button
 
 
-## Say or Do (D-55): the switch, the line's colour, the placeholder and the preview all follow it.
+## What a line without quotes is (D-55): the whole line is said, or done. The switch, colours, placeholder and
+## preview follow. For the player's own switching mid-line, see choose().
 func set_mode(value: String, chosen := false) -> void:
-	mode = "do" if value == "do" else "say"
 	mode_chosen = mode_chosen or chosen
+	line.default_mode = "do" if value == "do" else "say"
+	line.repaint()
+	_show_mode()
+
+
+## The player switched (Tab, or the switch): carry on typing the other kind, in the same line (D-57).
+func choose(value: String) -> void:
+	mode_chosen = true
+	line.switch_to(value)
+	_show_mode()
+
+
+## The switch shows what you're typing where the caret is.
+func _show_mode() -> void:
+	mode = line.current_mode()
 	for pair in [[say_button, "say", SAY_COLOUR], [do_button, "do", DO_COLOUR]]:
 		var button: Button = pair[0]
 		var on: bool = mode == pair[1]
@@ -183,8 +202,6 @@ func set_mode(value: String, chosen := false) -> void:
 			button.add_theme_stylebox_override(state_name, fill)
 		for font_state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 			button.add_theme_color_override(font_state, UITheme.CREAM if on else colour)
-	line.add_theme_color_override("font_color", SAY_COLOUR if mode == "say" else DO_COLOUR)
-	line.add_theme_color_override("caret_color", SAY_COLOUR if mode == "say" else DO_COLOUR)
 	line.placeholder_text = _placeholder()
 	_show_preview()
 
@@ -199,16 +216,22 @@ func _default_mode() -> void:
 func _show_preview() -> void:
 	if hint == null or waiting or round_playing or encounter_over:
 		return
-	var text := line.text.strip_edges()
+	var sent: Dictionary = line.payload()
+	var text: String = sent.text
 	var colour: Color = SAY_COLOUR if mode == "say" else DO_COLOUR
 	hint.add_theme_color_override("font_color", colour)
 	var listener := str(ui.npc_record(target).get("name", "")) if _is_person(target) else ""
 	if text.is_empty():
-		hint.text = ("Words you say aloud%s.  Tab: do something instead." % (" to " + listener if listener else "")) \
-			if mode == "say" else "Something you do with your hands.  Put words in “quotes” to say them too.  Tab: say something instead."
-	elif mode == "say":
-		hint.text = "You'll say%s: “%s”" % [(" to " + listener) if listener else "", text.trim_prefix("\"").trim_suffix("\"")]
+		hint.text = ("Words you say aloud%s, in blue.  Tab: do something as well." % (" to " + listener if listener else "")) \
+			if mode == "say" else "Something you do, in red.  Tab: say something as well."
+	elif sent.mode == "say":
+		hint.add_theme_color_override("font_color", SAY_COLOUR)
+		hint.text = "You'll say%s: “%s”" % [(" to " + listener) if listener else "", text]
+	elif SayDoLine.has_quotes(text):
+		hint.add_theme_color_override("font_color", UITheme.INK_SOFT)
+		hint.text = "You'll say the blue and do the red, in that order%s." % (", with " + listener if listener else "")
 	else:
+		hint.add_theme_color_override("font_color", DO_COLOUR)
 		hint.text = "You'll do: %s" % text
 
 
@@ -294,8 +317,7 @@ func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") ->
 			if painted:
 				painted.play_gesture("greet")
 	if not prefill.is_empty():
-		line.text = prefill
-		line.caret_column = prefill.length()
+		line.put(prefill, with_mode if with_mode in ["say", "do"] else line.default_mode)
 	if with_mode in ["say", "do"]:
 		set_mode(with_mode, true)
 	render(playing)
@@ -336,24 +358,29 @@ func _on_line_key(event: InputEvent) -> void:
 		line.accept_event()
 		escape()
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB:
-		line.accept_event() # Tab flips Say / Do instead of moving focus (D-55).
-		set_mode("do" if mode == "say" else "say", true)
+		line.accept_event() # Tab switches Say / Do, even halfway through a line (D-55, D-57).
+		choose("do" if mode == "say" else "say")
 
 
 func submit() -> void:
-	var text := line.text.strip_edges()
+	var sent: Dictionary = line.payload()
+	var text: String = sent.text
 	if text.is_empty() or waiting or round_playing or game.request_busy:
 		return
 	if encounter_over: # A new start after the last encounter ended.
 		encounter_view = {}
 		encounter_over = false
 	last_text = text
-	line.text = ""
+	last_raw = line.text.strip_edges()
+	sent_mode = sent.mode
+	var mixed := SayDoLine.has_quotes(text)
+	line.put("", ("say" if _is_person(target) or face_to_face() else "do") if mixed else str(sent.mode))
+	_show_mode()
 	var addressed := target if _is_person(target) else ""
 	var pointed := selected.duplicate()
 	if not target.is_empty() and not _is_person(target) and target not in pointed:
 		pointed.append(target)
-	game.act(text, addressed, pointed, mode)
+	game.act(text, addressed, pointed, sent_mode)
 
 
 ## While the world works out what happens: your line shows at once, the rest waits.
@@ -363,8 +390,7 @@ func wait(text: String) -> void:
 	line.editable = false
 	if is_instance_valid(pending):
 		pending.queue_free()
-	pending = _line(("[color=#%s]You say: “%s”[/color]" if mode == "say" else "[color=#%s][i]You: %s[/i][/color]")
-		% [(SAY_COLOUR if mode == "say" else DO_COLOUR).to_html(false), esc(text.trim_prefix("\"").trim_suffix("\""))])
+	pending = _line(mine(text, sent_mode))
 	log_box.add_child(pending)
 	_scroll_to_end.call_deferred()
 
@@ -382,8 +408,7 @@ func problem(text: String) -> void:
 	_ready_again()
 	ui.sounds.play("error")
 	if line.text.is_empty():
-		line.text = last_text
-		line.caret_column = last_text.length()
+		line.put(last_raw, sent_mode)
 	own_log.append({"kind": "note", "text": text, "tone": "bad"})
 	if not visible:
 		show()
@@ -450,7 +475,8 @@ func add_reference(id: String) -> void:
 			selected.append(id)
 	if not name in line.text:
 		line.text += ("" if line.text.is_empty() or line.text.ends_with(" ") else " ") + name + " "
-	line.caret_column = line.text.length()
+	line.set_caret_line(0)
+	line.set_caret_column(line.text.length())
 	render_chips()
 	_focus_line.call_deferred()
 
@@ -583,7 +609,7 @@ func _render_alone() -> void:
 		if their_mind.get("talk", []).is_empty():
 			log_box.add_child(_line("[i]%s looks you over.[/i]" % esc(str(npc.name))))
 	if own_log.is_empty() and not _is_person(target):
-		log_box.add_child(_line("[i]Choose [b]SAY[/b] for words or [b]DO[/b] for actions (Tab switches), then type in your own words. Click people and things, here or in the world, to mention them; drag things from your pack onto them.[/i]"))
+		log_box.add_child(_line("[i]Type in your own words: what you [b][color=#%s]SAY[/color][/b] shows blue, what you [b][color=#%s]DO[/color][/b] shows red. [b]Tab[/b] switches, even halfway through a line, so one turn can be both. Click people and things, here or in the world, to mention them; drag things from your pack onto them.[/i]" % [SAY_COLOUR.to_html(false), DO_COLOUR.to_html(false)]))
 	for item in own_log.slice(-8):
 		match str(item.kind):
 			"result":
@@ -617,10 +643,12 @@ func _render_encounter(playing: Dictionary) -> Array:
 			node = _line("[i][color=#%s](%s)[/color][/i]" % [UITheme.INK_SOFT.to_html(false), esc(str(entry.text))])
 		else:
 			var theirs := str(entry.get("who", "")) != "player"
-			var colour: Color = UITheme.THEIRS if theirs else (DO_COLOUR if entry.get("kind") == "do" else SAY_COLOUR)
-			var words := esc(str(entry.text))
-			node = _line(("[color=#%s][i]%s[/i][/color]" if not theirs and entry.get("kind") == "do"
-				else "[color=#%s]%s[/color]") % [colour.to_html(false), words])
+			if theirs:
+				node = _line("[color=#%s]%s[/color]" % [UITheme.THEIRS.to_html(false), esc(str(entry.text))])
+			elif entry.get("kind") == "do": # Your deed in red, any words you said as you did it in blue.
+				node = _line(toned(str(entry.text), "do"))
+			else:
+				node = _line("[color=#%s]%s[/color]" % [SAY_COLOUR.to_html(false), esc(str(entry.text))])
 		log_box.add_child(node)
 		if entry in fresh:
 			node.visible = false
@@ -669,6 +697,23 @@ static func esc(text: String) -> String:
 	return text.replace("[", "[lb]")
 
 
+## Text in the bar's two colours: quoted words blue, the rest in the given kind's colour (a deed in red italics).
+static func toned(text: String, kind: String) -> String:
+	var out := ""
+	for span in SayDoLine.spans(text, kind):
+		var part := esc(text.substr(span[0], span[1] - span[0]))
+		out += ("[color=#%s]%s[/color]" % [SAY_COLOUR.to_html(false), part]) if span[2] == "say" \
+			else ("[color=#%s][i]%s[/i][/color]" % [DO_COLOUR.to_html(false), part])
+	return out
+
+
+## Your own line as it goes out: "You say: “…”", or "You: " and the deed (with any words in blue).
+static func mine(text: String, kind: String) -> String:
+	if kind == "say":
+		return "[color=#%s]You say: “%s”[/color]" % [SAY_COLOUR.to_html(false), esc(text)]
+	return "[color=#%s]You: [/color]%s" % [DO_COLOUR.to_html(false), toned(text, "do")]
+
+
 func _line(bbcode: String) -> RichTextLabel:
 	var node := RichTextLabel.new()
 	node.bbcode_enabled = true
@@ -681,8 +726,8 @@ func _line(bbcode: String) -> RichTextLabel:
 	return node
 
 
-func _speech(mine: bool, their_name: String, text: String, faded: bool) -> RichTextLabel:
-	var node := _line(("[b]You:[/b] “%s”" % esc(text)) if mine else
+func _speech(yours: bool, their_name: String, text: String, faded: bool) -> RichTextLabel:
+	var node := _line(("[b]You:[/b] " + (toned(text, "do") if SayDoLine.has_quotes(text) else "“%s”" % esc(text))) if yours else
 		"[color=#%s][b]%s:[/b] “%s”[/color]" % [UITheme.THEIRS.to_html(false), esc(their_name), esc(text)])
 	if faded:
 		node.modulate.a = 0.6

@@ -636,13 +636,18 @@ def equip(state: dict, person: dict, obj: dict, slot: str | None, fighting: bool
         return {"ok": False, "reason": f"The {obj['name']} is too heavy to hold up."}
     for s in current:  # Moving it from one place to another.
         kit.pop(s)
+    freed = []  # What had to be let go of, and why, so the player is told (D-57).
     if slot in HAND_SLOTS:
         right = worn(state, person, "right")
         if two_handed:
             slot = "right"
+            freed = [(worn(state, person, hand), f"the {obj['name']} takes both hands") for hand in HAND_SLOTS]
             kit.pop("left", None)  # Both hands on it.
         elif slot == "left" and right is not None and of(right)["kind"] == "weapon" and weapon(right)["hands"] == 2:
+            freed = [(right, f"the {right['name']} takes both hands")]
             kit.pop("right", None)  # Can't keep a two-handed weapon ready with something in the other hand.
+        else:
+            freed = [(worn(state, person, slot), None)]
         kit[slot] = obj["id"]
         if two_handed:
             kit["left"] = obj["id"]
@@ -653,7 +658,14 @@ def equip(state: dict, person: dict, obj: dict, slot: str | None, fighting: bool
             kit[covered] = obj["id"]
     seconds = equip_seconds(obj, slot)
     verb = {"right": "take up", "left": "take up", "ammo": "ready"}.get(slot, "put on")
-    return {"ok": True, "seconds": seconds, "text": f"You {verb} the {obj['name']}."}
+    text = f"You {verb} the {obj['name']}."
+    let_go = {}
+    for thing, why in freed:
+        if thing is not None and thing["id"] != obj["id"] and thing["id"] not in let_go:
+            let_go[thing["id"]] = (thing["name"], why)
+    for name, why in let_go.values():
+        text += f" The {name} goes back in your pack" + (f": {why}." if why else ".")
+    return {"ok": True, "seconds": seconds, "text": text}
 
 
 def swap_hands(state: dict, person: dict) -> dict:
