@@ -46,6 +46,7 @@ var cursor: Node
 var sounds: Node
 var device: Control # The device from the future (D-50): scripts/ui/device.gd.
 var guide: Control # The tutorial's cards, task banner and marker (D-52): scripts/ui/tutorial_guide.gd.
+var layers: Control # Toasts, deeds, the reveal card and the pinned goal's marker (D-55): scripts/ui/game_layers.gd.
 var modal: PanelContainer
 var modal_box: VBoxContainer
 var modal_kind := ""
@@ -114,6 +115,9 @@ func build(owner_game: Node2D) -> void:
 	hud = preload("res://scripts/ui/hud.gd").new()
 	root.add_child(hud)
 	hud.build(self, game)
+	layers = preload("res://scripts/ui/game_layers.gd").new()
+	root.add_child(layers)
+	layers.build(self, game)
 	device = preload("res://scripts/ui/device.gd").new()
 	root.add_child(device)
 	device.build(self, game)
@@ -159,8 +163,15 @@ func build(owner_game: Node2D) -> void:
 	game.message.custom_minimum_size.x = 500
 	menu_box.add_child(game.message)
 
+	var scrim := ColorRect.new() # The world dims behind any open panel (D-55), so the panel reads first.
+	scrim.color = Color(0.06, 0.04, 0.02, 0.42)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scrim.hide()
+	root.add_child(scrim)
 	modal = PanelContainer.new()
 	modal.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	modal.visibility_changed.connect(func() -> void: scrim.visible = modal.visible)
 	root.add_child(modal)
 	modal_box = VBoxContainer.new()
 	modal_box.add_theme_constant_override("separation", 10)
@@ -509,7 +520,7 @@ func _slider(body: VBoxContainer, title: String, low: float, high: float, step: 
 	body.add_child(slider)
 
 
-func open_journal(tab := "leads") -> void:
+func open_journal(tab := "goals") -> void:
 	if game.run_state.is_empty() or game.request_busy:
 		return
 	var body := begin_modal("Your journal", "journal", Vector2(900, 590), false)
@@ -882,7 +893,7 @@ func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
 ## Swap "Painting…" for the picture wherever it's shown once it arrives.
 func refresh_icons() -> void:
 	hud.refresh()
-	for holder in [modal_box, bar, card]:
+	for holder in [modal_box, bar, card, layers.reveal]:
 		for icon in holder.find_children("*", "TextureRect", true, false):
 			if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
 				var obj: Dictionary = game.run_state.objects[icon.get_meta("object_id")]

@@ -45,6 +45,8 @@ var sync_error := false
 var ai_status: Dictionary = {}
 var last_trace = null # Developer runs receive the judge trace with each attempt.
 var hurt_flash: TextureRect # Red at the screen's edges when you're struck.
+var shake := 0.0 # The camera's shake when you're hit (D-55), in pixels; it dies away.
+var shake_jitter := Vector2.ZERO
 var fight: Node # Hands, gear, blows and missiles on screen (D-49): scripts/fight_view.gd.
 
 # Objects without authored art show a loading ring until their painting arrives (loading_ring.gd).
@@ -252,6 +254,7 @@ func _enter_run(state: Dictionary, save_pointer := true) -> void:
 	menu.hide()
 	ui.device.refresh()
 	ui.guide.refresh()
+	ui.layers.refresh()
 	_spawn_npcs()
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	_sync_display()
@@ -395,6 +398,18 @@ func _facing_for(direction: Vector2) -> int:
 
 func _cardinal_fallback(view: int) -> int:
 	return 0 if view == 4 or view == 5 else 2 if view == 6 or view == 7 else view
+
+
+## A blow lands on you (D-55): the view jolts, then settles.
+func shake_camera(strength := 9.0) -> void:
+	shake = maxf(shake, strength)
+
+
+func _process(delta: float) -> void:
+	camera.offset -= shake_jitter
+	shake = move_toward(shake, 0.0, delta * 30.0)
+	shake_jitter = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * shake if shake > 0.0 else Vector2.ZERO
+	camera.offset += shake_jitter
 
 
 func _physics_process(delta: float) -> void:
@@ -565,6 +580,7 @@ func _accept_state(new_state: Dictionary) -> void:
 	fight.sync()
 	ui.device.refresh()
 	ui.guide.refresh()
+	ui.layers.refresh()
 	var was_tutorial = before.get("tutorial")
 	var now_tutorial = run_state.get("tutorial")
 	if typeof(was_tutorial) == TYPE_DICTIONARY and typeof(now_tutorial) == TYPE_DICTIONARY \
@@ -636,8 +652,7 @@ func _sync_display_now() -> void:
 			shown_cues[str(npc["id"])] = str(cue.key)
 			if str(cue.get("kind", "")) in ["warmer", "trusting", "easier"]:
 				warm_until[str(npc["id"])] = Time.get_ticks_msec() / 1000.0 + 3.5
-			if not in_encounter(): # Face to face, the round log shows it.
-				ui.notify(str(cue.text))
+			# Standing toasts (D-55) now say how someone's view of you changed; face to face, the round log shows it.
 		var plate := get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
 			var standing: bool = npc.get("alive", true) and not npc.get("down", false)
@@ -698,6 +713,7 @@ func _react_to(before: Dictionary) -> void:
 				striker.play_gesture("gesture")
 			if entry.result != "missed" and run_state["player"].get("alive", true):
 				player_visual.hurt(1.0)
+				shake_camera()
 			ui.notify(str(entry.reason))
 	# Someone came up to you (a halt, a confrontation, an attack): face them.
 	if in_encounter() and gameplay_active and not request_busy and not ui.bar.showing_encounter() \
@@ -757,6 +773,7 @@ func _react_to_fight(before: Dictionary) -> void:
 			player_visual.hurt(1.0 if actor == null or actor.position.x <= player.position.x else -1.0)
 			hurt_flash.modulate.a = 1.0
 			create_tween().tween_property(hurt_flash, "modulate:a", 0.0, 0.8)
+			shake_camera(12.0 if str(entry.get("category", "")) == "killed" else 9.0)
 	for npc in run_state.get("npcs", []): # Punched to the ground (or disabled by a first strike).
 		if npc.get("down", false) and npc.get("alive", true):
 			var painted := get_node_or_null("NPCs/%s/PaintedActor" % npc.id)
@@ -1216,6 +1233,8 @@ func _play_attempt_reply(data: Dictionary) -> void:
 		player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
 		if typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY:
 			await get_tree().create_timer(1.2).timeout # Let the fall or the blow play out in view.
+	elif str(entry.category) in ["failed", "blocked", "unsupported", "unresolved"]:
+		ui.sounds.play("fail") # It didn't work (D-55): heard as well as read.
 	request_busy = false
 	ui.bar.result(entry, last_trace)
 	_story_moved_on()
@@ -1226,6 +1245,8 @@ func _play_attempt_reply(data: Dictionary) -> void:
 func _story_moved_on() -> void:
 	ui.device.refresh()
 	ui.guide.refresh()
+	ui.layers.refresh()
+	ui.hud.refresh()
 
 
 ## A round: walk over first if the server planned it, then the bar plays it back line by line.
@@ -1417,6 +1438,8 @@ func round_beat(entry: Dictionary) -> void:
 			_play_harm(played_action)
 			if played_action.category in ["success", "partial_success"]:
 				effects.pickup_sound.play()
+			elif str(played_action.category) in ["failed", "blocked", "unsupported", "unresolved"]:
+				ui.sounds.play("fail")
 				player_visual.play_gesture("pickup" if played_action.get("action") == "take" else "gesture")
 		return
 	var actor := get_node_or_null("NPCs/%s/PaintedActor" % who)
@@ -1425,6 +1448,7 @@ func round_beat(entry: Dictionary) -> void:
 	if entry.get("kind") == "strike" and not "misses" in str(entry.text):
 		var npc_actor := get_node_or_null("NPCs/" + who) as Node2D
 		player_visual.hurt(1.0 if npc_actor == null or npc_actor.position.x <= player.position.x else -1.0)
+		shake_camera()
 
 
 ## After the round has played out: the death screen if the stranger fell.

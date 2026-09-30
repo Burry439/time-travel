@@ -52,8 +52,13 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	objective = PanelContainer.new()
 	objective.theme_type_variation = "WoodPanel"
 	objective.position = Vector2(16, 14)
-	objective.custom_minimum_size = Vector2(310, 0)
-	objective.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	objective.custom_minimum_size = Vector2(340, 0)
+	objective.mouse_filter = Control.MOUSE_FILTER_STOP # The goal tracker (D-55): click for all your goals.
+	objective.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	objective.tooltip_text = "Your goals (J)"
+	objective.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			ui.open_journal("goals"))
 	add_child(objective)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 0)
@@ -219,18 +224,37 @@ func _wood_label(text: String, font_size: int, colour := UITheme.CREAM) -> Label
 	return node
 
 
+## The goal tracker (D-55): your pinned goal, else your newest lead, under the one long goal.
+func _track_goal(state: Dictionary) -> void:
+	var open_leads: PackedStringArray = ui.open_leads()
+	var claim: Dictionary = ui.layers.pinned_claim() if ui.layers else {}
+	var gate := "The city gate is open ↑" if state.get("gate_open", false) else "Get inside the city: the gate is north ↑"
+	if not claim.is_empty():
+		var who := str(ui.npc_record(ui.layers.lead_person(claim)).get("name", ""))
+		goal.text = "◆  " + str(claim.lead)
+		status.text = ("With %s  ·  " % who if not who.is_empty() else "") + "marked on the map  ·  J: all goals"
+	elif not open_leads.is_empty():
+		goal.text = open_leads[open_leads.size() - 1]
+		status.text = "Newest of %d lead%s  ·  click to pin one" % [open_leads.size(), "" if open_leads.size() == 1 else "s"]
+	else:
+		goal.text = "Find a way into the city"
+		status.text = gate + "  ·  talk to people to find leads"
+	goal.add_theme_font_size_override("font_size", 20 if goal.text == "Find a way into the city" else 16)
+	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal.custom_minimum_size.x = 320
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.custom_minimum_size.x = 320
+
+
 ## Called whenever the world state changes; rebuilds the slots only when what you carry changed.
 func refresh() -> void:
 	var state: Dictionary = game.run_state
 	if state.is_empty():
 		return
-	var leads: int = ui.open_leads().size()
-	status.text = ("The city gate is open ↑" if state.get("gate_open", false) else "The gate lies to the north ↑") + \
-		("  ·  %d open lead%s" % [leads, "" if leads == 1 else "s"] if leads > 0 else "")
 	var tutorial = state.get("tutorial")
 	# The first morning (D-50): its task is on the guide's banner (D-52), so the objective panel steps aside.
 	objective.visible = not (typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false))
-	goal.text = "Find a way into the city"
+	_track_goal(state)
 	var carried := carried_objects()
 	var mass := 0.0
 	var signature := PackedStringArray()

@@ -178,7 +178,7 @@ The suggested words for 9, 10 and 15 are checked against the live judge (`evals/
 
 **Mistakes stay real:** a death or an arrest becomes a card, with **Rewind to the last calm moment** on it (also in the pause menu).
 
-**Also on screen:** the objective panel steps aside in the tutorial; the journal has a **Device** tab with everything it said.
+**Also on screen:** the goal tracker steps aside in the tutorial; the journal has a **Device** tab with everything it said.
 
 ### The loop
 
@@ -193,7 +193,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
-| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach.** *(Milestones A and B of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
+| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A, B and C of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
 | D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
 | D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
 | D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
@@ -306,20 +306,51 @@ Code checks the move against that same reading (letting you in needs reason enou
 - Speech is an event. Anything said can be overheard and repeated, with the original speaker attributed.
 - Showing something is an action inside a conversation ("I show her the floating needle"). It goes through Try Something rules, and witnesses perceive the observable result.
 
+### Progress you can see (D-55)
+
+Everything here is read from what really happened (leads, memories, deals, things made), never from arbitrary achievements, and code still decides all of it: the client only shows it. `scripts/ui/game_layers.gd`, `scripts/ui/deeds.gd`, `scripts/ui/hud.gd`.
+
+- **The goal tracker** (top left) shows the **pinned** lead, else the newest open lead, under the one long goal (get inside the city). A click opens the journal's Goals.
+- **Pinning.** Pin a lead in the journal. The tracker follows it, and the person it's about (a referral's target, else whoever told you) gets the pulsing **ring**, with an **arrow** at the screen's edge when they're out of sight. It hides in the tutorial, when you're beside them, and while a panel is open. This is the one world marker outside the tutorial, and the player chooses it. Pins are remembered per journey on the client.
+- **Standing** is a word and a colour, never a number:
+  - the words are **Doesn't know you · Hostile · Wary · Neutral · Friendly · Would speak for you**;
+  - one backend rule (`minds.standing`) sets `mind.standing` whenever it changes;
+  - a **toast** with their portrait says so ("Bren ▲ Friendly · Was wary of you").
+- **Deeds** are the milestones of a journey. Each gets a toast with a small fanfare, and all are on the Deeds page:
+  - your first invention;
+  - someone amazed by it;
+  - someone helped;
+  - a deal agreed, then kept;
+  - a friend made;
+  - someone who would speak for you;
+  - someone who did;
+  - word of you spreading;
+  - the gate opening.
+- **News.** When someone sets off to tell someone about you: "Jory is off to tell Hessa about you".
+- **The reveal card.** Anything you make is shown off for a moment: its picture, its name, *New · made by you*, and what it's good for. Click to dismiss.
+- **Feel:**
+  - a success chime, and a low thud when an attempt fails;
+  - a camera jolt and a red edge when you're hit;
+  - the world dims behind any open panel.
+
 ### Journal
 
-An automatic memory aid, never an omniscient codex. **Built (D-35)**, a book with these tabs:
+An automatic memory aid, never an omniscient codex. It opens on **Goals** (J, or a click on the tracker). Rebuilt in D-55 as a book with these tabs:
 
-- **Leads**: the objective, open leads and done ones.
-- **What people said**: attributed claims, grouped by person ("Darin said the stone is a curiosity").
-- **Attempts**: what you tried, with its wording and result.
+- **Goals**: the long goal, then every open lead as a card, with the face of the person it's about, who told you, and **Pin**. Done leads are faded below.
+- **People**: everyone you've met, each with:
+  - their portrait and role;
+  - their **standing** in words and colour;
+  - what they told you;
+  - **Conversation**, which unfolds every word between you, oldest first, from the journal.
+- **Deeds**: the deeds above, newest first.
 - **Things made**: your creations with picture, provenance and known abilities.
+- **Device**: everything the device said and what you asked it (the same history as the Device window).
+- **Log**: what you tried (wording and result) and every notice this session.
 - **Map**: ink on parchment from the world geometry.
   - Fog of war: only places you've walked near, remembered per journey on the client.
   - People you've met, where you last saw them.
   - A red ring on whoever an open lead points to.
-  - Nothing is marked in the world itself.
-- **Notices**: every notice this session.
 
 It never reveals hidden NPC beliefs, trust scores, or events the player couldn't know about.
 
