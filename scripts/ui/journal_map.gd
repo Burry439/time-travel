@@ -70,7 +70,8 @@ func _draw() -> void:
 		var rect := Rect2(to_map(Vector2(c[0], c[1])), Vector2(c[2], c[3]) * s)
 		draw_rect(rect, Color(0.55, 0.40, 0.24, 0.35))
 		for i in range(0, int(rect.size.x), 6): # Hatching.
-			draw_line(rect.position + Vector2(i, rect.size.y), rect.position + Vector2(minf(i + rect.size.y, rect.size.x), maxf(0, rect.size.y - (rect.size.x - i))), Color(ink, 0.25), 1.0)
+			var end := Vector2(minf(i + rect.size.y, rect.size.x), maxf(0, rect.size.y - (rect.size.x - i)))
+			draw_line(rect.position + Vector2(i, rect.size.y), rect.position + end, Color(ink, 0.25), 1.0)
 		draw_rect(rect, ink, false, 1.5)
 		_label(font, str(LABELS.get(str(item.name), item.name)), rect.get_center() + Vector2(0, rect.size.y * 0.5 + 12), 13, ink)
 	for item in geometry.get("obstacles", []):
@@ -106,8 +107,9 @@ func _draw() -> void:
 			_label(small, str(npc.name), at + Vector2(0, -8), 12, ink)
 	# You.
 	var you := to_map(Vector2(game.predicted_cell) + Vector2(0.5, 0.5))
-	draw_colored_polygon(PackedVector2Array([you + Vector2(0, -8), you + Vector2(6, 6), you + Vector2(0, 3), you + Vector2(-6, 6)]), UITheme.GOLD)
-	draw_polyline(PackedVector2Array([you + Vector2(0, -8), you + Vector2(6, 6), you + Vector2(0, 3), you + Vector2(-6, 6), you + Vector2(0, -8)]), UITheme.INK, 1.5, true)
+	var arrow := PackedVector2Array([you + Vector2(0, -8), you + Vector2(6, 6), you + Vector2(0, 3), you + Vector2(-6, 6)])
+	draw_colored_polygon(arrow, UITheme.GOLD)
+	draw_polyline(arrow + PackedVector2Array([arrow[0]]), UITheme.INK, 1.5, true)
 	_label(font, "You", you + Vector2(0, 20), 12, UITheme.INK)
 	draw_rect(area, ink, false, 2.0)
 

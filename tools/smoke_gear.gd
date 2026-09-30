@@ -136,5 +136,6 @@ func _run() -> void:
 	if not check(quads.size() == 4 and quads.all(func(q) -> bool: return q != null and q.get_size() == Vector2(16, 16)),
 			"The worn sheet didn't slice into four views"):
 		return
-	print("GEAR SMOKE PASSED: branch in both hands (%s), Hessa hit, X refused, sheet sliced" % actor.held.get("right", {}).get("animation", "?"))
+	print("GEAR SMOKE PASSED: branch in both hands (%s), Hessa hit, X refused, sheet sliced"
+		% actor.held.get("right", {}).get("animation", "?"))
 	quit(0)

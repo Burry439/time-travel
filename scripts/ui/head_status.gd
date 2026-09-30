@@ -1,8 +1,8 @@
 extends Node2D
 ## Small signs over a person's head, from state the client already has (GDD D-35):
 ## "…" while they're thinking or replying, "!" when frightened, red crossed blades when they mean
-## violence (attacking or fighting), a pulsing red "!" while they wind up a blow in a fight, a gold mark for a few seconds after they warm to you, and a thin
-## health bar when hurt. Never numbers.
+## violence (attacking or fighting), a pulsing red "!" while they wind up a blow in a fight, a gold mark for a few
+## seconds after they warm to you, and a thin health bar when hurt. Never numbers.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 

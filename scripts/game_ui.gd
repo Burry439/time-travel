@@ -323,7 +323,8 @@ func enter_run(state: Dictionary) -> void:
 	note_cell(Vector2i(int(state.player.x), int(state.player.y)))
 	hud.refresh()
 	if state.get("scenario", "village") != "tutorial": # The tutorial teaches these one at a time (D-52).
-		hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
+		hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  "
+			+ "Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
 
 
 func leave_run() -> void:
@@ -696,7 +697,8 @@ func gear_words(obj: Dictionary) -> String:
 	if kind in ["armour", "clothing"] and table.get("armour", {}).has(cls):
 		var spec: Dictionary = table.armour[cls]
 		var cuts := "stops cuts well" if float(spec.cut) >= 0.8 else "turns some cuts" if float(spec.cut) >= 0.35 else "little against a blade"
-		return "%s: %s; %s." % [str(spec.name).capitalize(), cuts, "blunt blows still get through" if float(spec.blunt) < 0.4 else "softens blows"]
+		var blows := "blunt blows still get through" if float(spec.blunt) < 0.4 else "softens blows"
+		return "%s: %s; %s." % [str(spec.name).capitalize(), cuts, blows]
 	if kind == "shield":
 		return "A shield: hold its key to raise it against blows from the front."
 	if kind == "remedy" and table.get("remedies", {}).has(cls):
@@ -707,7 +709,8 @@ func gear_words(obj: Dictionary) -> String:
 
 
 func condition_words(condition: Dictionary) -> String:
-	var area: String = {"arm": "arm", "leg": "leg", "head": "head", "neck": "neck", "heart": "chest", "torso": "side"}.get(str(condition.get("area", "torso")), "side")
+	var areas := {"arm": "arm", "leg": "leg", "head": "head", "neck": "neck", "heart": "chest", "torso": "side"}
+	var area: String = areas.get(str(condition.get("area", "torso")), "side")
 	var treated := int(condition.get("treated", 0))
 	match str(condition.kind):
 		"bleeding":
@@ -1143,7 +1146,8 @@ func talk_trace(body: Control, trace: Dictionary) -> void:
 	var level := func(name: String) -> String:
 		var value = reading.get(name, {})
 		return "-" if typeof(value) != TYPE_DICTIONARY else str(value.get("score", value.get("noul", "-")))
-	small(body, "Move: %s (the voice chose %s)\nReading: impression %s · suspicion %s · anger %s · believes %s · threat %s · reason %s\nTrust %+.2f · suspicion %+.2f\nVoice: %s · %s · %d ms%s" % [
+	small(body, ("Move: %s (the voice chose %s)\nReading: impression %s · suspicion %s · anger %s · believes %s"
+		+ " · threat %s · reason %s\nTrust %+.2f · suspicion %+.2f\nVoice: %s · %s · %d ms%s") % [
 		str(trace.get("action")), _shown(trace.get("voice_move")),
 		level.call("impression"), level.call("suspicion"), level.call("anger"), level.call("believes"),
 		level.call("threat"), level.call("reason"),

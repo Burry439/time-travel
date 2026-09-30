@@ -112,7 +112,8 @@ func _build() -> void:
 	held_nodes.clear()
 	var view_count := 8 if actor_id == "traveler" else 4
 	for row in view_count:
-		var atlas: Texture2D = TRAVELER_DIAGONALS if row >= 4 else TRAVELER if actor_id == "traveler" else HESSA if actor_id == "hessa" else CAST_ART[actor_id]
+		var atlas: Texture2D = TRAVELER_DIAGONALS if row >= 4 else TRAVELER if actor_id == "traveler" \
+			else HESSA if actor_id == "hessa" else CAST_ART[actor_id]
 		var atlas_order := TRAVELER_ORDER if actor_id == "traveler" else CAST_ORDER
 		var box: Rect2i = DIAGONAL_BOUNDS[row - 4] if row >= 4 else BOUNDS[actor_id][atlas_order[row]]
 		var whole := Node2D.new()

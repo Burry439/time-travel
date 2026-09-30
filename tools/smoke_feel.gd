@@ -52,7 +52,8 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.modal.visible and scene.ui.modal_kind == "inventory", "Inventory did not open"):
 		return
-	if not check(Rect2(Vector2.ZERO, root.get_visible_rect().size).encloses(scene.ui.modal.get_global_rect()), "Inventory is outside the viewport"):
+	var view := Rect2(Vector2.ZERO, root.get_visible_rect().size)
+	if not check(view.encloses(scene.ui.modal.get_global_rect()), "Inventory is outside the viewport"):
 		return
 	await screenshot("feel-inventory")
 	await scene._quick_action("drop", "branch_a")
@@ -73,7 +74,8 @@ func _run() -> void:
 	Input.action_release("run")
 	await create_timer(0.2).timeout
 	var travelled: Vector2 = scene.player.position - before
-	if not check(travelled.x > 75 and travelled.y < -75 and travelled.length() < 230, "Diagonal running failed or is too fast: " + str(travelled)):
+	if not check(travelled.x > 75 and travelled.y < -75 and travelled.length() < 230,
+			"Diagonal running failed or is too fast: " + str(travelled)):
 		return
 	while scene.movement_sync_active:
 		await process_frame
@@ -88,7 +90,8 @@ func _run() -> void:
 		return
 	scene.ui.close_modal()
 	var restored: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
-	if not check(restored.ok and restored.data.objects.branch_a.holder_id == null and restored.data.player == scene.run_state.player, "Reload lost movement or item state"):
+	if not check(restored.ok and restored.data.objects.branch_a.holder_id == null
+			and restored.data.player == scene.run_state.player, "Reload lost movement or item state"):
 		return
 	var query := PhysicsPointQueryParameters2D.new()
 	query.position = Vector2(1104, 1500)

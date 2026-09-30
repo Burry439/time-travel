@@ -71,7 +71,8 @@ func _run() -> void:
 	scene.camera_zoom = 1.0
 	await process_frame
 	var ui: Control = scene.ui
-	if not check(ui.hud.visible and ui.hud.inventory.visible and ui.hud.slots_box.get_child_count() == 10, "No inventory bar %s %s %s" % [ui.hud.visible, ui.hud.inventory.visible, ui.hud.slots_box.get_child_count()]):
+	if not check(ui.hud.visible and ui.hud.inventory.visible and ui.hud.slots_box.get_child_count() == 10,
+			"No inventory bar %s %s %s" % [ui.hud.visible, ui.hud.inventory.visible, ui.hud.slots_box.get_child_count()]):
 		return
 	# The start is at the south edge, where the camera can't follow: the view lifts past the edge so the
 	# stranger stays clear of the pack, and of the dialogue bar when it's open.
@@ -123,7 +124,8 @@ func _run() -> void:
 	ui.open_try()
 	await process_frame
 	await process_frame
-	if not check(ui.bar.visible and ui.bar.who.text == "You" and not ui.hud.inventory.visible, "Bar did not open for you: %s %s %s" % [ui.bar.visible, ui.bar.who.text, ui.hud.inventory.visible]):
+	if not check(ui.bar.visible and ui.bar.who.text == "You" and not ui.hud.inventory.visible,
+			"Bar did not open for you: %s %s %s" % [ui.bar.visible, ui.bar.who.text, ui.hud.inventory.visible]):
 		return
 	ui.bar.add_reference("cord_a")
 	if not check("the short cord" in ui.bar.line.text and "cord_a" in ui.bar.selected, "Pointing did not reference the cord"):

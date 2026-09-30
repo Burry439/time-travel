@@ -8,6 +8,9 @@ extends SceneTree
 ##   read the notebook, go up to the gate and talk to the guard who stops you, then open every journal page.
 ## Nothing here asserts what a person says. It reports every step (time, outcome, the words) and ends with a list
 ## of BLOCKERS (no reply, a stuck bar, a request that failed, a script error) and NOTES (slow or odd).
+const Deeds := preload("res://scripts/ui/deeds.gd")
+const ASK_CAPTAIN := "Captain, Hessa the innkeeper has spoken for me: I brought her water when she needed it. " \
+	+ "Will you let me in?"
 var scene: Node2D
 var capture := false
 var blockers: PackedStringArray = []
@@ -211,7 +214,8 @@ func _run() -> void:
 		blocker("clicking Hessa didn't open the dialogue bar")
 	if scene.ui.bar.mode != "say":
 		note("the bar opened on %s for a person (expected Say)" % scene.ui.bar.mode)
-	var said := await bar_line("Good day. I've come a long way and I'm trying to get into the city. Is there anything you need?", "say", "npc_hessa_marr")
+	var said := await bar_line("Good day. I've come a long way and I'm trying to get into the city. "
+		+ "Is there anything you need?", "say", "npc_hessa_marr")
 	done(record, words_of(said.added))
 	record = step("Hessa, second line (Say)")
 	said = await bar_line("What would it take for the guards to let a stranger through?", "say", "npc_hessa_marr")
@@ -262,7 +266,7 @@ func _run() -> void:
 	record = step("Give Hessa the water (Do)")
 	said = await bar_line("hand Hessa the bucket of water", "do", "npc_hessa_marr")
 	deal = scene.run_state.get("agreements", {}).get(deal_id, {})
-	var deeds_now: Array = preload("res://scripts/ui/deeds.gd").compute(scene.run_state).map(func(d) -> String: return str(d.title))
+	var deeds_now: Array = Deeds.compute(scene.run_state).map(func(d) -> String: return str(d.title))
 	done(record, "deal: %s; deeds %s  %s" % [deal.get("status", "none"), deeds_now, words_of(said.added)])
 	if str(deal.get("status", "")) != "fulfilled" and not deal_id.is_empty():
 		blocker("the water was handed over but Hessa's deal isn't fulfilled (%s)" % deal.get("status", "none"))
@@ -329,7 +333,7 @@ func _run() -> void:
 		record = step("Ask Roderic to let you in (Say, walking up)")
 		scene._left_click(scene.ui.cursor.describe("npc_roderic_vale"))
 		await process_frame
-		said = await bar_line("Captain, Hessa the innkeeper has spoken for me: I brought her water when she needed it. Will you let me in?", "say", "npc_roderic_vale")
+		said = await bar_line(ASK_CAPTAIN, "say", "npc_roderic_vale")
 		done(record, "admitted: %s  %s" % [typeof(scene.run_state.get("admitted")) == TYPE_DICTIONARY, words_of(said.added)])
 		await shot("gate")
 		scene.ui.bar.escape()
@@ -343,7 +347,7 @@ func _run() -> void:
 		done(record, words_of(said.added))
 		await shot("gate")
 		record = step("Ask Roderic to let you in (Say)")
-		said = await bar_line("Captain, Hessa the innkeeper has spoken for me: I brought her water when she needed it. Will you let me in?", "say", "npc_roderic_vale")
+		said = await bar_line(ASK_CAPTAIN, "say", "npc_roderic_vale")
 		var admitted = scene.run_state.get("admitted")
 		done(record, "admitted: %s  %s" % [typeof(admitted) == TYPE_DICTIONARY, words_of(said.added)])
 		if typeof(admitted) == TYPE_DICTIONARY:
@@ -379,14 +383,18 @@ func _run() -> void:
 		journal.show_tab("people")
 		await shot("journal_people")
 	scene.ui.close_modal_now()
-	var deeds: Array = preload("res://scripts/ui/deeds.gd").compute(scene.run_state).map(func(d) -> String: return str(d.title))
+	var deeds: Array = Deeds.compute(scene.run_state).map(func(d) -> String: return str(d.title))
 	done(record, "pages %s; deeds %s" % [", ".join(built), deeds])
 
 	print("\n==== PLAYTEST REPORT ====")
 	for item in steps:
 		print("%-40s %6.1f s" % [item.name, float(item.get("ms", 0)) / 1000.0])
+	var standings := PackedStringArray()
+	for n in scene.run_state.npcs:
+		if typeof(n.get("mind")) == TYPE_DICTIONARY and n.mind.get("standing", "unknown") != "unknown":
+			standings.append("%s=%s" % [n.name, n.mind.standing])
 	print("device log: %d entries; leads: %d; standing: %s" % [scene.run_state.get("device_log", []).size(),
-		scene.ui.open_leads().size(), scene.run_state.npcs.filter(func(n) -> bool: return typeof(n.get("mind")) == TYPE_DICTIONARY and n.mind.get("standing", "unknown") != "unknown").map(func(n) -> String: return "%s=%s" % [n.name, n.mind.standing])])
+		scene.ui.open_leads().size(), standings])
 	print("BLOCKERS (%d):" % blockers.size())
 	for item in blockers:
 		print("  - ", item)

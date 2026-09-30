@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## The tutorial, "The first morning" (GDD D-50, D-52). Needs the backend with AI_MODE=stub:
 ##   $env:AI_MODE='stub'; ./tools/run_m0.ps1
 ##   Godot --headless --path . --script res://tools/smoke_tutorial.gd  [-- --capture]

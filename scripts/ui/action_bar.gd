@@ -609,7 +609,10 @@ func _render_alone() -> void:
 		if their_mind.get("talk", []).is_empty():
 			log_box.add_child(_line("[i]%s looks you over.[/i]" % esc(str(npc.name))))
 	if own_log.is_empty() and not _is_person(target):
-		log_box.add_child(_line("[i]Type in your own words: what you [b][color=#%s]SAY[/color][/b] shows blue, what you [b][color=#%s]DO[/color][/b] shows red. [b]Tab[/b] switches, even halfway through a line, so one turn can be both. Click people and things, here or in the world, to mention them; drag things from your pack onto them.[/i]" % [SAY_COLOUR.to_html(false), DO_COLOUR.to_html(false)]))
+		log_box.add_child(_line(("[i]Type in your own words: what you [b][color=#%s]SAY[/color][/b] shows blue, "
+			+ "what you [b][color=#%s]DO[/color][/b] shows red. [b]Tab[/b] switches, even halfway through a line, "
+			+ "so one turn can be both. Click people and things, here or in the world, to mention them; drag things "
+			+ "from your pack onto them.[/i]") % [SAY_COLOUR.to_html(false), DO_COLOUR.to_html(false)]))
 	for item in own_log.slice(-8):
 		match str(item.kind):
 			"result":

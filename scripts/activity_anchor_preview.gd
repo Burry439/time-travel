@@ -24,7 +24,9 @@ func _draw() -> void:
 		return
 	for npc_id in parsed:
 		var anchors: Array = parsed[npc_id]["anchors"]
-		var color := Color(0.34, 0.73, 1.0, 0.85) if "guard" in str(parsed[npc_id]["goal"]) or "watch" in str(parsed[npc_id]["goal"]) or "patrol" in str(parsed[npc_id]["goal"]) else Color(1.0, 0.72, 0.34, 0.85)
+		var goal_text := str(parsed[npc_id]["goal"])
+		var on_duty := "guard" in goal_text or "watch" in goal_text or "patrol" in goal_text
+		var color := Color(0.34, 0.73, 1.0, 0.85) if on_duty else Color(1.0, 0.72, 0.34, 0.85)
 		var points := PackedVector2Array()
 		for anchor in anchors:
 			points.append(Vector2(float(anchor[0]) + 0.5, float(anchor[1]) + 0.5) * 32.0)

@@ -62,7 +62,8 @@ func _run() -> void:
 	ui.layers.pin("Ask %s about the gate" % far.name)
 	await process_frame
 	await process_frame # The marker moves in the layers' own _process, after this signal.
-	if not check(ui.hud.goal.text.begins_with("◆") and far.name in ui.hud.status.text, "Pinned, the tracker doesn't follow it: " + ui.hud.goal.text):
+	if not check(ui.hud.goal.text.begins_with("◆") and far.name in ui.hud.status.text,
+			"Pinned, the tracker doesn't follow it: " + ui.hud.goal.text):
 		return
 	if not check(ui.layers.ring.visible, "The pinned lead's person isn't marked"):
 		return

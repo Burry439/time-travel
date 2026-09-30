@@ -6,7 +6,8 @@ const CELL := 32.0
 const WORLD_SIZE := Vector2(3072, 2304)
 const WALK_SPEED := 230.0 # 7.1875 cells/second, shared with the service.
 const RUN_SPEED := 368.0 # 11.5 cells/second while Shift is held.
-const SERVER := "http://127.0.0.1:8765"
+const DEFAULT_SERVER := "http://127.0.0.1:8765"
+var server := DEFAULT_SERVER # --server=URL or GAME_SERVER (tools/check.ps1 runs a throwaway backend).
 
 @onready var player: CharacterBody2D = $Player
 @onready var player_sprite: Sprite2D = $Player/Sprite2D
@@ -84,6 +85,7 @@ var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
 
 
 func _ready() -> void:
+	server = _server_address()
 	$NPCPreview.hide()
 	$M2Objects.hide()
 	_build_ui()
@@ -129,6 +131,13 @@ func _extend_ground() -> void:
 	var dusk := Color(0.05, 0.06, 0.04, 0.0)
 	shade.vertex_colors = PackedColorArray([dusk, dusk, Color(dusk, 0.85), Color(dusk, 0.85)])
 	$Map.add_child(shade)
+
+
+static func _server_address() -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--server="):
+			return arg.trim_prefix("--server=")
+	return OS.get_environment("GAME_SERVER") if OS.has_environment("GAME_SERVER") else DEFAULT_SERVER
 
 
 ## How far the view shifts down so the stranger stays clear of the bottom panels: the dialogue bar,
@@ -474,7 +483,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		walk_time = 0.0
 		player_sprite.frame = _cardinal_fallback(facing_row) * 3
-	player_visual.set_motion(facing_row, "run" if is_running and travelled > 0.15 else "walk" if travelled > 0.15 else "idle", travelled, delta)
+	var gait := "run" if is_running and travelled > 0.15 else "walk" if travelled > 0.15 else "idle"
+	player_visual.set_motion(facing_row, gait, travelled, delta)
 	var cell := Vector2i(int(floor(player.position.x / CELL)), int(floor(player.position.y / CELL)))
 	if cell != predicted_cell:
 		move_queue.append({"cell": cell, "running": is_running})
@@ -993,7 +1003,7 @@ func _api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeou
 	add_child(request)
 	request.timeout = timeout
 	var payload := JSON.stringify(body) if method != HTTPClient.METHOD_GET else ""
-	var err := request.request(SERVER + path, ["Content-Type: application/json"], method, payload)
+	var err := request.request(server + path, ["Content-Type: application/json"], method, payload)
 	if err != OK:
 		request.queue_free()
 		return {"ok": false, "status": 0}
@@ -1133,7 +1143,7 @@ func _fetch_asset(asset_id: String) -> Dictionary:
 	var request := HTTPRequest.new()
 	add_child(request)
 	request.timeout = 15.0
-	if request.request(SERVER + "/assets/" + asset_id) != OK:
+	if request.request(server + "/assets/" + asset_id) != OK:
 		request.queue_free()
 		return {"status": 0, "body": PackedByteArray()}
 	var completed: Array = await request.request_completed
@@ -1355,7 +1365,9 @@ func _update_nearby() -> void:
 		if plate:
 			plate.modulate.a = 1.0 if hovered == str(npc.id) else clampf((240 - distance) / 90, 0, 1)
 	nearby_target = best
-	ui.hud.area.text = "THE CITY GATE" if player.position.y < 600 else "THE CRAFTSMEN'S ROW" if player.position.y < 1200 else "THE WAYSIDE INN" if player.position.y < 1800 else "THE SOUTH ROAD"
+	var depth := player.position.y
+	ui.hud.area.text = "THE CITY GATE" if depth < 600 else "THE CRAFTSMEN'S ROW" if depth < 1200 \
+		else "THE WAYSIDE INN" if depth < 1800 else "THE SOUTH ROAD"
 
 ## E: act on whatever is nearest, as a left click on it would.
 func _interact() -> void:
@@ -1509,7 +1521,8 @@ func _quick_action(verb: String, id: String) -> void:
 			effects.pickup_sound.play()
 			player_visual.play_gesture("pickup" if verb == "take" else "gesture")
 			if verb == "take":
-				ui.hud.show_hint("pack", "It's in your pack (bottom of the screen). Drag it onto someone or something to use it; right-click it to look closer.")
+				ui.hud.show_hint("pack", "It's in your pack (bottom of the screen). Drag it onto someone or "
+					+ "something to use it; right-click it to look closer.")
 		if ui.modal_kind == "inventory":
 			ui.open_inventory()
 		return

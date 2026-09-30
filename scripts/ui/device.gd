@@ -235,7 +235,8 @@ func _render_history() -> void:
 		child.queue_free()
 	var lines: Array = game.run_state.get("device_log", [])
 	if lines.is_empty():
-		history_box.add_child(_bubble("Ask me anything: what to do next, why something failed, how things work here. I'll tell you what I can.", false, ""))
+		history_box.add_child(_bubble("Ask me anything: what to do next, why something failed, how things work here. "
+			+ "I'll tell you what I can.", false, ""))
 	for line in lines:
 		if line.has("question"):
 			history_box.add_child(_bubble(str(line.question), true, _clock(int(line.get("at", 0)))))
@@ -375,8 +376,10 @@ func closing_card() -> void:
 	var admitted = game.run_state.get("admitted")
 	var by := str(ui.npc_record(str(admitted.get("by", ""))).get("name", "")) if typeof(admitted) == TYPE_DICTIONARY else ""
 	var body: VBoxContainer = ui.begin_modal("The first morning", "tutorial_end", Vector2(600, 330), false)
-	ui.paragraph(body, ("You're in: %s has let you into the city. That's how it works here: people watch what you do, pass it on, and speak for you.\n\n" % by if not by.is_empty() else "That's everything the device can teach you.\n\n")
-		+ "A fresh journey starts again on the south road, with other people's problems and nobody handing you the answer. The device stays with you: press H any time to talk to it.")
+	var opening := ("You're in: %s has let you into the city. That's how it works here: people watch what you do, "
+		+ "pass it on, and speak for you.\n\n") % by if not by.is_empty() else "That's everything the device can teach you.\n\n"
+	ui.paragraph(body, opening + "A fresh journey starts again on the south road, with other people's problems and "
+		+ "nobody handing you the answer. The device stays with you: press H any time to talk to it.")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)

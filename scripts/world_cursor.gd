@@ -112,11 +112,13 @@ func describe(id: String) -> Dictionary:
 	if not npc.is_empty():
 		var actor := game.get_node_or_null("NPCs/" + id) as Node2D
 		cell = Vector2(int(npc.x), int(npc.y))
-		result.merge({"kind": "person", "name": str(npc.name), "at": actor.position if actor else game._cell_center(int(cell.x), int(cell.y))}, true)
+		var spot: Vector2 = actor.position if actor else game._cell_center(int(cell.x), int(cell.y))
+		result.merge({"kind": "person", "name": str(npc.name), "at": spot}, true)
 		if npc.get("alive", true):
 			result.merge({"verb": "Talk to " + str(npc.name), "action": "talk", "cursor": "talk"}, true)
 		else:
-			result.merge({"verb": str(npc.name) + " (dead)", "action": "look", "cursor": "look", "tone": "dead", "note": "Left-click to look closer"}, true)
+			result.merge({"verb": str(npc.name) + " (dead)", "action": "look", "cursor": "look", "tone": "dead",
+				"note": "Left-click to look closer"}, true)
 	else:
 		var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
 		if obj.is_empty():

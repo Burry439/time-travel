@@ -136,7 +136,12 @@ func _goals(body: VBoxContainer) -> void:
 	var admitted = game.run_state.get("admitted")
 	goal.text = "You've been let in" if typeof(admitted) == TYPE_DICTIONARY else "Get inside the city"
 	body.add_child(goal)
-	var intro: Label = ui.paragraph(body, ("%s has let you in: walk through the gate to the north. What you learned on the way is below." % str(ui.npc_record(str(admitted.get("by", ""))).get("name", "The watch"))) if typeof(admitted) == TYPE_DICTIONARY else "The gate to the north is shut to strangers. People here know things, want things and can speak for you, and every lead below came from someone. Pin one to follow it: it stays at the top left, and the person it's about is marked in the world.")
+	var let_in_by := str(ui.npc_record(str(admitted.get("by", ""))).get("name", "The watch")) \
+		if typeof(admitted) == TYPE_DICTIONARY else ""
+	var intro: Label = ui.paragraph(body, ("%s has let you in: walk through the gate to the north. What you learned "
+		+ "on the way is below.") % let_in_by if not let_in_by.is_empty() else ("The gate to the north is shut to "
+		+ "strangers. People here know things, want things and can speak for you, and every lead below came from "
+		+ "someone. Pin one to follow it: it stays at the top left, and the person it's about is marked in the world."))
 	intro.add_theme_font_size_override("font_size", 15)
 	intro.add_theme_color_override("font_color", UITheme.INK_SOFT)
 	var open: Array = ui.open_claims()

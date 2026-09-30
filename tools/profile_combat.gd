@@ -46,7 +46,8 @@ func _report(label: String) -> void:
 	if times.is_empty():
 		return
 	var pick := func(q: float) -> float: return times[mini(times.size() - 1, int(times.size() * q))]
-	print("%-10s frames %4d  p50 %5.1f  p95 %6.1f  max %7.1f ms | nodes %5d  objects %6d  orphans %4d | mem %6.1f MB | worst request %6.0f ms | health %d  fight %s  journal %d" % [
+	print(("%-10s frames %4d  p50 %5.1f  p95 %6.1f  max %7.1f ms | nodes %5d  objects %6d  orphans %4d | "
+		+ "mem %6.1f MB | worst request %6.0f ms | health %d  fight %s  journal %d") % [
 		label, times.size(), pick.call(0.5), pick.call(0.95), times[-1],
 		Performance.get_monitor(Performance.OBJECT_NODE_COUNT), Performance.get_monitor(Performance.OBJECT_COUNT),
 		Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT),

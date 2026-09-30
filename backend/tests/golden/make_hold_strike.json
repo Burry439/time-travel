@@ -1,0 +1,5251 @@
+{
+ "agreements": {},
+ "encounter": null,
+ "event_seq": 10,
+ "fight": null,
+ "gate_open": false,
+ "geometry_version": 3,
+ "inside_city": false,
+ "journal": [
+  {
+   "action": "take",
+   "category": "success",
+   "crafted": null,
+   "demonstration": null,
+   "event_id": 2,
+   "fill": null,
+   "give": null,
+   "harm": null,
+   "install": null,
+   "kind": "craft",
+   "lift_out": null,
+   "made": null,
+   "made_ids": [],
+   "made_name": null,
+   "offer_trade": null,
+   "player_cell": [
+    47,
+    68
+   ],
+   "precedent_key": "quick:take",
+   "property": [],
+   "reason": "You pick up the fallen branch.",
+   "step": {
+    "actor_id": "player",
+    "depends_on": [],
+    "effort_seconds": 2,
+    "input_refs": [
+     {
+      "existing_entity_id": "branch_a"
+     }
+    ],
+    "operation_key": "craft",
+    "output_bindings": [],
+    "required_capabilities": [],
+    "required_skill": null,
+    "risk_tags": [],
+    "status": "completed",
+    "step_id": "step_1"
+   },
+   "steps": [
+    {
+     "action": "take",
+     "category": "success",
+     "notes": [],
+     "reason": "You pick up the fallen branch."
+    }
+   ],
+   "taken_ids": [
+    "branch_a"
+   ],
+   "text": "take branch_a",
+   "trace_id": "quick-1",
+   "transformed": null,
+   "walk": []
+  },
+  {
+   "action": "take",
+   "category": "success",
+   "crafted": null,
+   "demonstration": null,
+   "event_id": 3,
+   "fill": null,
+   "give": null,
+   "harm": null,
+   "install": null,
+   "kind": "craft",
+   "lift_out": null,
+   "made": null,
+   "made_ids": [],
+   "made_name": null,
+   "offer_trade": null,
+   "player_cell": [
+    47,
+    68
+   ],
+   "precedent_key": "quick:take",
+   "property": [],
+   "reason": "You pick up the short cord.",
+   "step": {
+    "actor_id": "player",
+    "depends_on": [],
+    "effort_seconds": 3,
+    "input_refs": [
+     {
+      "existing_entity_id": "cord_a"
+     }
+    ],
+    "operation_key": "craft",
+    "output_bindings": [],
+    "required_capabilities": [],
+    "required_skill": null,
+    "risk_tags": [],
+    "status": "completed",
+    "step_id": "step_1"
+   },
+   "steps": [
+    {
+     "action": "take",
+     "category": "success",
+     "notes": [
+      "Walked 1 cells first (1 s)."
+     ],
+     "reason": "You pick up the short cord."
+    }
+   ],
+   "taken_ids": [
+    "cord_a"
+   ],
+   "text": "take cord_a",
+   "trace_id": "quick-2",
+   "transformed": null,
+   "walk": [
+    [
+     47,
+     67
+    ]
+   ]
+  },
+  {
+   "action": "make",
+   "category": "success",
+   "crafted": "made_4",
+   "demonstration": null,
+   "event_id": 4,
+   "fill": null,
+   "give": null,
+   "harm": null,
+   "install": null,
+   "kind": "craft",
+   "lift_out": null,
+   "made": "made_4",
+   "made_ids": [
+    "made_4"
+   ],
+   "made_name": "bound club",
+   "offer_trade": null,
+   "player_cell": [
+    47,
+    67
+   ],
+   "precedent_key": "test",
+   "property": [],
+   "reason": "It happens.",
+   "step": {
+    "actor_id": "player",
+    "depends_on": [],
+    "effort_seconds": 5,
+    "input_refs": [
+     {
+      "existing_entity_id": "branch_a"
+     },
+     {
+      "existing_entity_id": "cord_a"
+     }
+    ],
+    "operation_key": "craft",
+    "output_bindings": [
+     "made_4"
+    ],
+    "required_capabilities": [],
+    "required_skill": null,
+    "risk_tags": [],
+    "status": "completed",
+    "step_id": "step_1"
+   },
+   "steps": [
+    {
+     "action": "make",
+     "category": "success",
+     "notes": [
+      "Stripped material 'plant fibre': nothing it came from is made of it."
+     ],
+     "reason": "It happens."
+    }
+   ],
+   "taken_ids": [],
+   "text": "wind the cord round the branch",
+   "trace_id": "craft-3",
+   "transformed": null,
+   "walk": []
+  }
+ ],
+ "last_action": {
+  "action": "make",
+  "category": "success",
+  "crafted": "made_4",
+  "demonstration": null,
+  "event_id": 4,
+  "fill": null,
+  "give": null,
+  "harm": null,
+  "install": null,
+  "kind": "craft",
+  "lift_out": null,
+  "made": "made_4",
+  "made_ids": [
+   "made_4"
+  ],
+  "made_name": "bound club",
+  "offer_trade": null,
+  "player_cell": [
+   47,
+   67
+  ],
+  "precedent_key": "test",
+  "property": [],
+  "reason": "It happens.",
+  "step": {
+   "actor_id": "player",
+   "depends_on": [],
+   "effort_seconds": 5,
+   "input_refs": [
+    {
+     "existing_entity_id": "branch_a"
+    },
+    {
+     "existing_entity_id": "cord_a"
+    }
+   ],
+   "operation_key": "craft",
+   "output_bindings": [
+    "made_4"
+   ],
+   "required_capabilities": [],
+   "required_skill": null,
+   "risk_tags": [],
+   "status": "completed",
+   "step_id": "step_1"
+  },
+  "steps": [
+   {
+    "action": "make",
+    "category": "success",
+    "notes": [
+     "Stripped material 'plant fibre': nothing it came from is made of it."
+    ],
+    "reason": "It happens."
+   }
+  ],
+  "taken_ids": [],
+  "text": "wind the cord round the branch",
+  "trace_id": "craft-3",
+  "transformed": null,
+  "walk": []
+ },
+ "learned": [],
+ "mode": "developer",
+ "npcs": [
+  {
+   "alive": true,
+   "controller": {
+    "activity": "look",
+    "anchor_index": 2,
+    "destination": [
+     49,
+     13
+    ],
+    "goal": "watch the gate",
+    "next_at_ms": 15300,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 440
+   },
+   "equipped": {
+    "arms": "mail_roderic",
+    "body": "mail_roderic",
+    "head": "helmet_roderic",
+    "right": "sword_roderic"
+   },
+   "health": 100,
+   "id": "npc_roderic_vale",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "weary",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Roderic",
+   "role": "Gate captain",
+   "x": 49,
+   "y": 13
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "walk",
+    "anchor_index": 3,
+    "destination": [
+     47,
+     17
+    ],
+    "goal": "patrol the west approach",
+    "next_at_ms": 14300,
+    "path": [
+     [
+      46,
+      20
+     ],
+     [
+      47,
+      20
+     ],
+     [
+      47,
+      19
+     ],
+     [
+      47,
+      18
+     ],
+     [
+      47,
+      17
+     ]
+    ],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 360
+   },
+   "equipped": {
+    "arms": "mail_bren",
+    "body": "mail_bren",
+    "head": "helmet_bren",
+    "right": "spear_bren"
+   },
+   "health": 100,
+   "id": "npc_bren_marr",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "content",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Bren",
+   "role": "Gate guard",
+   "x": 45,
+   "y": 20
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "look",
+    "anchor_index": 2,
+    "destination": [
+     51,
+     20
+    ],
+    "goal": "patrol the east approach",
+    "next_at_ms": 15200,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 360
+   },
+   "equipped": {
+    "arms": "mail_oren",
+    "body": "mail_oren",
+    "head": "helmet_oren",
+    "right": "spear_oren"
+   },
+   "health": 100,
+   "id": "npc_oren_dast",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "anxious",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Oren",
+   "role": "Gate guard",
+   "x": 51,
+   "y": 20
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "walk",
+    "anchor_index": 2,
+    "destination": [
+     32,
+     52
+    ],
+    "goal": "tend the inn yard",
+    "next_at_ms": 13200,
+    "path": [
+     [
+      33,
+      51
+     ],
+     [
+      32,
+      51
+     ],
+     [
+      32,
+      52
+     ]
+    ],
+    "source": "routine",
+    "step_carry_ms": 120,
+    "step_ms": 440
+   },
+   "health": 100,
+   "id": "npc_hessa_marr",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "fresh": null,
+    "job": null,
+    "memories": [],
+    "mood": "cheerful",
+    "next_agenda_at": 30000,
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Hessa",
+   "role": "Innkeeper",
+   "x": 34,
+   "y": 51
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "look",
+    "anchor_index": 1,
+    "destination": [
+     20,
+     27
+    ],
+    "goal": "work at the smithy",
+    "next_at_ms": 26000,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 440
+   },
+   "equipped": {
+    "right": "hammer_mara"
+   },
+   "health": 100,
+   "id": "npc_mara_venn",
+   "injuries": [],
+   "mind": {
+    "chatting_with": {
+     "id": "npc_jory_venn",
+     "until": 26000
+    },
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "irritable",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Mara",
+   "role": "Blacksmith",
+   "x": 20,
+   "y": 27
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "wait",
+    "anchor_index": 1,
+    "destination": [
+     23,
+     27
+    ],
+    "goal": "help around the forge",
+    "next_at_ms": 26000,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 440
+   },
+   "health": 100,
+   "id": "npc_jory_venn",
+   "injuries": [],
+   "mind": {
+    "chatting_with": {
+     "id": "npc_mara_venn",
+     "until": 26000
+    },
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "excited",
+    "opinions": {
+     "npc_darin_ko": {
+      "text": "has the most interesting things in the world",
+      "warmth": 0.6
+     },
+     "npc_hessa_marr": {
+      "text": "slips him honey cakes",
+      "warmth": 0.7
+     },
+     "npc_mara_venn": {
+      "text": "his aunt; he'd do anything to impress her",
+      "warmth": 0.9
+     },
+     "npc_oren_dast": {
+      "text": "a bit frightening",
+      "warmth": -0.2
+     },
+     "npc_tomas_reed": {
+      "text": "clever with wood, and lets him watch",
+      "warmth": 0.5
+     }
+    },
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Jory",
+   "role": "Smith apprentice",
+   "x": 23,
+   "y": 27
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "walk",
+    "anchor_index": 2,
+    "destination": [
+     62,
+     27
+    ],
+    "goal": "work at the carpentry yard",
+    "next_at_ms": 12700,
+    "path": [
+     [
+      62,
+      27
+     ]
+    ],
+    "source": "routine",
+    "step_carry_ms": 240,
+    "step_ms": 440
+   },
+   "equipped": {
+    "right": "hammer_tomas"
+   },
+   "health": 100,
+   "id": "npc_tomas_reed",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "weary",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Tomas",
+   "role": "Carpenter",
+   "x": 62,
+   "y": 28
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "work",
+    "anchor_index": 2,
+    "destination": [
+     78,
+     31
+    ],
+    "goal": "tend the merchant wagon",
+    "next_at_ms": 17200,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 440
+   },
+   "equipped": {
+    "right": "knife_darin"
+   },
+   "health": 100,
+   "id": "npc_darin_ko",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "content",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Darin",
+   "role": "Merchant",
+   "x": 78,
+   "y": 31
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "look",
+    "anchor_index": 2,
+    "destination": [
+     47,
+     32
+    ],
+    "goal": "watch the south road",
+    "next_at_ms": 15200,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 360
+   },
+   "equipped": {
+    "body": "jacket_elin",
+    "right": "spear_elin"
+   },
+   "health": 100,
+   "id": "npc_elin_west",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "content",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Elin",
+   "role": "Watch scout",
+   "x": 47,
+   "y": 32
+  },
+  {
+   "alive": true,
+   "controller": {
+    "activity": "look",
+    "anchor_index": 2,
+    "destination": [
+     53,
+     43
+    ],
+    "goal": "patrol the village approach",
+    "next_at_ms": 15400,
+    "path": [],
+    "source": "routine",
+    "step_carry_ms": 0,
+    "step_ms": 360
+   },
+   "equipped": {
+    "body": "jerkin_kade",
+    "right": "spear_kade"
+   },
+   "health": 100,
+   "id": "npc_kade_east",
+   "injuries": [],
+   "mind": {
+    "facing_player": false,
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "mood": "irritable",
+    "said": null,
+    "standing": "unknown",
+    "stranger_seen": false
+   },
+   "name": "Kade",
+   "role": "Patrol guard",
+   "x": 53,
+   "y": 43
+  }
+ ],
+ "objective": "Get inside the city",
+ "objects": {
+  "bark_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A long strip of pliable bark peeled from a fallen trunk.",
+   "flags": [
+    "flexible",
+    "floats",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "bark_a",
+   "length_m": 0.6,
+   "mass_kg": 0.2,
+   "materials": [
+    "bark"
+   ],
+   "name": "strip of bark",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 52,
+   "y": 63
+  },
+  "birchbark_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A wide, papery sheet of white birch bark that curls when it dries.",
+   "flags": [
+    "flexible",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "birchbark_a",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "bark"
+   ],
+   "name": "sheet of birch bark",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 90,
+   "y": 56
+  },
+  "bone_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A weathered cow leg bone, hard and dry, with one splintered end.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "bone_a",
+   "length_m": 0.35,
+   "mass_kg": 0.4,
+   "materials": [
+    "bone"
+   ],
+   "name": "old leg bone",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 42,
+   "y": 56
+  },
+  "bowl_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill"
+   ],
+   "capacity_l": 1.0,
+   "condition": "usable",
+   "description": "A shallow glazed clay bowl, about a hand-span across.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "bowl_hessa",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "fired clay"
+   ],
+   "name": "clay bowl",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 32,
+   "y": 52
+  },
+  "bramble_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A long, pliable bramble stem covered in hooked thorns.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "bramble_a",
+   "length_m": 1.2,
+   "mass_kg": 0.3,
+   "materials": [
+    "bramble"
+   ],
+   "name": "thorny bramble",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 6,
+   "y": 45
+  },
+  "branch_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": "in:made_4",
+   "id": "branch_a",
+   "length_m": 1.5,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "name": "fallen branch",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 47,
+   "y": 67
+  },
+  "branch_b": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dry fallen branch about 1.5 m long, slightly crooked at one end.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "branch_b",
+   "length_m": 1.5,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "name": "fallen branch",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 50,
+   "y": 67
+  },
+  "bucket_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill",
+    "pour"
+   ],
+   "capacity_l": 1.0,
+   "condition": "usable",
+   "description": "Hessa's wooden bucket with an iron band and rope handle.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "bucket_hessa",
+   "length_m": null,
+   "mass_kg": 0.5,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "name": "wooden bucket",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 35,
+   "y": 52
+  },
+  "chalk_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A soft white lump of chalk that leaves pale marks on wood and stone.",
+   "flags": [],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "chalk_a",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "chalk"
+   ],
+   "name": "piece of chalk",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 58,
+   "y": 30
+  },
+  "charcoal_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A light, black lump of cold charcoal from the smithy's ash heap. It leaves black marks.",
+   "flags": [
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "charcoal_a",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "charcoal"
+   ],
+   "name": "lump of charcoal",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 11,
+   "y": 27
+  },
+  "clay_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A fist-sized lump of sticky grey clay dug from the edge of a puddle.",
+   "flags": [
+    "flexible",
+    "adhesive"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "clay_a",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "clay"
+   ],
+   "name": "lump of wet clay",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 51,
+   "y": 58
+  },
+  "cloth_darin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A rolled bolt of undyed linen cloth, tightly woven.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "cloth_darin",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "cloth"
+   ],
+   "name": "bolt of linen cloth",
+   "owner_id": "npc_darin_ko",
+   "water_l": 0.0,
+   "x": 81,
+   "y": 31
+  },
+  "clothes_player": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Your own clothes from the road: a wool coat over a linen shirt.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "clothes",
+    "covers": [
+     "body"
+    ],
+    "kind": "clothing",
+    "quality": "fair"
+   },
+   "holder_id": "player",
+   "id": "clothes_player",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "wool",
+    "linen"
+   ],
+   "name": "travelling clothes",
+   "no_overlay": true,
+   "no_sprite": true,
+   "owner_id": "player",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "cookfire_hessa": {
+   "bound_to": [],
+   "burning": true,
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A ring of stones in the inn yard with a small fire burning under an iron hook.",
+   "feature": "fire",
+   "flags": [
+    "heat_source",
+    "light_source"
+   ],
+   "holder_id": null,
+   "id": "cookfire_hessa",
+   "length_m": null,
+   "mass_kg": 30.0,
+   "materials": [
+    "stone",
+    "wood"
+   ],
+   "name": "cooking fire",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 38,
+   "y": 52
+  },
+  "cord_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": "in:made_4",
+   "id": "cord_a",
+   "length_m": 1.0,
+   "mass_kg": 0.2,
+   "materials": [
+    "plant fiber"
+   ],
+   "name": "short cord",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 49,
+   "y": 66
+  },
+  "cordage_darin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A neat coil of strong twisted hemp cordage, about 10 m long.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "cordage_darin",
+   "length_m": 10.0,
+   "mass_kg": 1.2,
+   "materials": [
+    "plant fiber"
+   ],
+   "name": "coil of cordage",
+   "owner_id": "npc_darin_ko",
+   "water_l": 0.0,
+   "x": 78,
+   "y": 31
+  },
+  "crates_gate": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill"
+   ],
+   "capacity_l": 40.0,
+   "condition": "usable",
+   "description": "Two empty wooden crates by the gate, solid enough to stand on or stack.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "container",
+    "combustible"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "crates_gate",
+   "length_m": null,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "empty crates",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 52,
+   "y": 13
+  },
+  "cup_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill"
+   ],
+   "capacity_l": 0.3,
+   "condition": "usable",
+   "description": "A turned wooden drinking cup.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "floats"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "cup_hessa",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "wood"
+   ],
+   "name": "wooden cup",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 33,
+   "y": 52
+  },
+  "dressing_bren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A clean roll of linen strips, for binding wounds.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "bandage",
+    "covers": [],
+    "kind": "remedy",
+    "quality": "fair"
+   },
+   "holder_id": "npc_bren_marr",
+   "id": "dressing_bren",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "linen"
+   ],
+   "name": "roll of linen bandage",
+   "owner_id": "npc_bren_marr",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "feathers_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A small bunch of long white goose flight feathers.",
+   "flags": [
+    "flexible",
+    "floats"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "feathers_a",
+   "length_m": null,
+   "mass_kg": 0.05,
+   "materials": [
+    "feather"
+   ],
+   "name": "goose feathers",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 56,
+   "y": 62
+  },
+  "flint_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A palm-sized shard of grey flint with a thin, glassy, very sharp edge.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "knife",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "flint_a",
+   "length_m": null,
+   "mass_kg": 0.3,
+   "materials": [
+    "flint"
+   ],
+   "name": "flint shard",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 45,
+   "y": 66
+  },
+  "forge_mara": {
+   "bound_to": [],
+   "burning": true,
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A stone forge with a bed of glowing charcoal, always kept hot.",
+   "feature": "fire",
+   "flags": [
+    "heat_source",
+    "light_source"
+   ],
+   "holder_id": null,
+   "id": "forge_mara",
+   "length_m": null,
+   "mass_kg": 400.0,
+   "materials": [
+    "stone",
+    "iron"
+   ],
+   "name": "Mara's forge",
+   "no_sprite": true,
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 17,
+   "y": 25
+  },
+  "fulcrum_tomas": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A squat, rounded stone Tomas uses as a pivot for levers.",
+   "flags": [
+    "rigid",
+    "fulcrum",
+    "stable_support"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "fulcrum_tomas",
+   "length_m": null,
+   "mass_kg": 6.0,
+   "materials": [
+    "stone"
+   ],
+   "name": "fulcrum stone",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 66,
+   "y": 27
+  },
+  "garlic_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A string of papery garlic bulbs hung to dry.",
+   "flags": [],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "garlic_hessa",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "garlic"
+   ],
+   "name": "garlic bulbs",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 34,
+   "y": 53
+  },
+  "gate_bar": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "installed",
+   "description": "The old gate bar: three metres of squared oak with a long crack down one side.",
+   "feature": "beam",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "holder_id": null,
+   "id": "gate_bar",
+   "installed_in": "gate_brackets",
+   "length_m": 3.0,
+   "mass_kg": 60.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cracked gate bar",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 48,
+   "y": 9
+  },
+  "gate_beam": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A squared oak beam about 3 m long and heavy, cut to replace the cracked bar across the gate.",
+   "feature": "beam",
+   "flags": [
+    "rigid",
+    "combustible",
+    "stable_support"
+   ],
+   "holder_id": null,
+   "id": "gate_beam",
+   "length_m": 3.0,
+   "mass_kg": 60.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "replacement gate beam",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 54,
+   "y": 13
+  },
+  "gate_brackets": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A pair of heavy iron brackets bolted across the city gate two metres up. Whatever bar rests in them holds the gate shut.",
+   "feature": "fixture",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "holder_id": null,
+   "id": "gate_brackets",
+   "length_m": null,
+   "mass_kg": 20.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron gate brackets",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 48,
+   "y": 9
+  },
+  "gourd_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill"
+   ],
+   "capacity_l": 1.0,
+   "condition": "usable",
+   "description": "A hollow dried bottle gourd with a hard shell and a small hole at the neck.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "floats"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "gourd_a",
+   "length_m": null,
+   "mass_kg": 0.3,
+   "materials": [
+    "gourd"
+   ],
+   "name": "dried gourd",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 45,
+   "y": 53
+  },
+  "grass_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "An armful-sized bundle of dry, brittle grass.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "grass_a",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "dry grass"
+   ],
+   "name": "bundle of dry grass",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 44,
+   "y": 64
+  },
+  "hammer_mara": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A heavy cross-peen hammer with a short hickory handle, black from the forge.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hammer",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_mara_venn",
+   "id": "hammer_mara",
+   "length_m": 0.35,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "name": "smith's hammer",
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "hammer_tomas": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A claw hammer with a smooth ash handle.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hammer",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_tomas_reed",
+   "id": "hammer_tomas",
+   "length_m": 0.32,
+   "mass_kg": 0.7,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "name": "carpenter's hammer",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "hazel_rod": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A long, straight, springy hazel rod as thick as a thumb, stripped of leaves.",
+   "flags": [
+    "flexible",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "hazel_rod",
+   "length_m": 1.8,
+   "mass_kg": 0.6,
+   "materials": [
+    "wood"
+   ],
+   "name": "hazel rod",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 40,
+   "y": 62
+  },
+  "helmet_bren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_bren_marr",
+   "id": "helmet_bren",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron helmet",
+   "owner_id": "npc_bren_marr",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "helmet_oren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_oren_dast",
+   "id": "helmet_oren",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron helmet",
+   "owner_id": "npc_oren_dast",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "helmet_roderic": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A plain conical iron helmet with a nasal bar, dented from years of use.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "helmet",
+    "covers": [
+     "head"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_roderic_vale",
+   "id": "helmet_roderic",
+   "length_m": null,
+   "mass_kg": 1.6,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron helmet",
+   "owner_id": "npc_roderic_vale",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "honey_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A small stoppered clay pot of thick dark honey.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "honey_hessa",
+   "length_m": null,
+   "mass_kg": 0.6,
+   "materials": [
+    "honey",
+    "fired clay"
+   ],
+   "name": "pot of honey",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 35,
+   "y": 53
+  },
+  "horseshoe_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A worn, rusty iron horseshoe with two nail holes still open.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "horseshoe_a",
+   "length_m": null,
+   "mass_kg": 0.5,
+   "materials": [
+    "iron"
+   ],
+   "name": "rusty horseshoe",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 40,
+   "y": 34
+  },
+  "jacket_elin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A light quilted scout's jacket, dyed a dull green.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "padded",
+    "covers": [
+     "body"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_elin_west",
+   "id": "jacket_elin",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "name": "quilted jacket",
+   "owner_id": "npc_elin_west",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "jerkin_kade": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "An old quilted jerkin, stained and patched, stuffed thick with wool.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "padded",
+    "covers": [
+     "body"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_kade_east",
+   "id": "jerkin_kade",
+   "length_m": null,
+   "mass_kg": 3.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "name": "padded jerkin",
+   "owner_id": "npc_kade_east",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "knife_darin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A slim iron knife with a bone handle, kept in his belt.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "knife",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_darin_ko",
+   "id": "knife_darin",
+   "length_m": 0.24,
+   "mass_kg": 0.25,
+   "materials": [
+    "iron",
+    "bone"
+   ],
+   "name": "iron knife",
+   "owner_id": "npc_darin_ko",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "ladder_tomas": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A sturdy wooden ladder, three metres long.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "ladder_tomas",
+   "length_m": 3.0,
+   "mass_kg": 8.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "wooden ladder",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 62,
+   "y": 27
+  },
+  "leather_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A palm-sized scrap of tanned leather, tough but flexible, with a torn edge.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "leather_a",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "leather"
+   ],
+   "name": "scrap of leather",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 46,
+   "y": 40
+  },
+  "leaves_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Three broad, soft burdock leaves as wide as a forearm is long.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "leaves_a",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "leaf"
+   ],
+   "name": "large burdock leaves",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 88,
+   "y": 45
+  },
+  "lodestone_darin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dark, rough, egg-sized stone, heavy for its size; iron filings cling to one end.",
+   "flags": [
+    "rigid",
+    "magnet_source"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "lodestone_darin",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "lodestone"
+   ],
+   "name": "lodestone",
+   "owner_id": "npc_darin_ko",
+   "water_l": 0.0,
+   "x": 79,
+   "y": 31
+  },
+  "log_a": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dry, barkless log as thick as a thigh and as long as a man, lying in the grass.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "holder_id": null,
+   "id": "log_a",
+   "length_m": 1.6,
+   "mass_kg": 28.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "fallen log",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 70,
+   "y": 60
+  },
+  "made_4": {
+   "base_name": "bound club",
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "components": [
+    "branch_a",
+    "cord_a"
+   ],
+   "condition": "usable",
+   "created_by": "player",
+   "created_event_id": 4,
+   "created_text": "wind the cord round the branch",
+   "description": "A branch with cord wound tight round its grip.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "held_asset_id": "spr_<r0>_made_4_held",
+   "holder_id": "player",
+   "id": "made_4",
+   "known_capabilities": [],
+   "length_m": 0.9,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "name": "bound club",
+   "owner_id": "player",
+   "placeholder": "wood",
+   "rated_load_kg": null,
+   "sprite_asset_id": "spr_<r0>_made_4",
+   "tools_used": [],
+   "water_l": 0.0,
+   "x": 47,
+   "y": 67
+  },
+  "mail_bren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_bren_marr",
+   "id": "mail_bren",
+   "length_m": null,
+   "mass_kg": 10.5,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "name": "mail shirt",
+   "owner_id": "npc_bren_marr",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "mail_oren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_oren_dast",
+   "id": "mail_oren",
+   "length_m": null,
+   "mass_kg": 10.5,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "name": "mail shirt",
+   "owner_id": "npc_oren_dast",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "mail_roderic": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A knee-length shirt of riveted iron rings over a quilted lining, heavy on the shoulders.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": "mail",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "kind": "armour",
+    "quality": "fair"
+   },
+   "holder_id": "npc_roderic_vale",
+   "id": "mail_roderic",
+   "length_m": null,
+   "mass_kg": 11.0,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "name": "mail shirt",
+   "owner_id": "npc_roderic_vale",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "mirror_darin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A hand mirror of polished bronze with a wooden grip; it throws back a bright, slightly golden reflection.",
+   "flags": [
+    "rigid",
+    "reflective"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "mirror_darin",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "bronze"
+   ],
+   "name": "polished bronze mirror",
+   "owner_id": "npc_darin_ko",
+   "water_l": 0.0,
+   "x": 82,
+   "y": 31
+  },
+  "moss_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A soft, damp clump of green moss from the foot of the wall.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "moss_a",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "moss"
+   ],
+   "name": "clump of moss",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 38,
+   "y": 14
+  },
+  "nail_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A hand-forged iron nail as long as a finger, bent near the tip.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "improvised",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "nail_a",
+   "length_m": 0.08,
+   "mass_kg": 0.02,
+   "materials": [
+    "iron"
+   ],
+   "name": "bent iron nail",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 27,
+   "y": 27
+  },
+  "nails_mara": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A small wooden box of square-headed iron nails.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "nails_mara",
+   "length_m": null,
+   "mass_kg": 1.0,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "name": "box of iron nails",
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 20,
+   "y": 26
+  },
+  "needles_mara": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dozen thin iron sewing needles and pins, bound together with a twist of thread.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "improvised",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "needles_mara",
+   "length_m": 0.06,
+   "mass_kg": 0.05,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron needles",
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 16,
+   "y": 26
+  },
+  "pinecones_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Four dry, open pine cones, brown and brittle.",
+   "flags": [
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "pinecones_a",
+   "length_m": null,
+   "mass_kg": 0.3,
+   "materials": [
+    "wood"
+   ],
+   "name": "handful of pine cones",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 30,
+   "y": 66
+  },
+  "plantain_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A handful of broad, ribbed plantain leaves from beside the road.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "plantain_a",
+   "length_m": null,
+   "mass_kg": 0.05,
+   "materials": [
+    "plantain",
+    "leaf"
+   ],
+   "name": "plantain leaves",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 46,
+   "y": 63
+  },
+  "potshard_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A curved red shard of a broken clay pot with one sharp, gritty edge.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "potshard_a",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "fired clay"
+   ],
+   "name": "broken pot shard",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 44,
+   "y": 50
+  },
+  "reeds_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A handful of hollow reed stems, each about 1.2 m long.",
+   "flags": [
+    "rigid",
+    "floats",
+    "combustible"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "reeds_a",
+   "length_m": 1.2,
+   "mass_kg": 0.3,
+   "materials": [
+    "reed"
+   ],
+   "name": "hollow reeds",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 53,
+   "y": 66
+  },
+  "resin_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A sticky amber lump of pine resin the size of a walnut.",
+   "flags": [
+    "adhesive",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "resin_a",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "pine resin"
+   ],
+   "name": "lump of pine resin",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 46,
+   "y": 63
+  },
+  "rope_tomas": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Six metres of stout hemp rope, good for about 150 kg.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "rope_tomas",
+   "length_m": 6.0,
+   "mass_kg": 1.5,
+   "materials": [
+    "plant fiber"
+   ],
+   "name": "coil of rope",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 61,
+   "y": 27
+  },
+  "sapling_a": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A slender young birch, taller than a man but only as thick as a wrist, rooted in the verge.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "flexible",
+    "combustible"
+   ],
+   "holder_id": null,
+   "id": "sapling_a",
+   "length_m": 3.0,
+   "mass_kg": 12.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "young birch sapling",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 38,
+   "y": 67
+  },
+  "sapling_b": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A straight young ash tree with a smooth grey trunk as thick as a forearm.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "holder_id": null,
+   "id": "sapling_b",
+   "length_m": 3.5,
+   "mass_kg": 15.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "young ash sapling",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 57,
+   "y": 67
+  },
+  "sapling_c": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A bushy young hazel with several thin stems growing from one root.",
+   "feature": "tree",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "holder_id": null,
+   "id": "sapling_c",
+   "length_m": 2.8,
+   "mass_kg": 10.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "young hazel sapling",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 64,
+   "y": 48
+  },
+  "spear_bren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "An ash-shafted spear with a leaf-shaped iron head.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "short_spear",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_bren_marr",
+   "id": "spear_bren",
+   "length_m": 2.0,
+   "mass_kg": 2.2,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "name": "iron-headed spear",
+   "owner_id": "npc_bren_marr",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "spear_elin": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A light spear with a narrow iron head, easy to carry at a run.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "short_spear",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_elin_west",
+   "id": "spear_elin",
+   "length_m": 1.6,
+   "mass_kg": 1.6,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "name": "short spear",
+   "owner_id": "npc_elin_west",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "spear_kade": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A long-used ash spear, its iron head worn thin from sharpening.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "short_spear",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_kade_east",
+   "id": "spear_kade",
+   "length_m": 2.1,
+   "mass_kg": 2.3,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "name": "iron-headed spear",
+   "owner_id": "npc_kade_east",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "spear_oren": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "An ash-shafted spear with a leaf-shaped iron head.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "short_spear",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "fair"
+   },
+   "holder_id": "npc_oren_dast",
+   "id": "spear_oren",
+   "length_m": 2.0,
+   "mass_kg": 2.2,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "name": "iron-headed spear",
+   "owner_id": "npc_oren_dast",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "stone_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "support"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A loose, rounded stone the size of a fist, heavy for its size.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "stone_a",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "stone"
+   ],
+   "name": "loose stone",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 47,
+   "y": 65
+  },
+  "stone_b": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A flat, heavy stone about as wide as two hands.",
+   "flags": [
+    "rigid",
+    "stable_support"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "stone_b",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "stone"
+   ],
+   "name": "flat stone",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 51,
+   "y": 65
+  },
+  "straw_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A loose armful of golden straw fallen from a cart.",
+   "flags": [
+    "flexible",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "straw_a",
+   "length_m": null,
+   "mass_kg": 0.5,
+   "materials": [
+    "straw"
+   ],
+   "name": "bundle of straw",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 52,
+   "y": 44
+  },
+  "sword_roderic": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A straight double-edged iron sword with a leather-wrapped grip, kept sharp.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "long_sword",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "good"
+   },
+   "holder_id": "npc_roderic_vale",
+   "id": "sword_roderic",
+   "length_m": 0.95,
+   "mass_kg": 1.3,
+   "materials": [
+    "iron",
+    "wood",
+    "leather"
+   ],
+   "name": "iron sword",
+   "owner_id": "npc_roderic_vale",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
+  "thread_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A skein of fine spun flax thread for mending.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "thread_hessa",
+   "length_m": null,
+   "mass_kg": 0.05,
+   "materials": [
+    "flax",
+    "thread"
+   ],
+   "name": "skein of flax thread",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 33,
+   "y": 51
+  },
+  "tree_00": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree00",
+   "holder_id": null,
+   "id": "tree_00",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree00",
+   "water_l": 0.0,
+   "x": 10,
+   "y": 65
+  },
+  "tree_01": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree01",
+   "holder_id": null,
+   "id": "tree_01",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree01",
+   "water_l": 0.0,
+   "x": 32,
+   "y": 64
+  },
+  "tree_02": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree02",
+   "holder_id": null,
+   "id": "tree_02",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree02",
+   "water_l": 0.0,
+   "x": 59,
+   "y": 65
+  },
+  "tree_03": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree03",
+   "holder_id": null,
+   "id": "tree_03",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree03",
+   "water_l": 0.0,
+   "x": 73,
+   "y": 63
+  },
+  "tree_04": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree04",
+   "holder_id": null,
+   "id": "tree_04",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree04",
+   "water_l": 0.0,
+   "x": 88,
+   "y": 66
+  },
+  "tree_05": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree05",
+   "holder_id": null,
+   "id": "tree_05",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree05",
+   "water_l": 0.0,
+   "x": 13,
+   "y": 53
+  },
+  "tree_06": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree06",
+   "holder_id": null,
+   "id": "tree_06",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree06",
+   "water_l": 0.0,
+   "x": 58,
+   "y": 54
+  },
+  "tree_07": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree07",
+   "holder_id": null,
+   "id": "tree_07",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree07",
+   "water_l": 0.0,
+   "x": 85,
+   "y": 50
+  },
+  "tree_08": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree08",
+   "holder_id": null,
+   "id": "tree_08",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree08",
+   "water_l": 0.0,
+   "x": 8,
+   "y": 40
+  },
+  "tree_09": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree09",
+   "holder_id": null,
+   "id": "tree_09",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree09",
+   "water_l": 0.0,
+   "x": 31,
+   "y": 38
+  },
+  "tree_10": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree10",
+   "holder_id": null,
+   "id": "tree_10",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree10",
+   "water_l": 0.0,
+   "x": 62,
+   "y": 40
+  },
+  "tree_11": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree11",
+   "holder_id": null,
+   "id": "tree_11",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree11",
+   "water_l": 0.0,
+   "x": 88,
+   "y": 38
+  },
+  "tree_12": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree12",
+   "holder_id": null,
+   "id": "tree_12",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree12",
+   "water_l": 0.0,
+   "x": 8,
+   "y": 29
+  },
+  "tree_13": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree13",
+   "holder_id": null,
+   "id": "tree_13",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree13",
+   "water_l": 0.0,
+   "x": 35,
+   "y": 28
+  },
+  "tree_14": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree14",
+   "holder_id": null,
+   "id": "tree_14",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree14",
+   "water_l": 0.0,
+   "x": 87,
+   "y": 22
+  },
+  "tree_15": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree15",
+   "holder_id": null,
+   "id": "tree_15",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree15",
+   "water_l": 0.0,
+   "x": 29,
+   "y": 16
+  },
+  "tree_16": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree16",
+   "holder_id": null,
+   "id": "tree_16",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree16",
+   "water_l": 0.0,
+   "x": 65,
+   "y": 16
+  },
+  "tree_17": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree17",
+   "holder_id": null,
+   "id": "tree_17",
+   "length_m": 9.0,
+   "mass_kg": 900.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree17",
+   "water_l": 0.0,
+   "x": 8,
+   "y": 16
+  },
+  "tree_18": {
+   "bound_to": [],
+   "capabilities": [],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage.",
+   "feature": "tree",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "geometry_name": "Tree18",
+   "holder_id": null,
+   "id": "tree_18",
+   "length_m": 10.0,
+   "mass_kg": 350.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "cypress tree",
+   "owner_id": null,
+   "scene_node": "Foliage/Tree18",
+   "water_l": 0.0,
+   "x": 84,
+   "y": 12
+  },
+  "trestles_gate": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Two sturdy wooden trestles, about knee height, for resting heavy timber on while working.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "trestles_gate",
+   "length_m": null,
+   "mass_kg": 14.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "pair of trestles",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 56,
+   "y": 13
+  },
+  "trough_gate": {
+   "bound_to": [],
+   "capabilities": [
+    "water_source"
+   ],
+   "capacity_l": 60.0,
+   "condition": "usable",
+   "description": "A long wooden horse trough by the gate, full of water.",
+   "feature": "water",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "holder_id": null,
+   "id": "trough_gate",
+   "length_m": null,
+   "mass_kg": 60.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "gate water trough",
+   "owner_id": null,
+   "water_l": 60.0,
+   "x": 50,
+   "y": 16
+  },
+  "trough_hessa": {
+   "bound_to": [],
+   "capabilities": [
+    "water_source"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A long wooden water trough in Hessa's yard.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "holder_id": null,
+   "id": "trough_hessa",
+   "length_m": null,
+   "mass_kg": 80.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "water trough",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 80.0,
+   "x": 36,
+   "y": 52
+  },
+  "vine_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A tough, fresh length of climbing vine about 2 m long.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "vine_a",
+   "length_m": 2.0,
+   "mass_kg": 0.4,
+   "materials": [
+    "vine"
+   ],
+   "name": "length of vine",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 43,
+   "y": 67
+  },
+  "wood_tomas": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie",
+    "support"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A sawn plank, 2 m long, 20 cm wide and 4 cm thick.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats",
+    "stable_support"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "wood_tomas",
+   "length_m": 2.0,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "wood plank",
+   "owner_id": "npc_tomas_reed",
+   "water_l": 0.0,
+   "x": 64,
+   "y": 28
+  },
+  "wool_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A greasy, off-white tuft of raw wool caught on a thorn.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "wool_a",
+   "length_m": null,
+   "mass_kg": 0.1,
+   "materials": [
+    "wool"
+   ],
+   "name": "tuft of sheep's wool",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 60,
+   "y": 58
+  },
+  "yard_antler": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A shed red deer antler with sturdy tines, hard as bone.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_antler",
+   "length_m": 0.7,
+   "mass_kg": 1.2,
+   "materials": [
+    "bone"
+   ],
+   "name": "red deer antler",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 85,
+   "y": 52
+  },
+  "yard_arrow_shafts": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Twenty straight dogwood shoots, peeled and dried.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "arrow",
+    "covers": [],
+    "kind": "ammo",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_arrow_shafts",
+   "length_m": 0.75,
+   "mass_kg": 0.4,
+   "materials": [
+    "wood"
+   ],
+   "name": "bundle of arrow shafts",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 62
+  },
+  "yard_ash_stave": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A straight, seasoned ash pole, springy and tough: a spear shaft or a quarterstaff.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_ash_stave",
+   "length_m": 2.2,
+   "mass_kg": 1.6,
+   "materials": [
+    "wood"
+   ],
+   "name": "ash stave",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 60
+  },
+  "yard_axe_haft": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A shaped ash handle for an axe, curved to the hand.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_axe_haft",
+   "length_m": 0.75,
+   "mass_kg": 0.8,
+   "materials": [
+    "wood"
+   ],
+   "name": "axe haft",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 62
+  },
+  "yard_axe_head": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A bearded axe head with an empty eye for a haft.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_axe",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_axe_head",
+   "length_m": 0.2,
+   "mass_kg": 1.2,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron axe head",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 56
+  },
+  "yard_beeswax": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A cake of yellow beeswax.",
+   "flags": [
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_beeswax",
+   "length_m": null,
+   "mass_kg": 0.3,
+   "materials": [
+    "wax"
+   ],
+   "name": "cake of beeswax",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 87,
+   "y": 56
+  },
+  "yard_birch_poles": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Three thin birch poles, light and straight.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_birch_poles",
+   "length_m": 2.5,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "birch poles",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 64
+  },
+  "yard_blade_blank": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A forged iron knife blade with no edge yet and a bare tang where a handle should go.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_blade_blank",
+   "length_m": 0.2,
+   "mass_kg": 0.3,
+   "materials": [
+    "iron"
+   ],
+   "name": "unfinished knife blade",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 56
+  },
+  "yard_bones": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Cattle long bones and shoulder blades, cleaned and dried.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_bones",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "bone"
+   ],
+   "name": "pile of bones",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 85,
+   "y": 56
+  },
+  "yard_bronze_ingot": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A small cast bronze ingot, golden-brown and heavy for its size.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_bronze_ingot",
+   "length_m": 0.2,
+   "mass_kg": 2.0,
+   "materials": [
+    "bronze"
+   ],
+   "name": "bronze ingot",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 52
+  },
+  "yard_chain": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Two metres of heavy iron chain with hand-forged links.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_chain",
+   "length_m": 2.0,
+   "mass_kg": 4.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "length of iron chain",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 54
+  },
+  "yard_charcoal": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A sack of good oak charcoal.",
+   "flags": [
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_charcoal",
+   "length_m": null,
+   "mass_kg": 5.0,
+   "materials": [
+    "charcoal",
+    "cloth"
+   ],
+   "name": "sack of charcoal",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 89,
+   "y": 54
+  },
+  "yard_chert": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A grey chert cobble, fine-grained and good for knapping.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_chert",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "chert"
+   ],
+   "name": "chert cobble",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 58
+  },
+  "yard_copper_sheet": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A thin hammered sheet of copper, soft enough to bend over a knee.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_copper_sheet",
+   "length_m": 0.5,
+   "mass_kg": 1.2,
+   "materials": [
+    "copper"
+   ],
+   "name": "copper sheet",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 52
+  },
+  "yard_elm_planks": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Three short elm planks, tough and hard to split: good shield boards.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_elm_planks",
+   "length_m": 0.9,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "elm planks",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 62
+  },
+  "yard_feathers": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A bunch of grey goose flight feathers, good for fletching.",
+   "flags": [
+    "flexible",
+    "floats"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_feathers",
+   "length_m": null,
+   "mass_kg": 0.05,
+   "materials": [
+    "feather"
+   ],
+   "name": "grey goose feathers",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 89,
+   "y": 52
+  },
+  "yard_flax_cord": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A hank of strong twisted flax cord.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_flax_cord",
+   "length_m": 10.0,
+   "mass_kg": 0.3,
+   "materials": [
+    "plant fiber"
+   ],
+   "name": "hank of flax cord",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 66
+  },
+  "yard_flint_nodules": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Three fist-sized flint nodules with chalky crusts; knapped, they give very sharp edges.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_flint_nodules",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "flint"
+   ],
+   "name": "flint nodules",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 58
+  },
+  "yard_glass": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A few thick shards of a broken green glass jar, razor-edged.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "knife",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_glass",
+   "length_m": null,
+   "mass_kg": 0.2,
+   "materials": [
+    "glass"
+   ],
+   "name": "shards of green glass",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 58
+  },
+  "yard_hammerstone": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A hard, rounded quartzite cobble for knapping and pounding.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hammer",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_hammerstone",
+   "length_m": null,
+   "mass_kg": 1.0,
+   "materials": [
+    "stone"
+   ],
+   "name": "hammerstone",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 60
+  },
+  "yard_hemp_rope": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Ten metres of stout hemp rope.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_hemp_rope",
+   "length_m": 10.0,
+   "mass_kg": 2.0,
+   "materials": [
+    "plant fiber"
+   ],
+   "name": "coil of hemp rope",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 66
+  },
+  "yard_hide_glue": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A small clay pot of hide glue; warmed, it sets hard and strong.",
+   "flags": [
+    "adhesive"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_hide_glue",
+   "length_m": null,
+   "mass_kg": 0.6,
+   "materials": [
+    "hide glue",
+    "fired clay"
+   ],
+   "name": "pot of hide glue",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 87,
+   "y": 52
+  },
+  "yard_horn": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A hollow cattle horn, tough and a little springy.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_horn",
+   "length_m": 0.35,
+   "mass_kg": 0.5,
+   "materials": [
+    "horn"
+   ],
+   "name": "cattle horn",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 85,
+   "y": 54
+  },
+  "yard_horseshoes": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Two worn iron horseshoes with their nails pulled.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_horseshoes",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "name": "pair of horseshoes",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 56
+  },
+  "yard_iron_bar": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A rough forged iron bar, square in section and as thick as a thumb.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_iron_bar",
+   "length_m": 0.6,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron bar",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 52
+  },
+  "yard_iron_bar_2": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A second forged iron bar, slightly bent at one end.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_iron_bar_2",
+   "length_m": 0.6,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron bar",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 52
+  },
+  "yard_iron_plates": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Four small hammered iron plates, each a hand wide, with a hole punched at every corner.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_iron_plates",
+   "length_m": null,
+   "mass_kg": 5.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron plates",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 54
+  },
+  "yard_iron_pot": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "fill"
+   ],
+   "capacity_l": 4.0,
+   "condition": "usable",
+   "description": "A heavy three-legged iron pot, sooty inside.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "container",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_iron_pot",
+   "length_m": null,
+   "mass_kg": 3.0,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron cooking pot",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 58
+  },
+  "yard_iron_wire": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A coil of soft drawn iron wire, about five metres of it.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_iron_wire",
+   "length_m": 5.0,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "name": "coil of iron wire",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 54
+  },
+  "yard_leather_hide": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A thick tanned ox hide, good for straps, sheaths or armour.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_leather_hide",
+   "length_m": null,
+   "mass_kg": 2.5,
+   "materials": [
+    "leather"
+   ],
+   "name": "tanned leather hide",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 64
+  },
+  "yard_linen": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A folded bolt of undyed linen cloth.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_linen",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen"
+   ],
+   "name": "bolt of linen",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 66
+  },
+  "yard_nails": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Twenty square-shanked iron nails, a little rusty.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_nails",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "name": "handful of iron nails",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 54
+  },
+  "yard_oak_billet": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A split, seasoned length of oak as thick as a forearm.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_oak_billet",
+   "length_m": 0.8,
+   "mass_kg": 2.5,
+   "materials": [
+    "wood"
+   ],
+   "name": "oak billet",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 62
+  },
+  "yard_obsidian": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A glassy black chunk of obsidian traded from far away; its broken edges are sharper than any blade, and brittle.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "gear": {
+    "class": "hand_axe",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_obsidian",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "obsidian"
+   ],
+   "name": "obsidian chunk",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 58
+  },
+  "yard_padding": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A stack of quilted linen layers stuffed with wool, the stuff of padded armour.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_padding",
+   "length_m": null,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "name": "quilted padding",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 66
+  },
+  "yard_pitch": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Thick black pine pitch in a clay pot; heated, it glues and seals.",
+   "flags": [
+    "adhesive",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_pitch",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "pine resin",
+    "fired clay"
+   ],
+   "name": "pot of pine pitch",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 87,
+   "y": 54
+  },
+  "yard_rawhide": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A stiff, untanned cattle hide; soaked, it goes soft, and it shrinks hard as it dries.",
+   "flags": [
+    "flexible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_rawhide",
+   "length_m": null,
+   "mass_kg": 3.0,
+   "materials": [
+    "leather"
+   ],
+   "name": "rawhide",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 64
+  },
+  "yard_recipe_book": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A battered leather-bound notebook of how to make weapons, armour, remedies and tools from what lies in the yard. Click it in your pack to read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_recipe_book",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "leather",
+    "cloth"
+   ],
+   "name": "wainwright's notebook",
+   "owner_id": null,
+   "readable": "recipe_book",
+   "water_l": 0.0,
+   "x": 79,
+   "y": 50
+  },
+  "yard_river_stones": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A dozen smooth, egg-sized river stones, just right for a sling.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_river_stones",
+   "length_m": null,
+   "mass_kg": 2.4,
+   "materials": [
+    "stone"
+   ],
+   "name": "pile of river stones",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 75,
+   "y": 60
+  },
+  "yard_rivets": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Soft iron rivets in a small leather bag, for joining plates or straps.",
+   "flags": [
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_rivets",
+   "length_m": null,
+   "mass_kg": 0.5,
+   "materials": [
+    "iron",
+    "leather"
+   ],
+   "name": "bag of iron rivets",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 54
+  },
+  "yard_sickle_blade": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A curved sickle blade with a broken grip, still sharp along the inside edge.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "short_sword",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_sickle_blade",
+   "length_m": 0.45,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "name": "old sickle blade",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 56
+  },
+  "yard_sinew": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Dried deer tendon, shredded into fibres: the strongest cord there is, for bowstrings and lashings.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_sinew",
+   "length_m": 0.5,
+   "mass_kg": 0.1,
+   "materials": [
+    "sinew"
+   ],
+   "name": "bundle of sinew",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 64
+  },
+  "yard_spearhead": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A leaf-shaped iron spearhead with an empty socket for a shaft.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_axe",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_spearhead",
+   "length_m": 0.25,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "name": "iron spearhead",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 56
+  },
+  "yard_steel_billet": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A short, hard billet of good steel, rare and costly; it rings when struck.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "club",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_steel_billet",
+   "length_m": 0.3,
+   "mass_kg": 1.5,
+   "materials": [
+    "steel"
+   ],
+   "name": "steel billet",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 79,
+   "y": 52
+  },
+  "yard_thongs": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A bunch of narrow leather laces.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_thongs",
+   "length_m": 1.5,
+   "mass_kg": 0.2,
+   "materials": [
+    "leather"
+   ],
+   "name": "leather thongs",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 81,
+   "y": 64
+  },
+  "yard_whetstone": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A fine-grained sharpening stone, worn hollow in the middle.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_whetstone",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "stone"
+   ],
+   "name": "whetstone",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 77,
+   "y": 60
+  },
+  "yard_withies": {
+   "bound_to": [],
+   "capabilities": [
+    "carry",
+    "tie"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A bundle of long, whippy willow withies for weaving.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_withies",
+   "length_m": 1.5,
+   "mass_kg": 1.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "willow withies",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 62
+  },
+  "yard_wool": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A greasy, unwashed sheep's fleece.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "yard_wool",
+   "length_m": null,
+   "mass_kg": 1.5,
+   "materials": [
+    "wool"
+   ],
+   "name": "raw wool fleece",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 66
+  },
+  "yard_yew_stave": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A seasoned yew stave, heartwood on one side and sapwood on the other: bow wood.",
+   "flags": [
+    "flexible",
+    "combustible",
+    "floats"
+   ],
+   "gear": {
+    "class": "staff",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yard_yew_stave",
+   "length_m": 1.8,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "name": "yew stave",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 83,
+   "y": 60
+  },
+  "yarrow_a": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Feathery yarrow with flat white flower heads.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": "arrow",
+    "covers": [],
+    "kind": "ammo",
+    "quality": "crude"
+   },
+   "holder_id": null,
+   "id": "yarrow_a",
+   "length_m": null,
+   "mass_kg": 0.05,
+   "materials": [
+    "yarrow",
+    "herb"
+   ],
+   "name": "yarrow",
+   "owner_id": null,
+   "water_l": 0.0,
+   "x": 50,
+   "y": 61
+  }
+ },
+ "pending_minds": [
+  {
+   "kind": "agenda",
+   "npc_id": "npc_hessa_marr",
+   "why": "the stranger came into view"
+  },
+  {
+   "kind": "meet",
+   "npc_id": "npc_jory_venn",
+   "why": "npc_mara_venn"
+  }
+ ],
+ "player": {
+  "alive": true,
+  "conditions": [],
+  "equipped": {
+   "body": "clothes_player",
+   "right": "made_4"
+  },
+  "health": 100.0,
+  "ready_at": {
+   "right": 12300
+  },
+  "swings": {},
+  "x": 47,
+  "y": 67
+ },
+ "player_seq": 6,
+ "projectiles": [],
+ "run_id": "<run0>",
+ "safe_seq": 3,
+ "scenario": "village",
+ "seed_version": 12,
+ "sim_time_ms": 15000,
+ "tick": 15,
+ "water_spilled_l": 0.0
+}
