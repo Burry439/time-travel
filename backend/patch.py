@@ -19,11 +19,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from shapes import State
+
 Patch = dict[str, Any]
 SET, DELETE, APPEND, DROP, RECORDS = "=", "-", "+", "<", "@"
 
 
-def snapshot(state: dict) -> dict:
+def snapshot(state: State) -> dict:
     """A deep, JSON-clean copy: what the state is as saved (tuples become lists, as they would on a reload)."""
     return json.loads(json.dumps(state))
 
@@ -66,7 +68,7 @@ def _copy(value: Any) -> Any:
     return json.loads(json.dumps(value))
 
 
-def apply(state: dict, changes: Patch) -> None:
+def apply(state: State, changes: Patch) -> None:
     """Change state in place. Values are copied, so a patch can be applied again (replay, retries)."""
     for key, change in changes.items():
         if SET in change:

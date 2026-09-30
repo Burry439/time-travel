@@ -15,6 +15,7 @@ import minds
 import persona
 import reputation
 import tuning
+from shapes import Npc, State
 
 PLACES = content.PLACES
 
@@ -60,7 +61,7 @@ def compass(start: tuple[int, int], goal: tuple[int, int]) -> str:
     return f"about {steps} steps {'-'.join(w for w in (ns, ew) if w)}"
 
 
-def way_around_town(npc: dict) -> list[str]:
+def way_around_town(npc: Npc) -> list[str]:
     """What anyone who lives here knows: where things are, from where this person stands."""
     seen, lines = set(), []
     for place in PLACES.values() if isinstance(PLACES, dict) else ():
@@ -71,7 +72,7 @@ def way_around_town(npc: dict) -> list[str]:
     return lines
 
 
-def why_here(state: dict, npc: dict) -> str:
+def why_here(state: State, npc: Npc) -> str:
     """Why this person is face to face with the stranger, in words (their purpose carries through, D-44)."""
     encounter = state.get("encounter") or {}
     inside = npc["id"] in encounter.get("participants", [])
@@ -99,7 +100,7 @@ def why_here(state: dict, npc: dict) -> str:
     ).strip()
 
 
-def request(state: dict, npc: dict, text: str, happened: str | None = None) -> tuple[str, dict]:
+def request(state: State, npc: Npc, text: str, happened: str | None = None) -> tuple[str, dict]:
     """The person's situation, the conversation and the stranger's words, as typed questions (for tools and
     traces; replies themselves are one voice call since D-46).
 
@@ -215,7 +216,7 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     return "\n".join(lines), questions
 
 
-def also_decided(state: dict, npc: dict, answers: dict) -> list[str]:
+def also_decided(state: State, npc: Npc, answers: dict) -> list[str]:
     """What else this exchange settles (a deal agreed or done), so the person's words match it."""
     name, notes = npc["name"], []
     proposed, accepted = (
@@ -237,7 +238,7 @@ def also_decided(state: dict, npc: dict, answers: dict) -> list[str]:
 
 
 def voice_context(
-    state: dict, npc: dict, text: str, key: str, answers: dict | None = None, happened: str | None = None
+    state: State, npc: Npc, text: str, key: str, answers: dict | None = None, happened: str | None = None
 ) -> dict:
     """Everything the voice may use: the card, what they know, the decided reply, the conversation."""
     me, options = cast.card(npc), conversation.replies(state, npc)
@@ -279,7 +280,7 @@ def voice_context(
     }
 
 
-def open_deals(state: dict, npc: dict) -> list[str]:
+def open_deals(state: State, npc: Npc) -> list[str]:
     """This person's deals with the stranger, for the voice to judge agreed or done (D-46)."""
     lines = [
         f"Offered, not yet agreed: the stranger is to {d['task']}."
@@ -296,7 +297,7 @@ def open_deals(state: dict, npc: dict) -> list[str]:
     return lines
 
 
-def converse_context(state: dict, npc: dict, text: str, answers: dict, happened: str | None = None) -> dict:
+def converse_context(state: State, npc: Npc, text: str, answers: dict, happened: str | None = None) -> dict:
     """Everything the voice needs to say what this person would say and pick their move (D-44): the character,
     what they know (and where things are), why they're here, the conversation,
     and the moves they may make. What is already decided (a deal agreed, the gate opened) comes as must."""
@@ -333,7 +334,7 @@ def converse_context(state: dict, npc: dict, text: str, answers: dict, happened:
     return context
 
 
-def bystanders(state: dict, limit: int = 3) -> list[dict]:
+def bystanders(state: State, limit: int = 3) -> list[dict]:
     """People close enough to hear the conversation who aren't in it, nearest first (D-48). They may join."""
     here = cast.player_cell(state)
     inside = set((state.get("encounter") or {}).get("participants") or [])
@@ -354,7 +355,7 @@ SHARED = ("stranger_says", "what_just_happened", "conversation_so_far")  # Said 
 
 
 def scene_context(
-    state: dict, addressed: dict | None, participants: list[dict], nearby: list[dict], text: str, happened: str | None
+    state: State, addressed: dict | None, participants: list[dict], nearby: list[dict], text: str, happened: str | None
 ) -> dict:
     """Everything the voice needs for one group moment (D-48): what the stranger just said or did, the
     conversation so far, and for each person (addressed first, then those taking part, then those nearby)
@@ -391,7 +392,7 @@ def scene_context(
     }
 
 
-def fallback_line(state: dict, npc: dict, key: str) -> str:
+def fallback_line(state: State, npc: Npc, key: str) -> str:
     """What the person says when the voice model can't be used."""
     act, _, target = key.partition(":")
     if act == "share" and target in conversation.knowledge(npc):

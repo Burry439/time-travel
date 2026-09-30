@@ -23,6 +23,7 @@ import m2
 import reputation
 import speech
 import tuning
+from shapes import Deal, Npc, State
 
 STORY = content.TUTORIAL
 STEPS: list[dict] = STORY["steps"]
@@ -81,7 +82,7 @@ TUTORIAL_THINGS = (
 )
 
 
-def active(state: dict) -> bool:
+def active(state: State) -> bool:
     """The first morning is on, and from this version of the story (an older journey's steps no longer line up)."""
     return (
         bool(state.get("tutorial"))
@@ -90,11 +91,11 @@ def active(state: dict) -> bool:
     )
 
 
-def step(state: dict) -> dict | None:
+def step(state: State) -> dict | None:
     return STEPS[state["tutorial"]["step"]] if active(state) else None
 
 
-def setup(state: dict) -> None:
+def setup(state: State) -> None:
     """A tutorial journey: Kade's practice gear to lend, and the story at its first step."""
     kade = cast.find(state["npcs"], KADE)
     for oid, name, mass, length, materials, description, flags, record in PRACTICE_GEAR:
@@ -124,7 +125,7 @@ def setup(state: dict) -> None:
 # --- The story moving on -------------------------------------------------------------------------------------
 
 
-def read_cards(state: dict) -> bool:
+def read_cards(state: State) -> bool:
     """The step's cards have been read (the client's Next): from now its check counts."""
     if not active(state) or state["tutorial"].get("read", -1) >= state["tutorial"]["step"]:
         return False
@@ -132,7 +133,7 @@ def read_cards(state: dict) -> bool:
     return True
 
 
-def ui_done(state: dict, key: str) -> bool:
+def ui_done(state: State, key: str) -> bool:
     """A ui action the tutorial teaches happened (the pack opened, a closer look, the book read)."""
     if not active(state) or key in state["tutorial"].setdefault("ui_done", []):
         return False
@@ -140,7 +141,7 @@ def ui_done(state: dict, key: str) -> bool:
     return True
 
 
-def tick(state: dict) -> bool:
+def tick(state: State) -> bool:
     """React to anything drastic; then, once the current step's cards are read, fire its triggers and complete it
     if its outcome has happened. One step at a time (D-52): the next step waits for its own cards."""
     if not active(state):
@@ -164,7 +165,7 @@ def tick(state: dict) -> bool:
     return True
 
 
-def _complete(state: dict, current: dict, now: int) -> None:
+def _complete(state: State, current: dict, now: int) -> None:
     tutorial = state["tutorial"]
     if current.get("done"):
         device_says(state, current["done"], "story")
@@ -177,7 +178,7 @@ def _complete(state: dict, current: dict, now: int) -> None:
     _start_step(state, now)
 
 
-def skip(state: dict) -> None:
+def skip(state: State) -> None:
     """Developer: complete the current step as if its outcome had happened."""
     if not active(state):
         return
@@ -193,7 +194,7 @@ def skip(state: dict) -> None:
     _complete(state, current, now)
 
 
-def _start_step(state: dict, now: int) -> None:
+def _start_step(state: State, now: int) -> None:
     current = STEPS[state["tutorial"]["step"]]
     state["tutorial"]["started_at"] = now
     state["tutorial"]["started_seq"] = state.get("event_seq", 0)  # Anything made after this is this step's.
@@ -203,7 +204,7 @@ def _start_step(state: dict, now: int) -> None:
     _do(state, current.get("on_start", []), now)
 
 
-def _react(state: dict, now: int) -> bool:
+def _react(state: State, now: int) -> bool:
     """The device notices anything drastic, once each: a death, an arrest, the stranger dying."""
     tutorial = state["tutorial"]
     changed = False
@@ -220,7 +221,7 @@ def _react(state: dict, now: int) -> bool:
     return changed
 
 
-def device_says(state: dict, text: str, kind: str, question: str | None = None) -> None:
+def device_says(state: State, text: str, kind: str, question: str | None = None) -> None:
     entry = {"at": state.get("sim_time_ms", 0), "text": text, "kind": kind}
     if question:
         entry["question"] = question
@@ -239,33 +240,33 @@ MOMENTS = ("new_lead", "failure", "angry", "news", "stuck")
 # --- Outcomes and triggers ------------------------------------------------------------------------------------
 
 
-def carried(state: dict) -> list[dict]:
+def carried(state: State) -> list[dict]:
     """What the stranger carries in the pack or hands (not what they wear)."""
     worn = {oid for slot, oid in (state["player"].get("equipped") or {}).items() if slot in gear.COVERS}
     return [o for o in state["objects"].values() if o.get("holder_id") == "player" and o["id"] not in worn]
 
 
-def holding_weapon(state: dict) -> bool:
+def holding_weapon(state: State) -> bool:
     return any(
         (obj := gear.held(state, state["player"], hand)) and gear.of(obj)["kind"] == "weapon"
         for hand in gear.HAND_SLOTS
     )
 
 
-def holding_shield(state: dict) -> bool:
+def holding_shield(state: State) -> bool:
     return any(
         (obj := gear.held(state, state["player"], hand)) and gear.of(obj)["kind"] == "shield"
         for hand in gear.HAND_SLOTS
     )
 
 
-def keeps(state: dict, npc: dict) -> bool:
+def keeps(state: State, npc: Npc) -> bool:
     """Kade during his lessons (D-57): he stays with the stranger. No errands, no letting them in himself: the
     story's end is his word to the captain."""
     return active(state) and npc["id"] == KADE and STEPS[state["tutorial"]["step"]]["id"] in TEACHING
 
 
-def _keep_teacher(state: dict, now: int) -> bool:
+def _keep_teacher(state: State, now: int) -> bool:
     """Once Kade has come over, he stays with the stranger until he goes to the captain: whenever he's only standing
     or watching (after a talk, after the bout), his stay is renewed. Anything else he's doing is left alone."""
     kade = cast.find(state["npcs"], KADE)
@@ -278,7 +279,7 @@ def _keep_teacher(state: dict, now: int) -> bool:
     return True
 
 
-def _told_wants_in(npc: dict) -> bool:
+def _told_wants_in(npc: Npc) -> bool:
     """Whether the stranger has told this person they want to come into the city (their own words to them)."""
     return any(
         t.get("who") == "stranger" and WANTS_IN.search(str(t.get("text", "")))
@@ -286,7 +287,7 @@ def _told_wants_in(npc: dict) -> bool:
     )
 
 
-def holds(state: dict, condition: dict) -> bool:
+def holds(state: State, condition: dict) -> bool:
     kind = condition["kind"]
     here = cast.player_cell(state)
     if kind == "always":
@@ -385,7 +386,7 @@ def holds(state: dict, condition: dict) -> bool:
     raise ValueError(f"Unknown tutorial condition {kind}")
 
 
-def _do(state: dict, actions: list[dict], now: int) -> None:
+def _do(state: State, actions: list[dict], now: int) -> None:
     for action in actions:
         npc = cast.find(state["npcs"], action.get("npc", ""))
         kind = action["kind"]
@@ -455,7 +456,7 @@ def _do(state: dict, actions: list[dict], now: int) -> None:
             )
 
 
-def spar_partner(state: dict) -> str | None:
+def spar_partner(state: State) -> str | None:
     """Kade, while he is the stranger's teacher (from when he comes over until he goes to the captain): a blow at
     him then is sparring, never an assault (D-53, D-57). A first blow with fists or before his cards is still a
     bout; a late swing after it is another."""
@@ -464,7 +465,7 @@ def spar_partner(state: dict) -> str | None:
     return KADE if STEPS[state["tutorial"]["step"]]["id"] in TEACHING else None
 
 
-def spar_now(state: dict, npc: dict, now: int) -> bool:
+def spar_now(state: State, npc: Npc, now: int) -> bool:
     """The stranger struck at Kade during his lessons: it becomes the bout (pulled blows, no crime). Returns whether
     it did."""
     if npc["id"] != spar_partner(state) or state.get("fight"):
@@ -495,7 +496,7 @@ CONTROLS = (
 )
 
 
-def moment_detail(state: dict, moment: str) -> str | None:
+def moment_detail(state: State, moment: str) -> str | None:
     """What just happened that's worth a word from the device, in words, from the world itself (never from the
     client's text). None when there's nothing to say about it."""
     if moment == "new_lead":
@@ -530,7 +531,7 @@ def moment_detail(state: dict, moment: str) -> str | None:
     return None
 
 
-def moment_allowed(state: dict) -> bool:
+def moment_allowed(state: State) -> bool:
     """Not too often, and never over a fight or someone face to face."""
     if state.get("fight") or (state.get("encounter") or {}).get("participants"):
         return False
@@ -538,14 +539,14 @@ def moment_allowed(state: dict) -> bool:
     return not remarks or state.get("sim_time_ms", 0) - remarks[-1].get("at", 0) >= tuning.MOMENT_GAP_MS
 
 
-def _place_name(state: dict) -> str:
+def _place_name(state: State) -> str:
     here = cast.player_cell(state)
     places = list(briefing.PLACES.values()) if isinstance(briefing.PLACES, dict) else []
     nearest = min(places, key=lambda place: math.dist(here, tuple(place["cell"])), default=None)
     return nearest["name"] if nearest else "the road"
 
 
-def _their_part(state: dict, deal: dict) -> str:
+def _their_part(state: State, deal: Deal) -> str:
     """What the other side of a deal promised, and whether they've done it yet, so the device never runs ahead."""
     issuer = deal.get("issuer") or ""
     promise = (
@@ -570,7 +571,7 @@ def _their_part(state: dict, deal: dict) -> str:
     )
 
 
-def _coach(state: dict) -> dict:
+def _coach(state: State) -> dict:
     """The main game: what a coach needs, all of it things the stranger knows (D-55)."""
     leads, seen_leads = [], set()
     for entry in reversed(state.get("learned", [])):
@@ -622,7 +623,7 @@ def _coach(state: dict) -> dict:
     }
 
 
-def device_context(state: dict, question: str, moment: str | None = None) -> dict:
+def device_context(state: State, question: str, moment: str | None = None) -> dict:
     """What the device can know: what the stranger carries, wears and has seen, what they tried, the story step
     (with its written hints as guidance), and the controls. Never anyone's secrets or anything unseen. It also
     remembers what the two of them have said (D-55), and in the main game it has what a coach needs."""
@@ -692,7 +693,7 @@ def device_context(state: dict, question: str, moment: str | None = None) -> dic
     }
 
 
-def fallback_answer(state: dict) -> str:
+def fallback_answer(state: State) -> str:
     """When the model can't be asked: the current step's first hint, or the controls."""
     current = step(state)
     if current and current.get("help"):

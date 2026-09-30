@@ -32,6 +32,7 @@ import perception
 import reputation
 import speech
 import tuning
+from shapes import Npc, State
 
 SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LOG_KEPT = 30
@@ -49,7 +50,7 @@ REASON_WORDS = {
 # --- Opening, joining and ending ------------------------------------------------------------------
 
 
-def active(state: dict) -> dict | None:
+def active(state: State) -> dict | None:
     return state.get("encounter") or None
 
 
@@ -65,13 +66,13 @@ def _reason(encounter: dict) -> str:
     )
 
 
-def hostile(state: dict) -> bool:
+def hostile(state: State) -> bool:
     """An encounter the stranger can't simply walk off from: someone is here about a crime or a halt."""
     encounter = active(state)
     return bool(encounter) and _reason(encounter) != "talk"
 
 
-def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dict:
+def join(state: State, npc: Npc, reason: str, line: str | None, now: int) -> dict:
     """Open an encounter with this person, or bring them into the current one. An attack is a fight, not an
     encounter. While a fight is on the stranger can still speak to anyone (D-51), but nobody walks up to start a
     conversation of their own. A guard coming to halt a stranger who is already in a conversation joins it
@@ -128,7 +129,7 @@ def _log(encounter: dict, who: str, kind: str, text: str, seen: str | None = Non
     return entry
 
 
-def prune(state: dict) -> None:
+def prune(state: State) -> None:
     """Drop people who are dead or have wandered off from a conversation; end it when nobody is left."""
     encounter = active(state)
     if encounter is None:
@@ -152,7 +153,7 @@ def prune(state: dict) -> None:
         end(state, state.get("sim_time_ms", 0))
 
 
-def end(state: dict, now: int, walked_away: bool = False) -> None:
+def end(state: State, now: int, walked_away: bool = False) -> None:
     """Everyone goes back to their day."""
     encounter = active(state)
     if encounter is None:
@@ -166,7 +167,7 @@ def end(state: dict, now: int, walked_away: bool = False) -> None:
     state["encounter"] = None
 
 
-def open_for_talk(state: dict, npc: dict, now: int) -> dict:
+def open_for_talk(state: State, npc: Npc, now: int) -> dict:
     """The stranger speaks to (or shows something to) someone: a conversation, which is an encounter too."""
     return join(state, npc, "talk", None, now)
 
@@ -175,7 +176,7 @@ def open_for_talk(state: dict, npc: dict, now: int) -> dict:
 
 
 def resolve(
-    state: dict, run_id: str, action: dict, judged: dict | None, service_error: str | None, trace_id: str
+    state: State, run_id: str, action: dict, judged: dict | None, service_error: str | None, trace_id: str
 ) -> tuple[dict, dict]:
     """The stranger's part of a round, on a copy of the world. Returns (draft world, round record: log entries,
     who was addressed, effort, what happened in words). The scene's replies and time passing come after."""
@@ -265,12 +266,12 @@ def resolve(
     return draft, record
 
 
-def grievance(npc: dict) -> dict | None:
+def grievance(npc: Npc) -> dict | None:
     """What the stranger did that this person holds against them (a crime they believe), if anything."""
     return reputation.unresolved_crime(npc)
 
 
-def _walked_off(draft: dict, encounter: dict, now: int, journal: list[dict], note) -> None:
+def _walked_off(draft: State, encounter: dict, now: int, journal: list[dict], note) -> None:
     """Walking away is answered by why they came (D-44). A guard who came about a crime doesn't let the stranger
     stroll off: they give chase, to put them on the ground and arrest them (to kill only after real violence).
     Someone wronged shouts for the guards. A plain halt or a chat just ends."""
@@ -296,7 +297,7 @@ def _walked_off(draft: dict, encounter: dict, now: int, journal: list[dict], not
             note(who, "shout_for_help", f"{npc['name']}: “{words}”", f"{npc['name']} called for the guards.")
 
 
-def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None) -> None:
+def finish(draft: State, record: dict, now: int, reply: dict | list | None = None) -> None:
     """After the scene's lines (if any): keep or end the encounter."""
     encounter = active(draft)
     lines = [reply] if isinstance(reply, dict) else reply or []
@@ -342,7 +343,7 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
             cast.set_job(npc, {"kind": "encounter"}, now)
 
 
-def arrest_player(state: dict, guard: dict, now: int) -> str:
+def arrest_player(state: State, guard: Npc, now: int) -> str:
     """Seized: other people's things go back to them, the stranger is marched down the south road and kept
     from the gate for a while, and the captain hears of it. Returns what happened, in words."""
     returned = []
@@ -380,7 +381,7 @@ def arrest_player(state: dict, guard: dict, now: int) -> str:
     return words
 
 
-def arrest(draft: dict, record: dict, now: int) -> None:
+def arrest(draft: State, record: dict, now: int) -> None:
     """Seized in a round: the arrest, logged in the encounter, and play goes on."""
     words = arrest_player(draft, cast.find(draft["npcs"], record["seized_by"]), now)
     record["entries"].append(_log(active(draft), "player", "arrested", words))
@@ -399,7 +400,7 @@ def round_ms(record: dict) -> int:
     return max(tuning.ROUND_MS, record["effort_seconds"] * 1000)
 
 
-def surrender(state: dict, now: int) -> dict:
+def surrender(state: State, now: int) -> dict:
     """The stranger gives up: a guard among the attackers arrests them; otherwise they're left be, for now."""
     fight = combat.active(state)
     if fight and fight.get("spar"):

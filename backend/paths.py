@@ -9,6 +9,7 @@ from collections.abc import Iterable
 
 import content
 import tuning
+from shapes import State
 
 WIDTH, TOP, BOTTOM = 96, 9, 72  # The ground outside the wall: x from 0 to 95, y from 9 (the wall's foot) to 71.
 
@@ -32,14 +33,14 @@ def obstacle_cells(cleared: set[str] | frozenset[str] = frozenset()) -> set[tupl
     return _cells(item for item in standing if item["name"] not in cleared)
 
 
-def cleared_obstacles(state: dict) -> set[str]:
+def cleared_obstacles(state: State) -> set[str]:
     """Geometry obstacles removed by play, such as felled trees."""
     return {
         o["geometry_name"] for o in state["objects"].values() if o.get("geometry_name") and o["condition"] != "usable"
     }
 
 
-def blocked_cells(state: dict) -> set[tuple[int, int]]:
+def blocked_cells(state: State) -> set[tuple[int, int]]:
     return obstacle_cells(cleared_obstacles(state))
 
 
@@ -116,7 +117,7 @@ def path_to_reach(
     return path[::-1]
 
 
-def plan_walk(state: dict, targets: list[tuple[int, int]]) -> list[list[int]] | None:
+def plan_walk(state: State, targets: list[tuple[int, int]]) -> list[list[int]] | None:
     """The stranger's walk to reach each target, nearest first; None if one cannot be reached."""
     if not targets:
         return []
@@ -139,7 +140,7 @@ def plan_walk(state: dict, targets: list[tuple[int, int]]) -> list[list[int]] | 
     return path
 
 
-def open_cells_near(state: dict, x: int, y: int, cleared: set[str], count: int) -> list[tuple[int, int]]:
+def open_cells_near(state: State, x: int, y: int, cleared: set[str], count: int) -> list[tuple[int, int]]:
     """Nearest open cells around (x, y), preferring ones without loose objects, for dropping pieces."""
     blocked = obstacle_cells(cleared)
     occupied = {(o["x"], o["y"]) for o in state["objects"].values() if o["holder_id"] is None}

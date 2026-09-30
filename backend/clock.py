@@ -19,9 +19,10 @@ import reputation
 import speech
 import tuning
 import village
+from shapes import Job, Npc, State
 
 
-def _target_cell(state: dict, npcs: list[dict], job: dict) -> tuple[int, int] | None:
+def _target_cell(state: State, npcs: list[Npc], job: Job) -> tuple[int, int] | None:
     if "goal" in job:
         return tuple(job["goal"])
     if job.get("target") == "player":
@@ -30,7 +31,7 @@ def _target_cell(state: dict, npcs: list[dict], job: dict) -> tuple[int, int] | 
     return cast.cell(target) if target and target.get("alive", True) else None
 
 
-def _deliver_report(state: dict, npc: dict, target: dict, now: int, journal: list[dict], job: dict) -> None:
+def _deliver_report(state: State, npc: Npc, target: dict, now: int, journal: list[dict], job: Job) -> None:
     worst = reputation.worst_memory(npc)
     if worst is None:
         return
@@ -59,7 +60,7 @@ def _deliver_report(state: dict, npc: dict, target: dict, now: int, journal: lis
     cast.add_pending(state, target["id"], "decide", f"told by {npc['name']}")
 
 
-def _deliver_vouch(state: dict, npc: dict, captain: dict, now: int, journal: list[dict], job: dict) -> None:
+def _deliver_vouch(state: State, npc: Npc, captain: Npc, now: int, journal: list[dict], job: Job) -> None:
     """Someone speaks for the stranger to the captain: evidence he weighs when the stranger asks to enter."""
     choices = speech.choose_lines(state, npc, "vouch", {"why": job["why"]})
     line_id, text = choices[0] if choices else (None, f"Captain, I'll speak for the stranger: {job['why']}")
@@ -82,7 +83,7 @@ def _deliver_vouch(state: dict, npc: dict, captain: dict, now: int, journal: lis
     )
 
 
-def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: list[dict], job: dict) -> None:
+def _deliver_message(state: State, npc: Npc, target: dict, now: int, journal: list[dict], job: Job) -> None:
     """An errand promised in conversation (D-51): they found the person and told them. The listener remembers it,
     and may do something about it."""
     message = job["message"]
@@ -121,7 +122,7 @@ def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: li
 DELIVERIES = {"report": _deliver_report, "vouch": _deliver_vouch, "tell": _deliver_message}
 
 
-def dealt_with_recently(npcs: list[dict], now: int) -> bool:
+def dealt_with_recently(npcs: list[Npc], now: int) -> bool:
     """A guard has just been speaking with the stranger or been shown something by them (D-48)."""
     for guard in npcs:
         if not cast.card(guard).get("guard") or not guard.get("mind"):
@@ -140,7 +141,7 @@ def dealt_with_recently(npcs: list[dict], now: int) -> bool:
     return False
 
 
-def _gate_watch(state: dict, npcs: list[dict], now: int) -> None:
+def _gate_watch(state: State, npcs: list[Npc], now: int) -> None:
     """No model involved: the nearest free guard walks up to a stranger at the gate who hasn't been admitted,
     unless the stranger is already being dealt with (a conversation, or a guard they've just talked to)."""
     x, y = cast.player_cell(state)
@@ -174,7 +175,7 @@ def _gate_watch(state: dict, npcs: list[dict], now: int) -> None:
         cast.set_job(guard, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "halt"}, now)
 
 
-def _maybe_reconsider(state: dict, npc: dict, why: str) -> None:
+def _maybe_reconsider(state: State, npc: Npc, why: str) -> None:
     """Someone shaken by a serious event nobody official has heard about thinks again (a few times at most)."""
     my_mind = cast.mind(npc)
     worst = reputation.worst_memory(npc)
@@ -186,7 +187,7 @@ def _maybe_reconsider(state: dict, npc: dict, why: str) -> None:
     cast.add_pending(state, npc["id"], "decide", why)
 
 
-def _ambient(state: dict, npc: dict, now: int, blocked: set) -> None:
+def _ambient(state: State, npc: Npc, now: int, blocked: set) -> None:
     """No model involved: wary people face the stranger; frightened people keep their distance."""
     my_mind = npc.get("mind")
     if not my_mind or my_mind.get("job") or not state["player"].get("alive", True):
@@ -210,7 +211,7 @@ def _ambient(state: dict, npc: dict, now: int, blocked: set) -> None:
         )
 
 
-def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], list[dict], dict]:
+def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], list[dict], dict]:
     """People follow routines or their current job for elapsed_ms; blows are rolled; ambient rules apply.
 
     Returns (npcs, journal lines, player). May queue thinking in state["pending_minds"].
@@ -256,7 +257,7 @@ def advance_world(state: dict, elapsed_ms: int, now: int) -> tuple[list[dict], l
 
 
 def _on_the_job(
-    state: dict, npcs: list[dict], npc: dict, elapsed_ms: int, end: int, blocked: set, journal: list[dict]
+    state: State, npcs: list[Npc], npc: Npc, elapsed_ms: int, end: int, blocked: set, journal: list[dict]
 ) -> None:
     """One person's job for this stretch of time: keep watching, give up, or walk on toward where it takes them
     and do it when they get there. Without a job, the calm rules apply."""
@@ -282,7 +283,7 @@ def _on_the_job(
         _arrived(state, npcs, npc, job, end, journal)
 
 
-def _walk(npc: dict, goal: tuple[int, int], stop: float, elapsed_ms: int, job: dict, blocked: set) -> bool:
+def _walk(npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Job, blocked: set) -> bool:
     """Step toward the goal at their pace (running or walking) for this long; whether they're there now."""
     controller = npc.get("controller") or {}
     carry = controller.get("step_carry_ms", 0) + elapsed_ms
@@ -297,7 +298,7 @@ def _walk(npc: dict, goal: tuple[int, int], stop: float, elapsed_ms: int, job: d
     return cast.distance(npc, goal) <= stop
 
 
-def _arrived(state: dict, npcs: list[dict], npc: dict, job: dict, end: int, journal: list[dict]) -> None:
+def _arrived(state: State, npcs: list[Npc], npc: Npc, job: Job, end: int, journal: list[dict]) -> None:
     """They got where their job took them: safe (and watching), the person they had word for, or the stranger."""
     kind, then = job["kind"], job.get("then")
     if kind == "flee":
@@ -326,7 +327,7 @@ def _arrived(state: dict, npcs: list[dict], npc: dict, job: dict, end: int, jour
         encounter.join(state, npc, "attack", None, end)  # An older chase arriving: it's a fight now.
 
 
-def _halt(state: dict, npcs: list[dict], npc: dict, end: int, journal: list[dict]) -> None:
+def _halt(state: State, npcs: list[Npc], npc: Npc, end: int, journal: list[dict]) -> None:
     """A guard who came to stop the stranger at the gate: joins a conversation that's already on, stands by if a
     guard has just dealt with them, or halts them."""
     if state.get("encounter"):
@@ -342,7 +343,7 @@ def _halt(state: dict, npcs: list[dict], npc: dict, end: int, journal: list[dict
         encounter.join(state, npc, "halt", text, end)
 
 
-def _tend(state: dict, helper: dict, patient: dict | None, now: int, journal: list[dict]) -> None:
+def _tend(state: State, helper: Npc, patient: Npc | None, now: int, journal: list[dict]) -> None:
     """Someone who came to help binds what they can (D-49): with a remedy they carry, or a strip torn from their
     own clothes (which slows heavy bleeding but won't close it)."""
     if patient is None or not patient.get("alive", True):
@@ -381,7 +382,7 @@ def _tend(state: dict, helper: dict, patient: dict | None, now: int, journal: li
         )
 
 
-def _bodies(state: dict, npcs: list[dict], elapsed_ms: int, now: int, journal: list[dict]) -> None:
+def _bodies(state: State, npcs: list[Npc], elapsed_ms: int, now: int, journal: list[dict]) -> None:
     """Bodies on the clock (gear.advance): wounds bleed and fester, the knocked-out wake, the unhurt mend."""
     end = now + elapsed_ms
     player = state["player"]
@@ -421,7 +422,7 @@ def _bodies(state: dict, npcs: list[dict], elapsed_ms: int, now: int, journal: l
             cast.mind(npc)["fresh"] = "came round after being knocked senseless"
 
 
-def advance_people(state: dict, elapsed_ms: int) -> dict:
+def advance_people(state: State, elapsed_ms: int) -> dict:
     """Payload fields for time passing: routines, the jobs people chose, encounters starting."""
     probe = dict(state)
     probe["pending_minds"] = list(state.get("pending_minds", []))
@@ -447,7 +448,7 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     return payload
 
 
-def _subdued(state: dict, payload: dict, by: str, now: int) -> None:
+def _subdued(state: State, payload: dict, by: str, now: int) -> None:
     """A guard arrests the stranger they put on the ground (stolen things go back, marched off, barred for a while);
     anyone else just stops. Everything lands in the payload, so replay needs no rules."""
     subduer = cast.find(payload["npcs"], by)

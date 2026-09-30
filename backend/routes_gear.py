@@ -20,6 +20,7 @@ import library
 import perception
 import routes_tutorial
 import store
+from shapes import State, Thing
 
 router = APIRouter()
 
@@ -60,7 +61,7 @@ class Treat(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
-def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
+def aim(state: State, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
     """Whoever the stranger aims at (the client picks who they face); else whoever is in front within reach; else
     nobody: the blow goes where they face (D-51: swinging is never refused for want of a target)."""
     npc = cast.find(state["npcs"], wanted or "")
@@ -150,7 +151,7 @@ def equip(run_id: str, request: Equip, background: BackgroundTasks):
     return {"state": state, "duplicate": False, "equip": result}
 
 
-def _picture_needed(obj: dict, slot: str | None) -> str | None:
+def _picture_needed(obj: Thing, slot: str | None) -> str | None:
     """held or worn, if this thing is going somewhere it has never been drawn (and isn't drawn by the painting)."""
     if slot is None or obj.get("no_overlay"):
         return None

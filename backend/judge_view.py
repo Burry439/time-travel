@@ -10,20 +10,21 @@ import cast
 import gear
 import paths
 import tuning
+from shapes import Npc, State, Thing
 
 PRIOR_RULINGS = 10
 
 
-def _names(state: dict) -> dict[str, str]:
+def _names(state: State) -> dict[str, str]:
     return {npc["id"]: npc["name"] for npc in state["npcs"]}
 
 
-def owner_label(state: dict, obj: dict) -> str:
+def owner_label(state: State, obj: Thing) -> str:
     owner = obj["owner_id"]
     return "nobody" if owner is None else "you" if owner == "player" else _names(state).get(owner, owner)
 
 
-def walk_costs(state: dict) -> dict[str, int]:
+def walk_costs(state: State) -> dict[str, int]:
     """Steps the player must walk to be within reach of each loose object and person nearby."""
     start = (state["player"]["x"], state["player"]["y"])
     _, steps = paths.bfs(start, paths.blocked_cells(state), tuning.NEARBY_WALK_STEPS)
@@ -55,12 +56,12 @@ def walk_costs(state: dict) -> dict[str, int]:
     return costs
 
 
-def fallen_holders(state: dict) -> dict[str, dict]:
+def fallen_holders(state: State) -> dict[str, dict]:
     """People down or dead: what they hold or wear can be taken from them (D-49)."""
     return {n["id"]: n for n in state["npcs"] if n.get("down") or not n.get("alive", True)}
 
 
-def available_items(state: dict, costs: dict | None = None) -> list[dict]:
+def available_items(state: State, costs: dict | None = None) -> list[dict]:
     """Carried items plus anything intact the player can walk to nearby, whoever owns it (including what someone
     down or dead has on them)."""
     costs = walk_costs(state) if costs is None else costs
@@ -75,13 +76,13 @@ def available_items(state: dict, costs: dict | None = None) -> list[dict]:
     ]
 
 
-def _on_body(obj: dict, fallen: dict[str, dict]) -> dict:
+def _on_body(obj: Thing, fallen: dict[str, dict]) -> dict:
     """Something on a fallen person is where they lie."""
     npc = fallen.get(obj["holder_id"])
     return {**obj, "x": npc["x"], "y": npc["y"], "on_person": npc["id"]} if npc else obj
 
 
-def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
+def people_nearby(state: State, costs: dict | None = None) -> list[dict]:
     costs = walk_costs(state) if costs is None else costs
     people = []
     for npc in state["npcs"]:
@@ -118,7 +119,7 @@ def people_nearby(state: dict, costs: dict | None = None) -> list[dict]:
     return people
 
 
-def _worn_words(state: dict, npc: dict) -> str:
+def _worn_words(state: State, npc: Npc) -> str:
     """What someone has on, in words, for the judge."""
     names = []
     for slot in gear.BODY_SLOTS:
@@ -128,12 +129,12 @@ def _worn_words(state: dict, npc: dict) -> str:
     return ", ".join(names) or "no armour"
 
 
-def _held_words(state: dict, npc: dict) -> str:
+def _held_words(state: State, npc: Npc) -> str:
     held = [o["name"] for h in gear.HAND_SLOTS if (o := gear.held(state, npc, h))]
     return ", ".join(dict.fromkeys(held)) or "none"
 
 
-def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
+def _judge_view(state: State, obj: Thing, costs: dict) -> dict:
     return {
         "id": obj["id"],
         "name": obj["name"],
@@ -157,7 +158,7 @@ def _judge_view(state: dict, obj: dict, costs: dict) -> dict:
     }
 
 
-def water_sources(state: dict, costs: dict) -> list[dict]:
+def water_sources(state: State, costs: dict) -> list[dict]:
     return [
         {
             "id": o["id"],
@@ -171,7 +172,7 @@ def water_sources(state: dict, costs: dict) -> list[dict]:
     ]
 
 
-def prior_rulings(state: dict) -> list[dict]:
+def prior_rulings(state: State) -> list[dict]:
     rulings = [
         {
             "intention": e["text"],
@@ -187,7 +188,7 @@ def prior_rulings(state: dict) -> list[dict]:
     return rulings[-PRIOR_RULINGS:]
 
 
-def build_context(state: dict, text: str, selected_ids: list[str]) -> dict:
+def build_context(state: State, text: str, selected_ids: list[str]) -> dict:
     costs = walk_costs(state)
     items = available_items(state, costs)
     people = people_nearby(state, costs)

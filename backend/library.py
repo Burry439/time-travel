@@ -14,6 +14,8 @@ import shutil
 import sqlite3
 from pathlib import Path
 
+from shapes import Thing
+
 VIEWS = ("world", "held", "worn")
 
 
@@ -24,7 +26,7 @@ def library_dir() -> Path:
     return attempts.ASSET_DIR / "library"
 
 
-def signature(obj: dict, precedent_key: str | None = None) -> str:
+def signature(obj: Thing, precedent_key: str | None = None) -> str:
     """Everything that makes two made things the same thing. A near-match is a different thing."""
     record = obj.get("gear") or {}
     key = {

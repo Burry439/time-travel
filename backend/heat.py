@@ -4,6 +4,7 @@ stone, a burning brand). What kindles a fire is here too."""
 from __future__ import annotations
 
 import tuning
+from shapes import State, Thing
 
 
 def can_kindle(things: list[dict]) -> bool:
@@ -22,7 +23,7 @@ def can_kindle(things: list[dict]) -> bool:
 HEAT_ORDER = ["cold", "warm", "hot", "boiling"]
 
 
-def display_name(obj: dict) -> str:
+def display_name(obj: Thing) -> str:
     """The name follows the state: "clay bowl", "clay bowl of water", "clay bowl of boiling water"."""
     base = obj.get("base_name") or obj["name"]
     heat = obj.get("temperature", "cold")
@@ -35,12 +36,12 @@ def display_name(obj: dict) -> str:
     return base
 
 
-def rename(obj: dict) -> None:
+def rename(obj: Thing) -> None:
     obj.setdefault("base_name", obj["name"])
     obj["name"] = display_name(obj)
 
 
-def age_objects(state: dict, elapsed_ms: int, now: int) -> dict[str, dict]:
+def age_objects(state: State, elapsed_ms: int, now: int) -> dict[str, dict]:
     """Time passing for things (by code, no model): hot things cool back, fires burn down.
     Returns {object_id: changed fields} for the event payload."""
     changes: dict[str, dict] = {}

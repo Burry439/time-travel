@@ -17,6 +17,7 @@ import commands
 import tutorial
 from ai import config as ai_config
 from ai import telemetry, voice
+from shapes import State
 
 router = APIRouter()
 
@@ -61,7 +62,7 @@ def progress(cmd: commands.Command) -> bool:
     return tutorial.active(cmd.state) and _moved_on(cmd, tutorial.tick)
 
 
-def after_action(state: dict) -> None:
+def after_action(state: State) -> None:
     """Right after the stranger does something (not only on the next clock beat, which a panel may pause)."""
     if tutorial.active(state):
         with commands.open(state["run_id"], playable=False) as cmd:

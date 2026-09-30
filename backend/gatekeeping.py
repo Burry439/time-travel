@@ -6,21 +6,22 @@ from __future__ import annotations
 
 import cast
 import reputation
+from shapes import Npc, State
 
 CAPTAIN = "npc_roderic_vale"
 
 
-def barred(state: dict) -> bool:
+def barred(state: State) -> bool:
     return (state.get("barred_until") or 0) > state.get("sim_time_ms", 0)
 
 
-def admission_rule(npc: dict) -> str:
+def admission_rule(npc: Npc) -> str:
     """How this person decides who may pass the gate, in their own terms (the captain's is 'decides')."""
     me = cast.card(npc)
     return me.get("decides") or me.get("admits") or ""
 
 
-def can_admit(state: dict, npc: dict) -> bool:
+def can_admit(state: State, npc: Npc) -> bool:
     """Any guard with their own reasons (D-43), standing, for a living stranger who isn't barred, never after
     violence or an assault on the gate they know of."""
     return (
@@ -34,7 +35,7 @@ def can_admit(state: dict, npc: dict) -> bool:
     )
 
 
-def grounds_to_admit(npc: dict) -> bool:
+def grounds_to_admit(npc: Npc) -> bool:
     """Something real behind letting the stranger in, never their word alone (D-55): evidence this guard holds
     (a resident's word given in person, something shown to work, a gift, help they saw). A guard going on their
     own motive may also go on trust earned over time; the captain's rule asks for the evidence."""
@@ -43,7 +44,7 @@ def grounds_to_admit(npc: dict) -> bool:
     return npc["id"] != CAPTAIN and reputation.standing(npc) in ("friendly", "would_speak")
 
 
-def speak_for(state: dict, npc: dict, why: str, summary: str, event_id: int, now: int) -> None:
+def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int) -> None:
     """The person walks to the captain and speaks for the stranger (minds.advance_world delivers it)."""
     cast.set_job(
         npc,

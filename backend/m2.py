@@ -7,13 +7,14 @@ from __future__ import annotations
 import content
 import gear
 import tuning
+from shapes import State
 
 GATE_FIXTURE = "gate_brackets"  # Whatever rests in these holds the gate shut (D-42).
 GATEWAY = (48, 8)  # The middle of the gate opening.
 WORLD_CONTENT = content.WORLD_OBJECTS
 
 
-def gate_barred(state: dict) -> bool:
+def gate_barred(state: State) -> bool:
     """The gate is shut while anything rests in its brackets."""
     return any(o.get("installed_in") == GATE_FIXTURE for o in state["objects"].values())
 
@@ -150,7 +151,7 @@ def seed_m2() -> dict:
     }
 
 
-def inventory_mass(state: dict) -> float:
+def inventory_mass(state: State) -> float:
     """What the stranger carries, not counting what they wear (D-49: worn armour is on the body, not in the pack)."""
     kit = state["player"].get("equipped") or {}
     worn = {oid for slot, oid in kit.items() if slot in ("head", "body", "arms", "legs", "hands", "feet")}

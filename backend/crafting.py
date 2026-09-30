@@ -17,6 +17,7 @@ import judge_view
 import m2
 import paths
 import tuning
+from shapes import Npc, State
 
 MAX_PIECES = 8
 # Flags describing an active state need an input that can cause it. Without one the
@@ -109,7 +110,7 @@ def _positive(value) -> float | None:
     return round(float(value), 3) if value is not None and float(value) > 0 else None
 
 
-def _property(state: dict, ids: list[str], how: str) -> list[dict]:
+def _property(state: State, ids: list[str], how: str) -> list[dict]:
     return [
         {"id": i, "name": state["objects"][i]["name"], "owner_id": state["objects"][i]["owner_id"], "how": how}
         for i in ids
@@ -122,7 +123,7 @@ def _property(state: dict, ids: list[str], how: str) -> list[dict]:
 PAYLOAD = {"demonstrate": "demonstration", "give": "give", "offer_trade": "offer_trade"}
 
 
-def validate(state: dict, judged: dict | None, service_error: str | None = None) -> dict:
+def validate(state: State, judged: dict | None, service_error: str | None = None) -> dict:
     """Turn a judge proposal into what code will actually commit, against the current state."""
     notes: list[str] = []
     if judged is None:
@@ -208,7 +209,7 @@ def validate(state: dict, judged: dict | None, service_error: str | None = None)
     return verdict
 
 
-def _walk_targets(state: dict, action: str, judged: dict, available: dict) -> list[tuple[int, int]]:
+def _walk_targets(state: State, action: str, judged: dict, available: dict) -> list[tuple[int, int]]:
     """Cells the player must be within reach of for this step, in no particular order."""
     ids: list[str] = []
     plan = judged.get("new_object") or {}
@@ -435,7 +436,7 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
-def quick(state: dict, verb: str, object_id: str) -> dict:
+def quick(state: State, verb: str, object_id: str) -> dict:
     """A judge-shaped proposal for the deterministic quick actions (E to pick up, Put down): no model involved."""
     obj = state["objects"].get(object_id)
     if obj is None:
@@ -583,7 +584,7 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
-def _patient(state: dict, patient_id: str) -> dict | None:
+def _patient(state: State, patient_id: str) -> dict | None:
     if patient_id in ("player", "stranger", None):
         return state["player"]
     return next((n for n in state["npcs"] if n["id"] == patient_id), None)
@@ -841,7 +842,7 @@ FAMILY_OF_METHOD = {"melee": "blow", "thrown": "missile", "poured": "pour"}
 
 
 def _blow(
-    state: dict, npc: dict, plan: dict, method: str, weapon: dict | None, result: str, notes: list[str], effort: int = 0
+    state: State, npc: Npc, plan: dict, method: str, weapon: dict | None, result: str, notes: list[str], effort: int = 0
 ) -> dict:
     """What a described attack does (D-49): the judge rules whether it lands, where, and (for a choke or anything
     else) how; code works out what that does to this person with gear.hit."""

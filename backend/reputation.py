@@ -7,6 +7,7 @@ from __future__ import annotations
 import cast
 import content
 import tuning
+from shapes import Memory, Npc, State
 
 CUES: dict[str, list[str]] = content.LINES["cues"]
 
@@ -23,19 +24,19 @@ EVIDENCE_KINDS = ("demonstration", "vouch", "help", "gift")  # Good things seen 
 CRIME_KINDS = ("violence", "theft", "breach")  # breach: unbarring the city gate (D-42).
 
 
-def knows(npc: dict, event) -> bool:
+def knows(npc: Npc, event) -> bool:
     """Already has a memory of this event (so news about it is not new)."""
     return event is not None and any(m.get("event") == event for m in cast.mind(npc)["memories"])
 
 
-def worst_memory(npc: dict) -> dict | None:
+def worst_memory(npc: Npc) -> dict | None:
     """The most serious memory still standing; of equals, the newest (the bowl just taken, not the cup last week).
     Settled matters (made right, forgiven, paid for with an arrest) no longer count (D-46)."""
     memories = [m for m in cast.mind(npc)["memories"] if not m.get("settled")]
     return max(enumerate(memories), key=lambda pair: (pair[1]["severity"], pair[0]))[1] if memories else None
 
 
-def unresolved_crime(npc: dict, kinds: tuple = ("violence", "theft", "breach")) -> dict | None:
+def unresolved_crime(npc: Npc, kinds: tuple = ("violence", "theft", "breach")) -> dict | None:
     """The worst crime by the stranger this person knows of, believes, and that hasn't been put right."""
     crimes = [
         m
@@ -45,7 +46,7 @@ def unresolved_crime(npc: dict, kinds: tuple = ("violence", "theft", "breach")) 
     return max(crimes, key=lambda m: m["severity"], default=None)
 
 
-def knows_a_crime(npc: dict) -> bool:
+def knows_a_crime(npc: Npc) -> bool:
     """A known act of real violence, or an assault on the gate: what rules out entry for good, and what makes
     someone fight to kill rather than to subdue (D-44). Theft and arrests only weigh on their judgement."""
     return unresolved_crime(npc, ("violence", "breach")) is not None
@@ -61,7 +62,7 @@ STANDING_WORDS = {
 }
 
 
-def standing(npc: dict) -> str:
+def standing(npc: Npc) -> str:
     """How this person stands toward the stranger, in one word for the player (D-55; never numbers): from their
     regard, their anger, and any crime they hold against them. The same rule everywhere (journal, toasts, device)."""
     my_mind = npc.get("mind") or {}
@@ -86,7 +87,7 @@ def standing(npc: dict) -> str:
     return "neutral"
 
 
-def update_standing(npc: dict) -> bool:
+def update_standing(npc: Npc) -> bool:
     """Keep mind.standing current; returns whether it changed (the client shows a toast when it does)."""
     if not npc.get("alive", True):
         return False
@@ -98,7 +99,7 @@ def update_standing(npc: dict) -> bool:
 
 
 def settle(
-    state: dict, why: str, item: str | None = None, kinds: tuple = ("theft",), npc_ids: set | None = None
+    state: State, why: str, item: str | None = None, kinds: tuple = ("theft",), npc_ids: set | None = None
 ) -> list[str]:
     """A matter is put right (the thing given back, forgiven, paid for with an arrest): everyone who held it
     against the stranger lets it go (D-46). Regard already moved stays moved; the grudge ends."""
@@ -114,7 +115,7 @@ def settle(
     return sorted(set(touched))
 
 
-def after_deed(state: dict, entry: dict) -> None:
+def after_deed(state: State, entry: dict) -> None:
     """What a committed deed puts right: giving someone back their own things settles that theft."""
     give = entry.get("give") if entry.get("category") in ("success", "partial_success") else None
     if not isinstance(give, dict):
@@ -125,7 +126,7 @@ def after_deed(state: dict, entry: dict) -> None:
             settle(state, "given back", item=thing["name"])
 
 
-def regard(npc: dict) -> dict:
+def regard(npc: Npc) -> dict:
     """How this person sees the stranger (GDD 7.2): starts from their card, changes only through events."""
     start = cast.card(npc).get("regard", {"trust": 0.2, "suspicion": 0.5})
     view = cast.mind(npc).setdefault(
@@ -136,12 +137,12 @@ def regard(npc: dict) -> dict:
     return view
 
 
-def is_evidence(memory: dict) -> bool:
+def is_evidence(memory: Memory) -> bool:
     """Seen clearly (or told by someone), and it worked: something real in the stranger's favour."""
     return memory["kind"] in EVIDENCE_KINDS and memory.get("clarity") != "vague" and memory.get("works", True)
 
 
-def regard_cue(npc: dict, before: dict, after: dict) -> None:
+def regard_cue(npc: Npc, before: dict, after: dict) -> None:
     """A small sign the player can read when someone's view of them crosses a band. Never numbers."""
 
     def band(value: float, bands: tuple) -> int:
@@ -171,7 +172,7 @@ def regard_cue(npc: dict, before: dict, after: dict) -> None:
     )
 
 
-def _shift_regard(npc: dict, memory: dict) -> None:
+def _shift_regard(npc: Npc, memory: Memory) -> None:
     """Evidence raises trust and eases suspicion; a crime does the opposite. Once per event."""
     view = regard(npc)
     credited = view.setdefault("credited", [])
@@ -198,7 +199,7 @@ def _shift_regard(npc: dict, memory: dict) -> None:
 FIRSTHAND = ("witnessed", "shown", "victim", "received")
 
 
-def _wonder(npc: dict, memory: dict, view: dict, trust: float, suspicion: float) -> tuple[float, float]:
+def _wonder(npc: Npc, memory: Memory, view: dict, trust: float, suspicion: float) -> tuple[float, float]:
     """Something that worked earns respect; something uncanny, seen with their own eyes, earns awe, and what
     awe does depends on who they are (their superstition): reverence, or fear of witchcraft. Hearsay earns
     neither awe nor fear: claims and stories never do (GDD 1)."""
@@ -217,7 +218,7 @@ def _wonder(npc: dict, memory: dict, view: dict, trust: float, suspicion: float)
     return trust, suspicion
 
 
-def remember(npc: dict, memory: dict) -> None:
+def remember(npc: Npc, memory: Memory) -> None:
     """Add a memory (evidence and crimes move regard); past the limit, forget the least serious one.
     Anything of note makes them fresh: they'll reconsider their day (D-39: the decider on events, not a timer)."""
     _shift_regard(npc, memory)
@@ -229,7 +230,7 @@ def remember(npc: dict, memory: dict) -> None:
         memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
 
 
-def hearsay(memory: dict) -> bool:
+def hearsay(memory: Memory) -> bool:
     """Told or overheard, not their own contact with the stranger: Hessa speaking for the stranger to the captain
     doesn't mean the guards have dealt with them (D-55)."""
     source = str(memory.get("source", ""))

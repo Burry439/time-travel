@@ -7,11 +7,12 @@ import math
 
 import content
 import gear
+from shapes import Job, Mind, Npc, State
 
 CARDS: dict[str, dict] = content.CARDS
 
 
-def card(npc: dict) -> dict:
+def card(npc: Npc) -> dict:
     return CARDS.get(
         npc["id"],
         {
@@ -32,19 +33,19 @@ def card(npc: dict) -> dict:
     )
 
 
-def mind(npc: dict) -> dict:
+def mind(npc: Npc) -> Mind:
     return npc.setdefault("mind", {"memories": [], "feelings": {"fear": 0.0, "anger": 0.0}, "job": None, "said": None})
 
 
-def find(npcs: list[dict], npc_id: str) -> dict | None:
+def find(npcs: list[Npc], npc_id: str) -> Npc | None:
     return next((n for n in npcs if n["id"] == npc_id), None)
 
 
-def player_cell(state: dict) -> tuple[int, int]:
+def player_cell(state: State) -> tuple[int, int]:
     return state["player"]["x"], state["player"]["y"]
 
 
-def cell(npc: dict) -> tuple[int, int]:
+def cell(npc: Npc) -> tuple[int, int]:
     return npc["x"], npc["y"]
 
 
@@ -57,7 +58,7 @@ def _at(where) -> tuple:
     return (where["x"], where["y"]) if isinstance(where, dict) else where
 
 
-def armed_with(state: dict, npc: dict) -> str | None:
+def armed_with(state: State, npc: Npc) -> str | None:
     """What this person is armed with, in words: their own weapon as their card names it, anything else they've
     picked up by its name, or None when their hands hold no weapon (D-49: what they have now, not what they began
     with)."""
@@ -74,21 +75,21 @@ def condition(health: float, alive: bool = True) -> str:
     return "unhurt" if health >= 100 else "wounded" if health > 30 else "badly wounded (near death)"
 
 
-def relation(npc: dict, other_id: str | None) -> str | None:
+def relation(npc: Npc, other_id: str | None) -> str | None:
     """How this person refers to someone they know, e.g. 'her nephew Jory'."""
     return card(npc).get("relations", {}).get(other_id or "")
 
 
-def is_family(npc: dict, other_id: str | None) -> bool:
+def is_family(npc: Npc, other_id: str | None) -> bool:
     return (other_id or "") in card(npc).get("family", [])
 
 
-def watch(npc: dict, now: int, ms: int) -> None:
+def watch(npc: Npc, now: int, ms: int) -> None:
     """Keep an eye on the stranger for a while: after a fright, a fight, a job done or a conversation over."""
     set_job(npc, {"kind": "watch", "until": now + ms}, now)
 
 
-def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -> None:
+def add_pending(state: State, npc_id: str, kind: str = "decide", why: str = "") -> None:
     pending = state.setdefault("pending_minds", [])
     if not any(p["npc_id"] == npc_id and p["kind"] == kind for p in pending):
         pending.append({"npc_id": npc_id, "kind": kind, "why": why})
@@ -97,7 +98,7 @@ def add_pending(state: dict, npc_id: str, kind: str = "decide", why: str = "") -
 REACTING = ("decide",)  # Pending kinds that mean someone is reacting to the stranger.
 
 
-def calm(state: dict) -> bool:
+def calm(state: State) -> bool:
     """No one is reacting to the player: a safe point to rewind to (people planning their day don't count)."""
     if any(p["kind"] in REACTING for p in state.get("pending_minds", [])) or not state["player"].get("alive", True):
         return False
@@ -110,7 +111,7 @@ def calm(state: dict) -> bool:
     )
 
 
-def set_job(npc: dict, job: dict | None, now: int) -> None:
+def set_job(npc: Npc, job: Job | None, now: int) -> None:
     mind(npc)["job"] = job
     controller = npc.get("controller")
     if controller is None:
@@ -130,7 +131,7 @@ def set_job(npc: dict, job: dict | None, now: int) -> None:
             mind(npc)["facing_player"] = True  # Busy with the stranger: they keep an eye on them.
 
 
-def aware(state: dict, npc: dict) -> bool:
+def aware(state: State, npc: Npc) -> bool:
     """Is this person watching the stranger (facing them, busy with them, or fighting them)? If not, they can
     be taken by surprise."""
     my_mind = npc.get("mind") or {}

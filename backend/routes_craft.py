@@ -32,6 +32,7 @@ import store
 import tuning
 from ai import config as ai_config
 from ai import decider, judge, telemetry, voice
+from shapes import State
 
 router = APIRouter()
 
@@ -52,7 +53,7 @@ class QuickRequest(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
-def _craft_response(run: sqlite3.Row, state: dict, trace: dict | None, duplicate: bool) -> dict:
+def _craft_response(run: sqlite3.Row, state: State, trace: dict | None, duplicate: bool) -> dict:
     response = {"state": state, "duplicate": duplicate}
     if run["mode"] == "developer":
         response["trace"] = trace

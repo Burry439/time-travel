@@ -33,6 +33,7 @@ import talk
 import tuning
 from ai import config as ai_config
 from ai import judge, telemetry, voice
+from shapes import Npc, State
 
 router = APIRouter()
 
@@ -45,7 +46,7 @@ class SayRequest(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
-def _talk_problem(state: dict, npc_id: str) -> tuple[dict, list[list[int]]]:
+def _talk_problem(state: State, npc_id: str) -> tuple[dict, list[list[int]]]:
     """The person and the walk to reach them, or an HTTP 409 saying why they can't be spoken to."""
     npc = cast.find(state["npcs"], npc_id)
     if npc is None:
@@ -92,7 +93,7 @@ def encounter_act(run_id: str, request: EncounterAct, background: BackgroundTask
     return play_round(run_id, request, background)
 
 
-def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
+def _round_setup(state: State, request: EncounterAct) -> list[list[int]]:
     """Check the stranger can act in a round now; returns the walk to whoever they start talking to."""
     if request.kind == "say" and not request.text.strip():
         raise HTTPException(422, "Say something")
@@ -116,7 +117,7 @@ def _round_setup(state: dict, request: EncounterAct) -> list[list[int]]:
 
 
 def _round_draft(
-    state: dict, run_id: str, request: EncounterAct, walk: list[list[int]], judged: judge.JudgeCall | None
+    state: State, run_id: str, request: EncounterAct, walk: list[list[int]], judged: judge.JudgeCall | None
 ) -> tuple[dict, dict]:
     """The stranger's part of a round on the latest world (deterministic: safe to redo after model calls)."""
     seen = conversation.standing_at(state, walk)
@@ -140,7 +141,7 @@ def _round_draft(
 
 
 def scene(
-    draft: dict, addressed_id: str, text: str, happened: str | None, allowed: bool, nearby: list[dict] | None = None
+    draft: State, addressed_id: str, text: str, happened: str | None, allowed: bool, nearby: list[dict] | None = None
 ) -> dict:
     """The group's moment (D-48): one voice call, outside the lock. Everyone in the conversation, plus up to
     three people near enough to hear it, may speak in turn, talk to each other or ask the stranger something."""
@@ -163,7 +164,7 @@ def scene(
 
 
 def keep_promise(
-    state: dict, npc: dict, promised: str, errand_to: str, errand_message: str
+    state: State, npc: Npc, promised: str, errand_to: str, errand_message: str
 ) -> tuple[str, str, str, str | None]:
     """Someone said they'd do something later but the move picked doesn't do it (D-51). If it's an errand to a
     person (named, or "the guards"/"the captain"), they go and do it, with their own words as the message.
@@ -188,7 +189,7 @@ def keep_promise(
     return "answer", errand_to, errand_message, promised
 
 
-def apply_scene(draft: dict, moment: dict, text: str, happened: str | None, now: int) -> list[dict]:
+def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now: int) -> list[dict]:
     """Check the scene's lines against the world as it now stands and apply each as that person's exchange.
     Returns what was said: [{npc_id, name, line, kind, key, trace}]. A nearby person who speaks joins first."""
     call, said = moment["call"], []
@@ -381,7 +382,7 @@ ROUND_FIELDS = (
 )
 
 
-def _adopt_round(state: dict, draft: dict, record: dict, safe_seq: int) -> None:
+def _adopt_round(state: State, draft: State, record: dict, safe_seq: int) -> None:
     """The round as worked out on the draft becomes the world: its fields, what was said and learned, an admission."""
     journal_before, learned_before = len(state["journal"]), len(state.get("learned", []))
     admitted_now = draft.get("admitted") and not state.get("admitted")
@@ -399,7 +400,7 @@ def _adopt_round(state: dict, draft: dict, record: dict, safe_seq: int) -> None:
     }
 
 
-def _pass_round_time(draft: dict, now: int, elapsed: int) -> None:
+def _pass_round_time(draft: State, now: int, elapsed: int) -> None:
     """The round takes time: everyone's day moves on by that much in the draft (routines, jobs, blows landing)."""
     people = clock.advance_people(draft, elapsed)
     for obj in people.get("objects_added", []):

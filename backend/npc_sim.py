@@ -11,13 +11,14 @@ from copy import deepcopy
 
 import content
 import paths
+from shapes import Npc
 
 # Each anchor is (cell x, cell y, activity at arrival, dwell milliseconds).
 # This file also drives the editor's visible activity-anchor overlay.
 ROUTINES = {npc_id: (spec["goal"], spec["anchors"]) for npc_id, spec in content.ROUTINES.items()}
 
 
-def seed_npcs(npcs: list[dict]) -> list[dict]:
+def seed_npcs(npcs: list[Npc]) -> list[dict]:
     seeded = deepcopy(npcs)
     blocked = paths.obstacle_cells()
     for index, npc in enumerate(seeded):
@@ -40,7 +41,7 @@ def seed_npcs(npcs: list[dict]) -> list[dict]:
     return seeded
 
 
-def choose_routine_plan(npc: dict, blocked: set[tuple[int, int]]) -> None:
+def choose_routine_plan(npc: Npc, blocked: set[tuple[int, int]]) -> None:
     """Current planner. The decider can replace this choice with another valid plan."""
     controller = npc["controller"]
     _, anchors = ROUTINES[npc["id"]]
@@ -53,7 +54,7 @@ def choose_routine_plan(npc: dict, blocked: set[tuple[int, int]]) -> None:
     controller["step_carry_ms"] = 0
 
 
-def advance_npcs(npcs: list[dict], elapsed_ms: int, now_ms: int) -> list[dict]:
+def advance_npcs(npcs: list[Npc], elapsed_ms: int, now_ms: int) -> list[dict]:
     updated = deepcopy(npcs)
     blocked = paths.obstacle_cells()
     arrival_time = now_ms + elapsed_ms

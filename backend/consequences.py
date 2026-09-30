@@ -14,6 +14,7 @@ import heat
 import m2
 import paths
 import tuning
+from shapes import State, Thing
 
 CONTENT = content.MATERIALS
 
@@ -24,14 +25,14 @@ MAX_STEPS = 4
 OPERATION_CAPABILITIES = {"tieable": "tie", "container": "fill"}
 
 
-def gate_after(state: dict, fixture_id: str, barred: bool) -> dict | None:
+def gate_after(state: State, fixture_id: str, barred: bool) -> dict | None:
     """The gate stands open while nothing bars it (or the stranger has been let in); None if unaffected."""
     if fixture_id != m2.GATE_FIXTURE:
         return None
     return {"open": bool(state.get("admitted")) or not barred, **({} if barred else {"unbarred_by": "player"})}
 
 
-def _known_after(obj: dict, results: list[dict], event_id: int) -> list[dict]:
+def _known_after(obj: Thing, results: list[dict], event_id: int) -> list[dict]:
     """The object's capabilities with what a demonstration showed: matching ones updated, new ones added."""
     known = [dict(c) for c in obj.get("known_capabilities", [])]
     for result in results:
@@ -107,7 +108,7 @@ def _object(
     }
 
 
-def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
+def _step_deltas(state: State, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
     """World changes for one validated step; ids stay unique across the steps of one attempt."""
     walk = verdict.get("walk") or []
     px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
@@ -142,7 +143,7 @@ def _step_deltas(state: dict, run_id: str, text: str, verdict: dict, event_id: i
     return deltas
 
 
-def _made(state: dict, verdict: dict, step: dict) -> dict:
+def _made(state: State, verdict: dict, step: dict) -> dict:
     """Something new, from what went into it: in hand if it can be carried with the rest, else at their feet."""
     spec = verdict["new_spec"]
     consumed = verdict["consumed_ids"]
@@ -205,7 +206,7 @@ def _pieces(verdict: dict, step: dict, prefix: str, piece: dict, numbers: range,
     return made
 
 
-def _gathered(state: dict, verdict: dict, step: dict) -> dict:
+def _gathered(state: State, verdict: dict, step: dict) -> dict:
     """New small things in hand; the source stays as it was (a small one is that much smaller)."""
     plan = verdict["gather"]
     source = state["objects"][plan["source_id"]]
@@ -220,7 +221,7 @@ def _gathered(state: dict, verdict: dict, step: dict) -> dict:
     return parts
 
 
-def _treated(state: dict, verdict: dict, step: dict) -> dict:
+def _treated(state: State, verdict: dict, step: dict) -> dict:
     treated = verdict["treat"]
     parts: dict = {"water": [], "npc_updates": [], "moved": []}
     if treated["patient_id"] == "player":
@@ -232,7 +233,7 @@ def _treated(state: dict, verdict: dict, step: dict) -> dict:
     return parts
 
 
-def _transformed(state: dict, verdict: dict, step: dict) -> dict:
+def _transformed(state: State, verdict: dict, step: dict) -> dict:
     """Cut, broken, felled: the pieces lie around it (or stay in hand while they can be carried)."""
     plan = verdict["transform"]
     target = state["objects"][plan["target_id"]]
@@ -259,7 +260,7 @@ def _transformed(state: dict, verdict: dict, step: dict) -> dict:
     return {"new_objects": made, "transformed": transformed}
 
 
-def _harmed(state: dict, verdict: dict, step: dict) -> dict:
+def _harmed(state: State, verdict: dict, step: dict) -> dict:
     """What gear.hit worked out (D-49), carried out on the person; a thrown weapon lands by them, a poured one is
     emptied over them."""
     harm = verdict["harm"]
@@ -294,7 +295,7 @@ def _harmed(state: dict, verdict: dict, step: dict) -> dict:
     return parts
 
 
-def _filled(state: dict, verdict: dict, step: dict) -> dict:
+def _filled(state: State, verdict: dict, step: dict) -> dict:
     fill = verdict["fill"]
     container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
     return {
@@ -305,18 +306,18 @@ def _filled(state: dict, verdict: dict, step: dict) -> dict:
     }
 
 
-def _changed(state: dict, verdict: dict, step: dict) -> dict:
+def _changed(state: State, verdict: dict, step: dict) -> dict:
     change = verdict["change"]
     return {"water": [{"id": change["id"], **change["fields"]}] + change["pour"], "spilled_l": change["spilled_l"]}
 
 
-def _shown(state: dict, verdict: dict, step: dict) -> dict:
+def _shown(state: State, verdict: dict, step: dict) -> dict:
     shown = verdict["demonstration"]
     known = _known_after(state["objects"][shown["object_id"]], shown["results"], step["event_id"])
     return {"capabilities": {"id": shown["object_id"], "known_capabilities": known}}
 
 
-def _installed(state: dict, verdict: dict, step: dict) -> dict:
+def _installed(state: State, verdict: dict, step: dict) -> dict:
     plan = verdict["install"]
     into = state["objects"][plan["into_id"]]
     return {
@@ -325,7 +326,7 @@ def _installed(state: dict, verdict: dict, step: dict) -> dict:
     }
 
 
-def _lifted(state: dict, verdict: dict, step: dict) -> dict:
+def _lifted(state: State, verdict: dict, step: dict) -> dict:
     plan = verdict["lift_out"]
     fixture = state["objects"][plan["from_id"]]
     x, y = paths.open_cells_near(state, fixture["x"], fixture["y"] + 2, paths.cleared_obstacles(state), 1)[0]
@@ -335,7 +336,7 @@ def _lifted(state: dict, verdict: dict, step: dict) -> dict:
     }
 
 
-def _trade_offered(state: dict, verdict: dict, step: dict) -> dict:
+def _trade_offered(state: State, verdict: dict, step: dict) -> dict:
     trade = {
         **verdict["offer_trade"],
         "id": f"trade_{step['event_id']}{step['suffix']}",
@@ -345,7 +346,7 @@ def _trade_offered(state: dict, verdict: dict, step: dict) -> dict:
     return {"trade": trade}
 
 
-def _given(state: dict, verdict: dict, step: dict) -> dict:
+def _given(state: State, verdict: dict, step: dict) -> dict:
     """A gift of your own (or unowned) thing makes it theirs; someone else's thing stays theirs."""
     give = verdict["give"]
     owners = {
@@ -379,7 +380,7 @@ CHANGES = {
 }
 
 
-def apply_step(state: dict, deltas: dict) -> None:
+def apply_step(state: State, deltas: dict) -> None:
     if deltas.get("player_to"):
         state["player"].update(x=deltas["player_to"][0], y=deltas["player_to"][1])
     for landed in deltas.get("moved", []):
@@ -482,7 +483,7 @@ def _resolve_references(step: dict, made_by_step: dict[int, str]) -> dict:
     return swap(copy.deepcopy(step))
 
 
-def humanize(text: str, state: dict, made_by_step: dict[int, str]) -> str:
+def humanize(text: str, state: State, made_by_step: dict[int, str]) -> str:
     """Replace any id that leaked into player-facing text with the thing's name."""
     names = {oid: ("the ", o["name"]) for oid, o in state["objects"].items()}
     names.update({f"made_by_step_{n}": ("the ", state["objects"][oid]["name"]) for n, oid in made_by_step.items()})
@@ -500,7 +501,7 @@ def humanize(text: str, state: dict, made_by_step: dict[int, str]) -> str:
 
 
 def resolve_attempt(
-    state: dict, run_id: str, text: str, judged: dict | None, service_error: str | None, trace_id: str, now_ms: int
+    state: State, run_id: str, text: str, judged: dict | None, service_error: str | None, trace_id: str, now_ms: int
 ) -> tuple[dict, dict, dict]:
     """Validate and apply the judge's steps in order on a draft world; stop at the first that fails.
 
@@ -620,7 +621,7 @@ def resolve_attempt(
     return payload, summary, draft
 
 
-def apply_payload(state: dict, payload: dict) -> None:
+def apply_payload(state: State, payload: dict) -> None:
     # People first, so wounds and deaths recorded by the steps are applied on top of their movement.
     if "npcs" in payload:
         state["npcs"] = payload["npcs"]

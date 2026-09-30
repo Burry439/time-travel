@@ -33,6 +33,7 @@ import gear
 import persona
 import reputation
 import tuning
+from shapes import Npc, State
 
 TURNS_KEPT = 12  # Lines kept verbatim; whole conversations live on as episodes (D-36).
 
@@ -40,7 +41,7 @@ TURNS_KEPT = 12  # Lines kept verbatim; whole conversations live on as episodes 
 ERRAND_JOBS = ("tell", "vouch", "report")  # Jobs that take someone somewhere to do something (D-54).
 
 
-def update_regard(npc: dict, answers: dict) -> dict:
+def update_regard(npc: Npc, answers: dict) -> dict:
     """Apply the reply's reading. Words alone move regard only so far either way (goodwill, which new evidence
     renews; ill will, capped the same): deeds and crimes move it in full, through what people see (D-46)."""
     view = reputation.regard(npc)
@@ -81,7 +82,7 @@ def plain_note(name: str, text: str, happened: str | None, line: str) -> str:
 
 
 def _remember_exchange(
-    npc: dict, text: str, happened: str | None, line: str, note: str, name_given: str, doubted: bool, now: int
+    npc: Npc, text: str, happened: str | None, line: str, note: str, name_given: str, doubted: bool, now: int
 ) -> None:
     """The person's own memory of this exchange (D-36): a note, the stranger's name, a claim they doubt."""
     memory = persona.knows(npc)
@@ -94,7 +95,7 @@ def _remember_exchange(
         memory["claims"] = (memory["claims"] + [{"text": conversation.clean(text)[:160], "at": now}])[-6:]
 
 
-def errand(state: dict, npc: dict, to: str, message: str) -> tuple[dict, str] | None:
+def errand(state: State, npc: Npc, to: str, message: str) -> tuple[dict, str] | None:
     """A go-and-tell errand the voice described, if it names a real person (by id or name) and says something."""
     words = " ".join((message or "").split())[:240]
     other = cast.find(state["npcs"], to or "") or next(
@@ -107,7 +108,7 @@ def errand(state: dict, npc: dict, to: str, message: str) -> tuple[dict, str] | 
 
 
 def exchange(
-    state: dict,
+    state: State,
     npc_id: str,
     text: str,
     answers: dict,
@@ -177,13 +178,13 @@ def exchange(
     }
 
 
-def _lead(npc: dict, line: str, event_id: int, kind: str, target: str, lead: str) -> dict:
+def _lead(npc: Npc, line: str, event_id: int, kind: str, target: str, lead: str) -> dict:
     """Something the stranger learned from this exchange: a line in their journal's leads."""
     return {"npc_id": npc["id"], "name": npc["name"], "said": line, kind: target, "event_id": event_id, "lead": lead}
 
 
 def _take_in(
-    npc: dict,
+    npc: Npc,
     answers: dict,
     text: str,
     happened: str | None,
@@ -214,7 +215,7 @@ def _take_in(
     return change
 
 
-def _settle_deals(state: dict, npc: dict, answers: dict, line: str, event_id: int, learned: list) -> tuple | None:
+def _settle_deals(state: State, npc: Npc, answers: dict, line: str, event_id: int, learned: list) -> tuple | None:
     """A deal offered is agreed, or one agreed is done: the reply's reading says so. A deal done is rewarded with
     a job: (what they tell the captain, what the captain remembers)."""
     npc_id, name = npc["id"], npc["name"]
@@ -241,7 +242,7 @@ def _settle_deals(state: dict, npc: dict, answers: dict, line: str, event_id: in
 
 
 def _hand_over(
-    state: dict, npc: dict, act: str, target: str | None, line: str, event_id: int, learned: list, lent: list
+    state: State, npc: Npc, act: str, target: str | None, line: str, event_id: int, learned: list, lent: list
 ) -> dict | None:
     """What this person offers, tells or hands over (a deal, a fact, a loan, a gift, a trade, a name), or their
     word at the gate. Returns the admission, if they let the stranger in."""
@@ -318,8 +319,8 @@ def _hand_over(
 
 
 def _then(
-    state: dict,
-    npc: dict,
+    state: State,
+    npc: Npc,
     act: str,
     target: str | None,
     task: tuple | None,
@@ -387,7 +388,7 @@ def _then(
         cast.watch(npc, now, tuning.TALK_WATCH_MS)
 
 
-def _overheard(state: dict, npc: dict, text: str, line: str, event_id: int, now: int) -> None:
+def _overheard(state: State, npc: Npc, text: str, line: str, event_id: int, now: int) -> None:
     """People close by overhear; they remember it but don't stop to think."""
     name = npc["name"]
     for other in state["npcs"]:

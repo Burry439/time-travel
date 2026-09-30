@@ -12,6 +12,7 @@ import gear
 import paths
 import reputation
 import tuning
+from shapes import Deal, Npc, State
 
 MAX_TEXT = 300
 
@@ -35,15 +36,15 @@ def clean(text: str) -> str:
     return text[:MAX_TEXT]
 
 
-def knowledge(npc: dict) -> dict[str, dict]:
+def knowledge(npc: Npc) -> dict[str, dict]:
     return cast.card(npc).get("knowledge", {})
 
 
-def turns(npc: dict) -> list[dict]:
+def turns(npc: Npc) -> list[dict]:
     return cast.mind(npc).setdefault("talk", [])
 
 
-def busy(npc: dict) -> str | None:
+def busy(npc: Npc) -> str | None:
     """Why this person can't talk right now, if they can't."""
     if not npc.get("alive", True):
         return f"{npc['name']} is dead."
@@ -53,14 +54,14 @@ def busy(npc: dict) -> str | None:
     return None
 
 
-def walk_to(state: dict, npc: dict) -> list[list[int]] | None:
+def walk_to(state: State, npc: Npc) -> list[list[int]] | None:
     """Cells to walk before talking ([] if already close enough); None if they can't be reached."""
     if cast.distance(state["player"], npc) <= tuning.TALK_CELLS:
         return []
     return paths.plan_walk(state, [cast.cell(npc)])
 
 
-def standing_at(state: dict, walk: list[list[int]]) -> dict:
+def standing_at(state: State, walk: list[list[int]]) -> dict:
     """A copy of the world with the player where the walk ends: what the person sees while talking."""
     draft = copy.deepcopy(state)
     if walk:
@@ -68,12 +69,12 @@ def standing_at(state: dict, walk: list[list[int]]) -> dict:
     return draft
 
 
-def nearest_guard(state: dict, npc: dict) -> dict | None:
+def nearest_guard(state: State, npc: Npc) -> dict | None:
     guards = [g for g in state["npcs"] if g["id"] != npc["id"] and g.get("alive", True) and cast.card(g).get("guard")]
     return min(guards, key=lambda g: cast.distance(g, npc), default=None)
 
 
-def deals(state: dict, npc_id: str, *statuses: str) -> list[dict]:
+def deals(state: State, npc_id: str, *statuses: str) -> list[dict]:
     """This person's deals with the stranger in these states, oldest first."""
     return sorted(
         (a for a in state.get("agreements", {}).values() if a.get("issuer") == npc_id and a.get("status") in statuses),
@@ -81,7 +82,7 @@ def deals(state: dict, npc_id: str, *statuses: str) -> list[dict]:
     )
 
 
-def stolen_in_view(state: dict, npc: dict) -> list[dict]:
+def stolen_in_view(state: State, npc: Npc) -> list[dict]:
     """Things the stranger is carrying that belong to this person, or, for a guard, that they know were stolen."""
     known = {
         m.get("item")
@@ -99,7 +100,7 @@ def stolen_in_view(state: dict, npc: dict) -> list[dict]:
     ]
 
 
-def open_trades(state: dict, npc: dict) -> list[dict]:
+def open_trades(state: State, npc: Npc) -> list[dict]:
     """Trades the stranger has offered this person that could still happen."""
     objects = state["objects"]
     return [
@@ -114,7 +115,7 @@ def open_trades(state: dict, npc: dict) -> list[dict]:
     ]
 
 
-def deal_possible(state: dict, deal: dict) -> bool:
+def deal_possible(state: State, deal: Deal) -> bool:
     """A deal with a world condition (the beam in its brackets) can only be done once that holds."""
     offer = next(
         (
@@ -128,7 +129,7 @@ def deal_possible(state: dict, deal: dict) -> bool:
     return not placed or bool(state["objects"].get(placed, {}).get("installed_in"))
 
 
-def lendable(state: dict, npc: dict) -> list[dict]:
+def lendable(state: State, npc: Npc) -> list[dict]:
     """Things of this person's the stranger could be allowed to use (at most four, nearest first)."""
     things = [
         o
@@ -142,7 +143,7 @@ def lendable(state: dict, npc: dict) -> list[dict]:
     return sorted(things, key=lambda o: (cast.distance((o["x"], o["y"]), npc), o["id"]))[:4]
 
 
-def helped_by_stranger(npc: dict) -> bool:
+def helped_by_stranger(npc: Npc) -> bool:
     """The stranger has done this person (or their family) a real kindness they saw or felt: a wound treated,
     a gift. Reason enough to speak up for them, whatever words were said (D-51)."""
     family = {npc["id"], *cast.card(npc).get("family", [])}
@@ -171,14 +172,14 @@ ERRANDS = (
 )  # Moves that carry something out.
 
 
-def holding(state: dict, person_id: str) -> list[dict]:
+def holding(state: State, person_id: str) -> list[dict]:
     """What someone has on them or in their hands (not what they wear)."""
     person = state["player"] if person_id == "player" else cast.find(state["npcs"], person_id) or {}
     worn = {oid for slot, oid in (person.get("equipped") or {}).items() if slot in gear.COVERS}
     return [o for o in state["objects"].values() if o.get("holder_id") == person_id and o["id"] not in worn]
 
 
-def self_remedies(state: dict, npc: dict) -> list[tuple[dict, int]]:
+def self_remedies(state: State, npc: Npc) -> list[tuple[dict, int]]:
     """Remedies this person holds that treat one of their own untreated wounds: [(remedy, condition index)]."""
     found = []
     for obj in holding(state, npc["id"]):
@@ -190,23 +191,34 @@ def self_remedies(state: dict, npc: dict) -> list[tuple[dict, int]]:
     return found
 
 
-def replies(state: dict, npc: dict) -> dict[str, dict]:
-    """Every reply code can carry out for this person now: {key: {act, target, description}}."""
+def replies(state: State, npc: Npc) -> dict[str, dict]:
+    """Every reply code can carry out for this person now: {key: {act, target, description}}. In the order the
+    voice sees them: talking, what they have to offer, wrongs to put right, going to do something, and parting."""
+    options: dict[str, dict] = {}
+    for group in (_talking, _offering, _wrongs, _going, _parting):
+        group(state, npc, options)
+    import tutorial
+
+    if tutorial.keeps(state, npc):  # Kade in the middle of his lessons stays put (D-57).
+        options = {k: o for k, o in options.items() if o["act"] not in ("go_tell", "vouch", "call_guard", "admit")}
+    return options
+
+
+def _option(act: str, description: str, target: str | None = None) -> dict:
+    return {"act": act, "target": target, "description": description}
+
+
+def _talking(state: State, npc: Npc, options: dict) -> None:
+    """Just talking, asking back, telling what they know, and sending the stranger to someone else."""
     name, me, my_mind = npc["name"], cast.card(npc), cast.mind(npc)
-
-    def option(act: str, description: str, target: str | None = None) -> dict:
-        return {"act": act, "target": target, "description": description}
-
-    options = {
-        "answer": option(
-            "answer",
-            f"{name} just talks: answers, reacts, explains, gives directions around town or "
-            f"says what they think, without doing anything else.",
-        ),
-    }
+    options["answer"] = _option(
+        "answer",
+        f"{name} just talks: answers, reacts, explains, gives directions around town or "
+        f"says what they think, without doing anything else.",
+    )
     recent = [t for t in turns(npc) if t["who"] == "them"][-3:]
     if not any(t.get("reply") == "ask_back" for t in recent):  # Asked once and answered: the conversation moves on.
-        options["ask_back"] = option(
+        options["ask_back"] = _option(
             "ask_back",
             f"{name} asks the stranger a question of their own: who they are, what they want, or what they meant.",
         )
@@ -214,76 +226,91 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
     for fact_id, fact in knowledge(npc).items():
         if fact_id in my_mind.get("shared", []) or (fact.get("trusted") and trust < tuning.SHARE_TRUST):
             continue
-        options[f"share:{fact_id}"] = option("share", f"{name} tells the stranger: {fact['text']}", fact_id)
+        options[f"share:{fact_id}"] = _option("share", f"{name} tells the stranger: {fact['text']}", fact_id)
     for other_id in me.get("refers", []):
         other = cast.find(state["npcs"], other_id)
         if other is None or not other.get("alive", True) or other_id in my_mind.get("referred", []):
             continue
         who = cast.relation(npc, other_id) or f"{other['name']} the {cast.card(other)['role']}"
         steps = round(cast.distance(other, npc))
-        options[f"refer:{other_id}"] = option(
+        options[f"refer:{other_id}"] = _option(
             "refer", f"{name} suggests the stranger go and talk to {who} (about {steps} steps from here).", other_id
         )
+
+
+def _offering(state: State, npc: Npc, options: dict) -> None:
+    """A deal from their authored offers, a loan or a gift of their own things, a trade the stranger proposed."""
+    name, me = npc["name"], cast.card(npc)
     offered = {a.get("template") for a in state.get("agreements", {}).values() if a.get("issuer") == npc["id"]}
     for offer in me.get("offers", []):
         if offer["id"] not in offered:
             reward = REWARDS[offer["reward"]].format(name=name)
-            options[f"offer:{offer['id']}"] = option(
+            options[f"offer:{offer['id']}"] = _option(
                 "offer", f"{name} proposes a deal: if the stranger will {offer['task']}, {reward}.", offer["id"]
             )
     for obj in lendable(state, npc):
-        options[f"lend:{obj['id']}"] = option(
+        options[f"lend:{obj['id']}"] = _option(
             "lend", f"{name} lets the stranger take and use their {obj['name']}.", obj["id"]
         )
-    if trust >= tuning.GIVE_TRUST:
+    if reputation.regard(npc)["trust"] >= tuning.GIVE_TRUST:
         for obj in lendable(state, npc)[:3]:
-            options[f"give:{obj['id']}"] = option(
+            options[f"give:{obj['id']}"] = _option(
                 "give", f"{name} gives the stranger their {obj['name']} to keep.", obj["id"]
             )
     for trade in open_trades(state, npc):
-        options[f"accept_trade:{trade['id']}"] = option(
+        options[f"accept_trade:{trade['id']}"] = _option(
             "accept_trade",
             f"{name} accepts the stranger's trade: their {' and '.join(trade['give_names'])} for "
             f"{name}'s {' and '.join(trade['want_names'])}.",
             trade["id"],
         )
+
+
+def _wrongs(state: State, npc: Npc, options: dict) -> None:
+    """Stolen things demanded or taken back; a crime not put right forgiven, or answered with an arrest or a fight
+    (only a real crime, D-46)."""
+    name, me = npc["name"], cast.card(npc)
     here = cast.distance(npc, state["player"])
     for obj in stolen_in_view(state, npc):  # Their things, or (for a guard) things they know were stolen.
         owner = "their" if obj["owner_id"] == npc["id"] else f"{cast.find(state['npcs'], obj['owner_id'])['name']}'s"
-        options[f"demand:{obj['id']}"] = option(
+        options[f"demand:{obj['id']}"] = _option(
             "demand", f"{name} demands the stranger hand back {owner} {obj['name']}.", obj["id"]
         )
         if here <= tuning.REACH_TAKE:
-            options[f"take_back:{obj['id']}"] = option(
+            options[f"take_back:{obj['id']}"] = _option(
                 "take_back", f"{name} takes {owner} {obj['name']} back out of the stranger's hands.", obj["id"]
             )
-    crime = reputation.unresolved_crime(npc)  # Arrests and attacks only for a real crime not put right (D-46).
-    if crime is not None and not me.get("guard") and crime.get("victim") == npc["id"]:
-        options["forgive"] = option("forgive", f"{name} lets it go: {crime['short']} is put behind them.")
-    elif crime is not None and me.get("guard"):
-        options["forgive"] = option("forgive", f"{name} lets the matter drop ({crime['short']}): it's been put right.")
-    if crime is not None and me.get("guard") and here <= tuning.REACH_TAKE and state["player"].get("alive", True):
-        options["seize"] = option(
+    crime = reputation.unresolved_crime(npc)
+    if crime is None:
+        return
+    if not me.get("guard") and crime.get("victim") == npc["id"]:
+        options["forgive"] = _option("forgive", f"{name} lets it go: {crime['short']} is put behind them.")
+    elif me.get("guard"):
+        options["forgive"] = _option("forgive", f"{name} lets the matter drop ({crime['short']}): it's been put right.")
+    alive = state["player"].get("alive", True)
+    if me.get("guard") and here <= tuning.REACH_TAKE and alive:
+        options["seize"] = _option(
             "seize",
             f"{name} arrests the stranger: anything stolen goes back, and the stranger is "
             f"marched off down the south road and kept from the gate for a while.",
         )
-    if (
-        crime is not None
-        and state["player"].get("alive", True)
-        and (me.get("guard") or cast.armed_with(state, npc))
-        and npc["id"] not in ((state.get("fight") or {}).get("attackers") or [])
-    ):
-        deadly = reputation.knows_a_crime(npc)
-        options["attack"] = option(
+    armed = cast.armed_with(state, npc)
+    if alive and (me.get("guard") or armed) and npc["id"] not in ((state.get("fight") or {}).get("attackers") or []):
+        options["attack"] = _option(
             "attack",
             f"{name} attacks the stranger "
             + (
-                f"to kill, with their {me.get('weapon') or 'fists'}."
-                if deadly
+                f"to kill, with their {armed or 'fists'}."
+                if reputation.knows_a_crime(npc)
                 else f"to beat them into submission{' and arrest them' if me.get('guard') else ''}, not to kill."
             ),
         )
+
+
+def _going(state: State, npc: Npc, options: dict) -> None:
+    """Going to do something for the stranger: speak for them, carry word, stop fighting, see to their own wound,
+    let them in."""
+    name, my_mind = npc["name"], cast.mind(npc)
     captain = cast.find(state["npcs"], gatekeeping.CAPTAIN)
     fighting = npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
     if (
@@ -292,47 +319,47 @@ def replies(state: dict, npc: dict) -> dict[str, dict]:
         and captain.get("alive", True)
         and not my_mind.get("vouched")
         and not fighting
-        and (trust >= tuning.VOUCH_TRUST or helped_by_stranger(npc))
+        and (reputation.regard(npc)["trust"] >= tuning.VOUCH_TRUST or helped_by_stranger(npc))
     ):
-        options["vouch"] = option("vouch", f"{name} goes to Captain Roderic now and speaks for the stranger.")
+        options["vouch"] = _option("vouch", f"{name} goes to Captain Roderic now and speaks for the stranger.")
     if not fighting and not npc.get("down"):
-        options["go_tell"] = option(
+        options["go_tell"] = _option(
             "go_tell",
             f"{name} goes off now to find someone in town and tell them something "
             f"(who: errand_to; what: errand_message). Choose this whenever {name} "
             f"says they'll go and tell or ask someone.",
         )
     if fighting:
-        options["stop_fighting"] = option("stop_fighting", f"{name} stops attacking the stranger and backs off.")
+        options["stop_fighting"] = _option("stop_fighting", f"{name} stops attacking the stranger and backs off.")
     for obj, index in self_remedies(state, npc):  # Something they were given for their own wound (D-53).
-        options[f"treat_self:{obj['id']}"] = option(
+        options[f"treat_self:{obj['id']}"] = _option(
             "treat_self",
             f"{name} puts the {obj['name']} on their own "
             f"{gear.describe(npc['conditions'][index]).removeprefix('the ')}.",
             obj["id"],
         )
     if gatekeeping.can_admit(state, npc):
-        options["admit"] = option(
+        options["admit"] = _option(
             "admit",
             f"{name} admits the stranger into the city and orders the gate opened for them."
             if npc["id"] == gatekeeping.CAPTAIN
             else f"{name} lets the stranger through the gate on their own say-so, and has it opened for them.",
         )
-    options["refuse"] = option("refuse", f"{name} refuses what the stranger is asking for.")
-    options["tell_to_leave"] = option("tell_to_leave", f"{name} tells the stranger to go away and leave them be.")
-    guard = None if me.get("guard") else nearest_guard(state, npc)
+
+
+def _parting(state: State, npc: Npc, options: dict) -> None:
+    """Refusing, sending the stranger away, fetching a guard, or simply ending it."""
+    name = npc["name"]
+    options["refuse"] = _option("refuse", f"{name} refuses what the stranger is asking for.")
+    options["tell_to_leave"] = _option("tell_to_leave", f"{name} tells the stranger to go away and leave them be.")
+    guard = None if cast.card(npc).get("guard") else nearest_guard(state, npc)
     if guard is not None:
-        options[f"call_guard:{guard['id']}"] = option(
+        options[f"call_guard:{guard['id']}"] = _option(
             "call_guard",
             f"{name} breaks off and goes to fetch {guard['name']} the guard about the stranger.",
             guard["id"],
         )
-    options["end"] = option("end", f"{name} politely ends the conversation.")
-    import tutorial
-
-    if tutorial.keeps(state, npc):  # Kade in the middle of his lessons stays put (D-57).
-        options = {k: o for k, o in options.items() if o["act"] not in ("go_tell", "vouch", "call_guard", "admit")}
-    return options
+    options["end"] = _option("end", f"{name} politely ends the conversation.")
 
 
 def said_or_did(text: str, happened: str | None) -> str:
@@ -340,7 +367,7 @@ def said_or_did(text: str, happened: str | None) -> str:
     return clean(text) if text.strip() else f"({clean(happened or 'says nothing')})"
 
 
-def admits_now(state: dict, npc: dict, answers: dict) -> bool:
+def admits_now(state: State, npc: Npc, answers: dict) -> bool:
     """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43), with real
     grounds in what they hold, so a claim ("Hessa has spoken for me") never opens the gate by itself (D-55)."""
     return (
@@ -352,7 +379,7 @@ def admits_now(state: dict, npc: dict, answers: dict) -> bool:
     )
 
 
-def moves(state: dict, npc: dict, answers: dict | None = None) -> dict[str, str]:
+def moves(state: State, npc: Npc, answers: dict | None = None) -> dict[str, str]:
     """The moves the voice may pick from: every legal reply. Letting the stranger in is offered to a guard who
     could; code then checks the same reply's own reading (reason enough, no threat) before the gate opens (D-46)."""
     options = {k: o["description"] for k, o in replies(state, npc).items()}
@@ -361,7 +388,7 @@ def moves(state: dict, npc: dict, answers: dict | None = None) -> dict[str, str]
     return options
 
 
-def decided_reply(state: dict, npc: dict, answers: dict, proposed: str) -> str:
+def decided_reply(state: State, npc: Npc, answers: dict, proposed: str) -> str:
     """The move code will carry out: the one the voice picked, if it is legal now. Letting the stranger in also
     needs the guard's own rule met by the reading ("reason", "threat"): their authored motive (GDD 4.3, D-43), checked by code; never forced on words that refuse (D-44)."""
     options = replies(state, npc)

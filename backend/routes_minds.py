@@ -25,6 +25,7 @@ import tuning
 import village
 from ai import config as ai_config
 from ai import decider, telemetry, voice
+from shapes import Npc, State
 
 router = APIRouter()
 KINDS = ("decide", "agenda", "meet", "recollect", "told")
@@ -42,7 +43,7 @@ class ThinkRequest(BaseModel):
 _thinking_runs: set[tuple[str, str]] = set()
 
 
-def _meet_ready(state: dict, pending: dict) -> bool:
+def _meet_ready(state: State, pending: dict) -> bool:
     """Both still free and close enough; otherwise the chat doesn't happen."""
     a, b = cast.find(state["npcs"], pending["npc_id"]), cast.find(state["npcs"], pending["why"])
     return (
@@ -53,7 +54,7 @@ def _meet_ready(state: dict, pending: dict) -> bool:
     )
 
 
-def _choose(state: dict, lane: str = "any") -> tuple[list[dict], list[dict], list[dict]]:
+def _choose(state: State, lane: str = "any") -> tuple[list[dict], list[dict], list[dict]]:
     """Who decides now, whose conversations become memories, and stale entries to drop.
 
     Reactions go alone and never carry memory or chatter work; the village lane takes meetings, agendas
@@ -75,7 +76,7 @@ def _choose(state: dict, lane: str = "any") -> tuple[list[dict], list[dict], lis
     return batch, recollecting, stale
 
 
-def _recollect_context(npc: dict) -> tuple[dict, dict]:
+def _recollect_context(npc: Npc) -> tuple[dict, dict]:
     known = persona.knows(npc)
     fold = [e["text"] for e in known["episodes"][: max(0, len(known["episodes"]) - persona.EPISODES_KEPT + 1)]]
     context = {
@@ -91,7 +92,7 @@ def _recollect_context(npc: dict) -> tuple[dict, dict]:
     return context, fallback
 
 
-def _apply_recollection(npc: dict, context: dict, result: dict, now: int) -> dict:
+def _apply_recollection(npc: Npc, context: dict, result: dict, now: int) -> dict:
     """The conversation becomes an episode; the notes it covered are cleared; the oldest episodes fold away."""
     known = persona.knows(npc)
     covered = len(context["notes"])
@@ -355,7 +356,7 @@ def _trace(connection, run_id: str, event_seq: int, npc_id: str, trace: dict) ->
 ANSWER_KEY = {"decide": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
 
 
-def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str, dict]:
+def _brief(state: State, npc: Npc, pending: dict, prefix: str = "") -> tuple[str, dict]:
     """A person's situation and questions: reacting to what they saw, what to do next with their day, or what to
     talk about with someone they've met (D-37)."""
     if pending["kind"] in ("agenda", "meet"):
@@ -365,12 +366,12 @@ def _brief(state: dict, npc: dict, pending: dict, prefix: str = "") -> tuple[str
     return minds.situation(state, npc), minds.questions(state, npc, prefix)
 
 
-def decision_request(state: dict, pending: dict) -> tuple[str, dict]:
+def decision_request(state: State, pending: dict) -> tuple[str, dict]:
     """One person's request (used when a batched answer is missing)."""
     return _brief(state, cast.find(state["npcs"], pending["npc_id"]), pending)
 
 
-def batch_request(state: dict, batch: list[dict]) -> tuple[str, dict, dict[str, str]]:
+def batch_request(state: State, batch: list[dict]) -> tuple[str, dict, dict[str, str]]:
     """One request for everyone deciding now: a shared scene plus each person's brief and questions.
 
     Returns (state text, questions, {npc_id: question prefix}).

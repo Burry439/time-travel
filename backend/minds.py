@@ -25,6 +25,7 @@ import persona
 import reputation
 import speech
 import tuning
+from shapes import Npc, State
 
 ACTIVITY_WORDS = {
     "work": "working",
@@ -46,7 +47,7 @@ ACTIVITY_WORDS = {
 # --- Options, lines and deciding ---------------------------------------------------------------
 
 
-def options_for(state: dict, npc: dict) -> dict[str, dict]:
+def options_for(state: State, npc: Npc) -> dict[str, dict]:
     """Every option code can carry out for this person right now: action, target, line, description."""
     name, me = npc["name"], cast.card(npc)
     armed = cast.armed_with(state, npc)
@@ -147,11 +148,11 @@ def options_for(state: dict, npc: dict) -> dict[str, dict]:
     return options
 
 
-def legal_actions(state: dict, npc: dict) -> dict[str, str]:
+def legal_actions(state: State, npc: Npc) -> dict[str, str]:
     return {key: option["description"] for key, option in options_for(state, npc).items()}
 
 
-def situation(state: dict, npc: dict) -> str:
+def situation(state: State, npc: Npc) -> str:
     me, my_mind = cast.card(npc), cast.mind(npc)
     here = cast.player_cell(state)
     known_as = persona.knows(npc).get("name") or persona.knows(npc).get("heard_name")
@@ -228,7 +229,7 @@ def situation(state: dict, npc: dict) -> str:
     return "\n".join(lines)
 
 
-def questions(state: dict, npc: dict, prefix: str = "") -> dict:
+def questions(state: State, npc: Npc, prefix: str = "") -> dict:
     name = npc["name"]
     questions = {
         f"{prefix}action": {
@@ -256,7 +257,7 @@ def questions(state: dict, npc: dict, prefix: str = "") -> dict:
 # --- Acting ----------------------------------------------------------------------------------
 
 
-def away_goal(state: dict, npc: dict, blocked: set, hidden: bool = False) -> list[int]:
+def away_goal(state: State, npc: Npc, blocked: set, hidden: bool = False) -> list[int]:
     """A reachable cell far from the stranger; for hiding, one the stranger can't see."""
     _, steps = paths.bfs(cast.cell(npc), blocked, 14)
     here = cast.player_cell(state)
@@ -265,7 +266,7 @@ def away_goal(state: dict, npc: dict, blocked: set, hidden: bool = False) -> lis
     return [goal[0], goal[1]]
 
 
-def raise_alarm(state: dict, npc: dict, line: str, radius: float, now: int, guards_only: bool = False) -> None:
+def raise_alarm(state: State, npc: Npc, line: str, radius: float, now: int, guards_only: bool = False) -> None:
     """Everyone within earshot who didn't already know hears about it and may react."""
     worst = reputation.worst_memory(npc)
     if worst is not None:
@@ -302,7 +303,7 @@ def raise_alarm(state: dict, npc: dict, line: str, radius: float, now: int, guar
                 known["reported"] = True  # A guard heard: the caller has done their part.
 
 
-def apply_decision(state: dict, npc: dict, answers: dict, now: int, journal: list[dict]) -> dict:
+def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: list[dict]) -> dict:
     """Carry out one person's decision (action and line). Returns a short record for the trace."""
     my_mind = cast.mind(npc)
     levels = len(reputation.FEAR_LEVELS) - 1

@@ -10,9 +10,10 @@ import paths
 import reputation
 import speech
 import tuning
+from shapes import Memory, Npc, State
 
 
-def _describe(state: dict, entry: dict) -> list[dict]:
+def _describe(state: State, entry: dict) -> list[dict]:
     """What onlookers could see of a committed attempt, clearly and from afar: one view per notable thing.
 
     Violence and theft make people think about what to do; seeing something shown or given is only
@@ -51,7 +52,7 @@ def _view(kind: str, victim: str | None, item: str | None, clear: tuple, vague: 
 SHOWN = {"think": False, "works": True, "audience": []}  # Seen and remembered, not reacted to.
 
 
-def _violence(state: dict, harm: dict, names: dict) -> dict:
+def _violence(state: State, harm: dict, names: dict) -> dict:
     victim = names.get(harm["target_id"], "someone")
     weapon = state["objects"].get(harm.get("weapon_id") or "", {}).get("name")
     how = f" with a {weapon}" if weapon else " with bare hands"
@@ -163,7 +164,7 @@ def _installing(placed) -> dict | None:
     )
 
 
-def _lifting(state: dict, lifted) -> dict | None:
+def _lifting(state: State, lifted) -> dict | None:
     """Taking the bar off the city gate is an assault on it, unless it's work someone asked for (Tomas's swap)."""
     if not isinstance(lifted, dict):
         return None
@@ -232,7 +233,7 @@ def _help(treated) -> dict | None:
 SOURCES = {"violence": "victim", "theft": "victim", "gift": "received", "help": "received"}
 
 
-def gate_work_agreed(state: dict) -> bool:
+def gate_work_agreed(state: State) -> bool:
     """The stranger has an accepted deal to put a new bar on the gate (Tomas's swap): taking the old one out is
     that work, not an assault on the gate."""
     for deal in (state.get("agreements") or {}).values():
@@ -248,7 +249,7 @@ def gate_work_agreed(state: dict) -> bool:
     return False
 
 
-def perceive(state: dict, entry: dict) -> list[dict]:
+def perceive(state: State, entry: dict) -> list[dict]:
     """Memories for everyone who could see what the player just did (and for the people it involved).
 
     Close witnesses see what happened; those further off only see something going on.
@@ -297,7 +298,7 @@ def perceive(state: dict, entry: dict) -> list[dict]:
     return perceptions
 
 
-def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
+def apply_perceptions(state: State, perceptions: list[dict]) -> None:
     """Remember what was seen; people who clearly saw a crime react at once by code (they turn, they're angry
     or afraid, the nearest one shouts), and then decide what to do about it (the decider)."""
     barked = False
@@ -330,7 +331,7 @@ def apply_perceptions(state: dict, perceptions: list[dict]) -> None:
         combat.start(state, fighters, state["sim_time_ms"], "violence")
 
 
-def _react_at_once(state: dict, npc: dict, memory: dict, barked: bool) -> bool:
+def _react_at_once(state: State, npc: Npc, memory: Memory, barked: bool) -> bool:
     """The moment itself, decided by code: face the stranger, feel it, and (the nearest) shout."""
     feelings, victim = cast.mind(npc)["feelings"], memory.get("victim") == npc["id"]
     guard = cast.card(npc).get("guard")

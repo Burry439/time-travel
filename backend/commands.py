@@ -27,6 +27,7 @@ from fastapi import HTTPException
 import attempts
 import patch
 import store
+from shapes import State
 
 
 class Reply(Exception):
@@ -57,7 +58,7 @@ class Command:
         self,
         connection: sqlite3.Connection,
         run: sqlite3.Row,
-        state: dict,
+        state: State,
         request_id: str | None,
         body: str | None = None,
     ):
@@ -102,7 +103,7 @@ def release(run_id: str) -> None:
     attempts.busy_runs.discard(run_id)
 
 
-def _playable(state: dict) -> None:
+def _playable(state: State) -> None:
     if state["inside_city"] or not state["player"]["alive"]:
         raise HTTPException(409, "This journey is over.")
 

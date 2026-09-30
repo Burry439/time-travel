@@ -22,6 +22,7 @@ import m2
 import npc_sim
 import patch
 import tutorial
+from shapes import State
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "demo.sqlite3"))
@@ -208,11 +209,11 @@ PLAYER_KINDS = {
 }
 
 
-def is_stale(state: dict, expected_version: int) -> bool:
+def is_stale(state: State, expected_version: int) -> bool:
     return not state.get("player_seq", 0) <= expected_version <= state["event_seq"]
 
 
-def reduce_event(state: dict, event: sqlite3.Row) -> None:
+def reduce_event(state: State, event: sqlite3.Row) -> None:
     """Every event is what changed (GDD D-58): apply it, then the counters."""
     patch.apply(state, payload_of(event)["patch"])
     if event["kind"] in PLAYER_KINDS:
@@ -221,7 +222,7 @@ def reduce_event(state: dict, event: sqlite3.Row) -> None:
     state["tick"] = event["tick"]
 
 
-def apply_people(state: dict, payload: dict) -> None:
+def apply_people(state: State, payload: dict) -> None:
     """Fields shared by events in which people act: their pending thoughts, what the player heard,
     and the latest calm moment to rewind to."""
     if "pending_minds" in payload:
@@ -287,7 +288,7 @@ COUNTERS = ("event_seq", "tick", "player_seq")  # Set from the event row itself,
 def record(
     connection: sqlite3.Connection,
     before: dict,
-    state: dict,
+    state: State,
     kind: str,
     request_id: str,
     tick: int,
@@ -333,7 +334,7 @@ CHECKPOINT_EVERY = 512  # Replaying a change is cheap; a full copy now and then 
 CHECKPOINTS_KEPT = 2
 
 
-def save_checkpoint(connection: sqlite3.Connection, state: dict) -> None:
+def save_checkpoint(connection: sqlite3.Connection, state: State) -> None:
     """A full copy of the journey at this event; only the newest few are kept (events stay the source of truth)."""
     connection.execute(
         "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
@@ -346,7 +347,7 @@ def save_checkpoint(connection: sqlite3.Connection, state: dict) -> None:
     )
 
 
-def check_request(connection: sqlite3.Connection, state: dict, expected_version: int, request_id: str) -> int | None:
+def check_request(connection: sqlite3.Connection, state: State, expected_version: int, request_id: str) -> int | None:
     """The last event a repeat of this request already saved (its own and any it saved after, id+1, id+2...), or
     None; a new request from a stale view is refused (409)."""
     prior = connection.execute(

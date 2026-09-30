@@ -7,6 +7,7 @@ import cast
 import content
 import reputation
 import tuning
+from shapes import Npc, State
 
 LINES: dict[str, dict] = content.LINES["lines"]
 
@@ -15,10 +16,10 @@ FAMILY_WORDS = ("sister", "brother", "nephew", "aunt")
 
 
 def say(
-    npc: dict,
+    npc: Npc,
     text: str,
     now: int,
-    state: dict,
+    state: State,
     journal: list[dict],
     line_id: str | None = None,
     category: str = "heard",
@@ -35,7 +36,7 @@ def _family_word(text: str | None) -> str | None:
     return next((f"my {word}" for word in FAMILY_WORDS if text and word in text), None)
 
 
-def choose_lines(state: dict, npc: dict, action: str, slots: dict) -> list[tuple[str, str]]:
+def choose_lines(state: State, npc: Npc, action: str, slots: dict) -> list[tuple[str, str]]:
     """Up to two (line_id, text) choices for this action in voices that suit this person."""
     bank = LINES.get(action, {})
     tones = list(cast.card(npc).get("tones") or ["frightened"])
@@ -63,7 +64,7 @@ def choose_lines(state: dict, npc: dict, action: str, slots: dict) -> list[tuple
     return choices
 
 
-def slots(state: dict, npc: dict) -> dict:
+def slots(state: State, npc: Npc) -> dict:
     """Words the line bank fills in for this person: who was hurt, what was taken, their weapon.
     When they are the victim themselves the words are first person ("me", "mine")."""
     worst = reputation.worst_memory(npc)

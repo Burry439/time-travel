@@ -17,6 +17,7 @@ import persona
 import reputation
 import speech
 import tuning
+from shapes import Npc, State
 
 PLACES = content.PLACES
 GATE_GUARDS = ("npc_roderic_vale", "npc_bren_marr", "npc_oren_dast")
@@ -27,11 +28,11 @@ def place_name(place_id: str) -> str:
     return PLACES[place_id]["name"]
 
 
-def _village(state: dict) -> dict:
+def _village(state: State) -> dict:
     return state.setdefault("village", {"chatter_at": []})
 
 
-def free(state: dict, npc: dict) -> bool:
+def free(state: State, npc: Npc) -> bool:
     """Alive, not busy with something they decided, not face to face with the stranger, and not standing close
     enough to a conversation with the stranger to be listening to it (they may join it instead, D-48)."""
     if not npc.get("alive", True) or npc.get("down") or (npc.get("mind") or {}).get("job"):
@@ -42,12 +43,12 @@ def free(state: dict, npc: dict) -> bool:
     return not (encounter and cast.distance(npc, state["player"]) <= tuning.OVERHEAR_CELLS)
 
 
-def _world_holds(state: dict, condition: dict | None) -> bool:
+def _world_holds(state: State, condition: dict | None) -> bool:
     placed = (condition or {}).get("installed")
     return bool(state["objects"].get(placed, {}).get("installed_in")) if placed else True
 
 
-def tasks(state: dict, npc: dict) -> list[dict]:
+def tasks(state: State, npc: Npc) -> list[dict]:
     """The card's tasks that make sense in the world as it is (the beam once raised, and so on)."""
     return [
         t
@@ -56,13 +57,13 @@ def tasks(state: dict, npc: dict) -> list[dict]:
     ]
 
 
-def at_gate(npc: dict) -> bool:
+def at_gate(npc: Npc) -> bool:
     controller = npc.get("controller") or {}
     target = tuple(controller.get("destination") or (npc["x"], npc["y"]))
     return npc["x"] <= 56 and npc["x"] >= 40 and npc["y"] <= 20 and target[1] <= 20
 
 
-def gate_cover(state: dict, leaving: dict) -> int:
+def gate_cover(state: State, leaving: dict) -> int:
     """Gate guards who would still be at the gate if this one left."""
     return sum(
         1
@@ -71,7 +72,7 @@ def gate_cover(state: dict, leaving: dict) -> int:
     )
 
 
-def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
+def agenda_options(state: State, npc: Npc) -> dict[str, dict]:
     """Everything this person could sensibly do next with their day: {key: {description, plan}}."""
     name = npc["name"]
     bound = npc["id"] in GATE_GUARDS and gate_cover(state, npc) < tuning.MIN_GATE_GUARDS
@@ -195,7 +196,7 @@ def agenda_options(state: dict, npc: dict) -> dict[str, dict]:
     return options
 
 
-def good_news(npc: dict) -> dict | None:
+def good_news(npc: Npc) -> dict | None:
     """The latest good thing this person saw or was given from the stranger, clearly, worth passing on (D-53)."""
     good = [
         m
@@ -209,7 +210,7 @@ def good_news(npc: dict) -> dict | None:
     return good[-1] if good else None
 
 
-def _grievance(npc: dict) -> dict | None:
+def _grievance(npc: Npc) -> dict | None:
     """The most serious thing this person knows about the stranger that is worth telling someone."""
     serious = [
         m
@@ -219,7 +220,7 @@ def _grievance(npc: dict) -> dict | None:
     return max(serious, key=lambda m: m["severity"], default=None)
 
 
-def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
+def agenda_brief(state: State, npc: Npc, prefix: str = "") -> tuple[str, dict]:
     name = npc["name"]
     minutes = state.get("sim_time_ms", 0) // 60_000
     text = (
@@ -251,7 +252,7 @@ def agenda_brief(state: dict, npc: dict, prefix: str = "") -> tuple[str, dict]:
     return text, questions
 
 
-def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
+def apply_agenda(state: State, npc: Npc, answers: dict, now: int) -> dict:
     """Turn the chosen option into a plan: a walk somewhere, and what they're doing when they get there."""
     my_mind = cast.mind(npc)
     mood = (answers.get("mood") or {}).get("choice")
@@ -356,7 +357,7 @@ def apply_agenda(state: dict, npc: dict, answers: dict, now: int) -> dict:
     return {"npc_id": npc["id"], "agenda": choice, "mood": my_mind.get("mood"), "doing": my_mind.get("doing")}
 
 
-def schedule(state: dict, npcs: list[dict], now: int) -> None:
+def schedule(state: State, npcs: list[Npc], now: int) -> None:
     """The decider only when something happens (D-39): a free person whose mind is fresh (news, a memory, a storyline,
     the stranger coming into view) reconsiders their day. Otherwise the routine goes on by code. Also queues
     meetings for people who arrived on a visit or bumped into someone they know."""
@@ -410,7 +411,7 @@ def schedule(state: dict, npcs: list[dict], now: int) -> None:
                 _stop_to_talk(state, a, b, now)
 
 
-def _stop_to_talk(state: dict, a: dict, b: dict, now: int) -> None:
+def _stop_to_talk(state: State, a: dict, b: dict, now: int) -> None:
     """They fall into conversation: both stay where they are until it has been decided what they talk about."""
     cast.add_pending(state, a["id"], "meet", b["id"])
     for person, other in ((a, b), (b, a)):
@@ -428,7 +429,7 @@ def _told(a: dict, b: dict) -> list[str]:
     return cast.mind(a).setdefault("told", {}).setdefault(b["id"], [])
 
 
-def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
+def topics(state: State, a: dict, b: dict) -> dict[str, dict]:
     """What A could bring up with B: news B hasn't heard, the stranger, a worry, an opinion, small talk."""
     options: dict[str, dict] = {}
     told = _told(a, b)
@@ -481,14 +482,14 @@ def topics(state: dict, a: dict, b: dict) -> dict[str, dict]:
     return options
 
 
-def has_news(state: dict, a: dict, b: dict) -> bool:
+def has_news(state: State, a: dict, b: dict) -> bool:
     """Whether a meeting is worth asking the decider about: either has something to pass on (else it's a nod, by code)."""
     return bool(
         news_pick(state, a, b) or news_pick(state, b, a) or cast.mind(a).get("fresh") or cast.mind(b).get("fresh")
     )
 
 
-def news_pick(state: dict, a: dict, b: dict) -> str | None:
+def news_pick(state: State, a: dict, b: dict) -> str | None:
     """The most important thing A could pass on to B: the most serious news, else word of the stranger."""
     options = topics(state, a, b)
     news = sorted(
@@ -497,7 +498,7 @@ def news_pick(state: dict, a: dict, b: dict) -> str | None:
     return news[0] if news else ("stranger" if "stranger" in options else None)
 
 
-def chosen_topic(state: dict, a: dict, b: dict, answers: dict) -> str:
+def chosen_topic(state: State, a: dict, b: dict, answers: dict) -> str:
     """The decider's topic, unless A (as the decider believes) would pass on the news first: a yes/no is more reliable than
     hoping one important option wins a long choice (GDD M5 lesson)."""
     options = topics(state, a, b)
@@ -508,7 +509,7 @@ def chosen_topic(state: dict, a: dict, b: dict, answers: dict) -> str:
     return choice if choice in options else "small_talk"
 
 
-def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, dict]:
+def meet_brief(state: State, a: dict, b: dict, prefix: str = "") -> tuple[str, dict]:
     view_ab, view_ba = persona.opinions(a).get(b["id"]), persona.opinions(b).get(a["id"])
     text = (
         minds.situation(state, a) + f"\n\n{a['name']} has fallen into conversation with {b['name']}, the "
@@ -559,7 +560,7 @@ def meet_brief(state: dict, a: dict, b: dict, prefix: str = "") -> tuple[str, di
     return text, questions
 
 
-def near_stranger(state: dict, npc: dict, cells: float) -> bool:
+def near_stranger(state: State, npc: Npc, cells: float) -> bool:
     here = cast.player_cell(state)
     return (
         state["player"].get("alive", True)
@@ -568,12 +569,12 @@ def near_stranger(state: dict, npc: dict, cells: float) -> bool:
     )
 
 
-def chatter_allowed(state: dict, a: dict, now: int) -> bool:
+def chatter_allowed(state: State, a: dict, now: int) -> bool:
     recent = [t for t in _village(state)["chatter_at"] if now - t < 60_000]
     return near_stranger(state, a, tuning.SIGHT_CELLS) and len(recent) < tuning.CHATTER_PER_MINUTE
 
 
-def chatter_context(state: dict, a: dict, b: dict, topic: dict, answers: dict) -> dict:
+def chatter_context(state: State, a: dict, b: dict, topic: dict, answers: dict) -> dict:
     level = _level(answers)
     return {
         "speaker": {"name": a["name"], "role": cast.card(a)["role"], **persona.voice_sheet(state, a)},
@@ -605,7 +606,7 @@ def _believes(answers: dict) -> bool:
     return float((answers.get("believes") or {}).get("noul", 1.0)) >= 0.5
 
 
-def _pass_on(state: dict, teller: dict, listener: dict, topic: dict, believed: bool, now: int) -> None:
+def _pass_on(state: State, teller: Npc, listener: Npc, topic: dict, believed: bool, now: int) -> None:
     """News becomes the listener's memory ("told by"); word of the stranger becomes hearsay (and a name)."""
     if topic["kind"] == "news":
         memory = topic["memory"]
@@ -652,7 +653,7 @@ def _pass_on(state: dict, teller: dict, listener: dict, topic: dict, believed: b
             view["warmth"] = round(max(-1.0, min(1.0, view["warmth"] + (0.1 if topic["warmth"] > 0 else -0.1))), 2)
 
 
-def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str, str] | None, now: int) -> dict:
+def apply_meeting(state: State, a: dict, b: dict, answers: dict, lines: tuple[str, str] | None, now: int) -> dict:
     """Commit what was said: news or hearsay passes both ways, opinions shift, and the stranger may overhear."""
     options = topics(state, a, b)
     choice = chosen_topic(state, a, b, answers)
@@ -719,7 +720,7 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
 # --- Being told something (D-54): the listener's own reaction, voiced ------------------------------
 
 
-def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict]:
+def hearing_options(state: State, listener: Npc, teller: Npc) -> dict[str, dict]:
     """What the listener could do about what they were just told: {key: {description, plan}}. Code builds these;
     the voice picks one as that person."""
     name = listener["name"]
@@ -761,7 +762,7 @@ def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict
     return options
 
 
-def hearing_context(state: dict, listener: dict, teller: dict, message: str) -> dict:
+def hearing_context(state: State, listener: Npc, teller: Npc, message: str) -> dict:
     return {
         "teller": {"name": teller["name"], "role": cast.card(teller)["role"], **persona.voice_sheet(state, teller)},
         "listener": {
@@ -775,7 +776,7 @@ def hearing_context(state: dict, listener: dict, teller: dict, message: str) -> 
     }
 
 
-def fallback_hearing(listener: dict, teller: dict, message: str) -> dict:
+def fallback_hearing(listener: Npc, teller: Npc, message: str) -> dict:
     return {
         "teller_line": f"{listener['name']}, a word. {message}",
         "listener_line": "Is that so? I'll bear it in mind.",
@@ -786,7 +787,7 @@ def fallback_hearing(listener: dict, teller: dict, message: str) -> dict:
 
 
 def apply_hearing(
-    state: dict, listener: dict, teller: dict, message: str, result: dict, now: int, journal: list[dict]
+    state: State, listener: Npc, teller: Npc, message: str, result: dict, now: int, journal: list[dict]
 ) -> dict:
     """Both lines are said aloud (bubbles; overheard if the stranger is near); the listener's choice becomes their
     plan, carried out by code."""

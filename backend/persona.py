@@ -14,6 +14,7 @@ import math
 import cast
 import content
 import npc_sim
+from shapes import Npc, State
 
 MOODS = ["content", "cheerful", "weary", "irritable", "anxious", "excited", "grieving"]
 MOOD_WORDS = {m: m for m in MOODS}
@@ -22,7 +23,7 @@ EPISODES_KEPT = 6  # Past conversations kept as short summaries; older ones merg
 NEARBY_CELLS = 16
 
 
-def knows(npc: dict) -> dict:
+def knows(npc: Npc) -> dict:
     """What this person has gathered about the stranger over every conversation (and from others)."""
     return cast.mind(npc).setdefault(
         "knows",
@@ -39,11 +40,11 @@ def knows(npc: dict) -> dict:
     )
 
 
-def mood(npc: dict) -> str:
+def mood(npc: Npc) -> str:
     return cast.mind(npc).get("mood") or cast.card(npc).get("mood") or "content"
 
 
-def opinions(npc: dict) -> dict:
+def opinions(npc: Npc) -> dict:
     """How they feel about the people they know; starts from the card, shifts as people talk (D-37)."""
     my_mind = cast.mind(npc)
     if "opinions" not in my_mind:
@@ -65,15 +66,15 @@ def warmth_words(warmth: float) -> str:
     )
 
 
-def doing(npc: dict) -> str:
+def doing(npc: Npc) -> str:
     return cast.mind(npc).get("doing") or (npc.get("controller") or {}).get("goal") or "going about their day"
 
 
-def secrets(npc: dict) -> list[dict]:
+def secrets(npc: Npc) -> list[dict]:
     return cast.card(npc).get("secrets", [])
 
 
-def stranger_lines(state: dict, npc: dict) -> list[str]:
+def stranger_lines(state: State, npc: Npc) -> list[str]:
     """What this person remembers of the stranger, for either model."""
     name, memory = npc["name"], knows(npc)
     lines = []
@@ -92,13 +93,13 @@ def stranger_lines(state: dict, npc: dict) -> list[str]:
     return lines
 
 
-def current_talk(npc: dict) -> list[dict]:
+def current_talk(npc: Npc) -> list[dict]:
     """This conversation's turns (earlier conversations live on as episodes)."""
     since = knows(npc).get("since", 0)
     return [t for t in cast.mind(npc).get("talk", []) if t.get("at", 0) >= since]
 
 
-def nearby(state: dict, npc: dict) -> list[dict]:
+def nearby(state: State, npc: Npc) -> list[dict]:
     return [
         n
         for n in state["npcs"]
@@ -106,7 +107,7 @@ def nearby(state: dict, npc: dict) -> list[dict]:
     ]
 
 
-def opinion_lines(state: dict, npc: dict, people: list[dict] | None = None) -> list[str]:
+def opinion_lines(state: State, npc: Npc, people: list[dict] | None = None) -> list[str]:
     feelings = opinions(npc)
     lines = []
     for other in people if people is not None else nearby(state, npc):
@@ -125,7 +126,7 @@ def usual_place(npc_id: str) -> str | None:
     return min(content.PLACES.values(), key=lambda p: math.dist(p["cell"], (x, y)))["name"]
 
 
-def everyone_in_town(state: dict, npc: dict) -> list[str]:
+def everyone_in_town(state: State, npc: Npc) -> list[str]:
     """Everyone in a village this small knows everyone else (D-48): who they are and where they're usually found."""
     lines = []
     for other in state["npcs"]:
@@ -142,7 +143,7 @@ def everyone_in_town(state: dict, npc: dict) -> list[str]:
     return lines
 
 
-def sheet_lines(state: dict, npc: dict) -> list[str]:
+def sheet_lines(state: State, npc: Npc) -> list[str]:
     """The character sheet for the decider: who they are beyond their role, what they want, how they feel now."""
     me, name = cast.card(npc), npc["name"]
     lines = []
@@ -164,7 +165,7 @@ def sheet_lines(state: dict, npc: dict) -> list[str]:
     return lines
 
 
-def voice_sheet(state: dict, npc: dict) -> dict:
+def voice_sheet(state: State, npc: Npc) -> dict:
     """The same person, for the voice: how they sound, what they want and feel, who they know."""
     me = cast.card(npc)
     voice = me.get("voice") or {}

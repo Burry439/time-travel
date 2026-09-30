@@ -20,6 +20,7 @@ import paths
 import perception
 import reputation
 import tuning
+from shapes import Npc, State, Thing
 
 LOG_KEPT = 12
 SHIELD_BASH = {
@@ -40,38 +41,38 @@ ARM_REACH = gear.WEAPONS["fists"]["reach"]
 DOWN_AT = gear.COND["down_at"]
 
 
-def active(state: dict) -> dict | None:
+def active(state: State) -> dict | None:
     return state.get("fight") or None
 
 
-def fighting(state: dict, npc: dict) -> bool:
+def fighting(state: State, npc: Npc) -> bool:
     fight = active(state)
     return bool(fight) and npc["id"] in fight["attackers"]
 
 
-def down(npc: dict) -> bool:
+def down(npc: Npc) -> bool:
     return bool(npc.get("down")) or not npc.get("alive", True)
 
 
 # --- Who holds what --------------------------------------------------------------------------------------------
 
 
-def npc_weapon(state: dict, npc: dict) -> dict:
+def npc_weapon(state: State, npc: Npc) -> dict:
     """What this person fights with: the weapon in their hands, or their fists (never what their card began with)."""
     return gear.weapon(gear.weapon_in_hand(state, npc))
 
 
-def weapon_name(state: dict, npc: dict) -> str:
+def weapon_name(state: State, npc: Npc) -> str:
     obj = gear.weapon_in_hand(state, npc)
     return obj["name"] if obj else "fists"
 
 
-def _their(state: dict, npc: dict) -> str:
+def _their(state: State, npc: Npc) -> str:
     name = weapon_name(state, npc)
     return "bare fists" if name == "fists" else f"a {name}"
 
 
-def hand_use(state: dict, hand: str) -> tuple[dict, dict | None]:
+def hand_use(state: State, hand: str) -> tuple[dict, dict | None]:
     """What the stranger's hand does on its key: (profile, object). Fists when empty, a bash with a shield,
     a pour with a container of water, a throw with anything else that isn't made for fighting."""
     player = state["player"]
@@ -86,7 +87,7 @@ def hand_use(state: dict, hand: str) -> tuple[dict, dict | None]:
     return gear.weapon(obj), obj
 
 
-def hand_free(state: dict, hand: str) -> str | None:
+def hand_free(state: State, hand: str) -> str | None:
     """Why this hand can't strike now, or None."""
     player = state["player"]
     if not player.get("alive", True) or player.get("down"):
@@ -105,17 +106,17 @@ def hand_free(state: dict, hand: str) -> str | None:
 # --- Changes the clock carries (copy-on-write, so a tick's working state never touches the saved one) ---------
 
 
-def change_object(state: dict, object_id: str, **fields) -> None:
+def change_object(state: State, object_id: str, **fields) -> None:
     state["objects"][object_id] = {**state["objects"][object_id], **fields}
     state.setdefault("objects_changed", {}).setdefault(object_id, {}).update(fields)
 
 
-def add_object(state: dict, obj: dict) -> None:
+def add_object(state: State, obj: Thing) -> None:
     state["objects"][obj["id"]] = obj
     state.setdefault("objects_added", []).append(obj)
 
 
-def _log(state: dict, who: str, kind: str, text: str, now: int, journal: list[dict] | None = None) -> dict:
+def _log(state: State, who: str, kind: str, text: str, now: int, journal: list[dict] | None = None) -> dict:
     """The fight's own log (what the client shows as it happens); the journal gets it too when one is given."""
     fight = state.get("fight") or {"count": 0, "log": []}  # A blow outside a fight: journal only.
     entry = {"at": now, "who": who, "kind": kind, "text": text, "n": fight.get("count", 0) + 1}
@@ -129,7 +130,7 @@ def _log(state: dict, who: str, kind: str, text: str, now: int, journal: list[di
 # --- Starting and ending ---------------------------------------------------------------------------------------
 
 
-def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | None = None) -> dict | None:
+def start(state: State, npc_ids: list[str], now: int, why: str, lethal: bool | None = None) -> dict | None:
     """Bring these people into a fight with the stranger (starting one if needed). Talk is over. They fight to kill
     only after real violence or an assault on the gate they know of (or when told to); otherwise to subdue."""
     people = [n for n in (cast.find(state["npcs"], i) for i in dict.fromkeys(npc_ids)) if n and not down(n)]
@@ -175,7 +176,7 @@ def start(state: dict, npc_ids: list[str], now: int, why: str, lethal: bool | No
     return fight
 
 
-def responders(state: dict, perceptions: list[dict]) -> list[str]:
+def responders(state: State, perceptions: list[dict]) -> list[str]:
     """Who fights at once after the stranger's violence or an unbarred gate: guards who clearly saw it. Anyone else
     decides for themselves (the decider): the smith may pick up her hammer, the merchant runs."""
     ids = []
@@ -189,7 +190,7 @@ def responders(state: dict, perceptions: list[dict]) -> list[str]:
     return ids
 
 
-def gate_held_by(state: dict) -> dict | None:
+def gate_held_by(state: State) -> dict | None:
     """A guard close to the gate steps into the gap and stops anyone walking through an unbarred gate who hasn't
     been let in (D-42): the bar is only half the way in. Dead, downed or distant guards hold nothing."""
     if state.get("admitted"):
@@ -203,7 +204,7 @@ def gate_held_by(state: dict) -> dict | None:
 
 
 def end_spar(
-    state: dict, npc: dict | None, outcome: str, text: str, now: int, journal: list[dict] | None = None
+    state: State, npc: Npc | None, outcome: str, text: str, now: int, journal: list[dict] | None = None
 ) -> None:
     """A practice bout is over: won, lost or yielded. Nobody is arrested; a good showing earns some respect."""
     _log(
@@ -222,7 +223,7 @@ def end_spar(
     finish(state, now)
 
 
-def finish(state: dict, now: int) -> None:
+def finish(state: State, now: int) -> None:
     fight = active(state)
     if fight is None:
         return
@@ -236,7 +237,7 @@ def finish(state: dict, now: int) -> None:
 # --- The stranger acts: strike, shoot, throw, pour, guard, swap ------------------------------------------------
 
 
-def _ahead(state: dict, facing: list[float] | None, cells: float) -> list[float]:
+def _ahead(state: State, facing: list[float] | None, cells: float) -> list[float]:
     """The spot this many cells in front of the stranger (where a swing or throw at nobody goes)."""
     fx, fy = (facing or [0.0, 1.0])[:2]
     length = math.hypot(fx, fy) or 1.0
@@ -244,7 +245,7 @@ def _ahead(state: dict, facing: list[float] | None, cells: float) -> list[float]
     return [round(x + fx / length * cells, 2), round(y + fy / length * cells, 2)]
 
 
-def strike(state: dict, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
+def strike(state: State, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
     """Space (right) or F (left): start this hand's blow, shot, throw or pour. It lands after the wind-up, on the
     clock (tick), like anyone's. There is no fighting mode (D-51): anyone can swing at any time. Aimed at nobody,
     the blow goes where the stranger faces and hits whoever is there when it lands. Returns {ok, reason?, swing?}."""
@@ -292,7 +293,7 @@ def strike(state: dict, hand: str, target_id: str | None, now: int, facing: list
     }
 
 
-def throw(state: dict, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
+def throw(state: State, hand: str, target_id: str | None, now: int, facing: list[float] | None = None) -> dict:
     """Throw what's in a hand (a stone, a knife, a javelin): at someone, or as far as it goes the way the stranger
     faces. It leaves the hand."""
     player = state["player"]
@@ -320,7 +321,7 @@ def throw(state: dict, hand: str, target_id: str | None, now: int, facing: list[
     return {"ok": True}
 
 
-def withdraw(state: dict, npc_id: str, now: int) -> None:
+def withdraw(state: State, npc_id: str, now: int) -> None:
     """Someone stops attacking the stranger (talked down, or they've made their point); the rest fight on."""
     fight = active(state)
     if fight is None or npc_id not in fight["attackers"]:
@@ -342,7 +343,7 @@ def withdraw(state: dict, npc_id: str, now: int) -> None:
         finish(state, now)
 
 
-def guard(state: dict, raised: bool, facing: list[float] | None, now: int) -> dict:
+def guard(state: State, raised: bool, facing: list[float] | None, now: int) -> dict:
     """Hold a shield up (in whichever hand has one), facing a direction; or lower it."""
     player = state["player"]
     shield = next(
@@ -367,11 +368,11 @@ def _facing_blow(guard_state: dict, defender: tuple[float, float], attacker: tup
 # --- On the clock ----------------------------------------------------------------------------------------------
 
 
-def busy(state: dict) -> bool:
+def busy(state: State) -> bool:
     return bool(active(state) or (state["player"].get("swings")) or state.get("projectiles"))
 
 
-def tick(state: dict, npcs: list[dict], elapsed_ms: int, now: int, blocked: set, journal: list[dict]) -> None:
+def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: set, journal: list[dict]) -> None:
     """This stretch of time: the stranger's blows and missiles land; attackers close in, wind up, and their blows
     land or miss."""
     end = now + elapsed_ms
@@ -425,7 +426,7 @@ def tick(state: dict, npcs: list[dict], elapsed_ms: int, now: int, blocked: set,
         finish(state, end)
 
 
-def _npc_lands(state: dict, fight: dict, npc: dict, swing: dict, profile: dict, journal: list[dict]) -> None:
+def _npc_lands(state: State, fight: dict, npc: Npc, swing: dict, profile: dict, journal: list[dict]) -> None:
     """Their blow lands: a hit if the stranger is still within reach and not behind a raised shield facing it."""
     fight.setdefault("recover", {})[npc["id"]] = swing["lands_at"] + profile["recover_ms"]
     player = state["player"]
@@ -489,7 +490,7 @@ def _npc_lands(state: dict, fight: dict, npc: dict, swing: dict, profile: dict, 
     )
 
 
-def _wear_shield(state: dict, shield: dict | None, profile: dict) -> str:
+def _wear_shield(state: State, shield: dict | None, profile: dict) -> str:
     """A blow on a shield wears it; at nothing it splits."""
     if shield is None:
         return ""
@@ -511,7 +512,7 @@ def _wear_shield(state: dict, shield: dict | None, profile: dict) -> str:
     return ""
 
 
-def _player_swings(state: dict, npcs: list[dict], end: int, journal: list[dict]) -> None:
+def _player_swings(state: State, npcs: list[Npc], end: int, journal: list[dict]) -> None:
     player = state["player"]
     for hand, swing in sorted((player.get("swings") or {}).items(), key=lambda kv: kv[1]["lands_at"]):
         if end < swing["lands_at"]:
@@ -527,7 +528,7 @@ def _player_swings(state: dict, npcs: list[dict], end: int, journal: list[dict])
         player.setdefault("ready_at", {})[hand] = swing["lands_at"] + int(profile.get("recover_ms", 600))
 
 
-def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict]) -> None:
+def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict]) -> None:
     """The stranger's blow (or pour) lands on the one they aimed at, if they're still there; a blow aimed at
     nobody lands on whoever is now in front of them within reach, or on thin air."""
     at = swing["lands_at"]
@@ -601,7 +602,7 @@ def _player_lands(state: dict, npcs: list[dict], swing: dict, journal: list[dict
     _react(state, npc, result, swing, at)
 
 
-def _spar_instead(state: dict, npc: dict, at: int) -> None:
+def _spar_instead(state: State, npc: Npc, at: int) -> None:
     """In the tutorial, a blow at Kade while he's teaching is the bout, not an assault (D-53)."""
     if state.get("tutorial") and not active(state):
         import tutorial
@@ -609,7 +610,7 @@ def _spar_instead(state: dict, npc: dict, at: int) -> None:
         tutorial.spar_now(state, npc, at)
 
 
-def in_front(state: dict, npcs: list[dict], facing: list[float] | None, reach: float) -> dict | None:
+def in_front(state: State, npcs: list[Npc], facing: list[float] | None, reach: float) -> dict | None:
     """The nearest living person within reach on the side the stranger faces."""
     here = cast.player_cell(state)
     fx, fy = (facing or [0.0, 1.0])[:2]
@@ -627,7 +628,7 @@ def in_front(state: dict, npcs: list[dict], facing: list[float] | None, reach: f
     return best[1] if best else None
 
 
-def _blow_words(npc: dict, profile: dict, result: str, outcome: dict) -> str:
+def _blow_words(npc: Npc, profile: dict, result: str, outcome: dict) -> str:
     name, weapon = npc["name"], profile.get("name", "blow")
     if result == "killed":
         return f"Your {weapon} kills {name}."
@@ -647,7 +648,7 @@ def _blow_words(npc: dict, profile: dict, result: str, outcome: dict) -> str:
     )
 
 
-def _fell(npc: dict, result: str, now: int) -> None:
+def _fell(npc: Npc, result: str, now: int) -> None:
     if result == "killed" or not npc.get("alive", True):
         npc["alive"] = False
         (npc.get("controller") or {}).update(activity="dead", path=[], source="dead")
@@ -658,7 +659,7 @@ def _fell(npc: dict, result: str, now: int) -> None:
         (npc.get("controller") or {}).update(activity="down", source="down", path=[])
 
 
-def _react(state: dict, npc: dict, result: str, swing: dict, now: int) -> None:
+def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
     """In a fight: someone downed drops out; someone hit who wasn't fighting now is. Outside one: an assault that
     everyone who could see it remembers, and answers (D-39, D-41)."""
     fight = active(state)
@@ -697,7 +698,7 @@ def _react(state: dict, npc: dict, result: str, swing: dict, now: int) -> None:
     perception.apply_perceptions(state, perception.perceive(state, entry))
 
 
-def _launch(state: dict, swing: dict) -> None:
+def _launch(state: State, swing: dict) -> None:
     """A shot or throw leaves the hand: a missile flies to where they stood when it was aimed."""
     player = state["player"]
     hand, obj_id = swing["hand"], swing.get("object_id")
@@ -740,7 +741,7 @@ def _launch(state: dict, swing: dict) -> None:
     )
 
 
-def _missiles(state: dict, npcs: list[dict], end: int, journal: list[dict]) -> None:
+def _missiles(state: State, npcs: list[Npc], end: int, journal: list[dict]) -> None:
     flying = []
     for shot in state.get("projectiles") or []:
         if end < shot["lands_at"]:
@@ -750,7 +751,7 @@ def _missiles(state: dict, npcs: list[dict], end: int, journal: list[dict]) -> N
     state["projectiles"] = flying
 
 
-def _missile_lands(state: dict, npcs: list[dict], shot: dict, journal: list[dict]) -> None:
+def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict]) -> None:
     at, profile = shot["lands_at"], shot["profile"]
     npc = (
         cast.find(npcs, shot["target"])

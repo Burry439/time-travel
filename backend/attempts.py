@@ -14,6 +14,7 @@ import library
 import store
 from ai import config as ai_config
 from ai import illustrator, judge, telemetry
+from shapes import Thing
 
 ASSET_DIR = store.ROOT / "data" / "assets"
 ASSET_ID = re.compile(r"^spr_[0-9a-f]{8}_[a-z0-9_]+$")
@@ -98,7 +99,7 @@ def record_attempt(
 def queue_picture(
     connection: sqlite3.Connection,
     run_id: str,
-    obj: dict,
+    obj: Thing,
     view: str,
     asset_id: str,
     signature: str | None,
