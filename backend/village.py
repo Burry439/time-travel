@@ -497,3 +497,77 @@ def apply_meeting(state: dict, a: dict, b: dict, answers: dict, lines: tuple[str
     return {"npc_id": a["id"], "with": b["id"], "topic": choice, "about": topic["description"],
             "told_back": returned["description"] if returned else None,
             "believed": believed, "reaction": REACTION_LEVELS[level], "voiced": bool(lines), "learned": learned}
+
+
+# --- Being told something (D-54): the listener's own reaction, voiced ------------------------------
+
+def hearing_options(state: dict, listener: dict, teller: dict) -> dict[str, dict]:
+    """What the listener could do about what they were just told: {key: {description, plan}}. Code builds these;
+    the voice picks one as that person."""
+    name = listener["name"]
+    options = {"carry_on": {"description": f"{name} takes note and carries on with what they were doing.",
+                            "plan": {"kind": "carry_on"}}}
+    player = state["player"]
+    if player.get("alive", True) and not state.get("inside_city"):
+        steps = round(math.dist(minds.player_cell(state), minds._cell(listener)))
+        options["come_see"] = {"description": f"{name} goes over to see the stranger for themselves "
+                                              f"(about {steps} steps away).", "plan": {"kind": "come_see"}}
+        options["go_with"] = {"description": f"{name} goes with {teller['name']} to find the stranger.",
+                              "plan": {"kind": "go_with"}}
+    listeners = sorted((o for o in state["npcs"] if o["id"] not in (listener["id"], teller["id"])
+                        and o.get("alive", True) and not o.get("down")),
+                       key=lambda o: (not minds.is_family(listener, o["id"]),
+                                      persona.opinions(listener).get(o["id"], {}).get("warmth", 0.0) < 0.4,
+                                      not minds.card(o).get("guard"),
+                                      math.dist(minds._cell(o), minds._cell(listener))))
+    for other in listeners[:2]:
+        options[f"tell:{other['id']}"] = {
+            "description": f"{name} goes to pass it on to {minds.relation(listener, other['id']) or other['name']}.",
+            "plan": {"kind": "tell", "target": other["id"]}}
+    return options
+
+
+def hearing_context(state: dict, listener: dict, teller: dict, message: str) -> dict:
+    return {"teller": {"name": teller["name"], "role": minds.card(teller)["role"], **persona.voice_sheet(state, teller)},
+            "listener": {"name": listener["name"], "role": minds.card(listener)["role"],
+                         **persona.voice_sheet(state, listener),
+                         "what_they_know": [m["summary"] for m in minds.mind(listener)["memories"]][-8:]},
+            "message": message,
+            "listener_options": {k: o["description"] for k, o in hearing_options(state, listener, teller).items()}}
+
+
+def fallback_hearing(listener: dict, teller: dict, message: str) -> dict:
+    return {"teller_line": f"{listener['name']}, a word. {message}", "listener_line": "Is that so? I'll bear it in mind.",
+            "move": "carry_on", "pass_on_message": "", "remember": ""}
+
+
+def apply_hearing(state: dict, listener: dict, teller: dict, message: str, result: dict, now: int,
+                  journal: list[dict]) -> dict:
+    """Both lines are said aloud (bubbles; overheard if the stranger is near); the listener's choice becomes their
+    plan, carried out by code."""
+    minds._say(teller, result["teller_line"], now, state, journal)
+    minds._say(listener, result["listener_line"], now + 1, state, journal)
+    minds.mind(listener)["said"]["after_ms"] = 2200  # The answer comes a beat after (the bubbles, D-54).
+    if result.get("remember"):
+        known = persona.knows(listener)
+        known["notes"] = (known["notes"] + [result["remember"]])[-persona.NOTES_KEPT:]
+    options = hearing_options(state, listener, teller)
+    move = result.get("move") if result.get("move") in options else "carry_on"
+    plan = options[move]["plan"]
+    if plan["kind"] == "come_see":
+        minds._set_job(listener, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": None,
+                                  "line": None, "line_id": None}, now)
+        minds.mind(listener)["doing"] = "going to see the stranger"
+    elif plan["kind"] == "go_with":
+        for person in (listener, teller):
+            minds._set_job(person, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk",
+                                    "then": None, "line": None, "line_id": None}, now)
+            minds.mind(person)["doing"] = "going to see the stranger"
+    elif plan["kind"] == "tell":
+        words = result.get("pass_on_message") or message
+        minds._set_job(listener, {"kind": "tell", "target": plan["target"], "speed": "walk", "message": words,
+                                  "event": None}, now)
+        other = minds.find(state["npcs"], plan["target"])
+        minds.mind(listener)["doing"] = f"on the way to tell {other['name'] if other else 'someone'}"
+    return {"npc_id": listener["id"], "kind": "told", "teller": teller["id"], "move": move,
+            "lines": [result["teller_line"], result["listener_line"]]}

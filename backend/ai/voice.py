@@ -36,6 +36,8 @@ DEVICE_VERSION = "device_v1"  # The device from the future, answering the strang
 _DEVICE = (_PROMPTS / f"{DEVICE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 _CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
+HEARING_VERSION = "hearing_v1"  # Someone comes to tell someone something; the listener decides (D-54).
+_HEARING = (_PROMPTS / f"{HEARING_VERSION}.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
 
 
@@ -77,6 +79,14 @@ class Scene(BaseModel):
 class Episode(BaseModel):
     episode: str
     long_memory: str
+
+
+class Hearing(BaseModel):
+    teller_line: str
+    listener_line: str
+    listener_move: str
+    pass_on_message: str
+    remember: str
 
 
 class Chatter(BaseModel):
@@ -267,3 +277,18 @@ def chatter(context: dict, fallback: tuple[str, str], allowed: bool = True) -> t
         return call, fallback
     call.status = "ok"
     return call, (tidy(parsed.first_line), tidy(parsed.reply_line))
+
+
+def hearing(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceCall, dict]:
+    """Someone arrives to tell someone something (D-54): both their lines, and what the listener does about it
+    (one of the listener's options; code checks it). The written fallback: the message, a nod, and carry on."""
+    skipped = _unavailable("", allowed, HEARING_VERSION)
+    if skipped:
+        return skipped, fallback
+    call, parsed = _parse(_HEARING, context, Hearing, HEARING_VERSION)
+    if parsed is None or not parsed.teller_line.strip() or not parsed.listener_line.strip():
+        return call, fallback
+    call.status = "ok"
+    return call, {"teller_line": tidy(parsed.teller_line), "listener_line": tidy(parsed.listener_line),
+                  "move": parsed.listener_move.strip(), "pass_on_message": " ".join(parsed.pass_on_message.split())[:240],
+                  "remember": " ".join(parsed.remember.split())[:300]}

@@ -912,16 +912,22 @@ def _deliver_message(state: dict, npc: dict, target: dict, now: int, journal: li
     and may do something about it."""
     import persona
     message = job["message"]
-    _say(npc, f"{target['name']}, a word. {message}", now, state, journal)
+    if job.get("quiet"):  # The tutorial's errands: a written line, and only its story moves on.
+        _say(npc, f"{target['name']}, a word. {message}", now, state, journal)
     remember(target, {"kind": "told", "severity": 0, "by": npc["id"], "victim": None, "item": None,
                       "event": job.get("event"), "clarity": "told", "source": f"told_by:{npc['id']}", "at": now,
                       "summary": f"{npc['name']} came and told them: {message}", "short": f"heard about from {npc['name']}"})
     heard = persona.knows(target).setdefault("heard", [])
     heard.append({"from": npc["id"], "from_name": npc["name"], "text": message, "at": now})
     del heard[:-8]
-    if not job.get("quiet"):  # The tutorial's errands only move its story on.
-        mind(target)["rethinks"] = 0
-        add_pending(state, target["id"], "decide", f"told by {npc['name']}")
+    if not job.get("quiet"):  # They stop and talk; what's said, and what the listener does, is the voice's (D-54).
+        for person, other in ((npc, target), (target, npc)):
+            controller = person.get("controller") or {}
+            controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 12_000)
+            mind(person)["chatting_with"] = {"id": other["id"], "until": now + 12_000}
+        pending = state.setdefault("pending_minds", [])
+        pending[:] = [p for p in pending if not (p["npc_id"] == target["id"] and p["kind"] == "told")]
+        pending.append({"npc_id": target["id"], "kind": "told", "why": npc["id"], "message": message, "at": now})
 
 
 DEALT_WITH_MS = 60_000  # The stranger just talked to or showed something to a guard: nobody needs to halt them.

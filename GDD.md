@@ -186,6 +186,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
+| D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
 | D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
 | D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
 | D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
@@ -780,6 +781,8 @@ The player often needs things they don't own or skills they don't have. **Agreem
 > - **Agendas** (`backend/village.py`, D-37).
 >   - The decider asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
 >   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
+>   - **Being told something (D-54).** When someone arrives on an errand (`tell`), the two stop and talk. One voice call (`hearing_v1`) writes both lines, shown as bubbles (overheard in the journal if the stranger is near), and picks what the listener does, from options code builds: carry on, go and see the stranger, go with the teller to find them, or pass it on to someone else. Code carries it out, so news can travel from person to person on its own: Mara tells Kade, Kade comes to see.
+>   - **Errands last (D-54).** A word from the stranger in passing doesn't cancel someone's errand; they answer and go on their way. Over their head, a small label shows where they're going ("→ Kade", "→ you").
 >   - **Good news travels too (D-53).** Someone who clearly saw the stranger help, give or show something that worked may walk over and tell family, a friend or a guard (a `tell` errand: they say it aloud on arrival, and the listener remembers who told them).
 >   - The gate never drops below two guards.
 >   - The same errand isn't offered twice in a row.
@@ -2099,6 +2102,40 @@ Changes to this document: …
 **To watch:**
 
 - Whether villagers now pass news on too often, or at odd moments (the agenda decides; watch it in play).
+
+### Retro: people passing things on (D-54), 30 Sep 2026
+
+**Built:**
+
+- `talk.ERRAND_JOBS`: errands survive exchanges.
+- `minds._deliver_message` queues a `told` thought; `village.hearing_options`, `hearing_context` and `apply_hearing`; `voice.hearing` with `hearing_v1`; the think route handles `told`.
+- `minds._describe`: making something in view is a demonstration.
+- Client: the reply bubble comes a beat after the teller's; errand labels over heads.
+- `evals/run_hearing_live.py`.
+
+**Evidence:**
+
+- 217 backend tests pass. New:
+  - an errand survives the next line;
+  - a fire made in front of Jory is a clear demonstration;
+  - arriving with news queues the listener's reaction;
+  - Kade can go and see the stranger;
+  - a move not offered is just carrying on.
+- All Godot smoke tests pass on stub.
+- **Live hearing, 6/6:**
+  - Jory telling Kade about the fire: Kade, who distrusts cleverness, says "Hm. Keep clear of him." and carries on;
+  - Mara telling Kade about the burn: Kade goes to see ("Hm. I'll see what their hands can do.");
+  - Hessa telling Roderic about Tomas's rope: once he comes to question the stranger, once he'll ask Tomas first.
+
+**Lessons:**
+
+- The bug that looked like "NPCs don't act" was one line resetting a job. Check the traces before redesigning.
+- Two short lines between people, in their own voices, do more for a living village than any hidden decision.
+
+**To watch:**
+
+- Roderic said he'd speak to Tomas first, but "pass it on to" offered only the two nearest people. The listener's options may need anyone named in the message.
+- The crash the player saw couldn't be reproduced from the saved journey (no crash record, no error in the log). If it happens again, running from the editor with Ziva connected will show the error.
 
 ---
 

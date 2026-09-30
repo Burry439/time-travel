@@ -118,3 +118,36 @@ def test_watching_something_made_counts_as_being_shown_it():
     minds.apply_perceptions(state, minds.perceive(state, entry))
     seen = [m for m in npc(state, "npc_jory_venn")["mind"]["memories"] if m["kind"] == "demonstration"]
     assert seen and seen[-1]["clarity"] == "clear" and "small fire" in seen[-1]["summary"]
+
+
+def test_arriving_with_news_stops_them_both_and_the_listener_reacts():
+    """D-54: on arrival the two stop and talk; the voice words both lines and picks what the listener does, from
+    options code built; code carries it out (here Kade goes to see the stranger)."""
+    import village
+    state = unit_state()
+    talk.exchange(state, "npc_jory_venn", "Tell Kade?", {}, "go_tell", "I'll go.", [], errand_to="npc_kade_east",
+                  errand_message="The stranger made fire from a nail and a flint.")
+    for _ in range(120):
+        advance(state, 1000)
+        if any(p["kind"] == "told" for p in state.get("pending_minds", [])):
+            break
+    pending = next(p for p in state["pending_minds"] if p["kind"] == "told")
+    assert pending["npc_id"] == "npc_kade_east" and pending["why"] == "npc_jory_venn" and "fire" in pending["message"]
+    kade, jory = npc(state, "npc_kade_east"), npc(state, "npc_jory_venn")
+    options = village.hearing_options(state, kade, jory)
+    assert {"carry_on", "come_see", "go_with"} <= set(options)
+    record = village.apply_hearing(state, kade, jory, pending["message"],
+                                   {"teller_line": "Kade! You'll want to see this.", "listener_line": "Fire? Show me.",
+                                    "move": "come_see", "pass_on_message": "", "remember": ""}, 0, state["journal"])
+    assert record["move"] == "come_see" and kade["mind"]["job"]["kind"] == "approach"
+    assert kade["mind"]["said"]["text"] == "Fire? Show me." and jory["mind"]["said"]["text"].startswith("Kade!")
+
+
+def test_a_move_the_listener_was_not_offered_is_just_carrying_on():
+    import village
+    state = unit_state()
+    kade, jory = npc(state, "npc_kade_east"), npc(state, "npc_jory_venn")
+    record = village.apply_hearing(state, kade, jory, "news", {"teller_line": "a", "listener_line": "b",
+                                                               "move": "admit", "pass_on_message": "",
+                                                               "remember": ""}, 0, state["journal"])
+    assert record["move"] == "carry_on" and not (kade.get("mind") or {}).get("job")

@@ -11,6 +11,7 @@ var npc_id := ""
 var clock := 0.0
 var signs: Array[String] = []
 var health := 100.0
+var heading := "" # Where they're off to and why, in a word (D-54): "→ Kade", "→ you".
 
 
 func _process(delta: float) -> void:
@@ -40,12 +41,36 @@ func _process(delta: float) -> void:
 			next.append("alarmed") # Frightened or angry: something just happened to them.
 		if float(game.warm_until.get(npc_id, 0.0)) > Time.get_ticks_msec() / 1000.0:
 			next.append("warm")
-	if next != signs or not signs.is_empty() or health < 100.0:
+	var going := _heading(npc)
+	if next != signs or not signs.is_empty() or health < 100.0 or going != heading:
 		signs = next
+		heading = going
 		queue_redraw()
 
 
+## An errand in a word: who they're going to, if anyone.
+func _heading(npc: Dictionary) -> String:
+	if npc.is_empty() or not npc.get("alive", true) or npc.get("down", false):
+		return ""
+	var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
+	var job = their_mind.get("job")
+	if typeof(job) != TYPE_DICTIONARY:
+		return ""
+	var target := str(job.get("target", ""))
+	match str(job.get("kind", "")):
+		"tell", "vouch", "report":
+			return "→ " + str(game.ui.npc_record(target).get("name", "someone"))
+		"approach":
+			return "→ you" if target == "player" and job.get("then") == null else ""
+	return ""
+
+
 func _draw() -> void:
+	if not heading.is_empty():
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size(heading, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		draw_rect(Rect2(-width * 0.5 - 5, -44, width + 10, 17), Color(UITheme.PARCHMENT, 0.92))
+		draw_string(font, Vector2(-width * 0.5, -31), heading, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(UITheme.INK, 0.95))
 	if health < 100.0:
 		draw_rect(Rect2(-20, 2, 40, 5), Color(0.1, 0.06, 0.03, 0.8))
 		draw_rect(Rect2(-19, 3, 38 * clampf(health / 100.0, 0, 1), 3),
