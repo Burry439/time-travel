@@ -17,6 +17,7 @@ wander off) while anyone is there about a crime or halting them at the gate; a g
 friendly conversation doesn't make it hostile. The whole round is one event. The encounter ends when
 everyone in it has gone or died, the stranger walks away, the stranger dies, or they are let in.
 """
+
 from __future__ import annotations
 
 import copy
@@ -34,12 +35,18 @@ SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LEAVE_MS = 1_000  # Walking away takes a moment.
 LOG_KEPT = 30
 HOSTILE_PURPOSES = ("halt", "confront", "threaten", "demand_payment")
-REASON_WORDS = {"halt": "a guard stopped the stranger at the gate", "confront": "they confronted the stranger",
-                "threaten": "they came to threaten the stranger", "demand_payment": "they came to demand payment",
-                "talk": "the stranger spoke to them", "joined": "they joined the conversation"}
+REASON_WORDS = {
+    "halt": "a guard stopped the stranger at the gate",
+    "confront": "they confronted the stranger",
+    "threaten": "they came to threaten the stranger",
+    "demand_payment": "they came to demand payment",
+    "talk": "the stranger spoke to them",
+    "joined": "they joined the conversation",
+}
 
 
 # --- Opening, joining and ending ------------------------------------------------------------------
+
 
 def active(state: dict) -> dict | None:
     return state.get("encounter") or None
@@ -52,8 +59,9 @@ def purpose(encounter: dict, npc_id: str) -> str:
 
 def _reason(encounter: dict) -> str:
     """The encounter's overall character: the first hostile purpose among those present, else a talk."""
-    return next((purpose(encounter, n) for n in encounter["participants"]
-                 if purpose(encounter, n) in HOSTILE_PURPOSES), "talk")
+    return next(
+        (purpose(encounter, n) for n in encounter["participants"] if purpose(encounter, n) in HOSTILE_PURPOSES), "talk"
+    )
 
 
 def hostile(state: dict) -> bool:
@@ -76,16 +84,27 @@ def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dic
     encounter = active(state)
     if encounter is None:
         encounter = state["encounter"] = {
-            "id": f"enc_{state.get('event_seq', 0) + 1}_{npc['id'][4:]}", "participants": [], "purpose": {},
-            "opened_by": npc["id"] if reason != "talk" else "player", "reason": reason, "round": 1, "log": [],
-            "started_at": now}
+            "id": f"enc_{state.get('event_seq', 0) + 1}_{npc['id'][4:]}",
+            "participants": [],
+            "purpose": {},
+            "opened_by": npc["id"] if reason != "talk" else "player",
+            "reason": reason,
+            "round": 1,
+            "log": [],
+            "started_at": now,
+        }
     elif reason == "halt":
         reason, line = "joined", None  # Already in a conversation: they step over and listen, no "Halt!".
     if npc["id"] not in encounter["participants"]:
         encounter["participants"].append(npc["id"])
         encounter.setdefault("purpose", {})[npc["id"]] = reason
-        words = (f"{npc['name']}: “{line}”" if line else f"{npc['name']} steps over." if reason == "joined"
-                 else f"{npc['name']} faces you.")
+        words = (
+            f"{npc['name']}: “{line}”"
+            if line
+            else f"{npc['name']} steps over."
+            if reason == "joined"
+            else f"{npc['name']} faces you."
+        )
         _log(encounter, npc["id"], "arrive", words)
     elif reason in HOSTILE_PURPOSES:
         encounter.setdefault("purpose", {})[npc["id"]] = reason  # Came back about something serious.
@@ -93,8 +112,9 @@ def join(state: dict, npc: dict, reason: str, line: str | None, now: int) -> dic
     if reason != "talk" and not combat.fighting(state, npc):  # An attacker keeps attacking while they talk.
         minds._set_job(npc, {"kind": "encounter"}, now)
     # Face to face, people act in the scene: they don't also stop to think about what they saw.
-    state["pending_minds"] = [p for p in state.get("pending_minds", [])
-                              if not (p["npc_id"] == npc["id"] and p["kind"] == "decide")]
+    state["pending_minds"] = [
+        p for p in state.get("pending_minds", []) if not (p["npc_id"] == npc["id"] and p["kind"] == "decide")
+    ]
     return encounter
 
 
@@ -152,8 +172,10 @@ def open_for_talk(state: dict, npc: dict, now: int) -> dict:
 
 # --- Resolving the stranger's part of a round ------------------------------------------------------
 
-def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service_error: str | None,
-            trace_id: str) -> tuple[dict, dict]:
+
+def resolve(
+    state: dict, run_id: str, action: dict, judged: dict | None, service_error: str | None, trace_id: str
+) -> tuple[dict, dict]:
     """The stranger's part of a round, on a copy of the world. Returns (draft world, round record: log entries,
     who was addressed, effort, what happened in words). The scene's replies and time passing come after."""
     draft = copy.deepcopy(state)
@@ -162,10 +184,19 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         open_for_talk(draft, minds.find(draft["npcs"], action["target_id"]), now)
     encounter = draft["encounter"]
     kind, text = action["kind"], action.get("text", "")
-    record = {"round": encounter["round"], "entries": [], "effort_seconds": 0, "entry": None, "replier": None,
-              "fighting": bool(combat.active(draft)),
-              "happened": [], "walked_away": False, "verdict": None, "seized_by": None,
-              "cues_before": {n["id"]: ((n.get("mind") or {}).get("cue") or {}).get("key") for n in draft["npcs"]}}
+    record = {
+        "round": encounter["round"],
+        "entries": [],
+        "effort_seconds": 0,
+        "entry": None,
+        "replier": None,
+        "fighting": bool(combat.active(draft)),
+        "happened": [],
+        "walked_away": False,
+        "verdict": None,
+        "seized_by": None,
+        "cues_before": {n["id"]: ((n.get("mind") or {}).get("cue") or {}).get("key") for n in draft["npcs"]},
+    }
 
     def note(who, entry_kind, words, seen=None):
         record["entries"].append(_log(encounter, who, entry_kind, words, seen))
@@ -181,12 +212,17 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         note("player", "leave", "You turn and walk away.", "The stranger turns and walks away.")
     elif kind == "yield":
         note("player", "yield", "You raise your hands and give yourself up.", "The stranger surrenders.")
-        guard = next((n for n in encounter["participants"] if minds.card(minds.find(draft["npcs"], n)).get("guard")),
-                     None)
+        guard = next(
+            (n for n in encounter["participants"] if minds.card(minds.find(draft["npcs"], n)).get("guard")), None
+        )
         if guard:  # A guard takes the surrender: an arrest.
             record["seized_by"] = guard
-            note(guard, "seize", f"{minds.find(draft['npcs'], guard)['name']} takes you by the arm.",
-                 "A guard took the stranger into custody.")
+            note(
+                guard,
+                "seize",
+                f"{minds.find(draft['npcs'], guard)['name']} takes you by the arm.",
+                "A guard took the stranger into custody.",
+            )
     elif kind == "do":
         payload, verdict, _ = crafting.resolve_attempt(draft, run_id, text, judged, service_error, trace_id, now)
         crafting.apply_payload(draft, payload)
@@ -197,19 +233,32 @@ def resolve(state: dict, run_id: str, action: dict, judged: dict | None, service
         minds.apply_perceptions(draft, perceptions)
         minds.after_deed(draft, entry)
         inside = set(encounter["participants"])
-        draft["pending_minds"] = [p for p in draft.get("pending_minds", [])
-                                  if not (p["npc_id"] in inside and p["kind"] == "decide")]
-        seen = next((p["memory"]["summary"] for p in perceptions
-                     if p["npc_id"] in inside and p["memory"].get("clarity") != "vague"), None)
+        draft["pending_minds"] = [
+            p for p in draft.get("pending_minds", []) if not (p["npc_id"] in inside and p["kind"] == "decide")
+        ]
+        seen = next(
+            (
+                p["memory"]["summary"]
+                for p in perceptions
+                if p["npc_id"] in inside and p["memory"].get("clarity") != "vague"
+            ),
+            None,
+        )
         note("player", "do", entry["reason"], seen or f"The stranger tried to: “{talk.clean(text)}”")
     if record["walked_away"] and draft["player"].get("alive", True):
         _walked_off(draft, encounter, now, journal, note)
     draft["journal"].extend(journal)
-    encounter["participants"] = [n for n in encounter["participants"]
-                                 if (npc := minds.find(draft["npcs"], n)) and npc.get("alive", True)]
+    encounter["participants"] = [
+        n for n in encounter["participants"] if (npc := minds.find(draft["npcs"], n)) and npc.get("alive", True)
+    ]
     # Who is addressed: the person named, else whoever opened the conversation, else the first there.
-    target = action.get("target_id") if action.get("target_id") in encounter["participants"] else next(
-        (n for n in [encounter["opened_by"]] + encounter["participants"] if n in encounter["participants"]), None)
+    target = (
+        action.get("target_id")
+        if action.get("target_id") in encounter["participants"]
+        else next(
+            (n for n in [encounter["opened_by"]] + encounter["participants"] if n in encounter["participants"]), None
+        )
+    )
     if target and draft["player"].get("alive", True) and not record["walked_away"] and not record["seized_by"]:
         record["replier"] = target
     return draft, record
@@ -232,8 +281,12 @@ def _walked_off(draft: dict, encounter: dict, now: int, journal: list[dict], not
             continue
         if minds.card(npc).get("guard"):
             combat.start(draft, [who], now, "chase")
-            note(who, "chase", f"{npc['name']}: “Stop right there!” {npc['name']} comes after you.",
-                 f"The stranger walked off from {npc['name']}, who gave chase.")
+            note(
+                who,
+                "chase",
+                f"{npc['name']}: “Stop right there!” {npc['name']} comes after you.",
+                f"The stranger walked off from {npc['name']}, who gave chase.",
+            )
         elif who not in (encounter.get("shouted") or []):
             encounter.setdefault("shouted", []).append(who)
             words = "Guards! Stop that one!"
@@ -248,22 +301,33 @@ def finish(draft: dict, record: dict, now: int, reply: dict | list | None = None
     lines = [reply] if isinstance(reply, dict) else reply or []
     if encounter is None:  # e.g. someone attacked: words are over, and a fight is on.
         for said in lines:
-            record["entries"].append({"round": record["round"], "who": said["npc_id"], "kind": said.get("kind", "reply"),
-                                      "text": f"{said['name']}: “{said['line']}”"})
+            record["entries"].append(
+                {
+                    "round": record["round"],
+                    "who": said["npc_id"],
+                    "kind": said.get("kind", "reply"),
+                    "text": f"{said['name']}: “{said['line']}”",
+                }
+            )
         record["ended"] = True
         return
     for said in lines:
-        record["entries"].append(_log(encounter, said["npc_id"], said.get("kind", "reply"),
-                                      f"{said['name']}: “{said['line']}”"))
+        record["entries"].append(
+            _log(encounter, said["npc_id"], said.get("kind", "reply"), f"{said['name']}: “{said['line']}”")
+        )
     for npc_id in encounter["participants"]:  # How someone's view of the stranger shifted, as they'd show it.
-        cue = (minds.mind(minds.find(draft["npcs"], npc_id)).get("cue") or {})
+        cue = minds.mind(minds.find(draft["npcs"], npc_id)).get("cue") or {}
         if cue and cue.get("key") != record.get("cues_before", {}).get(npc_id):
             record["entries"].append(_log(encounter, npc_id, "cue", cue["text"]))
     if record.get("seized_by") and draft["player"].get("alive", True):
         arrest(draft, record, now)
         return
-    over = (record["walked_away"] or not draft["player"].get("alive", True) or bool(draft.get("admitted"))
-            or not encounter["participants"])
+    over = (
+        record["walked_away"]
+        or not draft["player"].get("alive", True)
+        or bool(draft.get("admitted"))
+        or not encounter["participants"]
+    )
     if over:
         end(draft, now, walked_away=record["walked_away"])
         record["ended"] = True
@@ -287,20 +351,31 @@ def arrest_player(state: dict, guard: dict, now: int) -> str:
             returned.append(obj["name"])
     state["player"].update(x=SOUTH_ROAD[0], y=SOUTH_ROAD[1])
     state["barred_until"] = now + BARRED_MS
-    words = (f"{guard['name']} and the guards march you back down the south road"
-             + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
-             + ". You're not welcome at the gate for a while.")
+    words = (
+        f"{guard['name']} and the guards march you back down the south road"
+        + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
+        + ". You're not welcome at the gate for a while."
+    )
     state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
     minds.settle(state, "paid for with an arrest")  # The thefts are answered for (violence is not, D-46).
     captain = minds.find(state["npcs"], talk.CAPTAIN)
     if captain and captain.get("alive", True) and not captain.get("down"):
-        minds.remember(captain, {"kind": "arrest", "severity": 1, "victim": None, "item": None,
-                                 "event": state.get("event_seq", 0) + 1, "clarity": "told", "at": now,
-                                 "source": f"told_by:{guard['id']}",
-                                 "summary": f"{guard['name']} seized the stranger and marched them off down the south "
-                                            f"road" + (f", taking back the {', the '.join(returned)}" if returned
-                                                       else "") + ".",
-                                 "short": "was arrested by the guards"})
+        minds.remember(
+            captain,
+            {
+                "kind": "arrest",
+                "severity": 1,
+                "victim": None,
+                "item": None,
+                "event": state.get("event_seq", 0) + 1,
+                "clarity": "told",
+                "at": now,
+                "source": f"told_by:{guard['id']}",
+                "summary": f"{guard['name']} seized the stranger and marched them off down the south "
+                f"road" + (f", taking back the {', the '.join(returned)}" if returned else "") + ".",
+                "short": "was arrested by the guards",
+            },
+        )
     return words
 
 

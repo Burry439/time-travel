@@ -1,20 +1,33 @@
 """A fair baseline (GDD D-46), from the user's own games: favours aren't thefts, grudges can end, guards only arrest
 for a real crime not put right, words alone can't sour someone without limit, and no second decision per round."""
-import encounter
-import minds
-import talk
+
 from test_craft import commit, judged
 from test_encounter import face_to_face, play
 from test_talk import npc, said, unit_state
+
+import encounter
+import minds
+import talk
 
 
 def rope_theft(state):
     """Tomas's rope, taken; Tomas saw it and told Kade."""
     state["objects"]["rope_tomas"]["holder_id"] = "player"
     for who, source in (("npc_tomas_reed", "victim"), ("npc_kade_east", "told_by:npc_tomas_reed")):
-        minds.remember(npc(state, who), {"kind": "theft", "severity": 2, "event": 5, "clarity": "clear",
-                                         "victim": "npc_tomas_reed", "item": "coil of rope", "source": source,
-                                         "summary": "The stranger took Tomas's coil of rope.", "short": "stole the rope"})
+        minds.remember(
+            npc(state, who),
+            {
+                "kind": "theft",
+                "severity": 2,
+                "event": 5,
+                "clarity": "clear",
+                "victim": "npc_tomas_reed",
+                "item": "coil of rope",
+                "source": source,
+                "summary": "The stranger took Tomas's coil of rope.",
+                "short": "stole the rope",
+            },
+        )
 
 
 def test_fetching_water_from_her_trough_is_not_theft():
@@ -52,7 +65,9 @@ def test_forgiving_settles_their_own_grudge():
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
     assert "forgive" in talk.moves(state, tomas)
     state["event_seq"] = 9
-    talk.exchange(state, tomas["id"], "I'm sorry. I'll make it right.", said("forgive"), "forgive", "Fine. Let it go.", [])
+    talk.exchange(
+        state, tomas["id"], "I'm sorry. I'll make it right.", said("forgive"), "forgive", "Fine. Let it go.", []
+    )
     assert minds.unresolved_crime(tomas) is None
     assert minds.unresolved_crime(npc(state, "npc_kade_east")) is not None  # Kade still has his own view.
 

@@ -1,18 +1,19 @@
-﻿"""Real-time fights (GDD D-41, D-49): no rounds, no dice. Blows land if you're still in reach when the wind-up
+"""Real-time fights (GDD D-41, D-49): no rounds, no dice. Blows land if you're still in reach when the wind-up
 ends; what they do is the weapon against the armour (gear.json); code keeps the armour law over the judge."""
+
 import copy
 
 import pytest
+from test_craft import commit, judged
+from test_encounter import post, world  # noqa: F401
+from test_heat import bowl_of_water, change
+from test_talk import npc, unit_state
 
 import combat
 import crafting
 import gear
 import minds
 import village
-from test_craft import commit, judged
-from test_encounter import post, world  # noqa: F401
-from test_heat import bowl_of_water, change
-from test_talk import npc, unit_state
 
 
 @pytest.fixture(autouse=True)
@@ -55,10 +56,23 @@ def swing(state, target, hand="right", ms=500):
 
 def arm(state, oid, name, materials, mass, cls, hand="right", length=None, flags=("rigid",), kind="weapon"):
     """Put a thing in the stranger's hand."""
-    state["objects"][oid] = {"id": oid, "name": name, "materials": materials, "mass_kg": mass, "length_m": length,
-                             "flags": list(flags), "holder_id": "player", "capabilities": ["carry"], "bound_to": [],
-                             "water_l": 0.0, "capacity_l": 0.0, "condition": "usable", "x": 0, "y": 0,
-                             "gear": {"kind": kind, "class": cls, "covers": [], "quality": "fair"}}
+    state["objects"][oid] = {
+        "id": oid,
+        "name": name,
+        "materials": materials,
+        "mass_kg": mass,
+        "length_m": length,
+        "flags": list(flags),
+        "holder_id": "player",
+        "capabilities": ["carry"],
+        "bound_to": [],
+        "water_l": 0.0,
+        "capacity_l": 0.0,
+        "condition": "usable",
+        "x": 0,
+        "y": 0,
+        "gear": {"kind": kind, "class": cls, "covers": [], "quality": "fair"},
+    }
     assert gear.equip(state, state["player"], state["objects"][oid], hand)["ok"]
     return state["objects"][oid]
 
@@ -143,8 +157,16 @@ def test_it_ends_when_every_attacker_is_down_or_the_stranger_gets_away():
 
 def test_an_iron_sword_in_hand_cuts_the_unarmoured_and_mail_turns_it():
     state = open_ground(unit_state(), "npc_darin_ko", "npc_bren_marr")
-    arm(state, "sword_test", "iron sword", ["iron", "wood"], 1.3, "long_sword", length=1.0,
-        flags=("rigid", "sharp_edge"))
+    arm(
+        state,
+        "sword_test",
+        "iron sword",
+        ["iron", "wood"],
+        1.3,
+        "long_sword",
+        length=1.0,
+        flags=("rigid", "sharp_edge"),
+    )
     swing(state, "npc_darin_ko")  # He wasn't expecting it: twice as bad.
     assert not npc(state, "npc_darin_ko")["alive"]
     state["sim_time_ms"] += 2000
@@ -172,13 +194,15 @@ def test_a_raised_shield_takes_blows_from_the_front_but_not_behind():
 
 def test_two_handed_weapons_take_both_hands_and_x_swaps():
     state = unit_state()
-    spear = arm(state, "pike_test", "long spear", ["wood", "iron"], 3.0, "long_spear", length=3.0,
-                flags=("rigid", "sharp_edge"))
+    spear = arm(
+        state, "pike_test", "long spear", ["wood", "iron"], 3.0, "long_spear", length=3.0, flags=("rigid", "sharp_edge")
+    )
     kit = state["player"]["equipped"]
     assert kit["right"] == kit["left"] == spear["id"]
     assert combat.hand_free(state, "left")
-    knife = arm(state, "knife_test", "knife", ["iron"], 0.3, "knife", hand="left", length=0.25,
-                flags=("rigid", "sharp_edge"))
+    knife = arm(
+        state, "knife_test", "knife", ["iron"], 0.3, "knife", hand="left", length=0.25, flags=("rigid", "sharp_edge")
+    )
     assert kit.get("right") is None and kit["left"] == knife["id"]  # The pike had to go.
     assert gear.swap_hands(state, state["player"])["ok"] and kit["right"] == knife["id"]
 
@@ -188,11 +212,23 @@ def test_an_arrow_flies_hits_and_lands_where_it_can_be_picked_up():
     tomas = npc(state, "npc_tomas_reed")
     tomas.update(x=48, y=52)
     arm(state, "bow_test", "bow", ["yew", "sinew"], 0.8, "bow", flags=("flexible",))
-    state["objects"]["arrows_test"] = {"id": "arrows_test", "name": "arrows", "materials": ["wood", "iron", "feather"],
-                                       "mass_kg": 0.6, "flags": ["rigid", "sharp_edge"], "holder_id": "player",
-                                       "capabilities": ["carry"], "bound_to": [], "water_l": 0.0, "capacity_l": 0.0,
-                                       "condition": "usable", "x": 0, "y": 0, "count": 6,
-                                       "gear": {"kind": "ammo", "class": "arrow", "covers": [], "quality": "fair"}}
+    state["objects"]["arrows_test"] = {
+        "id": "arrows_test",
+        "name": "arrows",
+        "materials": ["wood", "iron", "feather"],
+        "mass_kg": 0.6,
+        "flags": ["rigid", "sharp_edge"],
+        "holder_id": "player",
+        "capabilities": ["carry"],
+        "bound_to": [],
+        "water_l": 0.0,
+        "capacity_l": 0.0,
+        "condition": "usable",
+        "x": 0,
+        "y": 0,
+        "count": 6,
+        "gear": {"kind": "ammo", "class": "arrow", "covers": [], "quality": "fair"},
+    }
     assert gear.equip(state, state["player"], state["objects"]["arrows_test"], "ammo")["ok"]
     assert combat.strike(state, "right", "npc_tomas_reed", 0)["ok"]
     for _ in range(6):
@@ -220,25 +256,55 @@ def test_bleeding_goes_on_after_the_fight_and_can_kill():
 
 # --- The first strike: judged physics, with the armour law --------------------------------------
 
+
 def test_a_wooden_spear_glances_off_mail_but_kills_an_unarmoured_man():
-    spear = {"name": "sharpened stake", "description": "A pointed stake.", "materials": ["wood"], "mass_kg": 1.2,
-             "flags": ["rigid", "sharp_edge"], "length_m": 1.0}
+    spear = {
+        "name": "sharpened stake",
+        "description": "A pointed stake.",
+        "materials": ["wood"],
+        "mass_kg": 1.2,
+        "flags": ["rigid", "sharp_edge"],
+        "length_m": 1.0,
+    }
     state = unit_state()
     guard = npc(state, "npc_bren_marr")
     state["player"].update(x=guard["x"], y=guard["y"] + 1)
     state["objects"]["branch_a"].update(holder_id="player", **spear)
     state["objects"]["branch_a"].pop("gear", None)  # (Now a stake: code reads it afresh.)
-    summary = commit(state, judged("harm", harm={"target_id": "npc_bren_marr", "weapon_id": "branch_a",
-                                                 "method": "melee", "result": "killed", "injury": "run through"}))
+    summary = commit(
+        state,
+        judged(
+            "harm",
+            harm={
+                "target_id": "npc_bren_marr",
+                "weapon_id": "branch_a",
+                "method": "melee",
+                "result": "killed",
+                "injury": "run through",
+            },
+        ),
+    )
     assert summary["harm"]["result"] == "deflected" and npc(state, "npc_bren_marr")["alive"]
     state = unit_state()
     tomas = npc(state, "npc_tomas_reed")
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
     state["objects"]["branch_a"].update(holder_id="player", **spear)
     state["objects"]["branch_a"].pop("gear", None)  # (Now a stake: code reads it afresh.)
-    summary = commit(state, judged("harm", harm={"target_id": "npc_tomas_reed", "weapon_id": "branch_a",
-                                                 "method": "melee", "result": "killed", "injury": "run through",
-                                                 "target_area": "heart", "outcome": "landed"}))
+    summary = commit(
+        state,
+        judged(
+            "harm",
+            harm={
+                "target_id": "npc_tomas_reed",
+                "weapon_id": "branch_a",
+                "method": "melee",
+                "result": "killed",
+                "injury": "run through",
+                "target_area": "heart",
+                "outcome": "landed",
+            },
+        ),
+    )
     assert summary["harm"]["result"] == "killed" and not npc(state, "npc_tomas_reed")["alive"]
 
 
@@ -254,10 +320,29 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
     view = {p["id"]: p for p in crafting.people_nearby(state)}
     assert "mail" in view["npc_bren_marr"]["armour"] and "aware_of_you" in view["npc_bren_marr"]
     payload, summary, after = crafting.resolve_attempt(
-        state, "unit0000", "throw the boiling water in Bren's face", {"clarifying_question": None,
-        "precedent_key": "p", "steps": [judged("harm", harm={"target_id": "npc_bren_marr", "weapon_id": "bowl_hessa",
-                                                             "method": "poured", "result": "disabled",
-                                                             "injury": "scalded face"})]}, None, "t", 0)
+        state,
+        "unit0000",
+        "throw the boiling water in Bren's face",
+        {
+            "clarifying_question": None,
+            "precedent_key": "p",
+            "steps": [
+                judged(
+                    "harm",
+                    harm={
+                        "target_id": "npc_bren_marr",
+                        "weapon_id": "bowl_hessa",
+                        "method": "poured",
+                        "result": "disabled",
+                        "injury": "scalded face",
+                    },
+                )
+            ],
+        },
+        None,
+        "t",
+        0,
+    )
     assert summary["harm"]["result"] == "disabled"  # ...but boiling water gets past mail.
     down = minds.find(after["npcs"], "npc_bren_marr")
     assert down["alive"] and down["down"] and down["controller"]["activity"] == "down"
@@ -267,6 +352,7 @@ def test_boiling_water_disables_a_guard_and_the_others_come_for_you():
 
 # --- Over HTTP ------------------------------------------------------------------------------------
 
+
 def test_space_is_a_blow_on_the_clock_that_replays(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     air = post(world, state, "strike", {"facing": [1.0, 0.0]})  # Nobody within reach: a swing at thin air (D-51).
@@ -275,7 +361,7 @@ def test_space_is_a_blow_on_the_clock_that_replays(world):
     assert not state["player"].get("swings") and not state.get("fight")
     while (state["player"]["x"], state["player"]["y"]) != (35, 52):  # Beside Hessa at the inn.
         px, py = state["player"]["x"], state["player"]["y"]
-        state = post(world, state, "move", {"x": px + (35 > px) - (35 < px), "y": py + (52 > py) - (52 < py)})["state"]
+        state = post(world, state, "move", {"x": px + (px < 35) - (px > 35), "y": py + (py < 52) - (py > 52)})["state"]
     body = post(world, state, "strike", {"target_id": "npc_hessa_marr", "hand": "right"})
     assert body["strike"]["ok"] and body["state"]["player"]["swings"]["right"]["target"] == "npc_hessa_marr"
     state = post(world, body["state"], "explore", {"elapsed_ms": 1000})["state"]
@@ -303,13 +389,15 @@ def test_talking_mid_fight_and_being_talked_down():
     """D-51: a fight is only some people attacking. The stranger can still speak (it's a short round, and the
     fight runs on); an attacker can be talked down, and stops; the others fight on."""
     import talk
+
     state = open_ground(unit_state(), "npc_hessa_marr")
     combat.start(state, ["npc_hessa_marr"], state["sim_time_ms"], "developer")
     hessa = npc(state, "npc_hessa_marr")
     options = talk.replies(state, hessa)
     assert "stop_fighting" in options and "attack" not in options and "go_tell" not in options
-    talk.exchange(state, "npc_hessa_marr", "Please, I'm sorry, I'll put it right!", {}, "stop_fighting",
-                  "Fine. Enough.", [])
+    talk.exchange(
+        state, "npc_hessa_marr", "Please, I'm sorry, I'll put it right!", {}, "stop_fighting", "Fine. Enough.", []
+    )
     assert not state.get("fight") and hessa["mind"]["job"]["kind"] == "watch"
 
 

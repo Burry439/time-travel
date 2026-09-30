@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from app import app
 import app as service
+from app import app
 
 
 def client(tmp_path, monkeypatch):
@@ -10,10 +10,16 @@ def client(tmp_path, monkeypatch):
 
 
 def step(http, run_id, state, x, y, request_id, running=False):
-    return http.post(f"/runs/{run_id}/move", json={
-        "x": x, "y": y, "expected_version": state["event_seq"], "request_id": request_id,
-        "running": running,
-    })
+    return http.post(
+        f"/runs/{run_id}/move",
+        json={
+            "x": x,
+            "y": y,
+            "expected_version": state["event_seq"],
+            "request_id": request_id,
+            "running": running,
+        },
+    )
 
 
 def test_seed_and_locked_wall(tmp_path, monkeypatch):
@@ -24,9 +30,17 @@ def test_seed_and_locked_wall(tmp_path, monkeypatch):
     assert {n["name"] for n in state["npcs"]} >= {"Elin", "Kade"}
     assert (state["player"]["x"], state["player"]["y"]) == (48, 68)
     assert step(http, state["run_id"], state, 48, 8, "teleport").status_code == 422
-    assert http.post(f"/runs/{state['run_id']}/dev/gate", json={
-        "open": True, "expected_version": 0, "request_id": "cheat",
-    }).status_code == 403
+    assert (
+        http.post(
+            f"/runs/{state['run_id']}/dev/gate",
+            json={
+                "open": True,
+                "expected_version": 0,
+                "request_id": "cheat",
+            },
+        ).status_code
+        == 403
+    )
     assert http.get(f"/runs/{state['run_id']}").json()["event_seq"] == 0
 
 
@@ -34,9 +48,14 @@ def test_replay_gate_entry_and_duplicate(tmp_path, monkeypatch):
     http = client(tmp_path, monkeypatch)
     state = http.post("/runs", json={"mode": "developer"}).json()
     run_id = state["run_id"]
-    response = http.post(f"/runs/{run_id}/dev/gate", json={
-        "open": True, "expected_version": 0, "request_id": "dev-open",
-    })
+    response = http.post(
+        f"/runs/{run_id}/dev/gate",
+        json={
+            "open": True,
+            "expected_version": 0,
+            "request_id": "dev-open",
+        },
+    )
     assert response.status_code == 200
     state = response.json()["state"]
     for y in range(67, 2, -1):
@@ -65,9 +84,14 @@ def test_closed_gate_and_stale_version(tmp_path, monkeypatch):
         assert response.status_code == 200
         state = response.json()["state"]
     assert step(http, run_id, state, 48, 8, "closed").status_code == 403
-    opened = http.post(f"/runs/{run_id}/dev/gate", json={
-        "open": True, "expected_version": state["event_seq"], "request_id": "open",
-    }).json()["state"]
+    opened = http.post(
+        f"/runs/{run_id}/dev/gate",
+        json={
+            "open": True,
+            "expected_version": state["event_seq"],
+            "request_id": "open",
+        },
+    ).json()["state"]
     assert step(http, run_id, state, 48, 8, "stale").status_code == 409
     assert step(http, run_id, opened, 48, 8, "accepted").status_code == 200
 
@@ -90,7 +114,12 @@ def test_diagonal_speed_and_corner_rule(tmp_path, monkeypatch):
         state = step(http, run_id, state, x, 67, f"left-{x}").json()["state"]
     for y in range(66, 8, -1):
         state = step(http, run_id, state, 45, y, f"north-{y}").json()["state"]
-    opened = http.post(f"/runs/{run_id}/dev/gate", json={
-        "open": True, "expected_version": state["event_seq"], "request_id": "open",
-    }).json()["state"]
+    opened = http.post(
+        f"/runs/{run_id}/dev/gate",
+        json={
+            "open": True,
+            "expected_version": state["event_seq"],
+            "request_id": "open",
+        },
+    ).json()["state"]
     assert step(http, run_id, opened, 46, 8, "corner-cut").status_code == 403

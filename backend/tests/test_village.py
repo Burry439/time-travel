@@ -1,17 +1,20 @@
 """The village's own life (GDD D-37): agendas the decider chooses among options built by code, the gate never
 left short of guards, meetings that pass news and hearsay and shift opinions, chatter voiced only where
 the stranger can see it, a decider budget, and replay of all of it."""
+
 import copy
 
+from test_encounter import post, world  # noqa: F401
+from test_talk import npc, unit_state
+
 import crafting
+import m2
 import minds
 import npc_sim
 import persona
 import village
 from ai import config as ai_config
 from ai import decider
-from test_encounter import post, world  # noqa: F401
-from test_talk import npc, unit_state
 
 
 def choice(key, value):
@@ -57,27 +60,42 @@ def test_a_chosen_task_is_walked_to_done_and_left_for_the_routine():
     assert controller["source"] == "agenda" and controller["path"][-1] == village.PLACES["inn_side"]["cell"]
     npcs = state["npcs"]
     for step in range(60):
-        npcs = npc_sim.advance_npcs(npcs, 500, step * 500, crafting.m2._GEOMETRY)
+        npcs = npc_sim.advance_npcs(npcs, 500, step * 500, m2._GEOMETRY)
     hessa = next(n for n in npcs if n["id"] == "npc_hessa_marr")
     assert [hessa["x"], hessa["y"]] == village.PLACES["inn_side"]["cell"] and hessa["controller"]["activity"] == "work"
     for step in range(60, 200):
-        npcs = npc_sim.advance_npcs(npcs, 500, step * 500, crafting.m2._GEOMETRY)
+        npcs = npc_sim.advance_npcs(npcs, 500, step * 500, m2._GEOMETRY)
     assert next(n for n in npcs if n["id"] == "npc_hessa_marr")["controller"]["source"] == "routine"
 
 
 def test_the_decider_is_asked_only_when_something_happens_and_neighbours_fall_into_talk():
     state = unit_state()
-    for t in range(0, 600_000, 30_000):  # Ten quiet minutes, the stranger out of sight: nobody asks the decider anything.
+    for t in range(
+        0, 600_000, 30_000
+    ):  # Ten quiet minutes, the stranger out of sight: nobody asks the decider anything.
         village.schedule(state, state["npcs"], t)
     assert not [p for p in state["pending_minds"] if p["kind"] == "agenda"]
     hessa = npc(state, "npc_hessa_marr")
-    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
-                           "short": "stole my bucket", "victim": "npc_hessa_marr", "clarity": "clear", "source": "victim"})
+    minds.remember(
+        hessa,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 7,
+            "summary": "The stranger stole my bucket.",
+            "short": "stole my bucket",
+            "victim": "npc_hessa_marr",
+            "clarity": "clear",
+            "source": "victim",
+        },
+    )
     village.schedule(state, state["npcs"], 700_000)
     assert {"npc_id": "npc_hessa_marr", "kind": "agenda", "why": "stole my bucket"} in state["pending_minds"]
     state["player"].update(x=npc(state, "npc_mara_venn")["x"] + 2, y=npc(state, "npc_mara_venn")["y"])
     village.schedule(state, state["npcs"], 710_000)  # The stranger walks into view: that's news too.
-    assert any(p["npc_id"] == "npc_mara_venn" and p["why"] == "the stranger came into view" for p in state["pending_minds"])
+    assert any(
+        p["npc_id"] == "npc_mara_venn" and p["why"] == "the stranger came into view" for p in state["pending_minds"]
+    )
     state["pending_minds"] = []
     hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
     bren["x"], bren["y"] = hessa["x"] + 1, hessa["y"]
@@ -89,15 +107,32 @@ def test_the_decider_is_asked_only_when_something_happens_and_neighbours_fall_in
 def test_news_and_hearsay_travel_and_opinions_shift():
     state = unit_state()
     hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
-    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
-                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
-                           "clarity": "clear", "source": "victim"})
+    minds.remember(
+        hessa,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 7,
+            "summary": "The stranger stole my bucket.",
+            "short": "stole a bucket",
+            "victim": "npc_hessa_marr",
+            "item": "bucket_hessa",
+            "clarity": "clear",
+            "source": "victim",
+        },
+    )
     persona.knows(hessa).update(name="Ash", episodes=[{"at": 0, "text": "Ash asked for work and seemed honest."}])
     options = village.topics(state, hessa, bren)
     assert {"news:7", "stranger", "worry", "small_talk"} <= set(options)
     warm = persona.opinions(bren)["npc_hessa_marr"]["warmth"]
-    record = village.apply_meeting(state, hessa, bren, {**choice("topic", "news:7"),
-                                                        "reaction": {"score": 4}, "believes": {"noul": 0.9}}, None, 100)
+    record = village.apply_meeting(
+        state,
+        hessa,
+        bren,
+        {**choice("topic", "news:7"), "reaction": {"score": 4}, "believes": {"noul": 0.9}},
+        None,
+        100,
+    )
     assert record["topic"] == "news:7" and minds.knows(bren, 7)
     assert bren["mind"]["memories"][-1]["source"] == "told_by:npc_hessa_marr"
     assert {"npc_id": "npc_bren_marr", "kind": "decide", "why": "told by Hessa"} in state["pending_minds"]
@@ -132,7 +167,9 @@ def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, m
     assert any(p["kind"] == "agenda" for p in state.get("pending_minds", []))
     body = post(world, state, "think", {})
     state = body["state"]
-    assert any(d["kind"] == "agenda" and d.get("agenda") == "carry_on" for d in body["decisions"])  # No answer: routine.
+    assert any(
+        d["kind"] == "agenda" and d.get("agenda") == "carry_on" for d in body["decisions"]
+    )  # No answer: routine.
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
     # Past the decider allowance, nobody asks the decider about their day: they carry on by routine.
     asked = []
@@ -152,12 +189,14 @@ def test_the_village_thinks_in_the_lane_and_replays_and_keeps_to_budget(world, m
 def test_the_dead_do_not_keep_the_village_thinking(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     import store
+
     with store.lock, store.db() as connection:
         _, current = store.load_run(connection, state["run_id"])
     working = copy.deepcopy(current)
     working["pending_minds"] = [{"npc_id": "npc_jory_venn", "kind": "agenda", "why": "test"}]
     minds.find(working["npcs"], "npc_jory_venn")["alive"] = False
     import routes_minds
+
     batch, recollecting, stale = routes_minds._choose(working)
     assert batch == [] and recollecting == []
 
@@ -165,9 +204,20 @@ def test_the_dead_do_not_keep_the_village_thinking(world):
 def test_news_comes_first_when_they_would_tell_it_and_nothing_is_said_twice():
     state = unit_state()
     hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
-    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
-                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
-                           "clarity": "clear", "source": "victim"})
+    minds.remember(
+        hessa,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 7,
+            "summary": "The stranger stole my bucket.",
+            "short": "stole a bucket",
+            "victim": "npc_hessa_marr",
+            "item": "bucket_hessa",
+            "clarity": "clear",
+            "source": "victim",
+        },
+    )
     _, questions = village.meet_brief(state, hessa, bren)
     assert "tells" in questions and "stole my bucket" in questions["tells"]["instructions"]
     record = village.apply_meeting(state, hessa, bren, {**choice("topic", "worry"), "tells": {"noul": 0.8}}, None, 0)
@@ -180,9 +230,20 @@ def test_news_comes_first_when_they_would_tell_it_and_nothing_is_said_twice():
 def test_a_wronged_person_can_tell_someone_or_have_it_out_and_errands_are_not_repeated():
     state = unit_state()
     hessa = npc(state, "npc_hessa_marr")
-    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
-                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
-                           "clarity": "clear", "source": "victim"})
+    minds.remember(
+        hessa,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 7,
+            "summary": "The stranger stole my bucket.",
+            "short": "stole a bucket",
+            "victim": "npc_hessa_marr",
+            "item": "bucket_hessa",
+            "clarity": "clear",
+            "source": "victim",
+        },
+    )
     options = village.agenda_options(state, hessa)
     tells = [k for k in options if k.startswith("tell:")]
     assert tells[0] == "tell:npc_bren_marr" and "her brother Bren" in options[tells[0]]["description"]  # Family first.
@@ -196,12 +257,24 @@ def test_a_wronged_person_can_tell_someone_or_have_it_out_and_errands_are_not_re
 def test_meetings_go_both_ways():
     state = unit_state()
     hessa, bren = npc(state, "npc_hessa_marr"), npc(state, "npc_bren_marr")
-    minds.remember(hessa, {"kind": "theft", "severity": 2, "event": 7, "summary": "The stranger stole my bucket.",
-                           "short": "stole a bucket", "victim": "npc_hessa_marr", "item": "bucket_hessa",
-                           "clarity": "clear", "source": "victim"})
+    minds.remember(
+        hessa,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 7,
+            "summary": "The stranger stole my bucket.",
+            "short": "stole a bucket",
+            "victim": "npc_hessa_marr",
+            "item": "bucket_hessa",
+            "clarity": "clear",
+            "source": "victim",
+        },
+    )
     _, questions = village.meet_brief(state, bren, hessa)  # Bren came over; Hessa has the news.
     assert "tells_back" in questions
-    record = village.apply_meeting(state, bren, hessa, {**choice("topic", "small_talk"), "tells_back": {"noul": 0.9}},
-                                   None, 0)
+    record = village.apply_meeting(
+        state, bren, hessa, {**choice("topic", "small_talk"), "tells_back": {"noul": 0.9}}, None, 0
+    )
     assert record["told_back"] and minds.knows(bren, 7)
     assert {"npc_id": "npc_bren_marr", "kind": "decide", "why": "told by Hessa"} in state["pending_minds"]

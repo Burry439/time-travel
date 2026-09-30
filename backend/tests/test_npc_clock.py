@@ -16,8 +16,7 @@ def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progres
 
     state = initial
     for index in range(12):
-        request = {"elapsed_ms": 500, "expected_version": state["event_seq"],
-                   "request_id": f"beat-{index}"}
+        request = {"elapsed_ms": 500, "expected_version": state["event_seq"], "request_id": f"beat-{index}"}
         reply = http.post(f"/runs/{run_id}/explore", json=request)
         assert reply.status_code == 200, reply.text
         state = reply.json()["state"]
@@ -25,13 +24,14 @@ def test_exploration_clock_moves_npcs_without_double_counting_or_offline_progres
             retry = http.post(f"/runs/{run_id}/explore", json=request).json()
             assert retry["duplicate"] and retry["state"]["sim_time_ms"] == 500
     assert state["sim_time_ms"] == 6000
-    assert any((a["x"], a["y"]) != (b["x"], b["y"])
-               for a, b in zip(initial["npcs"], state["npcs"]))
+    assert any((a["x"], a["y"]) != (b["x"], b["y"]) for a, b in zip(initial["npcs"], state["npcs"]))
     blocked = npc_sim.blocked_cells(service.WORLD_GEOMETRY)
     assert all((n["x"], n["y"]) not in blocked for n in state["npcs"])
 
-    move = http.post(f"/runs/{run_id}/move", json={"x": 48, "y": 67,
-        "expected_version": state["event_seq"], "request_id": "first-step"}).json()["state"]
+    move = http.post(
+        f"/runs/{run_id}/move",
+        json={"x": 48, "y": 67, "expected_version": state["event_seq"], "request_id": "first-step"},
+    ).json()["state"]
     assert move["sim_time_ms"] == 6000
     time.sleep(0.02)
     assert http.get(f"/runs/{run_id}").json() == move
@@ -44,17 +44,21 @@ def test_journeys_from_retired_versions_are_refused_honestly(tmp_path, monkeypat
     http = TestClient(service.app)
     created = http.post("/runs", json={}).json()
     with service.db() as connection:
-        connection.execute("UPDATE runs SET seed_version=2,geometry_version=2 WHERE id=?",
-                           (created["run_id"],))
-    for reply in (http.get(f"/runs/{created['run_id']}"),
-                  http.post(f"/runs/{created['run_id']}/move", json={
-                      "x": 48, "y": 67, "expected_version": 0, "request_id": "legacy-step"})):
+        connection.execute("UPDATE runs SET seed_version=2,geometry_version=2 WHERE id=?", (created["run_id"],))
+    for reply in (
+        http.get(f"/runs/{created['run_id']}"),
+        http.post(
+            f"/runs/{created['run_id']}/move",
+            json={"x": 48, "y": 67, "expected_version": 0, "request_id": "legacy-step"},
+        ),
+    ):
         assert reply.status_code == 410 and "Start a new journey" in reply.json()["detail"]
 
 
 def test_full_npc_routines_stay_on_open_cells_and_guards_patrol():
-    initial = service.initial_state({"id": "test", "mode": "normal", "seed_version": 3,
-                                     "geometry_version": service.GEOMETRY_VERSION})
+    initial = service.initial_state(
+        {"id": "test", "mode": "normal", "seed_version": 3, "geometry_version": service.GEOMETRY_VERSION}
+    )
     npcs = initial["npcs"]
     blocked = npc_sim.blocked_cells(service.WORLD_GEOMETRY)
     visited = {npc["id"]: {(npc["x"], npc["y"])} for npc in npcs}

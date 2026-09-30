@@ -28,4 +28,8 @@ extend-exclude = [".venv"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "SIM", "I"]
-ignore = ["E731", "SIM108", "SIM102"]
+# E501: the formatter keeps code to 120; long prose strings are fine. B905: zip() lengths are checked where it matters.
+ignore = ["E501", "E731", "B905", "SIM102", "SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F811"]  # pytest fixtures imported from other test modules are used by name

@@ -1,25 +1,26 @@
 """Deals, vouching, the guards' halt and Roderic's admission, with a scripted decider, judge and voice."""
+
 from types import SimpleNamespace
 
 import pytest
+import scenes
 from fastapi.testclient import TestClient
+from test_craft import attempt, judged
+from test_talk import npc, said, unit_state, walk_to
 
 import app as service
 import crafting
 import minds
-import scenes
 import talk
 import village
-from ai import decider, voice
-from test_craft import attempt, judged
-from test_talk import npc, said, unit_state, walk_to
+from ai import decider
+
 
 @pytest.fixture(autouse=True)
 def quiet_village(monkeypatch):
     """These tests follow reactions to the stranger step by step; the village's own life (agendas, meetings)
     is tested in test_village.py."""
     monkeypatch.setattr(village, "schedule", lambda state, npcs, now: None)
-
 
 
 def answers(reply, **yes):
@@ -35,8 +36,18 @@ def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
     assert "admit" not in talk.replies(state, npc(state, "npc_hessa_marr"))  # Not a guard: not hers to give.
     bren["down"] = True
     assert "admit" not in talk.replies(state, bren)
-    minds.remember(roderic, {"kind": "violence", "severity": 2, "event": 3, "summary": "The stranger attacked Oren.",
-                             "short": "attacked Oren", "victim": "npc_oren_dast", "source": "witnessed"})
+    minds.remember(
+        roderic,
+        {
+            "kind": "violence",
+            "severity": 2,
+            "event": 3,
+            "summary": "The stranger attacked Oren.",
+            "short": "attacked Oren",
+            "victim": "npc_oren_dast",
+            "source": "witnessed",
+        },
+    )
     assert "admit" not in talk.replies(state, roderic)
     roderic["mind"]["memories"][-1]["doubted"] = True  # He doesn't believe it.
     assert "admit" in talk.replies(state, roderic)
@@ -57,8 +68,15 @@ def test_a_deal_is_offered_accepted_done_and_rewarded_once():
     state = unit_state()
     state["player"].update(x=40, y=40)
     npc(state, "npc_tomas_reed").update(x=41, y=40)
-    talk.exchange(state, "npc_tomas_reed", "Any work going?", answers("offer:beam_help"), "offer:beam_help",
-                  "Help me with that beam and I'll speak for you.", [])
+    talk.exchange(
+        state,
+        "npc_tomas_reed",
+        "Any work going?",
+        answers("offer:beam_help"),
+        "offer:beam_help",
+        "Help me with that beam and I'll speak for you.",
+        [],
+    )
     (deal,) = state["agreements"].values()
     assert deal["status"] == "proposed" and deal["issuer"] == "npc_tomas_reed"
     assert "offer:beam_help" not in talk.replies(state, npc(state, "npc_tomas_reed"))  # Offered once.
@@ -115,15 +133,28 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
     admitted = unit_state()
     admitted["player"].update(x=48, y=16)
     admitted["admitted"] = {"by": "npc_roderic_vale"}
-    assert not run(admitted, lambda: any(e.get("category") == "halt" for e in admitted.get("heard", [])),
-                   limit_ms=20_000)
+    assert not run(
+        admitted, lambda: any(e.get("category") == "halt" for e in admitted.get("heard", [])), limit_ms=20_000
+    )
     # Someone speaking for the stranger to the captain isn't the guards dealing with them: they still stop them (D-55).
     vouched = unit_state()
     vouched["player"].update(x=48, y=16)
-    minds.remember(npc(vouched, "npc_roderic_vale"), {
-        "kind": "vouch", "severity": 1, "by": "npc_hessa_marr", "victim": None, "item": None, "event": 1,
-        "clarity": "told", "source": "told_by:npc_hessa_marr", "at": vouched["sim_time_ms"],
-        "summary": "Hessa vouched for the stranger.", "short": "has Hessa's word"})
+    minds.remember(
+        npc(vouched, "npc_roderic_vale"),
+        {
+            "kind": "vouch",
+            "severity": 1,
+            "by": "npc_hessa_marr",
+            "victim": None,
+            "item": None,
+            "event": 1,
+            "clarity": "told",
+            "source": "told_by:npc_hessa_marr",
+            "at": vouched["sim_time_ms"],
+            "summary": "Hessa vouched for the stranger.",
+            "short": "has Hessa's word",
+        },
+    )
     assert run(vouched, lambda: any(e.get("category") == "halt" for e in vouched.get("heard", [])), limit_ms=30_000)
 
 
@@ -131,20 +162,31 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "gate.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
-    script, rulings, moves = [], [], []
+    script, rulings, _moves = [], [], []
 
     def fake_decide(situation, questions):
-        if "impression" not in questions:  # People choosing what to do (not answering the stranger): they stay and listen.
-            return decider.DeciderCall(provider="script", model="script", answers={
-                k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")})
+        if (
+            "impression" not in questions
+        ):  # People choosing what to do (not answering the stranger): they stay and listen.
+            return decider.DeciderCall(
+                provider="script",
+                model="script",
+                answers={k: {"type": "choice", "choice": "listen"} for k in questions if k.endswith("action")},
+            )
         return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
+
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
+
     def fake_voice(context, fallback, allowed=True):  # The scripted scene (D-48): lines, moves and readings.
         return scenes.scene_call(context, script.pop(0) if script else {}, lambda ctx, person, move: fallback)
+
     monkeypatch.setattr(service.voice, "scene", fake_voice)
-    monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
-        status="ok", result=rulings.pop(0), model="stub", attempts=1))
+    monkeypatch.setattr(
+        service.judge,
+        "judge_craft",
+        lambda context: service.judge.JudgeCall(status="ok", result=rulings.pop(0), model="stub", attempts=1),
+    )
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), script=script, rulings=rulings)
 
@@ -160,8 +202,14 @@ def walk(http, state, x, y):
         goal = previous[goal]
     path = path[::-1] + [[x, row] for row in range(8, y - 1, -1)] if y < 9 else path[::-1]
     for i in range(0, len(path), 20):
-        reply = http.post(f"/runs/{state['run_id']}/move", json={
-            "cells": path[i:i + 20], "expected_version": state["event_seq"], "request_id": f"walk-{state['event_seq']}"})
+        reply = http.post(
+            f"/runs/{state['run_id']}/move",
+            json={
+                "cells": path[i : i + 20],
+                "expected_version": state["event_seq"],
+                "request_id": f"walk-{state['event_seq']}",
+            },
+        )
         assert reply.status_code == 200, reply.text
         state = reply.json()["state"]
     return state
@@ -169,8 +217,15 @@ def walk(http, state, x, y):
 
 def say(world, state, npc_id, text, reply):
     world.script.append(reply)
-    response = world.http.post(f"/runs/{state['run_id']}/say", json={
-        "npc_id": npc_id, "text": text, "expected_version": state["event_seq"], "request_id": f"say-{state['event_seq']}"})
+    response = world.http.post(
+        f"/runs/{state['run_id']}/say",
+        json={
+            "npc_id": npc_id,
+            "text": text,
+            "expected_version": state["event_seq"],
+            "request_id": f"say-{state['event_seq']}",
+        },
+    )
     assert response.status_code == 200, response.text
     return response.json()["state"]
 
@@ -181,11 +236,19 @@ def settle(world, state, until, limit=200):
         if until(state):
             return state
         if state.get("pending_minds"):
-            reply = world.http.post(f"/runs/{state['run_id']}/think", json={
-                "expected_version": state["event_seq"], "request_id": f"think-{state['event_seq']}"})
+            reply = world.http.post(
+                f"/runs/{state['run_id']}/think",
+                json={"expected_version": state["event_seq"], "request_id": f"think-{state['event_seq']}"},
+            )
         else:
-            reply = world.http.post(f"/runs/{state['run_id']}/explore", json={
-                "elapsed_ms": 1000, "expected_version": state["event_seq"], "request_id": f"beat-{state['event_seq']}"})
+            reply = world.http.post(
+                f"/runs/{state['run_id']}/explore",
+                json={
+                    "elapsed_ms": 1000,
+                    "expected_version": state["event_seq"],
+                    "request_id": f"beat-{state['event_seq']}",
+                },
+            )
         assert reply.status_code == 200, reply.text
         state = reply.json()["state"]
     raise AssertionError("condition never held")
@@ -195,32 +258,55 @@ def test_bringing_hessa_water_earns_her_word_and_the_captain_lets_you_in(world):
     http = world.http
     state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 45, 52)  # By the gourd (45, 53).
     world.rulings.append(attempt(judged("take", take_ids=["gourd_a"]), key="take"))
-    state = http.post(f"/runs/{state['run_id']}/craft", json={
-        "text": "take the gourd", "selected_ids": ["gourd_a"], "expected_version": state["event_seq"],
-        "request_id": "take-gourd"}).json()["state"]
+    state = http.post(
+        f"/runs/{state['run_id']}/craft",
+        json={
+            "text": "take the gourd",
+            "selected_ids": ["gourd_a"],
+            "expected_version": state["event_seq"],
+            "request_id": "take-gourd",
+        },
+    ).json()["state"]
     state = walk_to(http, state, 36, 53)  # Beside Hessa and her trough.
     state = say(world, state, "npc_hessa_marr", "Any way I can help?", answers("offer:water_haul"))
     state = say(world, state, "npc_hessa_marr", "Gladly, I'll fetch it.", answers("answer", accepts=0.95))
     assert next(iter(state["agreements"].values()))["status"] == "accepted"
-    world.rulings.append(attempt(
-        judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 1.0}),
-        judged("give", give={"item_ids": ["gourd_a"], "recipient_id": "npc_hessa_marr"}), key="fill+give"))
-    state = http.post(f"/runs/{state['run_id']}/craft", json={
-        "text": "fill the gourd at the trough and give it to Hessa", "selected_ids": [],
-        "expected_version": state["event_seq"], "request_id": "water"}).json()["state"]
+    world.rulings.append(
+        attempt(
+            judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 1.0}),
+            judged("give", give={"item_ids": ["gourd_a"], "recipient_id": "npc_hessa_marr"}),
+            key="fill+give",
+        )
+    )
+    state = http.post(
+        f"/runs/{state['run_id']}/craft",
+        json={
+            "text": "fill the gourd at the trough and give it to Hessa",
+            "selected_ids": [],
+            "expected_version": state["event_seq"],
+            "request_id": "water",
+        },
+    ).json()["state"]
     assert state["objects"]["gourd_a"]["holder_id"] == "npc_hessa_marr"
     hessa = npc(state, "npc_hessa_marr")
-    assert "with 1 L of water in it" in minds.worst_memory(hessa)["summary"] or \
-        any("water" in m["summary"] for m in hessa["mind"]["memories"] if m["kind"] == "gift")
+    assert "with 1 L of water in it" in minds.worst_memory(hessa)["summary"] or any(
+        "water" in m["summary"] for m in hessa["mind"]["memories"] if m["kind"] == "gift"
+    )
     state = settle(world, state, lambda s: not s.get("pending_minds"))
     state = say(world, state, "npc_hessa_marr", "Here's your water.", answers("answer", done=0.9))
     assert npc(state, "npc_hessa_marr")["mind"]["job"]["kind"] == "vouch"
-    state = settle(world, state, lambda s: any(m["kind"] == "vouch" for m in minds.mind(
-        npc(s, "npc_roderic_vale"))["memories"]))
+    state = settle(
+        world, state, lambda s: any(m["kind"] == "vouch" for m in minds.mind(npc(s, "npc_roderic_vale"))["memories"])
+    )
     roderic = npc(state, "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
-    state = say(world, state, "npc_roderic_vale", "Hessa has spoken for me. May I enter?",
-                answers("admit", reason=0.8, threat=0.1))
+    state = say(
+        world,
+        state,
+        "npc_roderic_vale",
+        "Hessa has spoken for me. May I enter?",
+        answers("admit", reason=0.8, threat=0.1),
+    )
     assert state["gate_open"] and state["admitted"]["by"] == "npc_roderic_vale"
     assert any("Hessa vouched" in reason for reason in state["admitted"]["because"])
     state = walk(http, state, 48, 3)
@@ -233,8 +319,15 @@ def test_business_and_demonstrated_value_are_routes_too():
     state["player"].update(x=79, y=31)
     darin = npc(state, "npc_darin_ko")
     darin.update(x=80, y=31)
-    talk.exchange(state, "npc_darin_ko", "What would you pay for something new?", answers("offer:trade_goods"),
-                  "offer:trade_goods", "Show me something I can sell.", [])
+    talk.exchange(
+        state,
+        "npc_darin_ko",
+        "What would you pay for something new?",
+        answers("offer:trade_goods"),
+        "offer:trade_goods",
+        "Show me something I can sell.",
+        [],
+    )
     state["event_seq"] += 1
     talk.exchange(state, "npc_darin_ko", "Agreed.", answers("answer", accepts=0.9), "answer", "Good.", [])
     state["event_seq"] += 1
@@ -244,14 +337,27 @@ def test_business_and_demonstrated_value_are_routes_too():
     # Value: the captain saw something useful with his own eyes, and says why he let the stranger in.
     roderic = npc(state, "npc_roderic_vale")
     state["player"].update(x=48, y=13)
-    minds.remember(roderic, {"kind": "demonstration", "severity": 1, "event": 40, "clarity": "clear", "works": True,
-                             "summary": "The stranger's floating needle kept pointing the same way in the fog.",
-                             "short": "showed off a water compass", "victim": None, "source": "shown"})
+    minds.remember(
+        roderic,
+        {
+            "kind": "demonstration",
+            "severity": 1,
+            "event": 40,
+            "clarity": "clear",
+            "works": True,
+            "summary": "The stranger's floating needle kept pointing the same way in the fog.",
+            "short": "showed off a water compass",
+            "victim": None,
+            "source": "shown",
+        },
+    )
     state["event_seq"] += 1
-    payload = talk.exchange(state, "npc_roderic_vale", "It will guide your patrols.", answers("admit"), "admit",
-                            "Open the gate.", [])
+    payload = talk.exchange(
+        state, "npc_roderic_vale", "It will guide your patrols.", answers("admit"), "admit", "Open the gate.", []
+    )
     assert state["gate_open"] and payload["admission"]["because"] == [
-        "The stranger's floating needle kept pointing the same way in the fog."]
+        "The stranger's floating needle kept pointing the same way in the fog."
+    ]
 
 
 def test_lent_things_can_be_used_without_theft():
@@ -259,8 +365,15 @@ def test_lent_things_can_be_used_without_theft():
     state["player"].update(x=79, y=32)
     darin = npc(state, "npc_darin_ko")
     assert "lend:lodestone_darin" in talk.replies(state, darin)
-    talk.exchange(state, "npc_darin_ko", "May I borrow your odd stone?", answers("lend:lodestone_darin"),
-                  "lend:lodestone_darin", "Take it. Carefully.", [])
+    talk.exchange(
+        state,
+        "npc_darin_ko",
+        "May I borrow your odd stone?",
+        answers("lend:lodestone_darin"),
+        "lend:lodestone_darin",
+        "Take it. Carefully.",
+        [],
+    )
     stone = state["objects"]["lodestone_darin"]
     assert stone["lent_to"] == "player" and stone["owner_id"] == "npc_darin_ko"
     assert "lend:lodestone_darin" not in talk.replies(state, npc(state, "npc_darin_ko"))
@@ -279,10 +392,25 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     # The stranger's word alone never opens the gate, however the reading goes (D-55): "Hessa spoke for me" isn't
     # Hessa speaking for them.
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "answer"
-    assert "admit" not in talk.moves(state, roderic) and "why_not_yet" in talk.converse_context(state, roderic, "Let me in.", {})
-    minds.remember(roderic, {"kind": "vouch", "severity": 1, "by": "npc_hessa_marr", "victim": None, "item": None,
-                             "event": 1, "clarity": "told", "source": "told_by:npc_hessa_marr", "at": 0,
-                             "summary": "Hessa vouched for the stranger.", "short": "has Hessa's word"})
+    assert "admit" not in talk.moves(state, roderic) and "why_not_yet" in talk.converse_context(
+        state, roderic, "Let me in.", {}
+    )
+    minds.remember(
+        roderic,
+        {
+            "kind": "vouch",
+            "severity": 1,
+            "by": "npc_hessa_marr",
+            "victim": None,
+            "item": None,
+            "event": 1,
+            "clarity": "told",
+            "source": "told_by:npc_hessa_marr",
+            "at": 0,
+            "summary": "Hessa vouched for the stranger.",
+            "short": "has Hessa's word",
+        },
+    )
     assert "admit" in talk.moves(state, roderic) and "why_not_yet" not in talk.converse_context(state, roderic, "x", {})
     # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"

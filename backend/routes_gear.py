@@ -4,6 +4,7 @@ Blows and guarding are "fight" events (the resulting fields, like a punch was). 
 and treating are "gear" events: they take time, so outside a fight the world moves on by that much; in a fight
 the clock is already running, so the hand is simply busy for that long.
 """
+
 from __future__ import annotations
 
 import math
@@ -91,13 +92,21 @@ def strike(run_id: str, request: Strike):
         profile, _ = combat.hand_use(state, request.hand)
         target = aim(state, request.target_id, max(profile["reach"], profile.get("range") or 0), request.facing)
         now = state["sim_time_ms"]
-        result = combat.throw(state, request.hand, target, now, request.facing) if request.throw else \
-            combat.strike(state, request.hand, target, now, request.facing)
+        result = (
+            combat.throw(state, request.hand, target, now, request.facing)
+            if request.throw
+            else combat.strike(state, request.hand, target, now, request.facing)
+        )
         if not result["ok"]:
             return {"state": state, "duplicate": False, "strike": result}
         journal_before = len(state["journal"])
-        routes_world.fight_event(connection, state, journal_before, request.request_id,
-                                 {"strike": {"target_id": target, "hand": request.hand}})
+        routes_world.fight_event(
+            connection,
+            state,
+            journal_before,
+            request.request_id,
+            {"strike": {"target_id": target, "hand": request.hand}},
+        )
     return {"state": state, "duplicate": False, "strike": {**result, "target_id": target}}
 
 
@@ -110,13 +119,15 @@ def guard(run_id: str, request: Guard):
             return prior
         result = combat.guard(state, request.raised, request.facing, state["sim_time_ms"])
         if result["ok"]:
-            routes_world.fight_event(connection, state, len(state["journal"]), request.request_id,
-                                     {"guard": {"raised": request.raised}})
+            routes_world.fight_event(
+                connection, state, len(state["journal"]), request.request_id, {"guard": {"raised": request.raised}}
+            )
     return {"state": state, "duplicate": False, "guard": result}
 
 
-def _gear_event(connection, state: dict, request_id: str, seconds: int, journal_line: str | None,
-                extra: dict | None = None) -> None:
+def _gear_event(
+    connection, state: dict, request_id: str, seconds: int, journal_line: str | None, extra: dict | None = None
+) -> None:
     """Something done with the stranger's own things, taking this long: outside a fight the world moves on by
     that much; in one, the hands are busy for it."""
     payload: dict = {"player": state["player"], "objects": state["objects"], "npcs": state["npcs"]}
@@ -135,9 +146,12 @@ def _gear_event(connection, state: dict, request_id: str, seconds: int, journal_
         payload.update(people)
         payload["sim_time_ms"] = state["sim_time_ms"] + seconds * 1000
     payload.update(extra or {})
-    store.append(connection, state, "gear", payload, request_id, payload.get("sim_time_ms", state["sim_time_ms"]) // 1000)
+    store.append(
+        connection, state, "gear", payload, request_id, payload.get("sim_time_ms", state["sim_time_ms"]) // 1000
+    )
     store.apply_gear(state, payload, already_journaled=True)
     import routes_tutorial  # The tutorial may move on (D-50).
+
     routes_tutorial.progress(connection, state)
 
 
@@ -160,11 +174,18 @@ def equip(run_id: str, request: Equip, background: BackgroundTasks):
         view = _picture_needed(obj, request.slot)
         if view:
             state["objects"][obj["id"]] = obj = {**obj, f"{view}_asset_id": f"spr_{run_id[:8]}_{obj['id']}_{view}"}
-        _gear_event(connection, state, request.request_id, result["seconds"], None,
-                    {"equip": {"object_id": obj["id"], "slot": request.slot}})
+        _gear_event(
+            connection,
+            state,
+            request.request_id,
+            result["seconds"],
+            None,
+            {"equip": {"object_id": obj["id"], "slot": request.slot}},
+        )
         if view:
-            attempts.queue_picture(connection, run_id, obj, view, obj[f"{view}_asset_id"], library.signature(obj),
-                                   background)
+            attempts.queue_picture(
+                connection, run_id, obj, view, obj[f"{view}_asset_id"], library.signature(obj), background
+            )
     return {"state": state, "duplicate": False, "equip": result}
 
 
@@ -207,10 +228,16 @@ def treat(run_id: str, request: Treat):
         if patient is None or not patient.get("alive", True):
             return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "There's nobody to treat."}}
         if patient is not state["player"] and math.dist(minds._cell(patient), minds.player_cell(state)) > 2.5:
-            return {"state": state, "duplicate": False,
-                    "treat": {"ok": False, "reason": f"You need to be beside {patient['name']}."}}
-        condition = (patient.get("conditions") or [])[request.condition] if request.condition < len(
-            patient.get("conditions") or []) else None
+            return {
+                "state": state,
+                "duplicate": False,
+                "treat": {"ok": False, "reason": f"You need to be beside {patient['name']}."},
+            }
+        condition = (
+            (patient.get("conditions") or [])[request.condition]
+            if request.condition < len(patient.get("conditions") or [])
+            else None
+        )
         now = state["sim_time_ms"]
         result = gear.treat(patient, request.condition, remedy, now)
         if not result["ok"]:
@@ -219,12 +246,23 @@ def treat(run_id: str, request: Treat):
             state["objects"][remedy["id"]] = {**remedy, "holder_id": "used", "condition": "used up"}
         extra: dict = {"treat": {"patient_id": request.patient_id, "object_id": remedy["id"]}}
         if patient is not state["player"]:  # Help, seen and remembered (D-49): like a gift.
-            entry = {"event_id": state["event_seq"] + 1, "category": "success", "action": "treat", "property": [],
-                     "treated": {"patient_id": patient["id"], "patient_name": patient["name"],
-                                 "what": gear.describe(condition or {}).removeprefix("the "),
-                                 "remedy": gear.REMEDIES[gear.of(remedy)["class"]]["name"]}}
+            entry = {
+                "event_id": state["event_seq"] + 1,
+                "category": "success",
+                "action": "treat",
+                "property": [],
+                "treated": {
+                    "patient_id": patient["id"],
+                    "patient_name": patient["name"],
+                    "what": gear.describe(condition or {}).removeprefix("the "),
+                    "remedy": gear.REMEDIES[gear.of(remedy)["class"]]["name"],
+                },
+            }
             minds.apply_perceptions(state, minds.perceive(state, entry))
-            result["text"] = result["text"].replace("You treat the", f"You treat {patient['name']}'s").replace(
-                f"{patient['name']}'s the", f"{patient['name']}'s")
+            result["text"] = (
+                result["text"]
+                .replace("You treat the", f"You treat {patient['name']}'s")
+                .replace(f"{patient['name']}'s the", f"{patient['name']}'s")
+            )
         _gear_event(connection, state, request.request_id, result["seconds"], result["text"], extra)
     return {"state": state, "duplicate": False, "treat": result}

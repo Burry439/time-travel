@@ -1,16 +1,17 @@
 """Encounters: rounds with the people who address the stranger (scripted judge and scene, D-48)."""
+
 from types import SimpleNamespace
 
 import pytest
+import scenes
 from fastapi.testclient import TestClient
+from test_craft import attempt, judged
+from test_talk import npc, said, unit_state
 
 import app as service
 import encounter
 import minds
-import scenes
-from ai import decider, voice
-from test_craft import attempt, judged
-from test_talk import npc, said, unit_state
+from ai import decider
 
 
 def face_to_face(state, npc_id, reason="confront"):
@@ -22,14 +23,26 @@ def face_to_face(state, npc_id, reason="confront"):
 
 
 def blow(target, result="wounded", weapon=None, effort=2):
-    return attempt(judged("harm", effort_seconds=effort, harm={
-        "target_id": target, "weapon_id": weapon, "method": "melee", "result": result, "injury": "a hard blow"}))
+    return attempt(
+        judged(
+            "harm",
+            effort_seconds=effort,
+            harm={
+                "target_id": target,
+                "weapon_id": weapon,
+                "method": "melee",
+                "result": result,
+                "injury": "a hard blow",
+            },
+        )
+    )
 
 
 def play(state, kind, text="", judged_result=None, target=None):
     state["event_seq"] += 1
-    return encounter.resolve(state, "enc00000", {"kind": kind, "text": text, "target_id": target}, judged_result,
-                             None, "trace")
+    return encounter.resolve(
+        state, "enc00000", {"kind": kind, "text": text, "target_id": target}, judged_result, None, "trace"
+    )
 
 
 def test_people_who_come_to_address_the_stranger_open_an_encounter():
@@ -85,8 +98,19 @@ def test_someone_who_walks_up_mid_encounter_joins_it():
     face_to_face(state, "npc_hessa_marr", reason="talk")
     bren = npc(state, "npc_bren_marr")
     bren.update(x=state["player"]["x"] + 6, y=state["player"]["y"])
-    minds._set_job(bren, {"kind": "approach", "target": "player", "stop": 2.0, "speed": "walk", "then": "confront",
-                          "line": "What's going on here?", "line_id": None}, 0)
+    minds._set_job(
+        bren,
+        {
+            "kind": "approach",
+            "target": "player",
+            "stop": 2.0,
+            "speed": "walk",
+            "then": "confront",
+            "line": "What's going on here?",
+            "line_id": None,
+        },
+        0,
+    )
     state["npcs"], _, _ = minds.advance_world(state, encounter.ROUND_MS, state["sim_time_ms"])
     assert state["encounter"]["participants"] == ["npc_hessa_marr", "npc_bren_marr"]
     assert state["encounter"]["reason"] == "confront"  # No longer just a chat.
@@ -102,24 +126,44 @@ def world(tmp_path, monkeypatch):
         if "impression" in questions:
             return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
         choice = choices.pop(0) if choices else "listen"  # A scripted reaction: one for everyone, or per person.
-        return decider.DeciderCall(provider="script", model="script", answers={
-            k: {"type": "choice", "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict)
-                else choice} for k in questions if k.endswith("action")})
+        return decider.DeciderCall(
+            provider="script",
+            model="script",
+            answers={
+                k: {
+                    "type": "choice",
+                    "choice": choice.get(k.split("__")[0], "listen") if isinstance(choice, dict) else choice,
+                }
+                for k in questions
+                if k.endswith("action")
+            },
+        )
+
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
+
     def fake_voice(context, fallback, allowed=True):  # The scripted scene (D-48): lines, moves and readings.
-        return scenes.scene_call(context, replies.pop(0) if replies else {}, lambda ctx, person, move: (
-            f"(voiced) {ctx['what_just_happened'] or ctx['stranger_says']}"[:120]))
+        return scenes.scene_call(
+            context,
+            replies.pop(0) if replies else {},
+            lambda ctx, person, move: f"(voiced) {ctx['what_just_happened'] or ctx['stranger_says']}"[:120],
+        )
+
     monkeypatch.setattr(service.voice, "scene", fake_voice)
-    monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
-        status="ok", result=rulings.pop(0), model="stub", attempts=1))
+    monkeypatch.setattr(
+        service.judge,
+        "judge_craft",
+        lambda context: service.judge.JudgeCall(status="ok", result=rulings.pop(0), model="stub", attempts=1),
+    )
     monkeypatch.setattr(service.attempts, "_generate_asset", lambda asset_id: None)
     return SimpleNamespace(http=TestClient(service.app), replies=replies, choices=choices, rulings=rulings)
 
 
 def post(world, state, path, body, status=200):
-    reply = world.http.post(f"/runs/{state['run_id']}/{path}", json={
-        **body, "expected_version": state["event_seq"], "request_id": f"{path}-{state['event_seq']}"})
+    reply = world.http.post(
+        f"/runs/{state['run_id']}/{path}",
+        json={**body, "expected_version": state["event_seq"], "request_id": f"{path}-{state['event_seq']}"},
+    )
     assert reply.status_code == status, reply.text
     return reply.json()
 
@@ -128,7 +172,7 @@ def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arres
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     cells = [[48, y] for y in range(67, 15, -1)]
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     for _ in range(60):
         if state.get("encounter"):
             break
@@ -143,10 +187,19 @@ def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arres
     assert body["trace"]["kind"] == "talk"
     assert not any(p["kind"] == "round" for p in state["pending_minds"])  # No second decision per round (D-46).
     assert world.http.get(f"/runs/{state['run_id']}").json() == state  # One event, replayed exactly.
-    world.rulings.append(blow(guard, "wounded"))  # The /craft path during an encounter is the stranger's part of a round.
+    world.rulings.append(
+        blow(guard, "wounded")
+    )  # The /craft path during an encounter is the stranger's part of a round.
     world.choices.append("listen")
-    reply = world.http.post(f"/runs/{state['run_id']}/craft", json={
-        "text": "shove the guard", "selected_ids": [], "expected_version": state["event_seq"], "request_id": "shove"})
+    reply = world.http.post(
+        f"/runs/{state['run_id']}/craft",
+        json={
+            "text": "shove the guard",
+            "selected_ids": [],
+            "expected_version": state["event_seq"],
+            "request_id": "shove",
+        },
+    )
     assert reply.status_code == 200, reply.text
     state = reply.json()["state"]
     # A shove at a guard in mail: it does nothing, but it's an assault. Words are over: a real-time fight.
@@ -170,7 +223,7 @@ def test_speaking_to_someone_is_an_encounter_you_can_simply_walk_away_from(world
         y += (person["y"] + 1 > y) - (person["y"] + 1 < y)
         cells.append([x, y])
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     world.replies.append(said("answer"))
     state = post(world, state, "say", {"npc_id": "npc_kade_east", "text": "Evening."})["state"]
     assert state["encounter"]["reason"] == "talk" and not encounter.hostile(state)
@@ -198,7 +251,7 @@ def test_walking_off_ends_a_conversation_and_replays(world):
         y += (person["y"] + 1 > y) - (person["y"] + 1 < y)
         cells.append([x, y])
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     world.replies.append(said("answer"))
     state = post(world, state, "say", {"npc_id": "npc_kade_east", "text": "Evening."})["state"]
     away = [[state["player"]["x"], state["player"]["y"] + n] for n in range(1, 9)]

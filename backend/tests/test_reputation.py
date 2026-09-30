@@ -1,16 +1,30 @@
 """Reputation (GDD D-43): respect for competence seen working, awe at the uncanny (double-edged, by each
 person's superstition), and any guard letting the stranger in for their own reasons."""
-import minds
-import talk
+
 from test_gate import answers
 from test_talk import npc, unit_state
 
+import minds
+import talk
+
 
 def shown(wonder, works=True):
-    return {"event_id": 7, "category": "success", "action": "demonstrate", "property": [],
-            "demonstration": {"object_id": "needle_x", "object_name": "floating needle", "used_ids": [],
-                              "audience_ids": [], "observed": "The stranger's needle swung round and settled north.",
-                              "works": works, "results": [], "wonder": wonder}}
+    return {
+        "event_id": 7,
+        "category": "success",
+        "action": "demonstrate",
+        "property": [],
+        "demonstration": {
+            "object_id": "needle_x",
+            "object_name": "floating needle",
+            "used_ids": [],
+            "audience_ids": [],
+            "observed": "The stranger's needle swung round and settled north.",
+            "works": works,
+            "results": [],
+            "wonder": wonder,
+        },
+    }
 
 
 def watching(*people):
@@ -50,10 +64,21 @@ def test_awe_is_double_edged():
 def test_stories_of_wonders_earn_no_awe():
     state = unit_state()
     oren = npc(state, "npc_oren_dast")
-    minds.remember(oren, {"kind": "demonstration", "severity": 1, "event": 9, "clarity": "told", "victim": None,
-                          "source": "told_by:npc_jory_venn", "works": True, "wonder": "uncanny",
-                          "summary": "Jory told them the stranger's needle finds north by itself.",
-                          "short": "showed off a needle"})
+    minds.remember(
+        oren,
+        {
+            "kind": "demonstration",
+            "severity": 1,
+            "event": 9,
+            "clarity": "told",
+            "victim": None,
+            "source": "told_by:npc_jory_venn",
+            "works": True,
+            "wonder": "uncanny",
+            "summary": "Jory told them the stranger's needle finds north by itself.",
+            "short": "showed off a needle",
+        },
+    )
     assert minds.regard(oren)["awe"] == 0  # Claims and stories never do (GDD 1).
 
 
@@ -76,6 +101,13 @@ def test_bren_lets_you_in_on_his_own_rule():
     key = talk.decided_reply(state, bren, answers("admit", reason=0.8, threat=0.1), "admit")
     assert key == "admit"
     state["event_seq"] = 3
-    said = talk.exchange(state, bren["id"], "Will you let me through?", answers("ask_back", reason=0.8, threat=0.1),
-                         key, "Go on, then. Quick, before the captain sees.", [])
+    said = talk.exchange(
+        state,
+        bren["id"],
+        "Will you let me through?",
+        answers("ask_back", reason=0.8, threat=0.1),
+        key,
+        "Go on, then. Quick, before the captain sees.",
+        [],
+    )
     assert said["admission"]["by"] == "npc_bren_marr" and state["gate_open"]

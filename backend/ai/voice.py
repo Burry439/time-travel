@@ -9,14 +9,15 @@ already decided reply into words (used by the persona eval). The same role keeps
 finished conversation becomes an episode, D-36) and phrases two villagers talking to each other (chatter, D-37).
 If the model is unavailable, the person addressed says an authored fallback line instead.
 """
+
 from __future__ import annotations
 
 import json
 import re
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Literal
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ValidationError
 
@@ -26,8 +27,13 @@ PROMPT_VERSION = "voice_v3"
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 _PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
-SUSPICION = ["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
-             "Much more suspicious"]
+SUSPICION = [
+    "Much less suspicious",
+    "A little less suspicious",
+    "Unchanged",
+    "A little more suspicious",
+    "Much more suspicious",
+]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 SCENE_VERSION = "scene_v3"  # D-51: errands, promises kept, talk mid-fight. D-53: things change hands only by moves.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
@@ -53,12 +59,18 @@ class DialogueLine(BaseModel):
 
 class SceneLine(BaseModel):
     """One person's line in a group moment: who speaks, what they say and do, how they read it (D-48)."""
+
     speaker_id: str
     text: str
     move: str
     impression: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
-    suspicion: Literal["Much less suspicious", "A little less suspicious", "Unchanged", "A little more suspicious",
-                       "Much more suspicious"]
+    suspicion: Literal[
+        "Much less suspicious",
+        "A little less suspicious",
+        "Unchanged",
+        "A little more suspicious",
+        "Much more suspicious",
+    ]
     anger: Literal["Calm", "Annoyed", "Angry", "Furious"]
     believes_what_was_said: bool
     sees_the_stranger_as_a_threat: bool
@@ -134,12 +146,18 @@ def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) ->
     started = time.perf_counter()
     parsed = None
     response = None
-    for attempt in range(2):  # One retry when the model's output doesn't match the schema (it happens rarely).
+    for _attempt in range(2):  # One retry when the model's output doesn't match the schema (it happens rarely).
         try:
             response = config.client().responses.parse(
-                model=model, reasoning={"effort": config.voice_reasoning()}, store=False, text_format=schema,
-                input=[{"role": "developer", "content": prompt},
-                       {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)}])
+                model=model,
+                reasoning={"effort": config.voice_reasoning()},
+                store=False,
+                text_format=schema,
+                input=[
+                    {"role": "developer", "content": prompt},
+                    {"role": "user", "content": json.dumps(context, indent=1, ensure_ascii=False)},
+                ],
+            )
             call.error = None
             break
         except ValidationError as error:  # Malformed structured output: keep a whole answer followed by stray text,
@@ -176,12 +194,20 @@ def salvage(error: ValidationError, schema: type[BaseModel]) -> BaseModel | None
 
 def _unavailable(fallback: str, allowed: bool, version: str) -> VoiceCall | None:
     if not allowed:
-        return VoiceCall(status="fallback", text=fallback, prompt_version=version,
-                         error="Model call allowance for this journey is used up.")
+        return VoiceCall(
+            status="fallback",
+            text=fallback,
+            prompt_version=version,
+            error="Model call allowance for this journey is used up.",
+        )
     if config.mode() != "live":
-        return VoiceCall(status="fallback", text=fallback, model="stub" if config.mode() == "stub" else None,
-                         prompt_version=version,
-                         error=None if config.mode() == "stub" else "No OPENAI_API_KEY in backend/.env.")
+        return VoiceCall(
+            status="fallback",
+            text=fallback,
+            model="stub" if config.mode() == "stub" else None,
+            prompt_version=version,
+            error=None if config.mode() == "stub" else "No OPENAI_API_KEY in backend/.env.",
+        )
     return None
 
 
@@ -205,12 +231,16 @@ def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
 def reading(parsed: SceneLine) -> dict:
     """The person's reading of the moment, in the typed-answer shape the rest of the code reads."""
     yes = lambda value: {"type": "noul", "noul": 0.9 if value else 0.1}  # noqa: E731
-    return {"impression": {"type": "score", "score": IMPRESSION.index(parsed.impression)},
-            "suspicion": {"type": "score", "score": SUSPICION.index(parsed.suspicion)},
-            "anger": {"type": "score", "score": ANGER.index(parsed.anger)},
-            "believes": yes(parsed.believes_what_was_said), "threat": yes(parsed.sees_the_stranger_as_a_threat),
-            "reason": yes(parsed.reason_enough_to_let_them_through), "accepts": yes(parsed.agreed_to_the_deal),
-            "done": yes(parsed.did_what_was_asked)}
+    return {
+        "impression": {"type": "score", "score": IMPRESSION.index(parsed.impression)},
+        "suspicion": {"type": "score", "score": SUSPICION.index(parsed.suspicion)},
+        "anger": {"type": "score", "score": ANGER.index(parsed.anger)},
+        "believes": yes(parsed.believes_what_was_said),
+        "threat": yes(parsed.sees_the_stranger_as_a_threat),
+        "reason": yes(parsed.reason_enough_to_let_them_through),
+        "accepts": yes(parsed.agreed_to_the_deal),
+        "done": yes(parsed.did_what_was_asked),
+    }
 
 
 def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
@@ -226,11 +256,18 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     for line in (parsed.lines if parsed is not None else [])[:SCENE_LINES]:
         spoken = tidy(line.text)
         if spoken:
-            lines.append({"speaker_id": line.speaker_id.strip(), "text": spoken, "move": line.move.strip(),
-                          "answers": reading(line), "remember": " ".join(line.remember.split())[:300],
-                          "errand_to": line.errand_to.strip()[:60],
-                          "errand_message": " ".join(line.errand_message.split())[:240],
-                          "promised_later": " ".join(line.promised_later.split())[:240]})
+            lines.append(
+                {
+                    "speaker_id": line.speaker_id.strip(),
+                    "text": spoken,
+                    "move": line.move.strip(),
+                    "answers": reading(line),
+                    "remember": " ".join(line.remember.split())[:300],
+                    "errand_to": line.errand_to.strip()[:60],
+                    "errand_message": " ".join(line.errand_message.split())[:240],
+                    "promised_later": " ".join(line.promised_later.split())[:240],
+                }
+            )
     if lines:
         call.status, call.lines, call.text = "ok", lines, lines[0]["text"]
         call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
@@ -263,8 +300,10 @@ def recollect(context: dict, fallback: dict, allowed: bool = True) -> tuple[Voic
     if parsed is None or not parsed.episode.strip():
         return call, fallback
     call.status = "ok"
-    return call, {"episode": " ".join(parsed.episode.split())[:400],
-                  "long_memory": " ".join(parsed.long_memory.split())[:600] or fallback["long_memory"]}
+    return call, {
+        "episode": " ".join(parsed.episode.split())[:400],
+        "long_memory": " ".join(parsed.long_memory.split())[:600] or fallback["long_memory"],
+    }
 
 
 def chatter(context: dict, fallback: tuple[str, str], allowed: bool = True) -> tuple[VoiceCall, tuple[str, str]]:
@@ -289,6 +328,10 @@ def hearing(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceC
     if parsed is None or not parsed.teller_line.strip() or not parsed.listener_line.strip():
         return call, fallback
     call.status = "ok"
-    return call, {"teller_line": tidy(parsed.teller_line), "listener_line": tidy(parsed.listener_line),
-                  "move": parsed.listener_move.strip(), "pass_on_message": " ".join(parsed.pass_on_message.split())[:240],
-                  "remember": " ".join(parsed.remember.split())[:300]}
+    return call, {
+        "teller_line": tidy(parsed.teller_line),
+        "listener_line": tidy(parsed.listener_line),
+        "move": parsed.listener_move.strip(),
+        "pass_on_message": " ".join(parsed.pass_on_message.split())[:240],
+        "remember": " ".join(parsed.remember.split())[:300],
+    }

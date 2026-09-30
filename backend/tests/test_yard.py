@@ -1,11 +1,12 @@
 """The old wainwright's yard (seed 11, D-51): a free stock of materials in the bottom-right corner, every piece on an
 open cell the stranger can walk to, unowned, and read by code for what it would be in a fight."""
+
 import json
+
+from test_talk import unit_state
 
 import crafting
 import store
-
-from test_talk import unit_state
 
 
 def test_the_yard_is_free_reachable_and_read_for_a_fight():

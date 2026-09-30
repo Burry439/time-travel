@@ -1,4 +1,5 @@
 """Crafting slice: the judge is stubbed, so these test what code allows and commits."""
+
 import math
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,19 +11,35 @@ import app as service
 import crafting
 from ai import illustrator, judge
 
-PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
-                    "1f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4b70000000049454e44ae426082")
+PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4b70000000049454e44ae426082"
+)
 
 
 def spear_step(**changes):
     step = {
-        "action": "make", "outcome": "success", "reason": "You lash the flint to the branch.", "effort_seconds": 40,
-        "take_ids": [], "transformation": None, "harm": None,
-        "new_object": {"name": "flint-tipped spear", "description": "A branch with a flint point lashed on.",
-                       "materials": ["wood", "flint", "vine"], "consumes": ["branch_a", "flint_a", "vine_a"],
-                       "tools_used": [], "mass_kg": 1.9, "length_m": 1.6, "capacity_l": None,
-                       "rated_load_kg": None, "flags": ["rigid", "sharp_edge"],
-                       "capabilities": [{"text": "can pierce soft things", "status": "expected"}]}}
+        "action": "make",
+        "outcome": "success",
+        "reason": "You lash the flint to the branch.",
+        "effort_seconds": 40,
+        "take_ids": [],
+        "transformation": None,
+        "harm": None,
+        "new_object": {
+            "name": "flint-tipped spear",
+            "description": "A branch with a flint point lashed on.",
+            "materials": ["wood", "flint", "vine"],
+            "consumes": ["branch_a", "flint_a", "vine_a"],
+            "tools_used": [],
+            "mass_kg": 1.9,
+            "length_m": 1.6,
+            "capacity_l": None,
+            "rated_load_kg": None,
+            "flags": ["rigid", "sharp_edge"],
+            "capabilities": [{"text": "can pierce soft things", "status": "expected"}],
+        },
+    }
     for key, value in changes.items():
         if key in step["new_object"]:
             step["new_object"][key] = value
@@ -69,8 +86,12 @@ def world(tmp_path, monkeypatch):
 def walk_to(http, state, x, y):
     while (state["player"]["x"], state["player"]["y"]) != (x, y):
         px, py = state["player"]["x"], state["player"]["y"]
-        step = {"x": px + (x > px) - (x < px), "y": py + (y > py) - (y < py),
-                "expected_version": state["event_seq"], "request_id": f"walk-{state['event_seq']}"}
+        step = {
+            "x": px + (x > px) - (x < px),
+            "y": py + (y > py) - (y < py),
+            "expected_version": state["event_seq"],
+            "request_id": f"walk-{state['event_seq']}",
+        }
         response = http.post(f"/runs/{state['run_id']}/move", json=step)
         assert response.status_code == 200, response.text
         state = response.json()["state"]
@@ -78,9 +99,15 @@ def walk_to(http, state, x, y):
 
 
 def craft(http, state, text, request_id, selected=()):
-    return http.post(f"/runs/{state['run_id']}/craft", json={
-        "text": text, "selected_ids": list(selected), "expected_version": state["event_seq"],
-        "request_id": request_id})
+    return http.post(
+        f"/runs/{state['run_id']}/craft",
+        json={
+            "text": text,
+            "selected_ids": list(selected),
+            "expected_version": state["event_seq"],
+            "request_id": request_id,
+        },
+    )
 
 
 def test_success_creates_a_persistent_object_with_provenance_and_sprite(world):
@@ -111,18 +138,24 @@ def test_success_creates_a_persistent_object_with_provenance_and_sprite(world):
     http.post(f"/runs/{state['run_id']}/checkpoint")
     assert http.get(f"/runs/{state['run_id']}").json() == state
     # Idempotent retry returns the same result without calling the judge again.
-    retry = craft(http, {"run_id": state["run_id"], "event_seq": 0}, "lash the flint to the branch with the vine", "spear")
+    retry = craft(
+        http, {"run_id": state["run_id"], "event_seq": 0}, "lash the flint to the branch with the vine", "spear"
+    )
     assert retry.json()["duplicate"] and retry.json()["state"] == state and len(world.contexts) == 1
     # The created object works with the quick actions (decided in code, no model).
-    dropped = http.post(f"/runs/{state['run_id']}/quick", json={
-        "verb": "drop", "object_id": made["id"], "expected_version": state["event_seq"],
-        "request_id": "drop"}).json()["state"]
+    dropped = http.post(
+        f"/runs/{state['run_id']}/quick",
+        json={"verb": "drop", "object_id": made["id"], "expected_version": state["event_seq"], "request_id": "drop"},
+    ).json()["state"]
     assert dropped["objects"][made["id"]]["holder_id"] is None
-    assert (dropped["objects"][made["id"]]["x"], dropped["objects"][made["id"]]["y"]) == \
-        (dropped["player"]["x"], dropped["player"]["y"])
-    taken = http.post(f"/runs/{state['run_id']}/quick", json={
-        "verb": "take", "object_id": made["id"], "expected_version": dropped["event_seq"],
-        "request_id": "take"}).json()["state"]
+    assert (dropped["objects"][made["id"]]["x"], dropped["objects"][made["id"]]["y"]) == (
+        dropped["player"]["x"],
+        dropped["player"]["y"],
+    )
+    taken = http.post(
+        f"/runs/{state['run_id']}/quick",
+        json={"verb": "take", "object_id": made["id"], "expected_version": dropped["event_seq"], "request_id": "take"},
+    ).json()["state"]
     assert taken["objects"][made["id"]]["holder_id"] == "player"
     assert http.get(f"/runs/{state['run_id']}").json() == taken
     assert len(world.contexts) == 1  # Neither quick action asked the judge.
@@ -130,11 +163,14 @@ def test_success_creates_a_persistent_object_with_provenance_and_sprite(world):
     assert traces["traces"][0]["request_id"] == "spear" and traces["assets"][0]["status"] == "ready"
 
 
-@pytest.mark.parametrize("change, note", [
-    ({"consumes": ["bucket_hessa"]}, "not available"),
-    ({"consumes": ["flint_a", "made_up_iron"]}, "not available"),
-    ({"consumes": []}, "at least one consumed item"),
-])
+@pytest.mark.parametrize(
+    "change, note",
+    [
+        ({"consumes": ["bucket_hessa"]}, "not available"),
+        ({"consumes": ["flint_a", "made_up_iron"]}, "not available"),
+        ({"consumes": []}, "at least one consumed item"),
+    ],
+)
 def test_invalid_proposals_change_nothing(world, change, note):
     http = world.http
     state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 45, 66)
@@ -149,15 +185,22 @@ def test_invalid_proposals_change_nothing(world, change, note):
 def test_validator_clamps_mass_strips_invented_material_and_unearned_flags(world):
     http = world.http
     state = walk_to(http, http.post("/runs", json={}).json(), 45, 66)
-    world.replies.append(spear(materials=["wood", "flint", "vine", "iron"], mass_kg=50.0,
-                               flags=["sharp_edge", "magnetized", "light_source", "ferromagnetic"]))
+    world.replies.append(
+        spear(
+            materials=["wood", "flint", "vine", "iron"],
+            mass_kg=50.0,
+            flags=["sharp_edge", "magnetized", "light_source", "ferromagnetic"],
+        )
+    )
     state = craft(http, state, "make a magic glowing spear", "clamp").json()["state"]
     made = next(o for o in state["objects"].values() if o["id"].startswith("made_"))
     assert "iron" not in made["materials"]
     assert made["mass_kg"] == pytest.approx(1.2 + 0.3 + 0.4)
     assert made["flags"] == ["sharp_edge"]
     assert {c["text"] for c in made["known_capabilities"] if c["status"] == "untested"} >= {
-        "could give light if lit", "might become magnetic if touched to a real magnet"}
+        "could give light if lit",
+        "might become magnetic if touched to a real magnet",
+    }
 
 
 @pytest.mark.parametrize("outcome", ["failed", "blocked", "unsupported", "needs_clarification"])
@@ -191,8 +234,15 @@ def test_new_road_materials_are_reachable_and_described():
     objects = service.m2.seed_objects(4)
     for oid in service.m2.NEW_PUBLIC_MATERIALS:
         assert objects[oid]["owner_id"] is None and objects[oid]["materials"]
-    assert set(service.m2.seed_objects(3)) == {"branch_a", "branch_b", "cord_a", "stone_a",
-                                               "bucket_hessa", "trough_hessa", "wood_tomas"}
+    assert set(service.m2.seed_objects(3)) == {
+        "branch_a",
+        "branch_b",
+        "cord_a",
+        "stone_a",
+        "bucket_hessa",
+        "trough_hessa",
+        "wood_tomas",
+    }
     assert crafting.placeholder_category(["flint"]) == "stone"
 
 
@@ -211,25 +261,42 @@ def test_stub_mode_runs_the_real_pipeline_without_a_model(tmp_path, monkeypatch)
 
 # --- Try Something beyond making things (judge v2) ---------------------------------------
 
+
 def fresh_state(x=48, y=68):
-    state = service.initial_state({"id": "unit0000", "mode": "developer", "seed_version": service.SEED_VERSION,
-                                   "geometry_version": service.GEOMETRY_VERSION})
+    state = service.initial_state(
+        {
+            "id": "unit0000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+        }
+    )
     state["player"].update(x=x, y=y)
     return state
 
 
 def judged(action, **fields):
-    base = {"action": action, "outcome": "success", "reason": "It happens.", "effort_seconds": 5,
-            "clarifying_question": None, "precedent_key": action, "new_object": None, "take_ids": [],
-            "transformation": None, "harm": None}
+    base = {
+        "action": action,
+        "outcome": "success",
+        "reason": "It happens.",
+        "effort_seconds": 5,
+        "clarifying_question": None,
+        "precedent_key": action,
+        "new_object": None,
+        "take_ids": [],
+        "transformation": None,
+        "harm": None,
+    }
     base.update(fields)
     return base
 
 
 def commit(state, *steps, text="try"):
     """Resolve judge steps the way the /craft endpoint does and apply them to state."""
-    payload, summary, after = crafting.resolve_attempt(state, "unit0000", text, attempt(*steps), None, "trace",
-                                                       state["sim_time_ms"])
+    payload, summary, after = crafting.resolve_attempt(
+        state, "unit0000", text, attempt(*steps), None, "trace", state["sim_time_ms"]
+    )
     payload["npcs"] = after["npcs"]
     state["event_seq"] += 1
     crafting.apply_payload(state, payload)
@@ -240,13 +307,24 @@ def test_other_peoples_property_is_offered_usable_and_recorded():
     state = fresh_state(63, 28)  # Beside Tomas's plank at (64, 28).
     offered = {i["id"]: i for i in crafting.build_context(state, "x", [])["available_items"]}
     assert offered["wood_tomas"]["belongs_to"] == "Tomas" and offered["wood_tomas"]["portable"]
-    shield = {"name": "plank shield", "description": "A plank.", "materials": ["wood"], "consumes": ["wood_tomas"],
-              "tools_used": [], "mass_kg": 4.0, "length_m": None, "capacity_l": None, "rated_load_kg": None,
-              "flags": ["rigid"], "capabilities": []}
+    shield = {
+        "name": "plank shield",
+        "description": "A plank.",
+        "materials": ["wood"],
+        "consumes": ["wood_tomas"],
+        "tools_used": [],
+        "mass_kg": 4.0,
+        "length_m": None,
+        "capacity_l": None,
+        "rated_load_kg": None,
+        "flags": ["rigid"],
+        "capabilities": [],
+    }
     verdict = crafting.validate(state, judged("make", new_object=shield))
     assert verdict["category"] == "success"
-    assert verdict["property"] == [{"id": "wood_tomas", "name": "wood plank", "owner_id": "npc_tomas_reed",
-                                    "how": "used up"}]
+    assert verdict["property"] == [
+        {"id": "wood_tomas", "name": "wood plank", "owner_id": "npc_tomas_reed", "how": "used up"}
+    ]
     taken = crafting.validate(fresh_state(63, 28), judged("take", take_ids=["wood_tomas"]))
     assert taken["category"] == "success" and taken["property"][0]["how"] == "taken"
 
@@ -264,18 +342,39 @@ def test_take_respects_reach_portability_and_weight():
 
 def tree_felling(target="tree_01"):
     def piece(name, count, mass, flags=("rigid",)):
-        return {"name": name, "description": f"A {name}.", "materials": ["wood"], "count": count,
-                "mass_kg": mass, "length_m": None, "flags": list(flags), "capabilities": []}
-    return judged("transform", effort_seconds=5400, transformation={
-        "target_id": target, "tools_used": [], "result_state": "felled",
-        "pieces": [piece("oak trunk", 1, 600.0), piece("leafy branch", 3, 15.0), piece("stump", 1, 150.0)]})
+        return {
+            "name": name,
+            "description": f"A {name}.",
+            "materials": ["wood"],
+            "count": count,
+            "mass_kg": mass,
+            "length_m": None,
+            "flags": list(flags),
+            "capabilities": [],
+        }
+
+    return judged(
+        "transform",
+        effort_seconds=5400,
+        transformation={
+            "target_id": target,
+            "tools_used": [],
+            "result_state": "felled",
+            "pieces": [piece("oak trunk", 1, 600.0), piece("leafy branch", 3, 15.0), piece("stump", 1, 150.0)],
+        },
+    )
 
 
 def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
     http = world.http
     state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 33, 64)  # Oak tree_01 at (32, 64).
-    assert http.post(f"/runs/{state['run_id']}/move", json={
-        "x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "into-tree"}).status_code == 403
+    assert (
+        http.post(
+            f"/runs/{state['run_id']}/move",
+            json={"x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "into-tree"},
+        ).status_code
+        == 403
+    )
     world.replies.append(attempt(tree_felling()))
     body = craft(http, state, "chop down the oak", "fell").json()
     state = body["state"]
@@ -287,8 +386,10 @@ def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
     assert {p["sprite_asset_id"] for p in pieces[1:4]} == {branch["sprite_asset_id"]}  # Identical pieces share art.
     assert len(world.painted) == 3
     assert state["sim_time_ms"] == 5_400_000
-    moved = http.post(f"/runs/{state['run_id']}/move", json={
-        "x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "through-stump"})
+    moved = http.post(
+        f"/runs/{state['run_id']}/move",
+        json={"x": 32, "y": 64, "expected_version": state["event_seq"], "request_id": "through-stump"},
+    )
     assert moved.status_code == 200, moved.text
     state = moved.json()["state"]
     assert http.get(f"/runs/{state['run_id']}").json() == state
@@ -296,10 +397,26 @@ def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
 
 def test_transform_mass_is_capped_by_the_target():
     state = fresh_state(37, 67)  # Beside the birch sapling (12 kg) at (38, 67).
-    plan = judged("transform", transformation={"target_id": "sapling_a", "tools_used": [], "result_state": "felled",
-                  "pieces": [{"name": "birch pole", "description": "A pole.", "materials": ["wood", "iron"],
-                              "count": 2, "mass_kg": 10.0, "length_m": 2.5, "flags": ["light_source"],
-                              "capabilities": []}]})
+    plan = judged(
+        "transform",
+        transformation={
+            "target_id": "sapling_a",
+            "tools_used": [],
+            "result_state": "felled",
+            "pieces": [
+                {
+                    "name": "birch pole",
+                    "description": "A pole.",
+                    "materials": ["wood", "iron"],
+                    "count": 2,
+                    "mass_kg": 10.0,
+                    "length_m": 2.5,
+                    "flags": ["light_source"],
+                    "capabilities": [],
+                }
+            ],
+        },
+    )
     verdict = crafting.validate(state, plan)
     piece = verdict["transform"]["pieces"][0]
     assert piece["mass_kg"] * piece["count"] == pytest.approx(12.0)
@@ -307,9 +424,17 @@ def test_transform_mass_is_capped_by_the_target():
 
 
 def harm(target, result, weapon=None, area="torso"):
-    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "result": result, "target_area": area,
-                                "outcome": "missed" if result == "missed" else "landed",
-                                "injury": "a deep wound" if result != "missed" else "the blow misses"})
+    return judged(
+        "harm",
+        harm={
+            "target_id": target,
+            "weapon_id": weapon,
+            "result": result,
+            "target_area": area,
+            "outcome": "missed" if result == "missed" else "landed",
+            "injury": "a deep wound" if result != "missed" else "the blow misses",
+        },
+    )
 
 
 def beside(state, npc_id):
@@ -327,11 +452,24 @@ def armed(state):
 def knife(state):
     """An iron knife in hand (D-49): deadly to the unarmoured, and to anyone's throat."""
     state["objects"]["knife_test"] = {
-        "id": "knife_test", "name": "iron knife", "x": 0, "y": 0, "mass_kg": 0.3, "owner_id": "player",
-        "holder_id": "player", "capabilities": ["carry"], "bound_to": [], "water_l": 0.0, "capacity_l": 0.0,
-        "condition": "usable", "materials": ["iron", "wood"], "description": "A short iron knife.",
-        "flags": ["rigid", "sharp_edge"], "length_m": 0.25,
-        "gear": {"kind": "weapon", "class": "knife", "covers": [], "quality": "fair"}}
+        "id": "knife_test",
+        "name": "iron knife",
+        "x": 0,
+        "y": 0,
+        "mass_kg": 0.3,
+        "owner_id": "player",
+        "holder_id": "player",
+        "capabilities": ["carry"],
+        "bound_to": [],
+        "water_l": 0.0,
+        "capacity_l": 0.0,
+        "condition": "usable",
+        "materials": ["iron", "wood"],
+        "description": "A short iron knife.",
+        "flags": ["rigid", "sharp_edge"],
+        "length_m": 0.25,
+        "gear": {"kind": "weapon", "class": "knife", "covers": [], "quality": "fair"},
+    }
     return "knife_test"
 
 
@@ -372,9 +510,13 @@ def test_wounds_accumulate_and_reach_is_enforced():
 
 # --- Several steps in one attempt ------------------------------------------------------
 
+
 def stab(target, weapon, result="wounded"):
-    return judged("harm", reason=f"You stab {target} with {weapon}.", harm={
-        "target_id": target, "weapon_id": weapon, "result": result, "injury": "a deep wound"})
+    return judged(
+        "harm",
+        reason=f"You stab {target} with {weapon}.",
+        harm={"target_id": target, "weapon_id": weapon, "result": result, "injury": "a deep wound"},
+    )
 
 
 def test_make_then_use_keeps_the_new_object_and_resolves_references():
@@ -396,8 +538,7 @@ def test_a_failed_later_step_keeps_earlier_work_and_stops():
     state = fresh_state()  # Tomas is far away, so the stab cannot happen.
     for item in ("branch_a", "flint_a", "vine_a"):
         state["objects"][item]["holder_id"] = "player"
-    summary = commit(state, spear_step(), stab("npc_tomas_reed", "made_by_step_1"),
-                     judged("take", take_ids=["cord_a"]))
+    summary = commit(state, spear_step(), stab("npc_tomas_reed", "made_by_step_1"), judged("take", take_ids=["cord_a"]))
     assert summary["category"] == "partial_success"
     assert [s["category"] for s in summary["steps"]] == ["success", "blocked"]  # The third step never ran.
     assert state["objects"][state["last_action"]["crafted"]]["holder_id"] == "player"
@@ -430,16 +571,23 @@ def test_people_near_death_are_described_to_the_judge():
 
 def test_single_step_events_from_before_multi_step_still_replay():
     state = fresh_state()
-    legacy = {"consumed_ids": [], "new_objects": [], "taken_ids": ["branch_a"], "transformed": None,
-              "npc_updates": [{"id": "npc_bren_marr", "alive": True, "health": 55, "injury": "a cut"}],
-              "journal_entry": {"kind": "craft", "text": "old", "category": "success", "reason": "old"},
-              "sim_time_ms": 5000, "npcs": state["npcs"]}
+    legacy = {
+        "consumed_ids": [],
+        "new_objects": [],
+        "taken_ids": ["branch_a"],
+        "transformed": None,
+        "npc_updates": [{"id": "npc_bren_marr", "alive": True, "health": 55, "injury": "a cut"}],
+        "journal_entry": {"kind": "craft", "text": "old", "category": "success", "reason": "old"},
+        "sim_time_ms": 5000,
+        "npcs": state["npcs"],
+    }
     crafting.apply_payload(state, legacy)
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert state["objects"]["branch_a"]["holder_id"] == "player" and bren["injuries"] == ["a cut"]
 
 
 # --- Acting at a distance: walking there first, or throwing ------------------------------
+
 
 def test_far_items_are_reached_by_walking_first():
     state = fresh_state()  # The flint at (45, 66) is 3.6 cells away: beyond arm's reach.
@@ -448,7 +596,10 @@ def test_far_items_are_reached_by_walking_first():
     assert summary["category"] == "success"
     assert state["objects"]["flint_a"]["holder_id"] == "player"
     assert crafting._distance(state, 45, 66) <= service.m2.REACH_CELLS
-    assert state["last_action"]["walk"] and state["last_action"]["walk"][-1] == [state["player"]["x"], state["player"]["y"]]
+    assert state["last_action"]["walk"] and state["last_action"]["walk"][-1] == [
+        state["player"]["x"],
+        state["player"]["y"],
+    ]
 
 
 def test_melee_walks_up_to_the_target():
@@ -462,8 +613,10 @@ def test_melee_walks_up_to_the_target():
 
 
 def throw(target, weapon, result="wounded"):
-    return judged("harm", harm={"target_id": target, "weapon_id": weapon, "method": "thrown",
-                                "result": result, "injury": "a hard blow"})
+    return judged(
+        "harm",
+        harm={"target_id": target, "weapon_id": weapon, "method": "thrown", "result": result, "injury": "a hard blow"},
+    )
 
 
 def test_a_thrown_weapon_lands_by_the_target_and_the_thrower_stays_put():
@@ -497,9 +650,18 @@ def test_a_later_step_can_show_light_or_give_what_an_earlier_step_made():
     beside(state, "npc_tomas_reed")
     for item in ("branch_a", "flint_a", "vine_a"):
         state["objects"][item]["holder_id"] = "player"
-    shown = judged("demonstrate", demonstration={
-        "object_id": "made_by_step_1", "used_ids": [], "audience_ids": ["npc_tomas_reed"],
-        "observed": "The stranger jabbed the spear into a post.", "works": True, "capabilities": [], "wonder": "ordinary"})
+    shown = judged(
+        "demonstrate",
+        demonstration={
+            "object_id": "made_by_step_1",
+            "used_ids": [],
+            "audience_ids": ["npc_tomas_reed"],
+            "observed": "The stranger jabbed the spear into a post.",
+            "works": True,
+            "capabilities": [],
+            "wonder": "ordinary",
+        },
+    )
     given = judged("give", give={"item_ids": ["made_by_step_1"], "recipient_id": "npc_tomas_reed"})
     summary = commit(state, spear_step(), shown, given, text="make a spear, show Tomas, then give it to him")
     assert [s["category"] for s in summary["steps"]] == ["success", "success", "success"], summary["steps"]
@@ -507,12 +669,30 @@ def test_a_later_step_can_show_light_or_give_what_an_earlier_step_made():
 
 
 def gather_step(source="tree_01", name="oak leaf", materials=("leaf",), count=1, mass=0.01):
-    return {"action": "gather", "outcome": "success", "reason": "You pull a leaf off the oak.", "effort_seconds": 3,
-            "new_object": None, "take_ids": [], "transformation": None, "harm": None,
-            "gather": {"source_id": source, "tools_used": [],
-                       "piece": {"name": name, "description": "A broad green oak leaf.", "materials": list(materials),
-                                 "count": count, "mass_kg": mass, "length_m": None, "flags": ["flexible"],
-                                 "capabilities": [{"text": "can float on water", "status": "expected"}]}}}
+    return {
+        "action": "gather",
+        "outcome": "success",
+        "reason": "You pull a leaf off the oak.",
+        "effort_seconds": 3,
+        "new_object": None,
+        "take_ids": [],
+        "transformation": None,
+        "harm": None,
+        "gather": {
+            "source_id": source,
+            "tools_used": [],
+            "piece": {
+                "name": name,
+                "description": "A broad green oak leaf.",
+                "materials": list(materials),
+                "count": count,
+                "mass_kg": mass,
+                "length_m": None,
+                "flags": ["flexible"],
+                "capabilities": [{"text": "can float on water", "status": "expected"}],
+            },
+        },
+    }
 
 
 def test_a_leaf_can_be_taken_off_a_tree_and_the_tree_stays(world):

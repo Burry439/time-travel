@@ -1,4 +1,5 @@
 """Journeys, walking, the exploration clock, rewinding, and the developer's gate switch."""
+
 from __future__ import annotations
 
 import copy
@@ -12,9 +13,11 @@ from pydantic import BaseModel, Field
 import combat
 import crafting
 import encounter
+import m2
 import minds
 import store
-from ai import config as ai_config, decider
+from ai import config as ai_config
+from ai import decider
 
 router = APIRouter()
 
@@ -55,8 +58,12 @@ class GateCommand(BaseModel):
 def health():
     with store.db() as connection:
         connection.execute("SELECT 1").fetchone()
-    return {"status": "ok", "seed_version": store.SEED_VERSION, "geometry_version": store.GEOMETRY_VERSION,
-            "ai": {**ai_config.status(), **decider.status()}}
+    return {
+        "status": "ok",
+        "seed_version": store.SEED_VERSION,
+        "geometry_version": store.GEOMETRY_VERSION,
+        "ai": {**ai_config.status(), **decider.status()},
+    }
 
 
 @router.post("/runs", status_code=201)
@@ -86,17 +93,29 @@ def get_run(run_id: str):
 def get_events(run_id: str):
     with store.db() as connection:
         store.load_run(connection, run_id)
-        rows = connection.execute("SELECT seq,tick,kind,payload,request_id FROM events WHERE run_id=? ORDER BY seq", (run_id,)).fetchall()
-    return [{"seq": row["seq"], "tick": row["tick"], "kind": row["kind"],
-             "payload": json.loads(row["payload"]), "request_id": row["request_id"]} for row in rows]
+        rows = connection.execute(
+            "SELECT seq,tick,kind,payload,request_id FROM events WHERE run_id=? ORDER BY seq", (run_id,)
+        ).fetchall()
+    return [
+        {
+            "seq": row["seq"],
+            "tick": row["tick"],
+            "kind": row["kind"],
+            "payload": json.loads(row["payload"]),
+            "request_id": row["request_id"],
+        }
+        for row in rows
+    ]
 
 
 @router.post("/runs/{run_id}/checkpoint")
 def checkpoint(run_id: str):
     with store.lock, store.db() as connection:
         _, state = store.load_run(connection, run_id)
-        connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-                           (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))
+        connection.execute(
+            "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
+            (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
+        )
     return {"event_seq": state["event_seq"], "saved": True}
 
 
@@ -107,12 +126,21 @@ def rewind(run_id: str):
         run, state = store.load_run(connection, run_id)
         point = int(state.get("safe_seq", 0))
         new_id = uuid4().hex
-        connection.execute("INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
-                           (new_id, run["mode"], run["seed_version"], run["geometry_version"],
-                            run["scenario"] if "scenario" in run.keys() else "village"))
-        connection.execute("INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
-                           "SELECT ?,seq,tick,kind,payload,request_id FROM events WHERE run_id=? AND seq<=?",
-                           (new_id, run_id, point))
+        connection.execute(
+            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
+            (
+                new_id,
+                run["mode"],
+                run["seed_version"],
+                run["geometry_version"],
+                run["scenario"] if "scenario" in run.keys() else "village",  # noqa: SIM118 (a sqlite3.Row)
+            ),
+        )
+        connection.execute(
+            "INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
+            "SELECT ?,seq,tick,kind,payload,request_id FROM events WHERE run_id=? AND seq<=?",
+            (new_id, run_id, point),
+        )
         _, restored = store.load_run(connection, new_id)
     return restored
 
@@ -138,7 +166,7 @@ def move(run_id: str, request: Move):
             raise HTTPException(422, "Send x and y, or a list of [x, y] cells")
 
         # Open because its bar was lifted off (not the captain's word, not the developer switch): a guard in the gap.
-        holder = combat.gate_held_by(state) if state["gate_open"] and not crafting.m2.gate_barred(state) else None
+        holder = combat.gate_held_by(state) if state["gate_open"] and not m2.gate_barred(state) else None
 
         def passable(x: int, y: int) -> bool:
             if not (0 <= x <= 95 and 0 <= y <= 71):
@@ -163,9 +191,12 @@ def move(run_id: str, request: Move):
             if max(abs(dx), abs(dy)) != 1:
                 problem = (422, "Move must cross exactly one adjacent cell")
             elif not passable(nx, ny):
-                problem = (403, f"{holder['name']} steps into the gateway and bars your way."
-                           if holder and 4 <= ny <= 8 and 46 <= nx <= 50
-                           else "A building, city wall, or closed gate blocks the path")
+                problem = (
+                    403,
+                    f"{holder['name']} steps into the gateway and bars your way."
+                    if holder and 4 <= ny <= 8 and 46 <= nx <= 50
+                    else "A building, city wall, or closed gate blocks the path",
+                )
             elif dx and dy and (not passable(x + dx, y) or not passable(x, y + dy)):
                 problem = (403, "Cannot cut diagonally through a blocked corner")
             if problem:
@@ -184,8 +215,9 @@ def move(run_id: str, request: Move):
             moved["player"].update(x=x, y=y)
             encounter.prune(moved)
             if moved.get("encounter") != state.get("encounter"):
-                payload.update(encounter=moved.get("encounter"), npcs=moved["npcs"],
-                               pending_minds=moved.get("pending_minds", []))
+                payload.update(
+                    encounter=moved.get("encounter"), npcs=moved["npcs"], pending_minds=moved.get("pending_minds", [])
+                )
         if len(accepted) > 1:
             payload["path"] = accepted
         store.append(connection, state, "move", payload, request.request_id, tick)
@@ -195,14 +227,22 @@ def move(run_id: str, request: Move):
             state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
         if y <= 3 and not state["inside_city"]:
             how = "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
-            store.append(connection, state, "objective_complete", {"location": "loc_city_interior", "how": how},
-                         f"objective:{request.request_id}", tick)
+            store.append(
+                connection,
+                state,
+                "objective_complete",
+                {"location": "loc_city_interior", "how": how},
+                f"objective:{request.request_id}",
+                tick,
+            )
             state["entered_by"] = how
             state["inside_city"] = True
         # Bound replay cost during continuous exploration. Events remain the source of truth.
         if state["event_seq"] % 64 == 0:
-            connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-                               (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))
+            connection.execute(
+                "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
+                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
+            )
     if problem:
         return JSONResponse({"detail": problem[1], "state": state, "accepted": len(accepted)}, status_code=problem[0])
     return {"state": state, "duplicate": False}
@@ -226,10 +266,13 @@ def explore(run_id: str, request: ExploreClock):
         state["npcs"] = payload["npcs"]
         store.apply_people(state, payload)
         import routes_tutorial  # The tutorial moves on with the clock, too (D-50).
+
         routes_tutorial.progress(connection, state)
         if state["event_seq"] % 64 == 0:
-            connection.execute("INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-                               (run_id, state["event_seq"], json.dumps(state, sort_keys=True)))
+            connection.execute(
+                "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
+                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
+            )
     return {"state": state, "duplicate": False}
 
 

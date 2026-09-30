@@ -1,11 +1,14 @@
 """Try Something outside encounters, the quick pick up / put down, sprites, and developer traces."""
+
 from __future__ import annotations
 
 import difflib
 import json
+import math
 import re
 import sqlite3
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
@@ -20,9 +23,10 @@ import minds
 import rounds
 import routes_tutorial
 import routes_world
-import talk
 import store
-from ai import config as ai_config, decider, judge, telemetry, voice
+import talk
+from ai import config as ai_config
+from ai import decider, judge, telemetry, voice
 
 router = APIRouter()
 
@@ -51,8 +55,9 @@ def _craft_response(run: sqlite3.Row, state: dict, trace: dict | None, duplicate
 
 
 def _load_trace(connection: sqlite3.Connection, run_id: str, request_id: str) -> dict | None:
-    row = connection.execute("SELECT trace_json FROM craft_traces WHERE run_id=? AND request_id=?",
-                             (run_id, request_id)).fetchone()
+    row = connection.execute(
+        "SELECT trace_json FROM craft_traces WHERE run_id=? AND request_id=?", (run_id, request_id)
+    ).fetchone()
     return json.loads(row["trace_json"]) if row else None
 
 
@@ -62,12 +67,26 @@ def craft(run_id: str, request: CraftRequest, background: BackgroundTasks):
     with store.db() as connection:
         _, peek = store.load_run(connection, run_id)
     if encounter.active(peek):  # Face to face with someone: this is the stranger's part of a round.
-        return rounds.play_round(run_id, rounds.EncounterAct(kind="do", text=request.text,
-                                                             selected_ids=request.selected_ids,
-                                                             expected_version=request.expected_version,
-                                                             request_id=request.request_id), background)
-    return _attempt(run_id, request.text, request.selected_ids, request.expected_version, request.request_id,
-                    background, lambda state, context, calls_used: attempts.judge_attempt(context, calls_used))
+        return rounds.play_round(
+            run_id,
+            rounds.EncounterAct(
+                kind="do",
+                text=request.text,
+                selected_ids=request.selected_ids,
+                expected_version=request.expected_version,
+                request_id=request.request_id,
+            ),
+            background,
+        )
+    return _attempt(
+        run_id,
+        request.text,
+        request.selected_ids,
+        request.expected_version,
+        request.request_id,
+        background,
+        lambda state, context, calls_used: attempts.judge_attempt(context, calls_used),
+    )
 
 
 class ActRequest(BaseModel):
@@ -87,9 +106,10 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
         _, state = store.load_run(connection, run_id)
     current = encounter.active(state)
     here = minds.player_cell(state)
-    near = sorted((n for n in state["npcs"] if n.get("alive", True)
-                   and minds.math.dist(minds._cell(n), here) <= talk.HEAR_TALK_CELLS),
-                  key=lambda n: minds.math.dist(minds._cell(n), here))
+    near = sorted(
+        (n for n in state["npcs"] if n.get("alive", True) and math.dist(minds._cell(n), here) <= talk.HEAR_TALK_CELLS),
+        key=lambda n: math.dist(minds._cell(n), here),
+    )
     target = request.target_id or (current.get("opened_by") if current else None)
     if target == "player":  # A conversation the stranger began: whoever they last addressed answers.
         target = None
@@ -97,12 +117,23 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     if request.mode:  # The player said which it is: no guessing, no model call (D-55).
         kind, how, call = intent.explicit(request.text, request.mode), "player", None
     else:
-        kind, how, call = intent.classify(request.text, bool(current) or bool(near) or bool(request.target_id),
-                                          talking_with)
+        kind, how, call = intent.classify(
+            request.text, bool(current) or bool(near) or bool(request.target_id), talking_with
+        )
     if call is not None:
         with store.lock, store.db() as connection:
-            telemetry.record(connection, run_id, "decider", call.model, call.provider, call.latency_ms, call.ok,
-                             call.error or call.fallback_from, call.input_tokens, call.output_tokens)
+            telemetry.record(
+                connection,
+                run_id,
+                "decider",
+                call.model,
+                call.provider,
+                call.latency_ms,
+                call.ok,
+                call.error or call.fallback_from,
+                call.input_tokens,
+                call.output_tokens,
+            )
     heard = {"kind": kind, "how": how}
     if combat.active(state) and kind in ("yield", "wait", "leave"):  # Giving up, holding still or running (D-41).
         return {**_fight_words(run_id, request, kind, state), "intent": heard}
@@ -116,21 +147,38 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
         if not current:
             target = target or (near[0]["id"] if near else None)
             if kind == "say" and not target:
-                raise HTTPException(409, {"reason": "nobody_hears", "message": "Nobody is close enough to hear you.",
-                                          "intent": heard})
+                raise HTTPException(
+                    409, {"reason": "nobody_hears", "message": "Nobody is close enough to hear you.", "intent": heard}
+                )
         if not current and kind in ("wait", "yield", "leave"):
             return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
         round_kind = {"both": "do"}.get(kind, kind)
-        reply = rounds.play_round(run_id, rounds.EncounterAct(
-            kind=round_kind, text=intent.unquote(request.text) if kind == "say" else request.text, target_id=target, selected_ids=request.selected_ids,
-            expected_version=request.expected_version, request_id=request.request_id, speech=kind == "both"),
-            background)
+        reply = rounds.play_round(
+            run_id,
+            rounds.EncounterAct(
+                kind=round_kind,
+                text=intent.unquote(request.text) if kind == "say" else request.text,
+                target_id=target,
+                selected_ids=request.selected_ids,
+                expected_version=request.expected_version,
+                request_id=request.request_id,
+                speech=kind == "both",
+            ),
+            background,
+        )
     elif kind in ("wait", "yield", "leave"):
         return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
     else:  # A deed (or a deed with words) with nobody face to face: Try Something.
-        reply = craft(run_id, CraftRequest(text=request.text, selected_ids=request.selected_ids,
-                                           expected_version=request.expected_version,
-                                           request_id=request.request_id), background)
+        reply = craft(
+            run_id,
+            CraftRequest(
+                text=request.text,
+                selected_ids=request.selected_ids,
+                expected_version=request.expected_version,
+                request_id=request.request_id,
+            ),
+            background,
+        )
     return {**reply, "intent": heard}
 
 
@@ -147,8 +195,11 @@ def named(text: str, near: list[dict]) -> str | None:
 def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dict:
     """Giving up in a fight is an event (guards arrest you); holding still or running are yours to do."""
     if kind != "yield":
-        return {"state": seen, "duplicate": False, "notice": {
-            "wait": "You hold still. They don't.", "leave": "Then run: get out of their reach."}[kind]}
+        return {
+            "state": seen,
+            "duplicate": False,
+            "notice": {"wait": "You hold still. They don't.", "leave": "Then run: get out of their reach."}[kind],
+        }
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
         prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
@@ -169,26 +220,44 @@ def quick(run_id: str, request: QuickRequest, background: BackgroundTasks):
         _, peek = store.load_run(connection, run_id)
     if encounter.hostile(peek):
         raise HTTPException(409, {"reason": "encounter_active", "state": peek})
-    return _attempt(run_id, f"{request.verb} {request.object_id}", [request.object_id], request.expected_version,
-                    request.request_id, background,
-                    lambda state, context, calls_used: judge.JudgeCall(
-                        status="ok", model="code", result=crafting.quick(state, request.verb, request.object_id)))
+    return _attempt(
+        run_id,
+        f"{request.verb} {request.object_id}",
+        [request.object_id],
+        request.expected_version,
+        request.request_id,
+        background,
+        lambda state, context, calls_used: judge.JudgeCall(
+            status="ok", model="code", result=crafting.quick(state, request.verb, request.object_id)
+        ),
+    )
 
 
-def _attempt(run_id: str, text: str, selected_ids: list[str], expected_version: int, request_id: str,
-             background: BackgroundTasks, propose: Callable[[dict, dict, int], judge.JudgeCall]) -> dict:
+def _attempt(
+    run_id: str,
+    text: str,
+    selected_ids: list[str],
+    expected_version: int,
+    request_id: str,
+    background: BackgroundTasks,
+    propose: Callable[[dict, dict, int], judge.JudgeCall],
+) -> dict:
     request_json = json.dumps({"text": text, "selected_ids": selected_ids}, sort_keys=True)
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
-        prior = connection.execute("SELECT final_seq,request_json FROM action_requests WHERE run_id=? AND request_id=?",
-                                   (run_id, request_id)).fetchone()
+        prior = connection.execute(
+            "SELECT final_seq,request_json FROM action_requests WHERE run_id=? AND request_id=?", (run_id, request_id)
+        ).fetchone()
         if prior:
             if prior["request_json"] != request_json:
                 raise HTTPException(409, {"reason": "request_id_conflict"})
-            return _craft_response(run, store.state_at(connection, run, prior["final_seq"]),
-                                   _load_trace(connection, run_id, request_id), duplicate=True)
-        if connection.execute("SELECT 1 FROM events WHERE run_id=? AND request_id=?",
-                              (run_id, request_id)).fetchone():
+            return _craft_response(
+                run,
+                store.state_at(connection, run, prior["final_seq"]),
+                _load_trace(connection, run_id, request_id),
+                duplicate=True,
+            )
+        if connection.execute("SELECT 1 FROM events WHERE run_id=? AND request_id=?", (run_id, request_id)).fetchone():
             raise HTTPException(409, {"reason": "request_id_conflict"})
         if store.is_stale(state, expected_version):
             raise HTTPException(409, {"reason": "stale_state", "state": state})
@@ -206,14 +275,24 @@ def _attempt(run_id: str, text: str, selected_ids: list[str], expected_version: 
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
             if judged.attempts:
-                telemetry.record(connection, run_id, "judge", judged.model, judged.prompt_version, judged.latency_ms,
-                                 judged.status == "ok", judged.error, judged.input_tokens, judged.output_tokens,
-                                 judged.attempts)
+                telemetry.record(
+                    connection,
+                    run_id,
+                    "judge",
+                    judged.model,
+                    judged.prompt_version,
+                    judged.latency_ms,
+                    judged.status == "ok",
+                    judged.error,
+                    judged.input_tokens,
+                    judged.output_tokens,
+                    judged.attempts,
+                )
             # Validation runs against the state as it is now, not the snapshot the judge saw,
             # one step at a time, stopping at the first step that does not succeed.
             payload, verdict, after = crafting.resolve_attempt(
-                state, run_id, text, judged.result, attempts.service_message(judged), request_id,
-                state["sim_time_ms"])
+                state, run_id, text, judged.result, attempts.service_message(judged), request_id, state["sim_time_ms"]
+            )
             payload["perceptions"] = minds.perceive(after, payload["journal_entry"])
             minds.apply_perceptions(after, payload["perceptions"])
             minds.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
@@ -222,12 +301,28 @@ def _attempt(run_id: str, text: str, selected_ids: list[str], expected_version: 
             store.append(connection, state, "craft", payload, request_id, payload["sim_time_ms"] // 1000)
             crafting.apply_payload(state, payload)
             store.apply_people(state, payload)
-            connection.execute("INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
-                               (run_id, request_id, state["event_seq"], request_json))
+            connection.execute(
+                "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
+                (run_id, request_id, state["event_seq"], request_json),
+            )
             new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]
-            trace = None if judged.model == "code" else attempts.record_attempt(  # No model: nothing to trace.
-                connection, run_id, request_id, state["event_seq"], text, selected_ids, context, judged, verdict,
-                new_objects, background)
+            trace = (
+                None
+                if judged.model == "code"
+                else attempts.record_attempt(  # No model: nothing to trace.
+                    connection,
+                    run_id,
+                    request_id,
+                    state["event_seq"],
+                    text,
+                    selected_ids,
+                    context,
+                    judged,
+                    verdict,
+                    new_objects,
+                    background,
+                )
+            )
     finally:
         attempts.busy_runs.discard(run_id)
     routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
@@ -273,22 +368,39 @@ def get_traces(run_id: str, limit: int = 10):
     """Developer view of recent judge calls, validator decisions, sprites, and model telemetry."""
     with store.db() as connection:
         _developer_run(connection, run_id)
-        rows = connection.execute("SELECT trace_json FROM craft_traces WHERE run_id=? ORDER BY rowid DESC LIMIT ?",
-                                  (run_id, max(1, min(limit, 50)))).fetchall()
-        assets = connection.execute("SELECT asset_id,object_id,status,record_json,trace_json,updated_at FROM assets "
-                                    "WHERE run_id=? ORDER BY rowid DESC LIMIT 20", (run_id,)).fetchall()
+        rows = connection.execute(
+            "SELECT trace_json FROM craft_traces WHERE run_id=? ORDER BY rowid DESC LIMIT ?",
+            (run_id, max(1, min(limit, 50))),
+        ).fetchall()
+        assets = connection.execute(
+            "SELECT asset_id,object_id,status,record_json,trace_json,updated_at FROM assets "
+            "WHERE run_id=? ORDER BY rowid DESC LIMIT 20",
+            (run_id,),
+        ).fetchall()
         calls = telemetry.recent(connection, run_id)
-        thoughts = connection.execute("SELECT trace_json FROM mind_traces WHERE run_id=? ORDER BY id DESC LIMIT 20",
-                                      (run_id,)).fetchall()
-    return {"ai": {**ai_config.status(), **decider.status()}, "judge_prompt_version": judge.PROMPT_VERSION,
-            "voice_system_prompt": voice.system_prompt(),
-            "minds": [json.loads(row["trace_json"]) for row in thoughts],
-            "judge_system_prompt": judge.system_prompt(),
-            "traces": [json.loads(row["trace_json"]) for row in rows],
-            "assets": [{"asset_id": a["asset_id"], "object_id": a["object_id"], "status": a["status"],
-                        "record": json.loads(a["record_json"]), "call": json.loads(a["trace_json"]),
-                        "updated_at": a["updated_at"]} for a in assets],
-            "model_calls": calls}
+        thoughts = connection.execute(
+            "SELECT trace_json FROM mind_traces WHERE run_id=? ORDER BY id DESC LIMIT 20", (run_id,)
+        ).fetchall()
+    return {
+        "ai": {**ai_config.status(), **decider.status()},
+        "judge_prompt_version": judge.PROMPT_VERSION,
+        "voice_system_prompt": voice.system_prompt(),
+        "minds": [json.loads(row["trace_json"]) for row in thoughts],
+        "judge_system_prompt": judge.system_prompt(),
+        "traces": [json.loads(row["trace_json"]) for row in rows],
+        "assets": [
+            {
+                "asset_id": a["asset_id"],
+                "object_id": a["object_id"],
+                "status": a["status"],
+                "record": json.loads(a["record_json"]),
+                "call": json.loads(a["trace_json"]),
+                "updated_at": a["updated_at"],
+            }
+            for a in assets
+        ],
+        "model_calls": calls,
+    }
 
 
 @router.post("/runs/{run_id}/assets/{asset_id}/retry")
@@ -296,8 +408,9 @@ def retry_asset(run_id: str, asset_id: str, background: BackgroundTasks):
     """Developer-only: repaint a failed sprite."""
     with store.lock, store.db() as connection:
         _developer_run(connection, run_id)
-        updated = connection.execute("UPDATE assets SET status='pending' WHERE asset_id=? AND run_id=?",
-                                     (asset_id, run_id)).rowcount
+        updated = connection.execute(
+            "UPDATE assets SET status='pending' WHERE asset_id=? AND run_id=?", (asset_id, run_id)
+        ).rowcount
     if not updated:
         raise HTTPException(404, "Unknown asset")
     background.add_task(attempts._generate_asset, asset_id)

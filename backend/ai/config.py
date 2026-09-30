@@ -1,4 +1,5 @@
 """Runtime AI configuration from backend/.env. Provider keys never leave the backend."""
+
 from __future__ import annotations
 
 import os
@@ -83,8 +84,14 @@ def images_enabled() -> bool:
 
 
 def status() -> dict:
-    return {"mode": mode(), "judge": judge_enabled(), "images": images_enabled(),
-            "judge_model": judge_model(), "voice_model": voice_model(), "image_model": image_model()}
+    return {
+        "mode": mode(),
+        "judge": judge_enabled(),
+        "images": images_enabled(),
+        "judge_model": judge_model(),
+        "voice_model": voice_model(),
+        "image_model": image_model(),
+    }
 
 
 @lru_cache(maxsize=1)

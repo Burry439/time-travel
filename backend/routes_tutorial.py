@@ -4,19 +4,20 @@ Progress is code: after each change the story is checked (tutorial.tick), and an
 Kade lending his staff, the bout starting) is saved as one `tutorial` event with the resulting fields. The clock
 beat checks it too, so nothing depends on the client asking. Asking the device is a `device` event.
 """
+
 from __future__ import annotations
 
 import copy
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
 import store
 import tutorial
-from ai import config as ai_config, telemetry, voice
+from ai import config as ai_config
+from ai import telemetry, voice
 
 router = APIRouter()
 
@@ -36,9 +37,10 @@ def progress(connection, state: dict, request_id: str | None = None) -> bool:
     if not tutorial.tick(probe):
         return False
     payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
-    payload["journal_added"] = probe["journal"][len(state["journal"]):]
-    store.append(connection, state, "tutorial", payload, request_id or f"tutorial:{uuid4().hex}",
-                 state["sim_time_ms"] // 1000)
+    payload["journal_added"] = probe["journal"][len(state["journal"]) :]
+    store.append(
+        connection, state, "tutorial", payload, request_id or f"tutorial:{uuid4().hex}", state["sim_time_ms"] // 1000
+    )
     store.apply_tutorial(state, payload)
     return True
 
@@ -75,7 +77,7 @@ def _save(connection, state: dict, change, request_id: str) -> bool:
     if not change(probe):
         return False
     payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
-    payload["journal_added"] = probe["journal"][len(state["journal"]):]
+    payload["journal_added"] = probe["journal"][len(state["journal"]) :]
     store.append(connection, state, "tutorial", payload, request_id, state["sim_time_ms"] // 1000)
     store.apply_tutorial(state, payload)
     return True
@@ -115,9 +117,10 @@ def skip(run_id: str):
         probe = copy.deepcopy(state)
         tutorial.skip(probe)
         payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
-        payload["journal_added"] = probe["journal"][len(state["journal"]):]
-        store.append(connection, state, "tutorial", payload, f"tutorial-skip:{uuid4().hex}",
-                     state["sim_time_ms"] // 1000)
+        payload["journal_added"] = probe["journal"][len(state["journal"]) :]
+        store.append(
+            connection, state, "tutorial", payload, f"tutorial-skip:{uuid4().hex}", state["sim_time_ms"] // 1000
+        )
         store.apply_tutorial(state, payload)
         progress(connection, state)
     return {"state": state, "duplicate": False}
@@ -148,11 +151,21 @@ def ask(run_id: str, request: Ask):
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
         if call.model and call.model != "stub":
-            telemetry.record(connection, run_id, "voice", call.model, call.prompt_version, call.latency_ms,
-                             call.status == "ok", call.error, call.input_tokens, call.output_tokens)
+            telemetry.record(
+                connection,
+                run_id,
+                "voice",
+                call.model,
+                call.prompt_version,
+                call.latency_ms,
+                call.status == "ok",
+                call.error,
+                call.input_tokens,
+                call.output_tokens,
+            )
         probe = copy.deepcopy(state)
         tutorial.device_says(probe, call.text, "remark" if moment else "answer", question or None)
-        payload = {"device_log": probe["device_log"], "journal_added": probe["journal"][len(state["journal"]):]}
+        payload = {"device_log": probe["device_log"], "journal_added": probe["journal"][len(state["journal"]) :]}
         store.append(connection, state, "device", payload, request.request_id, state["sim_time_ms"] // 1000)
         store.apply_tutorial(state, payload)
     reply = {"state": state, "duplicate": False, "answer": call.text, "status": call.status}

@@ -6,6 +6,7 @@ what has happened to them: their mood, what they're doing, how they feel about t
 them, and what they remember of the stranger (D-36). Free text from models only ever lands in
 memory (notes, episodes); it never changes world state.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,9 @@ from pathlib import Path
 import minds
 import npc_sim
 
-_PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))["places"]
+_PLACES = json.loads((Path(__file__).resolve().parents[1] / "data" / "places.json").read_text(encoding="utf-8"))[
+    "places"
+]
 
 MOODS = ["content", "cheerful", "weary", "irritable", "anxious", "excited", "grieving"]
 MOOD_WORDS = {m: m for m in MOODS}
@@ -26,8 +29,19 @@ NEARBY_CELLS = 16
 
 def knows(npc: dict) -> dict:
     """What this person has gathered about the stranger over every conversation (and from others)."""
-    return minds.mind(npc).setdefault("knows", {"name": None, "notes": [], "claims": [], "episodes": [],
-                                                "long_memory": "", "heard": [], "since": 0, "talks": 0})
+    return minds.mind(npc).setdefault(
+        "knows",
+        {
+            "name": None,
+            "notes": [],
+            "claims": [],
+            "episodes": [],
+            "long_memory": "",
+            "heard": [],
+            "since": 0,
+            "talks": 0,
+        },
+    )
 
 
 def mood(npc: dict) -> str:
@@ -43,8 +57,17 @@ def opinions(npc: dict) -> dict:
 
 
 def warmth_words(warmth: float) -> str:
-    return "dislikes" if warmth <= -0.4 else "is wary of" if warmth < 0 else "is neutral about" if warmth < 0.2 \
-        else "likes" if warmth < 0.6 else "is fond of"
+    return (
+        "dislikes"
+        if warmth <= -0.4
+        else "is wary of"
+        if warmth < 0
+        else "is neutral about"
+        if warmth < 0.2
+        else "likes"
+        if warmth < 0.6
+        else "is fond of"
+    )
 
 
 def doing(npc: dict) -> str:
@@ -81,14 +104,17 @@ def current_talk(npc: dict) -> list[dict]:
 
 
 def nearby(state: dict, npc: dict) -> list[dict]:
-    return [n for n in state["npcs"] if n["id"] != npc["id"] and n.get("alive", True)
-            and math.dist(minds._cell(n), minds._cell(npc)) <= NEARBY_CELLS]
+    return [
+        n
+        for n in state["npcs"]
+        if n["id"] != npc["id"] and n.get("alive", True) and math.dist(minds._cell(n), minds._cell(npc)) <= NEARBY_CELLS
+    ]
 
 
 def opinion_lines(state: dict, npc: dict, people: list[dict] | None = None) -> list[str]:
     feelings = opinions(npc)
     lines = []
-    for other in (people if people is not None else nearby(state, npc)):
+    for other in people if people is not None else nearby(state, npc):
         view = feelings.get(other["id"])
         if view:
             lines.append(f"{npc['name']} {warmth_words(view['warmth'])} {other['name']} ({view['text']}).")
@@ -112,9 +138,12 @@ def everyone_in_town(state: dict, npc: dict) -> list[str]:
             continue
         place = usual_place(other["id"])
         relation = minds.relation(npc, other["id"])
-        lines.append(f"{other['name']}, the {minds.card(other)['role']}" + (f" ({relation})" if relation else "")
-                     + (f", usually at {place}" if place else "")
-                     + ("" if other.get("alive", True) else ", now dead"))
+        lines.append(
+            f"{other['name']}, the {minds.card(other)['role']}"
+            + (f" ({relation})" if relation else "")
+            + (f", usually at {place}" if place else "")
+            + ("" if other.get("alive", True) else ", now dead")
+        )
     return lines
 
 
@@ -153,10 +182,13 @@ def voice_sheet(state: dict, npc: dict) -> dict:
         "doing": doing(npc),
         "authority": me.get("authority", ""),
         "wonders_and_the_uncanny": (me.get("superstition") or {}).get("text", ""),
-        "how_they_talk": {"style": me.get("style", ""), "habits": voice.get("habits", ""),
-                          "greeting": voice.get("greeting", ""),
-                          "example_lines_never_copy": voice.get("samples", []),
-                          "would_never": voice.get("never", "")},
+        "how_they_talk": {
+            "style": me.get("style", ""),
+            "habits": voice.get("habits", ""),
+            "greeting": voice.get("greeting", ""),
+            "example_lines_never_copy": voice.get("samples", []),
+            "would_never": voice.get("never", ""),
+        },
         "people_they_know": opinion_lines(state, npc, [n for n in state["npcs"] if n["id"] in opinions(npc)]),
         "everyone_in_town": everyone_in_town(state, npc),
         "secrets_kept": [f"{s['text']} (only told to {s['reveal']})" for s in secrets(npc)],

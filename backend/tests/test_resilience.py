@@ -1,11 +1,13 @@
 """A decision that can't be made (network, TLS, a malformed reply) never takes a request down (28 Sep 500)."""
+
 import json
 from types import SimpleNamespace
 
-from ai import config, decider, voice
 from test_encounter import post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import said  # noqa: F401
+
+from ai import config, decider, voice
 
 REAL_DECIDE = decider.decide
 REAL_SCENE = voice.scene
@@ -14,6 +16,7 @@ REAL_SCENE = voice.scene
 def break_everything(monkeypatch):
     def refuse(*args, **kwargs):
         raise PermissionError(13, "Permission denied", r"\\.\nllMonFltProxy\x")
+
     monkeypatch.setattr(decider, "mode", lambda: "llm")
     monkeypatch.setattr(config, "client", refuse)
 
@@ -40,6 +43,7 @@ def test_talk_still_works_when_every_model_call_fails(world, monkeypatch):
 
 class _Flaky:
     """A model client whose first structured answer is malformed and whose second is good."""
+
     def __init__(self, good):
         self.calls, self.good = 0, good
         self.responses = self
@@ -61,11 +65,23 @@ class _Flaky:
 
 
 def test_one_malformed_answer_is_asked_again(monkeypatch):
-    line = voice.SceneLine(speaker_id="npc_kade_east", text="Haven't seen her. Ask at the inn.", move="answer",
-                           impression="Unchanged", suspicion="Unchanged", anger="Calm", believes_what_was_said=True,
-                           sees_the_stranger_as_a_threat=False, reason_enough_to_let_them_through=False,
-                           agreed_to_the_deal=False, did_what_was_asked=False, errand_to="", errand_message="",
-                           promised_later="", remember="")
+    line = voice.SceneLine(
+        speaker_id="npc_kade_east",
+        text="Haven't seen her. Ask at the inn.",
+        move="answer",
+        impression="Unchanged",
+        suspicion="Unchanged",
+        anger="Calm",
+        believes_what_was_said=True,
+        sees_the_stranger_as_a_threat=False,
+        reason_enough_to_let_them_through=False,
+        agreed_to_the_deal=False,
+        did_what_was_asked=False,
+        errand_to="",
+        errand_message="",
+        promised_later="",
+        remember="",
+    )
     reply = voice.Scene(lines=[line], stranger_name="")
     flaky = _Flaky(reply)
     monkeypatch.setattr(config, "mode", lambda: "live")
@@ -81,6 +97,7 @@ def test_one_malformed_answer_is_asked_again(monkeypatch):
 
 class _Trailing:
     """A model client whose answer is complete and valid but followed by stray text (seen live, D-48)."""
+
     def __init__(self, whole: str):
         self.calls, self.whole = 0, whole
         self.responses = self
@@ -91,10 +108,23 @@ class _Trailing:
 
 
 def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
-    line = {"speaker_id": "npc_kade_east", "text": "Inn door.", "move": "answer", "impression": "Unchanged",
-            "suspicion": "Unchanged", "anger": "Calm", "believes_what_was_said": True,
-            "sees_the_stranger_as_a_threat": False, "reason_enough_to_let_them_through": False,
-            "agreed_to_the_deal": False, "did_what_was_asked": False, "errand_to": "", "errand_message": "", "promised_later": "", "remember": ""}
+    line = {
+        "speaker_id": "npc_kade_east",
+        "text": "Inn door.",
+        "move": "answer",
+        "impression": "Unchanged",
+        "suspicion": "Unchanged",
+        "anger": "Calm",
+        "believes_what_was_said": True,
+        "sees_the_stranger_as_a_threat": False,
+        "reason_enough_to_let_them_through": False,
+        "agreed_to_the_deal": False,
+        "did_what_was_asked": False,
+        "errand_to": "",
+        "errand_message": "",
+        "promised_later": "",
+        "remember": "",
+    }
     trailing = _Trailing(json.dumps({"lines": [line], "stranger_name": ""}))
     monkeypatch.setattr(config, "mode", lambda: "live")
     monkeypatch.setattr(config, "client", lambda: trailing)

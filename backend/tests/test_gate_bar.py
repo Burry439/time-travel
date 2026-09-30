@@ -1,16 +1,18 @@
 """The gate bar (GDD D-42): a physical way in. Lifting the cracked bar off the gate is a judged deed like any
 other; guards who see it treat it as an assault on the gate and fight, and a guard near the gate steps into the
 gap. If they're dead, down or elsewhere, the stranger walks in."""
-import pytest
 
-import combat
-import crafting
-import minds
-import talk
-import village
+import pytest
 from test_craft import commit, fresh_state, judged
 from test_encounter import post, world  # noqa: F401
 from test_talk import npc
+
+import combat
+import crafting
+import m2
+import minds
+import talk
+import village
 
 
 @pytest.fixture(autouse=True)
@@ -29,11 +31,11 @@ def at_the_gate(state):
 
 def test_the_gate_starts_barred_and_opens_when_the_bar_is_off():
     state = at_the_gate(fresh_state())
-    assert state["objects"]["gate_bar"]["installed_in"] == "gate_brackets" and crafting.m2.gate_barred(state)
+    assert state["objects"]["gate_bar"]["installed_in"] == "gate_brackets" and m2.gate_barred(state)
     view = next(i for i in crafting.build_context(state, "x", [])["available_items"] if i["id"] == "gate_bar")
     assert view["installed_in"] == "gate_brackets"  # The judge sees what the bar is doing.
     commit(state, lift_out())
-    assert state["gate_open"] and state["gate_unbarred_by"] == "player" and not crafting.m2.gate_barred(state)
+    assert state["gate_open"] and state["gate_unbarred_by"] == "player" and not m2.gate_barred(state)
 
 
 def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
@@ -51,8 +53,15 @@ def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
 
 def test_doing_tomas_s_swap_is_work_not_an_assault():
     state = at_the_gate(fresh_state())
-    state["agreements"] = {"deal_1": {"id": "deal_1", "type": "task_for_reward", "template": "beam_help",
-                                      "issuer": "npc_tomas_reed", "status": "accepted"}}
+    state["agreements"] = {
+        "deal_1": {
+            "id": "deal_1",
+            "type": "task_for_reward",
+            "template": "beam_help",
+            "issuer": "npc_tomas_reed",
+            "status": "accepted",
+        }
+    }
     commit(state, lift_out())
     seen = minds.perceive(state, state["last_action"])
     minds.apply_perceptions(state, seen)
@@ -79,11 +88,13 @@ def test_through_the_unbarred_gate_over_http(world, monkeypatch):
     for y in range(67, 8, -1):
         state = post(world, state, "move", {"x": 48, "y": y})["state"]
     world.rulings.append({"clarifying_question": None, "precedent_key": "p", "steps": [lift_out()]})
-    state = post(world, state, "craft", {"text": "lever the bar off the gate on the crates", "selected_ids": []})["state"]
+    state = post(world, state, "craft", {"text": "lever the bar off the gate on the crates", "selected_ids": []})[
+        "state"
+    ]
     assert state["gate_open"] and state["fight"]  # Seen: the guards come for you.
     while (state["player"]["x"], state["player"]["y"]) != (48, 9):  # Back beside the gate (the lift walked us).
         x, y = state["player"]["x"], state["player"]["y"]
-        state = post(world, state, "move", {"x": x + (48 > x) - (48 < x), "y": y + (9 > y) - (9 < y)})["state"]
+        state = post(world, state, "move", {"x": x + (x < 48) - (x > 48), "y": y + (y < 9) - (y > 9)})["state"]
     blocked = post(world, state, "move", {"x": 48, "y": 8}, status=403)
     assert "steps into the gateway" in blocked["detail"]
     monkeypatch.setattr(combat, "gate_held_by", lambda state: None)  # Say they were all elsewhere.

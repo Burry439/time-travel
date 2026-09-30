@@ -1,10 +1,12 @@
 """Arrest instead of death: guards seize, stolen things go back, the stranger is barred for a while; yielding."""
+
+from test_encounter import face_to_face, play, post, world  # noqa: F401
+from test_talk import npc, unit_state
+
 import combat
 import encounter
 import minds
 import talk
-from test_encounter import face_to_face, play, post, world  # noqa: F401
-from test_talk import npc, unit_state
 
 
 def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
@@ -30,17 +32,38 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
 def test_walking_off_from_someone_you_wronged():
     state = unit_state()
     kade = face_to_face(state, "npc_kade_east", reason="confront")
-    minds.remember(kade, {"kind": "theft", "severity": 2, "event": 5, "clarity": "told", "victim": "npc_tomas_reed",
-                          "item": "coil of rope", "source": "told_by:npc_tomas_reed",
-                          "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
-                          "short": "stole Tomas's coil of rope"})
+    minds.remember(
+        kade,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 5,
+            "clarity": "told",
+            "victim": "npc_tomas_reed",
+            "item": "coil of rope",
+            "source": "told_by:npc_tomas_reed",
+            "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+            "short": "stole Tomas's coil of rope",
+        },
+    )
     draft, _ = play(state, "leave")
     assert "npc_kade_east" in draft["fight"]["attackers"]  # A guard who came about a theft gives chase.
     state = unit_state()
     tomas = face_to_face(state, "npc_tomas_reed", reason="confront")
-    minds.remember(tomas, {"kind": "theft", "severity": 2, "event": 5, "clarity": "clear", "victim": "npc_tomas_reed",
-                           "item": "coil of rope", "source": "victim", "summary": "The stranger took my coil of rope.",
-                           "short": "stole my coil of rope"})
+    minds.remember(
+        tomas,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 5,
+            "clarity": "clear",
+            "victim": "npc_tomas_reed",
+            "item": "coil of rope",
+            "source": "victim",
+            "summary": "The stranger took my coil of rope.",
+            "short": "stole my coil of rope",
+        },
+    )
     draft, record = play(state, "leave")
     assert not draft.get("fight") and any(e["kind"] == "shout_for_help" for e in record["entries"])  # He shouts.
     calm = unit_state()
@@ -68,8 +91,19 @@ def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():
 def test_only_violence_rules_out_entry_for_good():
     state = unit_state()
     roderic = npc(state, "npc_roderic_vale")
-    minds.remember(roderic, {"kind": "theft", "severity": 1, "event": 3, "clarity": "clear", "source": "witnessed",
-                             "summary": "The stranger took Darin's cloth.", "short": "stole cloth", "victim": None})
+    minds.remember(
+        roderic,
+        {
+            "kind": "theft",
+            "severity": 1,
+            "event": 3,
+            "clarity": "clear",
+            "source": "witnessed",
+            "summary": "The stranger took Darin's cloth.",
+            "short": "stole cloth",
+            "victim": None,
+        },
+    )
     assert "admit" in talk.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
     assert minds.regard(roderic)["suspicion"] > 0.68
 
@@ -78,7 +112,7 @@ def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     cells = [[48, y] for y in range(67, 15, -1)]
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     for _ in range(60):
         if state.get("encounter"):
             break

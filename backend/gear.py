@@ -4,6 +4,7 @@ to a person, and the conditions that follow (bleeding, burns, broken bones, infe
 Every number lives in data/content/gear.json and is applied here, by code. The judge only proposes a class for
 something made (and, for a described attack, how it lands); nothing here is ever rolled.
 """
+
 from __future__ import annotations
 
 import json
@@ -29,12 +30,21 @@ AREAS = tuple(SIT["areas"])
 FAMILIES = ("blow", "missile", "pour", "choke", "other")
 RESULTS = ("missed", "blocked", "deflected", "wounded", "knocked_out", "disabled", "killed")
 # Card strings from before seed 10 (D-41), for journeys that began then.
-LEGACY_WEAPONS = {"fists": "fists", "knife": "knife", "smith's hammer": "hammer", "carpenter's hammer": "hammer",
-                  "spear": "short_spear", "short spear": "short_spear", "sword": "long_sword", "bow": "bow"}
+LEGACY_WEAPONS = {
+    "fists": "fists",
+    "knife": "knife",
+    "smith's hammer": "hammer",
+    "carpenter's hammer": "hammer",
+    "spear": "short_spear",
+    "short spear": "short_spear",
+    "sword": "long_sword",
+    "bow": "bow",
+}
 LEGACY_ARMOUR = {"mail": "mail", "padded": "padded", "none": None}
 
 
 # --- What a thing is ---------------------------------------------------------------------------------------------
+
 
 def _materials(obj: dict) -> list[str]:
     return [m.lower() for m in obj.get("materials") or []]
@@ -92,7 +102,11 @@ def valid(proposed: dict | None, obj: dict) -> bool:
         return cls in WEAPONS and _fits(WEAPONS[cls].get("requires", {}), obj)
     if kind == "shield":
         spec = SHIELDS.get(cls)
-        return bool(spec) and "rigid" in (obj.get("flags") or []) and spec.get("min_mass", 0) <= mass <= spec.get("max_mass", 99)
+        return (
+            bool(spec)
+            and "rigid" in (obj.get("flags") or [])
+            and spec.get("min_mass", 0) <= mass <= spec.get("max_mass", 99)
+        )
     if kind in ("armour", "clothing"):
         spec = ARMOUR.get(cls)
         return bool(spec) and _has(obj, spec["materials"]) and mass >= spec.get("min_mass", 0)
@@ -104,12 +118,16 @@ def valid(proposed: dict | None, obj: dict) -> bool:
             return False
         if cls == "stitches":
             return _has(obj, ["iron", "bone", "bronze", "steel", "copper"]) and _has(
-                obj, ["thread", "gut", "hair", "fiber", "fibre", "flax", "linen", "sinew", "silk", "wool"])
+                obj, ["thread", "gut", "hair", "fiber", "fibre", "flax", "linen", "sinew", "silk", "wool"]
+            )
         if cls == "splint":
             return "rigid" in (obj.get("flags") or []) or _has(obj, ["wood", "bark", "bone"])
         if cls == "tourniquet":
-            return "tieable" in (obj.get("flags") or []) or "flexible" in (obj.get("flags") or []) or _has(
-                obj, ["cord", "rope", "fiber", "leather", "cloth", "linen"])
+            return (
+                "tieable" in (obj.get("flags") or [])
+                or "flexible" in (obj.get("flags") or [])
+                or _has(obj, ["cord", "rope", "fiber", "leather", "cloth", "linen"])
+            )
         if cls == "clean_water":
             return (obj.get("water_l") or 0) > 0 and obj.get("temperature", "cold") in ("hot", "boiling", "warm")
         return _has(obj, spec.get("materials", [])) if spec.get("materials") else True
@@ -122,16 +140,32 @@ def classify(obj: dict) -> dict:
     mass, length = obj.get("mass_kg") or 0.0, obj.get("length_m") or 0.0
     name = (obj.get("base_name") or obj.get("name") or "").lower()
     guesses: list[tuple[str, str]] = []
-    for word, guess in (("bandage", ("remedy", "bandage")), ("poultice", ("remedy", "poultice")),
-                        ("salve", ("remedy", "salve")), ("splint", ("remedy", "splint")),
-                        ("helmet", ("armour", "helmet")), ("mail", ("armour", "mail")), ("shield", ("shield", "round")),
-                        ("bow", ("weapon", "bow")), ("sling", ("weapon", "sling")), ("javelin", ("weapon", "javelin")),
-                        ("sword", ("weapon", "long_sword")), ("axe", ("weapon", "hand_axe")),
-                        ("spear", ("weapon", "short_spear")), ("knife", ("weapon", "knife")),
-                        ("dagger", ("weapon", "knife")), ("hammer", ("weapon", "hammer")), ("club", ("weapon", "club")),
-                        ("jerkin", ("armour", "leather")), ("gambeson", ("armour", "padded")),
-                        ("arrow", ("ammo", "arrow")), ("cap", ("armour", "cap")), ("hood", ("armour", "cap")),
-                        ("boots", ("clothing", "boots")), ("gloves", ("clothing", "gloves"))):
+    for word, guess in (
+        ("bandage", ("remedy", "bandage")),
+        ("poultice", ("remedy", "poultice")),
+        ("salve", ("remedy", "salve")),
+        ("splint", ("remedy", "splint")),
+        ("helmet", ("armour", "helmet")),
+        ("mail", ("armour", "mail")),
+        ("shield", ("shield", "round")),
+        ("bow", ("weapon", "bow")),
+        ("sling", ("weapon", "sling")),
+        ("javelin", ("weapon", "javelin")),
+        ("sword", ("weapon", "long_sword")),
+        ("axe", ("weapon", "hand_axe")),
+        ("spear", ("weapon", "short_spear")),
+        ("knife", ("weapon", "knife")),
+        ("dagger", ("weapon", "knife")),
+        ("hammer", ("weapon", "hammer")),
+        ("club", ("weapon", "club")),
+        ("jerkin", ("armour", "leather")),
+        ("gambeson", ("armour", "padded")),
+        ("arrow", ("ammo", "arrow")),
+        ("cap", ("armour", "cap")),
+        ("hood", ("armour", "cap")),
+        ("boots", ("clothing", "boots")),
+        ("gloves", ("clothing", "gloves")),
+    ):
         if word in name:
             guesses.append(guess)
     if obj.get("burning") and length:
@@ -139,8 +173,10 @@ def classify(obj: dict) -> dict:
     if "container" in flags:
         guesses.append(("weapon", "container"))
     if "sharp_edge" in flags:
-        guesses += [("weapon", c) for c in ("long_spear", "short_spear", "long_sword", "short_sword", "hand_axe",
-                                            "knife", "sickle")]
+        guesses += [
+            ("weapon", c)
+            for c in ("long_spear", "short_spear", "long_sword", "short_sword", "hand_axe", "knife", "sickle")
+        ]
     if length >= 0.4 and ("sharp_edge" in flags or "point" in name or "stake" in name):
         guesses.append(("weapon", "stake"))
     guesses += [("weapon", c) for c in ("staff", "club", "hand_stone")]
@@ -160,15 +196,37 @@ def _covers(kind: str, cls: str | None) -> list[str]:
 
 # A judged class that doesn't quite fit tries its near kin before code's own reading (a long-hafted flint axe is
 # still an axe: a great axe, not a spear).
-KIN = {"hand_axe": ["great_axe"], "great_axe": ["hand_axe"], "short_sword": ["long_sword", "knife"],
-       "long_sword": ["short_sword", "great_sword"], "great_sword": ["long_sword"], "knife": ["sickle", "short_sword"],
-       "sickle": ["knife"], "short_spear": ["long_spear", "stake", "javelin"], "long_spear": ["short_spear"],
-       "stake": ["short_spear"], "javelin": ["short_spear"], "club": ["mace", "staff", "hand_stone"],
-       "mace": ["club", "hammer"], "hammer": ["mace", "club"], "staff": ["club"], "hand_stone": ["club"],
-       "padded": ["thick", "clothes"], "thick": ["padded", "clothes"], "leather": ["lamellar", "thick"],
-       "lamellar": ["leather"], "mail": ["scale"], "scale": ["mail", "lamellar"], "cap": ["helmet"],
-       "helmet": ["cap"], "round": ["improvised", "large", "buckler"], "buckler": ["round", "improvised"],
-       "large": ["round", "improvised"], "salve": ["poultice"], "poultice": ["salve"]}
+KIN = {
+    "hand_axe": ["great_axe"],
+    "great_axe": ["hand_axe"],
+    "short_sword": ["long_sword", "knife"],
+    "long_sword": ["short_sword", "great_sword"],
+    "great_sword": ["long_sword"],
+    "knife": ["sickle", "short_sword"],
+    "sickle": ["knife"],
+    "short_spear": ["long_spear", "stake", "javelin"],
+    "long_spear": ["short_spear"],
+    "stake": ["short_spear"],
+    "javelin": ["short_spear"],
+    "club": ["mace", "staff", "hand_stone"],
+    "mace": ["club", "hammer"],
+    "hammer": ["mace", "club"],
+    "staff": ["club"],
+    "hand_stone": ["club"],
+    "padded": ["thick", "clothes"],
+    "thick": ["padded", "clothes"],
+    "leather": ["lamellar", "thick"],
+    "lamellar": ["leather"],
+    "mail": ["scale"],
+    "scale": ["mail", "lamellar"],
+    "cap": ["helmet"],
+    "helmet": ["cap"],
+    "round": ["improvised", "large", "buckler"],
+    "buckler": ["round", "improvised"],
+    "large": ["round", "improvised"],
+    "salve": ["poultice"],
+    "poultice": ["salve"],
+}
 
 
 def checked(proposed: dict | None, obj: dict, notes: list[str] | None = None) -> dict:
@@ -181,14 +239,21 @@ def checked(proposed: dict | None, obj: dict, notes: list[str] | None = None) ->
                 proposed = {**proposed, "class": kin}
                 break
     if valid(proposed, obj):
-        covers = [c for c in (proposed.get("covers") or []) if c in COVERS] or _covers(proposed["kind"],
-                                                                                        proposed.get("class"))
-        return {"kind": proposed["kind"], "class": proposed.get("class"), "covers": covers,
-                "quality": proposed.get("quality") if proposed.get("quality") in QUALITY else "fair"}
+        covers = [c for c in (proposed.get("covers") or []) if c in COVERS] or _covers(
+            proposed["kind"], proposed.get("class")
+        )
+        return {
+            "kind": proposed["kind"],
+            "class": proposed.get("class"),
+            "covers": covers,
+            "quality": proposed.get("quality") if proposed.get("quality") in QUALITY else "fair",
+        }
     fallback = classify(obj)
     if proposed and proposed.get("kind") not in (None, "none") and notes is not None:
-        notes.append(f"Gear '{proposed.get('kind')}:{proposed.get('class')}' doesn't fit the thing; "
-                     f"read as {fallback['kind']}:{fallback['class']}.")
+        notes.append(
+            f"Gear '{proposed.get('kind')}:{proposed.get('class')}' doesn't fit the thing; "
+            f"read as {fallback['kind']}:{fallback['class']}."
+        )
     return fallback
 
 
@@ -201,8 +266,11 @@ def of(obj: dict | None) -> dict:
 def weapon(obj: dict | None) -> dict:
     """The fighting profile of what's in a hand (None or a non-weapon: fists, or something swung)."""
     record = of(obj)
-    cls = record["class"] if record["kind"] == "weapon" and record.get("class") in WEAPONS else (
-        "fists" if obj is None else "improvised")
+    cls = (
+        record["class"]
+        if record["kind"] == "weapon" and record.get("class") in WEAPONS
+        else ("fists" if obj is None else "improvised")
+    )
     spec = dict(WEAPONS[cls])
     quality = QUALITY.get(record.get("quality", "fair"), 1.0) if obj else 1.0
     damage_type, damage = spec["type"], float(spec["base"])
@@ -215,12 +283,24 @@ def weapon(obj: dict | None) -> dict:
     if damage_type == "blunt" and obj is not None:
         ratio = (obj.get("mass_kg") or 0.5) / spec.get("ref_mass", 1.0)
         damage *= max(0.5, min(1.6, math.sqrt(ratio)))
-    return {"class": cls, "name": spec["name"], "hands": spec["hands"], "type": damage_type,
-            "damage": round(damage * quality, 1), "reach": spec["reach"], "windup_ms": spec["windup_ms"],
-            "recover_ms": spec["recover_ms"], "animation": spec["animation"], "range": spec.get("range"),
-            "speed": spec.get("speed"), "ammo": spec.get("ammo"), "thrown": spec.get("thrown", False),
-            "edge_hardness": hardness if damage_type in ("cut", "pierce") else 0.0,
-            "mass": (obj or {}).get("mass_kg", 0.5), "object_id": (obj or {}).get("id")}
+    return {
+        "class": cls,
+        "name": spec["name"],
+        "hands": spec["hands"],
+        "type": damage_type,
+        "damage": round(damage * quality, 1),
+        "reach": spec["reach"],
+        "windup_ms": spec["windup_ms"],
+        "recover_ms": spec["recover_ms"],
+        "animation": spec["animation"],
+        "range": spec.get("range"),
+        "speed": spec.get("speed"),
+        "ammo": spec.get("ammo"),
+        "thrown": spec.get("thrown", False),
+        "edge_hardness": hardness if damage_type in ("cut", "pierce") else 0.0,
+        "mass": (obj or {}).get("mass_kg", 0.5),
+        "object_id": (obj or {}).get("id"),
+    }
 
 
 def thrown(obj: dict) -> dict:
@@ -233,12 +313,22 @@ def thrown(obj: dict) -> dict:
     damage = 20.0 * max(0.4, min(1.6, math.sqrt((obj.get("mass_kg") or 0.5) / 1.0)))
     if kind == "pierce":
         damage = spec["damage"] * 0.6
-    return {**spec, "type": kind, "damage": round(damage, 1), "range": t["range"], "speed": t["speed"],
-            "windup_ms": t["windup_ms"], "recover_ms": t["recover_ms"], "animation": "throw", "thrown": True,
-            "edge_hardness": spec["edge_hardness"] if kind == "pierce" else 0.0}
+    return {
+        **spec,
+        "type": kind,
+        "damage": round(damage, 1),
+        "range": t["range"],
+        "speed": t["speed"],
+        "windup_ms": t["windup_ms"],
+        "recover_ms": t["recover_ms"],
+        "animation": "throw",
+        "thrown": True,
+        "edge_hardness": spec["edge_hardness"] if kind == "pierce" else 0.0,
+    }
 
 
 # --- What a person wears and holds -------------------------------------------------------------------------------
+
 
 def owner_key(person: dict) -> str:
     return person.get("id", "player")
@@ -252,7 +342,11 @@ def worn(state: dict, person: dict, slot: str) -> dict | None:
     """What's in a slot, if the person still has it (taken, dropped or given away, it's simply gone)."""
     oid = equipped(person).get(slot)
     obj = state["objects"].get(oid) if oid else None
-    return obj if obj is not None and obj.get("holder_id") == owner_key(person) and obj.get("condition") != "broken" else None
+    return (
+        obj
+        if obj is not None and obj.get("holder_id") == owner_key(person) and obj.get("condition") != "broken"
+        else None
+    )
 
 
 def held(state: dict, person: dict, hand: str = "right") -> dict | None:
@@ -265,8 +359,12 @@ def layers(state: dict, person: dict, slot: str) -> list[dict]:
     for key in (k for k in equipped(person) if k in COVERS):
         obj = worn(state, person, key)
         record = of(obj)
-        if obj and obj["id"] not in seen and record["kind"] in ("armour", "clothing") \
-                and slot in (record.get("covers") or []):
+        if (
+            obj
+            and obj["id"] not in seen
+            and record["kind"] in ("armour", "clothing")
+            and slot in (record.get("covers") or [])
+        ):
             seen.add(obj["id"])  # A mail shirt fills the body and arms slots but is one layer.
             found.append(armour_profile(obj, record))
     if not found and slot == "body" and person.get("card_armour"):
@@ -283,8 +381,14 @@ def armour_profile(obj: dict | None, record: dict) -> dict:
     if obj is not None and hardness >= 2.0:  # Metal armour is as hard as its metal.
         metals = [GEAR["metal_armour_hardness"][m] for m in GEAR["metal_armour_hardness"] if _has(obj, [m])]
         hardness = max(metals) if metals else hardness
-    return {"class": record["class"], "cut": min(0.97, spec["cut"] * quality), "pierce": min(0.97, spec["pierce"] * quality),
-            "blunt": min(0.9, spec["blunt"] * quality), "burn": 0.0, "hardness": hardness}
+    return {
+        "class": record["class"],
+        "cut": min(0.97, spec["cut"] * quality),
+        "pierce": min(0.97, spec["pierce"] * quality),
+        "blunt": min(0.9, spec["blunt"] * quality),
+        "burn": 0.0,
+        "hardness": hardness,
+    }
 
 
 def shield_of(state: dict, person: dict) -> dict | None:
@@ -297,13 +401,34 @@ def shield_of(state: dict, person: dict) -> dict | None:
 
 # --- A blow ------------------------------------------------------------------------------------------------------
 
-def hit(state: dict, target: dict, attack: dict, *, area: str = "torso", aware: bool = True, held_down: bool = False,
-        family: str = "blow", liquid: dict | None = None, held_seconds: int = 0, judged: str | None = None) -> dict:
+
+def hit(
+    state: dict,
+    target: dict,
+    attack: dict,
+    *,
+    area: str = "torso",
+    aware: bool = True,
+    held_down: bool = False,
+    family: str = "blow",
+    liquid: dict | None = None,
+    held_seconds: int = 0,
+    judged: str | None = None,
+) -> dict:
     """What a landed attack does to this person: effective damage, the result word and the conditions it leaves.
     attack is a weapon() / thrown() profile. Nothing is changed here; see apply()."""
     area = area if area in AREAS else "torso"
-    out = {"effective": 0.0, "type": attack.get("type", "blunt"), "area": area, "deflected": False,
-           "conditions": [], "result": "missed", "knockout": False, "kill": False, "down": False}
+    out = {
+        "effective": 0.0,
+        "type": attack.get("type", "blunt"),
+        "area": area,
+        "deflected": False,
+        "conditions": [],
+        "result": "missed",
+        "knockout": False,
+        "kill": False,
+        "down": False,
+    }
     down_already = bool(target.get("down")) or held_down
     if family == "choke":
         if aware and not down_already:
@@ -324,10 +449,19 @@ def hit(state: dict, target: dict, attack: dict, *, area: str = "torso", aware: 
             word = "wounded"  # Someone alert and on their feet isn't dispatched by a trick alone (a law).
         if attack.get("class") == "fists" and not down_already and word in ("killed", "disabled", "knocked_out"):
             word = "wounded"  # Bare hands on someone standing: a shove or a trip hurts, it doesn't fell (a law).
-        effective = {"killed": target.get("health", 100), "disabled": max(0.0, target.get("health", 100) - 20),
-                     "knocked_out": 5.0, "wounded": 30.0}.get(word, 0.0)
-        out.update(effective=float(effective), result=word, kill=word == "killed",
-                   down=word in ("disabled", "knocked_out"), knockout=word == "knocked_out")
+        effective = {
+            "killed": target.get("health", 100),
+            "disabled": max(0.0, target.get("health", 100) - 20),
+            "knocked_out": 5.0,
+            "wounded": 30.0,
+        }.get(word, 0.0)
+        out.update(
+            effective=float(effective),
+            result=word,
+            kill=word == "killed",
+            down=word in ("disabled", "knocked_out"),
+            knockout=word == "knocked_out",
+        )
         if word == "knocked_out":
             out["conditions"].append({"kind": "knocked_out", "area": area})
         return out
@@ -362,16 +496,26 @@ def hit(state: dict, target: dict, attack: dict, *, area: str = "torso", aware: 
         effective = raw * share * (1.0 - blunt_stop)
         if not heavy:
             effective = min(effective, SIT["deflected_max"])
-        out.update(effective=round(effective, 1), deflected=True, type="blunt",
-                   result="deflected" if effective < 5 else "wounded")
+        out.update(
+            effective=round(effective, 1),
+            deflected=True,
+            type="blunt",
+            result="deflected" if effective < 5 else "wounded",
+        )
         kind = "blunt"
     else:
         effective = raw * (1.0 - stop)
         out.update(effective=round(effective, 1), result="wounded" if effective > 0 else "deflected")
     effective = out["effective"]
     if kind in ("cut", "pierce") and effective >= COND["bleed_at"]:
-        out["conditions"].append({"kind": "bleeding", "area": area, "severity": round(effective),
-                                  "heavy": effective >= COND["heavy_bleed_at"]})
+        out["conditions"].append(
+            {
+                "kind": "bleeding",
+                "area": area,
+                "severity": round(effective),
+                "heavy": effective >= COND["heavy_bleed_at"],
+            }
+        )
     if kind == "blunt" and area == "head" and effective >= COND["knockout_at"]:
         out.update(knockout=True, down=True)
         out["conditions"].append({"kind": "knocked_out", "area": area})
@@ -379,8 +523,13 @@ def hit(state: dict, target: dict, attack: dict, *, area: str = "torso", aware: 
         out["conditions"].append({"kind": "broken", "area": area})
     if kind == "burn" and effective >= COND["burn_at"]:
         out["conditions"].append({"kind": "burn", "area": area, "severity": round(effective)})
-    if (area in ("neck", "heart") and kind in ("cut", "pierce") and not out["deflected"]
-            and (not aware or down_already) and effective >= COND["vital_kill_at"]):
+    if (
+        area in ("neck", "heart")
+        and kind in ("cut", "pierce")
+        and not out["deflected"]
+        and (not aware or down_already)
+        and effective >= COND["vital_kill_at"]
+    ):
         out.update(kill=True, result="killed")  # A clean cut to the throat or a thrust to the heart (a law).
     return out
 
@@ -408,6 +557,7 @@ def apply(target: dict, outcome: dict, now: int) -> str:
 
 # --- Conditions and healing --------------------------------------------------------------------------------------
 
+
 def conditions(person: dict) -> list[dict]:
     return person.setdefault("conditions", [])
 
@@ -422,8 +572,9 @@ def add_condition(person: dict, condition: dict, now: int) -> None:
         entry["until"] = now + COND["knockout_ms"]
         if any(c["kind"] == "knocked_out" for c in conditions(person)):
             return
-    elif condition["kind"] == "broken" and any(c["kind"] == "broken" and c["area"] == entry["area"]
-                                               for c in conditions(person)):
+    elif condition["kind"] == "broken" and any(
+        c["kind"] == "broken" and c["area"] == entry["area"] for c in conditions(person)
+    ):
         return
     conditions(person).append(entry)
 
@@ -441,7 +592,12 @@ def untreated(person: dict) -> list[dict]:
     """Conditions that still need something (they stop natural healing)."""
     out = []
     for c in conditions(person):
-        if c["kind"] == "bleeding" and bleed_rate(c) > 0 or c["kind"] in ("burn", "infection", "broken") and not c.get("treated"):
+        if (
+            c["kind"] == "bleeding"
+            and bleed_rate(c) > 0
+            or c["kind"] in ("burn", "infection", "broken")
+            and not c.get("treated")
+        ):
             out.append(c)
     return out
 
@@ -463,11 +619,15 @@ def advance(person: dict, elapsed_ms: int, now: int) -> dict:
         elif c["kind"] == "knocked_out" and end >= c.get("until", 0):
             conditions(person).remove(c)
             if (health > COND["down_at"] or "id" not in person) and not any(
-                    x["kind"] == "broken" and x["area"] == "leg" for x in conditions(person)):
+                x["kind"] == "broken" and x["area"] == "leg" for x in conditions(person)
+            ):
                 person["down"] = False
                 person["woke_at"] = end
-    open_wounds = [c for c in conditions(person) if c["kind"] in ("bleeding", "burn") and c.get("treated", 0) < 2
-                   and not c.get("clean")]
+    open_wounds = [
+        c
+        for c in conditions(person)
+        if c["kind"] in ("bleeding", "burn") and c.get("treated", 0) < 2 and not c.get("clean")
+    ]
     if open_wounds and not any(c["kind"] == "infection" for c in conditions(person)):
         oldest = min(c["since"] for c in open_wounds)
         if end - oldest >= COND["infect_after_ms"]:
@@ -487,8 +647,12 @@ def advance(person: dict, elapsed_ms: int, now: int) -> dict:
     after = (person["health"], person.get("down"), len(conditions(person)))
     if after == before:
         return {}
-    return {"health": person["health"], "alive": person.get("alive", True), "down": bool(person.get("down")),
-            "conditions": [dict(c) for c in conditions(person)]}
+    return {
+        "health": person["health"],
+        "alive": person.get("alive", True),
+        "down": bool(person.get("down")),
+        "conditions": [dict(c) for c in conditions(person)],
+    }
 
 
 def _mend_ms(condition: dict) -> int:
@@ -525,13 +689,18 @@ def treat(person: dict, condition_index: int, obj: dict, now: int) -> dict:
     condition["treated_with"] = spec["name"]
     if spec.get("disables_limb"):
         condition["tourniquet"] = True
-    return {"ok": True, "consumed": spec.get("consumed", True), "seconds": spec["time_s"],
-            "text": f"You treat {describe(condition)} with the {obj['name']}."}
+    return {
+        "ok": True,
+        "consumed": spec.get("consumed", True),
+        "seconds": spec["time_s"],
+        "text": f"You treat {describe(condition)} with the {obj['name']}.",
+    }
 
 
 def describe(condition: dict) -> str:
     area = {"arm": "arm", "leg": "leg", "head": "head", "neck": "neck", "heart": "chest", "torso": "side"}.get(
-        condition.get("area", "torso"), "side")
+        condition.get("area", "torso"), "side"
+    )
     kind = condition["kind"]
     if kind == "bleeding":
         return f"the {'deep ' if condition.get('heavy') else ''}cut on the {area}"
@@ -558,6 +727,7 @@ def limb_useless(person: dict, limb: str) -> bool:
 
 # --- Plain words for the menus ----------------------------------------------------------------------------------
 
+
 def words(obj: dict) -> str:
     """How a thing strikes someone who handles it, in plain words (numbers are for developer mode)."""
     record = of(obj)
@@ -566,14 +736,26 @@ def words(obj: dict) -> str:
         deadly = spec["damage"]
         level = "Deadly" if deadly >= 45 else "Dangerous" if deadly >= 28 else "Painful" if deadly >= 12 else "Feeble"
         how = {"cut": "cuts", "pierce": "stabs", "blunt": "clubs", "burn": "burns"}[spec["type"]]
-        reach = "reaches far" if spec["reach"] >= 2.2 else "keeps them back a little" if spec["reach"] >= 1.7 else "close work"
+        reach = (
+            "reaches far"
+            if spec["reach"] >= 2.2
+            else "keeps them back a little"
+            if spec["reach"] >= 1.7
+            else "close work"
+        )
         if spec.get("range"):
             reach = f"shoots up to {spec['range']} paces"
         hands = "two hands" if spec["hands"] == 2 else "one hand"
         return f"{level}: {how}, {reach}, {hands}."
     if record["kind"] in ("armour", "clothing"):
         spec = armour_profile(obj, record)
-        cuts = "stops cuts well" if spec["cut"] >= 0.8 else "turns some cuts" if spec["cut"] >= 0.35 else "little against a blade"
+        cuts = (
+            "stops cuts well"
+            if spec["cut"] >= 0.8
+            else "turns some cuts"
+            if spec["cut"] >= 0.35
+            else "little against a blade"
+        )
         blunt = "blunt blows still get through" if spec["blunt"] < 0.4 else "softens blunt blows"
         return f"Worn on the {', '.join(record['covers'])}: {cuts}; {blunt}."
     if record["kind"] == "shield":
@@ -587,6 +769,7 @@ def words(obj: dict) -> str:
 
 
 # --- Putting things on and taking them off -----------------------------------------------------------------------
+
 
 def slots_for(obj: dict) -> list[str]:
     """Where a thing can go: anything carried can be held; worn things go where they cover; ammo in its pouch."""
@@ -623,8 +806,13 @@ def equip(state: dict, person: dict, obj: dict, slot: str | None, fighting: bool
         for s in current:
             kit.pop(s)
         seconds = equip_seconds(obj, current[0])
-        return {"ok": True, "seconds": seconds, "text": f"You take off the {obj['name']}."
-                if current[0] in BODY_SLOTS else f"You put away the {obj['name']}."}
+        return {
+            "ok": True,
+            "seconds": seconds,
+            "text": f"You take off the {obj['name']}."
+            if current[0] in BODY_SLOTS
+            else f"You put away the {obj['name']}.",
+        }
     if slot not in slots_for(obj):
         return {"ok": False, "reason": f"The {obj['name']} doesn't go there."}
     if fighting and slot in BODY_SLOTS:

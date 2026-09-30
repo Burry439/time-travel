@@ -1,14 +1,16 @@
 """NPC minds with a scripted decider: perception, the report chain, attacks on the player, rewind."""
+
+import math
 from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
 import app as service
-import encounter
 import minds
 import village
 from ai import decider
+
 
 @pytest.fixture(autouse=True)
 def quiet_village(monkeypatch):
@@ -17,10 +19,15 @@ def quiet_village(monkeypatch):
     monkeypatch.setattr(village, "schedule", lambda state, npcs, now: None)
 
 
-
 def unit_state():
-    state = service.initial_state({"id": "mind0000", "mode": "developer", "seed_version": service.SEED_VERSION,
-                                   "geometry_version": service.GEOMETRY_VERSION})
+    state = service.initial_state(
+        {
+            "id": "mind0000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+        }
+    )
     state.setdefault("pending_minds", [])
     return state
 
@@ -36,16 +43,30 @@ def place(state, npc_id, x, y):
 
 
 def killing(victim):
-    return {"event_id": 1, "category": "success", "action": "harm", "property": [],
-            "harm": {"target_id": victim, "weapon_id": None, "method": "melee", "result": "killed",
-                     "injury": "a blow", "witnesses": []}}
+    return {
+        "event_id": 1,
+        "category": "success",
+        "action": "harm",
+        "property": [],
+        "harm": {
+            "target_id": victim,
+            "weapon_id": None,
+            "method": "melee",
+            "result": "killed",
+            "injury": "a blow",
+            "witnesses": [],
+        },
+    }
 
 
 def answers(action, fear=2, anger=2, believes=0.9, result=None):
     """Decider-shaped answers."""
-    out = {"action": {"type": "choice", "choice": action, "confidence": 0.9, "probabilities": {action: 0.9}},
-           "fear": {"type": "score", "score": fear}, "anger": {"type": "score", "score": anger},
-           "believes": {"type": "noul", "noul": believes}}
+    out = {
+        "action": {"type": "choice", "choice": action, "confidence": 0.9, "probabilities": {action: 0.9}},
+        "fear": {"type": "score", "score": fear},
+        "anger": {"type": "score", "score": anger},
+        "believes": {"type": "noul", "noul": believes},
+    }
     if result:
         out["result"] = {"type": "choice", "choice": result, "probabilities": {result: 1.0}}
     return out
@@ -119,7 +140,7 @@ def test_witness_reports_to_a_guard_who_attacks_and_can_kill():
     categories = [e["category"] for e in hits]  # An iron spear: a few blows kill the unarmoured stranger.
     assert categories[-1] == "killed" and 2 <= len(categories) <= 3 and set(categories[:-1]) == {"hit"}
     bren = npc(state, "npc_bren_marr")
-    assert minds.math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 2.3
+    assert math.dist((bren["x"], bren["y"]), minds.player_cell(state)) <= 2.3
     assert bren["mind"]["job"]["kind"] == "watch"  # Attackers stand down once the stranger is dead.
 
 
@@ -142,19 +163,27 @@ def scripted(tmp_path, monkeypatch):
             reply = script.pop(0)
             replies.update({prefix + key: value for key, value in reply.items()})
         return decider.DeciderCall(provider="script", model="script", answers=replies)
+
     monkeypatch.setattr(service.decider, "decide", fake_decide)
     monkeypatch.setattr(service.decider, "decide_many", lambda requests: [fake_decide(*r) for r in requests])
     judge_replies = []
-    monkeypatch.setattr(service.judge, "judge_craft", lambda context: service.judge.JudgeCall(
-        status="ok", result=judge_replies.pop(0), model="stub", attempts=1))
+    monkeypatch.setattr(
+        service.judge,
+        "judge_craft",
+        lambda context: service.judge.JudgeCall(status="ok", result=judge_replies.pop(0), model="stub", attempts=1),
+    )
     return SimpleNamespace(http=TestClient(service.app), script=script, judge=judge_replies)
 
 
 def walk_to(http, state, x, y):
     while (state["player"]["x"], state["player"]["y"]) != (x, y):
         px, py = state["player"]["x"], state["player"]["y"]
-        step = {"x": px + (x > px) - (x < px), "y": py + (y > py) - (y < py),
-                "expected_version": state["event_seq"], "request_id": f"walk-{state['event_seq']}"}
+        step = {
+            "x": px + (x > px) - (x < px),
+            "y": py + (y > py) - (y < py),
+            "expected_version": state["event_seq"],
+            "request_id": f"walk-{state['event_seq']}",
+        }
         response = http.post(f"/runs/{state['run_id']}/move", json=step)
         assert response.status_code == 200, response.text
         state = response.json()["state"]
@@ -162,15 +191,19 @@ def walk_to(http, state, x, y):
 
 
 def think(http, state):
-    reply = http.post(f"/runs/{state['run_id']}/think", json={
-        "expected_version": state["event_seq"], "request_id": f"think-{state['event_seq']}"})
+    reply = http.post(
+        f"/runs/{state['run_id']}/think",
+        json={"expected_version": state["event_seq"], "request_id": f"think-{state['event_seq']}"},
+    )
     assert reply.status_code == 200, reply.text
     return reply.json()
 
 
 def tick(http, state, ms=500):
-    reply = http.post(f"/runs/{state['run_id']}/explore", json={
-        "elapsed_ms": ms, "expected_version": state["event_seq"], "request_id": f"beat-{state['event_seq']}"})
+    reply = http.post(
+        f"/runs/{state['run_id']}/explore",
+        json={"elapsed_ms": ms, "expected_version": state["event_seq"], "request_id": f"beat-{state['event_seq']}"},
+    )
     assert reply.status_code == 200, reply.text
     return reply.json()["state"]
 
@@ -179,14 +212,34 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
     http = scripted.http
     state = walk_to(http, http.post("/runs", json={"mode": "developer"}).json(), 36, 52)  # Beside Hessa (34, 51).
     calm_seq = state["event_seq"]
-    scripted.judge.append({"clarifying_question": None, "precedent_key": "punch", "steps": [{
-        "action": "harm", "outcome": "success", "reason": "You punch Hessa.", "effort_seconds": 1,
-        "new_object": None, "take_ids": [], "transformation": None,
-        "harm": {"target_id": "npc_hessa_marr", "weapon_id": None, "method": "melee", "result": "wounded",
-                 "injury": "a bruised cheek"}}]})
-    state = http.post(f"/runs/{state['run_id']}/craft", json={
-        "text": "punch Hessa", "selected_ids": [], "expected_version": state["event_seq"],
-        "request_id": "punch"}).json()["state"]
+    scripted.judge.append(
+        {
+            "clarifying_question": None,
+            "precedent_key": "punch",
+            "steps": [
+                {
+                    "action": "harm",
+                    "outcome": "success",
+                    "reason": "You punch Hessa.",
+                    "effort_seconds": 1,
+                    "new_object": None,
+                    "take_ids": [],
+                    "transformation": None,
+                    "harm": {
+                        "target_id": "npc_hessa_marr",
+                        "weapon_id": None,
+                        "method": "melee",
+                        "result": "wounded",
+                        "injury": "a bruised cheek",
+                    },
+                }
+            ],
+        }
+    )
+    state = http.post(
+        f"/runs/{state['run_id']}/craft",
+        json={"text": "punch Hessa", "selected_ids": [], "expected_version": state["event_seq"], "request_id": "punch"},
+    ).json()["state"]
     assert state["safe_seq"] == calm_seq
     assert any(p["npc_id"] == "npc_hessa_marr" for p in state["pending_minds"])
     scripted.script.extend(answers("attack") for _ in state["pending_minds"])
@@ -200,14 +253,21 @@ def test_victim_fights_back_kills_the_player_and_rewind_restores_the_calm(script
             break
         scripted.script.extend(answers("watch") for _ in state["pending_minds"])
         state = think(http, state)["state"] if state["pending_minds"] else tick(http, state, 1000)
-    assert any(e.get("kind") == "fight" and e["npc_id"] == "npc_hessa_marr" and e["category"] == "hit"
-               for e in state["journal"])
+    assert any(
+        e.get("kind") == "fight" and e["npc_id"] == "npc_hessa_marr" and e["category"] == "hit"
+        for e in state["journal"]
+    )
     assert state["player"]["alive"] is False and state["player"]["health"] == 0
     assert http.get(f"/runs/{state['run_id']}").json() == state  # Replays exactly.
     traces = http.get(f"/runs/{state['run_id']}/traces").json()
     assert traces["minds"] and "situation" in traces["minds"][0]
-    assert http.post(f"/runs/{state['run_id']}/explore", json={
-        "elapsed_ms": 500, "expected_version": state["event_seq"], "request_id": "dead"}).status_code == 409
+    assert (
+        http.post(
+            f"/runs/{state['run_id']}/explore",
+            json={"elapsed_ms": 500, "expected_version": state["event_seq"], "request_id": "dead"},
+        ).status_code
+        == 409
+    )
     restored = http.post(f"/runs/{state['run_id']}/rewind").json()
     assert restored["run_id"] != state["run_id"] and restored["event_seq"] == calm_seq
     assert restored["player"].get("alive", True) and minds.find(restored["npcs"], "npc_hessa_marr").get("health") == 100
@@ -218,7 +278,7 @@ def test_shaken_people_reconsider_a_limited_number_of_times():
     state = unit_state()
     state["player"].update(x=40, y=40)
     place(state, "npc_tomas_reed", 41, 40)
-    jory = place(state, "npc_jory_venn", 45, 41)
+    place(state, "npc_jory_venn", 45, 41)
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
     minds.apply_perceptions(state, minds.perceive(state, wounding))
@@ -254,8 +314,8 @@ def test_close_witnesses_see_clearly_and_distant_ones_see_a_scuffle():
     state = unit_state()
     state["player"].update(x=40, y=40)
     place(state, "npc_tomas_reed", 41, 40)
-    place(state, "npc_jory_venn", 44, 40)   # 3-4 cells: sees it all.
-    place(state, "npc_darin_ko", 53, 40)    # 12-13 cells: only a scuffle (D-55: clear sight to 10).
+    place(state, "npc_jory_venn", 44, 40)  # 3-4 cells: sees it all.
+    place(state, "npc_darin_ko", 53, 40)  # 12-13 cells: only a scuffle (D-55: clear sight to 10).
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
     memories = {p["npc_id"]: p["memory"] for p in minds.perceive(state, wounding)}

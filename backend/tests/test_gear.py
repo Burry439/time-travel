@@ -1,11 +1,19 @@
 """The gear table and what blows do to bodies (D-49): realistic, fixed, no dice."""
+
 import gear
 
 
-def thing(name, materials, mass, length=None, flags=("rigid",), cls=None, kind="weapon", covers=(), quality="fair",
-          oid=None):
-    obj = {"id": oid or name.replace(" ", "_"), "name": name, "materials": list(materials), "mass_kg": mass,
-           "length_m": length, "flags": list(flags)}
+def thing(
+    name, materials, mass, length=None, flags=("rigid",), cls=None, kind="weapon", covers=(), quality="fair", oid=None
+):
+    obj = {
+        "id": oid or name.replace(" ", "_"),
+        "name": name,
+        "materials": list(materials),
+        "mass_kg": mass,
+        "length_m": length,
+        "flags": list(flags),
+    }
     if cls:
         obj["gear"] = {"kind": kind, "class": cls, "covers": list(covers), "quality": quality}
     return obj
@@ -135,9 +143,13 @@ def test_a_judged_class_that_does_not_fit_the_thing_is_replaced_by_codes_reading
     notes = []
     record = gear.checked({"kind": "weapon", "class": "long_sword", "covers": [], "quality": "good"}, stick, notes)
     assert record["class"] != "long_sword" and notes  # A sword needs a hard sharp edge.
-    assert gear.checked({"kind": "weapon", "class": "stake", "covers": [], "quality": "fair"}, stick)["class"] == "stake"
+    assert (
+        gear.checked({"kind": "weapon", "class": "stake", "covers": [], "quality": "fair"}, stick)["class"] == "stake"
+    )
     assert gear.classify({"name": "rock", "materials": ["stone"], "mass_kg": 1.5, "flags": ["rigid"]})["class"] in (
-        "hand_stone", "club")
+        "hand_stone",
+        "club",
+    )
 
 
 def test_two_hands_or_one_and_the_player_is_told_what_was_let_go():
@@ -150,7 +162,9 @@ def test_two_hands_or_one_and_the_player_is_told_what_was_let_go():
     me = {"id": "player", "alive": True, "equipped": {}}
     assert gear.equip(state, me, state["objects"]["staff"], "right")["ok"]
     held = gear.equip(state, me, state["objects"]["shield"], "left")
-    assert held["ok"] and "The practice staff goes back in your pack: the practice staff takes both hands." in held["text"]
+    assert (
+        held["ok"] and "The practice staff goes back in your pack: the practice staff takes both hands." in held["text"]
+    )
     assert me["equipped"] == {"left": "shield"}
     both = gear.equip(state, me, state["objects"]["staff"], "right")
     assert "The wicker shield goes back in your pack: the practice staff takes both hands." in both["text"]

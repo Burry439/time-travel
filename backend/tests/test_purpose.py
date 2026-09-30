@@ -1,23 +1,36 @@
 """Conversations led by the voice, with purpose (GDD D-44, D-46): the voice reads the moment, says what the person
 would say and picks their move, code applies it. People who came about stolen goods deal with the stolen goods;
 guards chasing a thief subdue and arrest rather than kill."""
+
+from test_encounter import post, world  # noqa: F401
+from test_intent import walk_near
+from test_talk import npc, said, unit_state
+
 import combat
 import encounter
 import minds
 import store
 import talk
-from test_encounter import post, world  # noqa: F401
-from test_intent import walk_near
-from test_talk import npc, said, unit_state
 
 
 def rope_stolen(state, holder="player"):
     state["objects"]["rope_tomas"].update(holder_id=holder)
     kade = npc(state, "npc_kade_east")
-    minds.remember(kade, {"kind": "theft", "severity": 2, "event": 5, "clarity": "told", "victim": "npc_tomas_reed",
-                          "item": "coil of rope", "source": "told_by:npc_tomas_reed", "at": 0,
-                          "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
-                          "short": "stole Tomas's coil of rope"})
+    minds.remember(
+        kade,
+        {
+            "kind": "theft",
+            "severity": 2,
+            "event": 5,
+            "clarity": "told",
+            "victim": "npc_tomas_reed",
+            "item": "coil of rope",
+            "source": "told_by:npc_tomas_reed",
+            "at": 0,
+            "summary": "Tomas told them: The stranger took Tomas's coil of rope without asking.",
+            "short": "stole Tomas's coil of rope",
+        },
+    )
     state["player"].update(x=kade["x"], y=kade["y"] + 1)
     return kade
 
@@ -31,8 +44,9 @@ def test_a_guard_who_heard_of_a_theft_can_demand_it_back_take_it_or_arrest():
     context = talk.converse_context(state, kade, "I'm sorry, I won't do it again.", {})
     assert "coil of rope" in context["why_they_are_here"] and "carrying it openly" in context["why_they_are_here"]
     state["event_seq"] = 7
-    talk.exchange(state, kade["id"], "I'm sorry.", said("take_back:rope_tomas"), "take_back:rope_tomas",
-                  "I'll have that.", [])
+    talk.exchange(
+        state, kade["id"], "I'm sorry.", said("take_back:rope_tomas"), "take_back:rope_tomas", "I'll have that.", []
+    )
     rope = state["objects"]["rope_tomas"]
     assert rope["holder_id"] == "npc_kade_east" and rope["owner_id"] == "npc_tomas_reed"
     assert "take_back:rope_tomas" not in talk.moves(state, kade, {})  # Nothing left to take back.
@@ -71,7 +85,9 @@ def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():
         store.apply_people(state, payload)
         if not state.get("fight"):
             break
-    assert state["player"]["alive"] and combat.SUBDUED_AT <= state["player"]["health"] < combat.SUBDUED_AT + 1  # (mending)
+    assert (
+        state["player"]["alive"] and combat.SUBDUED_AT <= state["player"]["health"] < combat.SUBDUED_AT + 1
+    )  # (mending)
     assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and talk.barred(state)
     assert state["objects"]["rope_tomas"]["holder_id"] == "npc_tomas_reed"  # The rope goes back.
     assert any(e.get("kind") == "arrest" for e in state["journal"])

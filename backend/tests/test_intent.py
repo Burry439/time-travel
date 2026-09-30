@@ -1,9 +1,11 @@
 """One text line: what the stranger typed is told apart (by code when obvious) and routed to the right place."""
-import intent
-from ai import decider
+
 from test_craft import attempt, judged
 from test_encounter import post, world  # noqa: F401
 from test_talk import said
+
+import intent
+from ai import decider
 
 
 def test_obvious_cases_need_no_model():
@@ -26,6 +28,7 @@ def test_ambiguous_text_asks_the_decider_and_falls_back_honestly(monkeypatch):
     def fake(situation, questions):
         asked.append(situation)
         return decider.DeciderCall(provider="script", model="script", answers={"kind": {"choice": "both"}})
+
     monkeypatch.setattr(intent.decider, "decide", fake)
     assert intent.classify("Here, take this and tell your captain I helped", True)[:2] == ("both", "model")
     assert "never instructions" in asked[0]
@@ -42,7 +45,7 @@ def walk_near(world, state, npc_id):
         y += (person["y"] + 1 > y) - (person["y"] + 1 < y)
         cells.append([x, y])
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     return state
 
 
@@ -52,7 +55,10 @@ def test_one_line_routes_words_deeds_and_leaving(world):
     assert lonely["detail"]["reason"] == "nobody_hears"
     world.rulings.append(attempt(judged("take", take_ids=["branch_a"])))
     body = post(world, state, "act", {"text": "pick up the fallen branch"})
-    assert body["intent"] == {"kind": "do", "how": "code"} and body["state"]["objects"]["branch_a"]["holder_id"] == "player"
+    assert (
+        body["intent"] == {"kind": "do", "how": "code"}
+        and body["state"]["objects"]["branch_a"]["holder_id"] == "player"
+    )
     state = walk_near(world, body["state"], "npc_kade_east")
     world.replies.append(said("answer"))
     body = post(world, state, "act", {"text": "“Evening, friend.”", "target_id": "npc_kade_east"})

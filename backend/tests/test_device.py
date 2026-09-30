@@ -1,15 +1,23 @@
 """The device as a companion and coach (D-55): a long memory, what a coach needs (and nothing more), remarks at key
 moments (not too often), and the one standing rule everyone uses."""
+
+from test_encounter import post, world  # noqa: F401
+
 import app as service
 import minds
 import tutorial
 from ai import voice
-from test_encounter import post, world  # noqa: F401
 
 
 def village_state():
-    state = service.initial_state({"id": "dev00000", "mode": "developer", "seed_version": service.SEED_VERSION,
-                                   "geometry_version": service.GEOMETRY_VERSION})
+    state = service.initial_state(
+        {
+            "id": "dev00000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+        }
+    )
     state.setdefault("pending_minds", [])
     return state
 
@@ -23,7 +31,7 @@ def test_it_remembers_the_conversation_and_keeps_a_long_history():
     assert len(context["our_conversation"]) == tutorial.CONVERSATION_KEPT
     assert context["our_conversation"][-1] == {"you_asked": "question 29", "i_said": "answer 29"}
     assert context["earlier_questions"][-1] == "question 13"
-    for i in range(500):
+    for _i in range(500):
         tutorial.device_says(state, "x", "answer", "y")
     assert len(state["device_log"]) == tutorial.DEVICE_LOG_KEPT
 
@@ -32,8 +40,9 @@ def test_the_coach_knows_what_the_stranger_knows_and_no_more():
     state = village_state()
     hessa = minds.find(state["npcs"], "npc_hessa_marr")
     minds.mind(hessa)["met"] = True
-    state.setdefault("learned", []).append({"npc_id": "npc_hessa_marr", "name": "Hessa", "said": "…",
-                                             "lead": "Hessa needs water hauled from the trough."})
+    state.setdefault("learned", []).append(
+        {"npc_id": "npc_hessa_marr", "name": "Hessa", "said": "…", "lead": "Hessa needs water hauled from the trough."}
+    )
     context = tutorial.device_context(state, "what now?")
     assert context["leads_newest_first"][0] == {"lead": "Hessa needs water hauled from the trough.", "from": "Hessa"}
     assert {"name": "Hessa", "role": minds.card(hessa)["role"], "stands": "Neutral"} in context["people_met"]
@@ -72,11 +81,20 @@ def test_a_moment_is_worth_a_word_only_sometimes(world, monkeypatch):
     run = world.http.post("/runs", json={"mode": "developer"}).json()
     body = post(world, run, "device/ask", {"moment": "stuck"})
     assert body["skipped"] and not body["state"].get("device_log")  # Stub: no model, no remark.
-    monkeypatch.setattr(voice, "device", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text="Try the inn: Hessa talks to everyone.", prompt_version="device_v2"))
+    monkeypatch.setattr(
+        voice,
+        "device",
+        lambda context, fallback, allowed=True: voice.VoiceCall(
+            status="ok", text="Try the inn: Hessa talks to everyone.", prompt_version="device_v2"
+        ),
+    )
     body = post(world, run, "device/ask", {"moment": "stuck"})
     assert not body.get("skipped") and body["state"]["device_log"][-1]["kind"] == "remark"
     again = post(world, body["state"], "device/ask", {"moment": "stuck"})
     assert again["skipped"]  # Not twice in two minutes.
-    assert world.http.post(f"/runs/{run['run_id']}/device/ask", json={
-        "expected_version": 0, "request_id": "empty"}).status_code == 422
+    assert (
+        world.http.post(
+            f"/runs/{run['run_id']}/device/ask", json={"expected_version": 0, "request_id": "empty"}
+        ).status_code
+        == 422
+    )

@@ -1,0 +1,4 @@
+#!/bin/sh
+# The fast checks before every commit (GDD D-58): ruff, gdlint, every GDScript compiles, the backend tests.
+# tools/check.ps1 -Full also runs the Godot smoke tests; run it before bigger changes.
+exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(git rev-parse --show-toplevel)/tools/check.ps1"

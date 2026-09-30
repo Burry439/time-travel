@@ -1,18 +1,20 @@
 """Group conversations (D-48): one scene per round, where everyone in it (and anyone near enough to hear)
 may speak in turn; nothing else talks over it."""
+
 import math
+
+import scenes
+from test_encounter import face_to_face, post, world  # noqa: F401
+from test_intent import walk_near
+from test_talk import npc, said, unit_state
 
 import encounter
 import minds
 import persona
 import rounds
 import routes_craft
-import scenes
 import village
 from ai import voice
-from test_encounter import face_to_face, post, world  # noqa: F401
-from test_intent import walk_near
-from test_talk import npc, said, unit_state
 
 ROD, BREN, OREN = "npc_roderic_vale", "npc_bren_marr", "npc_oren_dast"
 
@@ -32,6 +34,7 @@ def moment(state, addressed, scripted, text="Look at this needle."):
     def fake(context, fallback, allowed=True):
         call["context"] = context
         return scenes.scene_call(context, scripted)
+
     real, voice.scene = voice.scene, fake
     try:
         scene = rounds.scene(state, addressed, text, None, True)
@@ -114,13 +117,13 @@ def test_the_same_two_do_not_make_the_same_small_talk_again_soon():
     state["player"].update(x=5, y=70)  # Far from everyone.
     jory, mara = npc(state, "npc_jory_venn"), npc(state, "npc_mara_venn")
     for person in (jory, mara):
-        minds.mind(person).update(job=None, last_met=-10**9)
+        minds.mind(person).update(job=None, last_met=-(10**9))
         (person.get("controller") or {}).update(activity="idle")
     mara.update(x=jory["x"] + 1, y=jory["y"])
     now = state["sim_time_ms"] + village.MEET_GAP_MS * 2
     village.apply_meeting(state, jory, mara, {}, ("Morning.", "Morning."), now - village.MEET_GAP_MS - 1)
     for person in (jory, mara):
-        minds.mind(person)["last_met"] = -10**9  # Ready to talk to someone, just not each other.
+        minds.mind(person)["last_met"] = -(10**9)  # Ready to talk to someone, just not each other.
         minds.mind(person)["chatting_with"] = None
     state["pending_minds"] = []
     village.schedule(state, state["npcs"], now)
@@ -145,9 +148,24 @@ def test_a_deed_that_names_someone_nearby_is_meant_for_them():
 def test_showing_someone_a_thing_opens_a_conversation_and_they_answer(world):  # noqa: F811
     state = world.http.post("/runs", json={"mode": "developer"}).json()
     state = walk_near(world, state, "npc_kade_east")
-    world.rulings.append({"clarifying_question": None, "precedent_key": "show", "steps": [{
-        "action": "other", "outcome": "success", "reason": "You hold up your empty hands.", "effort_seconds": 2,
-        "new_object": None, "take_ids": [], "transformation": None, "harm": None}]})
+    world.rulings.append(
+        {
+            "clarifying_question": None,
+            "precedent_key": "show",
+            "steps": [
+                {
+                    "action": "other",
+                    "outcome": "success",
+                    "reason": "You hold up your empty hands.",
+                    "effort_seconds": 2,
+                    "new_object": None,
+                    "take_ids": [],
+                    "transformation": None,
+                    "harm": None,
+                }
+            ],
+        }
+    )
     world.replies.append(said("ask_back"))
     body = post(world, state, "act", {"text": "I show Kade my empty hands"})
     state = body["state"]

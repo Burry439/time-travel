@@ -5,18 +5,19 @@ must not change unless the game is meant to. Refactors run these before and afte
 
 Each journey's final state (and its reload, which must be identical) is compared with tests/golden/<name>.json.
 Journey ids are random, so they are replaced by placeholders before comparing."""
+
 import json
 import os
 import re
 from pathlib import Path
 
 import pytest
-
-import minds
 from test_craft import attempt, judged
 from test_encounter import blow, post, world  # noqa: F401  (the fixture is used by name)
 from test_gate import answers, walk
 from test_talk import said, walk_to
+
+import minds
 
 GOLDEN = Path(__file__).parent / "golden"
 UPDATE = os.environ.get("GOLDEN_UPDATE") == "1"
@@ -73,16 +74,24 @@ def test_golden_hessa_route(world):
     state = post(world, state, "say", {"npc_id": "npc_hessa_marr", "text": "Any way I can help?"})["state"]
     world.replies.append(answers("answer", accepts=0.95))
     state = post(world, state, "say", {"npc_id": "npc_hessa_marr", "text": "Gladly, I'll fetch it."})["state"]
-    world.rulings.append(attempt(
-        judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 1.0}),
-        judged("give", give={"item_ids": ["gourd_a"], "recipient_id": "npc_hessa_marr"}), key="fill+give"))
-    state = post(world, state, "craft", {"text": "fill the gourd at the trough and give it to Hessa",
-                                         "selected_ids": []})["state"]
+    world.rulings.append(
+        attempt(
+            judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 1.0}),
+            judged("give", give={"item_ids": ["gourd_a"], "recipient_id": "npc_hessa_marr"}),
+            key="fill+give",
+        )
+    )
+    state = post(
+        world, state, "craft", {"text": "fill the gourd at the trough and give it to Hessa", "selected_ids": []}
+    )["state"]
     state = settle(world, state, lambda s: not s.get("pending_minds"))
     world.replies.append(answers("answer", done=0.9))
     state = post(world, state, "say", {"npc_id": "npc_hessa_marr", "text": "Here's your water."})["state"]
-    state = settle(world, state, lambda s: any(m["kind"] == "vouch" for m in minds.mind(
-        minds.find(s["npcs"], "npc_roderic_vale"))["memories"]))
+    state = settle(
+        world,
+        state,
+        lambda s: any(m["kind"] == "vouch" for m in minds.mind(minds.find(s["npcs"], "npc_roderic_vale"))["memories"]),
+    )
     roderic = minds.find(state["npcs"], "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
     world.replies.append(answers("admit", reason=0.8, threat=0.1))
@@ -97,7 +106,7 @@ def test_golden_halt_fight_arrest(world):
     state = new_run(world)
     cells = [[48, y] for y in range(67, 15, -1)]
     for i in range(0, len(cells), 20):
-        state = post(world, state, "move", {"cells": cells[i:i + 20]})["state"]
+        state = post(world, state, "move", {"cells": cells[i : i + 20]})["state"]
     for _ in range(60):
         if state.get("encounter"):
             break
@@ -120,14 +129,23 @@ def test_golden_make_hold_strike_rewind(world):
     """Pick things up, make a club, take it in hand, swing it, let time pass, then rewind."""
     http = world.http
     state = new_run(world)
-    branch, cord = state["objects"]["branch_a"], state["objects"]["cord_a"]
+    branch, _cord = state["objects"]["branch_a"], state["objects"]["cord_a"]
     state = walk_to(http, state, branch["x"], branch["y"] + 1)
     for oid in ("branch_a", "cord_a"):
         state = post(world, state, "quick", {"verb": "take", "object_id": oid})["state"]
-    club = {"name": "bound club", "description": "A branch with cord wound tight round its grip.",
-            "materials": ["wood", "plant fibre"], "consumes": ["branch_a", "cord_a"], "tools_used": [],
-            "mass_kg": 1.2, "length_m": 0.9, "capacity_l": None, "rated_load_kg": None, "flags": ["rigid"],
-            "capabilities": []}
+    club = {
+        "name": "bound club",
+        "description": "A branch with cord wound tight round its grip.",
+        "materials": ["wood", "plant fibre"],
+        "consumes": ["branch_a", "cord_a"],
+        "tools_used": [],
+        "mass_kg": 1.2,
+        "length_m": 0.9,
+        "capacity_l": None,
+        "rated_load_kg": None,
+        "flags": ["rigid"],
+        "capabilities": [],
+    }
     world.rulings.append(attempt(judged("make", new_object=club)))
     state = post(world, state, "craft", {"text": "wind the cord round the branch", "selected_ids": []})["state"]
     made = next(o for o in state["objects"].values() if o.get("created_by") == "player")

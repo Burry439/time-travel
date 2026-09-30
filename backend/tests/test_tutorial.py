@@ -1,6 +1,8 @@
 """The tutorial, "The first morning" (D-50, D-52): linear, card by card; outcomes, not recipes; the bout; the
 device; exact replay."""
+
 import pytest
+from test_encounter import post, world  # noqa: F401
 
 import app as service
 import combat
@@ -8,7 +10,6 @@ import gear
 import minds
 import tutorial
 import village
-from test_encounter import post, world  # noqa: F401
 
 
 @pytest.fixture(autouse=True)
@@ -17,8 +18,15 @@ def quiet_village(monkeypatch):
 
 
 def tutorial_state():
-    return service.initial_state({"id": "tut00000", "mode": "developer", "seed_version": service.SEED_VERSION,
-                                  "geometry_version": service.GEOMETRY_VERSION, "scenario": "tutorial"})
+    return service.initial_state(
+        {
+            "id": "tut00000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+            "scenario": "tutorial",
+        }
+    )
 
 
 def npc(state, npc_id):
@@ -56,8 +64,14 @@ def test_a_tutorial_journey_starts_with_the_device_and_kades_practice_gear():
     assert state["device_log"] and "device" in state["device_log"][0]["text"]
     assert state["objects"]["practice_sword"]["holder_id"] == "npc_kade_east"
     assert state["objects"]["steel_file"]["holder_id"] is None  # Lying by the smithy, anyone's to take.
-    village_run = service.initial_state({"id": "vil00000", "mode": "developer", "seed_version": service.SEED_VERSION,
-                                         "geometry_version": service.GEOMETRY_VERSION})
+    village_run = service.initial_state(
+        {
+            "id": "vil00000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+        }
+    )
     assert "tutorial" not in village_run and "practice_sword" not in village_run["objects"]
 
 
@@ -147,8 +161,9 @@ def test_the_whole_story_moves_on_by_outcomes():
     read_and_tick(state)
     assert at_step(state) == "why"  # Nothing said to him yet this step.
     state["sim_time_ms"] += 1000
-    minds.mind(kade).setdefault("talk", []).append({"who": "stranger", "text": "I'm trying to get into the city.",
-                                                    "at": state["sim_time_ms"]})
+    minds.mind(kade).setdefault("talk", []).append(
+        {"who": "stranger", "text": "I'm trying to get into the city.", "at": state["sim_time_ms"]}
+    )
     read_and_tick(state)
     assert at_step(state) == "steel"
     carry(state, "steel_file")
@@ -158,12 +173,32 @@ def test_the_whole_story_moves_on_by_outcomes():
     # A thing made earlier in front of someone (the poultice) isn't the fire (seen in play, 30 Sep 2026).
     assert not tutorial.tick(state) and at_step(state) == "fire"
     state["event_seq"] = state["tutorial"]["started_seq"] + 3
-    state["objects"]["fire_made"] = {"id": "fire_made", "name": "small fire", "created_by": "player",
-                                     "created_event_id": state["event_seq"], "flags": ["heat_source", "light_source"],
-                                     "holder_id": None, "x": state["player"]["x"], "y": state["player"]["y"]}
-    minds.remember(kade, {"kind": "demonstration", "works": True, "clarity": "clear", "severity": 1, "event": 99,
-                          "at": state["sim_time_ms"], "item": "small fire", "summary": "The stranger made a fire.",
-                          "short": "made a small fire", "victim": None, "source": "witnessed"})
+    state["objects"]["fire_made"] = {
+        "id": "fire_made",
+        "name": "small fire",
+        "created_by": "player",
+        "created_event_id": state["event_seq"],
+        "flags": ["heat_source", "light_source"],
+        "holder_id": None,
+        "x": state["player"]["x"],
+        "y": state["player"]["y"],
+    }
+    minds.remember(
+        kade,
+        {
+            "kind": "demonstration",
+            "works": True,
+            "clarity": "clear",
+            "severity": 1,
+            "event": 99,
+            "at": state["sim_time_ms"],
+            "item": "small fire",
+            "summary": "The stranger made a fire.",
+            "short": "made a small fire",
+            "victim": None,
+            "source": "witnessed",
+        },
+    )
     tutorial.tick(state)
     assert at_step(state) == "captain" and state["tutorial"]["flags"]["wants_in"]
     assert kade["mind"]["job"]["kind"] == "vouch" and "want to come into the city" in kade["mind"]["job"]["why"]
@@ -200,6 +235,7 @@ def test_the_captain_needs_asking_if_nobody_told_him_the_stranger_wants_in():
     Roderic know it, and come to let them in himself; otherwise the stranger has to ask, and Kade's word is the
     grounds his yes needs."""
     import talk
+
     state, kade = at_captain("Just passing through, looking for work.")
     assert not state["tutorial"]["flags"]["wants_in"] and "want to come" not in kade["mind"]["job"]["why"]
     roderic = npc(state, "npc_roderic_vale")
@@ -219,6 +255,7 @@ def test_the_captain_needs_asking_if_nobody_told_him_the_stranger_wants_in():
 
 def test_kade_stays_for_his_lessons_and_does_not_let_them_in_himself():
     import talk
+
     state = tutorial_state()
     kade = npc(state, "npc_kade_east")
     state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == "why")
@@ -265,8 +302,11 @@ def test_the_bout_is_practice_no_crime_no_blood_no_arrest():
         kade.update(x=49, y=60)
         combat.strike(state, "right", "npc_kade_east", state["sim_time_ms"])
         beat(state)
-    outcomes = [e["category"] for e in state["journal"] if e.get("kind") == "fight"
-                and e.get("category") in tutorial.SPAR_OUTCOMES]
+    outcomes = [
+        e["category"]
+        for e in state["journal"]
+        if e.get("kind") == "fight" and e.get("category") in tutorial.SPAR_OUTCOMES
+    ]
     assert outcomes and state["fight"] is None
     assert not state.get("barred_until") and not state.get("subdued_by")  # Nobody arrests anybody.
     assert not kade.get("conditions") and not state["player"].get("conditions")  # Pulled blows: nobody bleeds.
@@ -296,6 +336,7 @@ def test_the_device_knows_only_what_the_stranger_does():
 
 
 # --- Over HTTP ------------------------------------------------------------------------------------------------
+
 
 def test_a_tutorial_journey_over_http_reads_progresses_asks_and_replays(world):
     http = world.http

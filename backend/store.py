@@ -4,6 +4,7 @@ Every change to the world is an event; state is rebuilt by replaying events (wit
 Requests are idempotent by request id and rejected as stale when the player hasn't seen their own
 latest action. Journeys begun before OLDEST_SEED are retired (GDD D-04).
 """
+
 from __future__ import annotations
 
 import copy
@@ -30,7 +31,9 @@ GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = 12  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
+SEED_VERSION = (
+    12  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
+)
 # 11: the old wainwright's yard, a free stock of materials for weapons and armour (D-51).
 # 12: the wainwright's notebook, a readable recipe book (D-52).
 NPCS = [
@@ -158,12 +161,18 @@ def db():
 
 def initial_state(run: sqlite3.Row) -> dict:
     state = {
-        "run_id": run["id"], "mode": run["mode"], "seed_version": run["seed_version"],
-        "scenario": run["scenario"] if "scenario" in run.keys() else "village",
-        "geometry_version": run["geometry_version"], "event_seq": 0, "tick": 0,
+        "run_id": run["id"],
+        "mode": run["mode"],
+        "seed_version": run["seed_version"],
+        "scenario": run["scenario"] if "scenario" in run.keys() else "village",  # noqa: SIM118 (a sqlite3.Row)
+        "geometry_version": run["geometry_version"],
+        "event_seq": 0,
+        "tick": 0,
         "sim_time_ms": 0,
         "player": {"x": 48, "y": 68, "alive": True},
-        "gate_open": False, "inside_city": False, "objective": "Get inside the city",
+        "gate_open": False,
+        "inside_city": False,
+        "objective": "Get inside the city",
         "npcs": npc_sim.seed_npcs(NPCS + PATROL_GUARDS, WORLD_GEOMETRY),
     }
     state.update(m2.seed_m2(run["seed_version"]))
@@ -175,14 +184,25 @@ def initial_state(run: sqlite3.Row) -> dict:
             people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
     if state["scenario"] == "tutorial":  # The first morning, with the device (D-50).
         import tutorial
+
         tutorial.setup(state)
     return state
 
 
 # Events the player causes. A request is stale only if the client hasn't seen the latest of
 # these; people thinking or the clock ticking in between never makes the player's request stale.
-PLAYER_KINDS = {"move", "physical_action", "craft", "talk", "round", "fight", "gear", "dev_gate",
-                "objective_complete", "device"}
+PLAYER_KINDS = {
+    "move",
+    "physical_action",
+    "craft",
+    "talk",
+    "round",
+    "fight",
+    "gear",
+    "dev_gate",
+    "objective_complete",
+    "device",
+}
 
 
 def is_stale(state: dict, expected_version: int) -> bool:
@@ -271,8 +291,19 @@ def apply_people(state: dict, payload: dict) -> None:
         state["barred_until"] = payload["barred_until"]
 
 
-TUTORIAL_FIELDS = ("tutorial", "device_log", "objective", "npcs", "objects", "player", "fight", "pending_minds",
-                   "encounter", "admitted", "gate_open")
+TUTORIAL_FIELDS = (
+    "tutorial",
+    "device_log",
+    "objective",
+    "npcs",
+    "objects",
+    "player",
+    "fight",
+    "pending_minds",
+    "encounter",
+    "admitted",
+    "gate_open",
+)
 
 
 def apply_tutorial(state: dict, payload: dict) -> None:
@@ -294,8 +325,22 @@ def apply_gear(state: dict, payload: dict, already_journaled: bool = False) -> N
 
 # A round changes many things at once (anything a Try Something can, a reply, people moving on),
 # so its event carries the resulting fields rather than deltas.
-ROUND_FIELDS = ("objects", "npcs", "player", "encounter", "fight", "pending_minds", "agreements", "sim_time_ms",
-                "water_spilled_l", "last_action", "gate_open", "barred_until", "trades", "projectiles")
+ROUND_FIELDS = (
+    "objects",
+    "npcs",
+    "player",
+    "encounter",
+    "fight",
+    "pending_minds",
+    "agreements",
+    "sim_time_ms",
+    "water_spilled_l",
+    "last_action",
+    "gate_open",
+    "barred_until",
+    "trades",
+    "projectiles",
+)
 
 
 FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_minds", "encounter", "projectiles")
@@ -304,12 +349,14 @@ FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_m
 def round_payload(before: dict, after: dict, record: dict) -> dict:
     payload = {key: after.get(key) for key in ROUND_FIELDS}
     payload["trades"] = after.get("trades") or {}
-    payload["journal_added"] = after["journal"][len(before["journal"]):]
-    payload["learned_added"] = after.get("learned", [])[len(before.get("learned", [])):]
+    payload["journal_added"] = after["journal"][len(before["journal"]) :]
+    payload["learned_added"] = after.get("learned", [])[len(before.get("learned", [])) :]
     if after.get("admitted") and not before.get("admitted"):
         payload["admitted"] = after["admitted"]
-    payload["round"] = {key: record.get(key) for key in (
-        "round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")}
+    payload["round"] = {
+        key: record.get(key)
+        for key in ("round", "entries", "ended", "walked_away", "replier", "effort_seconds", "walk", "arrested")
+    }
     return payload
 
 
@@ -324,18 +371,27 @@ def apply_round(state: dict, payload: dict) -> None:
         state["safe_seq"] = payload["safe_seq"]
     state["last_round"] = payload["round"]
 
+
 def advance_people(state: dict, elapsed_ms: int) -> dict:
     """Payload fields for time passing: routines, the jobs people chose, encounters starting."""
     probe = dict(state)
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
     import crafting
+
     changed = crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])
     for object_id, fields in (probe.get("people_objects_changed") or {}).items():  # Arrows landing, shields worn.
         changed.setdefault(object_id, {}).update(fields)
-    payload = {"npcs": npcs, "player": player, "pending_minds": probe["pending_minds"], "people_journal": heard,
-               "encounter": probe.get("encounter"), "fight": probe.get("fight"),
-               "objects_changed": changed, "projectiles": probe.get("projectiles") or []}
+    payload = {
+        "npcs": npcs,
+        "player": player,
+        "pending_minds": probe["pending_minds"],
+        "people_journal": heard,
+        "encounter": probe.get("encounter"),
+        "fight": probe.get("fight"),
+        "objects_changed": changed,
+        "projectiles": probe.get("projectiles") or [],
+    }
     if probe.get("people_objects_added"):
         payload["objects_added"] = probe["people_objects_added"]
     if probe.get("subdued_by"):  # Beaten down by someone who meant only to subdue (D-44).
@@ -347,14 +403,33 @@ def _subdued(state: dict, payload: dict, by: str, now: int) -> None:
     """A guard arrests the stranger they put on the ground (stolen things go back, marched off, barred for a while);
     anyone else just stops. Everything lands in the payload, so replay needs no rules."""
     import encounter
+
     subduer = minds.find(payload["npcs"], by)
-    guard = subduer if minds.card(subduer).get("guard") else next(
-        (n for n in payload["npcs"] if minds.card(n).get("guard") and not n.get("down") and n.get("alive", True)
-         and n["id"] in (state.get("fight") or {}).get("attackers", [])), None)
+    guard = (
+        subduer
+        if minds.card(subduer).get("guard")
+        else next(
+            (
+                n
+                for n in payload["npcs"]
+                if minds.card(n).get("guard")
+                and not n.get("down")
+                and n.get("alive", True)
+                and n["id"] in (state.get("fight") or {}).get("attackers", [])
+            ),
+            None,
+        )
+    )
     if guard is None:
         return
-    draft = {"objects": copy.deepcopy(state["objects"]), "player": payload["player"], "npcs": payload["npcs"],
-             "journal": [], "sim_time_ms": now, "event_seq": state["event_seq"]}
+    draft = {
+        "objects": copy.deepcopy(state["objects"]),
+        "player": payload["player"],
+        "npcs": payload["npcs"],
+        "journal": [],
+        "sim_time_ms": now,
+        "event_seq": state["event_seq"],
+    }
     encounter.arrest_player(draft, guard, now)
     for object_id, obj in draft["objects"].items():
         if obj["holder_id"] != state["objects"][object_id]["holder_id"]:
@@ -369,30 +444,33 @@ def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, 
         raise HTTPException(404, "Run not found")
     if run["seed_version"] < OLDEST_SEED:
         raise HTTPException(410, "This journey is from an older version of the game. Start a new journey.")
-    checkpoint = connection.execute("SELECT seq,state_json FROM checkpoints WHERE run_id=? ORDER BY seq DESC LIMIT 1",
-                                    (run_id,)).fetchone()
+    checkpoint = connection.execute(
+        "SELECT seq,state_json FROM checkpoints WHERE run_id=? ORDER BY seq DESC LIMIT 1", (run_id,)
+    ).fetchone()
     state = json.loads(checkpoint["state_json"]) if checkpoint else initial_state(run)
-    for event in connection.execute("SELECT * FROM events WHERE run_id=? AND seq>? ORDER BY seq",
-                                    (run_id, state["event_seq"])):
+    for event in connection.execute(
+        "SELECT * FROM events WHERE run_id=? AND seq>? ORDER BY seq", (run_id, state["event_seq"])
+    ):
         reduce_event(state, event)
     return run, state
 
 
 def state_at(connection: sqlite3.Connection, run: sqlite3.Row, sequence: int) -> dict:
     """Reconstruct the exact saved result for an idempotent retry."""
-    checkpoint = connection.execute("SELECT seq,state_json FROM checkpoints WHERE run_id=? AND seq<=? ORDER BY seq DESC LIMIT 1",
-                                    (run["id"], sequence)).fetchone()
+    checkpoint = connection.execute(
+        "SELECT seq,state_json FROM checkpoints WHERE run_id=? AND seq<=? ORDER BY seq DESC LIMIT 1",
+        (run["id"], sequence),
+    ).fetchone()
     state = json.loads(checkpoint["state_json"]) if checkpoint else initial_state(run)
     for event in connection.execute(
         "SELECT * FROM events WHERE run_id=? AND seq>? AND seq<=? ORDER BY seq",
-        (run["id"], state["event_seq"], sequence)
+        (run["id"], state["event_seq"], sequence),
     ):
         reduce_event(state, event)
     return state
 
 
-def append(connection: sqlite3.Connection, state: dict, kind: str, payload: dict, request_id: str,
-           tick: int) -> None:
+def append(connection: sqlite3.Connection, state: dict, kind: str, payload: dict, request_id: str, tick: int) -> None:
     sequence = state["event_seq"] + 1
     connection.execute(
         "INSERT INTO events (run_id, seq, tick, kind, payload, request_id) VALUES (?,?,?,?,?,?)",
@@ -404,8 +482,7 @@ def append(connection: sqlite3.Connection, state: dict, kind: str, payload: dict
     state["tick"] = tick
 
 
-def check_request(connection: sqlite3.Connection, state: dict, expected_version: int,
-                  request_id: str) -> int | None:
+def check_request(connection: sqlite3.Connection, state: dict, expected_version: int, request_id: str) -> int | None:
     prior = connection.execute(
         "SELECT seq FROM events WHERE run_id=? AND request_id=?", (state["run_id"], request_id)
     ).fetchone()

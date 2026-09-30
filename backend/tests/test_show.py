@@ -1,10 +1,11 @@
 """Filling, showing and giving (judge v6), with the judge stubbed: what code allows, commits and who sees it."""
+
 import pytest
+from test_craft import commit, fresh_state, judged
 
 import crafting
 import minds
 import talk
-from test_craft import commit, fresh_state, judged
 
 
 def carry(state, *ids):
@@ -17,9 +18,17 @@ def fill(container, source, litres=1.0):
 
 
 def show(object_id, observed, works=True, used=(), audience=(), results=()):
-    return judged("demonstrate", demonstration={
-        "object_id": object_id, "used_ids": list(used), "audience_ids": list(audience), "observed": observed,
-        "works": works, "capabilities": [{"text": t, "status": s} for t, s in results]})
+    return judged(
+        "demonstrate",
+        demonstration={
+            "object_id": object_id,
+            "used_ids": list(used),
+            "audience_ids": list(audience),
+            "observed": observed,
+            "works": works,
+            "capabilities": [{"text": t, "status": s} for t, s in results],
+        },
+    )
 
 
 def give(items, recipient):
@@ -51,11 +60,19 @@ def compass(state):
     carry(state, "needles_mara", "bowl_hessa", "leaves_a")
     state["objects"]["bowl_hessa"]["water_l"] = 1.0
     state["objects"]["trough_hessa"]["water_l"] -= 1.0  # As if filled from the trough.
-    spec = {"name": "water compass", "description": "A magnetised needle on a leaf floating in a bowl of water.",
-            "materials": ["iron", "leaf", "fired clay"], "consumes": ["needles_mara", "leaves_a", "bowl_hessa"],
-            "tools_used": ["lodestone_darin"], "mass_kg": 0.5, "length_m": None, "capacity_l": 1.0,
-            "rated_load_kg": None, "flags": ["container", "watertight", "magnetized", "indicates_direction"],
-            "capabilities": [{"text": "points the same way every time", "status": "expected"}]}
+    spec = {
+        "name": "water compass",
+        "description": "A magnetised needle on a leaf floating in a bowl of water.",
+        "materials": ["iron", "leaf", "fired clay"],
+        "consumes": ["needles_mara", "leaves_a", "bowl_hessa"],
+        "tools_used": ["lodestone_darin"],
+        "mass_kg": 0.5,
+        "length_m": None,
+        "capacity_l": 1.0,
+        "rated_load_kg": None,
+        "flags": ["container", "watertight", "magnetized", "indicates_direction"],
+        "capabilities": [{"text": "points the same way every time", "status": "expected"}],
+    }
     carry(state, "lodestone_darin")
     return commit(state, judged("make", new_object=spec), text="make a water compass")
 
@@ -78,8 +95,11 @@ def test_showing_updates_what_it_is_known_to_do_and_who_saw_it():
     far = next(n for n in state["npcs"] if n["id"] == "npc_mara_venn")
     seen = "The stranger turned the bowl; the needle swung back to point the same way, three times."
     state["event_seq"] += 1
-    commit(state, show(made, seen, audience=["npc_hessa_marr"],
-                       results=[("points the same way every time", "observed")]), text="show Hessa")
+    commit(
+        state,
+        show(made, seen, audience=["npc_hessa_marr"], results=[("points the same way every time", "observed")]),
+        text="show Hessa",
+    )
     entry = state["last_action"]
     hessa = minds.find(state["npcs"], "npc_hessa_marr")  # The committed world has fresh records.
     assert entry["demonstration"]["observed"] == seen
@@ -103,8 +123,16 @@ def test_a_failed_showing_is_seen_but_earns_nothing():
     carry(state, "potshard_a")
     hessa = next(n for n in state["npcs"] if n["id"] == "npc_hessa_marr")
     hessa.update(x=33, y=53)
-    commit(state, show("potshard_a", "The stranger held up a pot shard and waited; nothing happened.", works=False,
-                       audience=["npc_hessa_marr"]), text="show Hessa the magic shard")
+    commit(
+        state,
+        show(
+            "potshard_a",
+            "The stranger held up a pot shard and waited; nothing happened.",
+            works=False,
+            audience=["npc_hessa_marr"],
+        ),
+        text="show Hessa the magic shard",
+    )
     state.setdefault("pending_minds", [])
     minds.apply_perceptions(state, minds.perceive(state, state["last_action"]))
     hessa = minds.find(state["npcs"], "npc_hessa_marr")

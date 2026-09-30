@@ -9,6 +9,7 @@ Answers keep one shape for all callers: choices with their probabilities, scores
 probability ("noul"). The interface is kept deliberately narrow so another typed engine could serve
 it again later (for example crowds inside the city), behind the same questions.
 """
+
 from __future__ import annotations
 
 import json
@@ -93,19 +94,25 @@ def _schema(questions: dict) -> dict:
 
 def _llm(state_text: str, questions: dict) -> DeciderCall:
     call = DeciderCall(provider="llm", model=model())
-    prompt = ("You decide what a character in a grounded premodern RPG does, as a game's typed decision engine. "
-              "Answer every question strictly from the situation and the character's personality, knowledge and "
-              "feelings. For choices pick exactly one listed option; for scales pick the level index (0 = first "
-              "description); for yes/no give a probability.\n\nQUESTIONS\n" + json.dumps(questions, indent=1))
+    prompt = (
+        "You decide what a character in a grounded premodern RPG does, as a game's typed decision engine. "
+        "Answer every question strictly from the situation and the character's personality, knowledge and "
+        "feelings. For choices pick exactly one listed option; for scales pick the level index (0 = first "
+        "description); for yes/no give a probability.\n\nQUESTIONS\n" + json.dumps(questions, indent=1)
+    )
     started = time.perf_counter()
     raw, response = None, None
-    for attempt in range(2):  # One retry when the output isn't valid JSON (rare, but it happens).
+    for _attempt in range(2):  # One retry when the output isn't valid JSON (rare, but it happens).
         try:
             response = config.client().responses.create(
-                model=call.model, reasoning={"effort": reasoning()}, store=False,
+                model=call.model,
+                reasoning={"effort": reasoning()},
+                store=False,
                 input=[{"role": "developer", "content": prompt}, {"role": "user", "content": state_text}],
-                text={"format": {"type": "json_schema", "name": "decision", "schema": _schema(questions),
-                                 "strict": True}})
+                text={
+                    "format": {"type": "json_schema", "name": "decision", "schema": _schema(questions), "strict": True}
+                },
+            )
             raw = json.loads(response.output_text)
             call.error = None
             break
@@ -126,11 +133,19 @@ def _llm(state_text: str, questions: dict) -> DeciderCall:
     for name, question in questions.items():
         value = raw[name]
         if question["type"] == "choice":
-            call.answers[name] = {"type": "choice", "choice": value, "confidence": 1.0,
-                                  "probabilities": {key: float(key == value) for key in question["criteria"]}}
+            call.answers[name] = {
+                "type": "choice",
+                "choice": value,
+                "confidence": 1.0,
+                "probabilities": {key: float(key == value) for key in question["criteria"]},
+            }
         elif question["type"] == "score":
-            call.answers[name] = {"type": "score", "score": float(value), "confidence": 1.0,
-                                  "probabilities": {str(i): float(i == value) for i in range(len(question["criteria"]))}}
+            call.answers[name] = {
+                "type": "score",
+                "score": float(value),
+                "confidence": 1.0,
+                "probabilities": {str(i): float(i == value) for i in range(len(question["criteria"]))},
+            }
         else:
             call.answers[name] = {"type": "noul", "noul": max(0.0, min(1.0, float(value)))}
     return call
@@ -142,8 +157,12 @@ def _stub(questions: dict) -> DeciderCall:
     for name, question in questions.items():
         if question["type"] == "choice":
             first = next(iter(question["criteria"]))
-            answers[name] = {"type": "choice", "choice": first, "confidence": 1.0,
-                             "probabilities": {key: float(key == first) for key in question["criteria"]}}
+            answers[name] = {
+                "type": "choice",
+                "choice": first,
+                "confidence": 1.0,
+                "probabilities": {key: float(key == first) for key in question["criteria"]},
+            }
         elif question["type"] == "score":
             answers[name] = {"type": "score", "score": 0.0, "confidence": 1.0, "probabilities": {"0": 1.0}}
         else:

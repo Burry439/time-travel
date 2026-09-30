@@ -4,13 +4,13 @@ Routine selection is deliberately separate from route execution. A plan the deci
 source "agenda") walks the same way; when its dwell is over the person drifts back to their routine
 until they next decide (GDD D-37).
 """
+
 from __future__ import annotations
 
+import json
 from collections import deque
 from copy import deepcopy
-import json
 from pathlib import Path
-
 
 # Each anchor is (cell x, cell y, activity at arrival, dwell milliseconds).
 # This file also drives the editor's visible activity-anchor overlay.
@@ -58,10 +58,16 @@ def seed_npcs(npcs: list[dict], geometry: dict) -> list[dict]:
         assert (npc["x"], npc["y"]) == tuple(anchors[0][:2])
         assert all((x, y) not in blocked for x, y, _, _ in anchors)
         npc["controller"] = {
-            "source": "routine", "goal": goal, "activity": anchors[0][2],
-            "anchor_index": 0, "destination": [npc["x"], npc["y"]],
-            "path": [], "step_carry_ms": 0,
-            "step_ms": 360 if "guard" in npc["role"].lower() or npc["id"] in ("npc_elin_west", "npc_kade_east") else 440,
+            "source": "routine",
+            "goal": goal,
+            "activity": anchors[0][2],
+            "anchor_index": 0,
+            "destination": [npc["x"], npc["y"]],
+            "path": [],
+            "step_carry_ms": 0,
+            "step_ms": 360
+            if "guard" in npc["role"].lower() or npc["id"] in ("npc_elin_west", "npc_kade_east")
+            else 440,
             "next_at_ms": anchors[0][3] + index * 170,
         }
     return seeded

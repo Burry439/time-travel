@@ -1,33 +1,69 @@
 """Memory that lasts (GDD D-36): each exchange leaves a note, a name the stranger actually said, doubted
 claims; a finished conversation becomes an episode in the thinking lane; old episodes fold into long
 memory; and all of it reaches both the decider and the voice the next time you talk. Replays exactly."""
-import persona
-import talk
-from ai import voice
+
 from test_encounter import post, world  # noqa: F401
 from test_intent import walk_near
 from test_talk import npc, said, unit_state
 
+import persona
+import talk
+from ai import voice
+
 
 def speaking(monkeypatch, remember="", name=""):
-    monkeypatch.setattr(voice, "scene", lambda context, fallback, allowed=True: voice.VoiceCall(
-        status="ok", text="Well met.", model="fake", stranger_name=name, lines=[
-            {"speaker_id": context["people"][0]["id"], "text": "Well met.", "move": "answer", "answers": {},
-             "remember": remember}]))
+    monkeypatch.setattr(
+        voice,
+        "scene",
+        lambda context, fallback, allowed=True: voice.VoiceCall(
+            status="ok",
+            text="Well met.",
+            model="fake",
+            stranger_name=name,
+            lines=[
+                {
+                    "speaker_id": context["people"][0]["id"],
+                    "text": "Well met.",
+                    "move": "answer",
+                    "answers": {},
+                    "remember": remember,
+                }
+            ],
+        ),
+    )
 
 
 def test_a_name_is_only_learned_when_the_stranger_said_it():
     state = unit_state()
-    talk.exchange(state, "npc_hessa_marr", "I'm Ash, a healer from the south.", said("answer"), "answer",
-                  "Welcome, love.", [], note="Ash says he's a healer from the south.", name_given="Ash")
+    talk.exchange(
+        state,
+        "npc_hessa_marr",
+        "I'm Ash, a healer from the south.",
+        said("answer"),
+        "answer",
+        "Welcome, love.",
+        [],
+        note="Ash says he's a healer from the south.",
+        name_given="Ash",
+    )
     hessa = npc(state, "npc_hessa_marr")
-    assert persona.knows(hessa)["name"] == "Ash" and persona.knows(hessa)["notes"] == ["Ash says he's a healer from the south."]
-    talk.exchange(state, "npc_bren_marr", "Just passing through.", said("answer"), "answer", "Hm.", [],
-                  name_given="Bob")  # Invented by the model: not in the stranger's words.
+    assert persona.knows(hessa)["name"] == "Ash" and persona.knows(hessa)["notes"] == [
+        "Ash says he's a healer from the south."
+    ]
+    talk.exchange(
+        state, "npc_bren_marr", "Just passing through.", said("answer"), "answer", "Hm.", [], name_given="Bob"
+    )  # Invented by the model: not in the stranger's words.
     bren = npc(state, "npc_bren_marr")
     assert persona.knows(bren)["name"] is None and "Just passing through" in persona.knows(bren)["notes"][0]
-    talk.exchange(state, "npc_bren_marr", "I'm the king's own cousin.", said("answer", believes=0.1), "answer",
-                  "Course you are.", [])
+    talk.exchange(
+        state,
+        "npc_bren_marr",
+        "I'm the king's own cousin.",
+        said("answer", believes=0.1),
+        "answer",
+        "Course you are.",
+        [],
+    )
     assert persona.knows(bren)["claims"][-1]["text"] == "I'm the king's own cousin."
     situation, _ = talk.request(state, bren, "Well?")
     assert "didn't believe it" in situation and "king's own cousin" in situation
@@ -38,8 +74,9 @@ def test_a_finished_conversation_becomes_an_episode_both_models_see(world, monke
     state = walk_near(world, state, "npc_kade_east")
     speaking(monkeypatch, remember="Ash says he's a smith looking for work.", name="Ash")
     world.replies.append(said("answer"))
-    state = post(world, state, "act", {"text": "“I'm Ash, a smith looking for work.”",
-                                       "target_id": "npc_kade_east"})["state"]
+    state = post(world, state, "act", {"text": "“I'm Ash, a smith looking for work.”", "target_id": "npc_kade_east"})[
+        "state"
+    ]
     kade = npc(state, "npc_kade_east")
     assert persona.knows(kade)["name"] == "Ash" and persona.knows(kade)["notes"]
     state = post(world, state, "act", {"text": "I walk away"})["state"]
@@ -62,6 +99,7 @@ def test_old_episodes_fold_into_long_memory(world, monkeypatch):
     known["episodes"] = [{"at": i, "text": f"Talk number {i}."} for i in range(persona.EPISODES_KEPT)]
     known["notes"] = ["The stranger brought water."]
     import routes_minds
+
     context, fallback = routes_minds._recollect_context(hessa)
     assert context["to_fold"] == ["Talk number 0."]
     routes_minds._apply_recollection(hessa, context, fallback, 999)

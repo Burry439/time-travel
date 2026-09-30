@@ -3,6 +3,7 @@
 The prompt is built from the committed record (name, description, materials),
 never from the player's raw words.
 """
+
 from __future__ import annotations
 
 import base64
@@ -15,8 +16,10 @@ from . import config
 PROMPT_VERSION = "illustrator_v1"
 # The world sprite, the view held in a hand, and the four-view sheet worn on the body (D-49).
 VERSIONS = {"world": PROMPT_VERSION, "held": "illustrator_v2_held", "worn": "illustrator_v2_worn"}
-_TEMPLATES = {view: (Path(__file__).resolve().parents[1] / "prompts" / f"{version}.txt").read_text(encoding="utf-8")
-              for view, version in VERSIONS.items()}
+_TEMPLATES = {
+    view: (Path(__file__).resolve().parents[1] / "prompts" / f"{version}.txt").read_text(encoding="utf-8")
+    for view, version in VERSIONS.items()
+}
 _TEMPLATE = _TEMPLATES["world"]
 
 
@@ -44,8 +47,12 @@ def generate_sprite(record: dict, destination: Path) -> SpriteCall:
     prompt = sprite_prompt(record)
     version = VERSIONS.get(record.get("view", "world"), PROMPT_VERSION)
     if not config.images_enabled():
-        return SpriteCall(status="disabled", prompt=prompt, prompt_version=version,
-                          error="Image generation is off or no API key is set.")
+        return SpriteCall(
+            status="disabled",
+            prompt=prompt,
+            prompt_version=version,
+            error="Image generation is off or no API key is set.",
+        )
     if config.mode() == "stub":  # Exercise storage and delivery without a model.
         destination.parent.mkdir(parents=True, exist_ok=True)
         stand_in = Path(__file__).resolve().parents[2] / "assets" / "generated" / "prop_stone.png"
@@ -58,8 +65,14 @@ def generate_sprite(record: dict, destination: Path) -> SpriteCall:
         call.model = model
         try:
             response = config.client().images.generate(
-                model=model, prompt=prompt, size="1024x1024", quality=config.image_quality(),
-                background="transparent", output_format="png", n=1)
+                model=model,
+                prompt=prompt,
+                size="1024x1024",
+                quality=config.image_quality(),
+                background="transparent",
+                output_format="png",
+                n=1,
+            )
         except Exception as error:
             errors.append(f"{model}: {type(error).__name__}: {error}")
             if not _model_unavailable(error):
@@ -78,4 +91,5 @@ def _model_unavailable(error: Exception) -> bool:
     from openai import BadRequestError, NotFoundError, PermissionDeniedError
 
     return isinstance(error, (NotFoundError, PermissionDeniedError)) or (
-        isinstance(error, BadRequestError) and "model" in str(error).lower())
+        isinstance(error, BadRequestError) and "model" in str(error).lower()
+    )

@@ -1,11 +1,13 @@
 """Effects that really change the world: raising the gate beam, gifts and barter."""
+
 import copy
+
+from test_craft import commit, fresh_state, judged
+from test_talk import npc, said
 
 import crafting
 import minds
 import talk
-from test_craft import commit, fresh_state, judged
-from test_talk import npc, said
 
 
 def at_gate(state):
@@ -18,8 +20,11 @@ def lift_out(aids=()):
 
 
 def install(aids=()):
-    return judged("install", effort_seconds=120, install={
-        "object_id": "gate_beam", "into_id": "gate_brackets", "aid_ids": list(aids)})
+    return judged(
+        "install",
+        effort_seconds=120,
+        install={"object_id": "gate_beam", "into_id": "gate_brackets", "aid_ids": list(aids)},
+    )
 
 
 def test_the_cracked_bar_comes_out_before_the_new_beam_goes_in():
@@ -66,8 +71,9 @@ def test_tomas_counts_the_deal_done_only_once_the_beam_is_up():
 
 
 def trade(give, want, recipient="npc_darin_ko"):
-    return judged("offer_trade", offer_trade={"give_ids": list(give), "want_ids": list(want),
-                                              "recipient_id": recipient})
+    return judged(
+        "offer_trade", offer_trade={"give_ids": list(give), "want_ids": list(want), "recipient_id": recipient}
+    )
 
 
 def test_an_offered_trade_happens_only_if_they_accept():
@@ -83,11 +89,15 @@ def test_an_offered_trade_happens_only_if_they_accept():
     assert f"accept_trade:{offer['id']}" in options
     assert "offering Darin a trade" in talk.request(state, darin, "Well?")[0]
     before = copy.deepcopy(state)
-    payload = talk.exchange(state, "npc_darin_ko", "Deal?", said(f"accept_trade:{offer['id']}"),
-                            f"accept_trade:{offer['id']}", "Done.", [])
+    payload = talk.exchange(
+        state, "npc_darin_ko", "Deal?", said(f"accept_trade:{offer['id']}"), f"accept_trade:{offer['id']}", "Done.", []
+    )
     assert state["objects"]["lodestone_darin"]["holder_id"] == "player"
     assert state["objects"]["lodestone_darin"]["owner_id"] == "player"
-    assert state["objects"]["flint_a"]["owner_id"] == "npc_darin_ko" and state["trades"][offer["id"]]["status"] == "accepted"
+    assert (
+        state["objects"]["flint_a"]["owner_id"] == "npc_darin_ko"
+        and state["trades"][offer["id"]]["status"] == "accepted"
+    )
     assert not talk.open_trades(state, npc(state, "npc_darin_ko"))
     replayed = copy.deepcopy(before)  # The event replays to the same world.
     talk.apply_payload(replayed, {**payload, "npcs": state["npcs"]})
