@@ -836,6 +836,33 @@ func npc_record(id: String) -> Dictionary:
 	return {}
 
 
+## The open leads' claims, oldest first (one per lead).
+func open_claims() -> Array:
+	var claims := []
+	var seen := {}
+	for claim in game.run_state.get("learned", []):
+		var lead := str(claim.get("lead", "")) if claim.get("lead") != null else ""
+		if lead.is_empty() or seen.has(lead):
+			continue
+		seen[lead] = true
+		if not _lead_done(claim):
+			claims.append(claim)
+	return claims
+
+
+## A lead that is something to do (a request, a loan to return, someone to go and see), not only a fact.
+static func is_task(claim: Dictionary) -> bool:
+	return claim.has("offer") or claim.has("lend") or claim.get("refer") != null
+
+
+## Text cut at a word to fit a small space.
+static func shorten(text: String, most: int) -> String:
+	if text.length() <= most:
+		return text
+	var cut := text.left(most)
+	return cut.left(maxi(cut.rfind(" "), most - 12)).rstrip(",;:. ") + "…"
+
+
 func open_leads() -> PackedStringArray:
 	var leads := PackedStringArray()
 	var seen := {}

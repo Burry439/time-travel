@@ -1,7 +1,8 @@
 extends RefCounted
 ## Deeds (GDD D-55): the milestones of a journey, read from what really happened in the world (never arbitrary
-## achievements): your first invention, someone amazed, someone helped, a deal agreed and kept, a friend made,
-## someone speaking for you, word of you spreading, the gate opening. One function, so the journal, the toasts
+## achievements): your first invention, someone amazed, someone helped, a deal agreed and kept, someone who
+## would speak for you, someone who did, word of you spreading, the gate opening. (How warm each person is shows
+## as their standing, not as a deed: someone friendly from the start isn't an achievement.) One function, so the journal, the toasts
 ## and tests all agree. Each deed: {id, title, text, who (an npc id or "")}.
 
 const STANDING_WORDS := {"unknown": "Doesn't know you", "hostile": "Hostile", "wary": "Wary", "neutral": "Neutral",
@@ -38,9 +39,6 @@ static func compute(state: Dictionary) -> Array:
 					"text": "%s won't forget it." % npc.name, "who": id})
 				break
 		var standing := str(their_mind.get("standing", ""))
-		if standing in ["friendly", "would_speak"]:
-			deeds.append({"id": "friend:" + id, "title": "A friend: %s" % npc.name,
-				"text": "%s thinks well of you." % npc.name, "who": id})
 		if standing == "would_speak":
 			deeds.append({"id": "would_speak:" + id, "title": "%s would speak for you" % npc.name,
 				"text": "Ask, and %s would put in a word for you." % npc.name, "who": id})

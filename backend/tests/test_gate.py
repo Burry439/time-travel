@@ -117,6 +117,14 @@ def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():
     admitted["admitted"] = {"by": "npc_roderic_vale"}
     assert not run(admitted, lambda: any(e.get("category") == "halt" for e in admitted.get("heard", [])),
                    limit_ms=20_000)
+    # Someone speaking for the stranger to the captain isn't the guards dealing with them: they still stop them (D-55).
+    vouched = unit_state()
+    vouched["player"].update(x=48, y=16)
+    minds.remember(npc(vouched, "npc_roderic_vale"), {
+        "kind": "vouch", "severity": 1, "by": "npc_hessa_marr", "victim": None, "item": None, "event": 1,
+        "clarity": "told", "source": "told_by:npc_hessa_marr", "at": vouched["sim_time_ms"],
+        "summary": "Hessa vouched for the stranger.", "short": "has Hessa's word"})
+    assert run(vouched, lambda: any(e.get("category") == "halt" for e in vouched.get("heard", [])), limit_ms=30_000)
 
 
 @pytest.fixture
@@ -268,6 +276,14 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
     _, questions = talk.request(state, roderic, "May I enter?")
     assert {"threat", "reason"} <= set(questions)
+    # The stranger's word alone never opens the gate, however the reading goes (D-55): "Hessa spoke for me" isn't
+    # Hessa speaking for them.
+    assert talk.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "answer"
+    assert "admit" not in talk.moves(state, roderic) and "why_not_yet" in talk.converse_context(state, roderic, "Let me in.", {})
+    minds.remember(roderic, {"kind": "vouch", "severity": 1, "by": "npc_hessa_marr", "victim": None, "item": None,
+                             "event": 1, "clarity": "told", "source": "told_by:npc_hessa_marr", "at": 0,
+                             "summary": "Hessa vouched for the stranger.", "short": "has Hessa's word"})
+    assert "admit" in talk.moves(state, roderic) and "why_not_yet" not in talk.converse_context(state, roderic, "x", {})
     # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
     assert talk.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"

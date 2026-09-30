@@ -437,16 +437,29 @@ def request(state: dict, npc: dict, text: str, happened: str | None = None) -> t
     return "\n".join(lines), questions
 
 
+def grounds_to_admit(npc: dict) -> bool:
+    """Something real behind letting the stranger in, never their word alone (D-55): evidence this guard holds
+    (a resident's word given in person, something shown to work, a gift, help they saw). A guard going on their
+    own motive may also go on trust earned over time; the captain's rule asks for the evidence."""
+    if any(minds.is_evidence(m) for m in minds.mind(npc).get("memories", [])):
+        return True
+    return npc["id"] != CAPTAIN and minds.standing(npc) in ("friendly", "would_speak")
+
+
 def admits_now(state: dict, npc: dict, answers: dict) -> bool:
-    """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43)."""
+    """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43), with real
+    grounds in what they hold, so a claim ("Hessa has spoken for me") never opens the gate by itself (D-55)."""
     return "admit" in replies(state, npc) and _yes(answers, "reason", REASON_YES) and "threat" in answers \
-        and float(answers["threat"].get("noul", 1.0)) < THREAT_NO
+        and float(answers["threat"].get("noul", 1.0)) < THREAT_NO and grounds_to_admit(npc)
 
 
 def moves(state: dict, npc: dict, answers: dict | None = None) -> dict[str, str]:
     """The moves the voice may pick from: every legal reply. Letting the stranger in is offered to a guard who
     could; code then checks the same reply's own reading (reason enough, no threat) before the gate opens (D-46)."""
-    return {k: o["description"] for k, o in replies(state, npc).items()}
+    options = {k: o["description"] for k, o in replies(state, npc).items()}
+    if "admit" in options and not grounds_to_admit(npc):
+        del options["admit"]  # Nothing real to go on yet (D-55): the voice isn't offered a yes that code would refuse.
+    return options
 
 
 def decided_reply(state: dict, npc: dict, answers: dict, proposed: str) -> str:
@@ -536,8 +549,13 @@ def converse_context(state: dict, npc: dict, text: str, answers: dict, happened:
                             "awe": _words(view.get("awe", 0.0), ["none", "a touch", "deep", "overwhelming"])},
         "moves_they_may_make": moves(state, npc),
         "open_deals": open_deals(state, npc),
-        "can_let_the_stranger_through": can_admit(state, npc),
+        "can_let_the_stranger_through": can_admit(state, npc) and grounds_to_admit(npc),
     })
+    if can_admit(state, npc) and not grounds_to_admit(npc):
+        context["why_not_yet"] = (f"{npc['name']} has nothing to go on but the stranger's own word: no one has spoken "
+                                  f"for them to {npc['name']}'s face, and {npc['name']} has seen nothing of theirs "
+                                  f"work. Claims about what others said or did prove nothing until {npc['name']} "
+                                  f"hears or sees it.")
     if minds.card(npc).get("persuaded_by"):
         context["what_would_change_their_mind"] = minds.card(npc)["persuaded_by"]
     if minds.card(npc).get("guard") and admission_rule(npc):  # Their own reasons, whatever the official line (D-43).
@@ -728,7 +746,7 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
             reward_job = ("they did what I asked of them, and did it honestly.",
                           f"{name} vouched for the stranger, who had done what {name} asked: {deal['task']}.")
         learned.append({"npc_id": npc_id, "name": name, "said": line, "fulfilled": deal["id"], "event_id": event_id,
-                        "lead": f"{name} is satisfied: you did what they asked, and they'll speak for you."})
+                        "lead": f"{name} is satisfied: you did what was asked, and {name} will speak for you."})
     admission = None
     if act == "offer":
         offer = next(o for o in minds.card(npc).get("offers", []) if o["id"] == target)
@@ -736,8 +754,16 @@ def exchange(state: dict, npc_id: str, text: str, answers: dict, key: str, line:
         agreements[deal_id] = {"id": deal_id, "type": "task_for_reward", "template": target, "issuer": npc_id,
                                "task": offer["task"], "check": offer["check"], "reward": offer["reward"],
                                "status": "proposed", "offered_event": event_id}
+        loaned = []
+        for thing_id in offer.get("lends", []):  # What the job needs, theirs to lend (D-55): using it isn't theft.
+            thing = state["objects"].get(thing_id)
+            if thing and thing["owner_id"] == npc_id and thing.get("lent_to") != "player":
+                thing["lent_to"] = "player"
+                lent.append({"id": thing_id, "holder_id": thing["holder_id"]})
+                loaned.append(thing["name"])
+        use = f" You may use {name}'s {', '.join(loaned[:-1]) + ' and ' + loaned[-1] if len(loaned) > 1 else loaned[0]} for it." if loaned else ""
         learned.append({"npc_id": npc_id, "name": name, "said": line, "offer": deal_id, "event_id": event_id,
-                        "lead": f"{name} asked you to {offer['task'].replace(name, 'them')}."})
+                        "lead": f"{name}'s request: {offer['task']}.{use}"})
     elif act == "vouch":
         reward_job = ("I've come to trust them.", f"{name} vouched for the stranger and says they can be trusted.")
     elif act == "admit":

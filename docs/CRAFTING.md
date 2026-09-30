@@ -9,7 +9,7 @@
 - **Right-click** to look closer.
 - **Drag** things from your pack (bottom of the screen) onto people or things.
 
-Press **T** (or Enter), or click something, and the dialogue bar opens with one line: *"What do you say or do?"* Type in your own words. The game works out whether you are speaking, doing something, or both, and "I wait", "I give up" and "I walk away" just work.
+Press **T** (or Enter), or click something, and the dialogue bar opens with one line. Beside it, **SAY** / **DO** (Tab switches) says which you mean: SAY is words spoken aloud (it starts on SAY when you're talking to someone), DO is something you do with your hands (words in "quotes" in a DO line are said as well). A live preview under the line shows how it will read. "I wait", "I give up" and "I walk away" work in either. **E** acts on whatever the "[E] …" tag is over. **H** opens the device: ask it anything, and it remembers your whole conversation. **J** opens your journal on your goals: pin one to follow it, and the person it's about is marked in the world.
 
 You can describe several things in one go ("sharpen the branch into a spear with the flint, then stab Tomas with it"). They happen in order, and if one fails the rest don't happen. The chips on the right point at things; clicking one is optional. There are no command words. The AI judge decides what happens, and code checks the result before anything changes.
 
@@ -98,7 +98,7 @@ Type anything. The person reads the moment and answers in their own voice, and d
 
 Start a **Developer playtest**.
 
-- **Every result in the dialogue bar** has a *Details* link with the developer trace (and the bar says how your line was heard, e.g. "heard as do (code)"):
+- **Every result in the dialogue bar** has a *Details* link with the developer trace (in developer journeys the bar also says how your line was taken, e.g. "heard as do (player)" when you chose the mode):
   - The model, latency, tokens and any errors
   - What the model proposed vs. what the validator committed, with a note for every change
   - Buttons to show the raw model JSON, the exact context sent to it, and the committed object

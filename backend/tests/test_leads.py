@@ -1,4 +1,5 @@
 """Readable progress and variety: leads, regard cues, refusals that point somewhere, styles, interjections."""
+import crafting
 import encounter
 import minds
 import talk
@@ -25,11 +26,30 @@ def test_what_people_tell_you_becomes_leads():
     state["event_seq"] += 1
     offered = talk.exchange(state, "npc_hessa_marr", "Any work?", said("offer:water_haul"), "offer:water_haul",
                             "Bring me water.", [])
-    assert offered["learned"][0]["lead"] == "Hessa asked you to bring them a container full of water from the trough for her kitchen."
+    assert offered["learned"][0]["lead"] == ("Hessa's request: bring Hessa a container full of water from the trough "
+                                             "for her kitchen. You may use Hessa's wooden bucket and water trough for it.")
     state["event_seq"] += 1
-    lent = talk.exchange(state, "npc_hessa_marr", "May I borrow the bucket?", said("lend:bucket_hessa"),
-                         "lend:bucket_hessa", "Take it.", [])
-    assert lent["learned"][0]["lead"] == "Hessa lent you their wooden bucket."
+    lent = talk.exchange(state, "npc_hessa_marr", "May I borrow the cup?", said("lend:cup_hessa"),
+                         "lend:cup_hessa", "Take it.", [])
+    assert lent["learned"][0]["lead"] == "Hessa lent you their wooden cup."
+
+
+def test_a_job_lends_what_it_needs_so_using_it_is_not_theft():
+    """Hessa asks for water and says the bucket's by the trough: taking it to do the job isn't stealing (D-55)."""
+    state = unit_state()
+    beside(state, "npc_hessa_marr")
+    assert [c["id"] for c in crafting._property(state, ["bucket_hessa"], "taken")] == ["bucket_hessa"]
+    offered = talk.exchange(state, "npc_hessa_marr", "Any work?", said("offer:water_haul"), "offer:water_haul",
+                            "Bring me water; the bucket's by the trough.", [])
+    assert {t["id"] for t in offered["lent"]} == {"bucket_hessa", "trough_hessa"}
+    assert crafting._property(state, ["bucket_hessa", "trough_hessa"], "taken") == []
+    assert crafting._property(state, ["honey_hessa"], "taken")  # Only what the job needs.
+    # Handed back to her, the loan is over: taking it again would be taking it.
+    state["objects"]["bucket_hessa"]["holder_id"] = "player"
+    crafting._apply_step(state, {"given": {"ids": ["bucket_hessa"], "to": "npc_hessa_marr",
+                                           "owners": {"bucket_hessa": "npc_hessa_marr"}}})
+    assert "lent_to" not in state["objects"]["bucket_hessa"]
+    assert crafting._property(state, ["bucket_hessa"], "taken")
 
 
 def test_cues_show_only_when_regard_crosses_a_band():

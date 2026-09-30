@@ -483,7 +483,7 @@ func _placeholder() -> String:
 		return ("Say something to %s…" % ui.npc_record(target).name) if _is_person(target) else "Say something…"
 	if not obj.is_empty():
 		return "Do something with the %s…" % obj.name
-	return "Do something…  (e.g. show Hessa the gourd, lever the beam up)"
+	return "Do something…  (e.g. pick up the flint, crush the leaves into a paste)"
 
 
 func _render_header() -> void:

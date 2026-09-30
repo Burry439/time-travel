@@ -193,7 +193,7 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
-| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A, B and C of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
+| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A to D of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map.<br><br>**Bug bash (D):** a scripted live playthrough (`tools/playtest_demo.gd`) found and fixed:<br>- theft at a bucket Hessa had offered: jobs now lend what they need;<br>- admission on the stranger's claim alone: code now requires evidence the guard holds (`grounds_to_admit`);<br>- no halt after a vouch: hearsay isn't the guards dealing with the stranger;<br>- the tracker showing facts instead of things to do.<br><br>The whole Hessa route now plays through live. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
 | D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
 | D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
 | D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
@@ -310,18 +310,17 @@ Code checks the move against that same reading (letting you in needs reason enou
 
 Everything here is read from what really happened (leads, memories, deals, things made), never from arbitrary achievements, and code still decides all of it: the client only shows it. `scripts/ui/game_layers.gd`, `scripts/ui/deeds.gd`, `scripts/ui/hud.gd`.
 
-- **The goal tracker** (top left) shows the **pinned** lead, else the newest open lead, under the one long goal (get inside the city). A click opens the journal's Goals.
+- **The goal tracker** (top left) shows the **pinned** lead. Otherwise it shows the newest *thing to do* (a request, a loan, someone to go and see), else the newest thing learned, cut to fit, under the one long goal (get inside the city). A click opens the journal's Goals.
 - **Pinning.** Pin a lead in the journal. The tracker follows it, and the person it's about (a referral's target, else whoever told you) gets the pulsing **ring**, with an **arrow** at the screen's edge when they're out of sight. It hides in the tutorial, when you're beside them, and while a panel is open. This is the one world marker outside the tutorial, and the player chooses it. Pins are remembered per journey on the client.
 - **Standing** is a word and a colour, never a number:
   - the words are **Doesn't know you · Hostile · Wary · Neutral · Friendly · Would speak for you**;
   - one backend rule (`minds.standing`) sets `mind.standing` whenever it changes;
   - a **toast** with their portrait says so ("Bren ▲ Friendly · Was wary of you").
-- **Deeds** are the milestones of a journey. Each gets a toast with a small fanfare, and all are on the Deeds page:
+- **Deeds** are the milestones of a journey. How warm someone is shows as their standing, not as a deed: someone friendly from the start is no achievement. Each gets a toast with a small fanfare, and all are on the Deeds page:
   - your first invention;
   - someone amazed by it;
   - someone helped;
   - a deal agreed, then kept;
-  - a friend made;
   - someone who would speak for you;
   - someone who did;
   - word of you spreading;
@@ -337,11 +336,11 @@ Everything here is read from what really happened (leads, memories, deals, thing
 
 An automatic memory aid, never an omniscient codex. It opens on **Goals** (J, or a click on the tracker). Rebuilt in D-55 as a book with these tabs:
 
-- **Goals**: the long goal, then every open lead as a card, with the face of the person it's about, who told you, and **Pin**. Done leads are faded below.
+- **Goals**: the long goal, then every open lead as a card, with the face of the person it's about, who told you, and **Pin**, in two groups: *Asked of you, and people to see*, then *What you've learned*. Done leads are faded below.
 - **People**: everyone you've met, each with:
   - their portrait and role;
   - their **standing** in words and colour;
-  - what they told you;
+  - what they told you, as the leads you learned from them;
   - **Conversation**, which unfolds every word between you, oldest first, from the journal.
 - **Deeds**: the deeds above, newest first.
 - **Things made**: your creations with picture, provenance and known abilities.
@@ -414,6 +413,13 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 > - **Elin:** for something of real use to the watch (finding the way in fog, seeing danger), shown to work.
 >
 > Live: Bren admits on Hessa's word (2/2) but not as a favour (2/2); Kade ignores wonders (2/2); Oren in awe opens the gate (2/2).
+>
+> **Grounds, not claims (D-55).** Code also requires something real behind a yes (`talk.grounds_to_admit`):
+> - evidence the guard holds: a resident's word given to them in person, something shown to work, a gift, or help they saw;
+> - for a guard going on their own motive, trust earned over time (standing Friendly or better) also counts;
+> - the captain's rule asks for the evidence.
+>
+> Without grounds, "admit" isn't among the voice's moves, and the context says why ("nothing to go on but the stranger's own word"). The live playtest found Roderic admitting on "Hessa has spoken for me" before she had.
 
 **Roderic's authored motives.** These are conditions he reasons about, not a recipe.
 
@@ -748,7 +754,7 @@ The judge receives the relevant precedents and must stay consistent with them. V
 
 ### 6.6 Agreements and NPC help
 
-> **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are yes/no readings returned with the reply itself (D-46), judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. Not built yet: escort, barter, loans with a return deadline, and breach.
+> **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are yes/no readings returned with the reply itself (D-46), judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. **A job lends what it needs (D-55):** an offer's authored `lends` (Hessa's bucket and trough; Tomas's beam, rope, ladder, fulcrum, trestles and hammer) are lent when the offer is made, and the lead says so ("You may use Hessa's wooden bucket and water trough for it"). Handed back to its owner, a lent thing's loan is over. The live playtest found Hessa crying theft at her own bucket, then turning hostile after the water was delivered. Not built yet: escort, barter, loans with a return deadline, and breach.
 
 The player often needs things they don't own or skills they don't have. **Agreements** are the typed mechanism for help. A promise in dialogue is not an agreement until it's committed.
 
@@ -2176,6 +2182,62 @@ Changes to this document: …
 
 - Roderic said he'd speak to Tomas first, but "pass it on to" offered only the two nearest people. The listener's options may need anyone named in the message.
 - The crash the player saw couldn't be reproduced from the saved journey (no crash record, no error in the log). If it happens again, running from the editor with Ziva connected will show the error.
+
+### Retro: playable and clear, the device as a coach, progress you can see (D-55), 30 Sep 2026
+
+**Built:**
+
+- **A:**
+  - the Say / Do switch (`ActRequest.mode`, `intent.explicit`);
+  - "[E] …" prompts;
+  - books read in hand;
+  - NPC sight doubled.
+- **B:** the device as a companion. The Device window with the whole history, `device_v2` as a coach, remarks at key moments, and `minds.standing`.
+- **C:** progress you can see:
+  - the goal tracker with pinning and a world marker;
+  - standing, deed and news toasts (`deeds.gd`, `game_layers.gd`);
+  - the reveal card;
+  - success and fail sounds, a camera jolt on hits, and a dim behind panels;
+  - the journal rebuilt (Goals, People with every word, Deeds, Things made, Device, Log, Map).
+- **D:** `tools/playtest_demo.gd`, a scripted playthrough with the live models. It plays what a new player would, through the same UI calls, and lists blockers and notes. It found and fixed:
+  - **Theft at a lent bucket.** Hessa said "the bucket's by the trough", then cried theft when it was taken, fetched Kade, and ended **hostile** after the water came. Offers now lend what the job needs (`offers.*.lends`), and the lead says so.
+  - **Admitted on a claim.** Roderic admitted on "Hessa has spoken for me" before she had. `talk.grounds_to_admit` now requires evidence the guard holds, and without it "admit" isn't offered to the voice.
+  - **No halt after a vouch.** Hessa's vouch to Roderic counted as the guards having "dealt with" the stranger, so nobody stopped them at the gate. Hearsay no longer counts (`minds._hearsay`).
+  - **A fact as the goal.** The tracker showed the newest lead even when it was a fact; it now prefers something to do. The Goals page splits *Asked of you* from *What you've learned*.
+  - **Smaller things:**
+    - "bring **them** a container" (leads name the person now);
+    - the Do placeholder hinted at the gate beam;
+    - the device said "no container **listed**" and "already inside" when only let in;
+    - it said Hessa had "already put in a word" before she had (deals now carry `their_part`);
+    - a "friend" deed for someone warm from the start.
+
+**Evidence:**
+
+- 223 backend tests pass. New:
+  - a job lends only what it needs, and the loan ends when it's handed back;
+  - no admission on words alone;
+  - Bren admits on trust he has earned;
+  - guards still halt after a vouch.
+- All 13 Godot smoke tests pass on stub, including the new `smoke_layers`, `smoke_say_do` and `smoke_device_window`.
+- **Live playthrough (`playtest_demo`), no blockers:**
+  - Hessa offers the water job and lends her bucket; the bucket is filled and handed over; she vouches to Roderic 16 s later;
+  - in the yard, a spear is made and the notebook read;
+  - Bren halts the stranger at the gate, and Roderic admits on Hessa's word.
+  - Every step took under 13 s (first line about 9 s).
+- **Live evals:**
+  - device 9/9;
+  - gate and persuasion talk 9/10. The miss is `oren_in_awe`, which already failed in the runs of 29 and 30 Sep before this change: Oren, in awe of the needle, still sends the stranger to the captain.
+
+**Lessons:**
+
+- A scripted playthrough with the real models found in minutes what the unit tests never could: each piece was right on its own, but the chain (ask, take, fill, give, vouch, halt, admit) broke at the joins.
+- "Models propose, code decides" has to cover every door. The captain's yes was the one move still resting on a model's reading alone.
+
+**To watch:**
+
+- `oren_in_awe`: the voice rarely lets awe open the gate. Oren's `admits` may need stronger wording, or awe needs to reach his regard in the context.
+- Hessa's "wooden bucket" holds only 1 L (seed data); a full bucket reads oddly.
+- The playtest moves through the API, so it has to wait for the client's clock sync. A real player's clicks during a resync are dropped without a word.
 
 ---
 

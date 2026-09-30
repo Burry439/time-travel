@@ -226,16 +226,23 @@ func _wood_label(text: String, font_size: int, colour := UITheme.CREAM) -> Label
 
 ## The goal tracker (D-55): your pinned goal, else your newest lead, under the one long goal.
 func _track_goal(state: Dictionary) -> void:
-	var open_leads: PackedStringArray = ui.open_leads()
+	var open: Array = ui.open_claims()
 	var claim: Dictionary = ui.layers.pinned_claim() if ui.layers else {}
 	var gate := "The city gate is open ↑" if state.get("gate_open", false) else "Get inside the city: the gate is north ↑"
-	if not claim.is_empty():
+	var admitted = state.get("admitted")
+	if typeof(admitted) == TYPE_DICTIONARY and not state.get("inside_city", false):
+		goal.text = "Walk through the city gate ↑"
+		status.text = "%s let you in" % str(ui.npc_record(str(admitted.get("by", ""))).get("name", "The watch"))
+	elif not claim.is_empty():
 		var who := str(ui.npc_record(ui.layers.lead_person(claim)).get("name", ""))
-		goal.text = "◆  " + str(claim.lead)
+		goal.text = "◆  " + ui.shorten(str(claim.lead), 90)
 		status.text = ("With %s  ·  " % who if not who.is_empty() else "") + "marked on the map  ·  J: all goals"
-	elif not open_leads.is_empty():
-		goal.text = open_leads[open_leads.size() - 1]
-		status.text = "Newest of %d lead%s  ·  click to pin one" % [open_leads.size(), "" if open_leads.size() == 1 else "s"]
+	elif not open.is_empty():
+		# Nothing pinned: the newest thing to do (a request, someone to see), else the newest thing learned.
+		var tasks := open.filter(func(c: Dictionary) -> bool: return ui.is_task(c))
+		var suggested: Dictionary = tasks[-1] if not tasks.is_empty() else open[-1]
+		goal.text = ui.shorten(str(suggested.lead), 90)
+		status.text = "%d open lead%s  ·  click to choose one to follow" % [open.size(), "" if open.size() == 1 else "s"]
 	else:
 		goal.text = "Find a way into the city"
 		status.text = gate + "  ·  talk to people to find leads"

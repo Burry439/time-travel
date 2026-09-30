@@ -340,6 +340,20 @@ def _place_name(state: dict) -> str:
     return nearest["name"] if nearest else "the road"
 
 
+def _their_part(state: dict, deal: dict) -> str:
+    """What the other side of a deal promised, and whether they've done it yet, so the device never runs ahead."""
+    issuer = deal.get("issuer") or ""
+    promise = ("take you on as a hired hand under their trade permit" if deal.get("reward") == "hire"
+               else "speak for you to the captain")
+    if deal.get("status") != "fulfilled":
+        return f"will {promise} once it's done (not yet)"
+    spoke = any(m.get("kind") == "vouch" and m.get("by") == issuer
+                for n in state["npcs"] for m in (n.get("mind") or {}).get("memories", []))
+    job = ((minds.find(state["npcs"], issuer) or {}).get("mind") or {}).get("job") or {}
+    return ("has done it: spoke for you to the captain" if spoke else
+            f"is on the way to {promise} now" if job.get("kind") == "vouch" else f"promised to {promise}")
+
+
 def _coach(state: dict) -> dict:
     """The main game: what a coach needs, all of it things the stranger knows (D-55)."""
     leads, seen_leads = [], set()
@@ -353,11 +367,17 @@ def _coach(state: dict) -> dict:
               for n in state["npcs"] if (n.get("mind") or {}).get("met") or (n.get("mind") or {}).get("memories")]
     deals = [{"with": (minds.find(state["npcs"], a.get("issuer") or "") or {}).get("name", "?"), "task": a.get("task", ""),
               "status": {"proposed": "offered", "accepted": "agreed, not yet done", "fulfilled": "done"}.get(
-                  a.get("status"), a.get("status"))} for a in (state.get("agreements") or {}).values()]
+                  a.get("status"), a.get("status")), "their_part": _their_part(state, a)}
+             for a in (state.get("agreements") or {}).values() if a.get("type") == "task_for_reward"]
     made = [o["name"] for o in state["objects"].values() if o.get("created_by") == "player"][-10:]
+    lent = [f"{(minds.find(state['npcs'], o.get('owner_id') or '') or {}).get('name', 'someone')}'s {o['name']}"
+            for o in state["objects"].values() if o.get("lent_to") == "player"]
     return {"leads_newest_first": leads[:12], "people_met": people, "deals": deals, "things_you_made": made,
+            "lent_to_you": lent,
             "where_you_are": _place_name(state),
-            "admitted_to_the_city": bool(state.get("admitted") or state.get("inside_city"))}
+            "city": ("inside the city" if state.get("inside_city") else
+                     "let in: the gate is open to them, but they haven't walked through it yet" if state.get("admitted")
+                     else "not let in yet")}
 
 
 def device_context(state: dict, question: str, moment: str | None = None) -> dict:

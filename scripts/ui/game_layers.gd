@@ -129,8 +129,8 @@ func refresh() -> void:
 			continue
 		seen_deeds[deed.id] = true
 		fresh_deeds = true
-		if first or deed.id.begins_with("friend:") or deed.id.begins_with("news:"):
-			continue # Friends and news already had their own toast.
+		if first or deed.id.begins_with("news:"):
+			continue # News already had its own toast.
 		_toast(ui.bar.portrait_for(str(deed.who)) if not str(deed.who).is_empty() else null, "★  " + str(deed.title),
 			str(deed.text), Color("9a6a12"), "deed")
 	if fresh_deeds:

@@ -133,44 +133,53 @@ func _action(row: HBoxContainer, text: String, call: Callable) -> void:
 func _goals(body: VBoxContainer) -> void:
 	var goal := Label.new()
 	goal.theme_type_variation = "Heading"
-	goal.text = "The city gate is open" if game.run_state.get("gate_open", false) else "Get inside the city"
+	var admitted = game.run_state.get("admitted")
+	goal.text = "You've been let in" if typeof(admitted) == TYPE_DICTIONARY else "Get inside the city"
 	body.add_child(goal)
-	var intro: Label = ui.paragraph(body, "The gate to the north is shut to strangers. People here know things, want things and can speak for you, and every lead below came from someone. Pin one to follow it: it stays at the top left, and the person it's about is marked in the world.")
+	var intro: Label = ui.paragraph(body, ("%s has let you in: walk through the gate to the north. What you learned on the way is below." % str(ui.npc_record(str(admitted.get("by", ""))).get("name", "The watch"))) if typeof(admitted) == TYPE_DICTIONARY else "The gate to the north is shut to strangers. People here know things, want things and can speak for you, and every lead below came from someone. Pin one to follow it: it stays at the top left, and the person it's about is marked in the world.")
 	intro.add_theme_font_size_override("font_size", 15)
 	intro.add_theme_color_override("font_color", UITheme.INK_SOFT)
-	var open: PackedStringArray = ui.open_leads()
-	var by_lead := {}
-	for claim in game.run_state.get("learned", []):
-		if not str(claim.get("lead", "")).is_empty():
-			by_lead[str(claim.lead)] = claim
-	_heading(body, "OPEN LEADS  ·  %d" % open.size())
+	var open: Array = ui.open_claims()
+	var open_names := PackedStringArray()
 	if open.is_empty():
+		_heading(body, "OPEN LEADS")
 		ui.paragraph(body, "Nothing yet. Talk to people: they'll tell you what they know and what they need.")
-	for index in range(open.size() - 1, -1, -1):
-		var lead := open[index]
-		var claim: Dictionary = by_lead.get(lead, {})
-		var person: String = ui.layers.lead_person(claim) if not claim.is_empty() else ""
-		var pinned: bool = ui.layers.pinned == lead
-		var teller := str(claim.get("name", ""))
-		var about := str(ui.npc_record(person).get("name", "")) if person != str(claim.get("npc_id", "")) else ""
-		var sub := ("%s told you%s." % [teller, "; it's about " + about if not about.is_empty() else ""]) if not teller.is_empty() else ""
-		if pinned:
-			sub += ("  " if not sub.is_empty() else "") + "Pinned: marked in the world."
-		var row := _card(body, ui.bar.portrait_for(person) if not person.is_empty() else null,
-			("◆  " if pinned else "") + lead, sub, UITheme.ACCENT if pinned else UITheme.INK)
-		_action(row, "Unpin" if pinned else "Pin", func() -> void:
-			ui.layers.pin(lead)
-			show_tab("goals"))
+	var tasks := open.filter(func(c: Dictionary) -> bool: return ui.is_task(c))
+	var facts := open.filter(func(c: Dictionary) -> bool: return not ui.is_task(c))
+	for part in [[tasks, "ASKED OF YOU, AND PEOPLE TO SEE"], [facts, "WHAT YOU'VE LEARNED"]]:
+		if not part[0].is_empty():
+			_heading(body, "%s  ·  %d" % [part[1], part[0].size()])
+		for index in range(part[0].size() - 1, -1, -1):
+			_lead_card(body, part[0][index])
+	for claim in open:
+		open_names.append(str(claim.lead))
 	var done := PackedStringArray()
 	for claim in game.run_state.get("learned", []):
 		var lead := str(claim.get("lead", ""))
-		if not lead.is_empty() and ui._lead_done(claim) and not lead in done and not lead in open:
+		if not lead.is_empty() and ui._lead_done(claim) and not lead in done and not lead in open_names:
 			done.append(lead)
 	if not done.is_empty():
 		_heading(body, "DONE")
 		for lead in done:
 			var node: Label = ui.paragraph(body, "✓ " + lead)
 			node.modulate.a = 0.55
+
+
+## One open lead as a card: whose face, who told you, and Pin.
+func _lead_card(body: VBoxContainer, claim: Dictionary) -> void:
+	var lead := str(claim.lead)
+	var person: String = ui.layers.lead_person(claim) if not claim.is_empty() else ""
+	var pinned: bool = ui.layers.pinned == lead
+	var teller := str(claim.get("name", ""))
+	var about := str(ui.npc_record(person).get("name", "")) if person != str(claim.get("npc_id", "")) else ""
+	var sub := ("%s told you%s." % [teller, "; it's about " + about if not about.is_empty() else ""]) if not teller.is_empty() else ""
+	if pinned:
+		sub += ("  " if not sub.is_empty() else "") + "Pinned: marked in the world."
+	var row := _card(body, ui.bar.portrait_for(person) if not person.is_empty() else null,
+		("◆  " if pinned else "") + lead, sub, UITheme.ACCENT if pinned else UITheme.INK)
+	_action(row, "Unpin" if pinned else "Pin", func() -> void:
+		ui.layers.pin(lead)
+		show_tab("goals"))
 
 
 # --- People -------------------------------------------------------------------------------------------------
@@ -190,10 +199,10 @@ func _people(body: VBoxContainer) -> void:
 		var word := Deeds.standing_word(npc)
 		var told := PackedStringArray()
 		for claim in game.run_state.get("learned", []):
-			if str(claim.get("npc_id", "")) == id and not str(claim.get("said", "")).is_empty():
-				told.append("“%s”" % claim.said)
+			if str(claim.get("npc_id", "")) == id and not str(claim.get("lead", "")).is_empty() and not str(claim.lead) in told:
+				told.append(str(claim.lead))
 		var row := _card(body, ui.bar.portrait_for(id), "%s  ·  %s" % [npc.name, str(npc.get("role", "")).capitalize()],
-			"" if told.is_empty() else "Told you: " + "  ".join(told.slice(-2)))
+			"\n".join(told.slice(-3)))
 		var standing := Label.new()
 		standing.text = Deeds.STANDING_WORDS.get(word, word) + ("" if npc.get("alive", true) else "  ·  dead")
 		standing.add_theme_color_override("font_color", Deeds.STANDING_COLOURS.get(word, UITheme.INK))
@@ -204,9 +213,10 @@ func _people(body: VBoxContainer) -> void:
 		column.move_child(standing, 1)
 		var lines := _transcript(id)
 		var unfolded := open_person == id
-		_action(row, "Hide" if unfolded else "Conversation (%d)" % lines.size(), func() -> void:
-			open_person = "" if open_person == id else id
-			show_tab("people"))
+		if not lines.is_empty():
+			_action(row, "Hide" if unfolded else "Conversation (%d)" % lines.size(), func() -> void:
+				open_person = "" if open_person == id else id
+				show_tab("people"))
 		if unfolded:
 			var talk := VBoxContainer.new()
 			talk.add_theme_constant_override("separation", 4)

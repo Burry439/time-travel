@@ -979,10 +979,17 @@ def dealt_with_recently(npcs: list[dict], now: int) -> bool:
             continue
         last_talk = max((t.get("at", -10**9) for t in guard["mind"].get("talk", [])), default=-10**9)
         last_seen = max((m.get("at", -10**9) for m in guard["mind"].get("memories", [])
-                         if m["kind"] in EVIDENCE_KINDS + ("talk",)), default=-10**9)
+                         if m["kind"] in EVIDENCE_KINDS + ("talk",) and not _hearsay(m)), default=-10**9)
         if max(last_talk, last_seen) >= now - DEALT_WITH_MS:
             return True
     return False
+
+
+def _hearsay(memory: dict) -> bool:
+    """Told or overheard, not their own contact with the stranger: Hessa speaking for the stranger to the captain
+    doesn't mean the guards have dealt with them (D-55)."""
+    source = str(memory.get("source", ""))
+    return source.startswith(("told_by", "heard")) or source == "overheard"
 
 
 def _gate_watch(state: dict, npcs: list[dict], now: int) -> None:
