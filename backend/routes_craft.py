@@ -20,6 +20,7 @@ import crafting
 import encounter
 import intent
 import minds
+import patch
 import rounds
 import routes_tutorial
 import routes_world
@@ -207,9 +208,9 @@ def _fight_words(run_id: str, request: ActRequest, kind: str, seen: dict) -> dic
             return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
         if not combat.active(state):
             return {"state": state, "duplicate": False, "notice": "The fight is already over."}
-        journal_before = len(state["journal"])
+        before = patch.snapshot(state)
         outcome = combat.surrender(state, state["sim_time_ms"])
-        routes_world.fight_event(connection, state, journal_before, request.request_id, {"surrender": outcome})
+        routes_world.fight_event(connection, before, state, request.request_id)
     return {"state": state, "duplicate": False, "notice": outcome["text"]}
 
 
@@ -274,6 +275,7 @@ def _attempt(
         judged = propose(snapshot, context, calls_used)
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
+            before = patch.snapshot(state)
             if judged.attempts:
                 telemetry.record(
                     connection,
@@ -298,9 +300,9 @@ def _attempt(
             minds.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
             payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
             payload.update(store.advance_people(after, verdict["effort_seconds"] * 1000))
-            store.append(connection, state, "craft", payload, request_id, payload["sim_time_ms"] // 1000)
             crafting.apply_payload(state, payload)
             store.apply_people(state, payload)
+            store.record(connection, before, state, "craft", request_id, payload["sim_time_ms"] // 1000)
             connection.execute(
                 "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                 (run_id, request_id, state["event_seq"], request_json),

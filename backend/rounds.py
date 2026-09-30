@@ -23,6 +23,7 @@ import combat
 import crafting
 import encounter
 import minds
+import patch
 import store
 import talk
 from ai import config as ai_config
@@ -367,6 +368,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             run, state = store.load_run(connection, run_id)
             if store.is_stale(state, request.expected_version):
                 raise HTTPException(409, {"reason": "stale_state", "state": state})
+            before = patch.snapshot(state)
             walk = _round_setup(state, request)
             draft, record = _round_draft(state, run_id, request, walk, judged)  # Redone on the latest world.
             now = draft["sim_time_ms"]
@@ -398,8 +400,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 draft["barred_until"] = people["barred_until"]
             payload = store.round_payload(state, draft, record)
             payload["safe_seq"] = state["event_seq"] if minds.calm(state) else state.get("safe_seq", 0)
-            store.append(connection, state, "round", payload, request.request_id, payload["sim_time_ms"] // 1000)
             store.apply_round(state, payload)
+            store.record(connection, before, state, "round", request.request_id, payload["sim_time_ms"] // 1000)
             connection.execute(
                 "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
                 (run_id, request.request_id, state["event_seq"], request_json),

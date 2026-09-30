@@ -17,6 +17,7 @@ import combat
 import gear
 import library
 import minds
+import patch
 import routes_world
 import store
 
@@ -59,14 +60,15 @@ class Treat(BaseModel):
     request_id: str = Field(min_length=1, max_length=100)
 
 
-def _open(connection, run_id: str, request) -> tuple[dict, dict, dict | None]:
+def _open(connection, run_id: str, request) -> tuple[dict, dict, dict, dict | None]:
+    """The journey, a snapshot of it as saved (what the change is measured from), and a duplicate's reply if any."""
     run, state = store.load_run(connection, run_id)
     prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
     if prior_seq is not None:
-        return run, state, {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
+        return run, state, {}, {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
     if state["inside_city"] or not state["player"]["alive"]:
         raise HTTPException(409, "Run is no longer interactive")
-    return run, state, None
+    return run, state, patch.snapshot(state), None
 
 
 def aim(state: dict, wanted: str | None, reach: float, facing: list[float] | None = None) -> str | None:
@@ -84,7 +86,7 @@ def strike(run_id: str, request: Strike):
     """Space (right hand) or F (left): a blow, shot, pour or throw, at someone or at the air, any time. It lands
     after its wind-up, on the clock; this only starts it (D-49: anyone can step out of reach)."""
     with store.lock, store.db() as connection:
-        run, state, prior = _open(connection, run_id, request)
+        run, state, before, prior = _open(connection, run_id, request)
         if prior:
             return prior
         if state["player"].get("down"):
@@ -99,14 +101,7 @@ def strike(run_id: str, request: Strike):
         )
         if not result["ok"]:
             return {"state": state, "duplicate": False, "strike": result}
-        journal_before = len(state["journal"])
-        routes_world.fight_event(
-            connection,
-            state,
-            journal_before,
-            request.request_id,
-            {"strike": {"target_id": target, "hand": request.hand}},
-        )
+        routes_world.fight_event(connection, before, state, request.request_id)
     return {"state": state, "duplicate": False, "strike": {**result, "target_id": target}}
 
 
@@ -114,20 +109,16 @@ def strike(run_id: str, request: Strike):
 def guard(run_id: str, request: Guard):
     """Hold F (or the shield hand's key): the shield goes up facing that way; let go and it comes down."""
     with store.lock, store.db() as connection:
-        run, state, prior = _open(connection, run_id, request)
+        run, state, before, prior = _open(connection, run_id, request)
         if prior:
             return prior
         result = combat.guard(state, request.raised, request.facing, state["sim_time_ms"])
         if result["ok"]:
-            routes_world.fight_event(
-                connection, state, len(state["journal"]), request.request_id, {"guard": {"raised": request.raised}}
-            )
+            routes_world.fight_event(connection, before, state, request.request_id)
     return {"state": state, "duplicate": False, "guard": result}
 
 
-def _gear_event(
-    connection, state: dict, request_id: str, seconds: int, journal_line: str | None, extra: dict | None = None
-) -> None:
+def _gear_event(connection, before: dict, state: dict, request_id: str, seconds: int, journal_line: str | None) -> None:
     """Something done with the stranger's own things, taking this long: outside a fight the world moves on by
     that much; in one, the hands are busy for it."""
     payload: dict = {"player": state["player"], "objects": state["objects"], "npcs": state["npcs"]}
@@ -145,11 +136,9 @@ def _gear_event(
         people = store.advance_people(state, seconds * 1000)
         payload.update(people)
         payload["sim_time_ms"] = state["sim_time_ms"] + seconds * 1000
-    payload.update(extra or {})
-    store.append(
-        connection, state, "gear", payload, request_id, payload.get("sim_time_ms", state["sim_time_ms"]) // 1000
-    )
+    tick = payload.get("sim_time_ms", state["sim_time_ms"]) // 1000
     store.apply_gear(state, payload, already_journaled=True)
+    store.record(connection, before, state, "gear", request_id, tick)
     import routes_tutorial  # The tutorial may move on (D-50).
 
     routes_tutorial.progress(connection, state)
@@ -160,7 +149,7 @@ def equip(run_id: str, request: Equip, background: BackgroundTasks):
     """Put something on or in a hand (slot), or take it off (no slot). Code only. Something that has never been
     drawn held or worn gets that picture now (from the item library if it's been painted before)."""
     with store.lock, store.db() as connection:
-        run, state, prior = _open(connection, run_id, request)
+        run, state, before, prior = _open(connection, run_id, request)
         if prior:
             return prior
         obj = state["objects"].get(request.object_id)
@@ -174,14 +163,7 @@ def equip(run_id: str, request: Equip, background: BackgroundTasks):
         view = _picture_needed(obj, request.slot)
         if view:
             state["objects"][obj["id"]] = obj = {**obj, f"{view}_asset_id": f"spr_{run_id[:8]}_{obj['id']}_{view}"}
-        _gear_event(
-            connection,
-            state,
-            request.request_id,
-            result["seconds"],
-            None,
-            {"equip": {"object_id": obj["id"], "slot": request.slot}},
-        )
+        _gear_event(connection, before, state, request.request_id, result["seconds"], None)
         if view:
             attempts.queue_picture(
                 connection, run_id, obj, view, obj[f"{view}_asset_id"], library.signature(obj), background
@@ -204,12 +186,12 @@ def _picture_needed(obj: dict, slot: str | None) -> str | None:
 def swap(run_id: str, request: Swap):
     """X: what's in each hand changes places."""
     with store.lock, store.db() as connection:
-        run, state, prior = _open(connection, run_id, request)
+        run, state, before, prior = _open(connection, run_id, request)
         if prior:
             return prior
         result = gear.swap_hands(state, state["player"])
         if result["ok"]:
-            _gear_event(connection, state, request.request_id, result["seconds"], None, {"swap": True})
+            _gear_event(connection, before, state, request.request_id, result["seconds"], None)
     return {"state": state, "duplicate": False, "swap": result}
 
 
@@ -217,7 +199,7 @@ def swap(run_id: str, request: Swap):
 def treat(run_id: str, request: Treat):
     """Bind, stitch, splint, dress or poultice a condition: the stranger's own, or someone within reach."""
     with store.lock, store.db() as connection:
-        run, state, prior = _open(connection, run_id, request)
+        run, state, before, prior = _open(connection, run_id, request)
         if prior:
             return prior
         # Allowed mid-fight too (D-51): it takes the hands for as long as it takes, and blows keep coming.
@@ -244,7 +226,6 @@ def treat(run_id: str, request: Treat):
             return {"state": state, "duplicate": False, "treat": result}
         if result["consumed"]:
             state["objects"][remedy["id"]] = {**remedy, "holder_id": "used", "condition": "used up"}
-        extra: dict = {"treat": {"patient_id": request.patient_id, "object_id": remedy["id"]}}
         if patient is not state["player"]:  # Help, seen and remembered (D-49): like a gift.
             entry = {
                 "event_id": state["event_seq"] + 1,
@@ -264,5 +245,5 @@ def treat(run_id: str, request: Treat):
                 .replace("You treat the", f"You treat {patient['name']}'s")
                 .replace(f"{patient['name']}'s the", f"{patient['name']}'s")
             )
-        _gear_event(connection, state, request.request_id, result["seconds"], result["text"], extra)
+        _gear_event(connection, before, state, request.request_id, result["seconds"], result["text"])
     return {"state": state, "duplicate": False, "treat": result}

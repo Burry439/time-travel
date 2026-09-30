@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import json
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
@@ -15,6 +14,7 @@ import crafting
 import encounter
 import m2
 import minds
+import patch
 import store
 from ai import config as ai_config
 from ai import decider
@@ -75,8 +75,8 @@ def create_run(request: NewRun):
     run_id = uuid4().hex
     with store.lock, store.db() as connection:
         connection.execute(
-            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
-            (run_id, request.mode, store.SEED_VERSION, store.GEOMETRY_VERSION, request.scenario),
+            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario,save_format) VALUES (?,?,?,?,?,?)",
+            (run_id, request.mode, store.SEED_VERSION, store.GEOMETRY_VERSION, request.scenario, store.SAVE_FORMAT),
         )
         _, state = store.load_run(connection, run_id)
     return state
@@ -101,7 +101,7 @@ def get_events(run_id: str):
             "seq": row["seq"],
             "tick": row["tick"],
             "kind": row["kind"],
-            "payload": json.loads(row["payload"]),
+            "payload": store.payload_of(row),
             "request_id": row["request_id"],
         }
         for row in rows
@@ -112,10 +112,7 @@ def get_events(run_id: str):
 def checkpoint(run_id: str):
     with store.lock, store.db() as connection:
         _, state = store.load_run(connection, run_id)
-        connection.execute(
-            "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-            (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
-        )
+        store.save_checkpoint(connection, state)
     return {"event_seq": state["event_seq"], "saved": True}
 
 
@@ -127,14 +124,8 @@ def rewind(run_id: str):
         point = int(state.get("safe_seq", 0))
         new_id = uuid4().hex
         connection.execute(
-            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario) VALUES (?,?,?,?,?)",
-            (
-                new_id,
-                run["mode"],
-                run["seed_version"],
-                run["geometry_version"],
-                run["scenario"] if "scenario" in run.keys() else "village",  # noqa: SIM118 (a sqlite3.Row)
-            ),
+            "INSERT INTO runs (id,mode,seed_version,geometry_version,scenario,save_format) VALUES (?,?,?,?,?,?)",
+            (new_id, run["mode"], run["seed_version"], run["geometry_version"], run["scenario"], run["save_format"]),
         )
         connection.execute(
             "INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
@@ -159,6 +150,7 @@ def move(run_id: str, request: Move):
             return {"state": store.state_at(connection, run, end_seq), "duplicate": True}
         if state["inside_city"] or not state["player"]["alive"]:
             raise HTTPException(409, "Run is no longer movable")
+        before = patch.snapshot(state)
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
         cells = request.cells or ([[request.x, request.y]] if request.x is not None and request.y is not None else [])
@@ -220,29 +212,17 @@ def move(run_id: str, request: Move):
                 )
         if len(accepted) > 1:
             payload["path"] = accepted
-        store.append(connection, state, "move", payload, request.request_id, tick)
         state["sim_time_ms"] = sim_time_ms
         state["player"].update(x=x, y=y)
         if "encounter" in payload:
             state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
+        meta = {"running": request.running, "path": accepted}
+        before = store.record(connection, before, state, "move", request.request_id, tick, meta)
         if y <= 3 and not state["inside_city"]:
             how = "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
-            store.append(
-                connection,
-                state,
-                "objective_complete",
-                {"location": "loc_city_interior", "how": how},
-                f"objective:{request.request_id}",
-                tick,
-            )
             state["entered_by"] = how
             state["inside_city"] = True
-        # Bound replay cost during continuous exploration. Events remain the source of truth.
-        if state["event_seq"] % 64 == 0:
-            connection.execute(
-                "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
-            )
+            store.record(connection, before, state, "objective_complete", f"objective:{request.request_id}", tick)
     if problem:
         return JSONResponse({"detail": problem[1], "state": state, "accepted": len(accepted)}, status_code=problem[0])
     return {"state": state, "duplicate": False}
@@ -259,30 +239,22 @@ def explore(run_id: str, request: ExploreClock):
             raise HTTPException(409, "Run is no longer exploring")
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
+        before = patch.snapshot(state)
         sim_time_ms = state["sim_time_ms"] + request.elapsed_ms
         payload = {"sim_time_ms": sim_time_ms, **store.advance_people(state, request.elapsed_ms)}
-        store.append(connection, state, "explore", payload, request.request_id, sim_time_ms // 1000)
         state["sim_time_ms"] = sim_time_ms
         state["npcs"] = payload["npcs"]
         store.apply_people(state, payload)
+        store.record(connection, before, state, "explore", request.request_id, sim_time_ms // 1000)
         import routes_tutorial  # The tutorial moves on with the clock, too (D-50).
 
         routes_tutorial.progress(connection, state)
-        if state["event_seq"] % 64 == 0:
-            connection.execute(
-                "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
-                (run_id, state["event_seq"], json.dumps(state, sort_keys=True)),
-            )
     return {"state": state, "duplicate": False}
 
 
-def fight_event(connection, state: dict, journal_before: int, request_id: str, extra: dict) -> None:
-    """Record a change made to the fight (state is already changed). Like a round, the event carries the
-    resulting fields, so replay needs no rules."""
-    payload = {key: state[key] for key in store.FIGHT_FIELDS if key in state}
-    payload["journal_added"] = state["journal"][journal_before:]
-    payload.update(extra)
-    store.append(connection, state, "fight", payload, request_id, state["tick"])
+def fight_event(connection, before: dict, state: dict, request_id: str) -> dict:
+    """Save a change made to the fight (state is already changed; before is the snapshot from before it)."""
+    return store.record(connection, before, state, "fight", request_id, state["tick"])
 
 
 @router.post("/runs/{run_id}/dev/gate")
@@ -294,8 +266,9 @@ def developer_gate(run_id: str, request: GateCommand):
         prior_seq = store.check_request(connection, state, request.expected_version, request.request_id)
         if prior_seq is not None:
             return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
-        store.append(connection, state, "dev_gate", {"open": request.open}, request.request_id, state["tick"])
+        before = patch.snapshot(state)
         state["gate_open"] = request.open
+        store.record(connection, before, state, "dev_gate", request.request_id, state["tick"])
     return {"state": state, "duplicate": False}
 
 
@@ -311,7 +284,7 @@ def developer_fight(run_id: str, request: FightCommand):
             return {"state": store.state_at(connection, run, prior_seq), "duplicate": True}
         if any(minds.find(state["npcs"], npc_id) is None for npc_id in request.npc_ids):
             raise HTTPException(422, "Unknown person")
-        journal_before = len(state["journal"])
+        before = patch.snapshot(state)
         combat.start(state, request.npc_ids, state["sim_time_ms"], "developer")
-        fight_event(connection, state, journal_before, request.request_id, {})
+        fight_event(connection, before, state, request.request_id)
     return {"state": state, "duplicate": False}

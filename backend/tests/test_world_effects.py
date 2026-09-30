@@ -7,6 +7,7 @@ from test_talk import npc, said
 
 import crafting
 import minds
+import patch
 import talk
 
 
@@ -89,7 +90,7 @@ def test_an_offered_trade_happens_only_if_they_accept():
     assert f"accept_trade:{offer['id']}" in options
     assert "offering Darin a trade" in talk.request(state, darin, "Well?")[0]
     before = copy.deepcopy(state)
-    payload = talk.exchange(
+    talk.exchange(
         state, "npc_darin_ko", "Deal?", said(f"accept_trade:{offer['id']}"), f"accept_trade:{offer['id']}", "Done.", []
     )
     assert state["objects"]["lodestone_darin"]["holder_id"] == "player"
@@ -99,9 +100,9 @@ def test_an_offered_trade_happens_only_if_they_accept():
         and state["trades"][offer["id"]]["status"] == "accepted"
     )
     assert not talk.open_trades(state, npc(state, "npc_darin_ko"))
-    replayed = copy.deepcopy(before)  # The event replays to the same world.
-    talk.apply_payload(replayed, {**payload, "npcs": state["npcs"]})
-    assert replayed["objects"] == state["objects"] and replayed["trades"] == state["trades"]
+    replayed = patch.snapshot(before)  # What the event saves replays to the same world (D-58).
+    patch.apply(replayed, patch.diff(patch.snapshot(before), patch.snapshot(state)))
+    assert replayed == patch.snapshot(state)
 
 
 def test_people_give_things_only_to_someone_they_trust():

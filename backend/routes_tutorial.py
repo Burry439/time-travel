@@ -14,6 +14,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+import patch
 import store
 import tutorial
 from ai import config as ai_config
@@ -38,10 +39,11 @@ def progress(connection, state: dict, request_id: str | None = None) -> bool:
         return False
     payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
     payload["journal_added"] = probe["journal"][len(state["journal"]) :]
-    store.append(
-        connection, state, "tutorial", payload, request_id or f"tutorial:{uuid4().hex}", state["sim_time_ms"] // 1000
-    )
+    before = patch.snapshot(state)
     store.apply_tutorial(state, payload)
+    store.record(
+        connection, before, state, "tutorial", request_id or f"tutorial:{uuid4().hex}", state["sim_time_ms"] // 1000
+    )
     return True
 
 
@@ -78,8 +80,9 @@ def _save(connection, state: dict, change, request_id: str) -> bool:
         return False
     payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
     payload["journal_added"] = probe["journal"][len(state["journal"]) :]
-    store.append(connection, state, "tutorial", payload, request_id, state["sim_time_ms"] // 1000)
+    before = patch.snapshot(state)
     store.apply_tutorial(state, payload)
+    store.record(connection, before, state, "tutorial", request_id, state["sim_time_ms"] // 1000)
     return True
 
 
@@ -118,10 +121,11 @@ def skip(run_id: str):
         tutorial.skip(probe)
         payload = {key: probe[key] for key in store.TUTORIAL_FIELDS if key in probe}
         payload["journal_added"] = probe["journal"][len(state["journal"]) :]
-        store.append(
-            connection, state, "tutorial", payload, f"tutorial-skip:{uuid4().hex}", state["sim_time_ms"] // 1000
-        )
+        before = patch.snapshot(state)
         store.apply_tutorial(state, payload)
+        store.record(
+            connection, before, state, "tutorial", f"tutorial-skip:{uuid4().hex}", state["sim_time_ms"] // 1000
+        )
         progress(connection, state)
     return {"state": state, "duplicate": False}
 
@@ -166,8 +170,9 @@ def ask(run_id: str, request: Ask):
         probe = copy.deepcopy(state)
         tutorial.device_says(probe, call.text, "remark" if moment else "answer", question or None)
         payload = {"device_log": probe["device_log"], "journal_added": probe["journal"][len(state["journal"]) :]}
-        store.append(connection, state, "device", payload, request.request_id, state["sim_time_ms"] // 1000)
+        before = patch.snapshot(state)
         store.apply_tutorial(state, payload)
+        store.record(connection, before, state, "device", request.request_id, state["sim_time_ms"] // 1000)
     reply = {"state": state, "duplicate": False, "answer": call.text, "status": call.status}
     if run["mode"] == "developer":
         reply["trace"] = {"context": context, "voice": call.as_dict()}

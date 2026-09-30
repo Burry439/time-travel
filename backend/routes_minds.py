@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 import minds
+import patch
 import persona
 import store
 import village
@@ -202,6 +203,7 @@ def think(run_id: str, request: ThinkRequest):
             spoken = {npc_id: future.result() for npc_id, future in chats.items()}
         with store.lock, store.db() as connection:
             run, state = store.load_run(connection, run_id)
+            before = patch.snapshot(state)
             for call in calls.values():
                 telemetry.record(
                     connection,
@@ -341,9 +343,9 @@ def think(run_id: str, request: ThinkRequest):
                 "learned_added": learned,
                 "village": working.get("village", state.get("village", {"chatter_at": []})),
             }
-            store.append(connection, state, "minds", payload, request.request_id, state["tick"])
             state["npcs"], state["player"] = payload["npcs"], payload["player"]
             store.apply_people(state, payload)
+            store.record(connection, before, state, "minds", request.request_id, state["tick"])
     finally:
         _thinking_runs.discard(guard)
     response = {"state": state, "duplicate": False}

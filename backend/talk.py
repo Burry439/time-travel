@@ -1226,23 +1226,3 @@ def exchange(
         "trades": state.get("trades") or {},
         "sim_time_ms": now + TALK_SECONDS * 1000,
     }
-
-
-def apply_payload(state: dict, payload: dict) -> None:
-    state["npcs"] = payload["npcs"]
-    if payload.get("walk"):
-        state["player"].update(x=payload["walk"][-1][0], y=payload["walk"][-1][1])
-    state.setdefault("learned", []).extend(payload.get("learned", []))
-    if "agreements" in payload:
-        state["agreements"] = payload["agreements"]
-    for thing in payload.get("lent", []):
-        if "owner_id" in thing:  # Given or traded: it changes hands for good.
-            state["objects"][thing["id"]].update(holder_id=thing["holder_id"], owner_id=thing["owner_id"])
-        else:
-            state["objects"][thing["id"]].update(lent_to="player", holder_id=thing["holder_id"])
-    if "trades" in payload:
-        state["trades"] = payload["trades"]
-    if payload.get("admission"):
-        state.update(admitted=payload["admission"], gate_open=True)
-    state["journal"].append(payload["journal_entry"])
-    state["sim_time_ms"] = payload["sim_time_ms"]

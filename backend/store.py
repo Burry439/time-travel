@@ -12,6 +12,7 @@ import json
 import os
 import sqlite3
 import threading
+import zlib
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -21,7 +22,7 @@ import crafting
 import m2
 import minds
 import npc_sim
-import talk
+import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "demo.sqlite3"))
@@ -51,6 +52,7 @@ PATROL_GUARDS = [
     {"id": "npc_kade_east", "name": "Kade", "role": "Patrol guard", "x": 52, "y": 35},
 ]
 OLDEST_SEED = 5  # Journeys begun before this are retired (GDD D-04: no save compatibility between prototypes).
+SAVE_FORMAT = 2  # 2: events store only what changed (D-58). Journeys saved in an older format are retired too.
 lock = threading.RLock()
 
 
@@ -150,6 +152,8 @@ def db():
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(runs)")}
         if "scenario" not in columns:  # village (the game) or tutorial (D-50)
             connection.execute("ALTER TABLE runs ADD COLUMN scenario TEXT NOT NULL DEFAULT 'village'")
+        if "save_format" not in columns:  # How its events are stored (D-58); journeys from before say 1.
+            connection.execute("ALTER TABLE runs ADD COLUMN save_format INTEGER NOT NULL DEFAULT 1")
         yield connection
         connection.commit()
     except Exception:
@@ -210,55 +214,10 @@ def is_stale(state: dict, expected_version: int) -> bool:
 
 
 def reduce_event(state: dict, event: sqlite3.Row) -> None:
-    payload = json.loads(event["payload"])
+    """Every event is what changed (GDD D-58): apply it, then the counters."""
+    patch.apply(state, payload_of(event)["patch"])
     if event["kind"] in PLAYER_KINDS:
         state["player_seq"] = event["seq"]
-    if event["kind"] == "move":
-        state["player"].update(x=payload["x"], y=payload["y"])
-        state["sim_time_ms"] = payload["sim_time_ms"]
-        if "encounter" in payload:  # Walked away from a conversation.
-            state.update(encounter=payload["encounter"], npcs=payload["npcs"], pending_minds=payload["pending_minds"])
-    elif event["kind"] == "explore":
-        state["sim_time_ms"] = payload["sim_time_ms"]
-        state["npcs"] = payload["npcs"]
-        apply_people(state, payload)
-    elif event["kind"] == "dev_gate":
-        state["gate_open"] = payload["open"]
-    elif event["kind"] == "objective_complete":
-        state["inside_city"] = True
-        if payload.get("how"):
-            state["entered_by"] = payload["how"]
-    elif event["kind"] == "physical_action":
-        state["objects"] = payload["objects"]
-        state["agreements"] = payload["agreements"]
-        state["water_spilled_l"] = payload["water_spilled_l"]
-        state["journal"].append(payload["journal_entry"])
-        state["last_action"] = payload["journal_entry"]
-        state["sim_time_ms"] = payload["sim_time_ms"]
-        if "npcs" in payload:
-            state["npcs"] = payload["npcs"]
-        apply_people(state, payload)
-    elif event["kind"] == "craft":
-        crafting.apply_payload(state, payload)
-        apply_people(state, payload)
-    elif event["kind"] == "round":
-        apply_round(state, payload)
-    elif event["kind"] == "talk":
-        talk.apply_payload(state, payload)
-        apply_people(state, payload)
-    elif event["kind"] == "fight":  # A punch or giving up (D-41): the resulting fields.
-        state.update({key: payload[key] for key in FIGHT_FIELDS if key in payload})
-        state["journal"].extend(payload["journal_added"])
-    elif event["kind"] == "gear":  # Equip, swap hands, treat (D-49): the resulting fields.
-        apply_gear(state, payload)
-    elif event["kind"] in ("tutorial", "device"):  # The story moving on; the device answering (D-50).
-        apply_tutorial(state, payload)
-    elif event["kind"] == "minds":
-        state["npcs"] = payload["npcs"]
-        state["player"] = payload["player"]
-        apply_people(state, payload)
-    else:
-        raise ValueError(f"Unknown event kind {event['kind']}")
     state["event_seq"] = event["seq"]
     state["tick"] = event["tick"]
 
@@ -343,9 +302,6 @@ ROUND_FIELDS = (
 )
 
 
-FIGHT_FIELDS = ("fight", "npcs", "player", "objects", "barred_until", "pending_minds", "encounter", "projectiles")
-
-
 def round_payload(before: dict, after: dict, record: dict) -> dict:
     payload = {key: after.get(key) for key in ROUND_FIELDS}
     payload["trades"] = after.get("trades") or {}
@@ -377,7 +333,6 @@ def advance_people(state: dict, elapsed_ms: int) -> dict:
     probe = dict(state)
     probe["pending_minds"] = list(state.get("pending_minds", []))
     npcs, heard, player = minds.advance_world(probe, elapsed_ms, state["sim_time_ms"])
-    import crafting
 
     changed = crafting.age_objects(state, elapsed_ms, state["sim_time_ms"])
     for object_id, fields in (probe.get("people_objects_changed") or {}).items():  # Arrows landing, shields worn.
@@ -442,7 +397,7 @@ def load_run(connection: sqlite3.Connection, run_id: str) -> tuple[sqlite3.Row, 
     run = connection.execute("SELECT * FROM runs WHERE id=?", (run_id,)).fetchone()
     if run is None:
         raise HTTPException(404, "Run not found")
-    if run["seed_version"] < OLDEST_SEED:
+    if run["seed_version"] < OLDEST_SEED or run["save_format"] < SAVE_FORMAT:
         raise HTTPException(410, "This journey is from an older version of the game. Start a new journey.")
     checkpoint = connection.execute(
         "SELECT seq,state_json FROM checkpoints WHERE run_id=? ORDER BY seq DESC LIMIT 1", (run_id,)
@@ -470,16 +425,69 @@ def state_at(connection: sqlite3.Connection, run: sqlite3.Row, sequence: int) ->
     return state
 
 
-def append(connection: sqlite3.Connection, state: dict, kind: str, payload: dict, request_id: str, tick: int) -> None:
+COUNTERS = ("event_seq", "tick", "player_seq")  # Set from the event row itself, never saved in a patch.
+
+
+def record(
+    connection: sqlite3.Connection,
+    before: dict,
+    state: dict,
+    kind: str,
+    request_id: str,
+    tick: int,
+    meta: dict | None = None,
+) -> dict:
+    """Save one event: what changed from ``before`` (a snapshot of the state as last saved) to ``state``. The counters
+    move on; returns the new snapshot, so a request that saves twice passes it to the second record (GDD D-58).
+    meta: details kept beside the change for the developer's event log (never applied)."""
+    after = patch.snapshot(state)
+    changes = {key: change for key, change in patch.diff(before, after).items() if key not in COUNTERS}
     sequence = state["event_seq"] + 1
     connection.execute(
         "INSERT INTO events (run_id, seq, tick, kind, payload, request_id) VALUES (?,?,?,?,?,?)",
-        (state["run_id"], sequence, tick, kind, json.dumps(payload, sort_keys=True), request_id),
+        (
+            state["run_id"],
+            sequence,
+            tick,
+            kind,
+            pack({**(meta or {}), "patch": changes}),
+            request_id,
+        ),
     )
-    state["event_seq"] = sequence
-    if kind in PLAYER_KINDS:
-        state["player_seq"] = sequence
-    state["tick"] = tick
+    for snap in (state, after):
+        snap["event_seq"] = sequence
+        if kind in PLAYER_KINDS:
+            snap["player_seq"] = sequence
+        snap["tick"] = tick
+    if sequence % CHECKPOINT_EVERY == 0:
+        save_checkpoint(connection, after)
+    return after
+
+
+def pack(payload: dict) -> bytes:
+    """An event's payload as stored: compressed JSON (about a third of the size, D-58)."""
+    return zlib.compress(json.dumps(payload, sort_keys=True).encode("utf-8"), 6)
+
+
+def payload_of(event: sqlite3.Row) -> dict:
+    return json.loads(zlib.decompress(event["payload"]).decode("utf-8"))
+
+
+CHECKPOINT_EVERY = 512  # Replaying a change is cheap; a full copy now and then bounds it (GDD D-58).
+CHECKPOINTS_KEPT = 2
+
+
+def save_checkpoint(connection: sqlite3.Connection, state: dict) -> None:
+    """A full copy of the journey at this event; only the newest few are kept (events stay the source of truth)."""
+    connection.execute(
+        "INSERT OR IGNORE INTO checkpoints VALUES (?,?,?)",
+        (state["run_id"], state["event_seq"], json.dumps(state, sort_keys=True)),
+    )
+    connection.execute(
+        "DELETE FROM checkpoints WHERE run_id=? AND seq NOT IN "
+        "(SELECT seq FROM checkpoints WHERE run_id=? ORDER BY seq DESC LIMIT ?)",
+        (state["run_id"], state["run_id"], CHECKPOINTS_KEPT),
+    )
 
 
 def check_request(connection: sqlite3.Connection, state: dict, expected_version: int, request_id: str) -> int | None:
