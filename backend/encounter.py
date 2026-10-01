@@ -143,6 +143,8 @@ def prune(state: State) -> None:
         job = (npc.get("mind") or {}).get("job") or {}
         casual = purpose(encounter, npc_id) not in HOSTILE_PURPOSES
         away = cast.distance(npc, here) > (6 if casual else 8)
+        if casual and away:
+            continue  # The stranger walked away from a friendly talk: it doesn't follow them (D-59, found by B6).
         if job.get("kind") != "encounter" and (away or (casual and job.get("kind") not in (None, "watch"))):
             continue  # Went off to do something else, or the stranger walked away from them.
         keep.append(npc_id)
