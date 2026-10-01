@@ -2372,8 +2372,11 @@ Changes to this document: …
   "promises are kept" rule made the voice carry out her reward at once). Fixed in its own commit: the bucket holds
   10 L (seed 13), what's handed over says when it's full, and `scene_v4` keeps a deal's reward for when the deal
   is done. Played again: no blockers, the deal done on the hand-over and Hessa at the captain in 16 s. Live talk
-  evals 30/32 (`oren_in_awe` already failing; `jory_given_a_poultice` 3 of 4 alone). The eval scripts had been
-  left on the old module names (they sit outside `backend/`) and were brought along.
+  evals 30/32 (`oren_in_awe` already failing; `jory_given_a_poultice` 3 of 4 alone); tutorial words 15/15;
+  device 8/9 (`why_did_it_fail` 2 of 3 alone: on the fire step the device sometimes coaches the fire instead of
+  saying why the grass bow failed; it had passed before D-57 rewrote that step). The eval scripts had been left
+  on the old module names (they sit outside `backend/`) and were brought along; one device case still named the
+  step D-57 renamed.
 - Bugs found on the way, each fixed in its own commit: a disarmed guard still fought with the spear on their card
   and stripped armour still protected (D-49's gear wasn't the whole truth); a deed in a round waved when it
   failed instead of when it worked; decisions D-51 to D-57 had been filed in §3's interaction table.
