@@ -83,12 +83,7 @@ func _card(body: VBoxContainer, face: Texture2D, title: String, sub: String, col
 	row.add_theme_constant_override("separation", 12)
 	paper.add_child(row)
 	if face:
-		var picture := TextureRect.new()
-		picture.texture = face
-		picture.custom_minimum_size = Vector2(52, 52)
-		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		row.add_child(picture)
+		row.add_child(UITheme.picture(face, Vector2(52, 52)))
 	elif not glyph.is_empty():
 		var mark := Label.new()
 		mark.text = glyph

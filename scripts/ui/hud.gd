@@ -150,10 +150,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	tip.hide()
 	add_child(tip)
 
-	drag_icon = TextureRect.new()
-	drag_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	drag_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	drag_icon.custom_minimum_size = Vector2(46, 46)
+	drag_icon = UITheme.picture(null, Vector2(46, 46))
 	drag_icon.size = Vector2(46, 46)
 	drag_icon.modulate.a = 0.85
 	drag_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE

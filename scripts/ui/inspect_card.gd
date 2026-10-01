@@ -70,10 +70,7 @@ func _header(picture: Texture2D, title: String, subtitle: String, missing := fal
 	frame.theme_type_variation = "SlotPanel"
 	frame.custom_minimum_size = Vector2(76, 76)
 	row.add_child(frame)
-	var icon := TextureRect.new()
-	icon.texture = picture
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var icon := UITheme.picture(picture)
 	frame.add_child(icon)
 	if picture == null:
 		var waiting := preload("res://scripts/loading_icon.gd").new()

@@ -534,11 +534,7 @@ func chip_note(obj: Dictionary) -> String:
 
 
 func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
-	var icon := TextureRect.new()
-	icon.texture = game.art.texture_for(obj)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.custom_minimum_size = Vector2(edge, edge)
+	var icon := UITheme.picture(game.art.texture_for(obj), Vector2(edge, edge))
 	icon.set_meta("object_id", str(obj.id))
 	if icon.texture == null:
 		var waiting := preload("res://scripts/loading_icon.gd").new()

@@ -156,12 +156,7 @@ func _toast(icon: Texture2D, title: String, text: String, colour: Color, sound :
 	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
 	if icon:
-		var picture := TextureRect.new()
-		picture.texture = icon
-		picture.custom_minimum_size = Vector2(44, 44)
-		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		row.add_child(picture)
+		row.add_child(UITheme.picture(icon, Vector2(44, 44)))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 0)
 	column.custom_minimum_size.x = 250

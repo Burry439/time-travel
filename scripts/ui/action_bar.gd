@@ -70,9 +70,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	frame.custom_minimum_size = Vector2(122, 122)
 	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	left.add_child(frame)
-	portrait = TextureRect.new()
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait = UITheme.picture()
 	frame.add_child(portrait)
 	who = Label.new()
 	who.add_theme_font_override("font", UITheme.serif(true))

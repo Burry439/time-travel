@@ -178,6 +178,16 @@ static func build(text_scale := 1.0) -> Theme:
 	return theme
 
 
+## A picture fitted into its space keeping its shape (icons, portraits, a dragged thing); at least size if given.
+static func picture(art: Texture2D = null, size := Vector2.ZERO) -> TextureRect:
+	var node := TextureRect.new()
+	node.texture = art
+	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	node.custom_minimum_size = size
+	return node
+
+
 static func flat(fill: Color, border: Color, width: int, radius: int) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = fill
