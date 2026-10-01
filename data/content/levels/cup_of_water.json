@@ -103,7 +103,7 @@
    "materials": [
     "stone"
    ],
-   "description": "A round stone well with a little roof and a windlass. The water is deep, cold and clean.",
+   "description": "A round stone well with a little roof and a windlass. Its bucket has just been wound up and sits on the rim, full of cold, clean water.",
    "flags": [
     "container",
     "watertight"
@@ -112,6 +112,24 @@
    "water_l": 2000.0,
    "no_sprite": true,
    "art": "scene"
+  },
+  {
+   "id": "bucket_well",
+   "name": "well bucket",
+   "x": 26,
+   "y": 11,
+   "mass_kg": 12.0,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "The well's wooden bucket, iron-hooped, on its rope at the rim: wound up and brimming with cold water.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 10.0,
+   "water_l": 10.0
   },
   {
    "id": "apple_windfall",
@@ -333,17 +351,17 @@
    "title": "Doing things",
    "cards": [
     "You can do anything you can describe. Press {T}, then {Tab} until DO is lit: your words turn red. Describe what you do and press {Enter}. The world decides if it works.",
-    "Or drag the cup from your pack onto the well: that writes the line for you. Try this:"
+    "The well's bucket is up on the rim, full. Fill the cup from it: drag the cup onto the bucket, or type it. Try this:"
    ],
    "suggest": {
-    "text": "fill the cup at the well",
+    "text": "fill the cup from the well bucket",
     "to": null,
     "button": true,
     "mode": "do"
    },
    "task": "Fill the cup at the well",
    "focus": {
-    "object": "well_wenna"
+    "object": "bucket_well"
    },
    "check": {
     "kind": "filled",
@@ -351,20 +369,20 @@
    },
    "done": "Cold, clean water. Nobody told the world a cup can be filled: it worked because a cup holds water.",
    "help": [
-    "Walk to the well, press {T}, press {Tab} until DO is lit, type 'fill the cup at the well' and press {Enter}.",
-    "Or drag the cup from your pack onto the well, then press {Enter}."
+    "Walk to the well, press {T}, press {Tab} until DO is lit, type 'fill the cup from the well bucket' and press {Enter}.",
+    "Or drag the cup from your pack onto the bucket, then press {Enter}."
    ],
    "playtest": [
     {
-     "walk_to": "well_wenna"
+     "walk_to": "bucket_well"
     },
     {
-     "do": "fill the cup at the well"
+     "do": "fill the cup from the well bucket"
     }
    ],
    "try_also": [
-    "I dip the cup into the well",
-    "draw water from the well into the wooden cup"
+    "fill the cup at the well",
+    "dip the cup in the bucket of water"
    ]
   },
   {
@@ -453,9 +471,9 @@
    "id": "device",
    "title": "Ask me",
    "cards": [
-    "Last thing: me. Press {H} and ask me anything: what to do next, how something works, why something failed. I only know what you've seen."
+    "Last thing: me. Press {H} and ask me anything. I only know what you've seen and been told. Try asking me about that mill Wenna mentioned."
    ],
-   "task": "Press H and ask the device a question",
+   "task": "Press H and ask the device about the mill",
    "check": {
     "kind": "asked_device"
    },
@@ -465,7 +483,7 @@
    ],
    "playtest": [
     {
-     "ask": "What should I do now?"
+     "ask": "Where's the mill Wenna told me about?"
     }
    ]
   }

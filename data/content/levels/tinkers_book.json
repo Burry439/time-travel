@@ -386,6 +386,9 @@
      "cord",
      "line",
      "twine"
+    ],
+    "from": [
+     "flax_tinker"
     ]
    },
    "done": "You made that. It didn't exist until you did, and it's yours now: look at it in your pack.",
@@ -462,6 +465,10 @@
     "named": [
      "torch",
      "brand"
+    ],
+    "from": [
+     "rag_tinker",
+     "stick_tinker"
     ]
    },
    "done": "Good. The world didn't care about the exact words, only what you did with what.",
@@ -507,6 +514,10 @@
     "kind": "made",
     "named": [
      "sling"
+    ],
+    "from": [
+     "leather_tinker",
+     "twine_tinker"
     ]
    },
    "done": "Three things made from what was lying about. That's most of what you'll do here: look at what's to hand, and think.",

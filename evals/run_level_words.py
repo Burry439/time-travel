@@ -99,7 +99,7 @@ def main() -> int:
         for index, step in enumerate(steps):
             state["tutorial"].update(step=index, read=index, started_seq=state["event_seq"])
             does = [a for a in step.get("playtest", []) if "do" in a]
-            for words in ([None] + step.get("try_also", [])) if does else [None]:
+            for words in (step.get("try_also", []) + [None]) if does else [None]:  # Others first, on copies.
                 trial = copy.deepcopy(state) if words else state  # Other wordings are tried on a copy.
                 tried = play(trial, step, words)
                 if not tried:

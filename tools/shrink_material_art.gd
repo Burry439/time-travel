@@ -20,6 +20,8 @@ func _initialize() -> void:
 			continue
 		if image.is_compressed():
 			image.decompress()
+		if maxi(image.get_width(), image.get_height()) <= LONGEST:
+			continue # Done before: trimming again would shave its edge off a little more each time.
 		var used := image.get_used_rect()
 		var trimmed := used.size.x > 0 and used.size != image.get_size()
 		if trimmed:

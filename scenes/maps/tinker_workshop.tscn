@@ -1,10 +1,22 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/ground.png" id="1_tex"]
 
 [ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Wall.png" id="2_tex"]
 
 [ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Workbench.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Shelves.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Hearth.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Table.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Barrels.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Crates.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/tinker_workshop/Anvil.png" id="9_tex"]
 
 [node name="TinkerWorkshopMap" type="Node2D"]
 y_sort_enabled = true
@@ -83,53 +95,47 @@ scale = Vector2(0.2041, 0.2041)
 texture = ExtResource("3_tex")
 offset = Vector2(0, -427.0)
 
-[node name="Shelves" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 352.0
-offset_top = 64.0
-offset_right = 544.0
-offset_bottom = 96.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Shelves" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(448.0, 96)
+scale = Vector2(0.2206, 0.2206)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -435.5)
 
-[node name="Hearth" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 576.0
-offset_top = 64.0
-offset_right = 704.0
-offset_bottom = 128.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Hearth" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(640.0, 128)
+scale = Vector2(0.1613, 0.1613)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -490.5)
 
-[node name="Table" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 288.0
-offset_top = 288.0
-offset_right = 448.0
-offset_bottom = 352.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Table" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(368.0, 352)
+scale = Vector2(0.1856, 0.1856)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -459.5)
 
-[node name="Barrels" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 640.0
-offset_top = 416.0
-offset_right = 704.0
-offset_bottom = 480.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Barrels" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(672.0, 480)
+scale = Vector2(0.0744, 0.0744)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -364.0)
 
-[node name="Crates" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 64.0
-offset_top = 416.0
-offset_right = 128.0
-offset_bottom = 480.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Crates" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(96.0, 480)
+scale = Vector2(0.0963, 0.0963)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -503.0)
 
-[node name="Anvil" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 512.0
-offset_top = 224.0
-offset_right = 544.0
-offset_bottom = 256.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Anvil" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(528.0, 256)
+scale = Vector2(0.0655, 0.0655)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -479.0)
 
 [node name="M2Objects" type="Node2D" parent="."]
 y_sort_enabled = true

@@ -63,9 +63,9 @@ def test_a_cup_of_water(world):
     state = read(world, state)
     assert at_step(state) == "fill"
     world.rulings.append(
-        attempt(judged("fill", fill={"container_id": "cup_wenna", "source_id": "well_wenna", "litres": 0.3}))
+        attempt(judged("fill", fill={"container_id": "cup_wenna", "source_id": "bucket_well", "litres": 0.3}))
     )
-    state = post(world, state, "craft", {"text": "fill the cup at the well", "selected_ids": []})["state"]
+    state = post(world, state, "craft", {"text": "fill the cup from the well bucket", "selected_ids": []})["state"]
     state = beat(world, state)
     assert at_step(state) == "give" and state["objects"]["cup_wenna"]["water_l"] > 0
     state = read(world, state)

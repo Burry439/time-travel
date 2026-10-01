@@ -296,15 +296,19 @@ def _made_here(obj: dict, since: int) -> bool:
     return obj.get("created_by") == "player" and int(obj.get("created_event_id") or 0) > since
 
 
-@condition("made", "named")
+@condition("made")
 def _made(state, spec, ctx):
-    """The stranger made something in this step whose name has one of these words (a rope, a torch): however they
-    put it, whatever the judge called it."""
+    """The stranger made something in this step: one whose name has one of these words (named: a rope, a torch), or
+    one made from any of these things (from: what went into it), so however they put it and whatever the judge
+    called it, it counts."""
     since = _progress(ctx).get("started_seq", 0)
-    return any(
-        _made_here(o, since) and any(word in o["name"].lower() for word in spec["named"])
-        for o in state["objects"].values()
-    )
+
+    def counts(o: dict) -> bool:
+        named = any(word in o["name"].lower() for word in spec.get("named", []))
+        made_from = set(o.get("components") or []) | set(o.get("tools_used") or [])
+        return named or bool(made_from & set(spec.get("from", [])))
+
+    return any(_made_here(o, since) and counts(o) for o in state["objects"].values())
 
 
 @condition("gave_made", "npc", "count")
