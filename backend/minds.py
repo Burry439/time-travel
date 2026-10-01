@@ -257,11 +257,11 @@ def questions(state: State, npc: Npc, prefix: str = "") -> dict:
 # --- Acting ----------------------------------------------------------------------------------
 
 
-def away_goal(state: State, npc: Npc, blocked: set, hidden: bool = False) -> list[int]:
+def away_goal(state: State, npc: Npc, blocked: paths.Grid, hidden: bool = False) -> list[int]:
     """A reachable cell far from the stranger; for hiding, one the stranger can't see."""
     _, steps = paths.bfs(cast.cell(npc), blocked, 14)
     here = cast.player_cell(state)
-    cells = [c for c in steps if not hidden or not paths.line_of_sight(c, here)] or list(steps)
+    cells = [c for c in steps if not hidden or not paths.line_of_sight(state, c, here)] or list(steps)
     goal = max(cells, key=lambda c: (math.dist(c, here), -steps[c]))
     return [goal[0], goal[1]]
 
@@ -325,7 +325,7 @@ def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: lis
         )
     option = options[choice]
     action, target, line, line_id = option["action"], option["target"], option["line"], option["line_id"]
-    blocked = paths.blocked_cells(state)
+    blocked = paths.grid(state)
     if action == "carry_on":
         cast.set_job(npc, None, now)
     elif action == "watch":

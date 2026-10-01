@@ -15,7 +15,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-import m2  # noqa: E402
 import content  # noqa: E402
 from ai import config, illustrator  # noqa: E402
 
@@ -23,14 +22,13 @@ OUT = ROOT / "assets" / "generated" / "materials"
 
 
 def paintable() -> dict[str, dict]:
-    """Every authored object without scene art (data/content/world_objects.json)."""
+    """Every authored thing in every level (data/content/levels) without art of its own."""
     records = {}
-    for spec in m2.WORLD_CONTENT["objects"]:
-        if spec.get("no_sprite") or spec.get("art") == "scene":
-            continue  # Drawn by something else (the scene itself, a building's art, the stranger's own painting).
-        records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
-    for spec in content.TUTORIAL.get("things", []):  # The first morning's own things.
-        records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
+    for level in content.LEVELS.values():
+        for spec in level["things"]:
+            if spec.get("no_sprite") or spec.get("art") == "scene":
+                continue  # Drawn by something else (the scene itself, a building's art, the stranger's own painting).
+            records[spec["id"]] = {key: spec[key] for key in ("name", "description", "materials")}
     return records
 
 

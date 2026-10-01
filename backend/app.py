@@ -22,7 +22,7 @@ import routes_world
 import store
 from ai import config as ai_config
 from ai import decider, illustrator, judge, voice
-from store import GEOMETRY_VERSION, SEED_VERSION, WORLD_GEOMETRY, db, initial_state, load_run
+from store import GEOMETRY_VERSION, SEED_VERSION, db, initial_state, load_run
 
 app = FastAPI(title="The City Beyond", version="0.5.0")
 for module in (routes_world, routes_craft, rounds, routes_minds, routes_gear, routes_tutorial):
@@ -43,7 +43,6 @@ __all__ = [
     "voice",
     "GEOMETRY_VERSION",
     "SEED_VERSION",
-    "WORLD_GEOMETRY",
     "db",
     "initial_state",
     "load_run",

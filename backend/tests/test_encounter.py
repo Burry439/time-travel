@@ -11,9 +11,12 @@ from test_talk import npc, said, unit_state
 import app as service
 import cast
 import clock
+import content
 import encounter
 import tuning
 from ai import decider
+
+SOUTH_ROAD = content.MAPS["village"]["after_arrest"]["cell"]  # Where the guards march an arrested stranger.
 
 
 def face_to_face(state, npc_id, reason="confront"):
@@ -211,7 +214,7 @@ def test_a_halt_becomes_rounds_then_a_shove_is_a_fight_and_giving_up_is_an_arres
     body = post(world, state, "act", {"text": "I give up"})
     state = body["state"]
     assert state["fight"] is None and "south road" in body["notice"]  # A guard takes the surrender: arrested.
-    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and state["barred_until"] > 0
+    assert [state["player"]["x"], state["player"]["y"]] == SOUTH_ROAD and state["barred_until"] > 0
     assert world.http.get(f"/runs/{state['run_id']}").json() == state
     post(world, state, "explore", {"elapsed_ms": 1000})  # The clock runs on.
 

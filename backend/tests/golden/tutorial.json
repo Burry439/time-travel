@@ -3560,6 +3560,12 @@
    "flags": [
     "rigid"
    ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
    "holder_id": null,
    "id": "steel_file",
    "length_m": 0.15,

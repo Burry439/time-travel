@@ -1,12 +1,15 @@
 """Content is checked the way code would read it (D-58): every rule is a known kind with the fields it needs,
-everyone and everything a rule names exists, and every authored thing and person has what the game reads.
-Adding a condition or effect kind means registering it (rules.condition, scenario.effect) with its fields."""
+everyone and everything a rule names exists, and every authored thing and person has what the game reads. Every
+map and level is checked the same way (D-59): places, starts and people's rounds on open ground, everyone in a
+cast with a card. Adding a condition or effect kind means registering it (rules.condition, scenario.effect) with
+its fields."""
 
 import pytest
 
 import content
 import conversation
 import gear
+import paths
 import rules
 import scenario
 
@@ -15,9 +18,14 @@ try:  # The parked storylines (D-56) register their own kinds when they're prese
 except ImportError:  # pragma: no cover - not in every checkout
     stories = None
 
-CARDS, ROUTINES, TUTORIAL = content.CARDS, content.ROUTINES, content.TUTORIAL
-STEP_IDS = [step["id"] for step in TUTORIAL["steps"]]
-THINGS = {spec["id"] for spec in content.WORLD_OBJECTS["objects"]} | {t["id"] for t in TUTORIAL.get("things", [])}
+CARDS, LEVELS, MAPS = content.CARDS, content.LEVELS, content.MAPS
+GUIDED = {level_id: level for level_id, level in LEVELS.items() if level.get("steps")}
+
+
+def things_in(level: dict) -> set[str]:
+    """Every thing in a level at the start: its own and its map's trees."""
+    trees = {o.get("id") or o["name"].lower() for o in MAPS[level["map"]]["obstacles"] if o.get("tree")}
+    return {spec["id"] for spec in level["things"]} | trees
 
 
 def conditions_in(spec, where: str):
@@ -37,10 +45,10 @@ def text_conditions(parts, where: str):
             yield part["when"], f"{where}[{index}].when"
 
 
-def tutorial_rules():
-    """(conditions, effects) of the first morning, each with where it is."""
+def level_rules(level: dict):
+    """(conditions, effects) of a guided level, each with where it is."""
     conditions, effects = [], []
-    for step in TUTORIAL["steps"]:
+    for step in level["steps"]:
         conditions.append((step["check"], f"{step['id']}.check"))
         lists = [
             (step.get("on_start", []), f"{step['id']}.on_start"),
@@ -55,10 +63,10 @@ def tutorial_rules():
                     conditions.append((effect["when"], f"{where}[{index}].when"))
                 for key in ("why", "summary"):
                     conditions += list(text_conditions(effect.get(key), f"{where}[{index}].{key}"))
-    for role in TUTORIAL.get("roles", []):
+    for role in level.get("roles", []):
         if isinstance(role.get("stays"), dict):
             conditions.append((role["stays"], f"role {role['npc']}.stays"))
-    for name, speech in TUTORIAL.get("speeches", {}).items():
+    for name, speech in level.get("speeches", {}).items():
         conditions += [(c, f"speech {name}.notes.{key}") for key, c in speech.get("notes", {}).items()]
         for key in ("why", "summary"):
             conditions += list(text_conditions(speech.get(key), f"speech {name}.{key}"))
@@ -92,14 +100,20 @@ def story_rules():
 
 
 def all_rules():
-    tutorial_conditions, tutorial_effects = tutorial_rules()
+    """Every rule in content, each with where it is: (conditions, effects)."""
+    conditions, effects = list(card_conditions()), []
+    for level_id, level in GUIDED.items():
+        level_conditions, level_effects = level_rules(level)
+        conditions += [(c, f"{level_id}: {where}") for c, where in level_conditions]
+        effects += [(e, f"{level_id}: {where}") for e, where in level_effects]
     story_conditions, story_effects = story_rules()
-    return tutorial_conditions + list(card_conditions()) + story_conditions, tutorial_effects + story_effects
+    return conditions + story_conditions, effects + story_effects
 
 
 def test_every_rule_is_a_known_kind_with_what_it_needs():
     conditions, effects = all_rules()
     assert conditions and effects
+    speeches = {name for level in GUIDED.values() for name in level.get("speeches", {})}
     problems = []
     for top, where in conditions:
         for spec, at in conditions_in(top, where):
@@ -114,40 +128,89 @@ def test_every_rule_is_a_known_kind_with_what_it_needs():
             problems.append(f"{at}: unknown effect {kind!r}")
         else:
             problems += [f"{at}: {kind} needs {field}" for field in scenario.NEEDS[kind] if field not in spec]
-        if kind == "vouch" and not (spec.get("speech") in TUTORIAL.get("speeches", {}) or "why" in spec):
+        if kind == "vouch" and not (spec.get("speech") in speeches or "why" in spec):
             problems.append(f"{at}: a vouch needs a speech or its own words")
     assert not problems, "\n".join(problems)
 
 
-def test_everyone_and_everything_a_rule_names_exists():
-    conditions, effects = all_rules()
+def named_in(spec: dict, at: str, people: set[str], things: set[str]) -> list[str]:
+    """What a rule names that isn't there: people (npc ids) and things."""
     problems = []
+    people_keys = ("npc", "from", "by", "to", "of") + (("with",) if spec.get("kind") == "hold" else ())
+    for key in people_keys:  # A hold's "with" is people; a spar's is the practice weapon.
+        value = spec.get(key)
+        for npc_id in value if isinstance(value, list) else [value]:
+            if isinstance(npc_id, str) and npc_id.startswith("npc_") and npc_id not in people:
+                problems.append(f"{at}: {key} {npc_id} isn't anyone here")
+    weapon = spec.get("with") if spec.get("kind") == "spar" else None
+    for thing in spec.get("objects", []) + [spec.get("thing"), weapon]:
+        if thing and thing not in things:
+            problems.append(f"{at}: no thing {thing}")
+    return problems
+
+
+@pytest.mark.parametrize("level_id", sorted(GUIDED))
+def test_everyone_and_everything_a_level_names_is_in_it(level_id):
+    level = GUIDED[level_id]
+    people, things = set(level["cast"]), things_in(level)
+    conditions, effects = level_rules(level)
     named = [(spec, at) for top, where in conditions for spec, at in conditions_in(top, where)] + effects
-    for spec, at in named:
-        people_keys = ("npc", "from", "by", "to", "of") + (("with",) if spec.get("kind") == "hold" else ())
-        for key in people_keys:  # A hold's "with" is people; a spar's is the practice weapon.
-            value = spec.get(key)
-            for npc_id in value if isinstance(value, list) else [value]:
-                if isinstance(npc_id, str) and npc_id.startswith("npc_") and npc_id not in CARDS:
-                    problems.append(f"{at}: {key} {npc_id} isn't anyone")
-        weapon = spec.get("with") if spec.get("kind") == "spar" else None
-        for thing in spec.get("objects", []) + [spec.get("thing"), weapon]:
-            if thing and thing not in THINGS:
-                problems.append(f"{at}: no thing {thing}")
-    for role in TUTORIAL.get("roles", []):
-        assert role["npc"] in CARDS and set(role["during"]) <= set(STEP_IDS), role
+    problems = [problem for spec, at in named for problem in named_in(spec, at, people, things)]
+    step_ids = [step["id"] for step in level["steps"]]
+    for role in level.get("roles", []):
+        assert role["npc"] in people and set(role["during"]) <= set(step_ids), role
         assert set(role.get("withholds", [])) <= {"go_tell", "vouch", "call_guard", "admit", "refer", "lend", "give"}
-        assert role.get("spars", {}).get("with", "practice_sword_kade") in THINGS
-    assert len(set(STEP_IDS)) == len(STEP_IDS), "step ids repeat"
-    for step in TUTORIAL["steps"]:
+        assert not role.get("spars") or role["spars"]["with"] in things, role
+    assert len(set(step_ids)) == len(step_ids), "step ids repeat"
+    for step in level["steps"]:
         ids = [t["id"] for t in step.get("triggers", [])]
         assert len(set(ids)) == len(ids), f"{step['id']}: trigger ids repeat"
     assert not problems, "\n".join(problems)
 
 
-@pytest.mark.parametrize("npc_id", sorted(ROUTINES))
-def test_everyone_in_the_world_has_a_card_a_title_a_pace_and_a_day(npc_id):
-    routine, card = ROUTINES[npc_id], CARDS.get(npc_id)
+def test_everyone_and_everything_a_card_names_exists():
+    conditions = list(card_conditions()) + story_rules()[0]
+    everything = {thing for level in LEVELS.values() for thing in things_in(level)}
+    named = [(spec, at) for top, where in conditions for spec, at in conditions_in(top, where)]
+    problems = [problem for spec, at in named for problem in named_in(spec, at, set(CARDS), everything)]
+    assert not problems, "\n".join(problems)
+
+
+@pytest.mark.parametrize("map_id", sorted(MAPS))
+def test_every_map_is_whole(map_id):
+    plan = MAPS[map_id]
+    width, height = plan["size"]
+    x0, y0, x1, y1 = plan["walk"]
+    assert 0 <= x0 < x1 <= width and 0 <= y0 < y1 <= height, "walk lies outside the map"
+    for item in plan["buildings"] + plan["obstacles"]:
+        bx, by, w, h = item["cells"]
+        assert bx >= 0 and bx + w <= width and by >= 0 and by + h <= height, item["name"]
+        assert not item.get("tree") or item["tree"] in plan["trees"], item["name"]
+    grid = paths.standing_grid({"scenario": next(i for i, lv in LEVELS.items() if lv["map"] == map_id)})
+    assert not [p for p, v in plan["places"].items() if not grid.walkable(tuple(v["cell"]))], "a place isn't open"
+
+
+@pytest.mark.parametrize("level_id", sorted(LEVELS))
+def test_every_level_stands_on_open_ground(level_id):
+    level = LEVELS[level_id]
+    assert level["map"] in MAPS and level["objective"]
+    grid = paths.standing_grid({"scenario": level_id})
+    assert grid.walkable(tuple(level["start"]["cell"])), "the stranger starts in a wall"
+    for npc_id, spec in level["cast"].items():
+        assert all(grid.walkable((x, y)) for x, y, _, _ in spec["anchors"]), npc_id
+    width, height = MAPS[level["map"]]["size"]
+    for spec in level["things"]:
+        if "x" in spec:
+            assert 0 <= spec["x"] < width and 0 <= spec["y"] < height, spec["id"]
+    if level.get("steps"):
+        assert level["version"] and level["reactions"]
+
+
+@pytest.mark.parametrize(
+    ("level_id", "npc_id"), sorted((level_id, npc_id) for level_id, level in LEVELS.items() for npc_id in level["cast"])
+)
+def test_everyone_in_a_level_has_a_card_a_title_a_pace_and_a_day(level_id, npc_id):
+    routine, card = LEVELS[level_id]["cast"][npc_id], CARDS.get(npc_id)
     assert card and card["name"] and card["role"] and card["personality"] and card["tones"]
     assert routine["role"] and routine["step_ms"] > 0 and routine["goal"] and routine["anchors"]
     assert all(len(anchor) == 4 for anchor in routine["anchors"])
@@ -165,9 +228,11 @@ def test_every_authored_thing_has_what_the_game_reads():
         "shield": gear.SHIELDS,
         "remedy": gear.REMEDIES,
     }
-    specs = content.WORLD_OBJECTS["objects"] + TUTORIAL.get("things", [])
-    ids = [spec["id"] for spec in specs]
-    assert len(set(ids)) == len(ids), "thing ids repeat"
+    for level_id, level in LEVELS.items():
+        ids = [spec["id"] for spec in level["things"]]
+        assert len(set(ids)) == len(ids), f"{level_id}: thing ids repeat"
+    specs = {spec["id"]: spec for level in LEVELS.values() for spec in level["things"]}.values()
+    everything = {thing for level in LEVELS.values() for thing in things_in(level)}
     for spec in specs:
         for field in ("id", "name", "mass_kg", "materials", "description", "flags"):
             assert field in spec, f"{spec.get('id')}: {field}"
@@ -178,4 +243,4 @@ def test_every_authored_thing_has_what_the_game_reads():
         if record and record["kind"] in tables:
             assert record["class"] in tables[record["kind"]], f"{spec['id']}: no {record['kind']} {record['class']}"
         if spec.get("installed_in"):
-            assert spec["installed_in"] in THINGS, spec["id"]
+            assert spec["installed_in"] in everything, spec["id"]

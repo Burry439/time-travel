@@ -22,11 +22,11 @@ sys.path.insert(0, str(ROOT / "backend"))
 import app  # noqa: E402
 import cast  # noqa: E402
 import consequences  # noqa: E402
+import content  # noqa: E402
 import gear  # noqa: E402
 import judge_view  # noqa: E402
 import perception  # noqa: E402
 import rules  # noqa: E402
-import scenario  # noqa: E402
 from ai import config, judge  # noqa: E402
 
 FIRE_WORDS = ["I strike the steel file with the flint over the dried grass",
@@ -34,7 +34,7 @@ FIRE_WORDS = ["I strike the steel file with the flint over the dried grass",
 
 
 def suggestion(step_id: str) -> str:
-    step = next(s for s in scenario.STEPS if s["id"] == step_id)
+    step = next(s for s in content.LEVELS["tutorial"]["steps"] if s["id"] == step_id)
     return step["suggest"]["text"]
 
 

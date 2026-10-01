@@ -26,8 +26,7 @@ from shapes import State
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "demo.sqlite3"))
-WORLD_GEOMETRY = content.GEOMETRY
-GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
+GEOMETRY_VERSION = content.MAPS["village"]["version"]  # Recorded with each journey (data/maps/village.json).
 # 4 adds loose road materials and material data for crafting; 5 adds materials across the map,
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
@@ -153,6 +152,8 @@ def db():
 
 
 def initial_state(run: sqlite3.Row) -> dict:
+    """A new journey: the level's map, people and things (data/content/levels), the stranger at its start, and its
+    story at the first step if it is a guided one (D-59)."""
     state = {
         "run_id": run["id"],
         "mode": run["mode"],
@@ -162,20 +163,20 @@ def initial_state(run: sqlite3.Row) -> dict:
         "event_seq": 0,
         "tick": 0,
         "sim_time_ms": 0,
-        "player": {"x": 48, "y": 68, "alive": True},
         "gate_open": False,
         "inside_city": False,
-        "objective": "Get inside the city",
-        "npcs": npc_sim.seed_npcs(),
     }
-    state.update(m2.seed_m2())
+    level = content.level(state)
+    x, y = level["start"]["cell"]
+    state.update(player={"x": x, "y": y, "alive": True}, objective=level["objective"], npcs=npc_sim.seed_npcs(state))
+    state.update(m2.seed_m2(state))
     for npc in state["npcs"]:
         npc.update(alive=True, health=100, injuries=[])
     people = {n["id"]: n for n in state["npcs"]} | {"player": state["player"]}
     for obj in state["objects"].values():  # Everyone starts wearing and holding their own gear (D-49).
         for slot in obj.pop("worn_slots", []):
             people[obj["holder_id"]].setdefault("equipped", {})[slot] = obj["id"]
-    if state["scenario"] == "tutorial":  # The first morning, with the device (D-50).
+    if level.get("steps"):  # A guided story, with the device (D-50).
         scenario.setup(state)
     return state
 

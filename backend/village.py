@@ -20,13 +20,21 @@ import speech
 import tuning
 from shapes import Npc, State
 
-PLACES = content.PLACES
-GATE_GUARDS = ("npc_roderic_vale", "npc_bren_marr", "npc_oren_dast")
 REACTION_LEVELS = ["Put off by it", "A little cooler", "Unmoved", "A little warmer", "Glad of it"]
 
 
-def place_name(place_id: str) -> str:
-    return PLACES[place_id]["name"]
+def places(state: State) -> dict[str, dict]:
+    """The named places on this journey's map (data/maps): where people go and what they call them."""
+    return content.map_of(state)["places"]
+
+
+def place_name(state: State, place_id: str) -> str:
+    return places(state)[place_id]["name"]
+
+
+def gate_guards(state: State) -> set[str]:
+    """Who keeps the gate manned (keeps_gate in the level's cast)."""
+    return {npc_id for npc_id, spec in content.level(state)["cast"].items() if spec.get("keeps_gate")}
 
 
 def _village(state: State) -> dict:
@@ -45,18 +53,24 @@ def free(state: State, npc: Npc) -> bool:
 
 
 def tasks(state: State, npc: Npc) -> list[dict]:
-    """The card's tasks that make sense in the world as it is (the beam once raised, and so on)."""
+    """The card's tasks that make sense in the world as it is (the beam once raised, and so on), at places on this
+    map (someone from the village, met in another level, can't go to the inn yard)."""
+    here = places(state)
     return [
         t
         for t in cast.card(npc).get("tasks", [])
-        if rules.holds(state, t.get("when")) and not (t.get("unless") and rules.holds(state, t["unless"]))
+        if t["place"] in here
+        and rules.holds(state, t.get("when"))
+        and not (t.get("unless") and rules.holds(state, t["unless"]))
     ]
 
 
-def at_gate(npc: Npc) -> bool:
+def at_gate(state: State, npc: Npc) -> bool:
+    """At a gate post, and not on the way somewhere else."""
+    gate = paths.gate(state)
     controller = npc.get("controller") or {}
     target = tuple(controller.get("destination") or (npc["x"], npc["y"]))
-    return npc["x"] <= 56 and npc["x"] >= 40 and npc["y"] <= 20 and target[1] <= 20
+    return gate is not None and paths.in_zone(cast.cell(npc), gate["posts"]) and target[1] <= gate["posts"][2]
 
 
 def gate_cover(state: State, leaving: dict) -> int:
@@ -64,21 +78,21 @@ def gate_cover(state: State, leaving: dict) -> int:
     return sum(
         1
         for g in state["npcs"]
-        if g["id"] in GATE_GUARDS and g["id"] != leaving["id"] and g.get("alive", True) and at_gate(g)
+        if g["id"] in gate_guards(state) and g["id"] != leaving["id"] and g.get("alive", True) and at_gate(state, g)
     )
 
 
 def agenda_options(state: State, npc: Npc) -> dict[str, dict]:
     """Everything this person could sensibly do next with their day: {key: {description, plan}}."""
     name = npc["name"]
-    bound = npc["id"] in GATE_GUARDS and gate_cover(state, npc) < tuning.MIN_GATE_GUARDS
+    bound = npc["id"] in gate_guards(state) and gate_cover(state, npc) < tuning.MIN_GATE_GUARDS
     goal = (npc.get("controller") or {}).get("goal") or "their usual round"
     options = {"carry_on": {"description": f"{name} carries on as usual ({goal}).", "plan": {"kind": "routine"}}}
     for task in tasks(state, npc):
-        if bound and not PLACES[task["place"]].get("gate"):
+        if bound and not places(state)[task["place"]].get("gate"):
             continue
         options[f"task:{task['id']}"] = {
-            "description": f"{name} goes to {place_name(task['place'])}: {task['doing']}.",
+            "description": f"{name} goes to {place_name(state, task['place'])}: {task['doing']}.",
             "plan": {"kind": "task", **task},
         }
     if not bound:
@@ -326,7 +340,7 @@ def apply_agenda(state: State, npc: Npc, answers: dict, now: int) -> dict:
         )
         my_mind["doing"] = "going to see what the stranger is up to"
     else:
-        blocked = paths.obstacle_cells()
+        blocked = paths.standing_grid(state)
         try:
             if plan["kind"] == "visit":
                 other = cast.find(state["npcs"], plan["target"])
@@ -334,7 +348,7 @@ def apply_agenda(state: State, npc: Npc, answers: dict, now: int) -> dict:
                 controller.update(visit=other["id"], arrive_activity="wait", dwell_ms=30_000)
                 my_mind["doing"] = f"on the way to see {other['name']}"
             else:
-                path = paths.route(cast.cell(npc), tuple(PLACES[plan["place"]]["cell"]), blocked)
+                path = paths.route(cast.cell(npc), tuple(places(state)[plan["place"]]["cell"]), blocked)
                 controller.update(visit=None, arrive_activity=plan["activity"], dwell_ms=plan["dwell_s"] * 1000)
                 my_mind["doing"] = plan["doing"]
         except ValueError:  # No way there right now: carry on as usual instead.
@@ -561,7 +575,7 @@ def near_stranger(state: State, npc: Npc, cells: float) -> bool:
     return (
         state["player"].get("alive", True)
         and cast.distance(npc, here) <= cells
-        and paths.line_of_sight(cast.cell(npc), here)
+        and paths.line_of_sight(state, cast.cell(npc), here)
     )
 
 

@@ -266,7 +266,7 @@ def _made_seen(state, spec, ctx):
 @condition("vouched", "npc")
 def _vouched(state, spec, ctx):
     """This person has spoken for the stranger to the captain."""
-    captain = cast.find(state["npcs"], cast.CAPTAIN)
+    captain = cast.captain(state)
     return bool(captain) and any(
         m.get("kind") == "vouch" and m.get("by") == spec["npc"] for m in (captain.get("mind") or {}).get("memories", [])
     )
@@ -285,10 +285,10 @@ def _installed(state, spec, ctx):
 
 
 def scene_step(state: State) -> dict | None:
-    """The scenario step the journey is on (the first morning), if one is running on this version of its story."""
+    """The step the journey's guided story is on, if one is running on this version of it."""
     progress = state.get("tutorial")
-    story = content.TUTORIAL
-    if not progress or progress.get("done") or progress.get("version", 2) != story["version"]:
+    story = content.level(state)
+    if not progress or progress.get("done") or not story.get("steps") or progress.get("version", 2) != story["version"]:
         return None
     return story["steps"][progress["step"]]
 
@@ -307,7 +307,7 @@ def role(state: State, npc: dict) -> dict:
     current = scene_step(state)
     if current is None:
         return {}
-    for part in content.TUTORIAL.get("roles", []):
+    for part in content.level(state).get("roles", []):
         if part["npc"] == npc["id"] and current["id"] in part["during"]:
             return part
     return {}

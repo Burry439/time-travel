@@ -4,10 +4,13 @@ from test_encounter import face_to_face, play, post, world  # noqa: F401
 from test_talk import npc, unit_state
 
 import combat
+import content
 import conversation
 import encounter
 import gatekeeping
 import reputation
+
+SOUTH_ROAD = content.MAPS["village"]["after_arrest"]["cell"]  # Where the guards march an arrested stranger.
 
 
 def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
@@ -21,7 +24,7 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     assert record["arrested"] and draft["encounter"] is None
     assert draft["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko"
     assert draft["objects"]["lodestone_darin"]["holder_id"] == "player"
-    assert (draft["player"]["x"], draft["player"]["y"]) == encounter.SOUTH_ROAD and draft["player"]["alive"]
+    assert [draft["player"]["x"], draft["player"]["y"]] == SOUTH_ROAD and draft["player"]["alive"]
     assert gatekeeping.barred(draft) and draft["journal"][-1]["kind"] == "arrest"
     roderic = npc(draft, "npc_roderic_vale")
     assert roderic["mind"]["memories"][-1]["kind"] == "arrest"
@@ -122,5 +125,5 @@ def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):
     body = post(world, state, "encounter/act", {"kind": "yield"})  # Giving up to a guard: arrested.
     state = body["state"]
     assert body["round"]["arrested"] and state["encounter"] is None and state["barred_until"] > state["sim_time_ms"]
-    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD
+    assert [state["player"]["x"], state["player"]["y"]] == SOUTH_ROAD
     assert world.http.get(f"/runs/{state['run_id']}").json() == state

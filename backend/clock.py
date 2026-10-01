@@ -144,9 +144,11 @@ def dealt_with_recently(npcs: list[Npc], now: int) -> bool:
 def _gate_watch(state: State, npcs: list[Npc], now: int) -> None:
     """No model involved: the nearest free guard walks up to a stranger at the gate who hasn't been admitted,
     unless the stranger is already being dealt with (a conversation, or a guard they've just talked to)."""
+    if (gate := paths.gate(state)) is None:
+        return
     x, y = cast.player_cell(state)
     guards = [g for g in npcs if g.get("alive", True) and cast.card(g).get("guard")]
-    at_gate = tuning.GATE_ZONE[0] <= x <= tuning.GATE_ZONE[1] and y <= tuning.GATE_ZONE[2]
+    at_gate = paths.in_zone((x, y), gate["approach"])
     dealt_with = bool(state.get("encounter")) or dealt_with_recently(npcs, now)
     if (
         state.get("admitted")
@@ -187,7 +189,7 @@ def _maybe_reconsider(state: State, npc: Npc, why: str) -> None:
     cast.add_pending(state, npc["id"], "decide", why)
 
 
-def _ambient(state: State, npc: Npc, now: int, blocked: set) -> None:
+def _ambient(state: State, npc: Npc, now: int, blocked: paths.Grid) -> None:
     """No model involved: wary people face the stranger; frightened people keep their distance."""
     my_mind = npc.get("mind")
     if not my_mind or my_mind.get("job") or not state["player"].get("alive", True):
@@ -216,7 +218,7 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
 
     Returns (npcs, journal lines, player). May queue thinking in state["pending_minds"].
     """
-    npcs = npc_sim.advance_npcs(state["npcs"], elapsed_ms, now)
+    npcs = npc_sim.advance_npcs(state, state["npcs"], elapsed_ms, now)
     working = copy.copy(state)
     working["npcs"] = npcs
     working["player"] = copy.deepcopy(state["player"])
@@ -227,7 +229,7 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
     working.pop("objects_changed", None)
     working.pop("objects_added", None)
     journal: list[dict] = []
-    blocked = paths.blocked_cells(state)
+    blocked = paths.grid(state)
     end = now + elapsed_ms
     talking = set((working.get("encounter") or {}).get("participants", []))
     for npc in npcs:
@@ -257,7 +259,7 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
 
 
 def _on_the_job(
-    state: State, npcs: list[Npc], npc: Npc, elapsed_ms: int, end: int, blocked: set, journal: list[dict]
+    state: State, npcs: list[Npc], npc: Npc, elapsed_ms: int, end: int, blocked: paths.Grid, journal: list[dict]
 ) -> None:
     """One person's job for this stretch of time: keep watching, give up, or walk on toward where it takes them
     and do it when they get there. Without a job, the calm rules apply."""
@@ -283,7 +285,7 @@ def _on_the_job(
         _arrived(state, npcs, npc, job, end, journal)
 
 
-def _walk(npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Job, blocked: set) -> bool:
+def _walk(npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Job, blocked: paths.Grid) -> bool:
     """Step toward the goal at their pace (running or walking) for this long; whether they're there now."""
     controller = npc.get("controller") or {}
     carry = controller.get("step_carry_ms", 0) + elapsed_ms

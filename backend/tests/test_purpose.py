@@ -9,13 +9,15 @@ from test_talk import npc, said, unit_state
 import briefing
 import clock
 import combat
+import content
 import conversation
-import encounter
 import gatekeeping
 import reputation
 import store
 import talk
 import tuning
+
+SOUTH_ROAD = content.MAPS["village"]["after_arrest"]["cell"]  # Where the guards march an arrested stranger.
 
 
 def rope_stolen(state, holder="player"):
@@ -93,6 +95,6 @@ def test_subdued_on_the_clock_means_arrested_not_dead_and_it_replays():
     assert (
         state["player"]["alive"] and tuning.SUBDUED_AT <= state["player"]["health"] < tuning.SUBDUED_AT + 1
     )  # (mending)
-    assert (state["player"]["x"], state["player"]["y"]) == encounter.SOUTH_ROAD and gatekeeping.barred(state)
+    assert [state["player"]["x"], state["player"]["y"]] == SOUTH_ROAD and gatekeeping.barred(state)
     assert state["objects"]["rope_tomas"]["holder_id"] == "npc_tomas_reed"  # The rope goes back.
     assert any(e.get("kind") == "arrest" for e in state["journal"])

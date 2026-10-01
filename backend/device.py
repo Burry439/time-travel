@@ -89,7 +89,7 @@ def moment_allowed(state: State) -> bool:
 
 def _place_name(state: State) -> str:
     here = cast.player_cell(state)
-    places = list(content.PLACES.values()) if isinstance(content.PLACES, dict) else []
+    places = list(content.map_of(state)["places"].values())
     nearest = min(places, key=lambda place: math.dist(here, tuple(place["cell"])), default=None)
     return nearest["name"] if nearest else "the road"
 

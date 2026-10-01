@@ -13,6 +13,7 @@ import cast
 import clock
 import combat
 import commands
+import content
 import encounter
 import m2
 import paths
@@ -27,7 +28,7 @@ router = APIRouter(route_class=views.Shown)  # Replies carry their state's view 
 
 class NewRun(BaseModel):
     mode: str = "normal"
-    scenario: str = "village"  # or "tutorial": the first morning, with the device (D-50)
+    scenario: str = "village"  # The level to play (data/content/levels): the village, or a guided one (D-50, D-59).
 
 
 class Move(BaseModel):
@@ -73,8 +74,8 @@ def health():
 def create_run(request: NewRun):
     if request.mode not in ("normal", "developer"):
         raise HTTPException(422, "Mode must be normal or developer")
-    if request.scenario not in ("village", "tutorial"):
-        raise HTTPException(422, "Scenario must be village or tutorial")
+    if request.scenario not in content.LEVELS:
+        raise HTTPException(422, f"No level called {request.scenario}")
     run_id = uuid4().hex
     with store.lock, store.db() as connection:
         connection.execute(
@@ -153,13 +154,14 @@ def move(run_id: str, request: Move):
         # Open because its bar was lifted off (not the captain's word, not the developer switch): a guard in the gap.
         holder = combat.gate_held_by(state) if state["gate_open"] and not m2.gate_barred(state) else None
 
-        blocked = paths.blocked_cells(state)  # Felled trees no longer block.
+        blocked = paths.grid(state)  # Felled trees no longer block.
+        gate, (width, height) = paths.gate(state), content.map_of(state)["size"]
 
         def passable(x: int, y: int) -> bool:
-            if not (0 <= x <= 95 and 0 <= y <= 71):
+            if not (0 <= x < width and 0 <= y < height):
                 return False
-            if 4 <= y <= 8:
-                return 46 <= x <= 50 and state["gate_open"] and holder is None
+            if paths.in_wall(gate, (x, y)):
+                return paths.in_gap(gate, (x, y)) and state["gate_open"] and holder is None
             return (x, y) not in blocked
 
         # Walk the cells in order; stop at the first illegal step, keeping the legal ones before it.
@@ -174,7 +176,7 @@ def move(run_id: str, request: Move):
                 problem = (
                     403,
                     f"{holder['name']} steps into the gateway and bars your way."
-                    if holder and 4 <= ny <= 8 and 46 <= nx <= 50
+                    if holder and paths.in_wall(gate, (nx, ny)) and paths.in_gap(gate, (nx, ny))
                     else "A building, city wall, or closed gate blocks the path",
                 )
             elif dx and dy and (not passable(x + dx, y) or not passable(x, y + dy)):
@@ -183,7 +185,7 @@ def move(run_id: str, request: Move):
                 break
             x, y = nx, ny
             accepted.append([x, y])
-            if y <= 3:
+            if paths.arrived(state, (x, y)):
                 break  # Inside the city.
         if not accepted:
             raise HTTPException(*problem)
@@ -198,7 +200,7 @@ def move(run_id: str, request: Move):
                 )
         state["player"].update(x=x, y=y)
         cmd.save("move", tick, {"running": request.running, "path": accepted})
-        if y <= 3 and not state["inside_city"]:
+        if paths.arrived(state, (x, y)) and not state["inside_city"]:
             state["entered_by"] = (
                 "admitted" if state.get("admitted") else "unbarred" if state.get("gate_unbarred_by") else "other"
             )

@@ -2,7 +2,7 @@
 extends Node2D
 ## Editor-only view of the same activity anchors the backend uses.
 
-@export_file("*.json") var routines_file := "res://data/npc_routines.json"
+@export_file("*.json") var level_file := "res://data/content/levels/village.json"
 @export var show_labels := true:
 	set(value):
 		show_labels = value
@@ -19,9 +19,10 @@ func _ready() -> void:
 func _draw() -> void:
 	if not Engine.is_editor_hint():
 		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(routines_file))
-	if typeof(parsed) != TYPE_DICTIONARY:
+	var level = JSON.parse_string(FileAccess.get_file_as_string(level_file))
+	if typeof(level) != TYPE_DICTIONARY:
 		return
+	var parsed: Dictionary = level.get("cast", {})
 	for npc_id in parsed:
 		var anchors: Array = parsed[npc_id]["anchors"]
 		var goal_text := str(parsed[npc_id]["goal"])

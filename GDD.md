@@ -136,7 +136,7 @@ Keep it short, dismissible, and free of hints.
 
 ### Tutorial and the device (D-50, D-52)
 
-**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json` (the whole story: steps, things, roles, speeches), run by `backend/scenario.py`, with the device in `backend/device.py` and the cards in `scripts/ui/tutorial_guide.gd`.
+**Status: CURRENT** (to be replaced by Training: many short levels, each on its own map, §11 Training, D-59). The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/levels/tutorial.json` (a level on the village map: steps, things, roles, speeches), run by `backend/scenario.py`, with the device in `backend/device.py` and the cards in `scripts/ui/tutorial_guide.gd`.
 
 **The device** is the damaged machine that brought the stranger here. Only the stranger hears it. It knows modern science and the controls, but only what the stranger has seen or been told: never people's secrets or anything unseen.
 
@@ -184,7 +184,7 @@ Keep it short, dismissible, and free of hints.
     - Kade speaks again if a minute passes without him reaching the captain.
 18. The city: the gate is open to you, a new journey is harder, the yard and the notebook. Then **Walk into the city** or **Begin a fresh journey**.
 
-While Kade is teaching (steps 11 to 16) he stays with the stranger (a `watch` job). The voice isn't offered moves that would send him off or have him let the stranger in himself. All of this is Kade's **role** in the story's data (`roles` in `tutorial.json`: stays, withholds, spars), which talk, fights and the clock read through `rules.role` without knowing which story is running (D-58).
+While Kade is teaching (steps 11 to 16) he stays with the stranger (a `watch` job). The voice isn't offered moves that would send him off or have him let the stranger in himself. All of this is Kade's **role** in the story's data (`roles` in its level file: stays, withholds, spars), which talk, fights and the clock read through `rules.role` without knowing which story is running (D-58).
 
 The suggested words for 9, 10 and 16 are checked against the live judge (`evals/run_tutorial_live.py`), and so are two wordings players really type for the fire.
 
@@ -399,7 +399,7 @@ This is a baseline, not a limit. The player may explain unknown things. Explaini
 
 ### 4.2 Map
 
-**Status: CURRENT** (already built: 96 × 72 cells, 32 px per cell; `data/world_geometry.json`, geometry version 3)
+**Status: CURRENT** (already built: 96 × 72 cells, 32 px per cell; `data/maps/village.json`, version 3, D-59: the grid, the named places, the trees, the gate and its approach and posts, the city rows that end a journey, and where an arrested stranger is taken. Each training level has its own map in the same form)
 
 | Zone | Where | What's there |
 | --- | --- | --- |
@@ -555,7 +555,7 @@ Traits run 0.00–1.00; knowledge runs 0 (none) to 4 (master for this world). Fu
 > - **secrets**, with who they would tell;
 > - **likes** and **dislikes**;
 > - **opinions** of the people they know, with a warmth from −1 to 1 that changes as they talk;
-> - **tasks** at named places (`data/places.json`), some of which depend on the world (the beam raised or not).
+> - **tasks** at named places on the level's map (`data/maps`; a task at a place not on this map is skipped), some of which depend on the world (the beam raised or not).
 >
 > `backend/persona.py` builds one sheet from all of this, and both the decider and the voice read it.
 
@@ -907,7 +907,7 @@ Each potential witness receives a **perceived projection** of the event, meaning
 | Perceived a salient event (demonstration, theft, a shout, a new object shown) | Each witness |
 | An agreement is due, or its predicate was satisfied | The parties |
 | Something fresh for them (a memory, news, the stranger in view, a visit), at most every 20 s (D-39) | That person |
-| Otherwise | Authored routine (`data/npc_routines.json`, already built) |
+| Otherwise | Authored routine (the level's `cast` in `data/content/levels`, already built) |
 
 ### 7.5 How a decision is made
 
@@ -1016,8 +1016,10 @@ AGENTS.md                ← agent instructions (points here)
 project.godot, scenes/, scripts/, assets/   (Godot client)
 backend/                 ← the service (the modules above), ai/ (role adapters), prompts/, tests/
 data/
-  content/               ← authored world (committed)
-  world_geometry.json, npc_routines.json, places.json
+  content/               ← authored world (committed): cards, things, gear, lines, materials, the notebook
+    levels/              ← each level: its map, cast, things and (if guided) steps (D-59)
+    people/              ← each level's own people, cards in the same form (merged with npc_cards.json)
+  maps/                  ← each map: size, buildings, obstacles, trees, places, the gate (D-59)
   assets/                ← generated sprites (ignored by git)
   *.sqlite3              ← saves (ignored by git)
 evals/                   ← fixtures + runner (§10)
@@ -1069,13 +1071,18 @@ fields it needs (the stranger near a cell or carrying something, someone talked 
 in this step and seen, a thing installed, a flag the story noted...). The tutorial's checks and triggers, deals'
 `done_when`, people's tasks (`when`, `unless`) and the parked stories and secrets use it.
 
-A **scenario** is data (`tutorial.json`): its steps (cards, a task, a check, triggers, what happens when it
-starts and ends), its own **things**, the **roles** it gives people for some steps, and **speeches** whose words
-may depend on what the story noted. Effects are registered the same way (`scenario.py`: someone says something,
+A journey plays a **level** (`data/content/levels`, D-59): a map (`data/maps`), a **cast** (who is there and each
+person's round), **things**, a start and an objective. A level may take another's map, cast and things
+(`base`): the first morning is the village plus its story. A guided level is a **scenario**: its steps (cards, a
+task, a check, triggers, what happens when it starts and ends), the **roles** it gives people for some steps, and
+**speeches** whose words may depend on what the story noted. Code reads the map, places, routines, the gate and
+the captain from the journey's level (`content.level`, `paths.grid`, `cast.captain`), so nothing assumes the
+village: a map without a gate has no halts or gate guards, and a level without anyone who `decides` has no
+captain. The hidden test room (`test_room`) plays every system off the village. Effects are registered the same way (`scenario.py`: someone says something,
 walks over, stays, lends, hurts, spars, goes to tell someone, speaks for the stranger, lets them in). Roles are
 the one place core rules learn about a scenario: Kade's "stays, withholds errands, spars when struck" is read by
-talk, fights and the clock through `rules.role`, never by asking which scenario is running. The training maps are
-meant to be scenarios in this form.
+talk, fights and the clock through `rules.role`, never by asking which scenario is running. The training levels
+are scenarios in this form.
 
 ---
 
@@ -1379,6 +1386,75 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 
 **Answers:** A7 (do players enjoy typing?) and A8 (can they find a route without hints?). Then decide what the full game should build on.
 
+### Training (D-59)
+
+**Status: CURRENT.** Phase A built; B to G to do.
+
+**Goal:** many short training levels, each a self-contained episode on its own small map (some indoors) with its
+own new people. They teach the game and double as labs: each one isolates a gameplay element, so what players do
+in it shows what to fix in the systems the main game shares.
+
+- **Two tracks behind a Training button.**
+  - **Basics:** guided (cards, one task, a ring, Type it for me), about 5 minutes each.
+  - **Advanced:** a goal with several ways to reach it and no exact words, 5 to 8 minutes; the device helps only
+    when asked.
+- **Every level is open,** with the next one suggested.
+- **Episodes in the same world:** their people and places can return in the main game's quests.
+- **Art** for new maps and people is generated in the village's painted style.
+- **"The first morning" retires** once the basics cover its lessons.
+
+**Basics:**
+
+| # | Level | Map | New people | Teaches | Refines |
+| --- | --- | --- | --- | --- | --- |
+| B1 | A cup of water | Farm well yard | Old Wenna, her grandson Pip | Walk, look, pick up, the pack, talk, fill a cup, give it, a lead, the device | Clicks, drag-to-give, first conversation, leads |
+| B2 | The tinker's book | Tinker's workshop (indoor) | Tinker Odo, his daughter Nell | A book in hand, Do, Type it for me, three makes from the book, a failure and why, using what you made | Book UX, the judge on written recipes, failure feedback |
+| B3 | The training yard | Garrison yard | Arms-master Hal | Two hands, swap, blows, wind-ups and reach, the shield, a bout, yielding | Combat feel and fairness |
+| B4 | Patched up | Inn back room (indoor) | Mother Brea, a hurt drover | Wounds and health, treating yourself and others, a remedy, Rewind | Injury UI, `treat_self`, Rewind |
+| B5 | Fire and water | Riverside camp | Charcoal burner Ulf | Containers, fill and pour, fire from flint and steel, heating water, putting a fire out | Heat, water, everyday physics |
+| B6 | The common room | Inn common room (indoor) | Innkeeper Doran, a drover, a pilgrim | Say and Do in one line, asking, overhearing, a group answering, walking away, People | Talk, group scenes, leads |
+| B7 | A fair trade | Water mill | Miller Ada, her hired man | Deals, a lent tool, a deal done, the goal tracker, pinning | Deals end to end |
+| B8 | Whose is it? | Village market | Potter Sela, Watchman Corr | Owned or free, witnesses, standing, giving back, forgiveness | Ownership, theft and forgiveness |
+| B9 | Something new | A brook with no bridge | Shepherd girl Mey, her father | Inventing without a book, showing it, someone amazed | The magic moment (P1, P3), awe |
+
+**Advanced:**
+
+| # | Level | Map | New people | Teaches / refines |
+| --- | --- | --- | --- | --- |
+| A1 | The sceptic | Ferry landing | Ferryman Gorm, his wife Ilse | Persuasion: evidence, deeds, someone he trusts to speak for you |
+| A2 | Word gets around | A hamlet | Four or five neighbours | Reputation travels: help or wrong one and the news spreads |
+| A3 | A wonder | Shrine and fishing hut | A priestess, a fisherman | Showing modern science; awe and fear |
+| A4 | Caught | Market hall (indoor) | A merchant, a watchman, a child thief | Crime and consequence: witnesses, guards, giving back, arrest, fleeing |
+| A5 | The armourer's yard | Ruined smithy yard and a book | An old soldier | Several-step making; weapons and armour tested on a dummy and in a bout |
+| A6 | Heavy lifting | A cart stuck in a lane | A carter, passers-by | An open problem: lever, rollers, rope, asking for help |
+| A7 | Ambush | Forest road | Two robbers | Several attackers, talking someone down, yielding, running, throwing |
+| A8 | Three voices | Farmhouse kitchen (indoor) | Two quarrelling brothers, their mother | Settling a dispute; opinions change |
+| A9 | A secret kept | Monastery cloister (indoor) | A lay brother, the cellarer | Earning trust until someone confides; what you do with it |
+| A10 | The gatekeeper | Walled manor | A porter, a steward, a groom | Capstone: get in by any of several routes |
+
+**Phases:**
+
+- **A. Any level on any map** (built): maps and levels as data (§8.8); the grid, places, routines, the gate and the
+  captain read from the journey's level; the hidden test room plays every system off the village.
+- **B. The client draws any map and any person:** the village's map moves into its own scene; people's art comes
+  from their card.
+- **C. The Training screens:** the catalogue with done marks, the level complete screen, a rating.
+- **D. Art tools:** a person's four-view sheet and a map's pieces from the image model, in the village's style.
+- **E. B1 and B2,** then the user plays them before the rest are built.
+- **F. B3 to B9** in batches, then the first morning retires.
+- **G. A1 to A10.**
+
+**Exit criteria (each level):**
+- its content checks pass;
+- a stub run through every step passes;
+- the live evals of its suggested words pass;
+- a scripted live playtest has no blockers;
+- a timed run fits its minutes;
+- the level report shows the run.
+
+**Answers:** where players get stuck in each system, and which systems need work before the main game's quests are
+built on them.
+
 ---
 
 ## 12. Assumptions register
@@ -1405,6 +1481,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-59 | 2026-10-01 | **Training: many short levels, each on its own map with its own people (planned); first, any level on any map (built).**<br><br>**The plan (§11 Training):** a Training button with two tracks, Basics (9 guided levels, about 5 minutes each) and Advanced (10 open levels, 5 to 8 minutes). Each level is its own small map, some indoors, with new people; every level is open, with the next suggested. Each isolates a gameplay element and doubles as a lab for it, so what players do in it improves the systems the main game shares. New maps and people are painted by the image model in the village's style. "The first morning" retires once the basics cover its lessons.<br><br>**Built (phase A):** a journey plays a level (`data/content/levels`): its map (`data/maps`: size, where people walk, buildings, obstacles and trees, named places, and optionally the gate, the inside and where an arrested stranger is taken), its cast, its things and, if guided, its steps. A level may take another's map, cast and things (`base`). The grid, sight, places, routines, the gate's guards and the captain come from the journey's level. A map without a gate has no halts; a level without anyone who decides has no captain; people skip tasks at places not on the map. The village and the first morning play exactly as before (the golden journeys match; the steel file now carries its gear reading, which was worked out on demand before). | The user: "split it up into many short 5 minute levels … each one of them should be its own self contained level on its own different map, some can even be inside like an inn, with different new npcs … another purpose of the training will be to refine and improve specific gameplay elements so we can improve the main game afterwards".<br><br>**Chosen (asked):** generated art in the village style; levels are episodes in the same world, so their people can return in quests; all open, the next suggested; the first morning retires once the basics cover it. |
 | D-58 | 2026-10-01 | **Clean up: one way to do each thing, content out of code, one rule language.**<br><br>**Saves store only what changed:** each event is a patch (`patch.py`), a full copy every 512 events; older journeys and a new starting world retire saves (D-04). **One pipeline for every command** (`commands.py`): repeats, stale views, finished journeys, the busy lock and model calls outside it, once.<br><br>**Modules by job, in layers** (§8.5): `minds`, `crafting` and `talk` split; a public people API (`cast`); the numbers in `tuning.py`; content read once (`content.py`); record shapes named (`shapes.py`).<br><br>**One rule language** (`rules.py`, §8.8): conditions and effects are registered with the fields they need. The tutorial, deals' `done_when`, people's tasks and the parked stories all use it; the tutorial's special cases are **roles** in its data. The cast, the starting things, the captain and the tutorial's things are content; a content test checks it all.<br><br>**The client** in parts (`net`, `object_art`, `world_view`, `player_input`, `actions`; the UI's screens, pack and developer views); the service sends what the client shows (`views.py`); `tools/check.ps1` runs every check, before every commit. | The user, after the whole-game review (code 5/10, tooling 4/10): "clean up and optimise and make the code more DRY and general … balance having hard coded rules with being able to do anything", before splitting the tutorial into training maps.<br><br>**Chosen:** old saves may break; content out of code with one shared rule language (the judge keeps ruling physics); the parked storylines ported but still off; one check command and a pre-commit hook. Behaviour was locked first by golden journeys, which matched after every step. |
 | D-57 | 2026-09-30 | **Say and do in one line; the first morning ends at the gate; two hands.** *(D-56 is the parked storylines work.)*<br><br>**One line, both:** spoken words blue in quotes, deeds red, with Tab switching mid-line and putting the quotes in. The backend already took a Do line with quotes as `both`; with nobody addressed, the nearest person now hears the words.<br><br>**The tutorial (story v3):**<br>- Mara fetches Kade, and they stand a moment before both come back.<br>- Kade sizes the stranger up and lends a one-handed practice sword and a shield, then the bout.<br>- He asks why they're here.<br>- A steel file and a fire he sees.<br>- He speaks for the stranger to Roderic.<br>- Roderic lets them in: himself if Kade told him they want in, otherwise when asked, on Kade's word.<br><br>**Fixed from play:**<br>- the fire step counted the earlier poultice as the demonstration, so it ended before any fire;<br>- flint on a soft iron nail was ruled sparkless;<br>- Kade walked off while Mara was talking to him.<br><br>**Found by the live tutorial playthrough (`tools/playtest_tutorial.gd`):** Mara stood beside the stranger during the bout, and a swing still in the air as it ended hit her; Kade then fought for real and killed the stranger. Now:<br>- in a practice bout the stranger's blows reach only the partner;<br>- a swing that lands after the bout is over is checked;<br>- Mara stands clear;<br>- Kade's protection (a blow at him is a bout, not an assault) lasts through all his lessons, and a talk with him no longer sends him back to his day mid-lesson.<br><br>**Two hands:** a two-handed weapon still takes both, but whatever is let go of is now named ("The wicker shield goes back in your pack: the practice staff takes both hands"), in the reply and atop Pack & gear. | The user: "we should be able to say and do things in the same dialogue … half of it will be red the other half can be blue"; "the practice combat doesn't really make sense and Kade walks away from Mara while she's talking to him"; "it said I showed them the fire before I actually made the fire and when I made the fire it just got stuck"; "the tutorial should end with Kade telling Roderic about you and then Roderic letting you in. But you still need to ask if Roderic doesn't know you want to enter the city"; "when I equip the shield in my left hand it unequips the staff".<br><br>**Live:** the fire 10/10, including the player's own wording, with Kade seeing it each time. |
 | D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A to D of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map.<br><br>**Bug bash (D):** a scripted live playthrough (`tools/playtest_demo.gd`) found and fixed:<br>- theft at a bucket Hessa had offered: jobs now lend what they need;<br>- admission on the stranger's claim alone: code now requires evidence the guard holds (`grounds_to_admit`);<br>- no halt after a vouch: hearsay isn't the guards dealing with the stranger;<br>- the tracker showing facts instead of things to do.<br><br>The whole Hessa route now plays through live. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |

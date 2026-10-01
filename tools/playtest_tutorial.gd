@@ -96,9 +96,9 @@ func settle(limit_s := 120.0) -> bool:
 var blocked := {}
 
 
-## The same cells the server treats as solid (buildings and obstacles in data/world_geometry.json).
+## The same cells the server treats as solid (buildings and obstacles in data/maps/village.json).
 func load_blocked() -> void:
-	var geometry: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_geometry.json"))
+	var geometry: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/village.json"))
 	for item in geometry.get("buildings", []) + geometry.get("obstacles", []):
 		var c: Array = item.cells
 		for x in range(int(c[0]), int(c[0]) + int(c[2])):

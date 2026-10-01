@@ -1,5 +1,5 @@
 extends Control
-## The journal's map, drawn in ink on parchment from data/world_geometry.json. Only places you have
+## The journal's map, drawn in ink on parchment from data/maps/village.json. Only places you have
 ## walked near are revealed (fog of war, remembered per journey). People you've met show where you
 ## last saw them; open leads get a small red mark on the person they point to. Nothing is marked in
 ## the world itself.
@@ -20,7 +20,7 @@ var small: Font = UITheme.serif(false, true)
 func setup(owner_ui: Control, owner_game: Node2D) -> void:
 	ui = owner_ui
 	game = owner_game
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_geometry.json"))
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/village.json"))
 	geometry = parsed if typeof(parsed) == TYPE_DICTIONARY else {"buildings": [], "obstacles": []}
 	custom_minimum_size = Vector2(640, 440)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL

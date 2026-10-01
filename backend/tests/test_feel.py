@@ -3,6 +3,7 @@ from collections import deque
 from fastapi.testclient import TestClient
 
 import app as service
+import content
 
 
 def test_building_and_tree_geometry_rejects_moves_without_mutating_save(tmp_path, monkeypatch):
@@ -28,11 +29,11 @@ def test_building_and_tree_geometry_rejects_moves_without_mutating_save(tmp_path
 
 
 def test_geometry_leaves_all_npcs_and_resources_accessible():
-    rectangles = service.WORLD_GEOMETRY["buildings"] + service.WORLD_GEOMETRY["obstacles"]
-    objects = list(service.m2.seed_m2()["objects"].values())
+    rectangles = content.MAPS["village"]["buildings"] + content.MAPS["village"]["obstacles"]
+    objects = list(service.m2.seed_m2({"scenario": "village", "npcs": []})["objects"].values())
     # Map trees are objects standing on their own obstacle cell; the player must reach a neighbouring cell.
     trees = [o for o in objects if o.get("geometry_name")]
-    points = service.npc_sim.seed_npcs() + [
+    points = service.npc_sim.seed_npcs({"scenario": "village"}) + [
         o for o in objects if not o.get("geometry_name") and o["holder_id"] is None
     ]  # (Gear someone holds is where they are.)
     for point in points:

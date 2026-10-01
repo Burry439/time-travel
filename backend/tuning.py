@@ -38,7 +38,6 @@ CARRY_LIMIT_KG = 20.0
 
 # --- The gate --------------------------------------------------------------------------------------------------------
 
-GATE_ZONE = (38, 58, 17)  # x from, x to, rows up to: the gate approach, where guards stop strangers.
 GATE_HOLD_CELLS = 8.0  # A guard standing this close steps into the gap to stop anyone walking through.
 HALT_REACH_CELLS = 14.0
 HALT_EVERY_MS = 180_000  # A stranger who was stopped isn't stopped again for a while.

@@ -234,7 +234,7 @@ def test_disabled_ai_is_honest_and_older_journeys_are_refused(world, monkeypatch
 
 
 def test_new_road_materials_are_reachable_and_described():
-    objects = service.m2.seed_objects()
+    objects = service.m2.seed_objects({"scenario": "village", "npcs": []})
     for oid in ("flint_a", "stone_b", "grass_a", "reeds_a", "vine_a", "bark_a", "resin_a"):
         assert objects[oid]["owner_id"] is None and objects[oid]["materials"]
     assert consequences.placeholder_category(["flint"]) == "stone"
@@ -477,7 +477,7 @@ def test_killing_a_person_is_permanent_and_they_stop_moving():
     bren = next(n for n in state["npcs"] if n["id"] == "npc_bren_marr")
     assert not bren["alive"] and bren["health"] == 0 and bren["controller"]["activity"] == "dead"
     where = (bren["x"], bren["y"])
-    later = service.npc_sim.advance_npcs(state["npcs"], 60_000, state["sim_time_ms"])
+    later = service.npc_sim.advance_npcs(state, state["npcs"], 60_000, state["sim_time_ms"])
     assert next((n["x"], n["y"]) for n in later if n["id"] == "npc_bren_marr") == where
     again = crafting.validate(state, harm("npc_bren_marr", "killed", blade))
     assert again["category"] == "blocked" and "already dead" in again["reason"]

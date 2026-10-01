@@ -8,6 +8,7 @@ import app as service
 import cast
 import clock
 import combat
+import content
 import conversation
 import device
 import encounter
@@ -16,6 +17,8 @@ import reputation
 import rules
 import scenario
 import village
+
+STEPS = content.LEVELS["tutorial"]["steps"]
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +43,7 @@ def npc(state, npc_id):
 
 
 def at_step(state):
-    return scenario.STEPS[state["tutorial"]["step"]]["id"] if scenario.active(state) else "done"
+    return STEPS[state["tutorial"]["step"]]["id"] if scenario.active(state) else "done"
 
 
 def carry(state, oid, **fields):
@@ -227,7 +230,7 @@ def test_the_whole_story_moves_on_by_outcomes():
 def at_captain(told_kade: str):
     """The story at its last task, Kade's word given to the captain after hearing this from the stranger."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "fire")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(STEPS) if s["id"] == "fire")
     kade = npc(state, "npc_kade_east")
     cast.mind(kade).setdefault("talk", []).append({"who": "stranger", "text": told_kade, "at": 0})
     scenario.run(state, [{"kind": "vouch", "npc": "npc_kade_east", "speech": "kade_to_the_captain"}], 0)
@@ -262,14 +265,14 @@ def test_kade_stays_for_his_lessons_and_does_not_let_them_in_himself():
 
     state = tutorial_state()
     kade = npc(state, "npc_kade_east")
-    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "why")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(STEPS) if s["id"] == "why")
     assert rules.role(state, kade)
     moves = conversation.replies(state, kade)
     assert not any(o["act"] in ("go_tell", "vouch", "call_guard", "admit") for o in moves.values())
     state["tutorial"]["fired"].append("kade:lent")  # He has come over.
     cast.set_job(kade, {"kind": "watch", "until": 20_000}, 0)  # What a talk leaves him with...
     assert scenario.tick(state) and kade["mind"]["job"]["until"] >= 600_000  # ...renewed: he stays for his lessons.
-    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "captain")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(STEPS) if s["id"] == "captain")
     assert not rules.role(state, kade)
 
 
@@ -280,7 +283,7 @@ def test_an_older_tutorial_journey_simply_carries_on_as_a_journey():
 
 
 def test_every_step_is_well_formed():
-    for step in scenario.STEPS:
+    for step in STEPS:
         assert step["cards"] and all(isinstance(c, str) and c for c in step["cards"]), step["id"]
         if step["check"]["kind"] != "always":
             assert step["task"] and step.get("help"), step["id"]
@@ -334,7 +337,7 @@ def test_the_device_knows_only_what_the_stranger_does():
     flat = str(context)
     assert "secrets" not in flat and "late shifts" not in flat  # Bren's secret about Oren is nowhere in it.
     assert context["tutorial"] and context["step"]["title"] == "Walking" and "Space" in context["controls"]
-    assert device.fallback_answer(state) == scenario.STEPS[1]["help"][0]
+    assert device.fallback_answer(state) == STEPS[1]["help"][0]
 
 
 # --- Over HTTP ------------------------------------------------------------------------------------------------
@@ -357,11 +360,11 @@ def test_a_tutorial_journey_over_http_reads_progresses_asks_and_replays(world):
     state = http.post(f"{run}/tutorial/ui", json={"key": "inspect"}).json()["state"]
     assert state["tutorial"]["step"] == 3 and "inspect" in state["tutorial"]["ui_done"]
     body = post(world, state, "device/ask", {"question": "What should I do?"})
-    assert body["answer"] == scenario.STEPS[3]["help"][0]  # No model in tests: the step's written help.
+    assert body["answer"] == STEPS[3]["help"][0]  # No model in tests: the step's written help.
     state = body["state"]
     assert state["journal"][-1]["kind"] == "device" and state["journal"][-1]["question"] == "What should I do?"
     skipped = http.post(f"{run}/tutorial/skip").json()["state"]
-    assert skipped["tutorial"]["step"] == 4 and skipped["objective"] == scenario.STEPS[4]["task"]
+    assert skipped["tutorial"]["step"] == 4 and skipped["objective"] == STEPS[4]["task"]
     assert http.get(run).json() == skipped  # Replays exactly.
     normal = http.post("/runs", json={"mode": "normal", "scenario": "tutorial"}).json()
     assert http.post(f"/runs/{normal['run_id']}/tutorial/skip").status_code == 403
@@ -372,7 +375,7 @@ def test_a_blow_at_kade_during_his_lessons_is_the_bout_not_an_assault():
     """Seen in play (30 Sep 2026): a punch at Kade with an empty left hand began a real fight, and he killed the
     stranger with his spear. While Kade is teaching, any blow at him starts the practice bout (D-53)."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "arm")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(STEPS) if s["id"] == "arm")
     state["tutorial"]["read"] = state["tutorial"]["step"]
     kade = npc(state, "npc_kade_east")
     state["player"].update(x=48, y=60)
@@ -390,7 +393,7 @@ def test_in_a_bout_blows_reach_only_the_partner_and_a_late_swing_is_checked():
     the air as it ended hit her, and Kade fought for real. In a practice bout the stranger's blows are for the
     partner only, and one that lands after it's over is checked (D-57)."""
     state = tutorial_state()
-    state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == "bout")
+    state["tutorial"]["step"] = next(i for i, s in enumerate(STEPS) if s["id"] == "bout")
     state["player"].update(x=48, y=60)
     npc(state, "npc_kade_east").update(x=49, y=60)
     npc(state, "npc_mara_venn").update(x=48, y=61)  # Right in front of the stranger, who faces south.

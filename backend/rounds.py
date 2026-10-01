@@ -182,7 +182,7 @@ def keep_promise(
                 None,
             )
             if named is None and words & {"captain", "guard", "guards", "watch", "gate"}:
-                named = cast.find(state["npcs"], cast.CAPTAIN)
+                named = cast.captain(state)
             task = talk.errand(state, npc, named["id"], errand_message or promised) if named else None
         if task is not None:
             return "go_tell", task[0]["id"], task[1], None

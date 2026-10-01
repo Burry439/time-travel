@@ -1,0 +1,80 @@
+{
+ "id": "test_room",
+ "version": 1,
+ "name": "a small room",
+ "notes": "A small room for tests and for trying the engine away from the village (D-59): see data/maps/village.json for the fields.",
+ "size": [
+  20,
+  16
+ ],
+ "walk": [
+  0,
+  0,
+  20,
+  16
+ ],
+ "trees": {
+  "oak": {
+   "name": "potted oak sapling",
+   "mass_kg": 40.0,
+   "length_m": 1.6,
+   "description": "A young oak in a tub, taller than a child."
+  }
+ },
+ "buildings": [
+  {
+   "name": "Table",
+   "cells": [
+    9,
+    6,
+    3,
+    2
+   ]
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Barrel",
+   "cells": [
+    17,
+    12,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Sapling",
+   "cells": [
+    2,
+    12,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_sapling"
+  }
+ ],
+ "places": {
+  "hearth": {
+   "name": "the hearth",
+   "cell": [
+    3,
+    3
+   ]
+  },
+  "window": {
+   "name": "the window",
+   "cell": [
+    16,
+    3
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    10,
+    14
+   ]
+  }
+ }
+}

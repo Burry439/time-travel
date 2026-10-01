@@ -1,5 +1,5 @@
-"""A scenario: a fixed story on the map told in steps, all of it content (data/content/tutorial.json: the first
-morning, GDD D-50, D-52, D-57). Each step's cards are read first (the client says so: `read`), and only then does
+"""A scenario: a guided story on a level's map told in steps, all of it content (data/content/levels: the first
+morning, GDD D-50, D-52, D-57; the training levels, D-59). Each step's cards are read first (the client says so: `read`), and only then does
 its check count, one step at a time. Checks and triggers are conditions in the rule language (rules.py), decided
 by code, so any way the player finds counts; what the story does (someone speaks, walks over, lends something,
 a bout begins) are effects, registered here. The parts it gives people for a while (Kade the teacher) are roles,
@@ -17,14 +17,19 @@ import content
 import device
 import gatekeeping
 import gear
-import m2
 import reputation
 import rules
 import speech
 from shapes import State
 
-STORY = content.TUTORIAL
-STEPS: list[dict] = STORY["steps"]
+
+def story(state: State) -> dict:
+    """The journey's level: its steps, roles, speeches and the device's reactions."""
+    return content.level(state)
+
+
+def steps(state: State) -> list[dict]:
+    return story(state).get("steps") or []
 
 
 def active(state: State) -> bool:
@@ -37,12 +42,7 @@ def step(state: State) -> dict | None:
 
 
 def setup(state: State) -> None:
-    """A scenario journey: its own things in the world (lent gear on the people who lend it), and the story at its
-    first step."""
-    for spec in STORY.get("things", []):
-        holder = cast.find(state["npcs"], spec.get("carried_by") or "")
-        at = {"x": holder["x"], "y": holder["y"]} if holder else {}
-        state["objects"][spec["id"]] = m2.authored({**spec, **at})
+    """A guided journey: the story at its first step (its things are already in the world, m2.seed_objects)."""
     state["tutorial"] = {
         "step": 0,
         "started_at": 0,
@@ -52,7 +52,7 @@ def setup(state: State) -> None:
         "read": -1,
         "ui_done": [],
         "flags": {},
-        "version": STORY["version"],
+        "version": story(state)["version"],
     }
     state["device_log"] = []
     state["journal"] = state.get("journal") or []
@@ -92,7 +92,7 @@ def tick(state: State) -> bool:
     now = state.get("sim_time_ms", 0)
     changed = _react(state, now)
     changed = _stay(state, now) or changed
-    current = STEPS[tutorial["step"]]
+    current = steps(state)[tutorial["step"]]
     if tutorial.get("read", tutorial["step"]) < tutorial["step"]:
         return changed  # Still reading its cards.
     ctx = _ctx(state, now)
@@ -113,9 +113,9 @@ def _complete(state: State, current: dict, now: int) -> None:
     if current.get("done"):
         device.says(state, current["done"], "story")
     run(state, current.get("on_done", []), now)
-    if tutorial["step"] + 1 >= len(STEPS):
+    if tutorial["step"] + 1 >= len(steps(state)):
         tutorial["done"] = True
-        state["objective"] = "Get inside the city"
+        state["objective"] = story(state)["objective"]
         return
     tutorial["step"] += 1
     _start_step(state, now)
@@ -127,7 +127,7 @@ def skip(state: State) -> None:
     if not active(state):
         return
     tutorial = state["tutorial"]
-    current = STEPS[tutorial["step"]]
+    current = steps(state)[tutorial["step"]]
     now = state.get("sim_time_ms", 0)
     for trigger in current.get("triggers", []):
         key = f"{current['id']}:{trigger['id']}"
@@ -139,7 +139,7 @@ def skip(state: State) -> None:
 
 
 def _start_step(state: State, now: int) -> None:
-    current = STEPS[state["tutorial"]["step"]]
+    current = steps(state)[state["tutorial"]["step"]]
     state["tutorial"]["started_at"] = now
     state["tutorial"]["started_seq"] = state.get("event_seq", 0)  # Anything made after this is this step's.
     state["objective"] = current.get("task") or current["title"]
@@ -160,7 +160,7 @@ def _react(state: State, now: int) -> bool:
     for kind, happened in seen.items():
         if happened and kind not in tutorial["reacted"]:
             tutorial["reacted"].append(kind)
-            device.says(state, STORY["reactions"][kind], "reaction")
+            device.says(state, story(state)["reactions"][kind], "reaction")
             changed = True
     return changed
 
@@ -169,7 +169,7 @@ def _stay(state: State, now: int) -> bool:
     """Someone whose role is to stay with the stranger (Kade, once he has come over, until he goes to the captain)
     has their stay renewed whenever they're only standing or watching. Anything else they're doing is left alone."""
     changed = False
-    for part in STORY.get("roles", []):
+    for part in story(state).get("roles", []):
         npc = cast.find(state["npcs"], part["npc"])
         if npc is None or not part.get("stays") or rules.role(state, npc) is not part:
             continue
@@ -274,7 +274,7 @@ def _vouch(state, spec, ctx):
     npc = _person(state, spec)
     if not (npc and npc.get("alive", True) and not npc.get("down")):
         return
-    words = {**STORY.get("speeches", {}).get(spec.get("speech"), {}), **spec}
+    words = {**story(state).get("speeches", {}).get(spec.get("speech"), {}), **spec}
     for key, known in words.get("notes", {}).items():
         state["tutorial"].setdefault("flags", {})[key] = rules.holds(state, known, ctx)
     why, summary = _text(state, words["why"], ctx), _text(state, words["summary"], ctx)

@@ -35,13 +35,8 @@ for name, rect in {
 }.items():
     resources += f'\n[sub_resource type="AtlasTexture" id="Atlas_{name}"]\natlas = ExtResource("26_foliage")\nregion = Rect2{rect}\n'
 
-geometry_path = ROOT / "data/world_geometry.json"
-geometry = json.loads(geometry_path.read_text())
-trees = [(10, 65), (32, 64), (59, 65), (73, 63), (88, 66), (13, 53), (58, 54),
-         (85, 50), (8, 40), (31, 38), (62, 40), (88, 38), (8, 29), (35, 28),
-         (87, 22), (29, 16), (65, 16), (8, 16), (84, 12)]
-geometry["obstacles"] = [{"name": f"Tree{i:02}", "cells": [x, y, 1, 1]} for i, (x, y) in enumerate(trees)]
-geometry_path.write_text(json.dumps(geometry, indent=2) + "\n")
+geometry = json.loads((ROOT / "data/maps/village.json").read_text(encoding="utf-8"))  # The map's own data (D-59).
+trees = [tuple(item["cells"][:2]) for item in geometry["obstacles"] if item.get("tree")]
 for item in geometry["buildings"] + geometry["obstacles"]:
     _, _, w, h = item["cells"]
     resources += f'\n[sub_resource type="RectangleShape2D" id="Foot_{item["name"]}"]\nsize = Vector2({w*32}, {h*32})\n'

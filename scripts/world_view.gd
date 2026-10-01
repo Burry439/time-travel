@@ -119,11 +119,12 @@ func _toward(along: Vector2) -> int:
 	return (3 if along.x > 0.0 else 1) if absf(along.x) > absf(along.y) else (0 if along.y > 0.0 else 2)
 
 
-func apply_building_geometry(version: int) -> void:
-	var file_name := "world_geometry_v2.json" if version == 2 else "world_geometry.json"
-	var geometry = JSON.parse_string(FileAccess.get_file_as_string("res://data/" + file_name))
+## Collisions from the map's data (data/maps), the same rectangles the server treats as solid.
+func apply_building_geometry(map_id := "village") -> void:
+	var file_name := "res://data/maps/%s.json" % map_id
+	var geometry = JSON.parse_string(FileAccess.get_file_as_string(file_name))
 	if typeof(geometry) != TYPE_DICTIONARY:
-		push_error("Could not load building geometry: " + file_name)
+		push_error("Could not load the map: " + file_name)
 		return
 	for item in geometry["buildings"] + geometry["obstacles"]:
 		var body := game.get_node_or_null("BuildingCollision/" + str(item["name"])) as StaticBody2D
@@ -134,7 +135,7 @@ func apply_building_geometry(version: int) -> void:
 		var rectangle := RectangleShape2D.new()
 		rectangle.size = Vector2(float(cells[2]), float(cells[3])) * game.CELL
 		shape_node.shape = rectangle
-		shape_node.set_deferred("disabled", version < 2)
+		shape_node.set_deferred("disabled", false)
 		body.position = Vector2(float(cells[0]) + float(cells[2]) * 0.5,
 			float(cells[1]) + float(cells[3]) * 0.5) * game.CELL
 

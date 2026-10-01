@@ -1,0 +1,196 @@
+{
+ "id": "test_room",
+ "title": "A test room",
+ "hidden": true,
+ "notes": "For tests and trying the engine (D-59): two people from the village in a small room, no guard, no captain, no gate, and a two-step guided story. Not shown in Training.",
+ "map": "test_room",
+ "start": {
+  "cell": [
+   10,
+   12
+  ]
+ },
+ "objective": "Try anything",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 60,
+ "cast": {
+  "npc_hessa_marr": {
+   "role": "Innkeeper",
+   "step_ms": 420,
+   "goal": "keep the room tidy",
+   "anchors": [
+    [
+     4,
+     4,
+     "work",
+     6000
+    ],
+    [
+     15,
+     4,
+     "look",
+     5000
+    ]
+   ]
+  },
+  "npc_tomas_reed": {
+   "role": "Carpenter",
+   "step_ms": 400,
+   "goal": "mend the table",
+   "anchors": [
+    [
+     12,
+     9,
+     "work",
+     8000
+    ],
+    [
+     6,
+     10,
+     "look",
+     4000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "stick_room",
+   "name": "fallen branch",
+   "x": 8,
+   "y": 12,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A dry, fairly straight branch about 1.5 m long and wrist-thick.",
+   "flags": [
+    "rigid",
+    "combustible",
+    "floats"
+   ],
+   "length_m": 1.5,
+   "capabilities": [
+    "carry",
+    "tie"
+   ]
+  },
+  {
+   "id": "cord_room",
+   "name": "short cord",
+   "x": 9,
+   "y": 13,
+   "mass_kg": 0.2,
+   "materials": [
+    "plant fiber"
+   ],
+   "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "length_m": 1.0
+  },
+  {
+   "id": "stone_room",
+   "name": "loose stone",
+   "x": 11,
+   "y": 13,
+   "mass_kg": 2.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A loose, rounded stone the size of a fist.",
+   "flags": [
+    "rigid"
+   ],
+   "capabilities": [
+    "carry",
+    "support"
+   ]
+  },
+  {
+   "id": "cup_room",
+   "name": "wooden cup",
+   "x": 5,
+   "y": 5,
+   "mass_kg": 0.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A turned wooden drinking cup.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "floats"
+   ],
+   "owner_id": "npc_hessa_marr",
+   "capacity_l": 0.3
+  },
+  {
+   "id": "basin_room",
+   "name": "water basin",
+   "x": 14,
+   "y": 3,
+   "mass_kg": 30.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A stone basin of clean water.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "water_l": 20.0
+  }
+ ],
+ "steps": [
+  {
+   "id": "walk",
+   "title": "To the hearth",
+   "cards": [
+    "Walk to the hearth."
+   ],
+   "task": "Walk to the hearth",
+   "focus": {
+    "cell": [
+     3,
+     3
+    ]
+   },
+   "check": {
+    "kind": "near",
+    "cell": [
+     3,
+     3
+    ],
+    "within": 2
+   },
+   "done": "Warm."
+  },
+  {
+   "id": "talk",
+   "title": "A word",
+   "cards": [
+    "Talk to Hessa."
+   ],
+   "task": "Talk to Hessa",
+   "focus": {
+    "npc": "npc_hessa_marr"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_hessa_marr"
+   },
+   "done": "Good."
+  }
+ ],
+ "reactions": {
+  "killed": "You killed someone. Rewind to the last calm moment.",
+  "arrested": "You were taken away. Rewind to try again.",
+  "dead": "You died. Rewind to the last calm moment."
+ }
+}

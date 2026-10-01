@@ -253,7 +253,7 @@ func enter_run(state: Dictionary, save_pointer := true) -> void:
 	request_busy = false
 	ui.modal.hide()
 	ui.modal_kind = ""
-	view.apply_building_geometry(int(state.get("geometry_version", 1)))
+	view.apply_building_geometry()
 	last_trace = null
 	for child in $M2Objects.get_children():
 		if child.has_meta("dynamic"):
@@ -275,8 +275,6 @@ func enter_run(state: Dictionary, save_pointer := true) -> void:
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	view.sync()
 	ui.enter_run(state)
-	if int(state.get("geometry_version", 1)) < 2:
-		ui.notify("Earlier map restored. Begin a new journey to test building and tree collisions.")
 	if state["inside_city"]:
 		show_victory()
 		gameplay_active = false

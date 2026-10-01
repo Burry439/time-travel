@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Every authored thing in the world at the start (the map's trees are added in code). Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), water_l (a fixed water source such as a trough), capacity_l (what a container holds), length_m, capabilities (instead of what its flags give), feature 'fire' with burning true (a lasting heat source), no_sprite (part of a building's art), art 'scene' (drawn in the scene itself), installed_in (a fixture it starts fitted into: the cracked bar across the gate), worn_by or carried_by with slots (someone's own gear, D-49), gear, readable (a book, D-52), count. The old wainwright's yard (D-51) is in the bottom-right corner. A change to the starting world is a new seed: raise SEED_VERSION in backend/store.py, which retires journeys begun on the older world.",
+ "notes": "Every authored thing in the world at the start (the village map's trees are added from data/maps/village.json). Add more here to experiment: every entry needs an id, name, open cell (x, y), mass_kg, materials, description and flags. Items heavier than 20 kg cannot be carried. Run tools/generate_material_art.py afterwards to paint them. Optional fields: owner_id (an NPC id; others' property can still be used, and it is recorded), water_l (a fixed water source such as a trough), capacity_l (what a container holds), length_m, capabilities (instead of what its flags give), feature 'fire' with burning true (a lasting heat source), no_sprite (part of a building's art), art 'scene' (drawn in the scene itself), installed_in (a fixture it starts fitted into: the cracked bar across the gate), worn_by or carried_by with slots (someone's own gear, D-49), gear, readable (a book, D-52), count. The old wainwright's yard (D-51) is in the bottom-right corner. A change to the starting world is a new seed: raise SEED_VERSION in backend/store.py, which retires journeys begun on the older world.",
  "objects": [
   {
    "id": "branch_a",
@@ -2283,20 +2283,5 @@
    ],
    "readable": "recipe_book"
   }
- ],
- "trees": {
-  "notes": "Generated from the TreeNN obstacles in data/world_geometry.json; every third tree is a cypress (matching scenes/main.tscn Foliage).",
-  "oak": {
-   "name": "oak tree",
-   "mass_kg": 900.0,
-   "length_m": 9.0,
-   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves."
-  },
-  "cypress": {
-   "name": "cypress tree",
-   "mass_kg": 350.0,
-   "length_m": 10.0,
-   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage."
-  }
- }
+ ]
 }

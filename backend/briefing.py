@@ -17,9 +17,6 @@ import reputation
 import tuning
 from shapes import Npc, State
 
-PLACES = content.PLACES
-
-
 IMPRESSION_LEVELS = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
 
 
@@ -61,10 +58,10 @@ def compass(start: tuple[int, int], goal: tuple[int, int]) -> str:
     return f"about {steps} steps {'-'.join(w for w in (ns, ew) if w)}"
 
 
-def way_around_town(npc: Npc) -> list[str]:
+def way_around_town(state: State, npc: Npc) -> list[str]:
     """What anyone who lives here knows: where things are, from where this person stands."""
     seen, lines = set(), []
-    for place in PLACES.values() if isinstance(PLACES, dict) else ():
+    for place in content.map_of(state)["places"].values():
         if place["name"] in seen:
             continue
         seen.add(place["name"])
@@ -302,7 +299,7 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
     context.update(
         {
             "why_they_are_here": why_here(state, npc) or "An ordinary moment; the stranger came up to them.",
-            "the_way_around_town": way_around_town(npc),
+            "the_way_around_town": way_around_town(state, npc),
             "respect_and_awe": {
                 "respect": reputation.in_words(view.get("respect", 0.0), ["none", "a little", "real", "great"]),
                 "awe": reputation.in_words(view.get("awe", 0.0), ["none", "a touch", "deep", "overwhelming"]),

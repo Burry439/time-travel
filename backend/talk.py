@@ -144,7 +144,7 @@ def exchange(
             f"{npc['name']} vouched for the stranger and says they can be trusted.",
         )
     admission = _hand_over(state, npc, act, target, line, event_id, learned, lent)
-    if reward_job and npc_id != cast.CAPTAIN:
+    if reward_job and npc_id != cast.captain_id(state):
         my_mind["vouched"] = True
         gatekeeping.speak_for(state, npc, reward_job[0], reward_job[1], event_id, now)
     else:

@@ -200,7 +200,7 @@ def world(tmp_path, monkeypatch):
 def walk(http, state, x, y):
     """Walk around buildings (the gate rows count as open once the gate is)."""
     start = (state["player"]["x"], state["player"]["y"])
-    previous, steps = paths.bfs(start, paths.blocked_cells(state), 200)
+    previous, steps = paths.bfs(start, paths.grid(state), 200)
     goal = min(steps, key=lambda c: (abs(c[0] - x) + abs(c[1] - max(y, 9)), steps[c]))
     path = []
     while goal != start:

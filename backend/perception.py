@@ -258,12 +258,12 @@ def perceive(state: State, entry: dict) -> list[dict]:
             if not npc.get("alive", True) or npc.get("down"):
                 continue  # The dead and the knocked-down see nothing.
             views = []
-            if cast.distance(npc, here) <= tuning.SIGHT_CELLS and paths.line_of_sight(cast.cell(npc), here):
+            if cast.distance(npc, here) <= tuning.SIGHT_CELLS and paths.line_of_sight(state, cast.cell(npc), here):
                 views.append(cast.distance(npc, here))
             if (
                 victim is not None
                 and cast.distance(npc, victim) <= tuning.SIGHT_CELLS
-                and paths.line_of_sight(cast.cell(npc), cast.cell(victim))
+                and paths.line_of_sight(state, cast.cell(npc), cast.cell(victim))
             ):
                 views.append(cast.distance(npc, victim))
             close = npc["id"] in involved

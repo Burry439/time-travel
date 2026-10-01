@@ -1,6 +1,6 @@
 """The world's starting things (materials, people's stock and gear, the gate's bar, trees) and the carrying rules.
-What they are is content (data/content/world_objects.json); picking up and putting down is decided in code
-(crafting.quick), everything else by the judge (Try Something)."""
+What they are is content (the level's things, data/content/levels, and its map's trees); picking up and putting
+down is decided in code (crafting.quick), everything else by the judge (Try Something)."""
 
 from __future__ import annotations
 
@@ -12,8 +12,6 @@ import tuning
 from shapes import State
 
 GATE_FIXTURE = "gate_brackets"  # Whatever rests in these holds the gate shut (D-42).
-GATEWAY = (48, 8)  # The middle of the gate opening.
-WORLD_CONTENT = content.WORLD_OBJECTS
 
 
 def gate_barred(state: State) -> bool:
@@ -21,12 +19,16 @@ def gate_barred(state: State) -> bool:
     return any(o.get("installed_in") == GATE_FIXTURE for o in state["objects"].values())
 
 
-def seed_objects() -> dict[str, dict]:
-    """Every thing in the world at the start: the authored ones (data/content/world_objects.json), then every map
-    tree as a fellable object. What each portable thing is good for in a fight or for the body is read once, here,
-    as code reads it (D-49)."""
-    objects = {spec["id"]: authored(spec) for spec in WORLD_CONTENT["objects"]}
-    objects.update(_trees())
+def seed_objects(state: State) -> dict[str, dict]:
+    """Every thing in the level at the start: its authored things (anything carried with no cell of its own is
+    where its holder stands), then every tree on its map as a fellable object. What each portable thing is good
+    for in a fight or for the body is read once, here, as code reads it (D-49)."""
+    people = {npc["id"]: npc for npc in state.get("npcs", [])}
+    objects = {}
+    for spec in content.level(state)["things"]:
+        holder = people.get(spec.get("carried_by") or "") if "x" not in spec else None
+        objects[spec["id"]] = authored({**spec, **({"x": holder["x"], "y": holder["y"]} if holder else {})})
+    objects.update(_trees(content.map_of(state)))
     for obj in objects.values():
         if "gear" not in obj and "carry" in obj["capabilities"] and obj.get("materials"):
             obj["gear"] = gear.classify(obj)
@@ -115,16 +117,14 @@ def authored(spec: dict) -> dict:
     return record
 
 
-def _trees() -> dict[str, dict]:
-    """Every map tree as a fellable object."""
+def _trees(plan: dict) -> dict[str, dict]:
+    """Every tree on the map (an obstacle with a tree kind) as a fellable object."""
     objects = {}
-    kinds = WORLD_CONTENT["trees"]
-    for obstacle in content.GEOMETRY["obstacles"]:
-        if not obstacle["name"].startswith("Tree"):
+    for obstacle in plan["obstacles"]:
+        if not obstacle.get("tree"):
             continue
-        number = int(obstacle["name"][4:])
-        kind = kinds["cypress" if number % 3 == 0 else "oak"]  # Matches the Foliage art in main.tscn.
-        tree_id = f"tree_{number:02d}"
+        kind = plan["trees"][obstacle["tree"]]  # Matches the map's foliage art.
+        tree_id = obstacle.get("id") or obstacle["name"].lower()
         tree = object_record(
             tree_id,
             kind["name"],
@@ -143,9 +143,9 @@ def _trees() -> dict[str, dict]:
     return objects
 
 
-def seed_m2() -> dict:
+def seed_m2(state: State) -> dict:
     return {
-        "objects": seed_objects(),
+        "objects": seed_objects(state),
         "agreements": {},
         "journal": [],
         "water_spilled_l": 0.0,

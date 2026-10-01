@@ -57,7 +57,7 @@ func _record(name: String, body: Callable) -> void:
 
 ## Walk with real, server-validated moves along a shortest path (clock paused so moves stay in order).
 func _walk(to: Vector2i) -> void:
-	var geometry: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/world_geometry.json"))
+	var geometry: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/village.json"))
 	for item in geometry.buildings + geometry.obstacles:
 		for x in range(int(item.cells[0]), int(item.cells[0]) + int(item.cells[2])):
 			for y in range(int(item.cells[1]), int(item.cells[1]) + int(item.cells[3])):

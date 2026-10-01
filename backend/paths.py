@@ -1,36 +1,59 @@
 """The walkable map: which cells are blocked, how to get from one cell to another, and what can be seen from
-where. The stranger, people on their routines and people on their jobs all walk the same grid (GDD section 8)."""
+where. The stranger, people on their routines and people on their jobs all walk the same grid (GDD section 8):
+the grid of the journey's map (data/maps, D-59)."""
 
 from __future__ import annotations
 
 import math
 from collections import deque
 from collections.abc import Iterable
+from dataclasses import dataclass
+from functools import cache
 
 import content
 import tuning
 from shapes import State
 
-WIDTH, TOP, BOTTOM = 96, 9, 72  # The ground outside the wall: x from 0 to 95, y from 9 (the wall's foot) to 71.
+Cell = tuple[int, int]
 
 
-def _cells(rectangles: Iterable[dict]) -> set[tuple[int, int]]:
-    return {
+@dataclass(frozen=True)
+class Grid:
+    """Where nobody can walk on one map (`cell in grid`), and the part of it people keep to (`walk`: x0, y0, x1, y1,
+    the far edges not included; on the village map, the ground below the city wall)."""
+
+    blocked: frozenset[Cell]
+    walk: tuple[int, int, int, int]
+
+    def walkable(self, cell: Cell) -> bool:
+        x0, y0, x1, y1 = self.walk
+        return x0 <= cell[0] < x1 and y0 <= cell[1] < y1 and cell not in self.blocked
+
+    def __contains__(self, cell: object) -> bool:
+        return cell in self.blocked
+
+
+def _cells(rectangles: Iterable[dict]) -> frozenset[Cell]:
+    return frozenset(
         (cx, cy)
         for item in rectangles
         for bx, by, w, h in [item["cells"]]
         for cx in range(bx, bx + w)
         for cy in range(by, by + h)
-    }
+    )
 
 
-WALLS = _cells(content.GEOMETRY["buildings"])  # Buildings block sight; trees do not.
+@cache
+def walls(map_id: str) -> frozenset[Cell]:
+    """Buildings block sight; trees do not."""
+    return _cells(content.MAPS[map_id]["buildings"])
 
 
-def obstacle_cells(cleared: set[str] | frozenset[str] = frozenset()) -> set[tuple[int, int]]:
-    """Buildings, and obstacles (trees, rocks) not yet cleared away: nobody walks through them."""
-    standing = content.GEOMETRY["buildings"] + content.GEOMETRY["obstacles"]
-    return _cells(item for item in standing if item["name"] not in cleared)
+@cache
+def _grid(map_id: str, cleared: frozenset[str]) -> Grid:
+    plan = content.MAPS[map_id]
+    standing = plan["buildings"] + plan["obstacles"]
+    return Grid(_cells(item for item in standing if item["name"] not in cleared), tuple(plan["walk"]))
 
 
 def cleared_obstacles(state: State) -> set[str]:
@@ -40,15 +63,23 @@ def cleared_obstacles(state: State) -> set[str]:
     }
 
 
-def blocked_cells(state: State) -> set[tuple[int, int]]:
-    return obstacle_cells(cleared_obstacles(state))
+def grid(state: State, cleared: Iterable[str] | None = None) -> Grid:
+    """Buildings, and obstacles (trees, rocks) not cleared away: nobody walks through them. By default those this
+    journey has cleared (felled trees no longer block)."""
+    gone = cleared_obstacles(state) if cleared is None else cleared
+    return _grid(content.level(state)["map"], frozenset(gone))
 
 
-def walkable(cell: tuple[int, int], blocked: set) -> bool:
-    return 0 <= cell[0] < WIDTH and TOP <= cell[1] < BOTTOM and cell not in blocked
+def standing_grid(state: State) -> Grid:
+    """Every obstacle as the map was made: what people's routines are planned around."""
+    return _grid(content.level(state)["map"], frozenset())
 
 
-def bfs(start: tuple[int, int], blocked: set, limit: int) -> tuple[dict, dict]:
+def walkable(cell: Cell, blocked: Grid) -> bool:
+    return blocked.walkable(cell)
+
+
+def bfs(start: tuple[int, int], blocked: Grid, limit: int) -> tuple[dict, dict]:
     """Every cell reachable within limit steps: (the cell each was reached from, steps to it)."""
     previous, steps = {start: None}, {start: 0}
     frontier = deque([start])
@@ -64,7 +95,7 @@ def bfs(start: tuple[int, int], blocked: set, limit: int) -> tuple[dict, dict]:
     return previous, steps
 
 
-def route(start: tuple[int, int], goal: tuple[int, int], blocked: set[tuple[int, int]]) -> list[list[int]]:
+def route(start: tuple[int, int], goal: tuple[int, int], blocked: Grid) -> list[list[int]]:
     """The whole walk from start to goal (a routine's next leg); it must exist."""
     if start == goal:
         return []
@@ -87,7 +118,7 @@ def route(start: tuple[int, int], goal: tuple[int, int], blocked: set[tuple[int,
     raise ValueError(f"No safe NPC route from {start} to {goal}")
 
 
-def next_step(start: tuple[int, int], goal: tuple[int, int], stop: float, blocked: set) -> tuple[int, int] | None:
+def next_step(start: tuple[int, int], goal: tuple[int, int], stop: float, blocked: Grid) -> tuple[int, int] | None:
     """One step toward being within stop of goal (someone on a job, a step per beat); None if there's no way."""
     previous, steps = bfs(start, blocked, 60)
     goals = [c for c in steps if math.dist(c, goal) <= stop]
@@ -100,7 +131,7 @@ def next_step(start: tuple[int, int], goal: tuple[int, int], stop: float, blocke
 
 
 def path_to_reach(
-    start: tuple[int, int], target: tuple[int, int], blocked: set, limit: int = tuning.NEARBY_WALK_STEPS
+    start: tuple[int, int], target: tuple[int, int], blocked: Grid, limit: int = tuning.NEARBY_WALK_STEPS
 ) -> list[list[int]] | None:
     """Shortest walk from start to any cell within reach of target; [] if already within reach."""
     if math.dist(start, target) <= tuning.REACH_CELLS:
@@ -121,7 +152,7 @@ def plan_walk(state: State, targets: list[tuple[int, int]]) -> list[list[int]] |
     """The stranger's walk to reach each target, nearest first; None if one cannot be reached."""
     if not targets:
         return []
-    blocked = blocked_cells(state)
+    blocked = grid(state)
     position = (state["player"]["x"], state["player"]["y"])
     path: list[list[int]] = []
     remaining = list(dict.fromkeys(targets))
@@ -142,7 +173,7 @@ def plan_walk(state: State, targets: list[tuple[int, int]]) -> list[list[int]] |
 
 def open_cells_near(state: State, x: int, y: int, cleared: set[str], count: int) -> list[tuple[int, int]]:
     """Nearest open cells around (x, y), preferring ones without loose objects, for dropping pieces."""
-    blocked = obstacle_cells(cleared)
+    blocked = grid(state, cleared)
     occupied = {(o["x"], o["y"]) for o in state["objects"].values() if o["holder_id"] is None}
     ring = sorted(((dx, dy) for dx in range(-3, 4) for dy in range(-3, 4)), key=lambda d: (math.hypot(*d), d))
     cells = [(x + dx, y + dy) for dx, dy in ring if walkable((x + dx, y + dy), blocked)]
@@ -150,8 +181,9 @@ def open_cells_near(state: State, x: int, y: int, cleared: set[str], count: int)
     return [free[i % len(free)] for i in range(count)] if free else [(x, y)] * count
 
 
-def line_of_sight(a: tuple[int, int], b: tuple[int, int]) -> bool:
+def line_of_sight(state: State, a: tuple[int, int], b: tuple[int, int]) -> bool:
     """True if no building stands between the two cells (Bresenham line)."""
+    buildings = walls(content.level(state)["map"])
     (x0, y0), (x1, y1) = a, b
     dx, dy = abs(x1 - x0), -abs(y1 - y0)
     sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
@@ -164,6 +196,36 @@ def line_of_sight(a: tuple[int, int], b: tuple[int, int]) -> bool:
         if twice <= dx:
             error += dx
             y0 += sy
-        if (x0, y0) != (x1, y1) and (x0, y0) in WALLS:
+        if (x0, y0) != (x1, y1) and (x0, y0) in buildings:
             return False
     return True
+
+
+# --- The gate (only the village map has one) ----------------------------------------------------------------------
+
+
+def gate(state: State) -> dict | None:
+    """The map's gate: the wall's rows, the gap (cols), its middle, the approach and the guards' posts; None if this
+    map has no gate."""
+    return content.map_of(state).get("gate")
+
+
+def in_zone(cell: Cell, zone: list[int]) -> bool:
+    """Inside a zone [x from, x to, rows up to] (the gate's approach or its posts)."""
+    x0, x1, top = zone
+    return x0 <= cell[0] <= x1 and cell[1] <= top
+
+
+def in_wall(gate: dict | None, cell: Cell) -> bool:
+    """In the wall's rows: passable only through the gap, and only while the gate is open."""
+    return gate is not None and gate["rows"][0] <= cell[1] <= gate["rows"][1]
+
+
+def in_gap(gate: dict, cell: Cell) -> bool:
+    return gate["cols"][0] <= cell[0] <= gate["cols"][1]
+
+
+def arrived(state: State, cell: Cell) -> bool:
+    """The stranger has reached the map's inside (on the village map, the city): the journey's end."""
+    inside = content.map_of(state).get("inside")
+    return inside is not None and inside["rows"][0] <= cell[1] <= inside["rows"][1]

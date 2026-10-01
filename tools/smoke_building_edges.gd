@@ -7,7 +7,7 @@ func _initialize() -> void:
 func _run() -> void:
 	var scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
-	scene.view.apply_building_geometry(3)
+	scene.view.apply_building_geometry()
 	await physics_frame
 	var player: CharacterBody2D = scene.player
 	for name in ["Smithy", "Inn", "Carpenter", "Wagon", "EastWorkshop", "SouthHouse"]:
@@ -28,12 +28,5 @@ func _run() -> void:
 				push_error("Player passed through %s from %s" % [name, approach[1]])
 				quit(1)
 				return
-	# Old journeys retain the footprint they were created with.
-	scene.view.apply_building_geometry(2)
-	var old_inn: RectangleShape2D = scene.get_node("BuildingCollision/Inn/CollisionShape2D").shape
-	if old_inn.size != Vector2(416, 128):
-		push_error("Legacy inn footprint changed")
-		quit(1)
-		return
-	print("BUILDING EDGE PASS: 24 approach directions blocked; legacy footprint preserved")
+	print("BUILDING EDGE PASS: 24 approach directions blocked")
 	quit(0)

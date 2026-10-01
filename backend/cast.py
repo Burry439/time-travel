@@ -10,8 +10,16 @@ import gear
 from shapes import Job, Mind, Npc, State
 
 CARDS: dict[str, dict] = content.CARDS
-# The captain: whoever decides who enters the city (their card holds decides, D-43).
-CAPTAIN = next(npc_id for npc_id, card in CARDS.items() if card.get("decides"))
+
+
+def captain_id(state: State) -> str | None:
+    """The captain here: whoever in this level decides who enters (their card holds decides, D-43); None if
+    nobody does."""
+    return next((npc["id"] for npc in state["npcs"] if CARDS.get(npc["id"], {}).get("decides")), None)
+
+
+def captain(state: State) -> Npc | None:
+    return find(state["npcs"], captain_id(state) or "")
 
 
 def card(npc: Npc) -> dict:

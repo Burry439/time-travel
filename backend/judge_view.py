@@ -27,7 +27,7 @@ def owner_label(state: State, obj: Thing) -> str:
 def walk_costs(state: State) -> dict[str, int]:
     """Steps the player must walk to be within reach of each loose object and person nearby."""
     start = (state["player"]["x"], state["player"]["y"])
-    _, steps = paths.bfs(start, paths.blocked_cells(state), tuning.NEARBY_WALK_STEPS)
+    _, steps = paths.bfs(start, paths.grid(state), tuning.NEARBY_WALK_STEPS)
 
     def cost(x: int, y: int) -> int | None:
         options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= tuning.REACH_CELLS]

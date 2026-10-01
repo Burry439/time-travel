@@ -25,15 +25,16 @@ import copy
 import cast
 import combat
 import consequences
+import content
 import conversation
 import minds
+import paths
 import perception
 import reputation
 import speech
 import tuning
 from shapes import Npc, State
 
-SOUTH_ROAD = (48, 66)  # Where the guards march an arrested stranger.
 LOG_KEPT = 30
 HOSTILE_PURPOSES = ("halt", "confront", "threaten", "demand_payment")
 REASON_WORDS = {
@@ -343,23 +344,25 @@ def finish(draft: State, record: dict, now: int, reply: dict | list | None = Non
 
 
 def arrest_player(state: State, guard: Npc, now: int) -> str:
-    """Seized: other people's things go back to them, the stranger is marched down the south road and kept
-    from the gate for a while, and the captain hears of it. Returns what happened, in words."""
+    """Seized: other people's things go back to them, the stranger is marched off (on the village map, down the
+    south road) and kept from the gate for a while, and the captain hears of it. Returns what happened, in words."""
     returned = []
     for obj in state["objects"].values():
         if obj["holder_id"] == "player" and obj["owner_id"] not in (None, "player") and obj.get("lent_to") != "player":
             obj["holder_id"] = obj["owner_id"]  # They take it back.
             returned.append(obj["name"])
-    state["player"].update(x=SOUTH_ROAD[0], y=SOUTH_ROAD[1])
+    away = content.map_of(state).get("after_arrest") or {}
+    x, y = away.get("cell") or content.level(state)["start"]["cell"]
+    state["player"].update(x=x, y=y)
     state["barred_until"] = now + tuning.BARRED_MS
     words = (
-        f"{guard['name']} and the guards march you back down the south road"
+        f"{guard['name']} and the guards {away.get('words', 'march you off')}"
         + (f", and hand back the {', the '.join(returned)} to their owners" if returned else "")
-        + ". You're not welcome at the gate for a while."
+        + (". You're not welcome at the gate for a while." if paths.gate(state) else ".")
     )
     state["journal"].append({"kind": "arrest", "category": "arrested", "npc_id": guard["id"], "reason": words})
     reputation.settle(state, "paid for with an arrest")  # The thefts are answered for (violence is not, D-46).
-    captain = cast.find(state["npcs"], cast.CAPTAIN)
+    captain = cast.captain(state)
     if captain and captain.get("alive", True) and not captain.get("down"):
         reputation.remember(
             captain,

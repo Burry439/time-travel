@@ -13,7 +13,7 @@ def test_the_yard_is_free_reachable_and_read_for_a_fight():
     state = unit_state()
     yard = [o for o in state["objects"].values() if o["id"].startswith("yard_")]
     assert len(yard) >= 40 and state["seed_version"] >= 11
-    blocked = paths.blocked_cells(state)
+    blocked = paths.grid(state)
     _, steps = paths.bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
     cells = set()
     for obj in yard:
@@ -31,7 +31,7 @@ def test_the_wainwrights_notebook_is_readable_and_names_real_things():
     state = unit_state()
     book = state["objects"]["yard_recipe_book"]
     assert book["readable"] == "recipe_book" and book["owner_id"] is None and "carry" in book["capabilities"]
-    blocked = paths.blocked_cells(state)
+    blocked = paths.grid(state)
     _, steps = paths.bfs((state["player"]["x"], state["player"]["y"]), blocked, 400)
     assert (book["x"], book["y"]) in steps
     content = json.loads((store.ROOT / "data" / "content" / "recipe_book.json").read_text(encoding="utf-8"))

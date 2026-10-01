@@ -8,6 +8,7 @@ from test_encounter import post, world  # noqa: F401
 from test_talk import npc, unit_state
 
 import cast
+import content
 import npc_sim
 import paths
 import persona
@@ -16,18 +17,20 @@ import village
 from ai import config as ai_config
 from ai import decider
 
+PLACES = content.MAPS["village"]["places"]
+
 
 def choice(key, value):
     return {key: {"type": "choice", "choice": value, "confidence": 1.0, "probabilities": {value: 1.0}}}
 
 
 def test_every_place_is_walkable_and_every_task_has_a_place():
-    blocked = paths.blocked_cells({"objects": {}})
-    assert not [p for p, v in village.PLACES.items() if tuple(v["cell"]) in blocked]
+    blocked = paths.grid({"objects": {}})
+    assert not [p for p, v in PLACES.items() if tuple(v["cell"]) in blocked]
     state = unit_state()
     for person in state["npcs"]:
         for task in cast.card(person)["tasks"]:
-            assert task["place"] in village.PLACES, (person["id"], task["id"])
+            assert task["place"] in PLACES, (person["id"], task["id"])
 
 
 def test_the_world_changes_what_people_choose_to_do():
@@ -47,7 +50,7 @@ def test_the_gate_is_never_left_short_of_guards():
     assert any(k.startswith("visit:") for k in village.agenda_options(state, bren))  # Roderic and Oren cover.
     oren["x"], oren["y"] = 64, 26  # Oren has wandered off to the carpenter's yard.
     oren["controller"]["destination"] = [64, 26]
-    at_the_gate = {f"task:{t['id']}" for t in cast.card(bren)["tasks"] if village.PLACES[t["place"]].get("gate")}
+    at_the_gate = {f"task:{t['id']}" for t in cast.card(bren)["tasks"] if PLACES[t["place"]].get("gate")}
     assert set(village.agenda_options(state, bren)) <= {"carry_on"} | at_the_gate  # He stays at his post.
 
 
@@ -57,14 +60,14 @@ def test_a_chosen_task_is_walked_to_done_and_left_for_the_routine():
     record = village.apply_agenda(state, hessa, {**choice("agenda", "task:sweep"), **choice("mood", "weary")}, 0)
     assert record["doing"] == "sweeping the side of the yard" and persona.mood(hessa) == "weary"
     controller = hessa["controller"]
-    assert controller["source"] == "agenda" and controller["path"][-1] == village.PLACES["inn_side"]["cell"]
+    assert controller["source"] == "agenda" and controller["path"][-1] == PLACES["inn_side"]["cell"]
     npcs = state["npcs"]
     for step in range(60):
-        npcs = npc_sim.advance_npcs(npcs, 500, step * 500)
+        npcs = npc_sim.advance_npcs({"scenario": "village"}, npcs, 500, step * 500)
     hessa = next(n for n in npcs if n["id"] == "npc_hessa_marr")
-    assert [hessa["x"], hessa["y"]] == village.PLACES["inn_side"]["cell"] and hessa["controller"]["activity"] == "work"
+    assert [hessa["x"], hessa["y"]] == PLACES["inn_side"]["cell"] and hessa["controller"]["activity"] == "work"
     for step in range(60, 200):
-        npcs = npc_sim.advance_npcs(npcs, 500, step * 500)
+        npcs = npc_sim.advance_npcs({"scenario": "village"}, npcs, 500, step * 500)
     assert next(n for n in npcs if n["id"] == "npc_hessa_marr")["controller"]["source"] == "routine"
 
 

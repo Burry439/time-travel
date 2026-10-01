@@ -300,11 +300,11 @@ def _going(state: State, npc: Npc, options: dict) -> None:
     """Going to do something for the stranger: speak for them, carry word, stop fighting, see to their own wound,
     let them in."""
     name, my_mind = npc["name"], cast.mind(npc)
-    captain = cast.find(state["npcs"], cast.CAPTAIN)
+    captain = cast.captain(state)
     fighting = npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
     if (
-        npc["id"] != cast.CAPTAIN
-        and captain
+        captain
+        and npc["id"] != captain["id"]
         and captain.get("alive", True)
         and not my_mind.get("vouched")
         and not fighting
@@ -333,7 +333,7 @@ def _going(state: State, npc: Npc, options: dict) -> None:
         options["admit"] = _option(
             "admit",
             f"{name} admits the stranger into the city and orders the gate opened for them."
-            if npc["id"] == cast.CAPTAIN
+            if npc["id"] == cast.captain_id(state)
             else f"{name} lets the stranger through the gate on their own say-so, and has it opened for them.",
         )
 

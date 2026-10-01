@@ -1,0 +1,488 @@
+{
+ "id": "village",
+ "version": 3,
+ "name": "the road below the city",
+ "notes": "A map (GDD 4.2, D-59): the grid everyone walks, in cells of 32 px. size: [width, height] in cells; the stranger may walk anywhere inside it that nothing blocks. walk: [x0, y0, x1, y1), where people (and the stranger's planned walks) keep to. buildings block movement and sight; obstacles block movement only, and an obstacle with 'tree' is also a fellable tree of that kind (trees: the kinds), the thing called by its id. places: named cells people talk about and go to (cell: where they stand; gate: a gate post, which the gate guards keep manned). gate (optional): the wall's rows and the gap in it (cols), passable only while the gate is open; middle: the middle of the gap, where a guard steps in to stop anyone; approach [x from, x to, rows up to]: where guards stop strangers; posts [x from, x to, rows up to]: where a gate guard counts as at the gate. after_arrest: where guards march an arrested stranger (cell) and how that's told (words); otherwise to the level's start. inside (optional): the rows that end the journey when the stranger reaches them. Every place must be walkable (tests/test_content.py checks).",
+ "size": [
+  96,
+  72
+ ],
+ "walk": [
+  0,
+  9,
+  96,
+  72
+ ],
+ "gate": {
+  "rows": [
+   4,
+   8
+  ],
+  "cols": [
+   46,
+   50
+  ],
+  "middle": [
+   48,
+   8
+  ],
+  "approach": [
+   38,
+   58,
+   17
+  ],
+  "posts": [
+   40,
+   56,
+   20
+  ]
+ },
+ "inside": {
+  "rows": [
+   0,
+   3
+  ],
+  "name": "the city"
+ },
+ "after_arrest": {
+  "cell": [
+   48,
+   66
+  ],
+  "words": "march you back down the south road"
+ },
+ "trees": {
+  "oak": {
+   "name": "oak tree",
+   "mass_kg": 900.0,
+   "length_m": 9.0,
+   "description": "A broad old oak with a trunk wider than a man's shoulders and a heavy crown of dark leaves."
+  },
+  "cypress": {
+   "name": "cypress tree",
+   "mass_kg": 350.0,
+   "length_m": 10.0,
+   "description": "A tall, slender cypress with a trunk as thick as a thigh and dense upright foliage."
+  }
+ },
+ "buildings": [
+  {
+   "name": "Smithy",
+   "cells": [
+    9,
+    19,
+    17,
+    6
+   ]
+  },
+  {
+   "name": "Inn",
+   "cells": [
+    25,
+    44,
+    19,
+    6
+   ]
+  },
+  {
+   "name": "Carpenter",
+   "cells": [
+    55,
+    20,
+    18,
+    6
+   ]
+  },
+  {
+   "name": "Wagon",
+   "cells": [
+    75,
+    26,
+    12,
+    4
+   ]
+  },
+  {
+   "name": "EastWorkshop",
+   "cells": [
+    67,
+    32,
+    15,
+    7
+   ]
+  },
+  {
+   "name": "SouthHouse",
+   "cells": [
+    20,
+    54,
+    15,
+    7
+   ]
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Tree00",
+   "cells": [
+    10,
+    65,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_00"
+  },
+  {
+   "name": "Tree01",
+   "cells": [
+    32,
+    64,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_01"
+  },
+  {
+   "name": "Tree02",
+   "cells": [
+    59,
+    65,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_02"
+  },
+  {
+   "name": "Tree03",
+   "cells": [
+    73,
+    63,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_03"
+  },
+  {
+   "name": "Tree04",
+   "cells": [
+    88,
+    66,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_04"
+  },
+  {
+   "name": "Tree05",
+   "cells": [
+    13,
+    53,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_05"
+  },
+  {
+   "name": "Tree06",
+   "cells": [
+    58,
+    54,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_06"
+  },
+  {
+   "name": "Tree07",
+   "cells": [
+    85,
+    50,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_07"
+  },
+  {
+   "name": "Tree08",
+   "cells": [
+    8,
+    40,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_08"
+  },
+  {
+   "name": "Tree09",
+   "cells": [
+    31,
+    38,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_09"
+  },
+  {
+   "name": "Tree10",
+   "cells": [
+    62,
+    40,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_10"
+  },
+  {
+   "name": "Tree11",
+   "cells": [
+    88,
+    38,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_11"
+  },
+  {
+   "name": "Tree12",
+   "cells": [
+    8,
+    29,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_12"
+  },
+  {
+   "name": "Tree13",
+   "cells": [
+    35,
+    28,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_13"
+  },
+  {
+   "name": "Tree14",
+   "cells": [
+    87,
+    22,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_14"
+  },
+  {
+   "name": "Tree15",
+   "cells": [
+    29,
+    16,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_15"
+  },
+  {
+   "name": "Tree16",
+   "cells": [
+    65,
+    16,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_16"
+  },
+  {
+   "name": "Tree17",
+   "cells": [
+    8,
+    16,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_17"
+  },
+  {
+   "name": "Tree18",
+   "cells": [
+    84,
+    12,
+    1,
+    1
+   ],
+   "tree": "cypress",
+   "id": "tree_18"
+  }
+ ],
+ "places": {
+  "gate_centre": {
+   "name": "the gate",
+   "cell": [
+    48,
+    11
+   ],
+   "gate": true
+  },
+  "gate_west": {
+   "name": "the west post at the gate",
+   "cell": [
+    44,
+    14
+   ],
+   "gate": true
+  },
+  "gate_east": {
+   "name": "the east post at the gate",
+   "cell": [
+    52,
+    14
+   ],
+   "gate": true
+  },
+  "gate_approach": {
+   "name": "the gate approach",
+   "cell": [
+    47,
+    17
+   ],
+   "gate": true
+  },
+  "road_north": {
+   "name": "the road below the gate",
+   "cell": [
+    47,
+    23
+   ]
+  },
+  "road_mid": {
+   "name": "the middle of the road",
+   "cell": [
+    47,
+    32
+   ]
+  },
+  "road_bend": {
+   "name": "the bend in the road",
+   "cell": [
+    49,
+    39
+   ]
+  },
+  "village_approach": {
+   "name": "the village approach",
+   "cell": [
+    53,
+    43
+   ]
+  },
+  "inn_yard": {
+   "name": "the inn yard",
+   "cell": [
+    36,
+    51
+   ]
+  },
+  "inn_door": {
+   "name": "the inn door",
+   "cell": [
+    34,
+    51
+   ]
+  },
+  "inn_side": {
+   "name": "beside the inn",
+   "cell": [
+    32,
+    52
+   ]
+  },
+  "smithy_forge": {
+   "name": "the forge",
+   "cell": [
+    18,
+    25
+   ]
+  },
+  "smithy_yard": {
+   "name": "the smithy yard",
+   "cell": [
+    20,
+    27
+   ]
+  },
+  "smithy_side": {
+   "name": "the smithy's scrap heap",
+   "cell": [
+    16,
+    26
+   ]
+  },
+  "carpenter_yard": {
+   "name": "the carpenter's yard",
+   "cell": [
+    64,
+    26
+   ]
+  },
+  "carpenter_bench": {
+   "name": "Tomas's workbench",
+   "cell": [
+    66,
+    28
+   ]
+  },
+  "carpenter_edge": {
+   "name": "the edge of the carpenter's yard",
+   "cell": [
+    62,
+    27
+   ]
+  },
+  "wagon": {
+   "name": "Darin's wagon",
+   "cell": [
+    80,
+    30
+   ]
+  },
+  "wagon_side": {
+   "name": "the far side of Darin's wagon",
+   "cell": [
+    83,
+    31
+   ]
+  },
+  "wagon_front": {
+   "name": "the front of Darin's wagon",
+   "cell": [
+    78,
+    31
+   ]
+  },
+  "wainwright_yard": {
+   "name": "the old wainwright's yard",
+   "cell": [
+    80,
+    59
+   ]
+  }
+ }
+}

@@ -117,13 +117,14 @@ def opinion_lines(state: State, npc: Npc, people: list[dict] | None = None) -> l
     return lines
 
 
-def usual_place(npc_id: str) -> str | None:
+def usual_place(state: State, npc_id: str) -> str | None:
     """Where this person is usually found: the named place nearest their routine's first stop."""
-    routine = npc_sim.ROUTINES.get(npc_id)
-    if not routine or not routine[1]:
+    stops = npc_sim.anchors(state, npc_id)
+    places = content.map_of(state)["places"].values()
+    if not stops or not places:
         return None
-    x, y = routine[1][0][0], routine[1][0][1]
-    return min(content.PLACES.values(), key=lambda p: math.dist(p["cell"], (x, y)))["name"]
+    x, y = stops[0][0], stops[0][1]
+    return min(places, key=lambda p: math.dist(p["cell"], (x, y)))["name"]
 
 
 def everyone_in_town(state: State, npc: Npc) -> list[str]:
@@ -132,7 +133,7 @@ def everyone_in_town(state: State, npc: Npc) -> list[str]:
     for other in state["npcs"]:
         if other["id"] == npc["id"]:
             continue
-        place = usual_place(other["id"])
+        place = usual_place(state, other["id"])
         relation = cast.relation(npc, other["id"])
         lines.append(
             f"{other['name']}, the {cast.card(other)['role']}"

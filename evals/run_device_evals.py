@@ -19,8 +19,8 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
 import cast  # noqa: E402
+import content  # noqa: E402
 import device  # noqa: E402
-import scenario  # noqa: E402
 from ai import config, voice  # noqa: E402
 
 
@@ -31,7 +31,7 @@ def state_for(case: dict) -> dict:
         state["tutorial"]["done"] = True
         state["objective"] = "Get inside the city"
     else:
-        state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == case["step"])
+        state["tutorial"]["step"] = next(i for i, s in enumerate(content.LEVELS["tutorial"]["steps"]) if s["id"] == case["step"])
     if case.get("attempt"):
         state["journal"].append({"kind": "craft", **case["attempt"]})
     for entry in case.get("learned", []):  # What people told the stranger (D-55: the coach builds on it).

@@ -48,7 +48,7 @@ class Route:
 
     def walk(self, x: int, y: int) -> None:
         start = (self.state["player"]["x"], self.state["player"]["y"])
-        previous, steps = paths.bfs(start, paths.blocked_cells(self.state), 250)
+        previous, steps = paths.bfs(start, paths.grid(self.state), 250)
         goal = min(steps, key=lambda c: (abs(c[0] - x) + abs(c[1] - max(y, 9)), steps[c]))
         path = []
         while goal != start:

@@ -15,7 +15,6 @@ import math
 
 import cast
 import gear
-import m2
 import paths
 import perception
 import reputation
@@ -195,14 +194,16 @@ def responders(state: State, perceptions: list[dict]) -> list[str]:
 def gate_held_by(state: State) -> dict | None:
     """A guard close to the gate steps into the gap and stops anyone walking through an unbarred gate who hasn't
     been let in (D-42): the bar is only half the way in. Dead, downed or distant guards hold nothing."""
-    if state.get("admitted"):
+    gate = paths.gate(state)
+    if state.get("admitted") or gate is None:
         return None
+    middle = tuple(gate["middle"])
     guards = [
         g
         for g in state["npcs"]
-        if cast.card(g).get("guard") and not down(g) and cast.distance(g, m2.GATEWAY) <= tuning.GATE_HOLD_CELLS
+        if cast.card(g).get("guard") and not down(g) and cast.distance(g, middle) <= tuning.GATE_HOLD_CELLS
     ]
-    return min(guards, key=lambda g: cast.distance(g, m2.GATEWAY), default=None)
+    return min(guards, key=lambda g: cast.distance(g, middle), default=None)
 
 
 def end_spar(
@@ -374,7 +375,7 @@ def busy(state: State) -> bool:
     return bool(active(state) or (state["player"].get("swings")) or state.get("projectiles"))
 
 
-def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: set, journal: list[dict]) -> None:
+def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: paths.Grid, journal: list[dict]) -> None:
     """This stretch of time: the stranger's blows and missiles land; attackers close in, wind up, and their blows
     land or miss."""
     end = now + elapsed_ms
