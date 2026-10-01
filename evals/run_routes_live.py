@@ -307,6 +307,7 @@ def beam() -> bool:
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")  # The reports quote words; a Windows console would refuse them.
     wanted = sys.argv[1:] or ["sponsor", "business", "value", "beam"]
     started = time.perf_counter()
     results = {name: globals()[name]() for name in wanted}

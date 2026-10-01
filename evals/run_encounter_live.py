@@ -82,6 +82,7 @@ def gate_halt() -> None:
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")  # The reports quote words; a Windows console would refuse them.
     smithy_fight()
     gate_halt()
     if timings:
