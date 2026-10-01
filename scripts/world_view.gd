@@ -149,6 +149,20 @@ func apply_building_geometry(map_id := "village") -> void:
 		shape_node.set_deferred("disabled", false)
 		body.position = Vector2(float(cells[0]) + float(cells[2]) * 0.5,
 			float(cells[1]) + float(cells[3]) * 0.5) * game.CELL
+	if geometry.get("gate") != null and game.gate_shape == null: # A gate in the data but not in the scene.
+		var gate: Dictionary = geometry["gate"]
+		var closed := StaticBody2D.new()
+		closed.name = "ClosedGate"
+		var shape := CollisionShape2D.new()
+		var box := RectangleShape2D.new()
+		var wide := float(gate.cols[1]) - float(gate.cols[0]) + 1.0
+		var gap := Vector2(wide, float(gate.rows[1]) - float(gate.rows[0]) + 1.0)
+		box.size = gap * game.CELL
+		shape.shape = box
+		closed.add_child(shape)
+		closed.position = (Vector2(float(gate.cols[0]), float(gate.rows[0])) + gap * 0.5) * game.CELL
+		holder.add_child(closed)
+		game.gate_shape = shape
 
 
 func sync() -> void:
@@ -158,8 +172,9 @@ func sync() -> void:
 
 
 func _sync_now() -> void:
-	if game.gate_sprite and game.gate_shape: # Only the village map has a drawn gate (a field gate is just art).
+	if game.gate_shape: # A map with a gate: closed until someone opens it.
 		game.gate_shape.set_deferred("disabled", bool(game.run_state["gate_open"]))
+	if game.gate_sprite and game.gate_opening: # Only the village draws its gate (a field gate is just art).
 		game.gate_sprite.visible = not bool(game.run_state["gate_open"])
 		game.gate_opening.visible = bool(game.run_state["gate_open"])
 	for object_id in game.run_state.get("objects", {}):
