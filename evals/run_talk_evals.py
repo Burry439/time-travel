@@ -21,11 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
+import cast  # noqa: E402
 import combat  # noqa: E402
+import conversation  # noqa: E402
 import encounter  # noqa: E402
-import minds  # noqa: E402
+import reputation  # noqa: E402
 import rounds  # noqa: E402
-import talk  # noqa: E402
 
 LUNA_PER_MTOK = (0.1, 0.5)  # input, output USD
 # Words that promise a later errand (D-51): the line's move must carry it out.
@@ -37,18 +38,18 @@ def world_for(case: dict) -> tuple[dict, dict]:
     state = app.initial_state({"id": "talkeval", "mode": "developer", "seed_version": app.SEED_VERSION,
                                "geometry_version": app.GEOMETRY_VERSION})
     state.setdefault("pending_minds", [])
-    person = minds.find(state["npcs"], case["npc"])
+    person = cast.find(state["npcs"], case["npc"])
     state["player"].update(x=person["x"], y=person["y"] + 1)
     for index, memory in enumerate(case.get("memories", [])):
-        minds.remember(person, {"victim": None, "item": None, "event": 900 + index, "at": 0, **memory})
-    minds.mind(person)["talk"] = [dict(t, at=0) for t in case.get("talk", [])]
-    talk.regard(person).update(case.get("regard", {}))  # e.g. awe or trust already earned
+        reputation.remember(person, {"victim": None, "item": None, "event": 900 + index, "at": 0, **memory})
+    cast.mind(person)["talk"] = [dict(t, at=0) for t in case.get("talk", [])]
+    reputation.regard(person).update(case.get("regard", {}))  # e.g. awe or trust already earned
     for object_id in case.get("carry", []):  # e.g. the stolen rope, in the stranger's hands
         state["objects"][object_id]["holder_id"] = "player"
     for near in case.get("nearby", []):  # Others a step or two away, free to listen and join in.
-        other = minds.find(state["npcs"], near["npc"])
+        other = cast.find(state["npcs"], near["npc"])
         other.update(x=state["player"]["x"] + near.get("dx", 2), y=state["player"]["y"] + near.get("dy", 0))
-        minds.mind(other)["job"] = None
+        cast.mind(other)["job"] = None
     if case.get("reason"):  # They came up to the stranger for a reason (a halt, a confrontation).
         encounter.join(state, person, case["reason"], None, 0)
     for condition in case.get("hurt", []):  # e.g. Jory's burn
@@ -72,7 +73,7 @@ def exchange(state: dict, npc_id: str, line) -> dict:
     call = moment["call"]
     if call.status != "ok":
         return {"said": text, "error": call.error, "voice_ms": call.latency_ms}
-    before = dict(talk.regard(minds.find(draft["npcs"], npc_id)))
+    before = dict(reputation.regard(cast.find(draft["npcs"], npc_id)))
     now = draft["sim_time_ms"]
     said = rounds.apply_scene(draft, moment, text, happened, now)
     encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
@@ -80,7 +81,7 @@ def exchange(state: dict, npc_id: str, line) -> dict:
     draft["sim_time_ms"] = now + encounter.round_ms(record)
     state.clear()
     state.update(draft)
-    after = talk.regard(minds.find(state["npcs"], npc_id))
+    after = reputation.regard(cast.find(state["npcs"], npc_id))
     mine = next((s for s in said if s["npc_id"] == npc_id), None)
     return {"said": text, "reply": mine["key"] if mine else None,
             "lines": [{"who": s["npc_id"], "key": s["key"], "line": s["line"], "joined": s["trace"]["joined"]}
@@ -118,7 +119,7 @@ def check(case: dict, turns: list[dict], start: dict, end: dict) -> list[str]:
                 problems.append(f"said '{word.strip()}': {t['line']}")
     for t in turns:  # Always: a promise to go and do something is a move that does it (D-51).
         for line in t.get("lines", []):
-            if PROMISE.search(line["line"]) and line["key"].split(":")[0] not in talk.ERRANDS:
+            if PROMISE.search(line["line"]) and line["key"].split(":")[0] not in conversation.ERRANDS:
                 problems.append(f"promised without doing it ({line['key']}): {line['line']}")
     speakers = {line["who"] for t in turns for line in t.get("lines", [])}
     if case.get("expect_speakers_any") and not speakers & set(case["expect_speakers_any"]):
@@ -142,9 +143,9 @@ def main(argv: list[str]) -> int:
     for case in cases:
         for run in range(args.runs):
             state, person = world_for(case)
-            start = dict(talk.regard(person))
+            start = dict(reputation.regard(person))
             turns = [exchange(state, case["npc"], line) for line in case["lines"]]
-            end = talk.regard(minds.find(state["npcs"], case["npc"]))
+            end = reputation.regard(cast.find(state["npcs"], case["npc"]))
             problems = check(case, turns, start, end)
             if case.get("hint_any"):
                 hinted = any(w in t.get("line", "").lower() for t in turns for w in case["hint_any"])

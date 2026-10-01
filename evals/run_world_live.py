@@ -20,11 +20,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from fastapi.testclient import TestClient  # noqa: E402
-
 import app  # noqa: E402
-import minds  # noqa: E402
+import cast  # noqa: E402
 from ai import decider  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
 
 def main(argv: list[str]) -> int:
@@ -68,8 +67,8 @@ def main(argv: list[str]) -> int:
     agendas = Counter(d.get("agenda", "?").split(":")[0] for d in decisions if d["kind"] == "agenda" and not d["skipped"])
     meetings = [d for d in decisions if d["kind"] == "meet" and not d["skipped"]]
     topics = Counter(d["topic"].split(":")[0] for d in meetings)
-    who_knows = [n["name"] for n in state["npcs"] if any(m.get("kind") == "theft" for m in minds.mind(n)["memories"])]
-    guards_know = [n for n in who_knows if minds.card(minds.find(state["npcs"], next(
+    who_knows = [n["name"] for n in state["npcs"] if any(m.get("kind") == "theft" for m in cast.mind(n)["memories"])]
+    guards_know = [n for n in who_knows if cast.card(cast.find(state["npcs"], next(
         x["id"] for x in state["npcs"] if x["name"] == n))).get("guard")]
     calls = http.get(f"/runs/{state['run_id']}/traces?limit=10").json().get("model_calls", [])
     decider_calls = [c for c in calls if c["role"] == "decider"]
@@ -81,8 +80,8 @@ def main(argv: list[str]) -> int:
     print("Knows about the theft:", who_knows, "| guards among them:", guards_know)
     for lines in confronted:
         print("Came up to the stranger:", " / ".join(lines))
-    print("Moods now:", {n["name"]: minds.mind(n).get("mood") for n in state["npcs"]})
-    print("Doing now:", {n["name"]: minds.mind(n).get("doing") for n in state["npcs"]})
+    print("Moods now:", {n["name"]: cast.mind(n).get("mood") for n in state["npcs"]})
+    print("Doing now:", {n["name"]: cast.mind(n).get("doing") for n in state["npcs"]})
     out = ROOT / "evals" / "results" / f"world_{time.strftime('%Y%m%d_%H%M%S')}.json"
     out.write_text(json.dumps({"agendas": agendas, "meetings": meetings, "who_knows": who_knows,
                                "decider_calls_last_page": len(decider_calls), "thinks": thinks,

@@ -20,19 +20,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import crafting  # noqa: E402
+import cast  # noqa: E402
+import consequences  # noqa: E402
 import gear  # noqa: E402
-import minds  # noqa: E402
-import tutorial  # noqa: E402
+import judge_view  # noqa: E402
+import perception  # noqa: E402
+import rules  # noqa: E402
+import scenario  # noqa: E402
 from ai import config, judge  # noqa: E402
-
 
 FIRE_WORDS = ["I strike the steel file with the flint over the dried grass",
               "make a fire with the flint, the steel file and the dry grass"]
 
 
 def suggestion(step_id: str) -> str:
-    step = next(s for s in tutorial.STEPS if s["id"] == step_id)
+    step = next(s for s in scenario.STEPS if s["id"] == step_id)
     return step["suggest"]["text"]
 
 
@@ -40,7 +42,7 @@ def world() -> dict:
     state = app.initial_state({"id": "tutlive", "mode": "developer", "seed_version": app.SEED_VERSION,
                                "geometry_version": app.GEOMETRY_VERSION, "scenario": "tutorial"})
     state.setdefault("pending_minds", [])
-    jory = minds.find(state["npcs"], "npc_jory_venn")
+    jory = cast.find(state["npcs"], "npc_jory_venn")
     gear.add_condition(jory, {"kind": "burn", "area": "arm", "severity": 18}, 0)
     for oid in ("plantain_a", "flint_a", "grass_a"):  # What the guide has the player pick up by then.
         state["objects"][oid]["holder_id"] = "player"
@@ -49,13 +51,13 @@ def world() -> dict:
 
 
 def attempt(state: dict, text: str) -> dict:
-    context = crafting.build_context(state, text, [])
+    context = judge_view.build_context(state, text, [])
     judged = judge.judge_craft(context)
-    payload, verdict, _ = crafting.resolve_attempt(copy.deepcopy(state), "tutlive0", text, judged.result,
+    payload, verdict, _ = consequences.resolve_attempt(copy.deepcopy(state), "tutlive0", text, judged.result,
                                                    judged.error if judged.status != "ok" else None, "tut", 0)
     if verdict["category"] == "success":
-        crafting.apply_payload(state, payload)
-        minds.apply_perceptions(state, minds.perceive(state, payload["journal_entry"]))
+        consequences.apply_payload(state, payload)
+        perception.apply_perceptions(state, perception.perceive(state, payload["journal_entry"]))
     return verdict
 
 
@@ -81,10 +83,10 @@ def main() -> int:
                        for o in state["objects"].values()):
                     state = world()  # Each wording tried on its own, from before any fire.
                 state["objects"]["steel_file"]["holder_id"] = "player"
-                kade = minds.find(state["npcs"], "npc_kade_east")
+                kade = cast.find(state["npcs"], "npc_kade_east")
                 kade.update(x=state["player"]["x"] + 2, y=state["player"]["y"])
             verdict = attempt(state, text)
-            ok = tutorial.holds(state, check)
+            ok = rules.holds(state, check, {"progress": state.get("tutorial") or {}})
             failures += not ok
             report.append({"run": run + 1, "step": step_id, "text": text, "ok": ok, "category": verdict["category"],
                            "reason": verdict["reason"]})

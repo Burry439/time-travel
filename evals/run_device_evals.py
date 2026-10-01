@@ -18,7 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import tutorial  # noqa: E402
+import cast  # noqa: E402
+import device  # noqa: E402
+import scenario  # noqa: E402
 from ai import config, voice  # noqa: E402
 
 
@@ -29,17 +31,16 @@ def state_for(case: dict) -> dict:
         state["tutorial"]["done"] = True
         state["objective"] = "Get inside the city"
     else:
-        state["tutorial"]["step"] = next(i for i, s in enumerate(tutorial.STEPS) if s["id"] == case["step"])
+        state["tutorial"]["step"] = next(i for i, s in enumerate(scenario.STEPS) if s["id"] == case["step"])
     if case.get("attempt"):
         state["journal"].append({"kind": "craft", **case["attempt"]})
     for entry in case.get("learned", []):  # What people told the stranger (D-55: the coach builds on it).
         state.setdefault("learned", []).append(entry)
-    import minds
     for npc in state["npcs"]:
         if npc["id"] in case.get("met", []):
-            minds.mind(npc)["met"] = True
+            cast.mind(npc)["met"] = True
     for pair in case.get("said_before", []):  # Earlier conversation with the device.
-        tutorial.device_says(state, pair["a"], "answer", pair["q"])
+        device.says(state, pair["a"], "answer", pair["q"])
     return state
 
 
@@ -61,7 +62,7 @@ def main(argv: list[str]) -> int:
     for case in cases:
         for _ in range(args.runs):
             state = state_for(case)
-            call = voice.device(tutorial.device_context(state, case["question"]), tutorial.fallback_answer(state))
+            call = voice.device(device.context(state, case["question"]), device.fallback_answer(state))
             text = call.text
             lower = f" {text.lower()} ".replace("’", "'")  # Curly apostrophes count as straight ones.
             problems = []

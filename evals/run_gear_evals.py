@@ -16,8 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import crafting  # noqa: E402
-import minds  # noqa: E402
+import cast  # noqa: E402
+import consequences  # noqa: E402
+import judge_view  # noqa: E402
 from ai import config, judge  # noqa: E402
 
 
@@ -25,24 +26,24 @@ def world_for(case: dict) -> dict:
     state = app.initial_state({"id": "geareval", "mode": "developer", "seed_version": app.SEED_VERSION,
                                "geometry_version": app.GEOMETRY_VERSION})
     if "beside" in case:
-        npc = minds.find(state["npcs"], case["beside"])
+        npc = cast.find(state["npcs"], case["beside"])
         state["player"].update(x=npc["x"], y=npc["y"] + 1)
     for object_id in case["carry"]:
         state["objects"][object_id].update(holder_id="player", x=state["player"]["x"], y=state["player"]["y"])
     for npc_id in case.get("facing", []):
-        minds.mind(minds.find(state["npcs"], npc_id))["facing_player"] = True
+        cast.mind(cast.find(state["npcs"], npc_id))["facing_player"] = True
     return state
 
 
 def run_case(case: dict) -> dict:
     state = world_for(case)
-    context = crafting.build_context(state, case["text"], case["carry"])
+    context = judge_view.build_context(state, case["text"], case["carry"])
     started = time.perf_counter()
     judged = judge.judge_craft(context)
     seconds = round(time.perf_counter() - started, 1)
     if judged.status != "ok":
         return {"case": case["id"], "ok": False, "problems": [f"judge {judged.status}: {judged.error}"]}
-    payload, summary, after = crafting.resolve_attempt(state, "geareval", case["text"], judged.result, None, "t", 0)
+    payload, summary, after = consequences.resolve_attempt(state, "geareval", case["text"], judged.result, None, "t", 0)
     problems = []
     made = (summary.get("new_spec") or {}).get("gear") if summary.get("new_spec") else None
     if made is None and summary.get("transform"):
@@ -57,7 +58,7 @@ def run_case(case: dict) -> dict:
             problems.append(f"result {harm.get('result')} ({harm.get('family')}, {harm.get('area')}, "
                             f"{harm.get('effective')}), wanted one of {case['result_any']}")
     if "alive" in case and "beside" in case:
-        target = minds.find(after["npcs"], case["beside"])
+        target = cast.find(after["npcs"], case["beside"])
         if target.get("alive", True) != case["alive"]:
             problems.append(f"{target['name']} {'alive' if target.get('alive', True) else 'dead'}")
     return {"case": case["id"], "ok": not problems, "problems": problems, "seconds": seconds,

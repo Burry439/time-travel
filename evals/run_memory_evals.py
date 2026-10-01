@@ -19,10 +19,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 sys.path.insert(0, str(ROOT / "evals"))
 
-import minds  # noqa: E402
+import briefing  # noqa: E402
+import cast  # noqa: E402
 import persona  # noqa: E402
 import routes_minds  # noqa: E402
-import talk  # noqa: E402
 import village  # noqa: E402
 from ai import decider, voice  # noqa: E402
 from run_talk_evals import exchange, world_for  # noqa: E402
@@ -34,7 +34,7 @@ LATER = ["Hello again! Do you remember me?", "What was it I told you I do for a 
 
 
 def recollect(state: dict, npc_id: str) -> str:
-    person = minds.find(state["npcs"], npc_id)
+    person = cast.find(state["npcs"], npc_id)
     context, fallback = routes_minds._recollect_context(person)
     call, result = voice.recollect(context, fallback)
     routes_minds._apply_recollection(person, context, result, state["sim_time_ms"])
@@ -49,7 +49,7 @@ def main() -> int:
     report, failures = {}, []
     state, hessa = world_for({"npc": "npc_hessa_marr"})
     first = [exchange(state, hessa["id"], line) for line in FIRST]
-    known = persona.knows(minds.find(state["npcs"], hessa["id"]))
+    known = persona.knows(cast.find(state["npcs"], hessa["id"]))
     report["hessa_notes"] = list(known["notes"])
     if known.get("name") != "Ash":
         failures.append(f"Hessa didn't take the name: {known.get('name')}")
@@ -63,22 +63,22 @@ def main() -> int:
     report["hessa_first"], report["hessa_later"] = first, later
 
     bren_id = "npc_bren_marr"
-    bren = minds.find(state["npcs"], bren_id)
+    bren = cast.find(state["npcs"], bren_id)
     state["player"].update(x=bren["x"], y=bren["y"] + 1)
     lie = exchange(state, bren_id, "I'm the king's own cousin, so you'd better let me through.")
-    claims = persona.knows(minds.find(state["npcs"], bren_id))["claims"]
+    claims = persona.knows(cast.find(state["npcs"], bren_id))["claims"]
     if not claims:
         failures.append("Bren believed the king's-cousin story")
     recollect(state, bren_id)
-    situation, _ = talk.request(state, minds.find(state["npcs"], bren_id), "Well?")
+    situation, _ = briefing.request(state, cast.find(state["npcs"], bren_id), "Well?")
     if claims and "didn't believe it" not in situation:
         failures.append("The doubted claim didn't reach Bren's next conversation")
     report["bren_lie"] = lie
 
     # Gossip: Hessa tells Bren about the stranger; he takes the name from her.
-    persona.knows(minds.find(state["npcs"], bren_id))["name"] = None
-    persona.knows(minds.find(state["npcs"], bren_id))["heard_name"] = None
-    a, b = minds.find(state["npcs"], hessa["id"]), minds.find(state["npcs"], bren_id)
+    persona.knows(cast.find(state["npcs"], bren_id))["name"] = None
+    persona.knows(cast.find(state["npcs"], bren_id))["heard_name"] = None
+    a, b = cast.find(state["npcs"], hessa["id"]), cast.find(state["npcs"], bren_id)
     text, questions = village.meet_brief(state, a, b)
     decided = decider.decide(text, questions)
     topic = (decided.answers.get("topic") or {}).get("choice")

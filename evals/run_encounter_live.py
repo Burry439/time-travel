@@ -8,7 +8,6 @@ and how long rounds took. Writes a transcript to evals/results/.
 from __future__ import annotations
 
 import sys
-import tempfile
 import time
 from pathlib import Path
 

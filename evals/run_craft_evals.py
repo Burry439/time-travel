@@ -19,7 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import crafting  # noqa: E402
+import consequences  # noqa: E402
+import heat  # noqa: E402
+import judge_view  # noqa: E402
 from ai import config, judge  # noqa: E402
 
 PRICES_PER_MTOK = {"gpt-6-sol": (2.0, 10.0), "gpt-6-luna": (0.1, 0.5), "gpt-6-astra": (10.0, 50.0)}
@@ -32,7 +34,7 @@ def world_with(case: dict) -> dict:
         state["objects"][object_id]["holder_id"] = "player"
     for object_id, fields in case.get("set", {}).items():  # e.g. water already in a bowl, and how hot it is
         state["objects"][object_id].update(fields)
-        crafting.rename(state["objects"][object_id])
+        heat.rename(state["objects"][object_id])
     if "player_at" in case:
         state["player"].update(x=case["player_at"][0], y=case["player_at"][1])
     if "beside" in case:
@@ -110,9 +112,9 @@ def main() -> int:
         passes = 0
         for run in range(args.runs):
             state = world_with(case)
-            context = crafting.build_context(state, case["text"], [])
+            context = judge_view.build_context(state, case["text"], [])
             judged = judge.judge_craft(context)
-            _, verdict, _ = crafting.resolve_attempt(copy.deepcopy(state), "eval0000", case["text"], judged.result,
+            _, verdict, _ = consequences.resolve_attempt(copy.deepcopy(state), "eval0000", case["text"], judged.result,
                                                      judged.error if judged.status != "ok" else None, "eval", 0)
             problems = check(case, judged, verdict)
             passes += not problems

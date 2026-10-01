@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import minds  # noqa: E402
+import cast  # noqa: E402
 import village  # noqa: E402
 from ai import config, voice  # noqa: E402
 
@@ -43,7 +43,7 @@ def main() -> int:
         for run in range(args.runs):
             state = app.initial_state({"id": "hearlive", "mode": "developer", "seed_version": app.SEED_VERSION,
                                        "geometry_version": app.GEOMETRY_VERSION})
-            teller, listener = minds.find(state["npcs"], teller_id), minds.find(state["npcs"], listener_id)
+            teller, listener = cast.find(state["npcs"], teller_id), cast.find(state["npcs"], listener_id)
             context = village.hearing_context(state, listener, teller, message)
             call, result = voice.hearing(context, village.fallback_hearing(listener, teller, message))
             problems = []

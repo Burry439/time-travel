@@ -23,8 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import minds  # noqa: E402
-import talk  # noqa: E402
+import briefing  # noqa: E402
+import cast  # noqa: E402
 from ai import config, voice  # noqa: E402
 
 LINES = ["Good day. I'm new here; what is this place?", "Could you use a hand with anything?",
@@ -51,13 +51,13 @@ def world() -> dict:
 
 
 def line_for(state: dict, npc: dict, text: str, baseline: bool) -> str:
-    person = minds.find(state["npcs"], npc["id"])
+    person = cast.find(state["npcs"], npc["id"])
     state["player"].update(x=person["x"], y=person["y"] + 1)
-    context = talk.voice_context(state, person, text, "answer", {})
+    context = briefing.voice_context(state, person, text, "answer", {})
     if not baseline:
         return voice.speak(context, "").text
     old = {k: context[k] for k in V2_FIELDS}
-    old["speaking_style"] = minds.card(person).get("style", "")
+    old["speaking_style"] = cast.card(person).get("style", "")
     response = config.client().responses.parse(
         model=config.voice_model(), reasoning={"effort": config.voice_reasoning()}, store=False,
         text_format=_Line,
@@ -86,8 +86,8 @@ def main(argv: list[str]) -> int:
     people = state["npcs"]
     names = [n["name"] for n in people]
     # The judge knows each person as a townsfolk would: who they are and how they talk (the same in both conditions).
-    cast = "\n".join(f"- {n['name']}, {minds.card(n)['role']}: {minds.card(n)['personality']} Talks: "
-                     f"{minds.card(n)['style']}" for n in people)
+    cast = "\n".join(f"- {n['name']}, {cast.card(n)['role']}: {cast.card(n)['personality']} Talks: "
+                     f"{cast.card(n)['style']}" for n in people)
     jobs = [(n, text) for n in people for text in LINES]
     with ThreadPoolExecutor(max_workers=8) as pool:
         lines = list(pool.map(lambda job: line_for(world(), job[0], job[1], args.baseline), jobs))

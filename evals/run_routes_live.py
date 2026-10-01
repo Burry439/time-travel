@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 import app  # noqa: E402
-import crafting  # noqa: E402
-import minds  # noqa: E402
+import cast  # noqa: E402
+import paths  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 app.store.DB_PATH = Path(tempfile.mkdtemp()) / "routes.sqlite3"
@@ -44,11 +44,11 @@ class Route:
         return self.state["run_id"]
 
     def person(self, npc_id: str) -> dict:
-        return minds.find(self.state["npcs"], npc_id)
+        return cast.find(self.state["npcs"], npc_id)
 
     def walk(self, x: int, y: int) -> None:
         start = (self.state["player"]["x"], self.state["player"]["y"])
-        previous, steps = crafting._bfs(start, crafting._blocked_cells(self.state), 250)
+        previous, steps = paths.bfs(start, paths.blocked_cells(self.state), 250)
         goal = min(steps, key=lambda c: (abs(c[0] - x) + abs(c[1] - max(y, 9)), steps[c]))
         path = []
         while goal != start:
@@ -155,7 +155,7 @@ def sponsor() -> bool:
                            lambda: route.deal(hessa, "fulfilled")):
         note("  ✗ Hessa did not count the deal as done.")
         return False
-    route.settle(lambda: any(m["kind"] == "vouch" for m in minds.mind(route.person("npc_roderic_vale"))["memories"]), 120)
+    route.settle(lambda: any(m["kind"] == "vouch" for m in cast.mind(route.person("npc_roderic_vale"))["memories"]), 120)
     return route.enter(["Captain, Hessa the innkeeper has spoken for me. I'd like to enter the city to find honest work.",
                         "My name is Ash. I carried water for Hessa and I'll work honestly for anyone in the city."])
 
@@ -180,7 +180,7 @@ def business() -> bool:
                            lambda: route.deal(darin, "fulfilled")):
         note("  ✗ Darin did not count the deal as done.")
         return False
-    route.settle(lambda: any(m["kind"] == "vouch" for m in minds.mind(route.person("npc_roderic_vale"))["memories"]), 150)
+    route.settle(lambda: any(m["kind"] == "vouch" for m in cast.mind(route.person("npc_roderic_vale"))["memories"]), 150)
     return route.enter(["Captain, I'm Darin the merchant's hired hand; he's taking me in under his trade permit.",
                         "My name is Ash. I work for Darin now and I'll keep to honest trade."])
 
@@ -301,7 +301,7 @@ def beam() -> bool:
                            lambda: route.deal(tomas, "fulfilled")):
         note("  ✗ Tomas did not count the deal as done.")
         return False
-    route.settle(lambda: any(m["kind"] == "vouch" for m in minds.mind(route.person("npc_roderic_vale"))["memories"]), 150)
+    route.settle(lambda: any(m["kind"] == "vouch" for m in cast.mind(route.person("npc_roderic_vale"))["memories"]), 150)
     return route.enter(["Captain, Tomas has spoken for me: I raised the new gate beam into its brackets.",
                         "My name is Ash. I'd work honestly in the city."])
 
