@@ -9,6 +9,7 @@ import math
 import cast
 import gear
 import paths
+import reputation
 import tuning
 from shapes import Npc, State, Thing
 
@@ -113,6 +114,7 @@ def people_nearby(state: State, costs: dict | None = None) -> list[dict]:
                     "weapon": _held_words(state, npc),
                     **({"conditions": [gear.describe(c) for c in npc["conditions"]]} if npc.get("conditions") else {}),
                     "aware_of_you": cast.aware(state, npc),
+                    "willing_to_help": reputation.will_help(state, npc),
                     "activity": (npc.get("controller") or {}).get("activity", "standing"),
                 }
             )

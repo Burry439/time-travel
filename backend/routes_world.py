@@ -161,7 +161,8 @@ def move(run_id: str, request: Move):
             if not (0 <= x < width and 0 <= y < height):
                 return False
             if paths.in_wall(gate, (x, y)):
-                return paths.in_gap(gate, (x, y)) and state["gate_open"] and holder is None
+                through_gate = paths.in_gap(gate, (x, y)) and state["gate_open"] and holder is None
+                return through_gate or paths.breached(state, (x, y))
             return (x, y) not in blocked
 
         # Walk the cells in order; stop at the first illegal step, keeping the legal ones before it.
@@ -206,6 +207,7 @@ def move(run_id: str, request: Move):
             )
             state["inside_city"] = True
             cmd.save("objective_complete", tick)
+            routes_tutorial.progress(cmd)  # A level that asked to get inside is told its end (D-59).
     if problem:
         body = views.shown(
             {"detail": problem[1], "state": state, "accepted": len(accepted)}

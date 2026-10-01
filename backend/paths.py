@@ -225,6 +225,14 @@ def in_gap(gate: dict, cell: Cell) -> bool:
     return gate["cols"][0] <= cell[0] <= gate["cols"][1]
 
 
+def breached(state: State, cell: Cell) -> bool:
+    """A way through the wall itself: an obstacle in the wall's rows that play has cleared (brambles cut out of a
+    gap in an old wall, D-59)."""
+    gone = cleared_obstacles(state)
+    plan = content.map_of(state)
+    return any(item["name"] in gone and cell in _cells([item]) for item in plan["obstacles"])
+
+
 def arrived(state: State, cell: Cell) -> bool:
     """The stranger has reached the map's inside (on the village map, the city): the journey's end."""
     inside = content.map_of(state).get("inside")

@@ -26,7 +26,7 @@ BUSY = {
 
 
 REWARDS = {
-    "vouch": "{name} will be grateful and put in a good word for the stranger with the captain",
+    "vouch": "{name} will be grateful and put in a good word for the stranger with {decider}",
     "hire": "{name} will take the stranger on as a hired hand for trade in the city, under {name}'s own permit",
     "pay": "{name} will give the stranger {pays}",  # Goods for work (D-59): the things named on the offer.
 }
@@ -194,7 +194,7 @@ def replies(state: State, npc: Npc) -> dict[str, dict]:
     """Every reply code can carry out for this person now: {key: {act, target, description}}. In the order the
     voice sees them: talking, what they have to offer, wrongs to put right, going to do something, and parting."""
     options: dict[str, dict] = {}
-    for group in (_talking, _offering, _wrongs, _going, _parting):
+    for group in (_talking, _offering, _wrongs, _robbing, _going, _parting):
         group(state, npc, options)
     withheld = rules.role(state, npc).get("withholds", [])  # Kade in the middle of his lessons stays put (D-57).
     return {k: o for k, o in options.items() if o["act"] not in withheld} if withheld else options
@@ -240,7 +240,9 @@ def _offering(state: State, npc: Npc, options: dict) -> None:
     offered = {a.get("template") for a in state.get("agreements", {}).values() if a.get("issuer") == npc["id"]}
     for offer in me.get("offers", []):
         if offer["id"] not in offered:
-            reward = REWARDS[offer["reward"]].format(name=name, pays=paid_with(state, offer.get("pays", [])))
+            reward = REWARDS[offer["reward"]].format(
+                name=name, pays=paid_with(state, offer.get("pays", [])), decider=gatekeeping.words(state)["decider"]
+            )
             options[f"offer:{offer['id']}"] = _option(
                 "offer", f"{name} proposes a deal: if the stranger will {offer['task']}, {reward}.", offer["id"]
             )
@@ -303,6 +305,23 @@ def _wrongs(state: State, npc: Npc, options: dict) -> None:
         )
 
 
+def _robbing(state: State, npc: Npc, options: dict) -> None:
+    """A robber holding the stranger up (D-59): take what they're after by force, or stand aside (paid, talked
+    round, or not worth the fight)."""
+    if not cast.robbing(npc):
+        return
+    name, wants = npc["name"], cast.card(npc)["robs"]
+    fighting = npc["id"] in ((state.get("fight") or {}).get("attackers") or [])
+    if not fighting and state["player"].get("alive", True):
+        options["rob"] = _option(
+            "rob", f"{name} comes at the stranger to beat them down and take {wants}, not to kill."
+        )
+    options["stand_aside"] = _option(
+        "stand_aside",
+        f"{name} stands aside and lets the stranger go on their way: paid, talked round, or not worth it.",
+    )
+
+
 def _going(state: State, npc: Npc, options: dict) -> None:
     """Going to do something for the stranger: speak for them, carry word, stop fighting, see to their own wound,
     let them in."""
@@ -318,7 +337,7 @@ def _going(state: State, npc: Npc, options: dict) -> None:
         and (reputation.regard(npc)["trust"] >= tuning.VOUCH_TRUST or helped_by_stranger(npc))
     ):
         options["vouch"] = _option(
-            "vouch", f"{name} goes to Captain {captain['name']} now and speaks for the stranger."
+            "vouch", f"{name} goes to {gatekeeping.decider_called(state, captain)} now and speaks for the stranger."
         )
     if not fighting and not npc.get("down"):
         options["go_tell"] = _option(
@@ -337,11 +356,10 @@ def _going(state: State, npc: Npc, options: dict) -> None:
             obj["id"],
         )
     if gatekeeping.can_admit(state, npc):
+        entry = gatekeeping.words(state)
         options["admit"] = _option(
             "admit",
-            f"{name} admits the stranger into the city and orders the gate opened for them."
-            if npc["id"] == cast.captain_id(state)
-            else f"{name} lets the stranger through the gate on their own say-so, and has it opened for them.",
+            f"{name} {entry['admit']}." if npc["id"] == cast.captain_id(state) else f"{name} {entry['let_through']}.",
         )
 
 

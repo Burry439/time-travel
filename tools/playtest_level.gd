@@ -2,7 +2,9 @@ extends SceneTree
 ## A scripted playtest of any training level (GDD D-59), with the live models: each step's cards are read, then its
 ## playtest is done through the game's own service (walk, take, say, do, the interface, asking the device), and the
 ## clock runs until the step is done. Needs the backend running live (./tools/run_m0.ps1):
-##   Godot --path . --script res://tools/playtest_level.gd -- --level=cup_of_water [--capture]
+##   Godot --path . --script res://tools/playtest_level.gd -- --level=cup_of_water [--route=2] [--capture]
+## An advanced level's steps may have other routes to the same outcome (routes: {"2": [...]}); --route picks one
+## (a step without it plays its playtest).
 ## Reports each step's time, the whole level's against its minutes, and ends with BLOCKERS and NOTES, like
 ## playtest_demo. Run against a stub backend it checks the script itself (attempts then fail as notes).
 var scene: Node2D
@@ -12,6 +14,7 @@ var blockers: PackedStringArray = []
 var notes: PackedStringArray = []
 var blocked := {}
 var size := Vector2i.ZERO
+var route := "1"
 
 
 func _initialize() -> void:
@@ -141,7 +144,21 @@ func beats(seconds: int, index: int) -> void:
 
 func act(action: Dictionary, index: int) -> void:
 	if action.has("equip"):
-		await post("equip", {"object_id": str(action.equip), "slot": str(action.get("slot", "right"))})
+		var thing_id := str(action.equip)
+		var slot := str(action.get("slot", "right"))
+		if thing_id.begins_with("made:"): # The newest thing the stranger made of this kind of gear (A5).
+			var kind := thing_id.trim_prefix("made:")
+			thing_id = ""
+			for thing in scene.run_state.objects.values():
+				var made_kind := str(thing.get("gear", {}).get("kind", ""))
+				if thing.get("created_by") == "player" and thing.holder_id == "player" and made_kind == kind:
+					thing_id = str(thing.id)
+			if not action.has("slot"):
+				slot = {"weapon": "right", "shield": "left"}.get(kind, "body")
+			if thing_id.is_empty():
+				note("nothing made of kind %s to take up" % kind)
+				return
+		await post("equip", {"object_id": thing_id, "slot": slot})
 	elif action.has("strike"):
 		for _swing in int(action.get("repeat", 1)):
 			if step_index() > index:
@@ -215,6 +232,8 @@ func _run() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--level="):
 			id = arg.trim_prefix("--level=")
+		elif arg.begins_with("--route="):
+			route = arg.trim_prefix("--route=")
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
@@ -222,7 +241,7 @@ func _run() -> void:
 	await create_timer(1.0).timeout
 	level = scene.level
 	load_map()
-	print("\n==== LEVEL PLAYTEST: %s (%s, about %d min)" % [level.title, id, int(level.minutes)])
+	print("\n==== LEVEL PLAYTEST: %s (%s, about %d min, route %s)" % [level.title, id, int(level.minutes), route])
 	var started := Time.get_ticks_msec()
 	for index in level.steps.size():
 		var step: Dictionary = level.steps[index]
@@ -235,7 +254,7 @@ func _run() -> void:
 			blocker("expected step %s, still at %d" % [step.id, step_index()])
 			break
 		print("-- %d %s" % [index + 1, step.id])
-		for action in step.get("playtest", []):
+		for action in step.get("routes", {}).get(route, step.get("playtest", [])):
 			await act(action, index)
 		for _beat in 40: # Up to 40 s of world time for the step to see it happened.
 			if step_index() > index:

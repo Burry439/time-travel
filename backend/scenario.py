@@ -251,6 +251,24 @@ def _approach(state, spec, ctx):
         cast.set_job(npc, job, ctx["now"])
 
 
+@effect("hold_up", "npcs")
+def _hold_up(state, spec, ctx):
+    """Robbers step out (D-59): each walks up to the stranger and threatens them, with their own line (says)."""
+    for npc_id in spec["npcs"]:
+        npc = cast.find(state["npcs"], npc_id)
+        if npc and npc.get("alive", True) and not npc.get("down") and cast.robbing(npc):
+            job = {
+                "kind": "approach",
+                "target": "player",
+                "stop": 2.5,
+                "speed": "walk",
+                "then": "threaten",
+                "line": (spec.get("says") or {}).get(npc_id),
+                "line_id": None,
+            }
+            cast.set_job(npc, job, ctx["now"])
+
+
 @effect("hold", "npc", "seconds")
 def _hold(state, spec, ctx):
     """Stand and talk a moment: nobody walks off mid-word."""

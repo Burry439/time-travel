@@ -17,6 +17,8 @@ from collections.abc import Callable
 import cast
 import content
 import gear
+import persona
+import reputation
 from shapes import State
 
 SPAR_OUTCOMES = ("spar_won", "spar_lost", "spar_yielded")  # How a practice bout can end (combat.end_spar).
@@ -157,6 +159,12 @@ def _holding_shield(state, spec, ctx):
 @condition("admitted")
 def _admitted(state, spec, ctx):
     return bool(state.get("admitted"))
+
+
+@condition("inside")
+def _inside(state, spec, ctx):
+    """The stranger has got inside (the map's inside: the city, the manor), by whatever way."""
+    return bool(state.get("inside_city"))
 
 
 # --- People ------------------------------------------------------------------------------------------------------
@@ -326,6 +334,34 @@ def _remembers(state, spec, ctx):
     return bool(wrongs) and all(bool(m.get("settled")) == spec["settled"] for m in wrongs)
 
 
+@condition("knows", "fact")
+def _knows(state, spec, ctx):
+    """Someone has told the stranger this fact of theirs (a card's knowledge): a secret confided, a way found."""
+    return any(entry.get("fact") == spec["fact"] for entry in state.get("learned") or [])
+
+
+@condition("standing", "npc", "is")
+def _standing(state, spec, ctx):
+    """How this person stands toward the stranger is one of these (the word the journal shows: unknown, hostile,
+    wary, neutral, friendly, would_speak)."""
+    npc = _npc(state, spec, ctx)
+    return bool(npc) and reputation.standing(npc) in spec["is"]
+
+
+@condition("stood_aside", "npc")
+def _stood_aside(state, spec, ctx):
+    """A robber has given up the hold-up: paid, talked round, scared off, or done (D-59)."""
+    npc = _npc(state, spec, ctx)
+    return bool(npc) and bool((npc.get("mind") or {}).get("stood_aside"))
+
+
+@condition("opinion", "npc", "of", "at_least")
+def _opinion(state, spec, ctx):
+    """How warmly this person now thinks of someone else is at least this (-1 to 1; brothers made up, D-59)."""
+    npc = _npc(state, spec, ctx)
+    return bool(npc) and persona.opinions(npc).get(spec["of"], {}).get("warmth", 0.0) >= spec["at_least"]
+
+
 @condition("shown", "npc")
 def _shown(state, spec, ctx):
     """This person saw the stranger show something that worked, clearly, in this step (a demonstration)."""
@@ -388,16 +424,45 @@ def _made_here(obj: dict, since: int) -> bool:
 @condition("made")
 def _made(state, spec, ctx):
     """The stranger made something in this step: one whose name has one of these words (named: a rope, a torch), or
-    one made from any of these things (from: what went into it), so however they put it and whatever the judge
-    called it, it counts."""
-    since = _progress(ctx).get("started_seq", 0)
+    one made from any of these things (from: what went into it), or gear of these kinds (gear: weapon, armour), so
+    however they put it and whatever the judge called it, it counts. ever: made at any time in the level."""
+    since = 0 if spec.get("ever") else _progress(ctx).get("started_seq", 0)
+    return any(_made_here(o, since) and _counts(o, spec) for o in state["objects"].values())
 
-    def counts(o: dict) -> bool:
-        named = any(word in o["name"].lower() for word in spec.get("named", []))
-        made_from = set(o.get("components") or []) | set(o.get("tools_used") or [])
-        return named or bool(made_from & set(spec.get("from", [])))
 
-    return any(_made_here(o, since) and counts(o) for o in state["objects"].values())
+def _counts(o: dict, spec: dict) -> bool:
+    """A made thing is the one a rule means: named with one of these words, made from one of these things, or
+    of one of these kinds of gear (weapon, shield, armour, clothing)."""
+    named = any(word in o["name"].lower() for word in spec.get("named", []))
+    made_from = set(o.get("components") or []) | set(o.get("tools_used") or [])
+    return (
+        named
+        or bool(made_from & set(spec.get("from", [])))
+        or (o.get("gear") or {}).get("kind") in spec.get("gear", [])
+    )
+
+
+@condition("using_made", "gear")
+def _using_made(state, spec, ctx):
+    """The stranger has something they made, of one of these kinds of gear, in hand or on (the spear they made
+    ready, the jack they quilted worn)."""
+    kit = gear.equipped(state["player"])
+    return any(
+        (o := state["objects"].get(oid)) and o.get("created_by") == "player" and _counts(o, spec)
+        for oid in set(kit.values())
+    )
+
+
+@condition("has", "named")
+def _has(state, spec, ctx):
+    """The stranger has, and owns, something with one of these words in its name: bought, given, earned or made,
+    not just taken (a pie paid for)."""
+    return any(
+        o["holder_id"] == "player"
+        and o["owner_id"] in (None, "player")
+        and any(word in o["name"].lower() for word in spec["named"])
+        for o in state["objects"].values()
+    )
 
 
 @condition("gave_made", "npc", "count")

@@ -158,7 +158,7 @@ func sync() -> void:
 
 
 func _sync_now() -> void:
-	if game.gate_sprite: # Only the village map has a gate.
+	if game.gate_sprite and game.gate_shape: # Only the village map has a drawn gate (a field gate is just art).
 		game.gate_shape.set_deferred("disabled", bool(game.run_state["gate_open"]))
 		game.gate_sprite.visible = not bool(game.run_state["gate_open"])
 		game.gate_opening.visible = bool(game.run_state["gate_open"])

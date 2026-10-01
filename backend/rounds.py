@@ -26,6 +26,7 @@ import commands
 import conversation
 import encounter
 import judge_view
+import persona
 import routes_tutorial
 import store
 import talk
@@ -240,6 +241,11 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
         )
         if unkept:
             exchange["journal_entry"]["unkept_promise"] = unkept
+        felt = [
+            shifted
+            for f in line.get("feelings") or []
+            if (shifted := persona.shift_opinion(draft, npc, f["person_id"], f["change"], line.get("remember", "")))
+        ]
         draft.setdefault("learned", []).extend(exchange["learned"])
         draft["journal"].append(exchange["journal_entry"])
         heard.append(f"{npc['name']} just said: “{line['text']}”")
@@ -261,6 +267,7 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
                     "why": "addressed" if npc["id"] == moment["addressed"] else "in the scene",
                     "promised_later": promised,
                     "unkept_promise": unkept,
+                    "feelings": felt,
                     "reply": line["text"],
                     "regard_change": exchange["regard_change"],
                     "situation": briefing.request(draft, npc, text, moment_words)[0],
@@ -345,6 +352,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                     record["seized_by"] = record.get("seized_by") or line["npc_id"]
                 elif act == "attack":
                     combat.start(draft, [line["npc_id"]], now, "attack")
+                elif act == "rob":  # A hold-up turned to force: to beat the stranger down and rob them (D-59).
+                    combat.start(draft, [line["npc_id"]], now, "rob", lethal=False)
             encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
             _pass_round_time(draft, now, encounter.round_ms(record))
             _adopt_round(state, draft, record, state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0))

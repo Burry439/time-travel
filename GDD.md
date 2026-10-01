@@ -436,6 +436,13 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 >
 > Without grounds, "admit" isn't among the voice's moves, and the context says why ("nothing to go on but the stranger's own word"). The live playtest found Roderic admitting on "Hessa has spoken for me" before she had.
 
+> **Any level's way in (D-59).** Admission isn't only the city's: a ferryman who takes you across (A1) and a manor's
+> porter and steward (A10) use the same rules. The words come from the map (`entry`: the place, who decides and their
+> title, what admitting means, the deed's words); the village's are the defaults (`gatekeeping.ENTRY`), so its
+> prompts are unchanged. A level whose map has a `gate` and an `inside` ends when the stranger walks in, by whatever
+> way. **A breach:** an obstacle in the wall's rows that play has cleared (brambles cut out of a gap in an old wall,
+> an authored thing standing for the obstacle, `geometry_name`) lets the stranger through (`paths.breached`).
+
 **Roderic's authored motives.** These are conditions he reasons about, not a recipe.
 
 - He admits an unknown traveller when he believes they are **not a threat** *and* have **a legitimate reason** to enter.
@@ -771,6 +778,12 @@ The judge receives the relevant precedents and must stay consistent with them. V
 
 > **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are yes/no readings returned with the reply itself (D-46), judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. **A job lends what it needs (D-55):** an offer's authored `lends` (Hessa's bucket and trough; Tomas's beam, rope, ladder, fulcrum, trestles and hammer) are lent when the offer is made, and the lead says so ("You may use Hessa's wooden bucket and water trough for it"). Handed back to its owner, a lent thing's loan is over. The live playtest found Hessa crying theft at her own bucket, then turning hostile after the water was delivered. Not built yet: escort, barter, loans with a return deadline, and breach.
 
+> **Hands to help (D-59).** Lifting, levering or freeing something heavy may name people as aids, not only things:
+> someone close by (4 cells), on their feet, not against the stranger and either in the conversation with them
+> (asked) or well disposed (Friendly or better) counts (`reputation.will_help`). The judge sees who is
+> `willing_to_help` (`judge_v15`) and decides whether the way described is enough; code refuses anyone else. Onlookers
+> see "with Wat and Dunna helping". Found for A6 (a cart in a mire): "asking for help" had no way to count.
+
 The player often needs things they don't own or skills they don't have. **Agreements** are the typed mechanism for help. A promise in dialogue is not an agreement until it's committed.
 
 - **Types:** `task_for_reward`, `loan`, `barter`, `craft_assistance`, `sponsorship`, `escort`
@@ -929,6 +942,22 @@ Each potential witness receives a **perceived projection** of the event, meaning
 - Player text is **data** to every model, never instructions (§9.6).
 - Relationship and belief changes are capped per event, and every change cites an event ID.
 
+### 7.7 Hold-ups and feelings between people (D-59)
+
+**Status: CURRENT**
+
+- **Hold-ups.** A robber's card says what they're after (`robs`) and what they'd take (`takes`, words in the names of
+  what the stranger carries). A level's `hold_up` effect sends them to threaten the stranger: a hostile encounter.
+  In it a robber may `rob` (come at the stranger to beat them down and rob them, never to kill) or `stand_aside`
+  (paid, talked round, not worth it); the voice chooses (`scene_v5` says how robbers think). Walking off, they give
+  chase. Beaten down or yielding, the stranger is robbed and let go. Robbers aren't soldiers: when one goes down,
+  the others break and run. Real violence by the stranger still makes it a fight to kill, as anywhere (D-44).
+- **Feelings between people change in conversation.** Each line of a scene may say how the speaker's feelings
+  toward someone else shifted (`feelings_toward_others`, `scene_v5`): a fair point that lands, amends accepted, a
+  truth brought out. Code applies it to their opinion (at most 0.3 a moment, `tuning.OPINION_SHIFTS`), remembers why
+  (`lately`, which the voice then sees), and ignores anyone unreal or themselves. The village's meetings already
+  shifted opinions; now the stranger can too (A8, two brothers made up).
+
 ---
 
 ## 8. Technical architecture
@@ -1080,7 +1109,11 @@ Content says what must hold and what happens in one language (`rules.py`, D-58; 
 fields it needs (the stranger near a cell or carrying something, someone talked to, told, treated, a thing made
 in this step and seen, a thing installed, a flag the story noted; and for the training levels a container filled,
 a thing held by someone, a thing made from given things, a deal's status, a wrong remembered or put right,
-something shown, a swing, a raised shield, a blow blocked, a thing heated, fires out...). The tutorial's checks and triggers, deals'
+something shown, a swing, a raised shield, a blow blocked, a thing heated, fires out; and for the advanced levels
+a fact someone told (`knows`), how someone stands toward the stranger (`standing`), how warmly someone thinks of
+someone else (`opinion`), a robber who stood aside, something made of a kind of gear and in hand or worn
+(`made` with `gear`, `using_made`), something the stranger has and owns (`has`), and getting inside (`inside`)...).
+The tutorial's checks and triggers, deals'
 `done_when`, people's tasks (`when`, `unless`) and the parked stories and secrets use it.
 
 A journey plays a **level** (`data/content/levels`, D-59): a map (`data/maps`), a **cast** (who is there and each
@@ -1091,7 +1124,8 @@ task, a check, triggers, what happens when it starts and ends), the **roles** it
 the captain from the journey's level (`content.level`, `paths.grid`, `cast.captain`), so nothing assumes the
 village: a map without a gate has no halts or gate guards, and a level without anyone who `decides` has no
 captain. The hidden test room (`test_room`) plays every system off the village. Effects are registered the same way (`scenario.py`: someone says something,
-walks over, stays, lends, hurts, spars, goes to tell someone, speaks for the stranger, lets them in). Roles are
+walks over, stays, lends, hurts, spars, goes to tell someone, speaks for the stranger, lets them in, robbers step
+out: `hold_up`). Roles are
 the one place core rules learn about a scenario: Kade's "stays, withholds errands, spars when struck" is read by
 talk, fights and the clock through `rules.role`, never by asking which scenario is running. The training levels
 are scenarios in this form.
@@ -1134,7 +1168,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `scene_v4` (D-48): one call a round writes the lines for everyone in the conversation (and anyone nearby who joins), each with their reading of the moment, their move, a memory note and any name given; v4 (D-58): a deal's reward waits for the deal. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
+| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `scene_v5` (D-48): one call a round writes the lines for everyone in the conversation (and anyone nearby who joins), each with their reading of the moment, their move, a memory note and any name given; v4 (D-58): a deal's reward waits for the deal; v5 (D-59): how robbers think, and feelings toward others that change. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17; one model since D-47) | `gpt-6-luna`, reasoning `low` (`MODEL_DECIDER`, `DECIDER_REASONING`), a strict per-question JSON schema over code-built options; about $0.0002 and 1.5–3 s per decision | A typed engine such as Jev behind the same interface, only if crowds inside the city make volume and cost matter |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |

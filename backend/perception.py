@@ -143,7 +143,10 @@ def _making(entry: dict) -> dict | None:
 
 
 def _aids(plan: dict) -> str:
-    return f" using the {' and the '.join(plan['aid_names'])}" if plan["aid_names"] else ""
+    using = f" using the {' and the '.join(plan['aid_names'])}" if plan["aid_names"] else ""
+    helpers = plan.get("helper_names") or []
+    helping = f"{',' if using else ''} with {' and '.join(helpers)} helping" if helpers else ""
+    return using + helping
 
 
 def _installing(placed) -> dict | None:

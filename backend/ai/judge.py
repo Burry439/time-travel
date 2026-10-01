@@ -19,7 +19,7 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = "judge_v14"
+PROMPT_VERSION = "judge_v15"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[

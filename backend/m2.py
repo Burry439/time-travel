@@ -26,7 +26,7 @@ def seed_objects(state: State) -> dict[str, dict]:
     people = {npc["id"]: npc for npc in state.get("npcs", [])}
     objects = {}
     for spec in content.level(state)["things"]:
-        holder = people.get(spec.get("carried_by") or "") if "x" not in spec else None
+        holder = people.get(spec.get("carried_by") or spec.get("worn_by") or "") if "x" not in spec else None
         objects[spec["id"]] = authored({**spec, **({"x": holder["x"], "y": holder["y"]} if holder else {})})
     objects.update(_trees(content.map_of(state)))
     for obj in objects.values():
@@ -102,7 +102,9 @@ def authored(spec: dict) -> dict:
         "no_overlay",
         "count",
         "readable",
-    ):  # Fires, building art, gear, books.
+        "geometry_name",
+        "scene_node",
+    ):  # Fires, building art, gear, books, an obstacle it stands for and its art (brambles in a gap, D-59).
         if spec.get(extra):
             record[extra] = copy.deepcopy(spec[extra])  # The world's own copy, never the content's.
     if spec.get("worn_by") or spec.get("carried_by"):  # Someone's own gear (D-49): on them.

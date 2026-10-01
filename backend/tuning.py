@@ -26,6 +26,7 @@ REACH_CELLS = 2.5
 REACH_TAKE = 2.0  # Close enough to take something out of the stranger's hands.
 TALK_CELLS = 3.0  # Close enough to talk without walking over.
 MEET_CELLS = 3.0  # Close enough to fall into conversation.
+HELP_CELLS = 4.0  # Close enough to lend a hand with something heavy (D-59).
 VISIT_REACH = 3.0
 NEARBY_WALK_STEPS = 14  # Things this many steps away can be acted on; the player walks there first.
 WALK_CELLS_PER_SECOND = 7.1875  # Matches the backend walking speed.
@@ -67,6 +68,8 @@ TALK_ILLWILL = 0.3  # ...and how far words alone can lower it (D-46: symmetric; 
 EVIDENCE_GOODWILL = 0.3  # Each new piece of evidence they hold about the stranger allows this much more.
 SHIFTS = [-0.15, -0.07, 0.0, 0.07, 0.15]
 WARMTH_SHIFTS = [-0.1, -0.05, 0.0, 0.05, 0.1]
+# How far one moment of a conversation can move someone's feelings toward someone else (D-59: brothers made up).
+OPINION_SHIFTS = {"Much worse": -0.3, "A little worse": -0.15, "A little better": 0.15, "Much better": 0.3}
 
 # --- What people will do for the stranger ----------------------------------------------------------------------------
 

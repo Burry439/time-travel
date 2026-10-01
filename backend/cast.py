@@ -18,6 +18,12 @@ def captain_id(state: State) -> str | None:
     return next((npc["id"] for npc in state["npcs"] if CARDS.get(npc["id"], {}).get("decides")), None)
 
 
+def robbing(npc: Npc | None) -> bool:
+    """A robber still after the stranger's things (D-59): their card says what they rob, and they haven't stood
+    aside (paid, talked round, scared off, or done)."""
+    return bool(npc) and bool(card(npc).get("robs")) and not mind(npc).get("stood_aside")
+
+
 def captain(state: State) -> Npc | None:
     return find(state["npcs"], captain_id(state) or "")
 

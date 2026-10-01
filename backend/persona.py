@@ -14,6 +14,7 @@ import math
 import cast
 import content
 import npc_sim
+import tuning
 from shapes import Npc, State
 
 MOODS = ["content", "cheerful", "weary", "irritable", "anxious", "excited", "grieving"]
@@ -113,8 +114,27 @@ def opinion_lines(state: State, npc: Npc, people: list[dict] | None = None) -> l
     for other in people if people is not None else nearby(state, npc):
         view = feelings.get(other["id"])
         if view:
-            lines.append(f"{npc['name']} {warmth_words(view['warmth'])} {other['name']} ({view['text']}).")
+            lately = f" Lately: {view['lately']}" if view.get("lately") else ""
+            lines.append(f"{npc['name']} {warmth_words(view['warmth'])} {other['name']} ({view['text']}).{lately}")
     return lines
+
+
+def shift_opinion(state: State, npc: Npc, who: str, change: str, why: str) -> dict | None:
+    """Something said in a conversation changed how this person feels about someone else (D-59): by id or name,
+    someone real and not themself. Returns {id, name, warmth} as it now stands, or None if nothing changed."""
+    amount = tuning.OPINION_SHIFTS.get(change)
+    other = cast.find(state["npcs"], who) or next(
+        (n for n in state["npcs"] if n["name"].lower() == who.strip().lower()), None
+    )
+    if not amount or other is None or other["id"] == npc["id"]:
+        return None
+    view = opinions(npc).setdefault(
+        other["id"], {"text": f"{other['name']} the {cast.card(other)['role']}", "warmth": 0.0}
+    )
+    view["warmth"] = round(max(-1.0, min(1.0, view["warmth"] + amount)), 2)
+    if why:
+        view["lately"] = why
+    return {"id": other["id"], "name": other["name"], "warmth": view["warmth"]}
 
 
 def usual_place(state: State, npc_id: str) -> str | None:

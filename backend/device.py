@@ -8,6 +8,7 @@ import math
 
 import cast
 import content
+import gatekeeping
 import gear
 import reputation
 import rules
@@ -97,10 +98,11 @@ def _place_name(state: State) -> str:
 def _their_part(state: State, deal: Deal) -> str:
     """What the other side of a deal promised, and whether they've done it yet, so the device never runs ahead."""
     issuer = deal.get("issuer") or ""
+    decider = gatekeeping.words(state)["decider"]
     promise = (
         "take you on as a hired hand under their trade permit"
         if deal.get("reward") == "hire"
-        else "speak for you to the captain"
+        else f"speak for you to {decider}"
     )
     if deal.get("status") != "fulfilled":
         return f"will {promise} once it's done (not yet)"
@@ -111,7 +113,7 @@ def _their_part(state: State, deal: Deal) -> str:
     )
     job = ((cast.find(state["npcs"], issuer) or {}).get("mind") or {}).get("job") or {}
     return (
-        "has done it: spoke for you to the captain"
+        f"has done it: spoke for you to {decider}"
         if spoke
         else f"is on the way to {promise} now"
         if job.get("kind") == "vouch"
@@ -162,9 +164,9 @@ def _coach(state: State) -> dict:
         "lent_to_you": lent,
         "where_you_are": _place_name(state),
         "city": (
-            "inside the city"
+            gatekeeping.words(state)["arrived"]
             if state.get("inside_city")
-            else "let in: the gate is open to them, but they haven't walked through it yet"
+            else gatekeeping.words(state)["let_in"]
             if state.get("admitted")
             else "not let in yet"
         ),

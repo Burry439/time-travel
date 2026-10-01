@@ -28,6 +28,7 @@ import re
 import cast
 import combat
 import conversation
+import encounter
 import gatekeeping
 import gear
 import persona
@@ -364,6 +365,8 @@ def _then(
         )
     elif act == "stop_fighting":
         combat.withdraw(state, npc_id, now)
+    elif act == "stand_aside":
+        encounter.stand_aside(state, npc, now)
     elif act == "treat_self":
         remedy = state["objects"][target]
         index = next((i for obj, i in conversation.self_remedies(state, npc) if obj["id"] == target), None)
@@ -384,7 +387,7 @@ def _then(
         thing.update(holder_id=npc_id)  # The owner has it back; a guard holds it for them.
         lent.append({"id": target, "holder_id": npc_id, "owner_id": thing["owner_id"]})
         cast.watch(npc, now, tuning.TALK_WATCH_MS)
-    elif act in ("seize", "attack") or fighting:
+    elif act in ("seize", "attack", "rob") or fighting:
         pass
     elif act == "call_guard":
         reputation.remember(

@@ -450,6 +450,29 @@ def advance_people(state: State, elapsed_ms: int) -> dict:
     return payload
 
 
+def _robbed(state: State, payload: dict, robber: Npc, now: int) -> None:
+    """Beaten down by robbers (D-59): they take what they came for and let the stranger go, in the payload."""
+    draft = {
+        "objects": copy.deepcopy(state["objects"]),
+        "player": payload["player"],
+        "npcs": payload["npcs"],
+        "journal": [],
+        "encounter": payload.get("encounter"),
+        "fight": payload.get("fight"),
+        "sim_time_ms": now,
+        "event_seq": state["event_seq"],
+    }
+    words = encounter.rob(draft, robber, now)
+    for object_id, obj in draft["objects"].items():
+        before = state["objects"][object_id]
+        for field in ("holder_id", "owner_id"):
+            if obj[field] != before[field]:
+                payload["objects_changed"].setdefault(object_id, {})[field] = obj[field]
+    payload.update(encounter=draft.get("encounter"), fight=draft.get("fight"))
+    entry = {"kind": "fight", "category": "robbed", "text": words, "sim_time_ms": now}
+    payload["people_journal"] = payload["people_journal"] + draft["journal"] + [entry]
+
+
 def _subdued(state: State, payload: dict, by: str, now: int) -> None:
     """A guard arrests the stranger they put on the ground (stolen things go back, marched off, barred for a while);
     anyone else just stops. Everything lands in the payload, so replay needs no rules."""
@@ -470,6 +493,8 @@ def _subdued(state: State, payload: dict, by: str, now: int) -> None:
         )
     )
     if guard is None:
+        if cast.robbing(subduer):
+            _robbed(state, payload, subduer, now)
         return
     draft = {
         "objects": copy.deepcopy(state["objects"]),

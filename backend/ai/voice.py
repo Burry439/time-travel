@@ -35,7 +35,7 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v4"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal.
+SCENE_VERSION = "scene_v5"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
 DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).
@@ -55,6 +55,13 @@ class DialogueLine(BaseModel):
     text: str
     remember: str
     stranger_name: str
+
+
+class FeelingShift(BaseModel):
+    """How a speaker's feelings toward someone else changed in this moment (D-59)."""
+
+    person_id: str
+    change: Literal["Much worse", "A little worse", "A little better", "Much better"]
 
 
 class SceneLine(BaseModel):
@@ -77,6 +84,7 @@ class SceneLine(BaseModel):
     reason_enough_to_let_them_through: bool
     agreed_to_the_deal: bool
     did_what_was_asked: bool
+    feelings_toward_others: list[FeelingShift]
     errand_to: str
     errand_message: str
     promised_later: str
@@ -266,6 +274,10 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
                     "errand_to": line.errand_to.strip()[:60],
                     "errand_message": " ".join(line.errand_message.split())[:240],
                     "promised_later": " ".join(line.promised_later.split())[:240],
+                    "feelings": [
+                        {"person_id": f.person_id.strip()[:60], "change": f.change}
+                        for f in line.feelings_toward_others[:3]
+                    ],
                 }
             )
     if lines:

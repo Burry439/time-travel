@@ -45,7 +45,7 @@ PIECE = (
 )
 BAND = (
     "Top-down view, seen from directly above, for a 2D RPG map: {piece}. It fills the whole image edge to edge, "
-    "running from the top of the image to the bottom, even lighting, no border, no text, no people. {style}"
+    "running {run}, even lighting, no border, no text, no people. {style}"
 )
 BLOCKS = {"indoor": "Color(0.29, 0.2, 0.13, 1)", "outdoor": "Color(0.42, 0.36, 0.25, 1)"}  # Unpainted pieces.
 SURROUND = {"indoor": "Color(0.07, 0.06, 0.05, 1)", "outdoor": "Color(0.26, 0.31, 0.17, 1)"}
@@ -88,8 +88,12 @@ def paint(plan: dict, folder: Path, force: bool) -> None:
         print(f"painting {name}…", flush=True)
         raw = folder / f"{name}.raw.png"
         band = name in art.get("bands", [])
-        prompt = (BAND if band else PIECE).format(piece=words, style=STYLE)
-        raw.write_bytes(_image(prompt, "1024x1536" if band else "1024x1024", not band))
+        cells = next((i["cells"] for i in plan["buildings"] + plan["obstacles"] if i["name"] == name), [0, 0, 1, 2])
+        across = cells[2] > cells[3]  # A river across the map, or down it.
+        shape = "1536x1024" if across else "1024x1536"
+        run = "from the left edge of the image to the right" if across else "from the top of the image to the bottom"
+        prompt = (BAND if band else PIECE).format(piece=words, style=STYLE, run=run)
+        raw.write_bytes(_image(prompt, shape if band else "1024x1024", not band))
         picture = Image.open(raw).convert("RGBA")
         if name in art.get("bands", []):  # Covers its cells whole: not trimmed.
             picture.save(target)

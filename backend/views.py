@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from fastapi.routing import APIRoute
 
 import cast
+import gatekeeping
 import reputation
 import rules
 from shapes import State
@@ -72,7 +73,8 @@ def deeds(state: State) -> list[dict]:
             text = f"{names.get(issuer, 'They')} is satisfied: you did what you promised."
             found.append(_deed(f"kept:{deal['id']}", "You kept your word", text, issuer))
     if isinstance(state.get("admitted"), dict) or state.get("inside_city"):
-        found.append(_deed("admitted", "The gate opens", "You're allowed into the city.", ""))
+        title, text = gatekeeping.words(state)["deed"]
+        found.append(_deed("admitted", title, text, ""))
     return found
 
 

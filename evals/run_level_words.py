@@ -1,7 +1,10 @@
 """Live check of a training level's words (D-59): every "do" in its steps' playtests, and the other wordings in
 try_also, must work with the real judge in the world as the level leaves it at that step, and complete the step.
 
-    backend/.venv/Scripts/python.exe evals/run_level_words.py --level cup_of_water [--runs 2]
+    backend/.venv/Scripts/python.exe evals/run_level_words.py --level cup_of_water [--runs 2] [--route 2]
+
+An advanced level's step may have other routes (routes: {"2": [...]}; --route plays one) and a words_check: what its
+deeds alone should bring about (Gorm saw it work), when its own check also needs talk this eval skips.
 
 The level is played from its start in the backend alone: walking is a step to the target, taking is taking, and
 each "do" is judged and applied as a real attempt, then the step's own check decides. Talk, the interface and the
@@ -74,10 +77,14 @@ def attempt(state: dict, text: str) -> dict:
     return verdict
 
 
-def play(state: dict, step: dict, words: str | None) -> list[dict]:
+def actions(step: dict, route: str) -> list[dict]:
+    return step.get("routes", {}).get(route, step.get("playtest", []))
+
+
+def play(state: dict, step: dict, words: str | None, route: str = "1") -> list[dict]:
     """The step's playtest, with its do in these words; what each do did."""
     done = []
-    for action in step.get("playtest", []):
+    for action in actions(step, route):
         if "walk_to" in action:
             walk_to(state, action["walk_to"])
         elif "take" in action:  # As the game takes it: someone else's, it's a theft and people see (D-46).
@@ -97,6 +104,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--level", required=True)
     parser.add_argument("--runs", type=int, default=2)
+    parser.add_argument("--route", default="1")
     args = parser.parse_args()
     if config.mode() != "live":
         print(f"AI mode is '{config.mode()}': add OPENAI_API_KEY to backend/.env first.")
@@ -107,13 +115,14 @@ def main() -> int:
         state = start(args.level)
         for index, step in enumerate(steps):
             state["tutorial"].update(step=index, read=index, started_seq=state["event_seq"])
-            does = [a for a in step.get("playtest", []) if "do" in a]
-            for words in (step.get("try_also", []) + [None]) if does else [None]:  # Others first, on copies.
+            does = [a for a in actions(step, args.route) if "do" in a]
+            others = step.get("try_also", []) if args.route == "1" else []
+            for words in (others + [None]) if does else [None]:  # Others first, on copies.
                 trial = copy.deepcopy(state) if words else state  # Other wordings are tried on a copy.
-                tried = play(trial, step, words)
+                tried = play(trial, step, words, args.route)
                 if not tried:
                     continue
-                ok = rules.holds(trial, step["check"], {"progress": trial["tutorial"]})
+                ok = rules.holds(trial, step.get("words_check", step["check"]), {"progress": trial["tutorial"]})
                 failures += not ok
                 for verdict in tried:
                     report.append({"run": run + 1, "step": step["id"], "text": verdict["text"], "ok": ok,
@@ -121,9 +130,10 @@ def main() -> int:
                     print(f"{'PASS' if ok else 'FAIL'}  run {run + 1}  {step['id']:7} “{verdict['text']}” → "
                           f"{verdict['category']}: {verdict['reason'][:150]}")
             if not does:  # Walking, talking, the interface: as if it happened (their checks aren't this eval's).
-                play(state, step, None)
+                play(state, step, None, args.route)
             scenario.run(state, step.get("on_done", []), state.get("sim_time_ms", 0))
-    out = ROOT / "evals" / "results" / f"words_{args.level}_{time.strftime('%Y%m%d_%H%M%S')}.json"
+    route = f"_route{args.route}" if args.route != "1" else ""
+    out = ROOT / "evals" / "results" / f"words_{args.level}{route}_{time.strftime('%Y%m%d_%H%M%S')}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"{len(report) - failures}/{len(report)} passed. Report: {out.relative_to(ROOT)}")

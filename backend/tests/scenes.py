@@ -13,7 +13,14 @@ def scene_call(context: dict, scripted, text_for=None) -> voice.VoiceCall:
         move = (reply.get("reply") or {}).get("choice", "answer")
         text = text_for(context, person, move) if text_for else f"(voiced) {person['id']}: {move}"
         lines.append(
-            {"speaker_id": speaker, "text": text, "move": move, "answers": reply, "remember": reply.get("remember", "")}
+            {
+                "speaker_id": speaker,
+                "text": text,
+                "move": move,
+                "answers": reply,
+                "remember": reply.get("remember", ""),
+                "feelings": reply.get("feelings", []),  # [{person_id, change}] (D-59).
+            }
         )
     return voice.VoiceCall(
         status="ok",

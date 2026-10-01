@@ -50,6 +50,8 @@ def level_rules(level: dict):
     conditions, effects = [], []
     for step in level["steps"]:
         conditions.append((step["check"], f"{step['id']}.check"))
+        if step.get("words_check"):
+            conditions.append((step["words_check"], f"{step['id']}.words_check"))
         lists = [
             (step.get("on_start", []), f"{step['id']}.on_start"),
             (step.get("on_done", []), f"{step['id']}.on_done"),
@@ -123,8 +125,8 @@ def test_every_rule_is_a_known_kind_with_what_it_needs():
                 problems.append(f"{at}: unknown condition {kind!r}")
             else:
                 problems += [f"{at}: {kind} needs {field}" for field in rules.NEEDS[kind] if field not in spec]
-            if kind == "made" and not (spec.get("named") or spec.get("from")):
-                problems.append(f"{at}: made needs named words or from things")
+            if kind == "made" and not (spec.get("named") or spec.get("from") or spec.get("gear")):
+                problems.append(f"{at}: made needs named words, from things or gear kinds")
     for spec, at in effects:
         kind = spec.get("kind")
         if kind not in scenario.EFFECTS:
@@ -246,6 +248,8 @@ def test_every_authored_thing_has_what_the_game_reads():
     for spec in specs:
         for field in ("id", "name", "mass_kg", "materials", "description", "flags"):
             assert field in spec, f"{spec.get('id')}: {field}"
+        unknown = set(spec["flags"]) - set(content.MATERIALS["flag_meanings"])
+        assert not unknown, f"{spec['id']}: flags the judge doesn't know: {unknown}"
         assert ("x" in spec and "y" in spec) or spec.get("carried_by") or spec.get("worn_by"), spec["id"]
         for key in ("owner_id", "carried_by", "worn_by"):
             assert spec.get(key) in (None, "player") or spec[key] in CARDS, f"{spec['id']}: {key}"
@@ -262,7 +266,8 @@ def test_every_playtest_names_what_is_in_its_level(level_id):
     level = GUIDED[level_id]
     people, things = set(level["cast"]), things_in(level)
     for step in level["steps"]:
-        for action in step.get("playtest", []):
+        scripts = [step.get("playtest", []), *step.get("routes", {}).values()]  # Every route an advanced level has.
+        for action in (action for script in scripts for action in script):
             target = action.get("walk_to")
             assert target is None or isinstance(target, list) or target in people | things, (step["id"], action)
             assert action.get("take") in (None, *things), (step["id"], action)

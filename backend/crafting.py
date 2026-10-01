@@ -16,6 +16,7 @@ import heat
 import judge_view
 import m2
 import paths
+import reputation
 import tuning
 from shapes import Npc, State
 
@@ -1027,6 +1028,27 @@ def _given_name(obj: dict) -> str:
     return obj["name"] + (f", full ({water:g} L of water)" if full else f" with {water:g} L of water in it")
 
 
+def _aids(state: State, plan: dict, available: dict, skip: tuple) -> tuple[list[str], list[str], list[str]]:
+    """The aids a lift names: things at hand, and people close by and willing to help (D-59). Returns (things,
+    helpers, anything named that is neither)."""
+    things, helpers, missing = [], [], []
+    for aid in _dedupe(plan["aid_ids"]):
+        if aid in skip:
+            continue
+        person = cast.find(state["npcs"], aid)
+        if aid in available:
+            things.append(aid)
+        elif person is not None and reputation.will_help(state, person):
+            helpers.append(aid)
+        else:
+            missing.append(aid)
+    return things, helpers, missing
+
+
+def _helper_names(state: State, helpers: list[str]) -> list[str]:
+    return [cast.find(state["npcs"], i)["name"] for i in helpers]
+
+
 def _install(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("install")
     if not plan:
@@ -1055,11 +1077,10 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
             action="install",
             precedent_key=key,
         )
-    aids = [i for i in _dedupe(plan["aid_ids"]) if i not in (obj["id"], into["id"])]
-    missing = [i for i in aids if i not in available]
+    aids, helpers, missing = _aids(state, plan, available, (obj["id"], into["id"]))
     if missing:
-        return unresolved(notes, f"aids that are not at hand: {missing}")
-    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
+        return unresolved(notes, f"aids that are not at hand (or people not willing to help): {missing}")
+    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not (aids or helpers):
         return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift into place by hand.",
@@ -1074,6 +1095,7 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
         "into_name": into["name"],
         "aid_ids": aids,
         "aid_names": [available[i]["name"] for i in aids],
+        **({"helper_ids": helpers, "helper_names": _helper_names(state, helpers)} if helpers else {}),
     }
     # Putting something where it belongs isn't taking it; borrowing someone's tools to do it is.
     not_ours = [i for i in aids if available[i]["holder_id"] != "player"]
@@ -1102,11 +1124,10 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
         return ruling(
             "blocked", f"The {obj['name']} isn't fitted into anything.", notes, action="lift_out", precedent_key=key
         )
-    aids = [i for i in _dedupe(plan["aid_ids"]) if i not in (obj["id"], into["id"])]
-    missing = [i for i in aids if i not in available]
+    aids, helpers, missing = _aids(state, plan, available, (obj["id"], into["id"]))
     if missing:
-        return unresolved(notes, f"aids that are not at hand: {missing}")
-    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not aids:
+        return unresolved(notes, f"aids that are not at hand (or people not willing to help): {missing}")
+    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not (aids or helpers):
         return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift out by hand.",
@@ -1121,6 +1142,7 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
         "from_name": into["name"],
         "aid_ids": aids,
         "aid_names": [available[i]["name"] for i in aids],
+        **({"helper_ids": helpers, "helper_names": _helper_names(state, helpers)} if helpers else {}),
     }
     not_ours = [i for i in aids if available[i]["holder_id"] != "player"]
     return ruling(

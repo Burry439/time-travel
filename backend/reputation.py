@@ -230,6 +230,18 @@ def remember(npc: Npc, memory: Memory) -> None:
         memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
 
 
+def will_help(state: State, npc: Npc) -> bool:
+    """Would lend a hand with something heavy right now (D-59): on their feet, close by, not against the stranger,
+    and either talking with them (asked) or well disposed toward them."""
+    if not npc.get("alive", True) or npc.get("down") or cast.distance(npc, state["player"]) > tuning.HELP_CELLS:
+        return False
+    if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
+        return False
+    where = standing(npc)
+    talking = npc["id"] in ((state.get("encounter") or {}).get("participants") or [])
+    return where not in ("hostile", "wary") and (talking or where in ("friendly", "would_speak"))
+
+
 def hearsay(memory: Memory) -> bool:
     """Told or overheard, not their own contact with the stranger: Hessa speaking for the stranger to the captain
     doesn't mean the guards have dealt with them (D-55)."""

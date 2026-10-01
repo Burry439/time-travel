@@ -43,6 +43,8 @@ FALLBACK = {
     "attack": "Right. You asked for it.",
     "forgive": "Well. We'll say no more about it.",
     "stop_fighting": "All right. Enough.",
+    "rob": "Have it your way, then.",
+    "stand_aside": "Go on, then. Get out of here before I change my mind.",
     "go_tell": "Wait here. I'll go and tell them.",
 }
 
@@ -110,7 +112,8 @@ def request(state: State, npc: Npc, text: str, happened: str | None = None) -> t
         f"On {name}'s mind: {cast.card(npc).get('concerns', 'nothing in particular')}",
     ]
     if gatekeeping.admission_rule(npc):
-        lines.append(f"How {name} decides who may enter the city: {gatekeeping.admission_rule(npc)}")
+        place = gatekeeping.words(state)["place"]
+        lines.append(f"How {name} decides who may enter {place}: {gatekeeping.admission_rule(npc)}")
     for trade in conversation.open_trades(state, npc):
         lines.append(
             f"The stranger is offering {name} a trade: their {' and '.join(trade['give_names'])} for "
@@ -180,14 +183,14 @@ def request(state: State, npc: Npc, text: str, happened: str | None = None) -> t
     if gatekeeping.can_admit(state, npc):
         questions["threat"] = {
             "type": "noul",
-            "instructions": f"Does {name} believe the stranger is a threat to the "
-            f"city? Judge only from what {name} has seen or been told.",
+            "instructions": f"Does {name} believe the stranger is a threat to "
+            f"{gatekeeping.words(state)['place']}? Judge only from what {name} has seen or been told.",
         }
         questions["reason"] = {
             "type": "noul",
             "instructions": (
                 f"By {name}'s own lights ({gatekeeping.admission_rule(npc)}), has {name} now seen, been given or been told of reason "
-                f"enough to let the stranger into the city? The stranger's own claims do not count."
+                f"enough to let the stranger into {gatekeeping.words(state)['place']}? The stranger's own claims do not count."
             ),
         }
     accepted = [d for d in accepted if conversation.deal_possible(state, d)]
@@ -220,11 +223,11 @@ def also_decided(state: State, npc: Npc, answers: dict) -> list[str]:
         deal = accepted[0]
         reward = (
             f"{name} now takes the stranger on as a hired hand under {name}'s own trade permit, and will go "
-            f"and tell the captain."
+            f"and tell {gatekeeping.words(state)['decider']}."
             if deal["reward"] == "hire"
             else f"{name} now hands the stranger {conversation.paid_with(state, deal.get('pays', []))}, as agreed."
             if deal["reward"] == "pay"
-            else f"{name} will now go and speak for the stranger to the captain."
+            else f"{name} will now go and speak for the stranger to {gatekeeping.words(state)['decider']}."
         )
         notes.append(f"{name} is satisfied that the stranger has done what was asked ({deal['task']}). {reward}")
     return notes
@@ -404,4 +407,6 @@ def fallback_line(state: State, npc: Npc, key: str) -> str:
     offer = next((o for o in cast.card(npc).get("offers", []) if o["id"] == target), None)
     if act == "offer" and offer:
         return f"Here's a thought. If you {offer['task'].replace(npc['name'], 'me')}, I'll make it worth your while."
+    if act in ("admit", "vouch"):
+        return gatekeeping.words(state)[f"fallback_{act}"]
     return FALLBACK.get(act, FALLBACK["answer"])

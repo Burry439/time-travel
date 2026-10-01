@@ -682,6 +682,8 @@ def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
         if down(npc):
             fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
             fight["swings"].pop(npc["id"], None)
+            if cast.card(npc).get("robs"):
+                _robbers_run(state, npc, now)
             if not fight["attackers"]:
                 finish(state, now)
         elif result not in ("missed",) and npc["id"] not in fight["attackers"]:
@@ -711,6 +713,31 @@ def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
         "property": [],
     }
     perception.apply_perceptions(state, perception.perceive(state, entry))
+
+
+def _robbers_run(state: State, fallen: Npc, now: int) -> None:
+    """Robbers aren't soldiers (D-59): when one of them goes down, the rest give up the hold-up and run."""
+    for other in state["npcs"]:
+        if other["id"] == fallen["id"] or not cast.card(other).get("robs") or down(other):
+            continue
+        if not other.get("alive", True) or cast.mind(other).get("stood_aside"):
+            continue
+        cast.mind(other)["stood_aside"] = True
+        fight = active(state)
+        if fight and other["id"] in fight["attackers"]:
+            fight["attackers"].remove(other["id"])
+            fight["swings"].pop(other["id"], None)
+        talking = state.get("encounter")
+        if talking and other["id"] in talking["participants"]:
+            talking["participants"].remove(other["id"])
+            (talking.get("purpose") or {}).pop(other["id"], None)
+        goal = list(cast.cell(other))
+        _, steps = paths.bfs(cast.cell(other), paths.grid(state), 14)
+        here = cast.player_cell(state)
+        if steps:
+            goal = list(max(steps, key=lambda c: (math.dist(c, here), c)))
+        cast.set_job(other, {"kind": "flee", "goal": goal, "speed": "run", "until": now + 40_000}, now)
+        _log(state, other["id"], "flees", f"{other['name']} breaks and runs.", now, state.get("journal"))
 
 
 def _launch(state: State, swing: dict) -> None:

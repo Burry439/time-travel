@@ -281,6 +281,21 @@ def _walked_off(draft: State, encounter: dict, now: int, journal: list[dict], no
     for who in list(encounter["participants"]):
         npc = cast.find(draft["npcs"], who)
         wrong = grievance(npc) if npc else None
+        if (
+            npc is not None
+            and who not in fighting
+            and cast.robbing(npc)
+            and npc.get("alive", True)
+            and not npc.get("down")
+        ):
+            combat.start(draft, [who], now, "rob", lethal=False)  # A hold-up doesn't let you stroll off (D-59).
+            note(
+                who,
+                "chase",
+                f"{npc['name']}: “Not so fast!” {npc['name']} comes after you.",
+                f"The stranger walked off from {npc['name']}, who came after them.",
+            )
+            continue
         if npc is None or who in fighting or wrong is None or not npc.get("alive", True) or npc.get("down"):
             continue
         if cast.card(npc).get("guard"):
@@ -343,6 +358,47 @@ def finish(draft: State, record: dict, now: int, reply: dict | list | None = Non
         npc = cast.find(draft["npcs"], npc_id)
         if purpose(encounter, npc_id) != "talk" and not combat.fighting(draft, npc):  # Stay face to face.
             cast.set_job(npc, {"kind": "encounter"}, now)
+
+
+# --- Hold-ups (D-59) ------------------------------------------------------------------------------------------------
+
+
+def stand_aside(state: State, npc: Npc, now: int) -> None:
+    """Paid, talked round or scared off: they let the stranger go on; their part in the hold-up is over."""
+    cast.mind(npc)["stood_aside"] = True
+    current = active(state)
+    if current and npc["id"] in current["participants"]:
+        current.setdefault("purpose", {})[npc["id"]] = "talk"
+        current["reason"] = _reason(current)
+    combat.withdraw(state, npc["id"], now)
+    if not npc.get("down") and npc.get("alive", True):
+        cast.watch(npc, now, tuning.WATCH_MS)
+
+
+def rob(state: State, robber: Npc, now: int) -> str:
+    """The stranger at their mercy: the robbers take what they came for (what the stranger carries whose name has
+    one of their takes words) and let them go. Returns what happened, in words."""
+    gang = [n for n in state["npcs"] if cast.robbing(n) and n.get("alive", True) and not n.get("down")]
+    wants = {word for n in gang for word in cast.card(n).get("takes", [])}
+    taken = [
+        o
+        for o in state["objects"].values()
+        if o["holder_id"] == "player" and any(word in o["name"].lower() for word in wants)
+    ]
+    kit = state["player"].get("equipped") or {}
+    for obj in taken:
+        obj.update(holder_id=robber["id"], owner_id=robber["id"])
+        obj.pop("lent_to", None)
+        for slot in [s for s, oid in kit.items() if oid == obj["id"]]:
+            kit.pop(slot)
+    for npc in gang:
+        stand_aside(state, npc, now)
+    things = " and ".join(f"your {o['name']}" for o in taken)
+    return (
+        f"{robber['name']} takes {things}, and they let you go."
+        if taken
+        else f"{robber['name']} finds nothing worth taking, spits, and they let you go."
+    )
 
 
 def arrest_player(state: State, guard: Npc, now: int) -> str:
@@ -422,8 +478,18 @@ def surrender(state: State, now: int) -> dict:
         ),
         None,
     )
+    robber = next(
+        (
+            cast.find(state["npcs"], a)
+            for a in (fight or {}).get("attackers", [])
+            if cast.robbing(cast.find(state["npcs"], a))
+        ),
+        None,
+    )
     combat.finish(state, now)
     if guard is not None:
         words = arrest_player(state, guard, now)
         return {"arrested": True, "text": words}
+    if robber is not None:
+        return {"arrested": False, "text": rob(state, robber, now)}
     return {"arrested": False, "text": "They lower their weapons and let you be, for now."}

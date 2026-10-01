@@ -5,8 +5,34 @@ with someone's word for them. Speaking for the stranger to the captain is here t
 from __future__ import annotations
 
 import cast
+import content
 import reputation
 from shapes import Npc, State
+
+# How a level speaks of getting in (D-59): the village's gate, unless the map names its own way in (a ferry across a
+# river, a manor's gate). Each is a whole phrase, so the village's words stay exactly as they were.
+ENTRY = {
+    "place": "the city",  # Who may enter {place}; a threat to {place}; let the stranger into {place}.
+    "decider": "the captain",  # Speak for the stranger to {decider}.
+    "title": "Captain",  # {name} goes to {title} {decider's name} now.
+    "admit": "admits the stranger into the city and orders the gate opened for them",
+    "let_through": "lets the stranger through the gate on their own say-so, and has it opened for them",
+    "let_in": "let in: the gate is open to them, but they haven't walked through it yet",
+    "arrived": "inside the city",
+    "deed": ["The gate opens", "You're allowed into the city."],
+    "fallback_admit": "Very well. Open the gate for this one.",
+    "fallback_vouch": "Right. I'll go and have a word with the captain for you.",
+}
+
+
+def words(state: State) -> dict:
+    """This level's words for getting in: the map's own (entry), over the village's."""
+    return {**ENTRY, **(content.map_of(state).get("entry") or {})}
+
+
+def decider_called(state: State, decider: Npc) -> str:
+    """'Captain Varo', or just 'Gorm' where the one who decides has no title."""
+    return f"{words(state)['title']} {decider['name']}".strip()
 
 
 def barred(state: State) -> bool:
