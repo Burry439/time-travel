@@ -60,8 +60,10 @@ def walk_to(state: dict, target) -> None:
 
     x, y = where(state, target)
     grid = paths.grid(state)
-    near = min((c for c in ((x + dx, y + dy) for dx in range(-2, 3) for dy in range(-2, 3)) if grid.walkable(c)),
-               key=lambda c: (abs(c[0] - x) + abs(c[1] - y), c))
+    around = [c for c in ((x + dx, y + dy) for dx in range(-2, 3) for dy in range(-2, 3)) if grid.walkable(c)]
+    if not around:  # Somewhere a walk can't reach here (inside the manor): the walk is the game's, not this eval's.
+        return
+    near = min(around, key=lambda c: (abs(c[0] - x) + abs(c[1] - y), c))
     state["player"].update(x=near[0], y=near[1])
 
 
@@ -69,11 +71,17 @@ def attempt(state: dict, text: str) -> dict:
     judged = judge.judge_craft(judge_view.build_context(state, text, []))
     payload, verdict, _ = consequences.resolve_attempt(copy.deepcopy(state), "words000", text, judged.result,
                                                    judged.error if judged.status != "ok" else None, "words", 0)
-    if verdict["category"] == "success" or verdict["category"] in FAILS:
+    if verdict["category"] in ("success", "partial_success") or verdict["category"] in FAILS:  # As the game applies.
         state["event_seq"] += 1
         consequences.apply_payload(state, payload)
         reputation.after_deed(state, payload["journal_entry"])  # As the service does: a thing given back settles it.
         perception.apply_perceptions(state, perception.perceive(state, payload["journal_entry"]))
+    steps = (judged.result or {}).get("steps") or []
+    verdict["steps"] = [  # What the judge did, for a failure to be read: each step's action, and what it made of what.
+        {"action": s.get("action"), "outcome": s.get("outcome"),
+         **({"made": s["new_object"]["name"], "consumes": s["new_object"].get("consumes")} if s.get("new_object") else {})}
+        for s in steps
+    ]
     return verdict
 
 
@@ -84,7 +92,9 @@ def actions(step: dict, route: str) -> list[dict]:
 def play(state: dict, step: dict, words: str | None, route: str = "1") -> list[dict]:
     """The step's playtest, with its do in these words; what each do did."""
     done = []
-    for action in actions(step, route):
+    script = actions(step, route)
+    last_do = max((i for i, a in enumerate(script) if "do" in a), default=-1)  # Other words replace only the last do.
+    for index, action in enumerate(script):
         if "walk_to" in action:
             walk_to(state, action["walk_to"])
         elif "take" in action:  # As the game takes it: someone else's, it's a theft and people see (D-46).
@@ -96,7 +106,8 @@ def play(state: dict, step: dict, words: str | None, route: str = "1") -> list[d
                 consequences.apply_payload(state, payload)
                 perception.apply_perceptions(state, perception.perceive(state, payload["journal_entry"]))
         elif "do" in action:
-            done.append({"text": words or action["do"], **attempt(state, words or action["do"])})
+            text = words if words and index == last_do else action["do"]
+            done.append({"text": text, **attempt(state, text)})
     return done
 
 
@@ -126,7 +137,8 @@ def main() -> int:
                 failures += not ok
                 for verdict in tried:
                     report.append({"run": run + 1, "step": step["id"], "text": verdict["text"], "ok": ok,
-                                   "category": verdict["category"], "reason": verdict["reason"]})
+                                   "category": verdict["category"], "reason": verdict["reason"],
+                                   "steps": verdict.get("steps", [])})
                     print(f"{'PASS' if ok else 'FAIL'}  run {run + 1}  {step['id']:7} “{verdict['text']}” → "
                           f"{verdict['category']}: {verdict['reason'][:150]}")
             if not does:  # Walking, talking, the interface: as if it happened (their checks aren't this eval's).

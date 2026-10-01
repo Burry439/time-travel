@@ -15,6 +15,7 @@ var notes: PackedStringArray = []
 var blocked := {}
 var size := Vector2i.ZERO
 var route := "1"
+var obstacle_cells := {}
 
 
 func _initialize() -> void:
@@ -74,9 +75,21 @@ func load_map() -> void:
 	size = Vector2i(int(plan.size[0]), int(plan.size[1]))
 	for item in plan.get("buildings", []) + plan.get("obstacles", []):
 		var c: Array = item.cells
+		var cells: Array[Vector2i] = []
 		for x in range(int(c[0]), int(c[0]) + int(c[2])):
 			for y in range(int(c[1]), int(c[1]) + int(c[3])):
 				blocked[Vector2i(x, y)] = true
+				cells.append(Vector2i(x, y))
+		obstacle_cells[str(item.name)] = cells
+
+
+## Obstacles play has cleared (a felled tree, brambles cut out of a gap) no longer block the walk.
+func unblock_cleared() -> void:
+	for thing in scene.run_state.get("objects", {}).values():
+		var name := str(thing.get("geometry_name", ""))
+		if not name.is_empty() and str(thing.get("condition", "usable")) != "usable":
+			for cell in obstacle_cells.get(name, []):
+				blocked.erase(cell)
 
 
 func path_to(start: Vector2i, goal: Vector2i) -> Array:
@@ -112,6 +125,7 @@ func target_cell(target) -> Vector2i:
 
 
 func walk_to(target) -> void:
+	unblock_cleared()
 	var here := Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
 	var cells := path_to(here, target_cell(target))
 	for i in range(0, cells.size(), 20):

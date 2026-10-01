@@ -364,8 +364,12 @@ def finish(draft: State, record: dict, now: int, reply: dict | list | None = Non
 
 
 def stand_aside(state: State, npc: Npc, now: int) -> None:
-    """Paid, talked round or scared off: they let the stranger go on; their part in the hold-up is over."""
+    """Paid, talked round or scared off: they let the stranger go on; their part in the hold-up is over. Anyone who
+    only follows them in it (their card's follows: Dobbs follows Sken) stands aside with them."""
     cast.mind(npc)["stood_aside"] = True
+    for other in state["npcs"]:
+        if cast.card(other).get("follows") == npc["id"] and cast.robbing(other) and other.get("alive", True):
+            stand_aside(state, other, now)
     current = active(state)
     if current and npc["id"] in current["participants"]:
         current.setdefault("purpose", {})[npc["id"]] = "talk"

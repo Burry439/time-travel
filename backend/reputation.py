@@ -207,6 +207,8 @@ def _wonder(npc: Npc, memory: Memory, view: dict, trust: float, suspicion: float
     view["respect"] = round(min(1.0, view["respect"] + tuning.RESPECT_SHIFT.get(wonder, tuning.EVIDENCE_SHIFT)), 3)
     if wonder != "uncanny" or memory.get("source") not in FIRSTHAND:
         return trust, suspicion
+    if any(m.get("wonder") == "uncanny" for m in cast.mind(npc)["memories"]):
+        return trust, suspicion  # Seen before: awe and fear come with the first sight; now it simply works (D-59).
     view["awe"] = round(min(1.0, view["awe"] + tuning.AWE_SHIFT), 3)
     leaning = (cast.card(npc).get("superstition") or {}).get("kind", "none")
     if leaning == "reverent":
@@ -230,10 +232,11 @@ def remember(npc: Npc, memory: Memory) -> None:
         memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
 
 
-def will_help(state: State, npc: Npc) -> bool:
-    """Would lend a hand with something heavy right now (D-59): on their feet, close by, not against the stranger,
-    and either talking with them (asked) or well disposed toward them."""
-    if not npc.get("alive", True) or npc.get("down") or cast.distance(npc, state["player"]) > tuning.HELP_CELLS:
+def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool:
+    """Would lend a hand with something heavy right now (D-59): on their feet, close by (to the stranger, or to the
+    thing being moved, at), not against the stranger, and either talking with them (asked) or well disposed."""
+    near = min(cast.distance(npc, state["player"]), cast.distance(npc, at) if at else float("inf"))
+    if not npc.get("alive", True) or npc.get("down") or near > tuning.HELP_CELLS:
         return False
     if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
         return False

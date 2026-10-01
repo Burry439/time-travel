@@ -275,6 +275,11 @@ def propose(state: State, npc: Npc, offer_id: str, event_id: int | None, line: s
         thing = objects.get(thing_id)
         if thing and thing["owner_id"] == npc_id and thing.get("lent_to") != "player":
             thing["lent_to"] = "player"
+            if thing["holder_id"] == npc_id:  # Handed over with the job, as a loan in talk is (A2: Cob's drawknife).
+                thing["holder_id"] = "player"
+                kit = npc.get("equipped") or {}
+                for slot in [s for s, held in kit.items() if held == thing_id]:
+                    kit.pop(slot)
             lent.append({"id": thing_id, "holder_id": thing["holder_id"]})
             loaned.append(thing["name"])
     use = (

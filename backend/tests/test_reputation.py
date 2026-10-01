@@ -70,6 +70,21 @@ def test_awe_is_double_edged():
     assert abs(tomas["trust"] - before["npc_tomas_reed"]["trust"] - tuning.EVIDENCE_SHIFT) < 1e-9
 
 
+def test_a_wonder_seen_again_no_longer_frightens_or_dazzles():
+    """Awe and fear come with the first sight (D-59, A3: Brann shown it again, step by step): the second time it is
+    simply something that works, for the wary and the reverent alike."""
+    state = watching("npc_jory_venn", "npc_roderic_vale")
+    perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
+    first = {i: dict(reputation.regard(npc(state, i))) for i in ("npc_jory_venn", "npc_roderic_vale")}
+    again = shown("uncanny")
+    again["event_id"] = 8
+    perception.apply_perceptions(state, perception.perceive(state, again))
+    jory, roderic = (reputation.regard(npc(state, i)) for i in first)
+    assert roderic["suspicion"] < first["npc_roderic_vale"]["suspicion"]  # It works: evidence, not witchcraft again.
+    assert roderic["awe"] == first["npc_roderic_vale"]["awe"] and jory["awe"] == first["npc_jory_venn"]["awe"]
+    assert abs(jory["trust"] - first["npc_jory_venn"]["trust"] - tuning.EVIDENCE_SHIFT) < 1e-9  # No second blessing.
+
+
 def test_stories_of_wonders_earn_no_awe():
     state = unit_state()
     oren = npc(state, "npc_oren_dast")

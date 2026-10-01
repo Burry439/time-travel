@@ -323,6 +323,12 @@ def _deal(state, spec, ctx):
     )
 
 
+@condition("trade_offered", "npc")
+def _trade_offered(state, spec, ctx):
+    """The stranger has offered this person a trade (whether they took it or not)."""
+    return any(trade.get("recipient_id") == spec["npc"] for trade in (state.get("trades") or {}).values())
+
+
 @condition("remembers", "npc", "of")
 def _remembers(state, spec, ctx):
     """This person remembers a wrong of this kind (theft, violence) by the stranger; settled: true asks for it put
@@ -453,6 +459,13 @@ def _using_made(state, spec, ctx):
     )
 
 
+@condition("lent", "thing")
+def _lent(state, spec, ctx):
+    """Its owner has lent this thing to the stranger, and the stranger has it (a guest-stick to carry)."""
+    thing = state["objects"].get(spec["thing"]) or {}
+    return thing.get("lent_to") == "player" and thing.get("holder_id") == "player"
+
+
 @condition("has", "named")
 def _has(state, spec, ctx):
     """The stranger has, and owns, something with one of these words in its name: bought, given, earned or made,
@@ -479,6 +492,12 @@ def _gave_made(state, spec, ctx):
 def _thing_with(state, spec, ctx):
     """Something in the world now has this property (a needle magnetised, a cloth soaked): however it came to."""
     return any(spec["flag"] in (o.get("flags") or []) for o in state["objects"].values())
+
+
+@condition("cleared", "thing")
+def _cleared(state, spec, ctx):
+    """This thing is no longer as it stood: felled, cut up, broken (brambles cut out of a gap in a wall)."""
+    return (state["objects"].get(spec["thing"]) or {}).get("condition", "usable") != "usable"
 
 
 @condition("filled", "thing")

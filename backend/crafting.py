@@ -262,12 +262,22 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
     return cells
 
 
+def _water_at_hand(state: State, thing_id: str) -> bool:
+    """A water source within reach (a trough, the lake's edge): something to soak or wet a thing in as it's made."""
+    thing = state["objects"].get(thing_id) or {}
+    return "water_source" in thing.get("capabilities", []) and cast.distance(state["player"], thing) <= (
+        tuning.REACH_CELLS + 1
+    )
+
+
 def _make(state, judged, available, notes, reason, effort, key) -> dict:
     spec = judged.get("new_object")
     if not spec:
         return unresolved(notes, "action 'make' without a new_object")
     consumes = _dedupe(spec["consumes"])
     tools = [i for i in _dedupe(spec["tools_used"]) if i not in consumes]
+    water = [i for i in tools if _water_at_hand(state, i)]  # Soaked, wetted or quenched in it (D-59: the trough).
+    tools = [i for i in tools if i not in water]
     missing = [i for i in consumes + tools if i not in available]
     if missing:
         return unresolved(notes, f"proposal used items that are not available now: {missing}")
@@ -1029,16 +1039,18 @@ def _given_name(obj: dict) -> str:
 
 
 def _aids(state: State, plan: dict, available: dict, skip: tuple) -> tuple[list[str], list[str], list[str]]:
-    """The aids a lift names: things at hand, and people close by and willing to help (D-59). Returns (things,
-    helpers, anything named that is neither)."""
+    """The aids a lift names: things at hand, and people close by (to the stranger or the thing) and willing to help
+    (D-59). Returns (things, helpers, anything named that is neither)."""
     things, helpers, missing = [], [], []
+    moved = state["objects"].get(skip[0]) or {}
+    at = (moved["x"], moved["y"]) if "x" in moved else None
     for aid in _dedupe(plan["aid_ids"]):
         if aid in skip:
             continue
         person = cast.find(state["npcs"], aid)
         if aid in available:
             things.append(aid)
-        elif person is not None and reputation.will_help(state, person):
+        elif person is not None and reputation.will_help(state, person, at):
             helpers.append(aid)
         else:
             missing.append(aid)
