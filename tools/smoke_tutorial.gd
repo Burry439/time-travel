@@ -55,6 +55,18 @@ func row_button(root_node: Node, item: String, text: String) -> Button:
 	return null
 
 
+## The Play button on a level's card on the Training screen.
+func level_button(title: String) -> Button:
+	for card in scene.ui.modal.find_children("*", "PanelContainer", true, false):
+		var named := false
+		for label in card.find_children("*", "Label", true, false):
+			named = named or title in (label as Label).text
+		var buttons: Array[Node] = card.find_children("*", "Button", true, false)
+		if named and buttons.size() == 1 and (buttons[0] as Button).text.begins_with("Play"): # The card itself.
+			return buttons[0]
+	return null
+
+
 func step_id() -> String:
 	var tutorial = scene.run_state.get("tutorial")
 	if typeof(tutorial) != TYPE_DICTIONARY or tutorial.get("done", false):
@@ -121,12 +133,13 @@ func _run() -> void:
 	if not check(training != null, "No Training button on the title"):
 		return
 	training.pressed.emit() # The Training screen (D-59): the first morning is in Basics, for now.
+	var start: Button = null
 	for _i in 40:
 		await create_timer(0.1).timeout
-		if scene.ui.modal_kind == "training" and find_button(scene.ui.modal, "Play") != null:
+		start = level_button("The first morning") if scene.ui.modal_kind == "training" else null
+		if start:
 			break
-	var start := find_button(scene.ui.modal, "Play")
-	if not check(start != null, "No level to play on the Training screen"):
+	if not check(start != null, "No first morning to play on the Training screen"):
 		return
 	start.pressed.emit()
 	for _i in 40:

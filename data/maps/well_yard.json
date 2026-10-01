@@ -1,0 +1,48 @@
+{
+ "id": "well_yard",
+ "version": 1,
+ "name": "Wenna's farmyard",
+ "notes": "Training level B1 (D-59): a small farmyard a morning's walk from the city. The fields are as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a sunny farmyard of packed earth and patchy grass, a worn path from the yard gate at the bottom to a cottage door at the top left, scattered straw, a few dandelions",
+  "pieces": {
+   "Cottage": "a small whitewashed farm cottage with a mossy thatched roof, a low wooden door facing down, one small shuttered window",
+   "Coop": "a little wooden hen coop on short legs with a slanted plank roof and a ramp",
+   "Haystack": "a round golden haystack, loosely piled",
+   "Well": "a round stone well with a little wooden roof, a windlass and a coiled rope",
+   "Bench": "a weathered wooden bench, plain and low",
+   "Woodpile": "a neat stack of split firewood logs"
+  }
+ },
+ "size": [40, 26],
+ "walk": [0, 0, 40, 26],
+ "trees": {
+  "apple": {
+   "name": "apple tree",
+   "mass_kg": 400.0,
+   "length_m": 5.0,
+   "description": "An old apple tree, bent and mossy, with small green apples."
+  }
+ },
+ "buildings": [
+  {"name": "Cottage", "cells": [3, 2, 10, 6], "label": "Wenna's cottage"},
+  {"name": "Coop", "cells": [29, 3, 6, 4], "label": "Hen coop"}
+ ],
+ "obstacles": [
+  {"name": "Haystack", "cells": [19, 3, 3, 2]},
+  {"name": "Well", "cells": [24, 10, 2, 2]},
+  {"name": "Bench", "cells": [5, 9, 3, 1]},
+  {"name": "Woodpile", "cells": [14, 6, 3, 1]},
+  {"name": "AppleTree1", "cells": [15, 17, 1, 1], "tree": "apple", "id": "tree_apple_1"},
+  {"name": "AppleTree2", "cells": [33, 18, 1, 1], "tree": "apple", "id": "tree_apple_2"}
+ ],
+ "places": {
+  "bench": {"name": "Wenna's bench", "cell": [8, 9]},
+  "well": {"name": "the well", "cell": [25, 13]},
+  "coop": {"name": "the hen coop", "cell": [32, 8]},
+  "haystack": {"name": "the haystack", "cell": [20, 6]},
+  "apple_tree": {"name": "the apple tree", "cell": [16, 19]},
+  "gate": {"name": "the yard gate", "cell": [20, 24]}
+ }
+}

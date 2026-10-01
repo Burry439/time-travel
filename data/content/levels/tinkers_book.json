@@ -1,0 +1,590 @@
+{
+ "id": "tinkers_book",
+ "title": "The tinker's book",
+ "track": "basic",
+ "order": 2,
+ "minutes": 6,
+ "teaches": [
+  "Reading a book",
+  "Making things",
+  "Type it for me",
+  "Why a thing fails",
+  "Making in your own words",
+  "Giving what you made"
+ ],
+ "blurb": "A tinker needs a rope, a torch and a sling by tomorrow. His book says how; your hands do the rest.",
+ "after": "Nothing you made was in a list: the world judged each one from what it was made of and what you did. A book is advice, not a spell.",
+ "refines": "Do players follow written instructions into their own words? Does the judge rule the same way on recipe words and on paraphrases? Is a failure's reason clear?",
+ "map": "tinker_workshop",
+ "start": {
+  "cell": [
+   11,
+   15
+  ]
+ },
+ "objective": "Make Odo's three things",
+ "goal": "Help the tinker with his order",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_odo_tinker": {
+   "role": "tinker",
+   "step_ms": 460,
+   "goal": "mend pots at the bench",
+   "anchors": [
+    [
+     6,
+     6,
+     "work",
+     20000
+    ],
+    [
+     19,
+     5,
+     "work",
+     15000
+    ]
+   ]
+  },
+  "npc_nell_tinker": {
+   "role": "Odo's daughter",
+   "step_ms": 360,
+   "goal": "read and keep the accounts",
+   "anchors": [
+    [
+     12,
+     12,
+     "look",
+     15000
+    ],
+    [
+     14,
+     4,
+     "look",
+     12000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "book_tinker",
+   "name": "Odo's book of makings",
+   "x": 12,
+   "y": 11,
+   "mass_kg": 0.6,
+   "materials": [
+    "leather",
+    "parchment"
+   ],
+   "description": "A fat little book bound in scorched leather: how Odo makes the things he sells. Pick it up and read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "readable": "tinker_book"
+  },
+  {
+   "id": "flax_tinker",
+   "name": "bundle of flax fibres",
+   "x": 5,
+   "y": 5,
+   "mass_kg": 0.3,
+   "materials": [
+    "flax"
+   ],
+   "description": "A bundle of combed flax, pale and long-fibred, ready for spinning or twisting.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "length_m": 0.8
+  },
+  {
+   "id": "sawdust_tinker",
+   "name": "heap of sawdust",
+   "x": 8,
+   "y": 5,
+   "mass_kg": 0.5,
+   "materials": [
+    "sawdust"
+   ],
+   "description": "A small heap of fine sawdust swept up under the bench.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker"
+  },
+  {
+   "id": "stick_tinker",
+   "name": "ash stick",
+   "x": 14,
+   "y": 11,
+   "mass_kg": 0.4,
+   "materials": [
+    "wood"
+   ],
+   "description": "A straight ash stick about as long as a forearm and a half.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "length_m": 0.7
+  },
+  {
+   "id": "rag_tinker",
+   "name": "linen rag",
+   "x": 15,
+   "y": 11,
+   "mass_kg": 0.05,
+   "materials": [
+    "linen"
+   ],
+   "description": "A clean linen rag, a hand's width wide and an arm long.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "length_m": 0.6
+  },
+  {
+   "id": "pitch_tinker",
+   "name": "pot of pine pitch",
+   "x": 17,
+   "y": 5,
+   "mass_kg": 1.0,
+   "materials": [
+    "pine pitch",
+    "clay"
+   ],
+   "description": "A small clay pot of thick, sticky pine pitch, warm from the hearth.",
+   "flags": [
+    "combustible",
+    "container"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "capacity_l": 0.5
+  },
+  {
+   "id": "leather_tinker",
+   "name": "strip of leather",
+   "x": 4,
+   "y": 12,
+   "mass_kg": 0.15,
+   "materials": [
+    "leather"
+   ],
+   "description": "A strip of supple tanned leather, a forearm long and three fingers wide.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "length_m": 0.5
+  },
+  {
+   "id": "twine_tinker",
+   "name": "hank of hemp twine",
+   "x": 5,
+   "y": 12,
+   "mass_kg": 0.1,
+   "materials": [
+    "hemp"
+   ],
+   "description": "A hank of strong hemp twine, several arm-lengths of it.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "length_m": 3.0
+  },
+  {
+   "id": "hearth_tinker",
+   "name": "hearth fire",
+   "x": 19,
+   "y": 3,
+   "mass_kg": 40.0,
+   "materials": [
+    "brick",
+    "coal"
+   ],
+   "description": "Glowing coals in the brick hearth, kept hot with the bellows.",
+   "flags": [
+    "heat_source",
+    "light_source"
+   ],
+   "owner_id": "npc_odo_tinker",
+   "feature": "fire",
+   "burning": true,
+   "no_sprite": true,
+   "art": "scene"
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A workshop",
+   "cards": [
+    "…signal. Back with you. This is Odo's workshop: a tinker, who mends what others throw away and makes what they can't buy.",
+    "Today is about making things. Nothing here comes from a list: you say what you do, and the world decides if it works.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "hello",
+   "title": "The tinker",
+   "cards": [
+    "That's Odo at the bench, and his daughter Nell. Go and talk to Odo: {Left-click} him, type, press {Enter}."
+   ],
+   "suggest": {
+    "text": "Good day. Can I help?",
+    "to": "npc_odo_tinker",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Odo",
+   "focus": {
+    "npc": "npc_odo_tinker"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_odo_tinker"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_odo_tinker",
+     "text": "Help? Hm. Rope, torch, sling, for my round tomorrow. Book's on the table, says how. Use what's on the bench."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_odo_tinker",
+     "objects": [
+      "flax_tinker",
+      "sawdust_tinker",
+      "stick_tinker",
+      "rag_tinker",
+      "pitch_tinker",
+      "leather_tinker",
+      "twine_tinker",
+      "book_tinker"
+     ]
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_odo_tinker",
+     "lead": "Make Odo a rope, a torch and a sling, and give them to him",
+     "said": "Rope, torch, sling, for my round tomorrow.",
+     "done_when": {
+      "kind": "gave_made",
+      "npc": "npc_odo_tinker",
+      "count": 3
+     }
+    }
+   ],
+   "done": "He's lent you his things: taking them isn't stealing. What he asked is in your journal.",
+   "help": [
+    "{Left-click} Odo to talk to him, type something and press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_odo_tinker"
+    },
+    {
+     "say": "Good day. Can I help?",
+     "to": "npc_odo_tinker"
+    }
+   ]
+  },
+  {
+   "id": "book",
+   "title": "The book",
+   "cards": [
+    "Pick up Odo's book from the table."
+   ],
+   "task": "Pick up the book on the table",
+   "focus": {
+    "object": "book_tinker"
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "book_tinker"
+    ]
+   },
+   "done": "A book is just a thing in your pack, until you read it.",
+   "help": [
+    "{Left-click} the book on the table, or walk up to it and press {E}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "book_tinker"
+    },
+    {
+     "take": "book_tinker"
+    }
+   ]
+  },
+  {
+   "id": "read",
+   "title": "Reading",
+   "cards": [
+    "To read a book, open Pack & gear ({I}) and press Read beside it. Or put it in your hand and press {Space}.",
+    "Have a look at the rope, then close the book."
+   ],
+   "task": "Read Odo's book",
+   "check": {
+    "kind": "ui",
+    "key": "book"
+   },
+   "done": "Each page says what you need, how, and what it's good for, and offers words to try.",
+   "help": [
+    "Press {I}, find the book, and press Read beside it."
+   ],
+   "playtest": [
+    {
+     "ui": "book"
+    }
+   ]
+  },
+  {
+   "id": "rope",
+   "title": "Making",
+   "cards": [
+    "Now make the rope. Press {T}, then {Tab} until DO is lit, and describe what you do. Stand near the flax, or carry it.",
+    "The book gave words to try; here they are:"
+   ],
+   "suggest": {
+    "text": "twist the flax fibres into a rope",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Make a rope from the flax",
+   "focus": {
+    "object": "flax_tinker"
+   },
+   "check": {
+    "kind": "made",
+    "named": [
+     "rope",
+     "cord",
+     "line",
+     "twine"
+    ]
+   },
+   "done": "You made that. It didn't exist until you did, and it's yours now: look at it in your pack.",
+   "help": [
+    "Press {T}, press {Tab} until DO is lit, type 'twist the flax fibres into a rope', press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "flax_tinker"
+    },
+    {
+     "do": "twist the flax fibres into a rope"
+    }
+   ],
+   "try_also": [
+    "braid the flax into a cord",
+    "make a rope out of the flax"
+   ]
+  },
+  {
+   "id": "fail",
+   "title": "When it doesn't work",
+   "cards": [
+    "Not everything works, and that's useful too. Try making a rope from the sawdust, and read what the world says."
+   ],
+   "suggest": {
+    "text": "twist the sawdust into a rope",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Try to make a rope from the sawdust",
+   "focus": {
+    "object": "sawdust_tinker"
+   },
+   "check": {
+    "kind": "attempt_failed"
+   },
+   "done": "See? It names what's wrong (sawdust has no long fibres), not the answer. Read the reason when something fails: it tells you what to change.",
+   "help": [
+    "Press {T}, {Tab} to DO, and type 'twist the sawdust into a rope'."
+   ],
+   "playtest": [
+    {
+     "walk_to": "sawdust_tinker"
+    },
+    {
+     "do": "twist the sawdust into a rope"
+    }
+   ]
+  },
+  {
+   "id": "torch",
+   "title": "In your own words",
+   "cards": [
+    "The torch next. This time the words are yours: say it however you like. The book has a way, if you want it:"
+   ],
+   "suggest": {
+    "text": "wind the linen rag round the end of the ash stick and soak it in the pine pitch to make a torch",
+    "to": null,
+    "button": false,
+    "mode": "do"
+   },
+   "task": "Make a torch from the stick, the rag and the pitch",
+   "focus": {
+    "objects": [
+     "stick_tinker",
+     "rag_tinker",
+     "pitch_tinker"
+    ]
+   },
+   "check": {
+    "kind": "made",
+    "named": [
+     "torch",
+     "brand"
+    ]
+   },
+   "done": "Good. The world didn't care about the exact words, only what you did with what.",
+   "help": [
+    "You need the ash stick, the linen rag and the pot of pitch: carry them or stand near them.",
+    "Describe it in your own words: what goes round what, and what it's soaked in."
+   ],
+   "playtest": [
+    {
+     "walk_to": "stick_tinker"
+    },
+    {
+     "take": "stick_tinker"
+    },
+    {
+     "take": "rag_tinker"
+    },
+    {
+     "walk_to": "pitch_tinker"
+    },
+    {
+     "do": "wind the linen rag round the end of the ash stick and soak it in the pine pitch to make a torch"
+    }
+   ],
+   "try_also": [
+    "wrap the rag around the stick and dip it in the pitch"
+   ]
+  },
+  {
+   "id": "sling",
+   "title": "On your own",
+   "cards": [
+    "Last, the sling, from the leather and the twine. No words this time: the book has the way."
+   ],
+   "task": "Make a sling from the leather and the twine",
+   "focus": {
+    "objects": [
+     "leather_tinker",
+     "twine_tinker"
+    ]
+   },
+   "check": {
+    "kind": "made",
+    "named": [
+     "sling"
+    ]
+   },
+   "done": "Three things made from what was lying about. That's most of what you'll do here: look at what's to hand, and think.",
+   "help": [
+    "Open the book ({I}, Read) for the sling.",
+    "You need the strip of leather and the hemp twine."
+   ],
+   "playtest": [
+    {
+     "walk_to": "leather_tinker"
+    },
+    {
+     "take": "leather_tinker"
+    },
+    {
+     "take": "twine_tinker"
+    },
+    {
+     "do": "make a sling from the strip of leather and the hemp twine"
+    }
+   ],
+   "try_also": [
+    "tie the twine to both ends of the leather strip to make a sling"
+   ]
+  },
+  {
+   "id": "give",
+   "title": "The order",
+   "cards": [
+    "Odo wants them. Give him the rope, the torch and the sling: drag each one from your pack onto him, or say what you do."
+   ],
+   "suggest": {
+    "text": "give Odo the rope, the torch and the sling",
+    "to": "npc_odo_tinker",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Give Odo the rope, the torch and the sling",
+   "focus": {
+    "npc": "npc_odo_tinker"
+   },
+   "check": {
+    "kind": "gave_made",
+    "npc": "npc_odo_tinker",
+    "count": 3
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_odo_tinker",
+     "text": "Hm. Good work. Tighter knots next time. Here's one for you: an old soldier at the ruined smithy up the valley teaches weapons, if you bring him iron."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_odo_tinker",
+     "lead": "An old soldier at the ruined smithy teaches weapon-making for iron.",
+     "said": "An old soldier at the ruined smithy up the valley teaches weapons, if you bring him iron."
+    }
+   ],
+   "done": "From Odo, that's high praise.",
+   "help": [
+    "Walk up to Odo and drag the rope, then the torch, then the sling onto him.",
+    "Or click him and type: give him the rope, the torch and the sling."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_odo_tinker"
+    },
+    {
+     "do": "give Odo the rope, the torch and the sling",
+     "to": "npc_odo_tinker"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

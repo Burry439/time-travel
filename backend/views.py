@@ -14,6 +14,7 @@ from fastapi.routing import APIRoute
 
 import cast
 import reputation
+import rules
 from shapes import State
 
 
@@ -33,6 +34,8 @@ def lead_done(state: State, claim: dict) -> bool:
     met (a gift or a trade is done when it's learned)."""
     if "fulfilled" in claim or "gift" in claim or "trade" in claim:
         return True
+    if claim.get("done_when"):  # Something a story asked of the stranger (D-59): done when its condition holds.
+        return rules.holds(state, claim["done_when"])
     if "offer" in claim:
         return (state.get("agreements") or {}).get(str(claim["offer"]), {}).get("status") == "fulfilled"
     if "lend" in claim:

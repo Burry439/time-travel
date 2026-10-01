@@ -1,0 +1,190 @@
+{
+ "id": "tinker_workshop",
+ "version": 1,
+ "name": "Odo's workshop",
+ "notes": "Training level B2 (D-59): a tinker's workshop, indoors. The fields are as in data/maps/village.json; the walls are buildings round the edge. art: what tools/make_map.py paints (kind indoor or outdoor; ground; pieces by building or obstacle name, or 'Wall' for every building named Wall..., drawn as a band, the top one rising wall_rise cells above the floor).",
+ "art": {
+  "kind": "indoor",
+  "ground": "the wooden plank floor of a cluttered tinker's workshop, warm lamplight, scattered wood shavings and a few dark soot marks",
+  "pieces": {
+   "Wall": "the back wall of a timber workshop: dark wooden planks with tools hanging on pegs and a small high window",
+   "Workbench": "a long, scarred wooden workbench with a vice, scattered tools and a coil of wire",
+   "Shelves": "low wooden shelves crowded with pots, jars, kettles and pans waiting to be mended",
+   "Hearth": "a small brick forge hearth with glowing coals and a leather bellows",
+   "Table": "a sturdy square wooden table with a few clay cups",
+   "Barrels": "two oak barrels side by side",
+   "Crates": "a stack of two wooden crates full of scrap",
+   "Anvil": "a small iron anvil on a tree-stump block"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  24,
+  18
+ ],
+ "walk": [
+  0,
+  0,
+  24,
+  18
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    24,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    16
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    23,
+    2,
+    1,
+    16
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    17,
+    9,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    14,
+    17,
+    9,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "Workbench",
+   "cells": [
+    3,
+    3,
+    6,
+    2
+   ],
+   "label": "Workbench"
+  },
+  {
+   "name": "Shelves",
+   "cells": [
+    11,
+    2,
+    6,
+    1
+   ],
+   "label": "Shelves"
+  },
+  {
+   "name": "Hearth",
+   "cells": [
+    18,
+    2,
+    4,
+    2
+   ],
+   "label": "Hearth"
+  },
+  {
+   "name": "Table",
+   "cells": [
+    9,
+    9,
+    5,
+    2
+   ],
+   "label": "Table"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Barrels",
+   "cells": [
+    20,
+    13,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Crates",
+   "cells": [
+    2,
+    13,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Anvil",
+   "cells": [
+    16,
+    7,
+    1,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "workbench": {
+   "name": "the workbench",
+   "cell": [
+    5,
+    6
+   ]
+  },
+  "hearth": {
+   "name": "the hearth",
+   "cell": [
+    19,
+    5
+   ]
+  },
+  "table": {
+   "name": "the table",
+   "cell": [
+    11,
+    12
+   ]
+  },
+  "shelves": {
+   "name": "the shelves",
+   "cell": [
+    14,
+    4
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    11,
+    16
+   ]
+  }
+ }
+}

@@ -292,12 +292,16 @@ def _admit(state, spec, ctx):
 
 @effect("lend", "npc", "objects")
 def _lend(state, spec, ctx):
+    """Their own things, the stranger's to use (D-55: using them isn't theft): handed over if they hold them, or
+    where they lie (the materials on a workbench, D-59)."""
     npc = _person(state, spec)
     if npc:
         for oid in spec["objects"]:
             obj = state["objects"].get(oid)
             if obj and obj.get("holder_id") == npc["id"]:
                 obj.update(holder_id="player", lent_to="player")
+            elif obj and obj.get("owner_id") == npc["id"] and obj.get("holder_id") is None:
+                obj["lent_to"] = "player"
 
 
 @effect("hurt", "npc", "condition")
@@ -325,3 +329,16 @@ def _errand(state, spec, ctx):
     if npc and npc.get("alive", True):
         job = {"kind": "tell", "target": spec["to"], "speed": "walk", "message": spec["message"], "event": None}
         cast.set_job(npc, {**job, "quiet": True}, ctx["now"])
+
+
+@effect("lead", "npc", "lead")
+def _lead(state, spec, ctx):
+    """Someone tells the stranger something worth keeping: a lead in the journal. One the story asks of the stranger
+    carries done_when, a condition, and counts as done when it holds (views.lead_done)."""
+    npc = _person(state, spec)
+    if npc:
+        entry = {"npc_id": npc["id"], "name": npc["name"], "said": spec.get("said", spec["lead"]), "event_id": None}
+        entry["lead"] = spec["lead"]
+        if spec.get("done_when"):
+            entry.update(asks=True, done_when=spec["done_when"])
+        state.setdefault("learned", []).append(entry)

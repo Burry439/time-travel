@@ -496,7 +496,7 @@ func open_claims() -> Array:
 
 ## A lead that is something to do (a request, a loan to return, someone to go and see), not only a fact.
 static func is_task(claim: Dictionary) -> bool:
-	return claim.has("offer") or claim.has("lend") or claim.get("refer") != null
+	return claim.has("offer") or claim.has("lend") or claim.get("refer") != null or claim.has("asks")
 
 
 ## Text cut at a word to fit a small space.

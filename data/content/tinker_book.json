@@ -1,0 +1,69 @@
+{
+ "version": 1,
+ "notes": "Odo's book of makings (training level B2, D-59): a readable thing, like the wainwright's notebook. Advice in the world, not a recipe system: every attempt is still judged and nothing is keyed to these words. 'need' names things as they lie in the workshop; 'say' is a sentence the reader can send with Type it for me.",
+ "title": "Odo's Book of Makings",
+ "intro": [
+  "Odo Tinker, his book. If you can read this, you can help.",
+  "Most things that break can be mended, and most things you need can be made from what's lying about. Look at what a thing is made of before you start: flax twists, leather bends, pitch burns and sticks.",
+  "The world decides whether it works. If it doesn't, it'll tell you why."
+ ],
+ "chapters": [
+  {
+   "title": "Cord and rope",
+   "recipes": [
+    {
+     "name": "Flax rope",
+     "need": [
+      "bundle of flax fibres"
+     ],
+     "steps": [
+      "Split the bundle into three.",
+      "Twist each strand the same way, tight.",
+      "Lay the three together and twist them back the other way: the rope holds itself."
+     ],
+     "say": "twist the flax fibres into a rope",
+     "good_for": "Tying, hauling, hanging a bucket. Rots if left wet."
+    }
+   ]
+  },
+  {
+   "title": "Light and fire",
+   "recipes": [
+    {
+     "name": "Pitch torch",
+     "need": [
+      "ash stick",
+      "linen rag",
+      "pot of pine pitch"
+     ],
+     "steps": [
+      "Wind the rag tight round one end of the stick.",
+      "Tie it off so it won't slip.",
+      "Dip the wrapped end in the pitch and let it soak."
+     ],
+     "say": "wind the linen rag round the end of the ash stick and soak it in the pine pitch to make a torch",
+     "good_for": "Light in the dark; burns for half an hour. Light it at a fire."
+    }
+   ]
+  },
+  {
+   "title": "For the road",
+   "recipes": [
+    {
+     "name": "Leather sling",
+     "need": [
+      "strip of leather",
+      "hank of hemp twine"
+     ],
+     "steps": [
+      "Cut a pouch from the middle of the leather strip.",
+      "Tie a length of twine to each end of the pouch.",
+      "Loop one cord round your finger; let the other go as you swing."
+     ],
+     "say": "make a sling from the strip of leather and the hemp twine",
+     "good_for": "Throwing stones a long way. Takes practice."
+    }
+   ]
+  }
+ ]
+}

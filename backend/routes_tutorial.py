@@ -36,6 +36,7 @@ TUTORIAL_FIELDS = (
     "encounter",
     "admitted",
     "gate_open",
+    "learned",
 )
 
 

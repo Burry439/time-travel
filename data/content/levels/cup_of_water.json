@@ -1,0 +1,478 @@
+{
+ "id": "cup_of_water",
+ "title": "A cup of water",
+ "track": "basic",
+ "order": 1,
+ "minutes": 5,
+ "teaches": [
+  "Walking",
+  "Looking closer",
+  "Picking things up",
+  "Talking",
+  "Filling a cup",
+  "Giving",
+  "Your journal",
+  "The device"
+ ],
+ "blurb": "An old woman on a farm can't reach her well. Walk, look, talk, and take her a drink.",
+ "after": "Wenna will remember you, and so will anyone she tells. That's how it works everywhere here: people see what you do, and pass it on.",
+ "refines": "Do first-time players find clicking, dragging from the pack and giving without help? Does a first conversation feel answered?",
+ "map": "well_yard",
+ "start": {
+  "cell": [
+   20,
+   23
+  ]
+ },
+ "objective": "Help Wenna",
+ "goal": "Help the old woman on the bench",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_wenna_ash": {
+   "role": "farmer's widow",
+   "step_ms": 700,
+   "goal": "rest her bad leg on the bench",
+   "anchors": [
+    [
+     8,
+     9,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_pip_ash": {
+   "role": "Wenna's grandson",
+   "step_ms": 300,
+   "goal": "chase the hens round the yard",
+   "anchors": [
+    [
+     31,
+     8,
+     "look",
+     9000
+    ],
+    [
+     21,
+     6,
+     "look",
+     7000
+    ],
+    [
+     27,
+     14,
+     "look",
+     6000
+    ],
+    [
+     16,
+     18,
+     "look",
+     8000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "cup_wenna",
+   "name": "wooden cup",
+   "x": 26,
+   "y": 12,
+   "mass_kg": 0.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A turned wooden drinking cup, worn smooth with use.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight",
+    "floats"
+   ],
+   "capacity_l": 0.3
+  },
+  {
+   "id": "well_wenna",
+   "name": "well",
+   "x": 25,
+   "y": 11,
+   "mass_kg": 900.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A round stone well with a little roof and a windlass. The water is deep, cold and clean.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 2000.0,
+   "water_l": 2000.0,
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "apple_windfall",
+   "name": "windfall apple",
+   "x": 17,
+   "y": 19,
+   "mass_kg": 0.15,
+   "materials": [
+    "apple"
+   ],
+   "description": "A small green apple fallen from the tree, bruised on one side.",
+   "flags": []
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_wenna_ash",
+   "during": [
+    "welcome",
+    "walk",
+    "talk",
+    "look",
+    "take",
+    "pack",
+    "fill",
+    "give",
+    "journal",
+    "device"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell",
+    "vouch",
+    "call_guard"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A farmyard",
+   "cards": [
+    "…signal. There you are. It's me, the device you came through with. Only you can hear me.",
+    "This is a small farm, a morning's walk from the city. It's a good place to learn how things work here, one thing at a time.",
+    "While I'm talking, the world waits for you. Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "walk",
+   "title": "Walking",
+   "cards": [
+    "Walk with {W} {A} {S} {D} or the arrow keys. Hold {Shift} to run.",
+    "See the old woman on the bench by the cottage? Walk over to her."
+   ],
+   "task": "Walk over to the old woman on the bench",
+   "focus": {
+    "npc": "npc_wenna_ash"
+   },
+   "check": {
+    "kind": "npc_near",
+    "npc": "npc_wenna_ash",
+    "within": 3.0
+   },
+   "done": "Good. You can go anywhere you like here.",
+   "help": [
+    "She's on the bench in front of the cottage, at the top left. The arrow at the edge of the screen points to her."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_wenna_ash"
+    }
+   ]
+  },
+  {
+   "id": "talk",
+   "title": "Talking",
+   "cards": [
+    "To talk, {Left-click} someone, or stand near them and press {T}. A box opens at the bottom.",
+    "Type in your own words and press {Enter}. There are no lines to choose from: people answer as themselves. Try these words, or your own:"
+   ],
+   "suggest": {
+    "text": "Good morning. Are you all right?",
+    "to": "npc_wenna_ash",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to the old woman: click her, type, press Enter",
+   "focus": {
+    "npc": "npc_wenna_ash"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_wenna_ash"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_wenna_ash",
+     "text": "Water, that's what's wrong. My leg won't take me to the well today and the boy's off after the hens. My cup's by the well. Fill it for me, would you?"
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_wenna_ash",
+     "lead": "Bring Wenna a cup of water from the well",
+     "said": "My cup's by the well. Fill it for me, would you?",
+     "done_when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "held_by",
+        "thing": "cup_wenna",
+        "npc": "npc_wenna_ash"
+       },
+       {
+        "kind": "filled",
+        "thing": "cup_wenna"
+       }
+      ]
+     }
+    }
+   ],
+   "done": "Her name's Wenna. What she asked of you is in your journal now, and on the tracker at the top left.",
+   "help": [
+    "{Left-click} her to open the box at the bottom, type something, and press {Enter}.",
+    "Or press Type it for me on the card, then {Enter}."
+   ],
+   "playtest": [
+    {
+     "say": "Good morning. Are you all right?",
+     "to": "npc_wenna_ash"
+    }
+   ]
+  },
+  {
+   "id": "look",
+   "title": "Looking closer",
+   "cards": [
+    "Everything here is real: it has weight, it's made of something, and it may belong to someone.",
+    "Hover over anything to see its name. {Right-click} to look closer. Find the cup by the well and right-click it."
+   ],
+   "task": "Right-click the cup by the well to look closer",
+   "focus": {
+    "object": "cup_wenna"
+   },
+   "check": {
+    "kind": "ui",
+    "key": "inspect"
+   },
+   "done": "That card says what a thing is, what it's made of and whose it is. Click anywhere to close it.",
+   "help": [
+    "The cup is just beside the well, in the middle of the yard. Point at it and press the right mouse button."
+   ],
+   "playtest": [
+    {
+     "ui": "inspect"
+    }
+   ]
+  },
+  {
+   "id": "take",
+   "title": "Picking up",
+   "cards": [
+    "{Left-click} something to pick it up: you walk there first. Or stand next to it and press {E}. Pick up the cup."
+   ],
+   "task": "Pick up the cup: left-click it",
+   "focus": {
+    "object": "cup_wenna"
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "cup_wenna"
+    ]
+   },
+   "done": "It's in your pack now, along the bottom of the screen.",
+   "help": [
+    "Point at the cup and press the left mouse button. Or walk right up to it and press {E}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "cup_wenna"
+    },
+    {
+     "take": "cup_wenna"
+    }
+   ]
+  },
+  {
+   "id": "pack",
+   "title": "Your pack",
+   "cards": [
+    "Press {I} to open Pack & gear: what's in your hands, what you carry, any wounds. Have a look, then close it with {Esc}."
+   ],
+   "task": "Press I to open Pack & gear",
+   "check": {
+    "kind": "ui",
+    "key": "pack"
+   },
+   "done": "You can carry about twenty kilos. The weight is on the right of your pack.",
+   "help": [
+    "Press the {I} key on your keyboard."
+   ],
+   "playtest": [
+    {
+     "ui": "pack"
+    }
+   ]
+  },
+  {
+   "id": "fill",
+   "title": "Doing things",
+   "cards": [
+    "You can do anything you can describe. Press {T}, then {Tab} until DO is lit: your words turn red. Describe what you do and press {Enter}. The world decides if it works.",
+    "Or drag the cup from your pack onto the well: that writes the line for you. Try this:"
+   ],
+   "suggest": {
+    "text": "fill the cup at the well",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Fill the cup at the well",
+   "focus": {
+    "object": "well_wenna"
+   },
+   "check": {
+    "kind": "filled",
+    "thing": "cup_wenna"
+   },
+   "done": "Cold, clean water. Nobody told the world a cup can be filled: it worked because a cup holds water.",
+   "help": [
+    "Walk to the well, press {T}, press {Tab} until DO is lit, type 'fill the cup at the well' and press {Enter}.",
+    "Or drag the cup from your pack onto the well, then press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "well_wenna"
+    },
+    {
+     "do": "fill the cup at the well"
+    }
+   ],
+   "try_also": [
+    "I dip the cup into the well",
+    "draw water from the well into the wooden cup"
+   ]
+  },
+  {
+   "id": "give",
+   "title": "Giving",
+   "cards": [
+    "Now take it to Wenna. Drag the cup from your pack onto her, check the line, and press {Enter}. Or say it in your own words."
+   ],
+   "suggest": {
+    "text": "give the cup of water to Wenna",
+    "to": "npc_wenna_ash",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Give Wenna the cup of water",
+   "focus": {
+    "npc": "npc_wenna_ash"
+   },
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "held_by",
+      "thing": "cup_wenna",
+      "npc": "npc_wenna_ash"
+     },
+     {
+      "kind": "filled",
+      "thing": "cup_wenna"
+     }
+    ]
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_wenna_ash",
+     "text": "Ahh. Bless you, child. Now listen: Ada at the mill pays in flour for a strong pair of hands. Tell her Wenna sent you."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_wenna_ash",
+     "lead": "Ada at the water mill pays in flour for help. Say Wenna sent you.",
+     "said": "Ada at the mill pays in flour for a strong pair of hands."
+    }
+   ],
+   "done": "She'll remember that. People here remember what you do for them, and they talk.",
+   "help": [
+    "Walk up to Wenna. Drag the cup from your pack onto her and press {Enter}.",
+    "Or click her and type: give her the cup of water."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_wenna_ash"
+    },
+    {
+     "do": "give the cup of water to Wenna",
+     "to": "npc_wenna_ash"
+    }
+   ],
+   "try_also": [
+    "hand Wenna the cup"
+   ]
+  },
+  {
+   "id": "journal",
+   "title": "Your journal",
+   "cards": [
+    "What people tell you goes in your journal. Press {J} to open it: what's asked of you, what you've learned, and everyone you've met."
+   ],
+   "task": "Press J to open your journal",
+   "check": {
+    "kind": "ui",
+    "key": "journal"
+   },
+   "done": "Pin a lead in the journal and the tracker follows it, and marks the person it's about.",
+   "help": [
+    "Press the {J} key on your keyboard, or click the tracker at the top left."
+   ],
+   "playtest": [
+    {
+     "ui": "journal"
+    }
+   ]
+  },
+  {
+   "id": "device",
+   "title": "Ask me",
+   "cards": [
+    "Last thing: me. Press {H} and ask me anything: what to do next, how something works, why something failed. I only know what you've seen."
+   ],
+   "task": "Press H and ask the device a question",
+   "check": {
+    "kind": "asked_device"
+   },
+   "done": "That's the basics: walk, look, take, talk, do, give. Everything else is the same, with bigger problems.",
+   "help": [
+    "Press {H}, type a question and press {Enter}. Or click one of the ready questions."
+   ],
+   "playtest": [
+    {
+     "ask": "What should I do now?"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone, and everyone who saw it will remember. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

@@ -272,6 +272,63 @@ def _vouched(state, spec, ctx):
     )
 
 
+@condition("asked_device")
+def _asked_device(state, spec, ctx):
+    """The stranger asked the device something in this step (H)."""
+    since = _progress(ctx).get("started_at", 0)
+    return any(e.get("question") and e.get("at", 0) >= since for e in state.get("device_log", []))
+
+
+@condition("attempt_failed")
+def _attempt_failed(state, spec, ctx):
+    """Something the stranger tried in this step didn't work, and the world said why (D-59: learning to read it)."""
+    since = _progress(ctx).get("started_seq", 0)
+    return any(
+        e.get("kind") == "craft" and e.get("category") in ("failed", "blocked") and int(e.get("event_id") or 0) > since
+        for e in state.get("journal", [])
+    )
+
+
+# --- Things ------------------------------------------------------------------------------------------------------
+
+
+def _made_here(obj: dict, since: int) -> bool:
+    return obj.get("created_by") == "player" and int(obj.get("created_event_id") or 0) > since
+
+
+@condition("made", "named")
+def _made(state, spec, ctx):
+    """The stranger made something in this step whose name has one of these words (a rope, a torch): however they
+    put it, whatever the judge called it."""
+    since = _progress(ctx).get("started_seq", 0)
+    return any(
+        _made_here(o, since) and any(word in o["name"].lower() for word in spec["named"])
+        for o in state["objects"].values()
+    )
+
+
+@condition("gave_made", "npc", "count")
+def _gave_made(state, spec, ctx):
+    """This person has at least this many things the stranger made (given to them)."""
+    npc = _npc(state, spec, ctx)
+    held = [
+        o for o in state["objects"].values() if o.get("created_by") == "player" and npc and o["holder_id"] == npc["id"]
+    ]
+    return len(held) >= spec["count"]
+
+
+@condition("filled", "thing")
+def _filled(state, spec, ctx):
+    """This thing holds water (a cup filled at the well)."""
+    return float((state["objects"].get(spec["thing"]) or {}).get("water_l") or 0) > 0
+
+
+@condition("held_by", "thing", "npc")
+def _held_by(state, spec, ctx):
+    """This person has this thing (given to them)."""
+    return (state["objects"].get(spec["thing"]) or {}).get("holder_id") == spec["npc"]
+
+
 # --- Things ------------------------------------------------------------------------------------------------------
 
 

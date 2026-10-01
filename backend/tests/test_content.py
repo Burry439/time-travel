@@ -59,8 +59,9 @@ def level_rules(level: dict):
         for items, where in lists:
             for index, effect in enumerate(items):
                 effects.append((effect, f"{where}[{index}]"))
-                if effect.get("when"):
-                    conditions.append((effect["when"], f"{where}[{index}].when"))
+                for key in ("when", "done_when"):
+                    if effect.get(key):
+                        conditions.append((effect[key], f"{where}[{index}].{key}"))
                 for key in ("why", "summary"):
                     conditions += list(text_conditions(effect.get(key), f"{where}[{index}].{key}"))
     for role in level.get("roles", []):
@@ -251,3 +252,20 @@ def test_every_authored_thing_has_what_the_game_reads():
             assert record["class"] in tables[record["kind"]], f"{spec['id']}: no {record['kind']} {record['class']}"
         if spec.get("installed_in"):
             assert spec["installed_in"] in everything, spec["id"]
+
+
+@pytest.mark.parametrize("level_id", sorted(GUIDED))
+def test_every_playtest_names_what_is_in_its_level(level_id):
+    """Each step's playtest (tools/playtest_level.gd, evals/run_level_words.py) can only do what the level has."""
+    level = GUIDED[level_id]
+    people, things = set(level["cast"]), things_in(level)
+    for step in level["steps"]:
+        for action in step.get("playtest", []):
+            target = action.get("walk_to")
+            assert target is None or isinstance(target, list) or target in people | things, (step["id"], action)
+            assert action.get("take") in (None, *things), (step["id"], action)
+            assert action.get("to") in (None, *people), (step["id"], action)
+            assert action.get("ui") in (None, "pack", "inspect", "journal", "book"), (step["id"], action)
+    if any(step.get("playtest") for step in level["steps"]):  # Scripted (the first morning has its own script).
+        missing = [s["id"] for s in level["steps"] if s.get("task") and not s.get("playtest")]
+        assert not missing, f"steps with a task but no playtest: {missing}"

@@ -1,0 +1,103 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Cottage.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Coop.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Haystack.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Well.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Bench.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/well_yard/Woodpile.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/generated/village_foliage.png" id="8_tex"]
+
+[sub_resource type="AtlasTexture" id="Atlas_9"]
+atlas = ExtResource("8_tex")
+region = Rect2(0, 0, 704, 800)
+
+[node name="WellYardMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2880.0
+offset_bottom = 2432.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Cottage" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(256.0, 256)
+scale = Vector2(0.3728, 0.3728)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -475.5)
+
+[node name="Coop" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(1024.0, 224)
+scale = Vector2(0.2711, 0.2711)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -503.0)
+
+[node name="Haystack" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(656.0, 160)
+scale = Vector2(0.1218, 0.1218)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -446.0)
+
+[node name="Well" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(800.0, 384)
+scale = Vector2(0.1012, 0.1012)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -495.0)
+
+[node name="Bench" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(208.0, 320)
+scale = Vector2(0.1094, 0.1094)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -347.0)
+
+[node name="Woodpile" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(496.0, 224)
+scale = Vector2(0.1239, 0.1239)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -447.0)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="AppleTree1" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(496.0, 576)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_9")
+offset = Vector2(0, -380)
+
+[node name="AppleTree2" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(1072.0, 608)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_9")
+offset = Vector2(0, -380)
