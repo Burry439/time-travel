@@ -111,7 +111,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif game.ui.bar.visible:
 				game.ui.bar.escape()
 			else:
-				game.ui.open_menu()
+				game.ui.screens.open_menu()
 		KEY_F3:
 			if game.run_state.mode == "developer":
 				game.trace_panel.visible = not game.trace_panel.visible
@@ -127,7 +127,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if game.ui.modal_kind == "inventory":
 				game.ui.close_modal()
 			elif game.gameplay_active:
-				game.ui.open_inventory()
+				game.ui.pack.open()
 		KEY_E:
 			if game.gameplay_active and not game.ui.modal.visible and not game.ui.bar.visible:
 				_interact()

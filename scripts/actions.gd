@@ -268,7 +268,7 @@ func quick_action(verb: String, id: String) -> void:
 				game.ui.hud.show_hint("pack", "It's in your pack (bottom of the screen). Drag it onto someone or "
 					+ "something to use it; right-click it to look closer.")
 		if game.ui.modal_kind == "inventory":
-			game.ui.open_inventory()
+			game.ui.pack.open()
 		return
 	# Reconcile a lost response before allowing another world-changing action.
 	var detail = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null

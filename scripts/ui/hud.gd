@@ -80,7 +80,7 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	corner.add_theme_constant_override("separation", 8)
 	add_child(corner)
 	corner.add_child(ui.button("Journal  ·  J", func() -> void: ui.open_journal()))
-	corner.add_child(ui.button("Menu  ·  Esc", func() -> void: ui.open_menu()))
+	corner.add_child(ui.button("Menu  ·  Esc", func() -> void: ui.screens.open_menu()))
 
 	inventory = PanelContainer.new()
 	inventory.theme_type_variation = "WoodPanel"
@@ -285,8 +285,8 @@ func refresh() -> void:
 		for condition in conditions: # Bleeding, burns, breaks, festering: see Pack & gear (I) to treat them (D-49).
 			if str(condition.get("kind", "")) == "knocked_out":
 				_condition("Knocked senseless", UITheme.BAD)
-			elif ui._needs_treating(condition):
-				_condition(ui.condition_words(condition).trim_suffix("."), UITheme.BAD)
+			elif ui.pack._needs_treating(condition):
+				_condition(ui.pack.condition_words(condition).trim_suffix("."), UITheme.BAD)
 	var barred := int(state.get("barred_until") if state.get("barred_until") != null else 0) - int(state.get("sim_time_ms", 0))
 	if barred > 0:
 		_condition("Barred from the gate  ·  about %d min" % maxi(1, ceili(barred / 60000.0)), UITheme.ACCENT)
@@ -342,7 +342,7 @@ func _rebuild_slots(carried: Array[Dictionary]) -> void:
 			slot.tooltip_text = "Everything you carry  (I)"
 			slot.gui_input.connect(func(event: InputEvent) -> void:
 				if event is InputEventMouseButton and event.pressed:
-					ui.open_inventory())
+					ui.pack.open())
 			continue
 		var obj: Dictionary = carried[index]
 		var icon: TextureRect = ui.object_icon(obj, 48)

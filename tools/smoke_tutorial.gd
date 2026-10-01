@@ -168,7 +168,7 @@ func _run() -> void:
 	if not check(await wait_for_step("pack"), "Picking up two more didn't count: " + step_id()):
 		return
 	await read_cards()
-	scene.ui.open_inventory()
+	scene.ui.pack.open()
 	if not check(await wait_for_step("smithy"), "Opening the pack didn't count: " + step_id()):
 		return
 	await read_cards()
@@ -221,7 +221,7 @@ func _run() -> void:
 	if not check(await wait_for_step("arm"), "Being lent the sword didn't move on: " + step_id()):
 		return
 	await read_cards()
-	scene.ui.open_inventory()
+	scene.ui.pack.open()
 	await process_frame
 	var right := row_button(scene.ui.modal, "practice sword", "Right hand")
 	if not check(right != null, "No 'Right hand' button for the sword in Pack & gear"):

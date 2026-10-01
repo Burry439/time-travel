@@ -760,7 +760,7 @@ func result_node(entry: Dictionary, trace, compact := false) -> VBoxContainer:
 		toggle.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		toggle.pressed.connect(func() -> void:
 			if details.get_child_count() == 0:
-				ui.trace_view(details, trace)
+				ui.dev.trace_view(details, trace)
 			details.visible = not details.visible)
 		box.add_child(toggle)
 		box.add_child(details)

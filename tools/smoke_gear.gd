@@ -58,7 +58,7 @@ func _run() -> void:
 		return
 	scene.accept_state(took.data.state)
 	# The Pack & gear screen: the branch, with a Right hand button.
-	scene.ui.open_inventory()
+	scene.ui.pack.open()
 	await process_frame
 	if not check(scene.ui.modal_kind == "inventory", "Pack & gear didn't open"):
 		return

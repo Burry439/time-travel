@@ -50,7 +50,7 @@ func _run() -> void:
 	if not walking_seen or not working_seen or not changed_guard or int(scene.run_state.sim_time_ms) < 5000:
 		_fail("NPC clock or patrol animation did not advance")
 		return
-	scene.ui.open_pause()
+	scene.ui.screens.open_pause()
 	var paused_time := int(scene.run_state.sim_time_ms)
 	var paused_guard: Vector2 = scene.get_node("NPCs/npc_elin_west").position
 	await create_timer(1.2).timeout

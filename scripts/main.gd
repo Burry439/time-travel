@@ -283,7 +283,7 @@ func enter_run(state: Dictionary, save_pointer := true) -> void:
 	elif not state["player"].get("alive", true):
 		gameplay_active = false
 		player_visual.lie_dead()
-		ui.show_death(death_reason())
+		ui.screens.show_death(death_reason())
 	else:
 		gameplay_active = true
 
@@ -596,7 +596,7 @@ func die() -> void:
 	move_queue.clear()
 	player_visual.die(1.0)
 	await get_tree().create_timer(1.6).timeout
-	ui.show_death(death_reason())
+	ui.screens.show_death(death_reason())
 
 
 func request_id(kind: String) -> String:
@@ -608,7 +608,7 @@ func open_traces() -> void:
 		return
 	var reply := await net.api(HTTPClient.METHOD_GET, run_path("/traces?limit=10"))
 	if reply.ok:
-		ui.show_traces(reply.data)
+		ui.dev.show_traces(reply.data)
 	else:
 		ui.notify("Could not load AI traces (HTTP %s)." % reply.status)
 

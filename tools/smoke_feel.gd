@@ -48,7 +48,7 @@ func _run() -> void:
 		return
 	if not check(not scene.get_node("M2Objects/branch_a").visible, "Picked-up object stayed on ground"):
 		return
-	scene.ui.open_inventory()
+	scene.ui.pack.open()
 	await process_frame
 	if not check(scene.ui.modal.visible and scene.ui.modal_kind == "inventory", "Inventory did not open"):
 		return
@@ -81,7 +81,7 @@ func _run() -> void:
 		await process_frame
 	if not check(scene.move_queue.is_empty() and not scene.sync_error, "Movement did not sync"):
 		return
-	scene.ui.open_pause()
+	scene.ui.screens.open_pause()
 	before = scene.player.position
 	Input.action_press("move_left")
 	await create_timer(0.15).timeout

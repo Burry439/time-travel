@@ -211,7 +211,7 @@ func _run() -> void:
 		return
 	await screenshot("ui-journal-map")
 	ui.close_modal()
-	ui.open_menu("settings")
+	ui.screens.open_menu("settings")
 	ui.ui_scale = 1.2
 	ui.apply_scale()
 	if not check(is_equal_approx(ui.root.scale.x, 1.2) and ui.root.size.x < 1100, "UI scale did not apply"):

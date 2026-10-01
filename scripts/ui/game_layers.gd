@@ -200,7 +200,7 @@ func _reveal(obj: Dictionary) -> void:
 	var words := PackedStringArray()
 	if not str(obj.get("description", "")).is_empty():
 		words.append(str(obj.description))
-	var use: String = ui.gear_words(obj)
+	var use: String = ui.pack.gear_words(obj)
 	if not use.is_empty():
 		words.append(use)
 	reveal_text.text = "\n".join(words)
