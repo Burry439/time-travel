@@ -1,0 +1,397 @@
+{
+ "id": "common_room",
+ "title": "The common room",
+ "track": "basic",
+ "order": 6,
+ "minutes": 5,
+ "teaches": [
+  "Talking",
+  "Asking",
+  "Saying and doing in one line",
+  "Groups",
+  "Walking away",
+  "People in the journal"
+ ],
+ "blurb": "An inn full of travellers and news. Ask, listen, lend a hand, and see who remembers you.",
+ "after": "Talk is how most things happen here. People remember what you said and did, pass it on, and answer as themselves.",
+ "refines": "Do players find Say and Do in one line? Do group answers read well? Do the leads people give land in the journal?",
+ "map": "inn_common",
+ "start": {
+  "cell": [
+   12,
+   15
+  ]
+ },
+ "objective": "Hear the news",
+ "goal": "Find out how a stranger gets into the city",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_doran_inn": {
+   "role": "innkeeper",
+   "step_ms": 480,
+   "goal": "keep the room",
+   "anchors": [
+    [
+     7,
+     6,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_ivo_carter": {
+   "role": "carter",
+   "step_ms": 520,
+   "goal": "rest his back",
+   "anchors": [
+    [
+     8,
+     12,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_wynn_pilgrim": {
+   "role": "pilgrim",
+   "step_ms": 560,
+   "goal": "rest by the fire",
+   "anchors": [
+    [
+     17,
+     13,
+     "wait",
+     40000
+    ],
+    [
+     21,
+     6,
+     "wait",
+     30000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "tankard_ivo",
+   "name": "pewter tankard",
+   "x": 9,
+   "y": 13,
+   "mass_kg": 0.4,
+   "materials": [
+    "pewter"
+   ],
+   "description": "Ivo's own dented pewter tankard, still wet: he knocked it off the table.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_ivo_carter",
+   "capacity_l": 0.5
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_ivo_carter",
+   "during": [
+    "welcome",
+    "doran",
+    "ask",
+    "both"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 600,
+   "withholds": [
+    "go_tell"
+   ]
+  },
+  {
+   "npc": "npc_doran_inn",
+   "during": [
+    "welcome",
+    "doran",
+    "ask"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 600,
+   "withholds": [
+    "go_tell"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A common room",
+   "cards": [
+    "…signal. The Ford Inn's common room: travellers, ale, and news. Most of what you'll do here is talk.",
+    "People here answer as themselves: what they know, what they want, what they think of you.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "doran",
+   "title": "The innkeeper",
+   "cards": [
+    "That's Doran behind the bar. Go and say good evening."
+   ],
+   "suggest": {
+    "text": "Good evening. Busy night?",
+    "to": "npc_doran_inn",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Doran",
+   "focus": {
+    "npc": "npc_doran_inn"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_doran_inn"
+   },
+   "done": "Anyone near can hear what you say, and they remember it.",
+   "help": [
+    "{Left-click} Doran, type, press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_doran_inn"
+    },
+    {
+     "say": "Good evening. Busy night?",
+     "to": "npc_doran_inn"
+    }
+   ]
+  },
+  {
+   "id": "ask",
+   "title": "Asking",
+   "cards": [
+    "People know things. Ask Doran about the city: how a stranger gets in. Ask in your own words."
+   ],
+   "suggest": {
+    "text": "What's the news from the city? Can a stranger get in?",
+    "to": "npc_doran_inn",
+    "button": false,
+    "mode": "say"
+   },
+   "task": "Ask Doran about the city",
+   "focus": {
+    "npc": "npc_doran_inn"
+   },
+   "check": {
+    "kind": "said_to",
+    "npc": "npc_doran_inn",
+    "words": [
+     "city",
+     "gate",
+     "road",
+     "news",
+     "get in",
+     "inside"
+    ]
+   },
+   "on_done": [
+    {
+     "kind": "lead",
+     "npc": "npc_doran_inn",
+     "lead": "The city lets strangers in only if someone will speak for them.",
+     "said": "Captain lets you in only if someone'll speak for you."
+    }
+   ],
+   "done": "What people tell you goes in your journal, under who told you.",
+   "help": [
+    "Type a question with the city or the gate in it."
+   ],
+   "playtest": [
+    {
+     "say": "What's the news from the city? Can a stranger get in?",
+     "to": "npc_doran_inn"
+    }
+   ]
+  },
+  {
+   "id": "both",
+   "title": "Say and do",
+   "on_start": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ivo_carter",
+     "text": "Oi, you. Pass me my tankard, would you? Knocked it off and my back's gone."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_ivo_carter",
+     "objects": [
+      "tankard_ivo"
+     ]
+    }
+   ],
+   "cards": [
+    "Ivo the carter has knocked his tankard off the table. Pick it up.",
+    "Then hand it to him and say something, in one line: {Tab} switches between SAY (blue) and DO (red), even halfway through. Like this:"
+   ],
+   "suggest": {
+    "text": "“You dropped this.” hand Ivo the pewter tankard",
+    "to": "npc_ivo_carter",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Pick up the tankard and hand it to Ivo with a word",
+   "focus": {
+    "object": "tankard_ivo"
+   },
+   "check": {
+    "kind": "held_by",
+    "thing": "tankard_ivo",
+    "npc": "npc_ivo_carter"
+   },
+   "done": "One line, both at once: what you say in blue, what you do in red.",
+   "help": [
+    "Pick up the tankard, walk to Ivo, press {T}, type words in quotes then what you do.",
+    "Or drag the tankard onto Ivo."
+   ],
+   "playtest": [
+    {
+     "walk_to": "tankard_ivo"
+    },
+    {
+     "take": "tankard_ivo"
+    },
+    {
+     "walk_to": "npc_ivo_carter"
+    },
+    {
+     "do": "“You dropped this.” hand Ivo the pewter tankard",
+     "to": "npc_ivo_carter"
+    }
+   ]
+  },
+  {
+   "id": "group",
+   "title": "A group",
+   "cards": [
+    "Wynn the pilgrim has been listening. Talk to her: when people are near each other, more than one may answer, and they talk among themselves."
+   ],
+   "suggest": {
+    "text": "Where are you travelling to?",
+    "to": "npc_wynn_pilgrim",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Wynn",
+   "focus": {
+    "npc": "npc_wynn_pilgrim"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_wynn_pilgrim"
+   },
+   "on_done": [
+    {
+     "kind": "lead",
+     "npc": "npc_wynn_pilgrim",
+     "lead": "Ada at the water mill pays fairly for help.",
+     "said": "Ada at the mill pays fair, and she's always short a pair of hands."
+    }
+   ],
+   "done": "Conversations here are among everyone near, not one at a time.",
+   "help": [
+    "{Left-click} Wynn, type, press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_wynn_pilgrim"
+    },
+    {
+     "say": "Where are you travelling to?",
+     "to": "npc_wynn_pilgrim"
+    }
+   ]
+  },
+  {
+   "id": "away",
+   "title": "Walking away",
+   "cards": [
+    "You can leave a conversation whenever you like: press {Esc}, or just walk off. Then warm yourself by the fire."
+   ],
+   "task": "Walk away, then go and stand by the fire",
+   "focus": {
+    "cell": [
+     20,
+     5
+    ]
+   },
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "not",
+      "of": {
+       "kind": "in_conversation"
+      }
+     },
+     {
+      "kind": "near",
+      "cell": [
+       20,
+       5
+      ],
+      "within": 2.5
+     }
+    ]
+   },
+   "done": "Walking off ends a friendly talk. Walking off from an angry guard is another matter.",
+   "help": [
+    "Press {Esc}, then walk to the fireplace at the top right."
+   ],
+   "playtest": [
+    {
+     "walk_to": [
+      20,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "id": "people",
+   "title": "People",
+   "cards": [
+    "Press {J} and open People: everyone you've met, how each stands toward you, and every word between you."
+   ],
+   "task": "Press J and look at People",
+   "check": {
+    "kind": "ui",
+    "key": "journal"
+   },
+   "done": "Neutral, Friendly, Wary: how people stand toward you changes with what you do, and they tell each other.",
+   "help": [
+    "Press {J}, then click People."
+   ],
+   "playtest": [
+    {
+     "ui": "journal"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

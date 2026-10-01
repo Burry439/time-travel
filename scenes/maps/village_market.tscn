@@ -1,0 +1,74 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/Cottage.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/PotStall.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/VegStall.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/Well.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/village_market/Barrels.png" id="6_tex"]
+
+[node name="VillageMarketMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2688.0
+offset_bottom = 2304.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Cottage" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(192.0, 224)
+scale = Vector2(0.3392, 0.3392)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -490.5)
+
+[node name="PotStall" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(512.0, 224)
+scale = Vector2(0.2208, 0.2208)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -494.5)
+
+[node name="VegStall" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(832.0, 224)
+scale = Vector2(0.2225, 0.2225)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -489.0)
+
+[node name="Well" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(544.0, 480)
+scale = Vector2(0.0890, 0.0890)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -505.0)
+
+[node name="Barrels" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(976.0, 512)
+scale = Vector2(0.1277, 0.1277)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -490.0)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

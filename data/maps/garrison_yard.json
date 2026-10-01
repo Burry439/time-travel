@@ -1,0 +1,126 @@
+{
+ "id": "garrison_yard",
+ "version": 1,
+ "name": "the garrison's practice yard",
+ "notes": "Training level B3 (D-59): an outdoor practice yard. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a packed-earth practice yard inside a timber palisade, trampled bare in a wide ring in the middle, scattered straw and a few pebbles",
+  "pieces": {
+   "Barracks": "a long, low timber barracks with a shingle roof and a plank door facing down",
+   "Armoury": "a small square stone armoury with a heavy wooden door and a barred window",
+   "WeaponRack": "a wooden weapon rack holding practice swords, staves and round wicker shields",
+   "Dummy1": "a straw practice dummy on a wooden post, shaped like a man, with a sack for a head",
+   "Dummy2": "a battered straw practice dummy on a post, its sack head half torn",
+   "Trough": "a long wooden water trough on legs"
+  }
+ },
+ "size": [
+  34,
+  22
+ ],
+ "walk": [
+  0,
+  0,
+  34,
+  22
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Barracks",
+   "cells": [
+    2,
+    2,
+    10,
+    5
+   ],
+   "label": "Barracks"
+  },
+  {
+   "name": "Armoury",
+   "cells": [
+    24,
+    2,
+    8,
+    4
+   ],
+   "label": "Armoury"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "WeaponRack",
+   "cells": [
+    14,
+    3,
+    4,
+    1
+   ]
+  },
+  {
+   "name": "Dummy1",
+   "cells": [
+    20,
+    9,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Dummy2",
+   "cells": [
+    24,
+    9,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Trough",
+   "cells": [
+    3,
+    16,
+    3,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "rack": {
+   "name": "the weapon rack",
+   "cell": [
+    16,
+    5
+   ]
+  },
+  "ring": {
+   "name": "the practice ring",
+   "cell": [
+    16,
+    12
+   ]
+  },
+  "barracks": {
+   "name": "the barracks door",
+   "cell": [
+    7,
+    8
+   ]
+  },
+  "dummies": {
+   "name": "the dummies",
+   "cell": [
+    22,
+    11
+   ]
+  },
+  "trough": {
+   "name": "the trough",
+   "cell": [
+    4,
+    15
+   ]
+  }
+ }
+}

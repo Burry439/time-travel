@@ -1,0 +1,431 @@
+{
+ "id": "something_new",
+ "title": "Something new",
+ "track": "basic",
+ "order": 9,
+ "minutes": 6,
+ "teaches": [
+  "Inventing without a book",
+  "Using what's lying about",
+  "Showing it",
+  "Someone amazed"
+ ],
+ "blurb": "Shepherds lost in the fog, a needle, a strange stone, a bowl of water. Make something nobody here has ever seen.",
+ "after": "Nothing you make is in a list: the world judges it from what it's made of and what you did. What you know is your greatest tool, and showing it is how people come to trust you.",
+ "refines": "Can players invent from their own knowledge without exact words? Does the judge rule a novel invention fairly? Does showing it land as wonder?",
+ "map": "brook_meadow",
+ "start": {
+  "cell": [
+   14,
+   20
+  ]
+ },
+ "objective": "Help the shepherds",
+ "goal": "Help the shepherds in the fog",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_mey_shepherd": {
+   "role": "shepherd girl",
+   "step_ms": 380,
+   "goal": "mind the flock",
+   "anchors": [
+    [
+     8,
+     9,
+     "look",
+     600000
+    ]
+   ]
+  },
+  "npc_orrin_shepherd": {
+   "role": "shepherd",
+   "step_ms": 480,
+   "goal": "mend hurdles",
+   "anchors": [
+    [
+     16,
+     7,
+     "work",
+     40000
+    ],
+    [
+     18,
+     18,
+     "look",
+     20000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "needle_mey",
+   "name": "iron sewing needle",
+   "x": 8,
+   "y": 10,
+   "mass_kg": 0.01,
+   "materials": [
+    "iron"
+   ],
+   "description": "A long iron sewing needle, for mending sacks and cloaks.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ],
+   "owner_id": "npc_mey_shepherd"
+  },
+  {
+   "id": "lodestone_orrin",
+   "name": "lodestone",
+   "x": 15,
+   "y": 8,
+   "mass_kg": 0.4,
+   "materials": [
+    "lodestone",
+    "magnetite"
+   ],
+   "description": "A heavy lump of black stone. Iron nails and needles jump to it: Orrin's grandfather found it on the hill.",
+   "flags": [
+    "rigid",
+    "magnet_source"
+   ],
+   "owner_id": "npc_orrin_shepherd"
+  },
+  {
+   "id": "bowl_orrin",
+   "name": "wooden bowl",
+   "x": 24,
+   "y": 12,
+   "mass_kg": 0.4,
+   "materials": [
+    "wood"
+   ],
+   "description": "A shallow wooden bowl, the kind the shepherds drink from.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_orrin_shepherd",
+   "capacity_l": 1.0
+  },
+  {
+   "id": "brook_water",
+   "name": "brook",
+   "x": 26,
+   "y": 12,
+   "mass_kg": 100000.0,
+   "materials": [
+    "water"
+   ],
+   "description": "The brook runs cold and clear over the stones.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 100000.0,
+   "water_l": 100000.0,
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "bark_meadow",
+   "name": "sliver of dry bark",
+   "x": 12,
+   "y": 12,
+   "mass_kg": 0.01,
+   "materials": [
+    "bark",
+    "wood"
+   ],
+   "description": "A thin, light curl of dry birch bark.",
+   "flags": [
+    "floats",
+    "combustible"
+   ]
+  },
+  {
+   "id": "leaf_meadow",
+   "name": "dry oak leaf",
+   "x": 20,
+   "y": 11,
+   "mass_kg": 0.005,
+   "materials": [
+    "leaf"
+   ],
+   "description": "A dry brown oak leaf, light as nothing.",
+   "flags": [
+    "floats",
+    "combustible",
+    "flexible"
+   ]
+  },
+  {
+   "id": "wool_meadow",
+   "name": "tuft of wool",
+   "x": 6,
+   "y": 9,
+   "mass_kg": 0.01,
+   "materials": [
+    "wool"
+   ],
+   "description": "A tuft of greasy sheep's wool caught on the fold wall.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ]
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_mey_shepherd",
+   "during": [
+    "welcome",
+    "hello",
+    "invent",
+    "show"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A hill pasture",
+   "cards": [
+    "…signal. High pasture above the brook. You know things nobody alive here knows: that's the most useful thing you brought.",
+    "Today there's no book and no words from me. Just a problem, and what's lying about.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "hello",
+   "title": "A problem",
+   "cards": [
+    "Mey is minding the sheep by the fold. Go and talk to her: ask what troubles them up here."
+   ],
+   "suggest": {
+    "text": "Hello. Is it hard, keeping sheep up here?",
+    "to": "npc_mey_shepherd",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Mey",
+   "focus": {
+    "npc": "npc_mey_shepherd"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_mey_shepherd"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_mey_shepherd",
+     "text": "It's the fog. When it comes down you can't tell one way from another. Father was lost all night last spring. You can use my needle if it helps. Father's got a magic stone too."
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_orrin_shepherd",
+     "text": "Not magic. Lucky. Pulls iron. Use it if you must, and the bowl."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_mey_shepherd",
+     "objects": [
+      "needle_mey"
+     ]
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_orrin_shepherd",
+     "objects": [
+      "lodestone_orrin",
+      "bowl_orrin"
+     ]
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_mey_shepherd",
+     "lead": "Find a way for the shepherds to tell direction in the fog",
+     "said": "When the fog comes down you can't tell one way from another.",
+     "done_when": {
+      "kind": "shown",
+      "npc": "npc_mey_shepherd"
+     }
+    }
+   ],
+   "done": "A real problem, and nobody here has the answer. Look at what's lying about: a needle, a stone that pulls iron, a bowl, the brook, things that float.",
+   "help": [
+    "{Left-click} Mey, type, press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_mey_shepherd"
+    },
+    {
+     "say": "Hello. Is it hard, keeping sheep up here?",
+     "to": "npc_mey_shepherd"
+    }
+   ]
+  },
+  {
+   "id": "invent",
+   "title": "Something new",
+   "cards": [
+    "Make something that tells direction, from what's here. You know how; they don't. Describe what you do, step by step, and the world decides if it works.",
+    "Stuck? Press {H} and ask me: I know what you know."
+   ],
+   "task": "Make something that tells direction",
+   "focus": {
+    "objects": [
+     "needle_mey",
+     "lodestone_orrin",
+     "bowl_orrin",
+     "bark_meadow",
+     "leaf_meadow"
+    ]
+   },
+   "check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "made",
+      "from": [
+       "needle_mey",
+       "lodestone_orrin",
+       "bowl_orrin",
+       "bark_meadow",
+       "leaf_meadow"
+      ]
+     },
+     {
+      "kind": "thing_with",
+      "flag": "magnetized"
+     },
+     {
+      "kind": "demonstration_seen"
+     }
+    ]
+   },
+   "done": "That didn't exist here until now. Nobody in this world has one but you.",
+   "help": [
+    "A needle stroked many times in one direction along a lodestone becomes a magnet itself.",
+    "A magnet that can turn freely, floating on water on something light, swings round to point north and south.",
+    "Try: fill the bowl at the brook; rub the needle on the lodestone many times one way, then lay it on the bark and float it in the bowl."
+   ],
+   "playtest": [
+    {
+     "walk_to": "needle_mey"
+    },
+    {
+     "take": "needle_mey"
+    },
+    {
+     "walk_to": "bark_meadow"
+    },
+    {
+     "take": "bark_meadow"
+    },
+    {
+     "walk_to": "lodestone_orrin"
+    },
+    {
+     "take": "lodestone_orrin"
+    },
+    {
+     "walk_to": "bowl_orrin"
+    },
+    {
+     "take": "bowl_orrin"
+    },
+    {
+     "walk_to": [
+      26,
+      12
+     ]
+    },
+    {
+     "do": "fill the wooden bowl with water from the brook"
+    },
+    {
+     "do": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl"
+    }
+   ],
+   "try_also": [
+    "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water"
+   ]
+  },
+  {
+   "id": "show",
+   "title": "Showing it",
+   "cards": [
+    "Now show Mey. Do it again in front of her and say what it means: people believe what they see, not what they're told. Like this:"
+   ],
+   "suggest": {
+    "text": "“Watch: it turns the same way every time. That way is north.” rub the needle along the lodestone, lay it on the bark and float it in the bowl of water in front of Mey",
+    "to": "npc_mey_shepherd",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Show Mey what you made, and what it does",
+   "focus": {
+    "npc": "npc_mey_shepherd"
+   },
+   "check": {
+    "kind": "shown",
+    "npc": "npc_mey_shepherd"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_mey_shepherd",
+     "text": "It turned! Again, do it again! It points the same way every time! Father, look!"
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_orrin_shepherd",
+     "text": "Hm. If that's a trick, it's a good one. In the fog, that'd bring a man home. The city could use a mind like yours, if they'd let you in."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_orrin_shepherd",
+     "lead": "The city lets in strangers only if someone will speak for them.",
+     "said": "The city could use a mind like yours, if they'd let you in."
+    }
+   ],
+   "done": "That's the whole game, really: what you know, made real, shown to people who'll remember it. That's the basics done.",
+   "help": [
+    "Walk up to Mey with the needle, the lodestone, the bark and the bowl of water.",
+    "Press {T} and do the whole thing in front of her, saying what it shows."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_mey_shepherd"
+    },
+    {
+     "do": "“Watch: it turns the same way every time. That way is north.” rub the needle along the lodestone, lay it on the bark and float it in the bowl of water in front of Mey",
+     "to": "npc_mey_shepherd"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

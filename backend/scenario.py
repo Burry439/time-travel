@@ -20,6 +20,7 @@ import gear
 import reputation
 import rules
 import speech
+import talk
 from shapes import State
 
 
@@ -211,6 +212,9 @@ def run(state: State, effects: list[dict], now: int) -> None:
 
 
 def _person(state: State, spec: dict) -> dict | None:
+    """Who an effect is about: someone in the level, or the stranger ("player")."""
+    if spec.get("npc") == "player":
+        return state["player"]
     return cast.find(state["npcs"], spec.get("npc", ""))
 
 
@@ -306,7 +310,7 @@ def _lend(state, spec, ctx):
 
 @effect("hurt", "npc", "condition")
 def _hurt(state, spec, ctx):
-    """The story's own problem: Jory's burn."""
+    """The story's own problem: Jory's burn, or the stranger's own cut (D-59)."""
     npc = _person(state, spec)
     if npc and npc.get("alive", True):
         wound = spec["condition"]
@@ -342,3 +346,24 @@ def _lead(state, spec, ctx):
         if spec.get("done_when"):
             entry.update(asks=True, done_when=spec["done_when"])
         state.setdefault("learned", []).append(entry)
+
+
+@effect("give", "npc", "objects")
+def _give(state, spec, ctx):
+    """Someone gives the stranger their own things to keep (a reward): handed over and the stranger's now."""
+    npc = _person(state, spec)
+    if npc:
+        for oid in spec["objects"]:
+            obj = state["objects"].get(oid)
+            if obj and obj.get("owner_id") == npc["id"]:
+                obj.update(holder_id="player", owner_id="player")
+                obj.pop("lent_to", None)
+
+
+@effect("offer", "npc", "offer")
+def _offer(state, spec, ctx):
+    """Someone offers the stranger one of their deals (their card's offers): a lead, and what the job needs lent.
+    Agreeing to it and doing it are the stranger's, as any deal (D-55)."""
+    npc = _person(state, spec)
+    if npc and not any(d.get("template") == spec["offer"] for d in (state.get("agreements") or {}).values()):
+        talk.propose(state, npc, spec["offer"], None, spec.get("says", ""), state.setdefault("learned", []), [])

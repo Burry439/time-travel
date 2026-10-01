@@ -1,0 +1,170 @@
+{
+ "id": "inn_backroom",
+ "version": 1,
+ "name": "the back room of the Ford Inn",
+ "notes": "Training level B4 (D-59): a small back room, indoors. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "indoor",
+  "ground": "the scrubbed plank floor of a small back room at an inn, a faded rag rug, a few dried herb leaves fallen",
+  "pieces": {
+   "Wall": "the plastered back wall of an old inn room, with a shelf of clay crocks and bunches of drying herbs hanging from a beam",
+   "Bed": "a narrow wooden bed with a straw mattress and a grey wool blanket",
+   "Cupboard": "a low wooden cupboard with jars of herbs and rolls of linen on top",
+   "Table": "a small square wooden table with a basin and a candle",
+   "Stove": "a small black iron stove with a kettle on top, glowing at the grate",
+   "Bench": "a plain wooden bench"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  20,
+  16
+ ],
+ "walk": [
+  0,
+  0,
+  20,
+  16
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    20,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    14
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    19,
+    2,
+    1,
+    14
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    15,
+    8,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    12,
+    15,
+    7,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "Bed",
+   "cells": [
+    2,
+    3,
+    4,
+    2
+   ],
+   "label": "Bed"
+  },
+  {
+   "name": "Cupboard",
+   "cells": [
+    8,
+    2,
+    4,
+    1
+   ],
+   "label": "Cupboard"
+  },
+  {
+   "name": "Table",
+   "cells": [
+    12,
+    7,
+    3,
+    2
+   ],
+   "label": "Table"
+  },
+  {
+   "name": "Stove",
+   "cells": [
+    16,
+    2,
+    3,
+    2
+   ],
+   "label": "Stove"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Bench",
+   "cells": [
+    3,
+    11,
+    3,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "bed": {
+   "name": "the bed",
+   "cell": [
+    4,
+    6
+   ]
+  },
+  "cupboard": {
+   "name": "the herb cupboard",
+   "cell": [
+    10,
+    4
+   ]
+  },
+  "table": {
+   "name": "the table",
+   "cell": [
+    13,
+    10
+   ]
+  },
+  "stove": {
+   "name": "the stove",
+   "cell": [
+    17,
+    5
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    10,
+    14
+   ]
+  }
+ }
+}

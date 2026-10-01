@@ -1,0 +1,126 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Wall.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Bar.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Fireplace.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Table1.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Table2.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/inn_common/Barrels.png" id="7_tex"]
+
+[node name="InnCommonMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2432.0
+offset_bottom = 2176.0
+color = Color(0.07, 0.06, 0.05, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="WallTop" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = -64.0
+offset_right = 832.0
+offset_bottom = 64.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallLeft" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 64.0
+offset_right = 32.0
+offset_bottom = 576.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallRight" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 800.0
+offset_top = 64.0
+offset_right = 832.0
+offset_bottom = 576.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallBottomLeft" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 32.0
+offset_top = 544.0
+offset_right = 352.0
+offset_bottom = 576.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallBottomRight" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 448.0
+offset_top = 544.0
+offset_right = 800.0
+offset_bottom = 576.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Bar" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(224.0, 160)
+scale = Vector2(0.2765, 0.2765)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -352.0)
+
+[node name="Fireplace" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(656.0, 128)
+scale = Vector2(0.2213, 0.2213)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -493.5)
+
+[node name="Table1" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 352)
+scale = Vector2(0.1984, 0.1984)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -437.0)
+
+[node name="Table2" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(560.0, 384)
+scale = Vector2(0.1239, 0.1239)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -469.5)
+
+[node name="Barrels" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(96.0, 480)
+scale = Vector2(0.1355, 0.1355)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -483.0)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

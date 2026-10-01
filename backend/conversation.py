@@ -28,7 +28,14 @@ BUSY = {
 REWARDS = {
     "vouch": "{name} will be grateful and put in a good word for the stranger with the captain",
     "hire": "{name} will take the stranger on as a hired hand for trade in the city, under {name}'s own permit",
+    "pay": "{name} will give the stranger {pays}",  # Goods for work (D-59): the things named on the offer.
 }
+
+
+def paid_with(state: State, thing_ids: list[str]) -> str:
+    """What a deal pays, in words: "a small sack of flour and a loaf"."""
+    names = [f"a {state['objects'][i]['name']}" for i in thing_ids if i in state.get("objects", {})]
+    return " and ".join(names) or "something of theirs"
 
 
 def clean(text: str) -> str:
@@ -233,7 +240,7 @@ def _offering(state: State, npc: Npc, options: dict) -> None:
     offered = {a.get("template") for a in state.get("agreements", {}).values() if a.get("issuer") == npc["id"]}
     for offer in me.get("offers", []):
         if offer["id"] not in offered:
-            reward = REWARDS[offer["reward"]].format(name=name)
+            reward = REWARDS[offer["reward"]].format(name=name, pays=paid_with(state, offer.get("pays", [])))
             options[f"offer:{offer['id']}"] = _option(
                 "offer", f"{name} proposes a deal: if the stranger will {offer['task']}, {reward}.", offer["id"]
             )

@@ -122,8 +122,62 @@ func walk_to(target) -> void:
 		scene.player.position = scene.cell_center(last[0], last[1])
 
 
-func act(action: Dictionary) -> void:
-	if action.has("walk_to"):
+func toward(target) -> Array:
+	var here := Vector2(float(scene.run_state.player.x), float(scene.run_state.player.y))
+	var there := Vector2(target_cell(target))
+	var way := (there - here).normalized() if there != here else Vector2(0, 1)
+	return [way.x, way.y]
+
+
+## World time passing, a second at a time, people thinking when they need to (up to seconds, or the step's end).
+func beats(seconds: int, index: int) -> void:
+	for _beat in seconds:
+		if step_index() > index:
+			return
+		await post("explore", {"elapsed_ms": 1000})
+		if scene.run_state.get("pending_minds", []):
+			await post("think", {}, 60.0)
+
+
+func act(action: Dictionary, index: int) -> void:
+	if action.has("equip"):
+		await post("equip", {"object_id": str(action.equip), "slot": str(action.get("slot", "right"))})
+	elif action.has("strike"):
+		for _swing in int(action.get("repeat", 1)):
+			if step_index() > index:
+				return
+			var facing := toward(action.at) if action.has("at") else [0.0, -1.0]
+			await post("strike", {"hand": str(action.strike), "facing": facing,
+				"target_id": action.get("at")})
+			await beats(1, index)
+	elif action.has("guard"):
+		await post("guard", {"raised": bool(action.guard),
+			"facing": toward(action.toward) if action.has("toward") else [0.0, -1.0]})
+	elif action.has("treat"):
+		var patient := str(action.treat)
+		var person: Dictionary = scene.run_state.player
+		if patient != "player":
+			person = scene.run_state.npcs.filter(func(n) -> bool: return n.id == patient)[0]
+		var wound := -1
+		for i in person.get("conditions", []).size():
+			var c: Dictionary = person.conditions[i]
+			if str(c.kind) == str(action.get("kind", "")) and int(c.get("treated", 0)) == 0:
+				wound = i
+		var remedy := ""
+		for thing in scene.run_state.objects.values():
+			if thing.holder_id == "player" and str(thing.get("gear", {}).get("kind", "")) == "remedy":
+				remedy = str(thing.id)
+		if wound < 0 or remedy.is_empty():
+			note("nothing to treat %s's %s with" % [patient, str(action.get("kind", ""))])
+			return
+		var reply := await post("treat", {"object_id": remedy, "patient_id": patient, "condition": wound})
+		print("     treat %s → %s" % [patient, str(reply.get("data", {}).get("treat", {}))])
+	elif action.has("give_up"):
+		await post("act", {"text": "I give up", "mode": "say", "selected_ids": []}, 90.0)
+		scene.ui.bar.close()
+	elif action.has("wait"):
+		await beats(int(action.wait), index)
+	elif action.has("walk_to"):
 		await walk_to(action.walk_to)
 	elif action.has("take"):
 		var reply := await post("quick", {"verb": "take", "object_id": str(action.take)})
@@ -182,7 +236,7 @@ func _run() -> void:
 			break
 		print("-- %d %s" % [index + 1, step.id])
 		for action in step.get("playtest", []):
-			await act(action)
+			await act(action, index)
 		for _beat in 40: # Up to 40 s of world time for the step to see it happened.
 			if step_index() > index:
 				break

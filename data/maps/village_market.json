@@ -1,0 +1,108 @@
+{
+ "id": "village_market",
+ "version": 1,
+ "name": "the village market",
+ "notes": "Training level B8 (D-59): a small market square. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a small village market square of worn cobbles and packed earth, straw and a few cabbage leaves scattered, a well-trodden path",
+  "pieces": {
+   "PotStall": "a market stall with a striped awning and a plank counter crowded with clay pots, jugs and bowls",
+   "VegStall": "a market stall with a green awning and baskets of cabbages, onions and apples",
+   "Well": "a round stone village well with a wooden roof and a bucket on a rope",
+   "Cottage": "a small timber-framed village house with a thatched roof and a door facing down",
+   "Barrels": "three barrels by a wall"
+  }
+ },
+ "size": [
+  34,
+  22
+ ],
+ "walk": [
+  0,
+  0,
+  34,
+  22
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Cottage",
+   "cells": [
+    2,
+    2,
+    8,
+    5
+   ],
+   "label": "House"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "PotStall",
+   "cells": [
+    13,
+    5,
+    6,
+    2
+   ]
+  },
+  {
+   "name": "VegStall",
+   "cells": [
+    23,
+    5,
+    6,
+    2
+   ]
+  },
+  {
+   "name": "Well",
+   "cells": [
+    16,
+    13,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Barrels",
+   "cells": [
+    29,
+    15,
+    3,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "pots": {
+   "name": "Sela's stall",
+   "cell": [
+    16,
+    8
+   ]
+  },
+  "veg": {
+   "name": "the vegetable stall",
+   "cell": [
+    26,
+    8
+   ]
+  },
+  "well": {
+   "name": "the well",
+   "cell": [
+    19,
+    15
+   ]
+  },
+  "corner": {
+   "name": "the corner by the house",
+   "cell": [
+    8,
+    9
+   ]
+  }
+ }
+}

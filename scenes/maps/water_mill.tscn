@@ -1,0 +1,77 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/Mill.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/Sacks.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/Cart.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/Millstone.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/water_mill/Race.png" id="6_tex"]
+
+[node name="WaterMillMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2752.0
+offset_bottom = 2368.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Mill" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(800.0, 320)
+scale = Vector2(0.5097, 0.5097)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -500.0)
+
+[node name="Sacks" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(432.0, 224)
+scale = Vector2(0.1137, 0.1137)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -450.5)
+
+[node name="Cart" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 512)
+scale = Vector2(0.2230, 0.2230)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -505.5)
+
+[node name="Millstone" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(480.0, 672)
+scale = Vector2(0.0909, 0.0909)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -442.0)
+
+[node name="Race" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 992.0
+offset_top = 0.0
+offset_right = 1152.0
+offset_bottom = 768.0
+texture = ExtResource("6_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

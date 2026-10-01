@@ -1,0 +1,158 @@
+{
+ "id": "river_camp",
+ "version": 1,
+ "name": "Ulf's camp by the river",
+ "notes": "Training level B5 (D-59): a charcoal burner's camp beside a river. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a woodland clearing beside a river: trampled grass, patches of black charcoal dust, wood chips and a few ferns",
+  "pieces": {
+   "Clamp": "a charcoal burner's clamp: a low dome of earth and turf with thin wisps of smoke rising from it",
+   "Hut": "a small hut of bent branches, bark and turf with a low dark doorway facing down",
+   "FirePit": "a ring of blackened stones for a campfire, with cold grey ash inside",
+   "Woodpile": "a neat stack of split logs",
+   "Stump": "a broad tree stump used as a chopping block, with an axe bitten into it",
+   "River": "a clear, shallow river flowing over brown pebbles, with reeds along its left bank"
+  },
+  "bands": [
+   "River"
+  ]
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {
+  "alder": {
+   "name": "alder tree",
+   "mass_kg": 500.0,
+   "length_m": 8.0,
+   "description": "A riverside alder with dark, ridged bark and round leaves."
+  }
+ },
+ "buildings": [
+  {
+   "name": "Clamp",
+   "cells": [
+    4,
+    3,
+    6,
+    4
+   ],
+   "label": "Charcoal clamp"
+  },
+  {
+   "name": "Hut",
+   "cells": [
+    14,
+    2,
+    7,
+    4
+   ],
+   "label": "Ulf's hut"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "FirePit",
+   "cells": [
+    16,
+    12,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Woodpile",
+   "cells": [
+    8,
+    15,
+    3,
+    1
+   ]
+  },
+  {
+   "name": "Stump",
+   "cells": [
+    22,
+    16,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "River",
+   "cells": [
+    29,
+    0,
+    7,
+    24
+   ]
+  },
+  {
+   "name": "Alder1",
+   "cells": [
+    24,
+    4,
+    1,
+    1
+   ],
+   "tree": "alder",
+   "id": "tree_alder_1"
+  },
+  {
+   "name": "Alder2",
+   "cells": [
+    25,
+    20,
+    1,
+    1
+   ],
+   "tree": "alder",
+   "id": "tree_alder_2"
+  }
+ ],
+ "places": {
+  "clamp": {
+   "name": "the charcoal clamp",
+   "cell": [
+    7,
+    8
+   ]
+  },
+  "hut": {
+   "name": "Ulf's hut",
+   "cell": [
+    17,
+    7
+   ]
+  },
+  "firepit": {
+   "name": "the fire pit",
+   "cell": [
+    17,
+    15
+   ]
+  },
+  "river": {
+   "name": "the river bank",
+   "cell": [
+    27,
+    12
+   ]
+  },
+  "woodpile": {
+   "name": "the woodpile",
+   "cell": [
+    9,
+    17
+   ]
+  }
+ }
+}

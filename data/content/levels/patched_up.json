@@ -1,0 +1,475 @@
+{
+ "id": "patched_up",
+ "title": "Patched up",
+ "track": "basic",
+ "order": 4,
+ "minutes": 5,
+ "teaches": [
+  "Your wounds and health",
+  "Making a bandage",
+  "Treating yourself",
+  "A poultice for a burn",
+  "Treating someone else",
+  "Rewind"
+ ],
+ "blurb": "A cut arm, a burned hand, and a healer's back room. Bind a wound, dress a burn.",
+ "after": "Wounds in this world bleed, burn and fester, and what treats them is real: cloth, herbs, clean water. Helping someone is remembered.",
+ "refines": "Do players find their wounds and Treat in Pack & gear? Do the remedies get made and recognised whatever they're called?",
+ "map": "inn_backroom",
+ "start": {
+  "cell": [
+   10,
+   13
+  ]
+ },
+ "objective": "Get patched up",
+ "goal": "Bind your cut, then help Tam",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_brea_healer": {
+   "role": "healer",
+   "step_ms": 520,
+   "goal": "keep the back room in order",
+   "anchors": [
+    [
+     10,
+     4,
+     "work",
+     20000
+    ],
+    [
+     13,
+     10,
+     "work",
+     15000
+    ]
+   ]
+  },
+  "npc_tam_drover": {
+   "role": "drover",
+   "step_ms": 420,
+   "goal": "warm himself by the stove",
+   "anchors": [
+    [
+     16,
+     5,
+     "look",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "linen_brea",
+   "name": "clean linen cloth",
+   "x": 13,
+   "y": 9,
+   "mass_kg": 0.2,
+   "materials": [
+    "linen"
+   ],
+   "description": "A folded square of clean, boiled linen, soft and white.",
+   "flags": [
+    "flexible",
+    "tieable",
+    "combustible"
+   ],
+   "owner_id": "npc_brea_healer",
+   "length_m": 1.0
+  },
+  {
+   "id": "plantain_brea",
+   "name": "plantain leaves",
+   "x": 11,
+   "y": 4,
+   "mass_kg": 0.05,
+   "materials": [
+    "plantain",
+    "leaf"
+   ],
+   "description": "A handful of broad, ribbed plantain leaves, fresh from the yard.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_brea_healer"
+  },
+  {
+   "id": "bowl_brea",
+   "name": "wooden bowl",
+   "x": 14,
+   "y": 9,
+   "mass_kg": 0.3,
+   "materials": [
+    "wood"
+   ],
+   "description": "A shallow wooden bowl for mixing herbs.",
+   "flags": [
+    "rigid",
+    "container"
+   ],
+   "owner_id": "npc_brea_healer",
+   "capacity_l": 0.5
+  },
+  {
+   "id": "pestle_brea",
+   "name": "stone pestle",
+   "x": 12,
+   "y": 9,
+   "mass_kg": 0.6,
+   "materials": [
+    "stone"
+   ],
+   "description": "A smooth stone pestle for crushing herbs.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_brea_healer"
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_tam_drover",
+   "during": [
+    "tam",
+    "poultice",
+    "treat"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 600,
+   "withholds": [
+    "go_tell"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A cut",
+   "cards": [
+    "…signal. You've cut your arm on a nail by the inn's back door. Not deep, but it's bleeding.",
+    "This is Mother Brea's room: she patches up everyone on this road. Wounds here are real, and so are the ways to treat them.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": "",
+   "on_start": [
+    {
+     "kind": "hurt",
+     "npc": "player",
+     "condition": {
+      "kind": "bleeding",
+      "area": "arm",
+      "severity": 5
+     }
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_brea_healer",
+     "text": "Mind that nail! Oh, dearie, you've cut yourself. Come in, come in."
+    }
+   ]
+  },
+  {
+   "id": "wounds",
+   "title": "Your wounds",
+   "cards": [
+    "Press {I}. Pack & gear shows your health and your wounds: what each is, how bad, and what can treat it.",
+    "A cut bleeds until it's bound. A burn needs dressing. Left alone, wounds fester."
+   ],
+   "task": "Press I and look at your wounds",
+   "check": {
+    "kind": "ui",
+    "key": "pack"
+   },
+   "done": "That cut needs binding.",
+   "help": [
+    "Press the {I} key."
+   ],
+   "playtest": [
+    {
+     "ui": "pack"
+    }
+   ]
+  },
+  {
+   "id": "ask",
+   "title": "Ask for help",
+   "cards": [
+    "Ask Brea what you can use. She knows every herb and bandage there is."
+   ],
+   "suggest": {
+    "text": "Could I use some of your linen to bind this cut?",
+    "to": "npc_brea_healer",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Brea",
+   "focus": {
+    "npc": "npc_brea_healer"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_brea_healer"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_brea_healer",
+     "text": "Use what's on the table, dearie: clean linen, and my plantain if you need it. Tear a strip, bind it tight."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_brea_healer",
+     "objects": [
+      "linen_brea",
+      "plantain_brea",
+      "bowl_brea",
+      "pestle_brea"
+     ]
+    }
+   ],
+   "done": "She's lent you her things: using them isn't stealing.",
+   "help": [
+    "{Left-click} Brea, type, press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_brea_healer"
+    },
+    {
+     "say": "Could I use some of your linen to bind this cut?",
+     "to": "npc_brea_healer"
+    }
+   ]
+  },
+  {
+   "id": "bandage",
+   "title": "A bandage",
+   "cards": [
+    "Make a bandage from the clean linen: press {T}, {Tab} to DO, and say what you do."
+   ],
+   "suggest": {
+    "text": "tear the clean linen into a strip to make a bandage",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Make a bandage from the linen",
+   "focus": {
+    "object": "linen_brea"
+   },
+   "check": {
+    "kind": "carrying_remedy",
+    "treats": "bleeding"
+   },
+   "done": "A bandage: the game knows what it's for, whatever you called it.",
+   "help": [
+    "Stand by the table with the linen, press {T}, {Tab} to DO, and type 'tear the linen into a strip for a bandage'."
+   ],
+   "playtest": [
+    {
+     "walk_to": "linen_brea"
+    },
+    {
+     "do": "tear the clean linen into a strip to make a bandage"
+    }
+   ],
+   "try_also": [
+    "make a bandage out of the linen cloth"
+   ]
+  },
+  {
+   "id": "self",
+   "title": "Treat yourself",
+   "cards": [
+    "Now bind your cut. In Pack & gear ({I}), press Treat beside the cut. Or drag the bandage onto yourself."
+   ],
+   "task": "Treat your cut",
+   "check": {
+    "kind": "condition_treated",
+    "npc": "player",
+    "condition": "bleeding"
+   },
+   "done": "Bound. It'll stop bleeding now. Treatment takes your hands for a moment: mind that in a fight.",
+   "help": [
+    "Press {I}, find the cut under your wounds, and press Treat."
+   ],
+   "playtest": [
+    {
+     "treat": "player",
+     "kind": "bleeding"
+    }
+   ]
+  },
+  {
+   "id": "tam",
+   "title": "A burn",
+   "on_start": [
+    {
+     "kind": "hurt",
+     "npc": "npc_tam_drover",
+     "condition": {
+      "kind": "burn",
+      "area": "hand",
+      "severity": 15
+     }
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_tam_drover",
+     "text": "Ow! Blast that stove! My hand!"
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_brea_healer",
+     "text": "Tam! Again? Don't put it in your mouth, you lump."
+    }
+   ],
+   "cards": [
+    "Tam the drover has burned his hand on the stove. Go to him."
+   ],
+   "task": "Go to Tam",
+   "focus": {
+    "npc": "npc_tam_drover"
+   },
+   "check": {
+    "kind": "npc_near",
+    "npc": "npc_tam_drover",
+    "within": 3.0
+   },
+   "done": "A bad burn. It needs dressing.",
+   "help": [
+    "He's by the stove."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_tam_drover"
+    }
+   ]
+  },
+  {
+   "id": "poultice",
+   "title": "Something for a burn",
+   "cards": [
+    "Plantain is good for burns: crush the leaves into a poultice. Try this:"
+   ],
+   "suggest": {
+    "text": "crush the plantain leaves in the bowl into a poultice for a burn",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Make a poultice from the plantain",
+   "focus": {
+    "object": "plantain_brea"
+   },
+   "check": {
+    "kind": "carrying_remedy",
+    "treats": "burn"
+   },
+   "done": "A poultice. Now it needs to go on his hand.",
+   "help": [
+    "Stand by the plantain (or carry it), press {T}, {Tab} to DO, and type 'crush the plantain leaves into a poultice for a burn'."
+   ],
+   "playtest": [
+    {
+     "walk_to": "plantain_brea"
+    },
+    {
+     "take": "plantain_brea"
+    },
+    {
+     "walk_to": "bowl_brea"
+    },
+    {
+     "do": "crush the plantain leaves in the bowl into a poultice for a burn"
+    }
+   ],
+   "try_also": [
+    "mash the plantain into a poultice"
+   ]
+  },
+  {
+   "id": "treat",
+   "title": "Treat someone else",
+   "cards": [
+    "Put the poultice on Tam's burn: drag it from your pack onto him, or say what you do."
+   ],
+   "suggest": {
+    "text": "lay the poultice on Tam's burned hand",
+    "to": "npc_tam_drover",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Put the poultice on Tam's burn",
+   "focus": {
+    "npc": "npc_tam_drover"
+   },
+   "check": {
+    "kind": "condition_treated",
+    "npc": "npc_tam_drover",
+    "condition": "burn"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_tam_drover",
+     "text": "Ahh, that's cool. Thank you kindly. Brea, did you see? Saved my hand."
+    },
+    {
+     "kind": "npc_says",
+     "npc": "npc_brea_healer",
+     "text": "Not bad, dearie. If you're heading up the river, Ulf the charcoal burner could use a hand that knows fire."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_brea_healer",
+     "lead": "Ulf the charcoal burner up the river could use help with fire and water.",
+     "said": "Ulf the charcoal burner could use a hand that knows fire."
+    }
+   ],
+   "done": "People remember who helped them. Tam will talk about this.",
+   "help": [
+    "Walk up to Tam, drag the poultice onto him and press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_tam_drover"
+    },
+    {
+     "do": "lay the poultice on Tam's burned hand",
+     "to": "npc_tam_drover"
+    }
+   ],
+   "try_also": [
+    "put the plantain poultice on Tam's hand"
+   ]
+  },
+  {
+   "id": "rewind",
+   "title": "If it goes wrong",
+   "cards": [
+    "One more thing. Mistakes here are real: a bad fight, a theft, a death.",
+    "If something goes badly wrong, Rewind to the last calm moment takes you back. It's in the menu ({Esc}), and on the card if you die."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": "That's wounds. Look after yourself out there."
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

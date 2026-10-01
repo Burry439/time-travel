@@ -37,6 +37,7 @@ TUTORIAL_FIELDS = (
     "admitted",
     "gate_open",
     "learned",
+    "agreements",
 )
 
 

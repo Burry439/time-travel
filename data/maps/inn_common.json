@@ -1,0 +1,170 @@
+{
+ "id": "inn_common",
+ "version": 1,
+ "name": "the common room of the Ford Inn",
+ "notes": "Training level B6 (D-59): an inn's common room, indoors. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "indoor",
+  "ground": "the worn wooden floor of a busy inn's common room, warm firelight, a little spilled ale and straw near the door",
+  "pieces": {
+   "Wall": "the timber back wall of an old inn's common room with hanging copper pots, a shelf of tankards and a mounted antler",
+   "Bar": "a long dark wooden bar counter with a row of pewter tankards and a small barrel on its end",
+   "Fireplace": "a big stone fireplace with a crackling log fire and an iron pot hanging over it",
+   "Table1": "a long scrubbed wooden table with two benches and a few cups on it",
+   "Table2": "a round wooden table with three stools and a candle",
+   "Barrels": "two ale barrels stacked on their sides"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  26,
+  18
+ ],
+ "walk": [
+  0,
+  0,
+  26,
+  18
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    26,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    16
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    25,
+    2,
+    1,
+    16
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    17,
+    10,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    14,
+    17,
+    11,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "Bar",
+   "cells": [
+    3,
+    3,
+    8,
+    2
+   ],
+   "label": "Bar"
+  },
+  {
+   "name": "Fireplace",
+   "cells": [
+    18,
+    2,
+    5,
+    2
+   ],
+   "label": "Fireplace"
+  },
+  {
+   "name": "Table1",
+   "cells": [
+    5,
+    9,
+    5,
+    2
+   ],
+   "label": "Table"
+  },
+  {
+   "name": "Table2",
+   "cells": [
+    16,
+    10,
+    3,
+    2
+   ],
+   "label": "Table"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Barrels",
+   "cells": [
+    2,
+    13,
+    2,
+    2
+   ]
+  }
+ ],
+ "places": {
+  "bar": {
+   "name": "the bar",
+   "cell": [
+    7,
+    6
+   ]
+  },
+  "fire": {
+   "name": "the fireplace",
+   "cell": [
+    20,
+    5
+   ]
+  },
+  "table1": {
+   "name": "the long table",
+   "cell": [
+    7,
+    12
+   ]
+  },
+  "table2": {
+   "name": "the round table",
+   "cell": [
+    17,
+    13
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    12,
+    16
+   ]
+  }
+ }
+}

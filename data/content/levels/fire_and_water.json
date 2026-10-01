@@ -1,0 +1,526 @@
+{
+ "id": "fire_and_water",
+ "title": "Fire and water",
+ "track": "basic",
+ "order": 5,
+ "minutes": 6,
+ "teaches": [
+  "Containers and water",
+  "Making fire",
+  "Heating water",
+  "Giving",
+  "Putting a fire out"
+ ],
+ "blurb": "A charcoal burner's camp by the river. Fill a pot, make a fire, boil the water, and put the fire out.",
+ "after": "Fire needs a spark, tinder and fuel; water fills what holds water; heat moves from hot to cold. The world keeps those laws, so you can use them.",
+ "refines": "Does the judge rule everyday physics consistently: filling, kindling, heating, dousing? Do players think of the fuel and the bucket?",
+ "map": "river_camp",
+ "start": {
+  "cell": [
+   12,
+   20
+  ]
+ },
+ "objective": "Help Ulf",
+ "goal": "Help the charcoal burner",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_ulf_charcoal": {
+   "role": "charcoal burner",
+   "step_ms": 600,
+   "goal": "tend the clamp",
+   "anchors": [
+    [
+     11,
+     8,
+     "work",
+     30000
+    ],
+    [
+     19,
+     9,
+     "look",
+     20000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "pot_ulf",
+   "name": "clay cooking pot",
+   "x": 18,
+   "y": 10,
+   "mass_kg": 1.2,
+   "materials": [
+    "clay"
+   ],
+   "description": "A blackened clay cooking pot with a handle of twisted wire. It holds about two litres.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_ulf_charcoal",
+   "capacity_l": 2.0
+  },
+  {
+   "id": "flint_ulf",
+   "name": "flint shard",
+   "x": 15,
+   "y": 10,
+   "mass_kg": 0.1,
+   "materials": [
+    "flint"
+   ],
+   "description": "A sharp grey flint shard, good for striking sparks.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_ulf_charcoal"
+  },
+  {
+   "id": "steel_ulf",
+   "name": "fire steel",
+   "x": 14,
+   "y": 10,
+   "mass_kg": 0.1,
+   "materials": [
+    "steel"
+   ],
+   "description": "A C-shaped striker of hard steel, worn bright where the flint hits it.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_ulf_charcoal"
+  },
+  {
+   "id": "tinder_ulf",
+   "name": "dry grass tinder",
+   "x": 17,
+   "y": 17,
+   "mass_kg": 0.05,
+   "materials": [
+    "grass"
+   ],
+   "description": "A twist of very dry grass and thistledown: it catches a spark.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "owner_id": "npc_ulf_charcoal"
+  },
+  {
+   "id": "kindling_ulf",
+   "name": "bundle of kindling",
+   "x": 15,
+   "y": 17,
+   "mass_kg": 0.5,
+   "materials": [
+    "wood"
+   ],
+   "description": "A bundle of dry twigs and split sticks, finger-thick.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_ulf_charcoal"
+  },
+  {
+   "id": "logs_ulf",
+   "name": "armful of split logs",
+   "x": 12,
+   "y": 17,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Three split oak logs, dry and seasoned.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_ulf_charcoal"
+  },
+  {
+   "id": "bucket_ulf",
+   "name": "leather bucket",
+   "x": 26,
+   "y": 13,
+   "mass_kg": 0.8,
+   "materials": [
+    "leather"
+   ],
+   "description": "A stiff leather bucket with a rope handle. It holds about six litres.",
+   "flags": [
+    "container",
+    "watertight",
+    "flexible"
+   ],
+   "owner_id": "npc_ulf_charcoal",
+   "capacity_l": 6.0
+  },
+  {
+   "id": "river_ulf",
+   "name": "river",
+   "x": 28,
+   "y": 12,
+   "mass_kg": 100000.0,
+   "materials": [
+    "water"
+   ],
+   "description": "The river runs clear and cold over the pebbles here.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 100000.0,
+   "water_l": 100000.0,
+   "no_sprite": true,
+   "art": "scene"
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A charcoal camp",
+   "cards": [
+    "…signal. This is Ulf's camp. He burns charcoal for the smiths, and he knows fire better than anyone alive.",
+    "Today: containers, water, fire and heat. Everything here behaves the way it really would.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "hello",
+   "title": "Ulf",
+   "cards": [
+    "Go and talk to Ulf."
+   ],
+   "suggest": {
+    "text": "Good morning. Can I help with anything?",
+    "to": "npc_ulf_charcoal",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Ulf",
+   "focus": {
+    "npc": "npc_ulf_charcoal"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_ulf_charcoal"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ulf_charcoal",
+     "text": "Help? Hands shake today. Fill my pot at the river, make a fire in the pit, and boil me some water for tea. Use my things."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_ulf_charcoal",
+     "objects": [
+      "pot_ulf",
+      "flint_ulf",
+      "steel_ulf",
+      "tinder_ulf",
+      "kindling_ulf",
+      "logs_ulf",
+      "bucket_ulf"
+     ]
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_ulf_charcoal",
+     "lead": "Boil a pot of river water on a fire for Ulf's tea",
+     "said": "Boil me some water for tea.",
+     "done_when": {
+      "kind": "held_by",
+      "thing": "pot_ulf",
+      "npc": "npc_ulf_charcoal"
+     }
+    }
+   ],
+   "done": "He's lent you his things. What he asked is in your journal.",
+   "help": [
+    "{Left-click} Ulf, type, press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ulf_charcoal"
+    },
+    {
+     "say": "Good morning. Can I help with anything?",
+     "to": "npc_ulf_charcoal"
+    }
+   ]
+  },
+  {
+   "id": "fill",
+   "title": "Water",
+   "cards": [
+    "Anything that holds water can be filled: a pot, a bucket, a cup. Take the pot to the river and fill it. Drag it onto the river, or say it:"
+   ],
+   "suggest": {
+    "text": "fill the clay pot with water from the river",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Fill the clay pot at the river",
+   "focus": {
+    "object": "pot_ulf"
+   },
+   "check": {
+    "kind": "filled",
+    "thing": "pot_ulf"
+   },
+   "done": "Two litres of river water. A full pot is heavy: watch your load.",
+   "help": [
+    "Pick up the pot, walk to the river bank, press {T}, {Tab} to DO, and type 'fill the pot from the river'."
+   ],
+   "playtest": [
+    {
+     "walk_to": "pot_ulf"
+    },
+    {
+     "take": "pot_ulf"
+    },
+    {
+     "walk_to": [
+      27,
+      12
+     ]
+    },
+    {
+     "do": "fill the clay pot with water from the river"
+    }
+   ],
+   "try_also": [
+    "scoop river water into the pot"
+   ]
+  },
+  {
+   "id": "kindle",
+   "title": "Fire",
+   "cards": [
+    "A fire needs three things: something to make a spark (flint struck on steel), something that catches it (dry tinder), and fuel, small to big.",
+    "Make a fire in the stone ring. Try this:"
+   ],
+   "suggest": {
+    "text": "strike the flint on the fire steel over the dry grass in the fire pit, then feed it the kindling and the logs",
+    "to": null,
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Make a fire in the fire pit",
+   "focus": {
+    "cell": [
+     17,
+     13
+    ]
+   },
+   "check": {
+    "kind": "made",
+    "named": [
+     "fire",
+     "blaze",
+     "flame"
+    ],
+    "from": [
+     "tinder_ulf",
+     "kindling_ulf",
+     "logs_ulf"
+    ]
+   },
+   "done": "Fire. It burns on its own now, until its fuel runs out.",
+   "help": [
+    "Carry the flint, the fire steel, the tinder and the kindling (the logs too) to the fire pit.",
+    "Then press {T}, {Tab} to DO, and say how you light it."
+   ],
+   "playtest": [
+    {
+     "walk_to": "flint_ulf"
+    },
+    {
+     "take": "flint_ulf"
+    },
+    {
+     "take": "steel_ulf"
+    },
+    {
+     "walk_to": "tinder_ulf"
+    },
+    {
+     "take": "tinder_ulf"
+    },
+    {
+     "take": "kindling_ulf"
+    },
+    {
+     "walk_to": "logs_ulf"
+    },
+    {
+     "take": "logs_ulf"
+    },
+    {
+     "walk_to": [
+      17,
+      15
+     ]
+    },
+    {
+     "do": "strike the flint on the fire steel over the dry grass in the fire pit, then feed it the kindling and the logs"
+    }
+   ],
+   "try_also": [
+    "light a campfire in the pit with the flint and steel, the tinder, the kindling and the logs"
+   ]
+  },
+  {
+   "id": "boil",
+   "title": "Heat",
+   "cards": [
+    "Heat goes from hot things to cold ones. Set the pot of water on the fire and let it boil. This time the words are yours:"
+   ],
+   "suggest": {
+    "text": "set the pot of water on the fire until it boils",
+    "to": null,
+    "button": false,
+    "mode": "do"
+   },
+   "task": "Boil the water on the fire",
+   "focus": {
+    "object": "pot_ulf"
+   },
+   "check": {
+    "kind": "heated",
+    "thing": "pot_ulf",
+    "at_least": "hot"
+   },
+   "done": "Steaming. Hot things cool again, slowly, and burn whoever holds them carelessly.",
+   "help": [
+    "Stand by the fire with the pot of water, press {T}, {Tab} to DO, and say what you do with it."
+   ],
+   "playtest": [
+    {
+     "do": "set the pot of water on the fire until it boils"
+    }
+   ],
+   "try_also": [
+    "put the pot on the fire to boil the water"
+   ]
+  },
+  {
+   "id": "give",
+   "title": "Tea",
+   "cards": [
+    "Take Ulf his hot water."
+   ],
+   "suggest": {
+    "text": "give Ulf the pot of hot water",
+    "to": "npc_ulf_charcoal",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Give Ulf the pot of hot water",
+   "focus": {
+    "npc": "npc_ulf_charcoal"
+   },
+   "check": {
+    "kind": "held_by",
+    "thing": "pot_ulf",
+    "npc": "npc_ulf_charcoal"
+   },
+   "done": "He'll remember that.",
+   "help": [
+    "Walk up to Ulf and drag the pot onto him."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ulf_charcoal"
+    },
+    {
+     "do": "give Ulf the pot of hot water",
+     "to": "npc_ulf_charcoal"
+    }
+   ]
+  },
+  {
+   "id": "out",
+   "title": "Never leave a fire",
+   "cards": [
+    "Ulf's rule: never leave a fire burning. Put yours out: water from the river does it (fill the leather bucket), or earth heaped on it.",
+    "No words from me this time."
+   ],
+   "task": "Put the fire out",
+   "focus": {
+    "cell": [
+     17,
+     13
+    ]
+   },
+   "check": {
+    "kind": "fires_out"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ulf_charcoal",
+     "text": "Good. Out properly. You'll do. Want news of the city? Sit in the common room at the Ford Inn and listen."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_ulf_charcoal",
+     "lead": "Travellers trade news of the road in the Ford Inn's common room.",
+     "said": "Sit in the common room at the Ford Inn and listen."
+    }
+   ],
+   "done": "Water, fire, heat: they work here as they do anywhere. You can use that.",
+   "help": [
+    "Fill the leather bucket at the river, carry it to the fire, and pour it on.",
+    "Or heap earth over the fire."
+   ],
+   "playtest": [
+    {
+     "walk_to": "bucket_ulf"
+    },
+    {
+     "take": "bucket_ulf"
+    },
+    {
+     "walk_to": [
+      27,
+      12
+     ]
+    },
+    {
+     "do": "fill the leather bucket with water from the river"
+    },
+    {
+     "walk_to": [
+      17,
+      15
+     ]
+    },
+    {
+     "do": "pour the bucket of water over the fire to put it out"
+    }
+   ],
+   "try_also": []
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

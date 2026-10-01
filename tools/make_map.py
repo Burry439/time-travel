@@ -10,7 +10,7 @@ and an empty M2Objects for the things lying about. Collisions come from the same
 With --paint (needs OPENAI_API_KEY in backend/.env) it first asks the image model (MODEL_IMAGE) for what isn't
 painted yet: the ground (map.art.ground) and each piece named in map.art.pieces, into assets/maps/<map_id>/.
 Every building named Wall... is a band cut from one painting, "Wall" (the top one rising art.wall_rise cells
-above the floor). A piece with no painting is drawn as a plain block, so a map is playable before its art exists.
+above the floor); anything named in art.bands (a river) is its own painting covering its cells. A piece with no painting is drawn as a plain block, so a map is playable before its art exists.
 Then:
     Godot --headless --path . --import
 """
@@ -42,6 +42,10 @@ PIECE = (
     "2D RPG map piece for a grounded premodern village game: {piece}. The whole thing centred and fully visible, "
     "filling most of the frame, seen from a high three-quarter top-down angle so its front faces down the screen. "
     "Transparent background. Only the piece: no ground tile, no cast shadow, no people, no text, no border. {style}"
+)
+BAND = (
+    "Top-down view, seen from directly above, for a 2D RPG map: {piece}. It fills the whole image edge to edge, "
+    "running from the top of the image to the bottom, even lighting, no border, no text, no people. {style}"
 )
 BLOCKS = {"indoor": "Color(0.29, 0.2, 0.13, 1)", "outdoor": "Color(0.42, 0.36, 0.25, 1)"}  # Unpainted pieces.
 SURROUND = {"indoor": "Color(0.07, 0.06, 0.05, 1)", "outdoor": "Color(0.26, 0.31, 0.17, 1)"}
@@ -83,10 +87,15 @@ def paint(plan: dict, folder: Path, force: bool) -> None:
             continue
         print(f"painting {name}…", flush=True)
         raw = folder / f"{name}.raw.png"
-        raw.write_bytes(_image(PIECE.format(piece=words, style=STYLE), "1024x1024", True))
+        band = name in art.get("bands", [])
+        prompt = (BAND if band else PIECE).format(piece=words, style=STYLE)
+        raw.write_bytes(_image(prompt, "1024x1536" if band else "1024x1024", not band))
         picture = Image.open(raw).convert("RGBA")
-        box = picture.getchannel("A").point(lambda value: 255 if value >= 64 else 0).getbbox()
-        picture.crop(box).save(target)  # Trimmed to the piece itself.
+        if name in art.get("bands", []):  # Covers its cells whole: not trimmed.
+            picture.save(target)
+        else:
+            box = picture.getchannel("A").point(lambda value: 255 if value >= 64 else 0).getbbox()
+            picture.crop(box).save(target)  # Trimmed to the piece itself.
         raw.unlink()
 
 
@@ -145,7 +154,12 @@ def build(plan: dict, folder: Path) -> str:
     for item in plan["buildings"] + [item for item in plan["obstacles"] if not item.get("tree")]:
         x, y, w, h = item["cells"]
         picture = folder / f"{item['name']}.png"
-        if item["name"].startswith("Wall") and wall_texture:  # A band cut from the one wall painting.
+        if item["name"] in art.get("bands", []) and picture.exists():  # A river or a road: its painting covers it.
+            band = scene.texture(f"res://assets/maps/{plan['id']}/{item['name']}.png")
+            scene.node(item["name"], "TextureRect", "Map", z_index="-19", offset_left=f"{x * CELL}.0",
+                       offset_top=f"{y * CELL}.0", offset_right=f"{(x + w) * CELL}.0", offset_bottom=f"{(y + h) * CELL}.0",
+                       texture=f'ExtResource("{band}")', expand_mode="1", stretch_mode="6")
+        elif item["name"].startswith("Wall") and wall_texture:  # A band cut from the one wall painting.
             up = rise if y == 0 else 0  # The back wall stands up above the floor.
             scene.node(item["name"], "TextureRect", "Map", z_index="-19", offset_left=f"{x * CELL}.0",
                        offset_top=f"{(y - up) * CELL}.0", offset_right=f"{(x + w) * CELL}.0",

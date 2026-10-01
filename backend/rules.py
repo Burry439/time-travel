@@ -51,7 +51,9 @@ def _progress(ctx: dict) -> dict:
 
 
 def _npc(state: State, spec: dict, ctx: dict, key: str = "npc"):
-    """The person a condition is about: named in it, or the one whose rule it is."""
+    """The person a condition is about: named in it ("player" for the stranger), or the one whose rule it is."""
+    if spec.get(key) == "player":
+        return state["player"]
     return cast.find(state["npcs"], spec[key]) if spec.get(key) else ctx.get("npc")
 
 
@@ -289,7 +291,94 @@ def _attempt_failed(state, spec, ctx):
     )
 
 
+@condition("told_by", "npc")
+def _told_by(state, spec, ctx):
+    """This person has told the stranger something worth keeping: a lead from them in the journal."""
+    return any(entry.get("npc_id") == spec["npc"] for entry in state.get("learned") or [])
+
+
+@condition("in_conversation")
+def _in_conversation(state, spec, ctx):
+    """The stranger is face to face with someone (the dialogue bar's conversation)."""
+    return bool((state.get("encounter") or {}).get("participants"))
+
+
+@condition("deal", "npc", "status")
+def _deal(state, spec, ctx):
+    """A deal this person offered has got this far: proposed, accepted (agreed) or fulfilled (done)."""
+    order = ["proposed", "accepted", "fulfilled"]
+    return any(
+        deal.get("issuer") == spec["npc"]
+        and deal.get("status") in order
+        and order.index(deal["status"]) >= order.index(spec["status"])
+        for deal in (state.get("agreements") or {}).values()
+    )
+
+
+@condition("remembers", "npc", "of")
+def _remembers(state, spec, ctx):
+    """This person remembers a wrong of this kind (theft, violence) by the stranger; settled: true asks for it put
+    right (given back, forgiven), false for it still held against them."""
+    npc = _npc(state, spec, ctx)
+    wrongs = [m for m in (npc or {}).get("mind", {}).get("memories", []) if m.get("kind") == spec["of"]]
+    if "settled" not in spec:
+        return bool(wrongs)
+    return bool(wrongs) and all(bool(m.get("settled")) == spec["settled"] for m in wrongs)
+
+
+@condition("shown", "npc")
+def _shown(state, spec, ctx):
+    """This person saw the stranger show something that worked, clearly, in this step (a demonstration)."""
+    npc = _npc(state, spec, ctx)
+    since = _progress(ctx).get("started_at", 0)
+    return bool(npc) and any(
+        m.get("kind") == "demonstration"
+        and m.get("works", True)
+        and m.get("clarity") != "vague"
+        and m.get("at", 0) >= since
+        for m in (npc.get("mind") or {}).get("memories", [])
+    )
+
+
+# --- Fighting ----------------------------------------------------------------------------------------------------
+
+
+@condition("swung")
+def _swung(state, spec, ctx):
+    """The stranger has swung what's in a hand (Space or F), at anyone or at the air."""
+    player = state["player"]
+    ready = player.get("ready_at") if isinstance(player.get("ready_at"), dict) else {}
+    return bool(player.get("swings")) or any(ready.values())
+
+
+@condition("guarding")
+def _guarding(state, spec, ctx):
+    """The stranger's shield is up."""
+    return bool((state["player"].get("guard") or {}).get("raised"))
+
+
+@condition("fight_moment", "categories")
+def _fight_moment(state, spec, ctx):
+    """A moment of a fight happened: a blow blocked, a miss, a hit (combat's journal words)."""
+    return any(e.get("kind") == "fight" and e.get("category") in spec["categories"] for e in state.get("journal", []))
+
+
 # --- Things ------------------------------------------------------------------------------------------------------
+
+
+@condition("heated", "thing", "at_least")
+def _heated(state, spec, ctx):
+    """This thing is at least this hot: warm, hot or boiling (water in a pot over a fire)."""
+    order = ["cold", "warm", "hot", "boiling"]
+    heat = (state["objects"].get(spec["thing"]) or {}).get("temperature", "cold")
+    return order.index(heat if heat in order else "cold") >= order.index(spec["at_least"])
+
+
+@condition("fires_out")
+def _fires_out(state, spec, ctx):
+    """Every fire the stranger made is out (and there was one)."""
+    fires = [o for o in state["objects"].values() if o.get("created_by") == "player" and o.get("feature") == "fire"]
+    return bool(fires) and not any(o.get("burning") for o in fires)
 
 
 def _made_here(obj: dict, since: int) -> bool:
@@ -321,6 +410,12 @@ def _gave_made(state, spec, ctx):
     return len(held) >= spec["count"]
 
 
+@condition("thing_with", "flag")
+def _thing_with(state, spec, ctx):
+    """Something in the world now has this property (a needle magnetised, a cloth soaked): however it came to."""
+    return any(spec["flag"] in (o.get("flags") or []) for o in state["objects"].values())
+
+
 @condition("filled", "thing")
 def _filled(state, spec, ctx):
     """This thing holds water (a cup filled at the well)."""
@@ -331,9 +426,6 @@ def _filled(state, spec, ctx):
 def _held_by(state, spec, ctx):
     """This person has this thing (given to them)."""
     return (state["objects"].get(spec["thing"]) or {}).get("holder_id") == spec["npc"]
-
-
-# --- Things ------------------------------------------------------------------------------------------------------
 
 
 @condition("installed", "thing")

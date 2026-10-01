@@ -228,6 +228,16 @@ def _settle_deals(state: State, npc: Npc, answers: dict, line: str, event_id: in
     deal = accepted[0]
     deal.update(status="fulfilled", fulfilled_event=event_id)
     deal.setdefault("evidence_event_ids", []).append(event_id)
+    if deal["reward"] == "pay":  # Paid in goods (D-59): theirs, now the stranger's.
+        paid = [i for i in deal.get("pays", []) if state["objects"].get(i, {}).get("owner_id") == npc_id]
+        for thing_id in paid:
+            state["objects"][thing_id].update(holder_id="player", owner_id="player")
+            state["objects"][thing_id].pop("lent_to", None)
+        lead = (
+            f"{name} is satisfied: you did what was asked, and {name} paid you {conversation.paid_with(state, paid)}."
+        )
+        learned.append(_lead(npc, line, event_id, "fulfilled", deal["id"], lead))
+        return None
     lead = f"{name} is satisfied: you did what was asked, and {name} will speak for you."
     learned.append(_lead(npc, line, event_id, "fulfilled", deal["id"], lead))
     if deal["reward"] == "hire":
@@ -241,6 +251,40 @@ def _settle_deals(state: State, npc: Npc, answers: dict, line: str, event_id: in
     )
 
 
+def propose(state: State, npc: Npc, offer_id: str, event_id: int | None, line: str, learned: list, lent: list) -> str:
+    """Someone offers one of their deals (their card's offers): a task for a reward, and the things the job needs
+    lent (D-55: using them isn't theft). It's a lead in the journal. Returns the deal's id."""
+    npc_id, name, objects = npc["id"], npc["name"], state["objects"]
+    offer = next(o for o in cast.card(npc).get("offers", []) if o["id"] == offer_id)
+    deal_id = f"deal_{event_id if event_id is not None else len(state.setdefault('agreements', {}))}"
+    state.setdefault("agreements", {})[deal_id] = {
+        "id": deal_id,
+        "type": "task_for_reward",
+        "template": offer_id,
+        "issuer": npc_id,
+        "task": offer["task"],
+        "check": offer["check"],
+        "reward": offer["reward"],
+        **({"pays": list(offer["pays"])} if offer.get("pays") else {}),  # Goods it pays in (D-59).
+        "status": "proposed",
+        "offered_event": event_id,
+    }
+    loaned = []
+    for thing_id in offer.get("lends", []):
+        thing = objects.get(thing_id)
+        if thing and thing["owner_id"] == npc_id and thing.get("lent_to") != "player":
+            thing["lent_to"] = "player"
+            lent.append({"id": thing_id, "holder_id": thing["holder_id"]})
+            loaned.append(thing["name"])
+    use = (
+        f" You may use {name}'s {', '.join(loaned[:-1]) + ' and ' + loaned[-1] if len(loaned) > 1 else loaned[0]} for it."
+        if loaned
+        else ""
+    )
+    learned.append(_lead(npc, line, event_id, "offer", deal_id, f"{name}'s request: {offer['task']}.{use}"))
+    return deal_id
+
+
 def _hand_over(
     state: State, npc: Npc, act: str, target: str | None, line: str, event_id: int, learned: list, lent: list
 ) -> dict | None:
@@ -248,32 +292,7 @@ def _hand_over(
     word at the gate. Returns the admission, if they let the stranger in."""
     npc_id, name, objects = npc["id"], npc["name"], state["objects"]
     if act == "offer":
-        offer = next(o for o in cast.card(npc).get("offers", []) if o["id"] == target)
-        deal_id = f"deal_{event_id}"
-        state["agreements"][deal_id] = {
-            "id": deal_id,
-            "type": "task_for_reward",
-            "template": target,
-            "issuer": npc_id,
-            "task": offer["task"],
-            "check": offer["check"],
-            "reward": offer["reward"],
-            "status": "proposed",
-            "offered_event": event_id,
-        }
-        loaned = []
-        for thing_id in offer.get("lends", []):  # What the job needs, theirs to lend (D-55): using it isn't theft.
-            thing = objects.get(thing_id)
-            if thing and thing["owner_id"] == npc_id and thing.get("lent_to") != "player":
-                thing["lent_to"] = "player"
-                lent.append({"id": thing_id, "holder_id": thing["holder_id"]})
-                loaned.append(thing["name"])
-        use = (
-            f" You may use {name}'s {', '.join(loaned[:-1]) + ' and ' + loaned[-1] if len(loaned) > 1 else loaned[0]} for it."
-            if loaned
-            else ""
-        )
-        learned.append(_lead(npc, line, event_id, "offer", deal_id, f"{name}'s request: {offer['task']}.{use}"))
+        propose(state, npc, target, event_id, line, learned, lent)
     elif act == "admit":
         because = [
             m["summary"]

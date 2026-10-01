@@ -1,0 +1,432 @@
+{
+ "id": "training_yard",
+ "title": "The training yard",
+ "track": "basic",
+ "order": 3,
+ "minutes": 5,
+ "teaches": [
+  "Two hands",
+  "Swinging",
+  "The shield",
+  "Wind-ups and reach",
+  "A bout",
+  "Giving up"
+ ],
+ "blurb": "An old soldier's practice yard. Hold a sword and a shield, see a blow coming, and get through a bout.",
+ "after": "Every fight here is real time and every blow winds up. Most fights are won by not being where the blow lands, and the best are never started.",
+ "refines": "Can players read a wind-up and block or step back? Does the bout feel fair? Do they find Give up when it goes badly?",
+ "map": "garrison_yard",
+ "start": {
+  "cell": [
+   16,
+   19
+  ]
+ },
+ "objective": "Learn to fight",
+ "goal": "Learn to fight from Hal",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_hal_brand": {
+   "role": "arms-master",
+   "step_ms": 440,
+   "goal": "keep an eye on the yard",
+   "anchors": [
+    [
+     16,
+     11,
+     "look",
+     600000
+    ]
+   ]
+  },
+  "npc_bram_recruit": {
+   "role": "recruit",
+   "step_ms": 330,
+   "goal": "practise on the dummies",
+   "anchors": [
+    [
+     22,
+     11,
+     "work",
+     12000
+    ],
+    [
+     5,
+     15,
+     "work",
+     9000
+    ],
+    [
+     15,
+     6,
+     "look",
+     8000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "practice_sword_yard",
+   "name": "practice sword",
+   "mass_kg": 0.9,
+   "materials": [
+    "wood"
+   ],
+   "description": "A wooden practice sword of ash, its edges rounded and its tip padded with leather.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_hal_brand",
+   "carried_by": "npc_hal_brand",
+   "no_overlay": true
+  },
+  {
+   "id": "wicker_shield_yard",
+   "name": "wicker shield",
+   "mass_kg": 2.0,
+   "materials": [
+    "willow",
+    "wood"
+   ],
+   "description": "A round shield of woven willow on a wooden rim, light and springy.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "shield",
+    "class": "improvised",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_hal_brand",
+   "carried_by": "npc_hal_brand",
+   "no_overlay": true
+  },
+  {
+   "id": "practice_sword_hal",
+   "name": "practice sword",
+   "mass_kg": 0.9,
+   "materials": [
+    "wood"
+   ],
+   "description": "Hal's own practice sword, its grip worn black.",
+   "flags": [
+    "rigid"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "owner_id": "npc_hal_brand",
+   "carried_by": "npc_hal_brand",
+   "no_overlay": true
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_hal_brand",
+   "during": [
+    "welcome",
+    "hello",
+    "arm",
+    "swing",
+    "guard",
+    "block",
+    "bout"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell",
+    "vouch",
+    "call_guard",
+    "lend",
+    "give"
+   ],
+   "spars": {
+    "says": "Ha! Straight in, is it? Practice only, then.",
+    "with": "practice_sword_hal",
+    "marks": [
+     "block:spar"
+    ]
+   }
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A practice yard",
+   "cards": [
+    "…signal. This is the garrison's practice yard, a short walk from the city road. Hal, the arms-master, teaches anyone willing to sweat.",
+    "Fights here happen in real time, and they're real: a blow lands or it doesn't. Better to learn on wooden swords.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "hello",
+   "title": "The arms-master",
+   "cards": [
+    "Go and talk to Hal, by the ring. Tell him you want to learn."
+   ],
+   "suggest": {
+    "text": "I'd like to learn how to fight.",
+    "to": "npc_hal_brand",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Hal",
+   "focus": {
+    "npc": "npc_hal_brand"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_hal_brand"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_hal_brand",
+     "text": "Learn? Good. Sword in your right hand, shield in your left. Here: practice ones. Nobody bleeds in my yard."
+    },
+    {
+     "kind": "lend",
+     "npc": "npc_hal_brand",
+     "objects": [
+      "practice_sword_yard",
+      "wicker_shield_yard"
+     ]
+    }
+   ],
+   "done": "A practice sword and a wicker shield, lent to you: yours to use, not to keep.",
+   "help": [
+    "{Left-click} Hal and type something, then press {Enter}."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_hal_brand"
+    },
+    {
+     "say": "I'd like to learn how to fight.",
+     "to": "npc_hal_brand"
+    }
+   ]
+  },
+  {
+   "id": "arm",
+   "title": "Two hands",
+   "cards": [
+    "You have two hands. Press {I} for Pack & gear: click the practice sword and choose Right hand; click the wicker shield and choose Left hand.",
+    "A sword like this takes one hand, so the other can hold a shield. A staff or a spear takes both."
+   ],
+   "task": "Press I: the sword in your right hand, the shield in your left",
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "holding_weapon"
+     },
+     {
+      "kind": "holding_shield"
+     }
+    ]
+   },
+   "done": "Armed. {X} swaps what's in your hands, if you ever need to.",
+   "help": [
+    "Press {I}. Find the practice sword and press Right hand; then the wicker shield and press Left hand."
+   ],
+   "playtest": [
+    {
+     "equip": "practice_sword_yard",
+     "slot": "right"
+    },
+    {
+     "equip": "wicker_shield_yard",
+     "slot": "left"
+    }
+   ]
+  },
+  {
+   "id": "swing",
+   "title": "Swinging",
+   "cards": [
+    "{Space} uses what's in your right hand: with a sword, a swing. It goes where you face and lands after a moment: that moment is the wind-up.",
+    "Walk up to a straw dummy and swing at it."
+   ],
+   "task": "Walk up to a dummy and press Space",
+   "focus": {
+    "cell": [
+     20,
+     10
+    ]
+   },
+   "check": {
+    "kind": "swung"
+   },
+   "done": "Every swing winds up first: yours, and everyone else's. That's your chance, and theirs.",
+   "help": [
+    "Walk to one of the straw dummies, face it, and press {Space}."
+   ],
+   "playtest": [
+    {
+     "walk_to": [
+      20,
+      10
+     ]
+    },
+    {
+     "strike": "right"
+    }
+   ]
+  },
+  {
+   "id": "guard",
+   "title": "The shield",
+   "cards": [
+    "{F} uses your left hand. With a shield there, hold {F} to raise it. It only stops blows from in front of you, so face what's coming."
+   ],
+   "task": "Hold F to raise your shield",
+   "check": {
+    "kind": "guarding"
+   },
+   "done": "Let go of {F} and it comes down. You can't swing well with the shield up: choose your moment.",
+   "help": [
+    "Press and hold {F}."
+   ],
+   "playtest": [
+    {
+     "guard": true
+    }
+   ]
+  },
+  {
+   "id": "block",
+   "title": "A blow coming",
+   "cards": [
+    "Now Hal will swing at you: slowly, it's practice. Watch the red mark over his head: that's his wind-up.",
+    "When it shows, raise your shield towards him ({F}) or step back out of reach. Walk up to Hal to begin."
+   ],
+   "task": "Walk up to Hal, then block or dodge one of his blows",
+   "focus": {
+    "npc": "npc_hal_brand"
+   },
+   "triggers": [
+    {
+     "id": "spar",
+     "when": {
+      "kind": "ready_to_spar",
+      "npc": "npc_hal_brand",
+      "within": 3.0
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_hal_brand",
+       "text": "On guard. I'll go slow. Watch the shoulder."
+      },
+      {
+       "kind": "spar",
+       "npc": "npc_hal_brand",
+       "with": "practice_sword_hal"
+      }
+     ],
+     "skippable": false
+    }
+   ],
+   "check": {
+    "kind": "fight_moment",
+    "categories": [
+     "blocked",
+     "miss"
+    ]
+   },
+   "done": "That's the whole trick: see it coming, and don't be where it lands.",
+   "help": [
+    "Walk right up to Hal. When the red mark shows over his head, hold {F} facing him, or step back."
+   ],
+   "playtest": [
+    {
+     "guard": false
+    },
+    {
+     "walk_to": "npc_hal_brand"
+    },
+    {
+     "guard": true,
+     "toward": "npc_hal_brand"
+    },
+    {
+     "wait": 15
+    }
+   ]
+  },
+  {
+   "id": "bout",
+   "title": "The bout",
+   "cards": [
+    "Now hit back. Lower your shield, step in while he recovers from a swing, and press {Space}.",
+    "It's only practice: it ends when one of you is beaten. If it goes badly, press {T} and say you give up. There's no shame in that here."
+   ],
+   "task": "Finish the bout: hit back, or say you give up",
+   "focus": {
+    "npc": "npc_hal_brand"
+   },
+   "check": {
+    "kind": "bout_over"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_hal_brand",
+     "text": "Not bad. You'll live a week. If you get cut out there, Mother Brea at the inn will sew you up."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_hal_brand",
+     "lead": "Mother Brea at the inn patches up cuts.",
+     "said": "Mother Brea at the inn will sew you up."
+    }
+   ],
+   "done": "Win or lose, you know how a fight goes now. A real one won't stop at 'enough': choose your fights.",
+   "help": [
+    "Let go of {F}. When Hal has just swung, step in and press {Space}.",
+    "Or press {T} and type 'I give up'."
+   ],
+   "playtest": [
+    {
+     "guard": false
+    },
+    {
+     "strike": "right",
+     "at": "npc_hal_brand",
+     "repeat": 25
+    },
+    {
+     "give_up": true
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

@@ -1,0 +1,137 @@
+{
+ "id": "brook_meadow",
+ "version": 1,
+ "name": "the high meadow by the brook",
+ "notes": "Training level B9 (D-59): a hill pasture above a brook. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a green hill pasture of short sheep-cropped grass, clumps of heather and a few grey boulders, mist lingering in the hollows",
+  "pieces": {
+   "Fold": "a round sheepfold of dry-stone walls with a wooden hurdle gate",
+   "Hut": "a small shepherd's hut of grey stone with a turf roof and a low door facing down",
+   "Rocks": "a cluster of mossy grey boulders",
+   "Shrine": "a little stone shrine with a carved stone on top and a few offerings of wool and flowers",
+   "Brook": "a narrow, fast hill brook running over stones between grassy banks"
+  },
+  "bands": [
+   "Brook"
+  ]
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {
+  "rowan": {
+   "name": "rowan tree",
+   "mass_kg": 300.0,
+   "length_m": 6.0,
+   "description": "A wind-bent rowan with red berries, which shepherds say keeps bad luck away."
+  }
+ },
+ "buildings": [
+  {
+   "name": "Fold",
+   "cells": [
+    4,
+    3,
+    7,
+    4
+   ],
+   "label": "Sheepfold"
+  },
+  {
+   "name": "Hut",
+   "cells": [
+    13,
+    2,
+    6,
+    4
+   ],
+   "label": "Hut"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Rocks",
+   "cells": [
+    9,
+    16,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Shrine",
+   "cells": [
+    17,
+    15,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Brook",
+   "cells": [
+    27,
+    0,
+    4,
+    24
+   ]
+  },
+  {
+   "name": "Rowan1",
+   "cells": [
+    23,
+    6,
+    1,
+    1
+   ],
+   "tree": "rowan",
+   "id": "tree_rowan_1"
+  }
+ ],
+ "places": {
+  "fold": {
+   "name": "the sheepfold",
+   "cell": [
+    7,
+    8
+   ]
+  },
+  "hut": {
+   "name": "the shepherd's hut",
+   "cell": [
+    16,
+    7
+   ]
+  },
+  "shrine": {
+   "name": "the shrine",
+   "cell": [
+    18,
+    18
+   ]
+  },
+  "brook": {
+   "name": "the brook",
+   "cell": [
+    25,
+    12
+   ]
+  },
+  "rocks": {
+   "name": "the boulders",
+   "cell": [
+    10,
+    19
+   ]
+  }
+ }
+}

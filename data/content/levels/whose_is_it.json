@@ -1,0 +1,309 @@
+{
+ "id": "whose_is_it",
+ "title": "Whose is it?",
+ "track": "basic",
+ "order": 8,
+ "minutes": 4,
+ "teaches": [
+  "Owned or free",
+  "Taking what isn't yours",
+  "Witnesses",
+  "Giving back",
+  "Standing"
+ ],
+ "blurb": "Market day. Learn what's yours to take, what isn't, and how to put a wrong right.",
+ "after": "Everything here belongs to someone or no one, people see what you do and pass it on, and a wrong put right is let go.",
+ "refines": "Is it clear what's owned? Do theft, witnesses and the watchman feel fair? Does giving back settle it?",
+ "map": "village_market",
+ "start": {
+  "cell": [
+   17,
+   19
+  ]
+ },
+ "objective": "Learn whose things are whose",
+ "goal": "Mind whose things are whose",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_sela_potter": {
+   "role": "potter",
+   "step_ms": 460,
+   "goal": "mind her stall",
+   "anchors": [
+    [
+     16,
+     8,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_corr_watch": {
+   "role": "watchman",
+   "step_ms": 420,
+   "goal": "watch the market",
+   "anchors": [
+    [
+     19,
+     16,
+     "look",
+     30000
+    ],
+    [
+     26,
+     9,
+     "look",
+     20000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "jug_sela",
+   "name": "glazed clay jug",
+   "x": 15,
+   "y": 7,
+   "mass_kg": 1.0,
+   "materials": [
+    "clay"
+   ],
+   "description": "A round clay jug with a green glaze and a neat handle: Sela's best.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_sela_potter",
+   "capacity_l": 1.5
+  },
+  {
+   "id": "bowl_sela",
+   "name": "clay bowl",
+   "x": 17,
+   "y": 7,
+   "mass_kg": 0.5,
+   "materials": [
+    "clay"
+   ],
+   "description": "A plain brown clay bowl.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_sela_potter",
+   "capacity_l": 0.8
+  },
+  {
+   "id": "horseshoe_market",
+   "name": "old horseshoe",
+   "x": 21,
+   "y": 18,
+   "mass_kg": 0.4,
+   "materials": [
+    "iron"
+   ],
+   "description": "A rusty horseshoe lying in the road, lost by some passing horse.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ]
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_sela_potter",
+   "during": [
+    "welcome",
+    "look",
+    "free",
+    "steal",
+    "back",
+    "standing"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Market day",
+   "cards": [
+    "…signal. A village market. Everything here belongs to someone, or to no one, and people notice which.",
+    "Taking what isn't yours is a choice, and it has a price. Today you'll see both sides of it.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "look",
+   "title": "Whose?",
+   "cards": [
+    "{Right-click} the green jug on Sela's stall. The card says whose it is."
+   ],
+   "task": "Right-click the jug on Sela's stall",
+   "focus": {
+    "object": "jug_sela"
+   },
+   "check": {
+    "kind": "ui",
+    "key": "inspect"
+   },
+   "done": "Sela's. Hover over it: a red 'Steal' means it isn't yours to take.",
+   "help": [
+    "Point at the green jug on the pot stall and press the right mouse button."
+   ],
+   "playtest": [
+    {
+     "ui": "inspect"
+    }
+   ]
+  },
+  {
+   "id": "free",
+   "title": "Nobody's",
+   "cards": [
+    "Some things belong to no one. There's an old horseshoe lying in the road: pick it up."
+   ],
+   "task": "Pick up the horseshoe in the road",
+   "focus": {
+    "object": "horseshoe_market"
+   },
+   "check": {
+    "kind": "carrying_id",
+    "ids": [
+     "horseshoe_market"
+    ]
+   },
+   "done": "Nobody's, so nobody minds. It says 'Pick up' in plain letters, not red.",
+   "help": [
+    "{Left-click} the horseshoe at the bottom of the square."
+   ],
+   "playtest": [
+    {
+     "walk_to": "horseshoe_market"
+    },
+    {
+     "take": "horseshoe_market"
+    }
+   ]
+  },
+  {
+   "id": "steal",
+   "title": "Somebody's",
+   "cards": [
+    "Now the other side. Take Sela's jug without asking: hover, see the red 'Steal', and take it anyway.",
+    "Watch who sees it, and what they do. (You'll put it right next.)"
+   ],
+   "task": "Take Sela's jug without asking",
+   "focus": {
+    "object": "jug_sela"
+   },
+   "check": {
+    "kind": "remembers",
+    "npc": "npc_sela_potter",
+    "of": "theft"
+   },
+   "done": "She saw. So did Corr, perhaps. A theft is remembered by whoever saw it, and they tell others.",
+   "help": [
+    "{Left-click} the green jug on Sela's stall."
+   ],
+   "playtest": [
+    {
+     "walk_to": "jug_sela"
+    },
+    {
+     "take": "jug_sela"
+    }
+   ]
+  },
+  {
+   "id": "back",
+   "title": "Putting it right",
+   "cards": [
+    "Put it right: give the jug back and say sorry, in one line. Like this:"
+   ],
+   "suggest": {
+    "text": "“I'm sorry, that was wrong of me.” give the jug back to Sela",
+    "to": "npc_sela_potter",
+    "button": true,
+    "mode": "do"
+   },
+   "task": "Give Sela her jug back, and say sorry",
+   "focus": {
+    "npc": "npc_sela_potter"
+   },
+   "check": {
+    "kind": "remembers",
+    "npc": "npc_sela_potter",
+    "of": "theft",
+    "settled": true
+   },
+   "done": "Given back, the theft is settled: Sela lets it go. How she sees you doesn't jump back all the way.",
+   "help": [
+    "Walk up to Sela and drag the jug onto her. Or click her and say you're giving it back."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_sela_potter"
+    },
+    {
+     "do": "“I'm sorry, that was wrong of me.” give the jug back to Sela",
+     "to": "npc_sela_potter"
+    }
+   ]
+  },
+  {
+   "id": "standing",
+   "title": "Standing",
+   "cards": [
+    "Press {J} and open People: how Sela and Corr stand toward you now. Wary, Neutral, Friendly: it moves with what you do, and what they hear."
+   ],
+   "task": "Press J and look at People",
+   "check": {
+    "kind": "ui",
+    "key": "journal"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_corr_watch",
+     "text": "Hm. Gave it back. Once, I let that go. Clever, are you? Orrin the shepherd up by the brook could use clever."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_corr_watch",
+     "lead": "Orrin the shepherd by the brook needs help against the fog.",
+     "said": "Orrin the shepherd up by the brook could use clever."
+    }
+   ],
+   "done": "People don't forget, but they do forgive what's put right.",
+   "help": [
+    "Press {J}, then People."
+   ],
+   "playtest": [
+    {
+     "ui": "journal"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

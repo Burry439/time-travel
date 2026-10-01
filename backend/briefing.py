@@ -222,6 +222,8 @@ def also_decided(state: State, npc: Npc, answers: dict) -> list[str]:
             f"{name} now takes the stranger on as a hired hand under {name}'s own trade permit, and will go "
             f"and tell the captain."
             if deal["reward"] == "hire"
+            else f"{name} now hands the stranger {conversation.paid_with(state, deal.get('pays', []))}, as agreed."
+            if deal["reward"] == "pay"
             else f"{name} will now go and speak for the stranger to the captain."
         )
         notes.append(f"{name} is satisfied that the stranger has done what was asked ({deal['task']}). {reward}")

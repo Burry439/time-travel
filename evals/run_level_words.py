@@ -23,9 +23,11 @@ sys.path.insert(0, str(ROOT / "backend"))
 import app  # noqa: E402
 import cast  # noqa: E402
 import consequences  # noqa: E402
+import crafting  # noqa: E402
 import content  # noqa: E402
 import judge_view  # noqa: E402
 import perception  # noqa: E402
+import reputation  # noqa: E402
 import rules  # noqa: E402
 import scenario  # noqa: E402
 from ai import config, judge  # noqa: E402
@@ -67,6 +69,7 @@ def attempt(state: dict, text: str) -> dict:
     if verdict["category"] == "success" or verdict["category"] in FAILS:
         state["event_seq"] += 1
         consequences.apply_payload(state, payload)
+        reputation.after_deed(state, payload["journal_entry"])  # As the service does: a thing given back settles it.
         perception.apply_perceptions(state, perception.perceive(state, payload["journal_entry"]))
     return verdict
 
@@ -77,8 +80,14 @@ def play(state: dict, step: dict, words: str | None) -> list[dict]:
     for action in step.get("playtest", []):
         if "walk_to" in action:
             walk_to(state, action["walk_to"])
-        elif "take" in action:
-            state["objects"][action["take"]]["holder_id"] = "player"
+        elif "take" in action:  # As the game takes it: someone else's, it's a theft and people see (D-46).
+            judged = crafting.quick(state, "take", action["take"])
+            payload, verdict, _ = consequences.resolve_attempt(copy.deepcopy(state), "words000", f"take {action['take']}",
+                                                           judged, None, "words", 0)
+            if verdict["category"] == "success":
+                state["event_seq"] += 1
+                consequences.apply_payload(state, payload)
+                perception.apply_perceptions(state, perception.perceive(state, payload["journal_entry"]))
         elif "do" in action:
             done.append({"text": words or action["do"], **attempt(state, words or action["do"])})
     return done

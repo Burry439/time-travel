@@ -123,6 +123,8 @@ def test_every_rule_is_a_known_kind_with_what_it_needs():
                 problems.append(f"{at}: unknown condition {kind!r}")
             else:
                 problems += [f"{at}: {kind} needs {field}" for field in rules.NEEDS[kind] if field not in spec]
+            if kind == "made" and not (spec.get("named") or spec.get("from")):
+                problems.append(f"{at}: made needs named words or from things")
     for spec, at in effects:
         kind = spec.get("kind")
         if kind not in scenario.EFFECTS:

@@ -1,0 +1,118 @@
+{
+ "id": "water_mill",
+ "version": 1,
+ "name": "Ada's water mill",
+ "notes": "Training level B7 (D-59): a water mill on a river. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a muddy yard in front of a water mill: packed earth, wheel ruts, spilled flour dust, tufts of grass and a few puddles",
+  "pieces": {
+   "Mill": "a tall timber water mill with a mossy shingle roof, a big wooden water wheel on its right side and a wide door facing down",
+   "Sacks": "a stack of bulging grain sacks",
+   "Cart": "a two-wheeled wooden farm cart with its shafts resting on the ground",
+   "Millstone": "a spare round millstone leaning on its edge",
+   "Race": "a fast mill race: a narrow channel of rushing water between stone banks"
+  },
+  "bands": [
+   "Race"
+  ]
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Mill",
+   "cells": [
+    20,
+    3,
+    10,
+    7
+   ],
+   "label": "The mill"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Sacks",
+   "cells": [
+    12,
+    5,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Cart",
+   "cells": [
+    5,
+    13,
+    5,
+    3
+   ]
+  },
+  {
+   "name": "Millstone",
+   "cells": [
+    14,
+    19,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Race",
+   "cells": [
+    31,
+    0,
+    5,
+    24
+   ]
+  }
+ ],
+ "places": {
+  "door": {
+   "name": "the mill door",
+   "cell": [
+    24,
+    11
+   ]
+  },
+  "sacks": {
+   "name": "the grain sacks",
+   "cell": [
+    13,
+    8
+   ]
+  },
+  "cart": {
+   "name": "the cart",
+   "cell": [
+    7,
+    17
+   ]
+  },
+  "trough": {
+   "name": "the mule's trough",
+   "cell": [
+    20,
+    14
+   ]
+  },
+  "race": {
+   "name": "the mill race",
+   "cell": [
+    29,
+    12
+   ]
+  }
+ }
+}

@@ -1,0 +1,178 @@
+{
+ "notes": "People of training level B9 (D-59).",
+ "npcs": {
+  "npc_mey_shepherd": {
+   "name": "Mey",
+   "age": 11,
+   "role": "shepherd girl",
+   "look": "A sturdy eleven-year-old girl with wind-reddened cheeks and a tangle of red-brown hair, a grey wool shawl over a green dress, bare legs, wooden clogs and a crook taller than she is.",
+   "look_kind": "child",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Curious, brave and stubborn; asks 'why' about everything and believes in nothing she hasn't seen.",
+   "values": "her father, the flock, finding things out",
+   "fears": "the fog, losing her father on the hill",
+   "authority": "Minds the flock when her father is away.",
+   "tones": [
+    "frightened",
+    "protective"
+   ],
+   "relations": {
+    "npc_orrin_shepherd": "her father Orrin"
+   },
+   "family": [
+    "npc_orrin_shepherd"
+   ],
+   "regard": {
+    "trust": 0.45,
+    "suspicion": 0.2
+   },
+   "concerns": "The fog comes down off the hill without warning; last spring her father was lost in it all night and they lost three ewes.",
+   "refers": [],
+   "knowledge": {
+    "fog": {
+     "text": "When the fog comes down on the hill you can't tell one way from another; her father was lost in it last spring.",
+     "line": "When the fog comes down you can't tell up from down. Father was lost all night last spring.",
+     "trusted": false,
+     "lead": "The shepherds get lost on the hill when the fog comes down."
+    }
+   },
+   "persuaded_by": "seeing it work with her own eyes",
+   "style": "Quick questions, one after another; sceptical, then delighted.",
+   "mood": "curious",
+   "voice": {
+    "samples": [
+     "Why? But why does it?",
+     "Show me. I don't believe things I can't see.",
+     "Father says the fog's alive. I think it's just wet.",
+     "Again! Do it again!"
+    ],
+    "habits": "Asks why; wants to see things done; repeats new words.",
+    "never": "believes a thing just because she's told it",
+    "greeting": "Squints at you: 'You're not from the valley. Where are you from? Why?'"
+   },
+   "goals": [
+    "Keep the flock safe",
+    "Find out how things work"
+   ],
+   "secrets": [],
+   "likes": "clever things, stories of far places",
+   "dislikes": "fog, being told to wait",
+   "opinions": {
+    "npc_orrin_shepherd": {
+     "text": "her father; brave but too proud to ask for help",
+     "warmth": 0.9
+    }
+   },
+   "tasks": [
+    {
+     "id": "fold",
+     "place": "fold",
+     "activity": "look",
+     "dwell_s": 40,
+     "doing": "counting the sheep in the fold"
+    }
+   ],
+   "superstition": {
+    "kind": "reverent",
+    "text": "Mey would be thrilled by anything uncanny and tell the whole valley."
+   }
+  },
+  "npc_orrin_shepherd": {
+   "name": "Orrin",
+   "age": 45,
+   "role": "shepherd",
+   "look": "A lean, weather-beaten shepherd in his forties with a long face, a short dark beard going grey, a heavy brown wool cloak pinned at the shoulder, leather leggings, and a sling tucked in his belt.",
+   "look_kind": "man",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Quiet, proud and wary of strangers; superstitious about the hill and the fog.",
+   "values": "his flock, his daughter, old ways",
+   "fears": "the fog, strange powers",
+   "authority": "Shepherds the high pasture.",
+   "tones": [
+    "frightened",
+    "protective"
+   ],
+   "relations": {
+    "npc_mey_shepherd": "his daughter Mey"
+   },
+   "family": [
+    "npc_mey_shepherd"
+   ],
+   "regard": {
+    "trust": 0.4,
+    "suspicion": 0.3
+   },
+   "concerns": "Fog season is coming; he keeps a lodestone his grandfather found, for luck, and doesn't know what it's for.",
+   "refers": [],
+   "knowledge": {
+    "lodestone": {
+     "text": "Orrin keeps a lodestone his grandfather found: a black stone that pulls iron to it. He thinks it's lucky.",
+     "line": "That? Grandfather's stone. Pulls iron like a lover. Lucky, I'd say.",
+     "trusted": false,
+     "lead": "Orrin has a lodestone, a stone that pulls iron."
+    },
+    "city": {
+     "text": "The city lets in strangers only when someone inside will vouch for them.",
+     "line": "City? They let no stranger in now unless someone speaks for them.",
+     "trusted": false,
+     "lead": "The city lets in strangers only if someone will speak for them."
+    }
+   },
+   "persuaded_by": "something that works on the hill, not talk",
+   "style": "Few words, careful; touches the shrine stone for luck.",
+   "mood": "wary",
+   "voice": {
+    "samples": [
+     "Hm. And who are you?",
+     "The fog's not to be trifled with.",
+     "My grandfather's stone. Lucky. Or cursed. One of the two.",
+     "If that's a trick, it's a good one."
+    ],
+    "habits": "Watches before he speaks; touches wood or stone for luck.",
+    "never": "trusts a stranger's word alone",
+    "greeting": "Nods, unsmiling: 'You're far from the road.'"
+   },
+   "goals": [
+    "Bring the flock through fog season",
+    "Keep Mey safe"
+   ],
+   "secrets": [],
+   "likes": "quiet, his dog, good grass",
+   "dislikes": "fog, city folk, tricks",
+   "opinions": {
+    "npc_mey_shepherd": {
+     "text": "his daughter; too clever by half",
+     "warmth": 0.9
+    }
+   },
+   "tasks": [
+    {
+     "id": "hut",
+     "place": "hut",
+     "activity": "work",
+     "dwell_s": 40,
+     "doing": "mending a hurdle outside the hut"
+    },
+    {
+     "id": "shrine",
+     "place": "shrine",
+     "activity": "look",
+     "dwell_s": 20,
+     "doing": "touching the shrine stone"
+    }
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Orrin fears anything uncanny: he'd call it witchcraft before he'd call it clever."
+   }
+  }
+ }
+}

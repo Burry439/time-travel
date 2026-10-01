@@ -1,0 +1,106 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/Clamp.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/Hut.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/FirePit.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/Woodpile.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/Stump.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/river_camp/River.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/generated/village_foliage.png" id="8_tex"]
+
+[sub_resource type="AtlasTexture" id="Atlas_9"]
+atlas = ExtResource("8_tex")
+region = Rect2(0, 0, 704, 800)
+
+[node name="RiverCampMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2752.0
+offset_bottom = 2368.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Clamp" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(224.0, 224)
+scale = Vector2(0.2251, 0.2251)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -476.0)
+
+[node name="Hut" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(560.0, 192)
+scale = Vector2(0.2833, 0.2833)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -480.5)
+
+[node name="FirePit" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(544.0, 448)
+scale = Vector2(0.0746, 0.0746)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -386.0)
+
+[node name="Woodpile" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(304.0, 512)
+scale = Vector2(0.1221, 0.1221)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -482.0)
+
+[node name="Stump" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(720.0, 544)
+scale = Vector2(0.0413, 0.0413)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -499.0)
+
+[node name="River" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 928.0
+offset_top = 0.0
+offset_right = 1152.0
+offset_bottom = 768.0
+texture = ExtResource("7_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Alder1" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(784.0, 160)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_9")
+offset = Vector2(0, -380)
+
+[node name="Alder2" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(816.0, 672)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_9")
+offset = Vector2(0, -380)

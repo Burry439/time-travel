@@ -1,0 +1,90 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/Fold.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/Hut.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/Rocks.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/Shrine.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/brook_meadow/Brook.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/generated/village_foliage.png" id="7_tex"]
+
+[sub_resource type="AtlasTexture" id="Atlas_8"]
+atlas = ExtResource("7_tex")
+region = Rect2(0, 0, 704, 800)
+
+[node name="BrookMeadowMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2752.0
+offset_bottom = 2368.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Fold" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 224)
+scale = Vector2(0.2504, 0.2504)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -412.0)
+
+[node name="Hut" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(512.0, 192)
+scale = Vector2(0.2615, 0.2615)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -476.5)
+
+[node name="Rocks" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(336.0, 576)
+scale = Vector2(0.1096, 0.1096)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -478.0)
+
+[node name="Shrine" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(576.0, 544)
+scale = Vector2(0.1012, 0.1012)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -495.5)
+
+[node name="Brook" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 864.0
+offset_top = 0.0
+offset_right = 992.0
+offset_bottom = 768.0
+texture = ExtResource("6_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Rowan1" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(752.0, 224)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_8")
+offset = Vector2(0, -380)

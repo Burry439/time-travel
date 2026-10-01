@@ -32,7 +32,7 @@
   "stone": "Rigid and heavy; usable as a hammer, weight, anvil or fulcrum; does not burn or cut unless it is flint.",
   "iron": "Ferromagnetic; can be magnetised by a real magnet such as lodestone; forgeable only with a forge.",
   "bronze": "Not ferromagnetic; cannot be magnetised; can be polished into a mirror.",
-  "lodestone": "A natural magnet; attracts iron and can magnetise small iron pieces.",
+  "lodestone": "A natural magnet; attracts iron. Stroking a small iron piece (a needle, a nail) along it many times in one direction reliably magnetises it, weakly but for good.",
   "water": "Liquid; needs a container; light objects float on it.",
   "cloth": "Flexible, cuttable, can wrap or filter.",
   "fire": "Fire exists only where something is really burning: Mara's forge, Hessa's cooking fire in the inn yard, or a fire the player makes from real sparks or flame. Heat, boiling, hardening in fire or melting need one of those within reach. Flint struck hard against iron or steel (a horseshoe, a nail, a blade) throws sparks that catch in fine dry tinder such as dry grass; steel sparks best, but plain iron works.",

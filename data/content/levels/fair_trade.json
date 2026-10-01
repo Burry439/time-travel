@@ -1,0 +1,363 @@
+{
+ "id": "fair_trade",
+ "title": "A fair trade",
+ "track": "basic",
+ "order": 7,
+ "minutes": 5,
+ "teaches": [
+  "Offers",
+  "Agreeing a deal",
+  "A lent tool",
+  "The tracker and goals",
+  "Doing the work",
+  "Getting paid"
+ ],
+ "blurb": "A miller with a dry trough and a sack of flour to spare. Strike a deal and keep it.",
+ "after": "People here trade work for goods and keep score of who keeps their word. A kept deal is the best evidence you can give.",
+ "refines": "Does the voice offer, agree and settle the deal reliably? Do players find the lent pail and the tracker?",
+ "map": "water_mill",
+ "start": {
+  "cell": [
+   14,
+   21
+  ]
+ },
+ "objective": "Earn a sack of flour",
+ "goal": "Find work at the mill",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 45,
+ "cast": {
+  "npc_ada_miller": {
+   "role": "miller",
+   "step_ms": 460,
+   "goal": "work the mill",
+   "anchors": [
+    [
+     24,
+     11,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_jem_hired": {
+   "role": "hired man",
+   "step_ms": 600,
+   "goal": "doze behind the sacks",
+   "anchors": [
+    [
+     13,
+     8,
+     "wait",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "pail_ada",
+   "name": "wooden pail",
+   "x": 22,
+   "y": 11,
+   "mass_kg": 1.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A sturdy wooden pail with an iron handle. It holds about eight litres.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_ada_miller",
+   "capacity_l": 8.0
+  },
+  {
+   "id": "trough_ada",
+   "name": "mule's trough",
+   "x": 20,
+   "y": 13,
+   "mass_kg": 40.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A long wooden trough for the mill's mule. It's bone dry.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_ada_miller",
+   "capacity_l": 30.0
+  },
+  {
+   "id": "race_ada",
+   "name": "mill race",
+   "x": 30,
+   "y": 12,
+   "mass_kg": 100000.0,
+   "materials": [
+    "water"
+   ],
+   "description": "The mill race rushes past, cold and fast.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 100000.0,
+   "water_l": 100000.0,
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "flour_ada",
+   "name": "small sack of flour",
+   "mass_kg": 5.0,
+   "materials": [
+    "flour",
+    "linen"
+   ],
+   "description": "A small linen sack of fine-ground wheat flour.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_ada_miller",
+   "carried_by": "npc_ada_miller"
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_ada_miller",
+   "during": [
+    "welcome",
+    "hello",
+    "agree",
+    "journal",
+    "work",
+    "paid"
+   ],
+   "stays": {
+    "kind": "always"
+   },
+   "stay_s": 900,
+   "withholds": [
+    "go_tell",
+    "vouch",
+    "call_guard"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "A water mill",
+   "cards": [
+    "…signal. Ada's mill. People here trade: work for goods, goods for help. A deal is a promise both ways, and they remember who keeps theirs.",
+    "You have no money. You have hands.",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "hello",
+   "title": "The miller",
+   "cards": [
+    "Go and talk to Ada, at the mill door. Ask if there's work."
+   ],
+   "suggest": {
+    "text": "Good day. Is there any work going?",
+    "to": "npc_ada_miller",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Ada",
+   "focus": {
+    "npc": "npc_ada_miller"
+   },
+   "check": {
+    "kind": "talked_to",
+    "npc": "npc_ada_miller"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ada_miller",
+     "text": "Work? The mule's trough is dry and Jem's asleep. Fill it from the race and you'll have a sack of flour. Use my pail. Deal?"
+    },
+    {
+     "kind": "offer",
+     "npc": "npc_ada_miller",
+     "offer": "trough",
+     "says": "Fill the mule's trough from the race and you'll have a sack of flour."
+    }
+   ],
+   "done": "An offer. It's in your journal and on the tracker, with what she's lent you for it.",
+   "help": [
+    "{Left-click} Ada and ask about work."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ada_miller"
+    },
+    {
+     "say": "Good day. Is there any work going?",
+     "to": "npc_ada_miller"
+    }
+   ]
+  },
+  {
+   "id": "agree",
+   "title": "A deal",
+   "cards": [
+    "A deal needs both sides. Tell Ada yes: in your own words."
+   ],
+   "suggest": {
+    "text": "Deal. I'll fill the trough.",
+    "to": "npc_ada_miller",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Agree to Ada's deal",
+   "focus": {
+    "npc": "npc_ada_miller"
+   },
+   "check": {
+    "kind": "deal",
+    "npc": "npc_ada_miller",
+    "status": "accepted"
+   },
+   "done": "Agreed. Now she expects it done, and so does anyone she tells.",
+   "help": [
+    "Talk to Ada and say yes to the deal."
+   ],
+   "playtest": [
+    {
+     "say": "Deal. I'll fill the trough.",
+     "to": "npc_ada_miller"
+    }
+   ]
+  },
+  {
+   "id": "journal",
+   "title": "Keeping track",
+   "cards": [
+    "Press {J}. Under Goals is what's asked of you. Pin a goal and the tracker at the top left follows it, and marks who it's about."
+   ],
+   "task": "Press J and look at your goals",
+   "check": {
+    "kind": "ui",
+    "key": "journal"
+   },
+   "done": "The tracker always shows one thing to do next.",
+   "help": [
+    "Press {J}."
+   ],
+   "playtest": [
+    {
+     "ui": "journal"
+    }
+   ]
+  },
+  {
+   "id": "work",
+   "title": "The work",
+   "cards": [
+    "Now do it. Ada's pail is lent to you: using it isn't stealing. Fill it at the mill race and pour it into the trough. The words are yours."
+   ],
+   "task": "Fill the mule's trough from the race",
+   "focus": {
+    "object": "trough_ada"
+   },
+   "check": {
+    "kind": "filled",
+    "thing": "trough_ada"
+   },
+   "done": "Water in the trough. The deal's done when Ada says so.",
+   "help": [
+    "Pick up the pail, fill it at the race (the rushing water on the right), carry it to the trough and pour it in."
+   ],
+   "playtest": [
+    {
+     "walk_to": "pail_ada"
+    },
+    {
+     "take": "pail_ada"
+    },
+    {
+     "walk_to": [
+      29,
+      12
+     ]
+    },
+    {
+     "do": "fill the wooden pail at the mill race"
+    },
+    {
+     "walk_to": "trough_ada"
+    },
+    {
+     "do": "pour the pail of water into the mule's trough"
+    }
+   ],
+   "try_also": []
+  },
+  {
+   "id": "paid",
+   "title": "Paid",
+   "cards": [
+    "Tell Ada it's done. She'll look, and pay."
+   ],
+   "suggest": {
+    "text": "The trough's full.",
+    "to": "npc_ada_miller",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Tell Ada the trough is full",
+   "focus": {
+    "npc": "npc_ada_miller"
+   },
+   "check": {
+    "kind": "deal",
+    "npc": "npc_ada_miller",
+    "status": "fulfilled"
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ada_miller",
+     "text": "Full to the brim. Here: your flour. You keep your word; I'll remember it. Going to the market? Mind Corr, the watchman."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_ada_miller",
+     "lead": "Corr the watchman at the village market takes theft very seriously.",
+     "said": "Mind Corr, the watchman."
+    }
+   ],
+   "done": "A deal done is remembered, and passed on: the next person may trust you sooner.",
+   "help": [
+    "Walk back to Ada and tell her the trough is full."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ada_miller"
+    },
+    {
+     "say": "The trough's full.",
+     "to": "npc_ada_miller"
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

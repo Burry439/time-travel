@@ -92,6 +92,7 @@ def strike(run_id: str, request: Strike):
         if not result["ok"]:
             return {"state": state, "duplicate": False, "strike": result}
         cmd.save("fight", state["tick"])
+        routes_tutorial.progress(cmd)  # A swing may be what the story asked for (D-59).
     return {"state": state, "duplicate": False, "strike": {**result, "target_id": target}}
 
 
@@ -103,6 +104,7 @@ def guard(run_id: str, request: Guard):
         result = combat.guard(cmd.state, request.raised, request.facing, cmd.state["sim_time_ms"])
         if result["ok"]:
             cmd.save("fight", cmd.state["tick"])
+            routes_tutorial.progress(cmd)  # So may a shield raised (D-59).
     return {"state": cmd.state, "duplicate": False, "guard": result}
 
 
