@@ -132,8 +132,8 @@ def rewind(run_id: str):
             (new_id, run["mode"], run["seed_version"], run["geometry_version"], run["scenario"], run["save_format"]),
         )
         connection.execute(
-            "INSERT INTO events (run_id,seq,tick,kind,payload,request_id) "
-            "SELECT ?,seq,tick,kind,payload,request_id FROM events WHERE run_id=? AND seq<=?",
+            "INSERT INTO events (run_id,seq,tick,kind,payload,request_id,created_at) "
+            "SELECT ?,seq,tick,kind,payload,request_id,created_at FROM events WHERE run_id=? AND seq<=?",
             (new_id, run_id, point),
         )
         _, restored = store.load_run(connection, new_id)

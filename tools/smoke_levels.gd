@@ -48,7 +48,7 @@ func _run() -> void:
 		return
 	if not check(not scene.has_node("Map/Gate") and scene.gate_sprite == null, "The village's gate came along"):
 		return
-	if not check(scene.world_size == Vector2(640, 512) and scene.camera.limit_right == 640, "The map's size is wrong"):
+	if not check(scene.world_size == Vector2(640, 512) and scene.camera.limit_right >= 640, "The map's size is wrong"):
 		return
 	var table := scene.get_node_or_null("BuildingCollision/Table/CollisionShape2D") as CollisionShape2D
 	if not check(table != null and (table.shape as RectangleShape2D).size == Vector2(96, 64), "No table to bump into"):

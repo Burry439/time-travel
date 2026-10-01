@@ -16,6 +16,7 @@ dev = [
     "httpx>=0.27,<1",
     "ruff>=0.6,<1",
     "gdtoolkit>=4,<5",
+    "pillow>=10,<13",
 ]
 
 [tool.pytest.ini_options]

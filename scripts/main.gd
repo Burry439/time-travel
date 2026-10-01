@@ -145,17 +145,26 @@ func load_map(id: String) -> void:
 	map_id = id
 	map_plan = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % id))
 	world_size = Vector2(float(map_plan.size[0]), float(map_plan.size[1])) * CELL
-	camera.limit_right = int(world_size.x)
-	camera.limit_bottom = int(world_size.y)
+	fit_camera()
 	gate_shape = get_node_or_null("WorldCollision/ClosedGate/CollisionShape2D") as CollisionShape2D
 	gate_sprite = get_node_or_null("Map/Gate") as Sprite2D
 	gate_opening = get_node_or_null("Map/GateOpening") as ColorRect
 	for preview in ["NPCPreview", "M2Objects"]: # Editor previews; the world's things are drawn from the state.
 		if has_node(preview):
 			get_node(preview).hide()
-	if has_node("Map/Ground"):
+	if has_node("Map/Ground") and not has_node("Map/Surround"): # The village's ground runs on past its edge.
 		_extend_ground()
 	view.apply_building_geometry(id)
+
+
+## The camera stays over the map; a map smaller than the view sits in its middle, with its surround round it.
+func fit_camera() -> void:
+	var view_size := get_viewport_rect().size / camera.zoom
+	var pad := ((view_size - world_size) * 0.5).max(Vector2.ZERO)
+	camera.limit_left = int(-pad.x)
+	camera.limit_top = int(-pad.y)
+	camera.limit_right = int(world_size.x + pad.x)
+	camera.limit_bottom = int(world_size.y + pad.y)
 
 
 func _unown(node: Node) -> void:
@@ -369,6 +378,7 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * camera_zoom, minf(1.0, delta * 10))
+	fit_camera() # A small map stays in the middle as the view zooms.
 	# The view shifts so you stay in sight above the dialogue bar or the pack.
 	var lift := _camera_lift()
 	camera.offset.y = lerpf(camera.offset.y, lift, minf(1.0, delta * 6.0))

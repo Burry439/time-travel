@@ -67,6 +67,7 @@ def db():
                 kind TEXT NOT NULL,
                 payload TEXT NOT NULL,
                 request_id TEXT,
+                created_at TEXT,
                 PRIMARY KEY(run_id, seq),
                 UNIQUE(run_id, request_id)
             );
@@ -150,6 +151,8 @@ def db():
             connection.execute("ALTER TABLE runs ADD COLUMN save_format INTEGER NOT NULL DEFAULT 1")
         if "completed_at" not in columns:  # When the journey's level was done (D-59): the training's done marks.
             connection.execute("ALTER TABLE runs ADD COLUMN completed_at TEXT")
+        if "created_at" not in {row["name"] for row in connection.execute("PRAGMA table_info(events)")}:
+            connection.execute("ALTER TABLE events ADD COLUMN created_at TEXT")  # When it happened (D-59: reports)
         yield connection
         connection.commit()
     except Exception:
@@ -297,7 +300,8 @@ def record(
     changes = {key: change for key, change in patch.diff(before, after).items() if key not in COUNTERS}
     sequence = state["event_seq"] + 1
     connection.execute(
-        "INSERT INTO events (run_id, seq, tick, kind, payload, request_id) VALUES (?,?,?,?,?,?)",
+        "INSERT INTO events (run_id, seq, tick, kind, payload, request_id, created_at) "
+        "VALUES (?,?,?,?,?,?,strftime('%Y-%m-%d %H:%M:%f','now'))",
         (
             state["run_id"],
             sequence,

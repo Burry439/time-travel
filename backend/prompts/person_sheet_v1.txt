@@ -1,0 +1,5 @@
+2D RPG character turnaround sheet for a grounded premodern village game, in exactly the same painted style, scale, proportions, lighting and layout as the reference sheets (which show other people; draw a new person, not them).
+Layout: the same person four times in a 2 by 2 grid of four equal cells: top left seen from the front, top right facing right in profile, bottom left seen from the back, bottom right facing left in profile. Standing upright, arms relaxed at the sides, feet together on the same line in every cell, the whole figure fully visible and centred in its cell, the same height in all four, with clear empty space all round it (nothing crosses into another cell).
+The person: {name}, {role}. {look}
+Style: detailed painterly pixel art with crisp edges, warm muted ochre and olive palette, sun from upper left, soft form shading, matching a three-quarter top-down village game.
+Transparent background. Only the person: no ground, no cast shadow, no text, no labels, no borders or lines between the cells, nothing held in the hands unless described.
