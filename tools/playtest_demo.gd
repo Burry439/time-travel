@@ -94,10 +94,10 @@ func walk(points: Array) -> bool:
 			while here != point and cells.size() < 20:
 				here += Vector2i(signi(point.x - here.x), signi(point.y - here.y))
 				cells.append([here.x, here.y])
-			var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-				{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+			var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+				{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 			if typeof(reply.data) == TYPE_DICTIONARY and reply.data.has("state"):
-				scene._accept_state(reply.data.state)
+				scene.accept_state(reply.data.state)
 			if not reply.ok:
 				var why := str(reply.data.get("detail", {}).get("reason", "")) if typeof(reply.data) == TYPE_DICTIONARY \
 					and typeof(reply.data.get("detail")) == TYPE_DICTIONARY else ""
@@ -107,7 +107,7 @@ func walk(points: Array) -> bool:
 				note("walk to %s refused at %s: %s" % [point, here, JSON.stringify(reply.data).left(160)])
 				break
 		scene.predicted_cell = Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
-		scene.player.position = scene._cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
+		scene.player.position = scene.cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
 	await create_timer(0.6).timeout
 	await idle()
 	return true
@@ -170,7 +170,7 @@ func take(object_id: String) -> String:
 		note("no object %s" % object_id)
 		return ""
 	await idle()
-	scene._left_click(scene.ui.cursor.describe(object_id))
+	scene.controls.left_click(scene.ui.cursor.describe(object_id))
 	await settle()
 	var now: Dictionary = scene.run_state.objects.get(object_id, {})
 	return "held" if now.get("holder_id") == "player" else "not held (%s)" % str(scene.run_state.get("last_action", {}).get("reason", ""))
@@ -192,14 +192,14 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not health.ok or str(health.data.get("ai", {}).get("mode", "")) == "stub":
 		push_error("PLAYTEST: start the backend live (not stub): ./tools/run_m0.ps1")
 		quit(1)
 		return
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
+	scene.enter_run(created.data, false)
 	await create_timer(1.0).timeout
 	scene.ui.close_modal_now()
 	scene.ui.hud.refresh()
@@ -208,7 +208,7 @@ func _run() -> void:
 	# 1. Talk to Hessa at the inn: Say.
 	var record := step("Talk to Hessa (Say)")
 	await walk([Vector2i(44, 60), Vector2i(37, 54)])
-	scene._left_click(scene.ui.cursor.describe("npc_hessa_marr"))
+	scene.controls.left_click(scene.ui.cursor.describe("npc_hessa_marr"))
 	await process_frame
 	if not scene.ui.bar.visible:
 		blocker("clicking Hessa didn't open the dialogue bar")
@@ -331,7 +331,7 @@ func _run() -> void:
 		note("no guard stopped the stranger at the gate within 30 s")
 		done(record, "no halt")
 		record = step("Ask Roderic to let you in (Say, walking up)")
-		scene._left_click(scene.ui.cursor.describe("npc_roderic_vale"))
+		scene.controls.left_click(scene.ui.cursor.describe("npc_roderic_vale"))
 		await process_frame
 		said = await bar_line(ASK_CAPTAIN, "say", "npc_roderic_vale")
 		done(record, "admitted: %s  %s" % [typeof(scene.run_state.get("admitted")) == TYPE_DICTIONARY, words_of(said.added)])

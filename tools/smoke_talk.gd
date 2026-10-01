@@ -37,15 +37,15 @@ func walk_to(x: int, y: int) -> bool:
 		while here != Vector2i(x, y) and cells.size() < 20:
 			here += Vector2i(signi(x - here.x), signi(y - here.y))
 			cells.append([here.x, here.y])
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if typeof(reply.data) == TYPE_DICTIONARY and reply.data.has("state"):
-			scene._accept_state(reply.data.state)
+			scene.accept_state(reply.data.state)
 		if not reply.ok:
 			print("walk refused: ", reply.status, " ", JSON.stringify(reply.data).left(300))
 			break
 	scene.predicted_cell = Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
-	scene.player.position = scene._cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
+	scene.player.position = scene.cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
 	return scene.predicted_cell == Vector2i(x, y)
 
 
@@ -63,20 +63,20 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and int(health.data.seed_version) >= 5, "Backend missing or outdated; restart it"):
 		return
 	if not check(str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	await process_frame
 	if not check(await walk_to(36, 53), "Could not walk to the inn yard"):
 		return
 
 	# A left click on a living person opens the dialogue bar with them.
-	scene._left_click(scene.ui.cursor.describe("npc_hessa_marr"))
+	scene.controls.left_click(scene.ui.cursor.describe("npc_hessa_marr"))
 	await process_frame
 	if not check(scene.ui.bar.visible and scene.ui.bar.target == "npc_hessa_marr", "Dialogue bar did not open"):
 		return
@@ -118,8 +118,8 @@ func _run() -> void:
 	scene.ui.close_modal()
 
 	# At the gate a guard walks up and stops you: their conversation opens with the halt.
-	created = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	created = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	await process_frame
 	if not check(await walk_to(48, 16), "Could not walk up to the gate"):
 		return
@@ -163,7 +163,7 @@ func _run() -> void:
 
 	# Admission is decided on the server (see backend/tests/test_gate.py); the panel explains the route.
 	scene.run_state["admitted"] = {"by": "npc_roderic_vale", "because": ["Hessa vouched for the stranger."]}
-	scene._show_victory()
+	scene.show_victory()
 	if not check(scene.victory_panel.visible and "Hessa vouched" in scene.victory_route.text, "Victory route missing"):
 		return
 	print("TALK SMOKE PASSED")

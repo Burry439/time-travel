@@ -152,11 +152,11 @@ func build(owner_game: Node2D) -> void:
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_box.add_child(intro)
 	menu_box.add_child(HSeparator.new())
-	var first_time := button("Tutorial (first time)", game._start.bind("normal", "tutorial"))
+	var first_time := button("Tutorial (first time)", game.start.bind("normal", "tutorial"))
 	menu_box.add_child(first_time)
-	menu_box.add_child(button("Begin a journey", game._start.bind("normal")))
-	menu_box.add_child(button("Continue last journey", game._resume))
-	menu_box.add_child(button("Developer playtest", game._start.bind("developer")))
+	menu_box.add_child(button("Begin a journey", game.start.bind("normal")))
+	menu_box.add_child(button("Continue last journey", game.resume))
+	menu_box.add_child(button("Developer playtest", game.start.bind("developer")))
 	game.message = label("Connecting…", 14)
 	game.message.theme_type_variation = "Small"
 	game.message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -192,7 +192,7 @@ func build(owner_game: Node2D) -> void:
 	game.trace_text = label("", 13)
 	game.trace_text.theme_type_variation = "WoodLabel"
 	debug_box.add_child(game.trace_text)
-	game.gate_button = button("Open gate (test)", game._toggle_gate)
+	game.gate_button = button("Open gate (test)", game.toggle_gate)
 	debug_box.add_child(game.gate_button)
 	debug_box.add_child(button("AI traces  ·  F4", game.open_traces))
 	game.trace_panel.hide()
@@ -215,7 +215,7 @@ func build(owner_game: Node2D) -> void:
 	game.victory_route.custom_minimum_size.x = 500
 	game.victory_route.add_theme_color_override("font_color", UITheme.ACCENT)
 	win_box.add_child(game.victory_route)
-	win_box.add_child(button("Return to title", game._back_to_menu))
+	win_box.add_child(button("Return to title", game.back_to_menu))
 	game.victory_panel.hide()
 	guide = preload("res://scripts/ui/tutorial_guide.gd").new()
 	root.add_child(guide) # Above everything else: while a card is up, the world waits.
@@ -472,10 +472,10 @@ func open_menu(page := "main") -> void:
 				sizes.add_child(choice)
 			_slider(body, "Camera distance", 0.75, 1.25, 0.05, game.camera_zoom, func(value: float) -> void:
 				game.camera_zoom = value
-				game._save_settings())
+				game.save_settings())
 			_slider(body, "Sound volume", 0.0, 1.0, 0.05, game.sound_volume, func(value: float) -> void:
 				game.sound_volume = value
-				game._save_settings())
+				game.save_settings())
 			paragraph(body, "The device")
 			var device_modes := HBoxContainer.new()
 			device_modes.add_theme_constant_override("separation", 6)
@@ -501,7 +501,7 @@ func open_menu(page := "main") -> void:
 			body.add_child(button("Rewind to the last calm moment", func() -> void:
 				close_modal_now()
 				game.rewind()))
-			body.add_child(button("Save and return to title", game._back_to_menu))
+			body.add_child(button("Save and return to title", game.back_to_menu))
 			var saved := paragraph(body, "Every action and step is saved as you go.")
 			saved.theme_type_variation = "Small"
 
@@ -652,7 +652,7 @@ func open_inventory() -> void:
 		row.add_child(button("Use…", func() -> void:
 			close_modal()
 			bar.open(id), "Chip"))
-		row.add_child(button("Put down", game._quick_action.bind("drop", id), "Chip"))
+		row.add_child(button("Put down", game.actions.quick_action.bind("drop", id), "Chip"))
 
 
 func _section(text: String) -> Label:
@@ -794,7 +794,7 @@ func drop_on_item(item_id: String, onto_id: String) -> void:
 func drop_on_world(item_id: String) -> void:
 	var over: Dictionary = cursor.pick(game.get_global_mouse_position()) if not pointer_over_ui() else {}
 	if over.is_empty():
-		game._quick_action("drop", item_id)
+		game.actions.quick_action("drop", item_id)
 		return
 	if not over.get("reachable", true):
 		notify("That's too far away. Walk closer first.")
@@ -909,7 +909,7 @@ func chip_note(obj: Dictionary) -> String:
 		return "" if obj.alive else "  (dead)"
 	if obj.holder_id == "player":
 		return ""
-	var owner: String = game.owner_name(obj)
+	var owner: String = game.actions.owner_name(obj)
 	if obj.get("lent_to") == "player":
 		return "  (lent)"
 	return "  (%s's)" % owner if not owner.is_empty() and owner != "you" else ""
@@ -917,7 +917,7 @@ func chip_note(obj: Dictionary) -> String:
 
 func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
 	var icon := TextureRect.new()
-	icon.texture = game.texture_for(obj)
+	icon.texture = game.art.texture_for(obj)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2(edge, edge)
@@ -925,7 +925,7 @@ func object_icon(obj: Dictionary, edge := 64) -> TextureRect:
 	if icon.texture == null:
 		var waiting := preload("res://scripts/loading_icon.gd").new()
 		waiting.name = "Painting"
-		waiting.missing = game.sprite_status(obj) in ["failed", "none"]
+		waiting.missing = game.art.sprite_status(obj) in ["failed", "none"]
 		icon.add_child(waiting)
 	return icon
 
@@ -937,13 +937,13 @@ func refresh_icons() -> void:
 		for icon in holder.find_children("*", "TextureRect", true, false):
 			if icon.has_meta("object_id") and game.run_state.get("objects", {}).has(icon.get_meta("object_id")):
 				var obj: Dictionary = game.run_state.objects[icon.get_meta("object_id")]
-				icon.texture = game.texture_for(obj)
+				icon.texture = game.art.texture_for(obj)
 				var waiting: Node = icon.get_node_or_null("Painting")
 				if waiting and icon.texture != null:
 					icon.remove_child(waiting)
 					waiting.queue_free()
 				elif waiting:
-					waiting.missing = game.sprite_status(obj) in ["failed", "none"]
+					waiting.missing = game.art.sprite_status(obj) in ["failed", "none"]
 
 
 func flag_words(flags: Array) -> String:
@@ -1093,7 +1093,7 @@ func show_death(reason: String) -> void:
 	body.add_child(button("Try again from before the trouble began", game.rewind))
 	body.add_child(button("Start a new journey", func() -> void:
 		modal_kind = ""
-		game._back_to_menu()))
+		game.back_to_menu()))
 
 
 # --- Developer views -----------------------------------------------------------------------------
@@ -1231,7 +1231,7 @@ func show_traces(data: Dictionary) -> void:
 				_shown(info.get("model")), int(info.get("latency_ms", 0)),
 				("\nError: " + str(info.error)) if info.get("error") != null else ""])
 			if sprite.status in ["failed", "disabled"]:
-				body.add_child(button("Retry painting " + str(sprite.object_id), game.retry_sprite.bind(str(sprite.asset_id)), "Chip"))
+				body.add_child(button("Retry painting " + str(sprite.object_id), game.art.retry.bind(str(sprite.asset_id)), "Chip"))
 			if info.has("prompt"):
 				reveal(body, "Image prompt for " + str(sprite.object_id), str(info.prompt))
 	var calls: Array = data.get("model_calls", [])

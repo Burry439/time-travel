@@ -300,8 +300,8 @@ func _ask(question: String) -> void:
 		history_box.add_child(_bubble(question, true, "now"))
 		history_box.add_child(_bubble("…", false, ""))
 		_scroll_down.call_deferred()
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/device/ask" % game.run_state.run_id, {
-		"question": question, "expected_version": game.run_state.event_seq, "request_id": game._request_id("device")},
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/device/ask"), {
+		"question": question, "expected_version": game.run_state.event_seq, "request_id": game.request_id("device")},
 		60.0)
 	asking = false
 	if is_instance_valid(ask_line):
@@ -311,7 +311,7 @@ func _ask(question: String) -> void:
 		if is_instance_valid(history_box):
 			history_box.add_child(_bubble("…static. I can't answer just now. Ask me again in a moment.", false, ""))
 		return
-	game._accept_state(reply.data.state)
+	game.accept_state(reply.data.state)
 	if ui.modal_kind == "device" and is_instance_valid(history_box):
 		_render_history()
 
@@ -361,10 +361,10 @@ func _moment(kind: String) -> void:
 			or game.in_fight() or game.in_encounter():
 		return
 	last_moment_s = now
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/device/ask" % game.run_state.run_id, {
-		"moment": kind, "expected_version": game.run_state.event_seq, "request_id": game._request_id("device")}, 60.0)
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/device/ask"), {
+		"moment": kind, "expected_version": game.run_state.event_seq, "request_id": game.request_id("device")}, 60.0)
 	if reply.ok and not reply.data.get("skipped", false):
-		game._accept_state(reply.data.state)
+		game.accept_state(reply.data.state)
 
 
 ## The first morning is over: carry on, or begin a fresh journey.
@@ -386,4 +386,4 @@ func closing_card() -> void:
 	row.add_child(ui.button("Walk into the city" if not by.is_empty() else "Carry on in this journey", func() -> void: ui.close_modal()))
 	row.add_child(ui.button("Begin a fresh journey", func() -> void:
 		ui.close_modal_now()
-		game._start("normal")))
+		game.start("normal")))

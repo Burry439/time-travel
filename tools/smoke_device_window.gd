@@ -42,10 +42,10 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	if not check(created.ok, "Start the backend with AI_MODE=stub first"):
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	await create_timer(0.8).timeout
 	if not check(scene.ui.device.panel.visible, "The device widget isn't there in the main game"):
 		return
@@ -70,7 +70,7 @@ func _run() -> void:
 	await process_frame
 	if not check(bubbles() == 4, "Reopened, the whole history isn't there: %d" % bubbles()):
 		return
-	var reloaded: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
+	var reloaded: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
 	if not check(reloaded.ok and reloaded.data.get("device_log", []).size() == 2, "The history didn't survive a reload"):
 		return
 	print("DEVICE WINDOW SMOKE PASSED")

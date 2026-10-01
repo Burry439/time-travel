@@ -46,14 +46,14 @@ func walk_to(x: int, y: int) -> bool:
 		while here != Vector2i(x, y) and cells.size() < 20:
 			here += Vector2i(signi(x - here.x), signi(y - here.y))
 			cells.append([here.x, here.y])
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if typeof(reply.data) == TYPE_DICTIONARY and reply.data.has("state"):
-			scene._accept_state(reply.data.state)
+			scene.accept_state(reply.data.state)
 		if not reply.ok:
 			break
 	scene.predicted_cell = Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
-	scene.player.position = scene._cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
+	scene.player.position = scene.cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
 	scene.camera.reset_smoothing()
 	return scene.predicted_cell == Vector2i(x, y)
 
@@ -62,12 +62,12 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	scene.camera_zoom = 1.0
 	await process_frame
 	var ui: Control = scene.ui
@@ -108,7 +108,7 @@ func _run() -> void:
 		return
 
 	# Left click on a loose thing picks it up (after walking there) and it shows in the pack.
-	scene._left_click(branch)
+	scene.controls.left_click(branch)
 	if not check(await settle() and scene.run_state.objects.branch_a.holder_id == "player"
 			and "branch_a" in ui.hud.slot_ids(), "Click to pick up failed"):
 		return
@@ -145,7 +145,7 @@ func _run() -> void:
 			and ui.bar.line.text.begins_with("“Hello"), "Nobody-hears message missing"):
 		return
 	# A server error (plain-text 500) is reported honestly and leaves the line usable.
-	var stumble: String = scene._reply_problem({"status": 500, "data": null})
+	var stumble: String = scene.actions.reply_problem({"status": 500, "data": null})
 	ui.bar.wait("test")
 	ui.bar.problem(stumble)
 	if not check("HTTP 500" in stumble and ui.bar.line.editable and not ui.bar.waiting, "A 500 left the bar stuck"):
@@ -197,7 +197,7 @@ func _run() -> void:
 	if not check("thinking" in status.signs, "No thinking sign: " + str(status.signs)):
 		return
 	scene.run_state["pending_minds"] = []
-	scene.warm_until["npc_hessa_marr"] = Time.get_ticks_msec() / 1000.0 + 3.0
+	scene.view.warm_until["npc_hessa_marr"] = Time.get_ticks_msec() / 1000.0 + 3.0
 	await process_frame
 	if not check("warm" in status.signs, "No warm sign"):
 		return

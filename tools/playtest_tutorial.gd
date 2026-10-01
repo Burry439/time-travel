@@ -69,9 +69,9 @@ func wait_for_step(wanted: String, seconds := 30.0) -> bool:
 
 
 func skip() -> void:
-	var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/tutorial/skip" % scene.run_state.run_id, {})
+	var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/tutorial/skip" % scene.run_state.run_id, {})
 	if reply.ok:
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	await read_cards()
 
 
@@ -135,15 +135,15 @@ func walk_to(cell: Vector2i) -> void:
 	var here := Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
 	var cells := path_to(here, cell)
 	for i in range(0, cells.size(), 20):
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if typeof(reply.data) == TYPE_DICTIONARY and reply.data.has("state"):
-			scene._accept_state(reply.data.state)
+			scene.accept_state(reply.data.state)
 		if not reply.ok:
 			note("walk to %s refused: %s" % [cell, JSON.stringify(reply.data).left(140)])
 			break
 	scene.predicted_cell = Vector2i(int(scene.run_state.player.x), int(scene.run_state.player.y))
-	scene.player.position = scene._cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
+	scene.player.position = scene.cell_center(scene.predicted_cell.x, scene.predicted_cell.y)
 	await create_timer(0.6).timeout
 	await idle()
 
@@ -186,22 +186,22 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not health.ok or str(health.data.get("ai", {}).get("mode", "")) == "stub":
 		push_error("PLAYTEST: start the backend live (not stub): ./tools/run_m0.ps1")
 		quit(1)
 		return
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer", "scenario": "tutorial"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer", "scenario": "tutorial"})
+	scene.enter_run(created.data, false)
 	await create_timer(1.0).timeout
 	print("TUTORIAL PLAYTEST run ", scene.run_state.run_id)
 	# The early steps are smoke_tutorial's; here only what they leave in the pack matters.
 	for id in ["plantain_a", "flint_a", "grass_a"]:
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
-			{"verb": "take", "object_id": id, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
+			{"verb": "take", "object_id": id, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("take")})
 		if reply.ok:
-			scene._accept_state(reply.data.state)
+			scene.accept_state(reply.data.state)
 	for _i in 8:
 		if step_id() == "smithy":
 			break
@@ -271,7 +271,7 @@ func _run() -> void:
 			fought = true
 			var toward := cell_of(KADE) - Vector2(scene.run_state.player.x, scene.run_state.player.y)
 			if toward.length() > 0.5:
-				scene.facing_row = scene._facing_for(toward.normalized())
+				scene.facing_row = scene.facing_for(toward.normalized())
 			await scene.fight.strike("right")
 		elif fought or step_id() != "bout":
 			break
@@ -291,10 +291,10 @@ func _run() -> void:
 	if not await wait_for_step("steel"):
 		blocker("answering Kade didn't move on: " + step_id())
 	await walk_to(Vector2i(25, 29))
-	var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
-		{"verb": "take", "object_id": "steel_file", "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+	var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
+		{"verb": "take", "object_id": "steel_file", "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("take")})
 	if reply.ok:
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	print("\n== The fire, where Kade can see it")
 	if not await wait_for_step("fire"):
 		blocker("picking up the file didn't move on: " + step_id())

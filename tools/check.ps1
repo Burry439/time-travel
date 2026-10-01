@@ -1,5 +1,6 @@
 # Every automatic check in one command (GDD D-58).
-#   ./tools/check.ps1          lint (ruff, gdlint), compile every GDScript, backend tests. About a minute.
+#   ./tools/check.ps1          lint (ruff, gdlint), the game's references (check_refs.py), compile every GDScript,
+#                              backend tests. About a minute.
 #   ./tools/check.ps1 -Full    also every Godot smoke test, against a throwaway stub backend on port 8766 with its
 #                              own database (your game on 8765 and data/demo.sqlite3 are never touched).
 # The pre-commit hook (.githooks/pre-commit) runs the fast part. Set GODOT to your Godot console executable if it
@@ -22,6 +23,7 @@ try {
     Step 'ruff check' { & (Join-Path $bin 'ruff.exe') check backend --quiet }
     Step 'ruff format' { & (Join-Path $bin 'ruff.exe') format --check backend 2>&1 | Select-Object -Last 2 }
     Step 'gdlint' { & (Join-Path $bin 'gdlint.exe') scripts tools 2>&1 | Select-Object -Last 3 }
+    Step 'game references' { & (Join-Path $bin 'python.exe') tools/check_refs.py | Select-Object -Last 3 }
     Step 'GDScript compiles' { & $godot --headless --path $root --script res://tools/check_scripts.gd 2>&1 |
         Select-String 'CHECK SCRIPTS' }
     Push-Location (Join-Path $root 'backend')

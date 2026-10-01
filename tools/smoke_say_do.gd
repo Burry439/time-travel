@@ -40,10 +40,10 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	if not check(created.ok, "Start the backend with AI_MODE=stub first"):
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	await create_timer(1.0).timeout
 	# The E prompt over the nearest thing (the start of the south road is strewn with things).
 	if not check(scene.ui.hud.prompt.visible and "[ E ]" in scene.ui.hud.prompt_text.text, "No [E] prompt near the road's things"):

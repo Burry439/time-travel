@@ -26,16 +26,16 @@ func _run() -> void:
 	root.add_child(scene)
 	await process_frame
 	await screenshot("feel-title")
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
 	if not check(created.ok, "Backend unavailable"):
 		return
 	if not check(int(created.data.geometry_version) == 3, "Restart the backend: map geometry is outdated"):
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	for direction in [Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT,
 		Vector2(1, 1).normalized(), Vector2(-1, 1).normalized(),
 		Vector2(-1, -1).normalized(), Vector2(1, -1).normalized()]:
-		var view: int = scene._facing_for(direction)
+		var view: int = scene.facing_for(direction)
 		scene.player_visual.set_motion(view, "walk", 12.0, 0.1)
 		if not check(scene.player_visual.views[view].visible, "Missing painted view " + str(view)):
 			return
@@ -43,7 +43,7 @@ func _run() -> void:
 	scene.camera_zoom = 1.0
 	await create_timer(0.25).timeout
 	await screenshot("feel-south-road")
-	await scene._quick_action("take", "branch_a")
+	await scene.actions.quick_action("take", "branch_a")
 	if not check(scene.run_state.objects.branch_a.holder_id == "player", "Quick pickup failed"):
 		return
 	if not check(not scene.get_node("M2Objects/branch_a").visible, "Picked-up object stayed on ground"):
@@ -56,7 +56,7 @@ func _run() -> void:
 	if not check(view.encloses(scene.ui.modal.get_global_rect()), "Inventory is outside the viewport"):
 		return
 	await screenshot("feel-inventory")
-	await scene._quick_action("drop", "branch_a")
+	await scene.actions.quick_action("drop", "branch_a")
 	if not check(scene.run_state.objects.branch_a.holder_id == null, "Drop failed"):
 		return
 	scene.ui.close_modal()
@@ -89,7 +89,7 @@ func _run() -> void:
 	if not check(scene.player.position == before, "Player moved while paused"):
 		return
 	scene.ui.close_modal()
-	var restored: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
+	var restored: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
 	if not check(restored.ok and restored.data.objects.branch_a.holder_id == null
 			and restored.data.player == scene.run_state.player, "Reload lost movement or item state"):
 		return

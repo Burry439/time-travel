@@ -8,12 +8,12 @@ func _run() -> void:
 	var scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
 	if not created.ok:
 		push_error("Backend unavailable for responsiveness test")
 		quit(1)
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	var beginning: Vector2 = scene.player.position
 	var start_ms := Time.get_ticks_msec()
 	var max_queue := 0

@@ -260,7 +260,7 @@ func _focus_target():
 		return null
 	var spec: Dictionary = steps[step].get("focus", {})
 	if spec.has("cell"):
-		return game._cell_center(int(spec.cell[0]), int(spec.cell[1]))
+		return game.cell_center(int(spec.cell[0]), int(spec.cell[1]))
 	if spec.has("npc"):
 		var person := game.get_node_or_null("NPCs/" + str(spec.npc)) as Node2D
 		return person.position if person else null
@@ -272,7 +272,7 @@ func _focus_target():
 		if obj.is_empty() or obj.get("holder_id") != null:
 			continue
 		var sprite := game.get_node_or_null("M2Objects/" + str(id)) as Node2D
-		return sprite.position if sprite else game._cell_center(int(obj.x), int(obj.y))
+		return sprite.position if sprite else game.cell_center(int(obj.x), int(obj.y))
 	return null
 
 
@@ -374,7 +374,7 @@ func _finish() -> void:
 	_close()
 	_update_banner()
 	if read_step >= 0 and read_step == current_step():
-		await _send("/runs/%s/tutorial/read" % game.run_state.run_id, {"step": read_step})
+		await _send(game.run_path("/tutorial/read"), {"step": read_step})
 	_update_banner()
 
 
@@ -402,17 +402,17 @@ func open_help() -> void:
 func report(key: String) -> void:
 	if not active() or key in game.run_state.get("tutorial", {}).get("ui_done", []):
 		return
-	await _send("/runs/%s/tutorial/ui" % game.run_state.run_id, {"key": key})
+	await _send(game.run_path("/tutorial/ui"), {"key": key})
 
 
 func _send(path: String, body: Dictionary) -> void:
 	if sending:
 		return
 	sending = true
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, path, body)
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, path, body)
 	sending = false
 	if reply.ok:
-		game._accept_state(reply.data.state)
+		game.accept_state(reply.data.state)
 
 
 func _input(event: InputEvent) -> void:

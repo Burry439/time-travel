@@ -13,11 +13,11 @@ func _run() -> void:
 	var scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "normal"})
 	if not created.ok or int(created.data.seed_version) < 3:
 		_fail("Living-village backend unavailable")
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	if scene.get_node("NPCs").get_child_count() != 10:
 		_fail("The living village did not spawn its full cast")
 		return
@@ -66,7 +66,7 @@ func _run() -> void:
 	if int(scene.run_state.sim_time_ms) <= paused_time:
 		_fail("Village clock did not resume")
 		return
-	var saved: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
+	var saved: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
 	if not saved.ok or saved.data.npcs != scene.run_state.npcs:
 		_fail("NPC state did not survive reload")
 		return

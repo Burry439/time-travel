@@ -348,7 +348,7 @@ func escape() -> void:
 	if round_playing or waiting or game.request_busy:
 		return
 	if showing_encounter() and not _encounter().is_empty():
-		game.encounter_act("leave", "", "")
+		game.actions.encounter_act("leave", "", "")
 		return
 	close()
 
@@ -380,7 +380,7 @@ func submit() -> void:
 	var pointed := selected.duplicate()
 	if not target.is_empty() and not _is_person(target) and target not in pointed:
 		pointed.append(target)
-	game.act(text, addressed, pointed, sent_mode)
+	game.actions.act(text, addressed, pointed, sent_mode)
 
 
 ## While the world works out what happens: your line shows at once, the rest waits.
@@ -452,7 +452,7 @@ func ended(playing: Dictionary = {}) -> void:
 		render(playing)
 	elif not playing.is_empty():
 		_ready_again()
-		game.round_played()
+		game.actions.round_played()
 
 
 func address(id: String) -> void:
@@ -538,7 +538,7 @@ func _render_header() -> void:
 	elif game.run_state.get("objects", {}).has(target):
 		var obj: Dictionary = game.run_state.objects[target]
 		who.text = str(obj.name).capitalize()
-		var owner: String = game.owner_name(obj)
+		var owner: String = game.actions.owner_name(obj)
 		what.text = ("%s's" % owner) if not owner.is_empty() and owner != "you" else ("yours" if owner == "you" else "")
 	else:
 		who.text = "You"
@@ -551,7 +551,7 @@ func portrait_for(id: String) -> Texture2D:
 	if _is_person(id):
 		actor = str(ui.npc_record(id).name).to_lower()
 	elif game.run_state.get("objects", {}).has(id):
-		var art: Texture2D = game.texture_for(game.run_state.objects[id])
+		var art: Texture2D = game.art.texture_for(game.run_state.objects[id])
 		if art:
 			return art
 	var atlas: Texture2D = PaintedActor.TRAVELER
@@ -573,14 +573,14 @@ func render_chips() -> void:
 	for child in chip_box.get_children():
 		chip_box.remove_child(child)
 		child.queue_free()
-	for obj in game.try_candidates():
+	for obj in game.actions.try_candidates():
 		var id := str(obj.id)
 		var person: bool = obj.get("person", false)
 		var chip: Button = ui.button(str(obj.name) + ui.chip_note(obj), func() -> void: pass, "Chip")
 		chip.toggle_mode = true
 		chip.button_pressed = id in selected or (person and id == target)
 		if not person:
-			chip.icon = game.texture_for(obj)
+			chip.icon = game.art.texture_for(obj)
 			chip.expand_icon = false
 		else:
 			chip.add_theme_color_override("font_color", UITheme.ACCENT)
@@ -656,8 +656,8 @@ func _render_encounter(playing: Dictionary) -> Array:
 		if entry in fresh:
 			node.visible = false
 			hidden.append([node, entry])
-			if str(entry.get("who", "")) == "player" and entry.get("kind") == "do" and not game.played_action.is_empty():
-				var card := result_node(game.played_action, game.last_trace, true)
+			if str(entry.get("who", "")) == "player" and entry.get("kind") == "do" and not game.actions.played_action.is_empty():
+				var card := result_node(game.actions.played_action, game.last_trace, true)
 				card.visible = false
 				log_box.add_child(card)
 				hidden.append([card, {}])
@@ -680,14 +680,14 @@ func _play_lines(lines: Array) -> void:
 			break
 		pair[0].visible = true
 		if not pair[1].is_empty():
-			game.round_beat(pair[1])
+			game.actions.round_beat(pair[1])
 		_scroll_to_end()
 	round_playing = false
 	waiting = false
 	line.editable = true
 	_scroll_to_end()
 	_focus_line()
-	game.round_played()
+	game.actions.round_played()
 
 
 func _scroll_to_end() -> void:

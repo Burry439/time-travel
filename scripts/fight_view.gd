@@ -71,13 +71,13 @@ func strike(hand: String, throw := false) -> void:
 	var ahead: Vector2 = facing_vector()
 	# There's no fighting mode (D-51): a swing at nobody still happens, where you face.
 	var body := {"hand": hand, "throw": throw, "facing": [ahead.x, ahead.y],
-		"expected_version": game.run_state.event_seq, "request_id": game._request_id("strike")}
+		"expected_version": game.run_state.event_seq, "request_id": game.request_id("strike")}
 	if not target.is_empty():
 		body["target_id"] = target
 	while game.movement_sync_active: # Our steps first: the blow starts where we stand now.
 		await get_tree().process_frame
 	game.movement_sync_active = true
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/strike" % game.run_state.run_id, body)
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/strike"), body)
 	game.movement_sync_active = false
 	busy = false
 	if not reply.ok:
@@ -92,7 +92,7 @@ func strike(hand: String, throw := false) -> void:
 	var animation := "throw" if throw else str(spec.get("animation", "punch"))
 	game.player_visual.play_attack(animation, float(spec.get("windup_ms", 400)), hand)
 	seen_swings["player:" + hand] = int(game.run_state.get("sim_time_ms", 0))
-	game._accept_state(reply.data.state)
+	game.accept_state(reply.data.state)
 
 
 ## Hold F with a shield: it comes up facing the way you face; let go and it comes down.
@@ -106,11 +106,11 @@ func guard(raised: bool) -> void:
 	game.player_visual.set_guard(raised, hand if not hand.is_empty() else "left")
 	var facing: Vector2 = [Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT, Vector2(1, 1), Vector2(-1, 1),
 		Vector2(-1, -1), Vector2(1, -1)][game.facing_row]
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/guard" % game.run_state.run_id, {
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/guard"), {
 		"raised": raised, "facing": [facing.x, facing.y], "expected_version": game.run_state.event_seq,
-		"request_id": game._request_id("guard")})
+		"request_id": game.request_id("guard")})
 	if reply.ok:
-		game._accept_state(reply.data.state)
+		game.accept_state(reply.data.state)
 
 
 ## X: what's in each hand changes places.
@@ -118,36 +118,36 @@ func swap() -> void:
 	if busy or not game.gameplay_active:
 		return
 	busy = true
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/swap" % game.run_state.run_id, {
-		"expected_version": game.run_state.event_seq, "request_id": game._request_id("swap")})
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/swap"), {
+		"expected_version": game.run_state.event_seq, "request_id": game.request_id("swap")})
 	busy = false
 	if reply.ok:
 		var result = reply.data.get("swap", {})
 		if typeof(result) == TYPE_DICTIONARY and result.get("ok") == false:
 			game.ui.notify(str(result.get("reason", "")))
-		game._accept_state(reply.data.state)
+		game.accept_state(reply.data.state)
 
 
 ## Put something on or in a hand (slot), or take it off (slot ""); used by the Pack & gear screen.
 func equip(object_id: String, slot: String) -> Dictionary:
 	var body := {"object_id": object_id, "expected_version": game.run_state.event_seq,
-		"request_id": game._request_id("equip")}
+		"request_id": game.request_id("equip")}
 	if not slot.is_empty():
 		body["slot"] = slot
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/equip" % game.run_state.run_id, body)
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/equip"), body)
 	if not reply.ok:
 		return {"ok": false, "reason": "Could not do that just now."}
-	game._accept_state(reply.data.state)
+	game.accept_state(reply.data.state)
 	return reply.data.get("equip", {})
 
 
 func treat(object_id: String, condition: int, patient := "player") -> Dictionary:
-	var reply: Dictionary = await game._api(HTTPClient.METHOD_POST, "/runs/%s/treat" % game.run_state.run_id, {
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_POST, game.run_path("/treat"), {
 		"object_id": object_id, "condition": condition, "patient_id": patient,
-		"expected_version": game.run_state.event_seq, "request_id": game._request_id("treat")})
+		"expected_version": game.run_state.event_seq, "request_id": game.request_id("treat")})
 	if not reply.ok:
 		return {"ok": false, "reason": "Could not do that just now."}
-	game._accept_state(reply.data.state)
+	game.accept_state(reply.data.state)
 	return reply.data.get("treat", {})
 
 
@@ -208,13 +208,13 @@ func sync() -> void:
 			continue
 		seen_shots[shot.id] = true
 		var flying := Projectile.new()
-		flying.from = game._cell_center(int(shot.from[0]), int(shot.from[1])) + Vector2(0, -40)
-		flying.to = game._cell_center(int(shot.to[0]), int(shot.to[1])) + Vector2(0, -36)
+		flying.from = game.cell_center(int(shot.from[0]), int(shot.from[1])) + Vector2(0, -40)
+		flying.to = game.cell_center(int(shot.to[0]), int(shot.to[1])) + Vector2(0, -36)
 		flying.flight_s = maxf(0.1, (float(shot.lands_at) - float(shot.launched_at)) / 1000.0)
 		var profile: Dictionary = shot.get("profile", {})
 		flying.kind = "arrow" if str(profile.get("ammo", "")) == "arrow" else "stone" if profile.get("ammo") else "thrown"
 		if shot.get("object_id") != null:
-			flying.texture = game.texture_for(state.objects.get(str(shot.object_id), {"id": str(shot.object_id)}))
+			flying.texture = game.art.texture_for(state.objects.get(str(shot.object_id), {"id": str(shot.object_id)}))
 		game.add_child(flying)
 
 
@@ -233,7 +233,7 @@ func _sync_player_gear(state: Dictionary) -> void:
 		if obj.get("held_asset_id"):
 			texture = _view_texture(str(obj.held_asset_id), true)
 		if texture == null:
-			texture = game.texture_for(obj)
+			texture = game.art.texture_for(obj)
 		holding[hand] = {"texture": texture, "animation": str(spec.get("animation", "slash")), "kind": kind,
 			"length_m": float(obj.length_m) if obj.get("length_m") != null else maxf(0.25, sqrt(float(obj.get("mass_kg", 0.5))) * 0.5)}
 	var wearing := {}
@@ -285,7 +285,7 @@ func _view_image(asset_id: String):
 func _poll_view(asset_id: String) -> void:
 	view_state[asset_id] = "polling"
 	for _attempt in 60:
-		var reply: Dictionary = await game._fetch_asset(asset_id)
+		var reply: Dictionary = await game.net.fetch_asset(asset_id)
 		if game.run_state.is_empty():
 			break
 		if reply.status == 200:

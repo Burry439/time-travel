@@ -111,13 +111,13 @@ func _text(text: String, variation := "") -> Label:
 
 
 func _object(obj: Dictionary) -> void:
-	var owner: String = game.owner_name(obj)
+	var owner: String = game.actions.owner_name(obj)
 	var belongs := "Yours" if owner == "you" else ("Nobody's" if owner.is_empty() else owner + "'s")
 	if obj.get("lent_to") == "player":
 		belongs += ", lent to you"
 	var where := "In your pack" if obj.get("holder_id") == "player" else "Lying here"
-	_header(game.texture_for(obj), str(obj.name).capitalize(), "%s  ·  %s" % [belongs, where],
-		game.sprite_status(obj) in ["failed", "none"])
+	_header(game.art.texture_for(obj), str(obj.name).capitalize(), "%s  ·  %s" % [belongs, where],
+		game.art.sprite_status(obj) in ["failed", "none"])
 	if not str(obj.get("description", "")).is_empty():
 		_text(str(obj.description))
 	var facts := PackedStringArray(["%s kg" % obj.mass_kg, str(obj.get("condition", "usable")).capitalize()])
@@ -135,8 +135,8 @@ func _object(obj: Dictionary) -> void:
 		_text(ui.provenance(obj)).add_theme_color_override("font_color", UITheme.ACCENT)
 		for capability in obj.get("known_capabilities", []):
 			_text("• " + str(capability.text) + str(ui.CAPABILITY_NOTES.get(str(capability.status), "")))
-		if game.is_placeholder(obj):
-			_text("Its picture is still being painted." if game.sprite_status(obj) == "polling"
+		if game.art.is_placeholder(obj):
+			_text("Its picture is still being painted." if game.art.sprite_status(obj) == "polling"
 				else "Its picture couldn't be painted; a stand-in is shown.", "Small")
 	if obj.get("readable") != null:
 		var read: Button = ui.button("Read it", func() -> void: ui.open_book(obj))

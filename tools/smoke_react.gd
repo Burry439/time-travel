@@ -32,11 +32,11 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	await process_frame
 	var cells := []
 	for y in range(67, 54, -1):
@@ -44,16 +44,16 @@ func _run() -> void:
 	for x in range(47, 38, -1):
 		cells.append([x, 55])
 	for i in range(0, cells.size(), 20):
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if not check(reply.ok, "Could not walk to the inn"):
 			return
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	scene.predicted_cell = Vector2i(39, 55)
-	scene.player.position = scene._cell_center(39, 55)
+	scene.player.position = scene.cell_center(39, 55)
 	scene.camera.reset_smoothing()
 	var started := Time.get_ticks_msec()
-	await scene._quick_action("take", "bowl_hessa")
+	await scene.actions.quick_action("take", "bowl_hessa")
 	await process_frame
 	var bubble := scene.get_node_or_null("NPCs/npc_hessa_marr/Speech/Words") as Label
 	if not check(bubble != null and ("bowl" in bubble.text or "mine" in bubble.text),

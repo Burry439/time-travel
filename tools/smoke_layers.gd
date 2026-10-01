@@ -34,10 +34,10 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
 	if not check(created.ok, "Start the backend with AI_MODE=stub first"):
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	await create_timer(0.8).timeout
 	scene.gameplay_active = false # Hold the world still: no clock syncs replacing this copy of the state.
 	var ui: Control = scene.ui

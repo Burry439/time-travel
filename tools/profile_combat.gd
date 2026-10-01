@@ -34,7 +34,7 @@ func fail(reason: String) -> void:
 
 func _api(method: int, path: String, body := {}) -> Dictionary:
 	var started := Time.get_ticks_usec()
-	var reply: Dictionary = await scene._api(method, path, body)
+	var reply: Dictionary = await scene.net.api(method, path, body)
 	worst_request_ms = maxf(worst_request_ms, (Time.get_ticks_usec() - started) / 1000.0)
 	return reply
 
@@ -65,12 +65,12 @@ func _run() -> void:
 	if not created.ok:
 		fail("Start the backend first")
 		return
-	scene._enter_run(created.data, false)
+	scene.enter_run(created.data, false)
 	await process_frame
 	var took: Dictionary = await _api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
-		{"verb": "take", "object_id": "stone_b", "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+		{"verb": "take", "object_id": "stone_b", "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("take")})
 	if took.ok:
-		scene._accept_state(took.data.state)
+		scene.accept_state(took.data.state)
 		await scene.fight.equip("stone_b", "right")
 	var started_at := Time.get_ticks_msec()
 	var next_report := 5.0
@@ -84,9 +84,9 @@ func _run() -> void:
 			round += 1
 			var who: Array = [["npc_hessa_marr", "npc_darin_ko", "npc_tomas_reed"], ["npc_mara_venn", "npc_jory_venn"]][round % 2]
 			var fight: Dictionary = await _api(HTTPClient.METHOD_POST, "/runs/%s/dev/fight" % scene.run_state.run_id,
-				{"npc_ids": who, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("fight")})
+				{"npc_ids": who, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("fight")})
 			if fight.ok:
-				scene._accept_state(fight.data.state)
+				scene.accept_state(fight.data.state)
 			else:
 				print("dev fight refused: ", str(fight.get("data")).left(200))
 		# Swing at whoever is closest (Space), else at thin air.
@@ -99,7 +99,7 @@ func _run() -> void:
 		if nearest:
 			var toward: Vector2 = nearest.position - scene.player.position
 			if toward.length() > 1.0:
-				scene.facing_row = scene._facing_for(toward.normalized())
+				scene.facing_row = scene.facing_for(toward.normalized())
 		scene.fight.strike("right")
 		await create_timer(0.4).timeout
 		var elapsed := (Time.get_ticks_msec() - started_at) / 1000.0

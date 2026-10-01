@@ -99,7 +99,7 @@ func object_box(obj: Dictionary) -> Rect2:
 			return Rect2(box.position.x + box.size.x * 0.3, box.position.y + box.size.y * 0.3,
 				box.size.x * 0.4, box.size.y * 0.7)
 		return box.grow(4)
-	var at: Vector2 = (node as Node2D).global_position if node is Node2D else game._cell_center(int(obj.x), int(obj.y))
+	var at: Vector2 = (node as Node2D).global_position if node is Node2D else game.cell_center(int(obj.x), int(obj.y))
 	return Rect2(at - Vector2(24, 30), Vector2(48, 48))
 
 
@@ -112,7 +112,7 @@ func describe(id: String) -> Dictionary:
 	if not npc.is_empty():
 		var actor := game.get_node_or_null("NPCs/" + id) as Node2D
 		cell = Vector2(int(npc.x), int(npc.y))
-		var spot: Vector2 = actor.position if actor else game._cell_center(int(cell.x), int(cell.y))
+		var spot: Vector2 = actor.position if actor else game.cell_center(int(cell.x), int(cell.y))
 		result.merge({"kind": "person", "name": str(npc.name), "at": spot}, true)
 		if npc.get("alive", true):
 			result.merge({"verb": "Talk to " + str(npc.name), "action": "talk", "cursor": "talk"}, true)
@@ -125,8 +125,8 @@ func describe(id: String) -> Dictionary:
 			return {}
 		cell = Vector2(int(obj.x), int(obj.y))
 		var name := str(obj.name)
-		result.merge({"kind": "object", "name": name, "at": game._cell_center(int(cell.x), int(cell.y))}, true)
-		var owner: String = game.owner_name(obj)
+		result.merge({"kind": "object", "name": name, "at": game.cell_center(int(cell.x), int(cell.y))}, true)
+		var owner: String = game.actions.owner_name(obj)
 		var theirs: bool = obj.get("owner_id") != null and obj.owner_id != "player" and obj.get("lent_to") != "player"
 		if "carry" in obj.get("capabilities", []) and str(obj.get("condition", "usable")) == "usable":
 			if theirs:

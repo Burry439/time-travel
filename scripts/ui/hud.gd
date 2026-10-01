@@ -192,7 +192,7 @@ func _process(delta: float) -> void:
 
 ## What E would do right now, over the thing or person it would act on (hidden while a panel or the bar is up).
 func _update_prompt() -> void:
-	var id: String = game.nearby_target
+	var id: String = game.controls.nearby_target
 	if id.is_empty() or ui.blocks_movement() or not game.gameplay_active or game.request_busy:
 		prompt.hide()
 		return
@@ -267,7 +267,7 @@ func refresh() -> void:
 	var signature := PackedStringArray()
 	for obj in carried:
 		mass += float(obj.get("mass_kg", 0)) + float(obj.get("water_l", 0))
-		signature.append("%s:%s:%s" % [obj.id, game.sprite_status(obj), obj.get("water_l", 0)])
+		signature.append("%s:%s:%s" % [obj.id, game.art.sprite_status(obj), obj.get("water_l", 0)])
 	weight.text = "%s / 20 kg" % String.num(mass, 1) # m2.CARRY_LIMIT_KG
 	weight.add_theme_color_override("font_color", UITheme.STEAL.lightened(0.3) if mass > 18.0 else UITheme.CREAM)
 	if ",".join(signature) != _signature:
@@ -407,7 +407,7 @@ func start_drag(id: String) -> void:
 	dragging = id
 	press_id = id
 	var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
-	drag_icon.texture = game.texture_for(obj) if not obj.is_empty() else null
+	drag_icon.texture = game.art.texture_for(obj) if not obj.is_empty() else null
 	drag_icon.position = get_local_mouse_position() - drag_icon.size * 0.5
 	drag_icon.show()
 	ui.sounds.play("click")

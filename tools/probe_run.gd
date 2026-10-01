@@ -54,12 +54,12 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var loaded: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + run_id)
+	var loaded: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + run_id)
 	if not loaded.ok:
 		push_error("PROBE FAILED: could not load the journey " + run_id)
 		quit(1)
 		return
-	scene._enter_run(loaded.data, false)
+	scene.enter_run(loaded.data, false)
 	var started := Time.get_ticks_msec()
 	var next_report := 5.0
 	var moves := ["move_left", "move_up", "move_right", "move_down"]

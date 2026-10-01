@@ -81,10 +81,10 @@ func _walk(to: Vector2i) -> void:
 		cursor = previous[cursor]
 	var state: Dictionary = scene.run_state
 	for cell in route:
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % state.run_id,
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % state.run_id,
 			{"x": cell.x, "y": cell.y, "expected_version": state.event_seq, "request_id": "walk-%s" % state.event_seq})
 		state = reply.data.state
-	scene._enter_run(state, false)
+	scene.enter_run(state, false)
 	await create_timer(0.5).timeout
 
 
@@ -93,10 +93,10 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	await create_timer(1.0).timeout
 	await _record("idle", func() -> void: await create_timer(8.0).timeout)
 	await _record("walking", func() -> void:
@@ -109,7 +109,7 @@ func _run() -> void:
 		await _hold(["move_down", "run"], 3.0))
 	# People reacting: punch Jory at the smithy (Mara watching), then run away while they react.
 	await _walk(Vector2i(23, 29))
-	await scene.act("punch Jory hard in the face", "", [])
+	await scene.actions.act("punch Jory hard in the face", "", [])
 	scene.ui.bar.close()
 	await _record("reacting, running away", func() -> void:
 		await _hold(["move_down", "run"], 2.0)

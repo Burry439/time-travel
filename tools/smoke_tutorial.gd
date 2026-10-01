@@ -84,29 +84,29 @@ func read_cards() -> void:
 
 func walk(cells: Array) -> bool:
 	for i in range(0, cells.size(), 20):
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if not reply.ok:
 			return false
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	var last: Array = cells[-1]
 	scene.predicted_cell = Vector2i(last[0], last[1])
-	scene.player.position = scene._cell_center(last[0], last[1])
+	scene.player.position = scene.cell_center(last[0], last[1])
 	return true
 
 
 func take(object_id: String) -> bool:
-	var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
-		{"verb": "take", "object_id": object_id, "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+	var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
+		{"verb": "take", "object_id": object_id, "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("take")})
 	if reply.ok:
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	return reply.ok
 
 
 func skip() -> void:
-	var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/tutorial/skip" % scene.run_state.run_id, {})
+	var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/tutorial/skip" % scene.run_state.run_id, {})
 	if reply.ok:
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	await read_cards() # The next step counts only once its cards are read.
 
 
@@ -114,7 +114,7 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
 	var start := find_button(scene.menu, "Tutorial (first time)")
@@ -181,8 +181,8 @@ func _run() -> void:
 	await screenshot("tutorial_keys") # "Hold {Shift}...": a key cap.
 	await read_cards()
 	# A developer tutorial journey for the rest.
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer", "scenario": "tutorial"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer", "scenario": "tutorial"})
+	scene.enter_run(created.data, false)
 	await process_frame
 	for _i in 8: # welcome, walk, look, take, gather, pack, smithy
 		if step_id() == "talk":
@@ -262,7 +262,7 @@ func _run() -> void:
 			var kade: Dictionary = scene.ui.npc_record("npc_kade_east")
 			var toward := Vector2(float(kade.x), float(kade.y)) - Vector2(scene.run_state.player.x, scene.run_state.player.y)
 			if toward.length() > 0.5:
-				scene.facing_row = scene._facing_for(toward.normalized())
+				scene.facing_row = scene.facing_for(toward.normalized())
 			await scene.fight.strike("right")
 		elif fought or step_id() != "bout":
 			break
@@ -285,8 +285,8 @@ func _run() -> void:
 	await screenshot("tutorial_end")
 	# The wainwright's notebook (D-52).
 	scene.ui.close_modal_now()
-	var village: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(village.data, false)
+	var village: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(village.data, false)
 	await process_frame
 	var notebook: Dictionary = scene.run_state.objects.get("yard_recipe_book", {})
 	if not check(str(notebook.get("readable", "")) == "recipe_book", "No wainwright's notebook in a new journey"):

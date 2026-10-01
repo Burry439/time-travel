@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 			next.append("hostile")
 		elif float(their_mind.get("feelings", {}).get("fear", 0)) > 0.6 or float(their_mind.get("feelings", {}).get("anger", 0)) >= 0.6:
 			next.append("alarmed") # Frightened or angry: something just happened to them.
-		if float(game.warm_until.get(npc_id, 0.0)) > Time.get_ticks_msec() / 1000.0:
+		if float(game.view.warm_until.get(npc_id, 0.0)) > Time.get_ticks_msec() / 1000.0:
 			next.append("warm")
 	var going := _heading(npc)
 	if next != signs or not signs.is_empty() or health < 100.0 or going != heading:

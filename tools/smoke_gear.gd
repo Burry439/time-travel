@@ -43,20 +43,20 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	await process_frame
 	if not check(scene.fight.in_hand(scene.run_state.player, "body").get("id") == "clothes_player",
 			"The stranger doesn't start in their own clothes"):
 		return
-	var took: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
-		{"verb": "take", "object_id": "branch_a", "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("take")})
+	var took: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/quick" % scene.run_state.run_id,
+		{"verb": "take", "object_id": "branch_a", "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("take")})
 	if not check(took.ok, "Could not pick up the branch"):
 		return
-	scene._accept_state(took.data.state)
+	scene.accept_state(took.data.state)
 	# The Pack & gear screen: the branch, with a Right hand button.
 	scene.ui.open_inventory()
 	await process_frame
@@ -89,18 +89,18 @@ func _run() -> void:
 	for x in range(47, 38, -1):
 		cells.append([x, 55])
 	for i in range(0, cells.size(), 20):
-		var reply: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
-			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("move")})
+		var reply: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/move" % scene.run_state.run_id,
+			{"cells": cells.slice(i, i + 20), "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("move")})
 		if not check(reply.ok, "Could not walk to the inn"):
 			return
-		scene._accept_state(reply.data.state)
+		scene.accept_state(reply.data.state)
 	scene.predicted_cell = Vector2i(39, 55)
-	scene.player.position = scene._cell_center(39, 55)
-	var started: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs/%s/dev/fight" % scene.run_state.run_id,
-		{"npc_ids": ["npc_hessa_marr"], "expected_version": scene.run_state.event_seq, "request_id": scene._request_id("fight")})
+	scene.player.position = scene.cell_center(39, 55)
+	var started: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs/%s/dev/fight" % scene.run_state.run_id,
+		{"npc_ids": ["npc_hessa_marr"], "expected_version": scene.run_state.event_seq, "request_id": scene.request_id("fight")})
 	if not check(started.ok, "Could not start a fight"):
 		return
-	scene._accept_state(started.data.state)
+	scene.accept_state(started.data.state)
 	for _i in 60: # She runs in.
 		await create_timer(0.2).timeout
 		var her: Dictionary = scene.ui.npc_record("npc_hessa_marr")
@@ -108,7 +108,7 @@ func _run() -> void:
 			break
 	var her_now: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	var toward := Vector2(float(her_now.x), float(her_now.y)) - Vector2(scene.run_state.player.x, scene.run_state.player.y)
-	scene.facing_row = scene._facing_for(toward.normalized())
+	scene.facing_row = scene.facing_for(toward.normalized())
 	var before := float(her_now.get("health", 100))
 	await scene.fight.strike("right")
 	if not check(not actor.attack.is_empty() and str(actor.attack.animation) in ["overhead", "two_hand_swing"],

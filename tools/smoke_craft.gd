@@ -31,14 +31,14 @@ func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	var health: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/health")
+	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and int(health.data.seed_version) >= 4, "Backend missing or outdated; restart it"):
 		return
 	if not check(str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
 	scene.ai_status = health.data.ai
-	var created: Dictionary = await scene._api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
-	scene._enter_run(created.data, false)
+	var created: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	scene.enter_run(created.data, false)
 	scene.camera_zoom = 1.0
 	await process_frame
 
@@ -47,13 +47,13 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.bar.visible and scene.ui.bar.chip_box.get_child_count() > 0, "Dialogue bar did not open"):
 		return
-	var offered: Array = scene.try_candidates().map(func(o: Dictionary) -> String: return str(o.id))
+	var offered: Array = scene.actions.try_candidates().map(func(o: Dictionary) -> String: return str(o.id))
 	if not check("branch_a" in offered and "cord_a" in offered and "bucket_hessa" not in offered,
 			"Unexpected items within reach: " + str(offered)):
 		return
 	scene.ui.bar.line.text = "tie the cord around the branch"
 	await screenshot("craft-try-box")
-	await scene.act("tie the cord around the branch", "", ["branch_a", "cord_a"])
+	await scene.actions.act("tie the cord around the branch", "", ["branch_a", "cord_a"])
 	var entry: Dictionary = scene.run_state.last_action
 	if not check(entry.category == "success" and entry.made != null, "Craft did not succeed: " + str(entry)):
 		return
@@ -69,23 +69,23 @@ func _run() -> void:
 
 	# The painted sprite is fetched from the backend and replaces the placeholder.
 	for i in 40:
-		if not scene.is_placeholder(obj):
+		if not scene.art.is_placeholder(obj):
 			break
 		await create_timer(0.25).timeout
-	if not check(not scene.is_placeholder(obj), "Sprite never arrived"):
+	if not check(not scene.art.is_placeholder(obj), "Sprite never arrived"):
 		return
 	await screenshot("craft-result")
 	scene.ui.bar.close()
 
 	# Drop it: a world sprite appears for an object that has no authored scene node.
-	await scene._quick_action("drop", made)
+	await scene.actions.quick_action("drop", made)
 	var sprite := scene.get_node_or_null("M2Objects/" + made) as Sprite2D
 	if not check(sprite != null and sprite.visible and sprite.texture != null, "Dropped object has no world sprite"):
 		return
 
 	# Reload the run from the backend: the object and its history persist.
-	var fresh: Dictionary = await scene._api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
-	scene._enter_run(fresh.data, false)
+	var fresh: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
+	scene.enter_run(fresh.data, false)
 	await process_frame
 	var again: Dictionary = scene.run_state.objects.get(made, {})
 	if not check(again.get("created_text") == "tie the cord around the branch" and again.holder_id == null,
