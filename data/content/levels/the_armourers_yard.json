@@ -1,0 +1,621 @@
+{
+ "id": "the_armourers_yard",
+ "title": "The armourer's yard",
+ "track": "advanced",
+ "order": 5,
+ "minutes": 8,
+ "teaches": [
+  "Making in several steps",
+  "Tools that make things",
+  "Weapons and armour",
+  "Testing what you made",
+  "A bout with your own kit"
+ ],
+ "blurb": "A ruined smithy, an old soldier and his notes. Make your own arms, test them, and bout with him.",
+ "after": "Good things take steps, and a tool before the thing. Kit you made yourself, you can mend.",
+ "refines": "Does several-step making read well (a part, then the thing)? Are made weapons and armour classed and felt in a bout?",
+ "map": "smithy_yard",
+ "start": {
+  "cell": [
+   18,
+   21
+  ]
+ },
+ "objective": "Arm yourself",
+ "goal": "Make, test and try your own arms",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_holt_sergeant": {
+   "role": "old soldier",
+   "step_ms": 560,
+   "goal": "keep his yard",
+   "anchors": [
+    [
+     14,
+     17,
+     "work",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "book_holt",
+   "name": "Holt's notes on arms",
+   "x": 13,
+   "y": 16,
+   "mass_kg": 0.5,
+   "materials": [
+    "leather",
+    "parchment"
+   ],
+   "description": "A battered leather book of notes in a soldier's square hand: how to make arms from what's lying about. Pick it up and read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "readable": "armourer_notes"
+  },
+  {
+   "id": "blade_broken",
+   "name": "broken sword blade",
+   "x": 7,
+   "y": 16,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "description": "Half of a broken sword: a good iron blade snapped a foot from the hilt, rusty but sound.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "length_m": 0.45
+  },
+  {
+   "id": "pole_ash",
+   "name": "ash pole",
+   "x": 31,
+   "y": 7,
+   "mass_kg": 1.8,
+   "materials": [
+    "wood"
+   ],
+   "description": "A straight, seasoned ash pole, two yards long.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 2.0
+  },
+  {
+   "id": "rawhide",
+   "name": "rawhide strips",
+   "x": 15,
+   "y": 18,
+   "mass_kg": 0.4,
+   "materials": [
+    "rawhide"
+   ],
+   "description": "A coil of stiff rawhide strips: soak them and they'll bind anything.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ]
+  },
+  {
+   "id": "linen_bolt",
+   "name": "bolt of linen",
+   "x": 11,
+   "y": 17,
+   "mass_kg": 2.0,
+   "materials": [
+    "linen"
+   ],
+   "description": "A bolt of coarse unbleached linen, free to use.",
+   "flags": [
+    "flexible"
+   ]
+  },
+  {
+   "id": "wool_sack",
+   "name": "sack of wool",
+   "x": 10,
+   "y": 18,
+   "mass_kg": 3.0,
+   "materials": [
+    "wool"
+   ],
+   "description": "A sack of raw fleece wool, greasy and thick.",
+   "flags": [
+    "flexible"
+   ]
+  },
+  {
+   "id": "needle_holt",
+   "name": "needle and thread",
+   "x": 13,
+   "y": 18,
+   "mass_kg": 0.05,
+   "materials": [
+    "iron",
+    "linen"
+   ],
+   "description": "A big sail needle threaded with waxed linen thread.",
+   "flags": [
+    "sharp_edge",
+    "ferromagnetic"
+   ]
+  },
+  {
+   "id": "boards_oak",
+   "name": "oak boards",
+   "x": 32,
+   "y": 7,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A few short oak boards from an old door.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 0.6
+  },
+  {
+   "id": "grindstone",
+   "name": "grindstone",
+   "x": 21,
+   "y": 9,
+   "mass_kg": 120.0,
+   "materials": [
+    "stone",
+    "wood"
+   ],
+   "description": "A big sandstone grindstone with a crank: for grinding edges and points.",
+   "flags": [
+    "rigid",
+    "stable_support"
+   ],
+   "feature": "fixture",
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "trough_smithy",
+   "name": "quenching trough",
+   "x": 17,
+   "y": 9,
+   "mass_kg": 300.0,
+   "materials": [
+    "stone",
+    "water"
+   ],
+   "description": "A stone trough of water for quenching and soaking.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 200.0,
+   "water_l": 150.0,
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "dummy",
+   "name": "straw dummy",
+   "x": 28,
+   "y": 13,
+   "mass_kg": 25.0,
+   "materials": [
+    "straw",
+    "sacking",
+    "wood"
+   ],
+   "description": "A practice dummy of straw-stuffed sacking on a post, with a painted scowl. Hit it all you like.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_holt_sergeant",
+   "feature": "fixture",
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "staff_holt",
+   "name": "practice staff",
+   "mass_kg": 1.6,
+   "materials": [
+    "wood"
+   ],
+   "description": "Holt's stout ash practice staff, its ends padded with leather.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_holt_sergeant",
+   "worn_by": "npc_holt_sergeant",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "staff",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 1.8
+  },
+  {
+   "id": "jack_holt",
+   "name": "old quilted jack",
+   "mass_kg": 3.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "description": "Holt's faded red quilted jack, patched at the elbows.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_holt_sergeant",
+   "worn_by": "npc_holt_sergeant",
+   "slots": [
+    "body",
+    "arms"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "padded",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "quality": "fair"
+   }
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_holt_sergeant",
+   "during": [
+    "welcome",
+    "weapon",
+    "guard",
+    "test",
+    "bout"
+   ],
+   "withholds": [
+    "go_tell",
+    "vouch",
+    "call_guard",
+    "lend",
+    "give"
+   ],
+   "spars": {
+    "says": "Ha! Eager, are we? Practice only, then.",
+    "with": "staff_holt",
+    "marks": [
+     "bout:spar"
+    ]
+   }
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "The old smithy",
+   "cards": [
+    "…signal. A ruined smithy on the road to the forest. Sergeant Holt lives here, and his notes on arms lie on the bench.",
+    "He won't arm you: you must make it yourself, so you can mend it. Good things take steps: a tool, then the thing.",
+    "There's no one right way. The notes have some; you may know others. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "weapon",
+   "title": "A weapon",
+   "cards": [
+    "Make yourself a weapon worth the name from what's in the yard."
+   ],
+   "task": "Make a weapon",
+   "check": {
+    "kind": "made",
+    "gear": [
+     "weapon"
+    ],
+    "ever": true
+   },
+   "done": "Made, not found. You know how it's put together, so you can mend it.",
+   "help": [
+    "Holt's notes are on the workbench: pick them up and read them ({Space} with them in hand).",
+    "A broken blade is no use until it has a point; a point is no use until it has a haft."
+   ],
+   "playtest": [
+    {
+     "walk_to": "book_holt"
+    },
+    {
+     "take": "book_holt"
+    },
+    {
+     "ui": "book"
+    },
+    {
+     "walk_to": "blade_broken"
+    },
+    {
+     "take": "blade_broken"
+    },
+    {
+     "walk_to": [
+      21,
+      10
+     ]
+    },
+    {
+     "do": "grind the broken sword blade to a sharp spear point on the grindstone, keeping it wet"
+    },
+    {
+     "walk_to": "pole_ash"
+    },
+    {
+     "take": "pole_ash"
+    },
+    {
+     "walk_to": "rawhide"
+    },
+    {
+     "take": "rawhide"
+    },
+    {
+     "walk_to": [
+      17,
+      10
+     ]
+    },
+    {
+     "do": "soak the rawhide in the trough, seat the spearhead in the split end of the ash pole and bind it tight with the soaked rawhide"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "pole_ash"
+     },
+     {
+      "take": "pole_ash"
+     },
+     {
+      "walk_to": "blade_broken"
+     },
+     {
+      "take": "blade_broken"
+     },
+     {
+      "walk_to": "rawhide"
+     },
+     {
+      "take": "rawhide"
+     },
+     {
+      "walk_to": [
+       17,
+       10
+      ]
+     },
+     {
+      "do": "lash the broken sword blade crosswise to the end of the ash pole with soaked rawhide to make a heavy bill-hook polearm"
+     }
+    ]
+   },
+   "try_also": [
+    "sharpen the broken blade into a spearhead on the grindstone"
+   ]
+  },
+  {
+   "id": "guard",
+   "title": "Something to keep blows off",
+   "cards": [
+    "Now make something to keep a blow off you: armour, or a shield."
+   ],
+   "task": "Make armour or a shield",
+   "check": {
+    "kind": "made",
+    "gear": [
+     "armour",
+     "shield",
+     "clothing"
+    ],
+    "ever": true
+   },
+   "done": "Steel is better, but quilted linen has saved more lives.",
+   "help": [
+    "The notes have a quilted jack (linen, wool, a needle) and a buckler (boards and rawhide)."
+   ],
+   "playtest": [
+    {
+     "walk_to": "linen_bolt"
+    },
+    {
+     "take": "linen_bolt"
+    },
+    {
+     "take": "wool_sack"
+    },
+    {
+     "take": "needle_holt"
+    },
+    {
+     "do": "cut the linen into two layers, stuff the wool between them and quilt it into a padded jack with the needle and thread"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "boards_oak"
+     },
+     {
+      "take": "boards_oak"
+     },
+     {
+      "walk_to": [
+       17,
+       10
+      ]
+     },
+     {
+      "do": "cut a round buckler from the oak boards and bind its rim with soaked rawhide"
+     }
+    ]
+   }
+  },
+  {
+   "id": "test",
+   "title": "On the dummy",
+   "cards": [
+    "Take up your weapon and put on what you made, then show Holt it works: on the dummy."
+   ],
+   "task": "Show Holt your weapon works",
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "using_made",
+      "gear": [
+       "weapon"
+      ]
+     },
+     {
+      "kind": "shown",
+      "npc": "npc_holt_sergeant"
+     }
+    ]
+   },
+   "words_check": {
+    "kind": "shown",
+    "npc": "npc_holt_sergeant"
+   },
+   "done": "It bites. Better learned on straw.",
+   "help": [
+    "Open Pack & gear ({I}) to take it up and put things on.",
+    "Then try it on the dummy where Holt can see."
+   ],
+   "playtest": [
+    {
+     "equip": "made:weapon"
+    },
+    {
+     "equip": "made:armour"
+    },
+    {
+     "walk_to": [
+      27,
+      14
+     ]
+    },
+    {
+     "do": "thrust my spear hard into the straw dummy to show Holt it holds and bites"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "equip": "made:weapon"
+     },
+     {
+      "equip": "made:shield"
+     },
+     {
+      "walk_to": [
+       27,
+       14
+      ]
+     },
+     {
+      "do": "hack at the straw dummy with my polearm to show Holt it holds and bites"
+     }
+    ]
+   },
+   "try_also": [
+    "stab the dummy with the spear"
+   ]
+  },
+  {
+   "id": "bout",
+   "title": "A bout",
+   "cards": [
+    "Last: a bout with Holt, with what you made. Walk up to him armed. Practice only."
+   ],
+   "task": "Bout with Holt",
+   "check": {
+    "kind": "bout_over"
+   },
+   "triggers": [
+    {
+     "id": "spar",
+     "when": {
+      "kind": "ready_to_spar",
+      "npc": "npc_holt_sergeant",
+      "within": 3.0
+     },
+     "do": [
+      {
+       "kind": "npc_says",
+       "npc": "npc_holt_sergeant",
+       "text": "On guard, then. Let's see what you've made."
+      },
+      {
+       "kind": "spar",
+       "npc": "npc_holt_sergeant",
+       "with": "staff_holt"
+      }
+     ],
+     "skippable": false
+    }
+   ],
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_holt_sergeant",
+     "text": "Hm. You'll do. If you go by the forest road, keep that close."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_holt_sergeant",
+     "lead": "Two deserters rob travellers on the forest road to the ford.",
+     "said": "Two deserters work the forest road."
+    }
+   ],
+   "done": "Made, tested and tried. That's how you know your kit.",
+   "help": [
+    "Walk up to Holt with your weapon ready. Watch his wind-up; raise your guard ({F}) or step back."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_holt_sergeant"
+    },
+    {
+     "strike": "right",
+     "at": "npc_holt_sergeant",
+     "repeat": 8
+    },
+    {
+     "wait": 20
+    }
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

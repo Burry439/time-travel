@@ -1,0 +1,314 @@
+{
+ "id": "the_sceptic",
+ "title": "The sceptic",
+ "track": "advanced",
+ "order": 1,
+ "minutes": 6,
+ "teaches": [
+  "Persuasion: words only go so far",
+  "Evidence: what people see you do",
+  "A gift that's useful",
+  "Someone they trust speaking for you"
+ ],
+ "blurb": "A ferryman who was robbed last year and takes no one across on their word. Find another way.",
+ "after": "Words open doors only so far. People here go on what they see you do, what you give, and who speaks for you.",
+ "refines": "Which grounds do players find? Does the voice hold the line on words alone, and give way on real grounds?",
+ "map": "ferry_landing",
+ "start": {
+  "cell": [
+   18,
+   21
+  ]
+ },
+ "objective": "Cross the river",
+ "goal": "Get Gorm to take you across",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_gorm_ferry": {
+   "role": "ferryman",
+   "step_ms": 480,
+   "goal": "mind the ferry",
+   "anchors": [
+    [
+     18,
+     8,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_ilse_ferry": {
+   "role": "ferryman's wife",
+   "step_ms": 460,
+   "goal": "mend the nets",
+   "anchors": [
+    [
+     14,
+     12,
+     "work",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "net_ilse",
+   "name": "torn fishing net",
+   "x": 15,
+   "y": 11,
+   "mass_kg": 3.0,
+   "materials": [
+    "hemp"
+   ],
+   "description": "Ilse's best fishing net, with a long tear through its middle where it caught on a snag.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_ilse_ferry"
+  },
+  {
+   "id": "twine_ilse",
+   "name": "ball of tarred twine",
+   "x": 13,
+   "y": 11,
+   "mass_kg": 0.3,
+   "materials": [
+    "hemp",
+    "pitch"
+   ],
+   "description": "A ball of tarred hemp twine for mending nets.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_ilse_ferry"
+  },
+  {
+   "id": "needle_ilse",
+   "name": "wooden netting needle",
+   "mass_kg": 0.05,
+   "materials": [
+    "wood"
+   ],
+   "description": "A flat wooden netting needle, worn smooth, for knotting meshes.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_ilse_ferry",
+   "carried_by": "npc_ilse_ferry"
+  },
+  {
+   "id": "rope_gorm",
+   "name": "frayed tow rope",
+   "x": 17,
+   "y": 8,
+   "mass_kg": 6.0,
+   "materials": [
+    "hemp"
+   ],
+   "description": "The ferry's tow rope, coiled by the jetty. Badly frayed where it runs over the post: it could part any day.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_gorm_ferry",
+   "length_m": 40.0
+  },
+  {
+   "id": "hemp_boat",
+   "name": "hank of hemp fibre",
+   "x": 28,
+   "y": 14,
+   "mass_kg": 2.0,
+   "materials": [
+    "hemp"
+   ],
+   "description": "A thick hank of retted hemp fibre, left drying on the old boat. Nobody seems to want it.",
+   "flags": [
+    "flexible"
+   ]
+  },
+  {
+   "id": "pitch_pot",
+   "name": "pot of pine pitch",
+   "x": 26,
+   "y": 15,
+   "mass_kg": 1.5,
+   "materials": [
+    "pitch",
+    "clay"
+   ],
+   "description": "A clay pot of sticky pine pitch, for tarring rope and boats. Left by the old boat.",
+   "flags": [
+    "container",
+    "combustible"
+   ]
+  },
+  {
+   "id": "driftwood",
+   "name": "length of driftwood",
+   "x": 31,
+   "y": 9,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A bleached, sound length of driftwood, washed up on the bank.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 1.6
+  }
+ ],
+ "roles": [
+  {
+   "npc": "npc_gorm_ferry",
+   "during": [
+    "welcome",
+    "cross"
+   ],
+   "withholds": [
+    "go_tell",
+    "call_guard"
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "The ferry landing",
+   "cards": [
+    "…signal. A ferry over the Wend. The far bank's track runs north toward the city.",
+    "Gorm the ferryman takes no one across on their word alone: he was robbed last year. Words go only so far. What he sees, what he's given, and who speaks for him go further.",
+    "This is an advanced level: there's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "cross",
+   "title": "Across the river",
+   "cards": [
+    "Get Gorm to take you across. However you manage it counts."
+   ],
+   "task": "Get Gorm to take you across the river",
+   "check": {
+    "kind": "admitted"
+   },
+   "words_check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "made",
+      "from": [
+       "net_ilse",
+       "hemp_boat",
+       "rope_gorm"
+      ]
+     },
+     {
+      "kind": "gave_made",
+      "npc": "npc_gorm_ferry",
+      "count": 1
+     }
+    ]
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_gorm_ferry",
+     "text": "Hm. Get aboard, then. And keep your hands where I can see them."
+    }
+   ],
+   "done": "He'll take you. Not because of what you said, but because of what he saw, was given, or heard from someone he trusts.",
+   "help": [
+    "Gorm goes on what he sees, what he's given, and who speaks for him. Talk to Ilse: she might have work, and he listens to her.",
+    "Or look around the landing ({right-click} things): is there something Gorm needs that you could make?"
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ilse_ferry"
+    },
+    {
+     "say": "Good day. Gorm won't take me across. Is there anything I can do for you?",
+     "to": "npc_ilse_ferry"
+    },
+    {
+     "say": "Yes, I'll mend your net.",
+     "to": "npc_ilse_ferry"
+    },
+    {
+     "walk_to": "net_ilse"
+    },
+    {
+     "take": "net_ilse"
+    },
+    {
+     "take": "twine_ilse"
+    },
+    {
+     "do": "mend the tear in the fishing net with the tarred twine, knotting new meshes"
+    },
+    {
+     "walk_to": "npc_ilse_ferry"
+    },
+    {
+     "say": "Your net's mended. Here, see.",
+     "to": "npc_ilse_ferry"
+    },
+    {
+     "wait": 20
+    },
+    {
+     "walk_to": "npc_gorm_ferry"
+    },
+    {
+     "say": "Ilse says I'm honest. Will you take me across now?",
+     "to": "npc_gorm_ferry"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "hemp_boat"
+     },
+     {
+      "take": "hemp_boat"
+     },
+     {
+      "take": "pitch_pot"
+     },
+     {
+      "do": "twist the hemp fibre into a long, strong three-strand rope and tar it with the pitch"
+     },
+     {
+      "walk_to": "npc_gorm_ferry"
+     },
+     {
+      "do": "give the new tarred rope to Gorm for his ferry"
+     },
+     {
+      "say": "Your old tow rope is going. I made you a new one. Will you take me across?",
+      "to": "npc_gorm_ferry"
+     }
+    ]
+   },
+   "try_also": [
+    "fix Ilse's net with the twine"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

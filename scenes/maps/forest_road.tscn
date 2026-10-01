@@ -1,0 +1,101 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/WoodsWest.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/WoodsEast.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/Ford.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/Thicket.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/Thicket2.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/Log.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/forest_road/Boulders.png" id="8_tex"]
+
+[node name="ForestRoadMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2880.0
+offset_bottom = 2432.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="WoodsWest" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 384.0
+offset_bottom = 832.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WoodsEast" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 896.0
+offset_top = 0.0
+offset_right = 1280.0
+offset_bottom = 832.0
+texture = ExtResource("3_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Ford" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 384.0
+offset_top = 0.0
+offset_right = 896.0
+offset_bottom = 64.0
+texture = ExtResource("4_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Thicket" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(464.0, 384)
+scale = Vector2(0.1085, 0.1085)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -493.5)
+
+[node name="Thicket2" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(816.0, 512)
+scale = Vector2(0.1083, 0.1083)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -492.0)
+
+[node name="Log" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(592.0, 224)
+scale = Vector2(0.2479, 0.2479)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -504.5)
+
+[node name="Boulders" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(672.0, 608)
+scale = Vector2(0.0742, 0.0742)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -476.0)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

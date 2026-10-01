@@ -1,0 +1,176 @@
+{
+ "id": "smithy_yard",
+ "version": 1,
+ "name": "the old smithy at Hollin",
+ "notes": "Training level A5 (D-59): the yard of a ruined smithy where an old soldier lives. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a cobbled smithy yard with patches of cinders, weeds between the stones, and a muddy track at the bottom",
+  "pieces": {
+   "Forge": "a roofless ruined stone smithy with a cold forge hearth and a broken chimney, door facing down",
+   "Anvil": "a heavy iron anvil on a tree-stump block",
+   "Trough": "a stone quenching trough full of water",
+   "Grindstone": "a big round sandstone grindstone on a wooden frame with a crank handle",
+   "Dummy": "a straw-stuffed sacking practice dummy on a wooden post, with a painted face",
+   "Scrap": "a heap of rusty scrap iron, old blades and broken tools",
+   "Bench": "a sturdy wooden workbench with tools on it",
+   "Rack": "an empty wooden weapon rack",
+   "Woodpile": "a stack of rough poles and planks"
+  }
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Forge",
+   "cells": [
+    3,
+    3,
+    9,
+    6
+   ],
+   "label": "The old forge"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Anvil",
+   "cells": [
+    14,
+    8,
+    2,
+    1
+   ]
+  },
+  {
+   "name": "Trough",
+   "cells": [
+    17,
+    8,
+    2,
+    1
+   ]
+  },
+  {
+   "name": "Grindstone",
+   "cells": [
+    20,
+    7,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Dummy",
+   "cells": [
+    28,
+    12,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Scrap",
+   "cells": [
+    6,
+    13,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Bench",
+   "cells": [
+    12,
+    15,
+    4,
+    1
+   ]
+  },
+  {
+   "name": "Rack",
+   "cells": [
+    24,
+    4,
+    4,
+    1
+   ]
+  },
+  {
+   "name": "Woodpile",
+   "cells": [
+    30,
+    4,
+    3,
+    2
+   ]
+  }
+ ],
+ "places": {
+  "forge": {
+   "name": "the forge",
+   "cell": [
+    7,
+    10
+   ]
+  },
+  "anvil": {
+   "name": "the anvil",
+   "cell": [
+    15,
+    10
+   ]
+  },
+  "grindstone": {
+   "name": "the grindstone",
+   "cell": [
+    21,
+    10
+   ]
+  },
+  "dummy": {
+   "name": "the dummy",
+   "cell": [
+    28,
+    14
+   ]
+  },
+  "scrap": {
+   "name": "the scrap heap",
+   "cell": [
+    8,
+    16
+   ]
+  },
+  "bench": {
+   "name": "the workbench",
+   "cell": [
+    14,
+    17
+   ]
+  },
+  "rack": {
+   "name": "the weapon rack",
+   "cell": [
+    26,
+    6
+   ]
+  },
+  "track": {
+   "name": "the track",
+   "cell": [
+    18,
+    22
+   ]
+  }
+ }
+}

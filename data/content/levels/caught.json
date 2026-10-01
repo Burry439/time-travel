@@ -1,0 +1,350 @@
+{
+ "id": "caught",
+ "title": "Caught",
+ "track": "advanced",
+ "order": 4,
+ "minutes": 6,
+ "teaches": [
+  "Ownership and what's fair",
+  "Witnesses and accusation",
+  "The watch",
+  "Making it right",
+  "Trading"
+ ],
+ "blurb": "A market hall at closing time, a pieman, a watchman, and a hungry child with a plan.",
+ "after": "What you take, people see. Giving back and paying makes it right; a fair trade or honest work makes it yours.",
+ "refines": "Do players read ownership and consequences? Does the watch respond fairly (accuse, demand, forgive, seize)?",
+ "map": "market_hall",
+ "start": {
+  "cell": [
+   16,
+   18
+  ]
+ },
+ "objective": "Get your supper",
+ "goal": "Get a pie of your own",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_osk_pieman": {
+   "role": "pieman",
+   "step_ms": 520,
+   "goal": "sell the last pies",
+   "anchors": [
+    [
+     7,
+     7,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_hobb_watchman": {
+   "role": "watchman",
+   "step_ms": 600,
+   "goal": "watch the hall",
+   "anchors": [
+    [
+     16,
+     12,
+     "patrol",
+     600000
+    ]
+   ]
+  },
+  "npc_kit_urchin": {
+   "role": "urchin",
+   "step_ms": 360,
+   "goal": "watch the pies",
+   "anchors": [
+    [
+     26,
+     17,
+     "wait",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "pie_1",
+   "name": "meat pie",
+   "x": 7,
+   "y": 6,
+   "mass_kg": 0.3,
+   "materials": [
+    "pastry",
+    "meat"
+   ],
+   "description": "A golden meat pie, still warm. Osk's: a copper each.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "pie_2",
+   "name": "meat pie",
+   "x": 9,
+   "y": 6,
+   "mass_kg": 0.3,
+   "materials": [
+    "pastry",
+    "meat"
+   ],
+   "description": "A golden meat pie, still warm. Osk's: a copper each.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "pie_3",
+   "name": "meat pie",
+   "x": 11,
+   "y": 6,
+   "mass_kg": 0.3,
+   "materials": [
+    "pastry",
+    "meat"
+   ],
+   "description": "A golden meat pie, still warm. Osk's: a copper each.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "pie_reward",
+   "name": "meat pie",
+   "mass_kg": 0.3,
+   "materials": [
+    "pastry",
+    "meat"
+   ],
+   "description": "A golden meat pie, still warm, kept back under the counter.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_osk_pieman",
+   "carried_by": "npc_osk_pieman"
+  },
+  {
+   "id": "logs_osk",
+   "name": "logs for the oven",
+   "x": 4,
+   "y": 11,
+   "mass_kg": 8.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A few sawn logs by the oven, waiting to be split into kindling.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "hatchet_osk",
+   "name": "hatchet",
+   "x": 5,
+   "y": 12,
+   "mass_kg": 0.9,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "Osk's small hatchet, for kindling.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "whistle_player",
+   "name": "carved wooden whistle",
+   "x": 16,
+   "y": 20,
+   "mass_kg": 0.05,
+   "materials": [
+    "wood"
+   ],
+   "description": "Your own little carved wooden whistle, well made. You've had it as long as you can remember.",
+   "flags": [
+    "rigid",
+    "sound_loud"
+   ],
+   "owner_id": "player",
+   "carried_by": "player"
+  },
+  {
+   "id": "broom_osk",
+   "name": "broom",
+   "x": 12,
+   "y": 6,
+   "mass_kg": 0.8,
+   "materials": [
+    "wood",
+    "straw"
+   ],
+   "description": "A stiff straw broom.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_osk_pieman"
+  },
+  {
+   "id": "cudgel_hobb",
+   "name": "cudgel",
+   "mass_kg": 1.1,
+   "materials": [
+    "wood"
+   ],
+   "description": "A heavy oak cudgel, the watch's badge burnt into the handle.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_hobb_watchman",
+   "worn_by": "npc_hobb_watchman",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.7
+  },
+  {
+   "id": "coat_hobb",
+   "name": "quilted watch coat",
+   "mass_kg": 3.0,
+   "materials": [
+    "linen",
+    "wool"
+   ],
+   "description": "A thick quilted coat with the town's badge on the breast.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_hobb_watchman",
+   "worn_by": "npc_hobb_watchman",
+   "slots": [
+    "body",
+    "arms"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "padded",
+    "covers": [
+     "body",
+     "arms"
+    ],
+    "quality": "fair"
+   }
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Wendford market hall",
+   "cards": [
+    "…signal. A market hall at closing time. You're hungry and you have no money.",
+    "Osk sells pies. Hobb the watchman is hunting a pie thief. People see what you do, and someone seen taking what isn't theirs is accused, chased, made to give it back, or thrown out.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "supper",
+   "title": "Supper",
+   "cards": [
+    "Get yourself a pie: one that's yours. A pie you've only taken isn't yours."
+   ],
+   "task": "Get a pie of your own",
+   "check": {
+    "kind": "has",
+    "named": [
+     "pie"
+    ]
+   },
+   "words_check": {
+    "kind": "made",
+    "from": [
+     "logs_osk"
+    ]
+   },
+   "done": "Yours, fairly. However you came by it, the hall saw how.",
+   "help": [
+    "Osk pays for work. Or you carry something of your own: a trade is fair.",
+    "If you take one, someone may see. Giving it back and paying makes it right; running makes it worse."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_osk_pieman"
+    },
+    {
+     "say": "I've no money, but I'll work for a pie. Is there anything needs doing?",
+     "to": "npc_osk_pieman"
+    },
+    {
+     "say": "Done. I'll split the logs.",
+     "to": "npc_osk_pieman"
+    },
+    {
+     "walk_to": "hatchet_osk"
+    },
+    {
+     "take": "hatchet_osk"
+    },
+    {
+     "walk_to": "logs_osk"
+    },
+    {
+     "do": "split the logs by the oven into kindling with the hatchet"
+    },
+    {
+     "walk_to": "npc_osk_pieman"
+    },
+    {
+     "say": "The kindling's split, by the oven.",
+     "to": "npc_osk_pieman"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "npc_osk_pieman"
+     },
+     {
+      "do": "offer Osk my carved wooden whistle in trade for one of his meat pies"
+     },
+     {
+      "say": "It's a good whistle. A fair trade for a pie?",
+      "to": "npc_osk_pieman"
+     }
+    ]
+   },
+   "try_also": [
+    "chop the oven logs into kindling"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

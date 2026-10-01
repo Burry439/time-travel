@@ -1,0 +1,123 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/ReeveHouse.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Cob.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Liss.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Fenn.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Well.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Bench.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Woodpile.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Sty.png" id="9_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/hamlet/Haystack.png" id="10_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/generated/village_foliage.png" id="11_tex"]
+
+[sub_resource type="AtlasTexture" id="Atlas_12"]
+atlas = ExtResource("11_tex")
+region = Rect2(0, 0, 704, 800)
+
+[node name="HamletMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2880.0
+offset_bottom = 2432.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="ReeveHouse" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(656.0, 224)
+scale = Vector2(0.5074, 0.5074)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -489.5)
+
+[node name="Cob" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(192.0, 288)
+scale = Vector2(0.2589, 0.2589)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -488.5)
+
+[node name="Liss" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(1088.0, 288)
+scale = Vector2(0.2529, 0.2529)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -500.5)
+
+[node name="Fenn" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(208.0, 640)
+scale = Vector2(0.1946, 0.1946)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -485.5)
+
+[node name="Well" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(640.0, 448)
+scale = Vector2(0.0814, 0.0814)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -472.5)
+
+[node name="Bench" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(560.0, 288)
+scale = Vector2(0.1104, 0.1104)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -436.5)
+
+[node name="Woodpile" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(352.0, 288)
+scale = Vector2(0.0742, 0.0742)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -488.5)
+
+[node name="Sty" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(992.0, 608)
+scale = Vector2(0.1609, 0.1609)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -482.0)
+
+[node name="Haystack" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(1136.0, 512)
+scale = Vector2(0.1260, 0.1260)
+texture = ExtResource("10_tex")
+offset = Vector2(0, -489.5)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Oak" type="Sprite2D" parent="Foliage"]
+texture_filter = 1
+position = Vector2(848.0, 384)
+scale = Vector2(0.16, 0.16)
+texture = SubResource("Atlas_12")
+offset = Vector2(0, -380)

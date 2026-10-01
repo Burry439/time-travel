@@ -1,0 +1,394 @@
+{
+ "id": "ambush",
+ "title": "Ambush",
+ "track": "advanced",
+ "order": 7,
+ "minutes": 6,
+ "teaches": [
+  "Several attackers",
+  "Talking someone down",
+  "Paying your way",
+  "Fighting, throwing, running",
+  "Yielding"
+ ],
+ "blurb": "A forest road to the ford, and two deserters who rob travellers.",
+ "after": "Not every fight has to be fought. Robbers want what you carry; a purse is cheaper than a wound.",
+ "refines": "Do robbers threaten, bargain and stand aside believably? Do fights with two feel fair, and does one falling make the other run?",
+ "map": "forest_road",
+ "start": {
+  "cell": [
+   20,
+   24
+  ]
+ },
+ "objective": "Reach the ford",
+ "goal": "Get to the ford alive",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_sken_deserter": {
+   "role": "deserter",
+   "step_ms": 420,
+   "goal": "lie in wait",
+   "anchors": [
+    [
+     17,
+     11,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_dobbs_deserter": {
+   "role": "deserter",
+   "step_ms": 520,
+   "goal": "lie in wait",
+   "anchors": [
+    [
+     23,
+     15,
+     "wait",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "purse_player",
+   "name": "small purse of coins",
+   "x": 20,
+   "y": 24,
+   "mass_kg": 0.2,
+   "materials": [
+    "leather",
+    "silver"
+   ],
+   "description": "Your purse: a dozen silver pennies, all you have in the world.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "player",
+   "carried_by": "player"
+  },
+  {
+   "id": "loaf_player",
+   "name": "loaf of bread",
+   "x": 20,
+   "y": 24,
+   "mass_kg": 0.5,
+   "materials": [
+    "bread"
+   ],
+   "description": "A round brown loaf for the road.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "player",
+   "carried_by": "player"
+  },
+  {
+   "id": "knife_player",
+   "name": "short knife",
+   "mass_kg": 0.2,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "Your own short knife, sharp enough for bread or worse.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "player",
+   "gear": {
+    "kind": "weapon",
+    "class": "knife",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.2,
+   "x": 20,
+   "y": 24,
+   "carried_by": "player"
+  },
+  {
+   "id": "stones_road",
+   "name": "fist-sized stones",
+   "x": 21,
+   "y": 21,
+   "mass_kg": 1.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A scatter of fist-sized stones on the road: good for throwing.",
+   "flags": [
+    "rigid"
+   ],
+   "count": 5
+  },
+  {
+   "id": "stick_road",
+   "name": "stout stick",
+   "x": 13,
+   "y": 19,
+   "mass_kg": 1.2,
+   "materials": [
+    "wood"
+   ],
+   "description": "A stout, straight fallen branch, good as a staff.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 1.6
+  },
+  {
+   "id": "sword_sken",
+   "name": "short sword",
+   "mass_kg": 1.0,
+   "materials": [
+    "iron",
+    "wood",
+    "leather"
+   ],
+   "description": "A notched soldier's short sword.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_sken_deserter",
+   "worn_by": "npc_sken_deserter",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "short_sword",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.6
+  },
+  {
+   "id": "jerkin_sken",
+   "name": "battered leather jerkin",
+   "mass_kg": 3.0,
+   "materials": [
+    "leather"
+   ],
+   "description": "A scuffed, cracked leather jerkin.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_sken_deserter",
+   "worn_by": "npc_sken_deserter",
+   "slots": [
+    "body"
+   ],
+   "gear": {
+    "kind": "armour",
+    "class": "leather",
+    "covers": [
+     "body"
+    ],
+    "quality": "fair"
+   }
+  },
+  {
+   "id": "club_dobbs",
+   "name": "knotted club",
+   "mass_kg": 1.8,
+   "materials": [
+    "wood"
+   ],
+   "description": "A heavy club cut from an oak branch, its knots left on.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_dobbs_deserter",
+   "worn_by": "npc_dobbs_deserter",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "club",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 0.8
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "The Ashwood road",
+   "cards": [
+    "…signal. The road through Ashwood, down to the ford. Old Holt warned you: two deserters rob travellers here.",
+    "You have a purse of silver, a loaf and a knife. You can pay, talk, fight, throw, run, or give up and lose your purse. Robbers would rather not fight; when one falls, the other may run.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "ford",
+   "title": "To the ford",
+   "cards": [
+    "Get to the ford alive."
+   ],
+   "task": "Reach the ford",
+   "check": {
+    "kind": "near",
+    "cell": [
+     20,
+     3
+    ],
+    "within": 3.0
+   },
+   "words_check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "held_by",
+      "thing": "purse_player",
+      "npc": "npc_sken_deserter"
+     },
+     {
+      "kind": "held_by",
+      "thing": "loaf_player",
+      "npc": "npc_dobbs_deserter"
+     },
+     {
+      "kind": "held_by",
+      "thing": "loaf_player",
+      "npc": "npc_sken_deserter"
+     }
+    ]
+   },
+   "triggers": [
+    {
+     "id": "ambush",
+     "when": {
+      "kind": "npc_near",
+      "npc": "npc_sken_deserter",
+      "within": 9.0
+     },
+     "do": [
+      {
+       "kind": "hold_up",
+       "npcs": [
+        "npc_sken_deserter",
+        "npc_dobbs_deserter"
+       ],
+       "says": {
+        "npc_sken_deserter": "Far enough, friend. Your purse, and anything else worth having.",
+        "npc_dobbs_deserter": "Sorry. Just do what he says."
+       }
+      }
+     ],
+     "skippable": false
+    }
+   ],
+   "done": "Through. However you managed it, you're alive, which is what counts.",
+   "help": [
+    "Robbers want what you carry, not a fight. Pay, bargain, frighten them, or reason with them.",
+    "If it comes to blows, keep your distance, raise your guard, or throw stones ({Q}). If you're beaten, yield and they'll take your purse and go."
+   ],
+   "playtest": [
+    {
+     "walk_to": [
+      20,
+      16
+     ]
+    },
+    {
+     "wait": 8
+    },
+    {
+     "do": "hold out my purse of coins and give it to Sken"
+    },
+    {
+     "say": "That's all I have. Let me pass.",
+     "to": "npc_sken_deserter"
+    },
+    {
+     "walk_to": [
+      20,
+      3
+     ]
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": [
+       20,
+       16
+      ]
+     },
+     {
+      "wait": 8
+     },
+     {
+      "do": "break my loaf in two and give half to Dobbs"
+     },
+     {
+      "say": "You're starving, both of you. There's work at the mill by Wendford for men who'll lift sacks, and the patrol's on the north road today. Let me by.",
+      "to": "npc_dobbs_deserter"
+     },
+     {
+      "walk_to": [
+       20,
+       3
+      ]
+     }
+    ],
+    "3": [
+     {
+      "equip": "knife_player",
+      "slot": "right"
+     },
+     {
+      "walk_to": [
+       20,
+       16
+      ]
+     },
+     {
+      "wait": 8
+     },
+     {
+      "say": "No. Stand aside.",
+      "to": "npc_sken_deserter"
+     },
+     {
+      "strike": "right",
+      "at": "npc_dobbs_deserter",
+      "repeat": 10
+     },
+     {
+      "walk_to": [
+       20,
+       3
+      ]
+     }
+    ]
+   },
+   "try_also": [
+    "give Sken my purse"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

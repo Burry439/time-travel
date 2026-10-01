@@ -1,0 +1,168 @@
+{
+ "id": "mire_lane",
+ "version": 1,
+ "name": "the lane at Sedge Bottom",
+ "notes": "Training level A6 (D-59): a sunken lane between hedges with a mire across it. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a sunken country lane of rutted brown mud between grassy verges, puddles in the ruts, a field of stubble beyond a hedge",
+  "pieces": {
+   "HedgeTop": "a thick green hawthorn hedge running across",
+   "HedgeBottom": "a thick green hawthorn hedge running across",
+   "Mire": "a deep, wide patch of sticky black mud and standing water across a lane",
+   "Fence": "a rickety split-rail wooden fence with a few rails loose",
+   "Logs": "a stack of round, barked logs",
+   "Boulder": "a big rounded grey boulder",
+   "Boards": "a pile of old wooden planks and boards",
+   "FieldGate": "a wooden five-bar field gate, standing open"
+  },
+  "bands": [
+   "HedgeTop",
+   "HedgeBottom"
+  ]
+ },
+ "size": [
+  38,
+  22
+ ],
+ "walk": [
+  0,
+  0,
+  38,
+  22
+ ],
+ "trees": {},
+ "buildings": [],
+ "obstacles": [
+  {
+   "name": "HedgeTop",
+   "cells": [
+    0,
+    0,
+    38,
+    4
+   ]
+  },
+  {
+   "name": "HedgeBottom",
+   "cells": [
+    0,
+    18,
+    15,
+    4
+   ]
+  },
+  {
+   "name": "FieldGate",
+   "cells": [
+    15,
+    19,
+    3,
+    1
+   ]
+  },
+  {
+   "name": "Mire",
+   "cells": [
+    16,
+    8,
+    6,
+    5
+   ]
+  },
+  {
+   "name": "Fence",
+   "cells": [
+    26,
+    15,
+    8,
+    1
+   ]
+  },
+  {
+   "name": "Logs",
+   "cells": [
+    6,
+    14,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Boulder",
+   "cells": [
+    24,
+    6,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Boards",
+   "cells": [
+    9,
+    5,
+    3,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "mire": {
+   "name": "the mire",
+   "cell": [
+    19,
+    14
+   ]
+  },
+  "logs": {
+   "name": "the log pile",
+   "cell": [
+    7,
+    17
+   ]
+  },
+  "fence": {
+   "name": "the fence",
+   "cell": [
+    29,
+    14
+   ]
+  },
+  "boulder": {
+   "name": "the boulder",
+   "cell": [
+    25,
+    9
+   ]
+  },
+  "boards": {
+   "name": "the boards",
+   "cell": [
+    10,
+    7
+   ]
+  },
+  "east": {
+   "name": "the lane east",
+   "cell": [
+    35,
+    10
+   ]
+  },
+  "west": {
+   "name": "the lane west",
+   "cell": [
+    2,
+    10
+   ]
+  },
+  "field": {
+   "name": "the field gate",
+   "cell": [
+    16,
+    18
+   ]
+  }
+ }
+}

@@ -1,0 +1,356 @@
+{
+ "id": "word_gets_around",
+ "title": "Word gets around",
+ "track": "advanced",
+ "order": 2,
+ "minutes": 7,
+ "teaches": [
+  "Reputation travels",
+  "Neighbours pass on news",
+  "Speaking for you to someone else",
+  "Help as evidence"
+ ],
+ "blurb": "A hamlet where the reeve gives her guest-stick only to strangers her neighbours speak well of.",
+ "after": "What you do travels further than you do: at the well, on errands, to the people who decide. Bad news travels faster.",
+ "refines": "Does news really spread in a few minutes (meetings, errands, vouching)? Do players see it travel?",
+ "map": "hamlet",
+ "start": {
+  "cell": [
+   20,
+   24
+  ]
+ },
+ "objective": "Earn the guest-stick",
+ "goal": "Earn Agna's guest-stick",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_agna_reeve": {
+   "role": "reeve",
+   "step_ms": 640,
+   "goal": "watch the green",
+   "anchors": [
+    [
+     17,
+     9,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_cob_woodman": {
+   "role": "woodcutter",
+   "step_ms": 520,
+   "goal": "fix his axe",
+   "anchors": [
+    [
+     11,
+     10,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_liss_weaver": {
+   "role": "weaver",
+   "step_ms": 460,
+   "goal": "nurse her hand",
+   "anchors": [
+    [
+     33,
+     10,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_fenn_old": {
+   "role": "old cottar",
+   "step_ms": 720,
+   "goal": "keep warm",
+   "anchors": [
+    [
+     6,
+     21,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_tib_child": {
+   "role": "boy",
+   "step_ms": 380,
+   "goal": "run about",
+   "anchors": [
+    [
+     23,
+     16,
+     "walk",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "stick_agna",
+   "name": "guest-stick",
+   "mass_kg": 0.4,
+   "materials": [
+    "wood"
+   ],
+   "description": "A carved hazel stick with Oakley's mark burnt into it. Whoever carries it is the hamlet's guest.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_agna_reeve",
+   "carried_by": "npc_agna_reeve"
+  },
+  {
+   "id": "axehead_cob",
+   "name": "axe head",
+   "x": 10,
+   "y": 9,
+   "mass_kg": 1.2,
+   "materials": [
+    "iron"
+   ],
+   "description": "Cob's axe head, sound and sharp, with the stub of a split handle still jammed in its eye.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_cob_woodman"
+  },
+  {
+   "id": "stave_cob",
+   "name": "ash stave",
+   "x": 12,
+   "y": 9,
+   "mass_kg": 1.5,
+   "materials": [
+    "wood"
+   ],
+   "description": "A straight, seasoned ash stave about a yard long: good handle wood.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_cob_woodman",
+   "length_m": 0.9
+  },
+  {
+   "id": "knife_cob",
+   "name": "drawknife",
+   "mass_kg": 0.6,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "Cob's two-handled drawknife, for shaving wood.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_cob_woodman",
+   "carried_by": "npc_cob_woodman"
+  },
+  {
+   "id": "branches_oak",
+   "name": "fallen oak branches",
+   "x": 25,
+   "y": 13,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Dry fallen branches under the oak: good firewood, free to anyone.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ]
+  },
+  {
+   "id": "linen_liss",
+   "name": "clean linen strips",
+   "x": 34,
+   "y": 10,
+   "mass_kg": 0.2,
+   "materials": [
+    "linen"
+   ],
+   "description": "Clean linen strips from Liss's loom, rolled up by her door.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_liss_weaver"
+  },
+  {
+   "id": "yarrow",
+   "name": "yarrow plants",
+   "x": 14,
+   "y": 19,
+   "mass_kg": 0.1,
+   "materials": [
+    "leaf"
+   ],
+   "description": "Feathery yarrow growing by the path. Old wives pack wounds with it to stop the bleeding.",
+   "flags": [
+    "flexible"
+   ]
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Oakley",
+   "cards": [
+    "…signal. A hamlet of five households. Reeve Agna keeps its guest-stick: whoever carries it is fed and housed by anyone here.",
+    "She gives it only to strangers the neighbours speak well of. People here talk: at the well, on errands, to Agna. What you do for one of them, all of them hear. What you do to one of them, too.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": "",
+   "on_done": [
+    {
+     "kind": "hurt",
+     "npc": "npc_liss_weaver",
+     "condition": {
+      "kind": "bleeding",
+      "area": "arm",
+      "severity": 5
+     }
+    }
+   ]
+  },
+  {
+   "id": "stick",
+   "title": "The guest-stick",
+   "cards": [
+    "Earn Agna's guest-stick. She won't give it on your word: let the hamlet's word reach her."
+   ],
+   "task": "Get Agna to give you the guest-stick",
+   "check": {
+    "kind": "has",
+    "named": [
+     "guest-stick"
+    ]
+   },
+   "words_check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "made",
+      "from": [
+       "stave_cob"
+      ]
+     },
+     {
+      "kind": "condition_treated",
+      "npc": "npc_liss_weaver",
+      "condition": "bleeding"
+     },
+     {
+      "kind": "held_by",
+      "thing": "branches_oak",
+      "npc": "npc_fenn_old"
+     }
+    ]
+   },
+   "done": "News travelled, and Agna heard it. People here carry what you do to everyone else, good and bad.",
+   "help": [
+    "Everyone here needs something: Cob's axe, Liss's hand, Old Fenn's cold hearth. Help one and they'll talk.",
+    "You can ask someone you've helped to put in a word with Agna. Or wait: they meet at the well and pass on the news."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_cob_woodman"
+    },
+    {
+     "say": "That axe looks broken. Can I help?",
+     "to": "npc_cob_woodman"
+    },
+    {
+     "say": "Yes, I'll make you a new handle.",
+     "to": "npc_cob_woodman"
+    },
+    {
+     "walk_to": "stave_cob"
+    },
+    {
+     "take": "stave_cob"
+    },
+    {
+     "take": "axehead_cob"
+    },
+    {
+     "do": "shave the ash stave into an axe handle with Cob's drawknife and fit the axe head on it"
+    },
+    {
+     "walk_to": "npc_cob_woodman"
+    },
+    {
+     "say": "Here's your axe, with a new handle.",
+     "to": "npc_cob_woodman"
+    },
+    {
+     "wait": 30
+    },
+    {
+     "walk_to": "npc_agna_reeve"
+    },
+    {
+     "say": "Good day, Reeve. I've been helping Cob. May I carry the guest-stick?",
+     "to": "npc_agna_reeve"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "linen_liss"
+     },
+     {
+      "say": "Your hand's bleeding badly. May I bind it with your linen?",
+      "to": "npc_liss_weaver"
+     },
+     {
+      "take": "linen_liss"
+     },
+     {
+      "walk_to": "npc_liss_weaver"
+     },
+     {
+      "do": "bind Liss's cut hand tightly with the clean linen strips"
+     },
+     {
+      "say": "Keep it raised. Would you tell Agna I'm no thief?",
+      "to": "npc_liss_weaver"
+     },
+     {
+      "wait": 40
+     },
+     {
+      "walk_to": "npc_agna_reeve"
+     },
+     {
+      "say": "Good day, Reeve. Liss will tell you I helped her. May I carry the guest-stick?",
+      "to": "npc_agna_reeve"
+     }
+    ]
+   },
+   "try_also": [
+    "make Cob a new axe handle from the stave"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

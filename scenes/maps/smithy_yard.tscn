@@ -1,0 +1,110 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Forge.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Anvil.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Trough.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Grindstone.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Dummy.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Scrap.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Bench.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Rack.png" id="9_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/smithy_yard/Woodpile.png" id="10_tex"]
+
+[node name="SmithyYardMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2752.0
+offset_bottom = 2368.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="Forge" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 288)
+scale = Vector2(0.3694, 0.3694)
+texture = ExtResource("2_tex")
+offset = Vector2(0, -502.5)
+
+[node name="Anvil" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(480.0, 288)
+scale = Vector2(0.1067, 0.1067)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -486.5)
+
+[node name="Trough" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(576.0, 288)
+scale = Vector2(0.1029, 0.1029)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -477.5)
+
+[node name="Grindstone" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(672.0, 288)
+scale = Vector2(0.0847, 0.0847)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -464.0)
+
+[node name="Dummy" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(912.0, 416)
+scale = Vector2(0.0494, 0.0494)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -504.5)
+
+[node name="Scrap" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(256.0, 480)
+scale = Vector2(0.1445, 0.1445)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -440.0)
+
+[node name="Bench" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(448.0, 512)
+scale = Vector2(0.1436, 0.1436)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -482.5)
+
+[node name="Rack" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(832.0, 160)
+scale = Vector2(0.1702, 0.1702)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -473.5)
+
+[node name="Woodpile" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(1008.0, 192)
+scale = Vector2(0.1237, 0.1237)
+texture = ExtResource("10_tex")
+offset = Vector2(0, -486.5)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

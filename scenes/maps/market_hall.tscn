@@ -1,0 +1,144 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Wall.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/PieStall.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/ClothStall.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Crates.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Barrels.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Oven.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Pillar.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/market_hall/Pillar2.png" id="9_tex"]
+
+[node name="MarketHallMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2688.0
+offset_bottom = 2304.0
+color = Color(0.07, 0.06, 0.05, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="WallTop" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = -64.0
+offset_right = 1088.0
+offset_bottom = 64.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallLeft" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 64.0
+offset_right = 32.0
+offset_bottom = 704.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallRight" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 1056.0
+offset_top = 64.0
+offset_right = 1088.0
+offset_bottom = 704.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallBottomLeft" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 32.0
+offset_top = 672.0
+offset_right = 480.0
+offset_bottom = 704.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="WallBottomRight" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 608.0
+offset_top = 672.0
+offset_right = 1056.0
+offset_bottom = 704.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="PieStall" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 192)
+scale = Vector2(0.2552, 0.2552)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -476.0)
+
+[node name="ClothStall" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(848.0, 192)
+scale = Vector2(0.2749, 0.2749)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -463.0)
+
+[node name="Crates" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(912.0, 512)
+scale = Vector2(0.1282, 0.1282)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -481.0)
+
+[node name="Barrels" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(128.0, 544)
+scale = Vector2(0.0754, 0.0754)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -453.0)
+
+[node name="Oven" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(96.0, 352)
+scale = Vector2(0.0808, 0.0808)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -470.0)
+
+[node name="Pillar" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(368.0, 352)
+scale = Vector2(0.0682, 0.0682)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -491.5)
+
+[node name="Pillar2" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(720.0, 352)
+scale = Vector2(0.0666, 0.0666)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -497.0)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

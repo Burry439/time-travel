@@ -1,0 +1,145 @@
+{
+ "id": "forest_road",
+ "version": 1,
+ "name": "the Ashwood road",
+ "notes": "Training level A7 (D-59): a road through a dark wood, down to a ford. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a rough dirt road through a forest: wheel ruts, roots, fallen leaves, patches of moss, dappled shade",
+  "pieces": {
+   "WoodsWest": "dense dark forest seen from above: a thick canopy of oak and holly with deep shadow",
+   "WoodsEast": "dense dark forest seen from above: a thick canopy of oak and holly with deep shadow",
+   "Ford": "a shallow, stony river ford with clear water running over pebbles, running across",
+   "Thicket": "a dense thicket of holly and bramble",
+   "Thicket2": "a dense thicket of hazel and bramble",
+   "Log": "a big fallen oak trunk lying across part of a road",
+   "Boulders": "two mossy boulders"
+  },
+  "bands": [
+   "WoodsWest",
+   "WoodsEast",
+   "Ford"
+  ]
+ },
+ "size": [
+  40,
+  26
+ ],
+ "walk": [
+  0,
+  0,
+  40,
+  26
+ ],
+ "trees": {},
+ "buildings": [],
+ "obstacles": [
+  {
+   "name": "WoodsWest",
+   "cells": [
+    0,
+    0,
+    12,
+    26
+   ]
+  },
+  {
+   "name": "WoodsEast",
+   "cells": [
+    28,
+    0,
+    12,
+    26
+   ]
+  },
+  {
+   "name": "Ford",
+   "cells": [
+    12,
+    0,
+    16,
+    2
+   ]
+  },
+  {
+   "name": "Thicket",
+   "cells": [
+    13,
+    9,
+    3,
+    3
+   ]
+  },
+  {
+   "name": "Thicket2",
+   "cells": [
+    24,
+    13,
+    3,
+    3
+   ]
+  },
+  {
+   "name": "Log",
+   "cells": [
+    15,
+    6,
+    7,
+    1
+   ]
+  },
+  {
+   "name": "Boulders",
+   "cells": [
+    20,
+    17,
+    2,
+    2
+   ]
+  }
+ ],
+ "places": {
+  "ford": {
+   "name": "the ford",
+   "cell": [
+    20,
+    3
+   ]
+  },
+  "thicket": {
+   "name": "the holly thicket",
+   "cell": [
+    17,
+    11
+   ]
+  },
+  "hazel": {
+   "name": "the hazel thicket",
+   "cell": [
+    23,
+    15
+   ]
+  },
+  "log": {
+   "name": "the fallen oak",
+   "cell": [
+    18,
+    8
+   ]
+  },
+  "boulders": {
+   "name": "the boulders",
+   "cell": [
+    19,
+    20
+   ]
+  },
+  "south": {
+   "name": "the road south",
+   "cell": [
+    20,
+    24
+   ]
+  }
+ }
+}

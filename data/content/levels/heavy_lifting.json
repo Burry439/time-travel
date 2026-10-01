@@ -1,0 +1,329 @@
+{
+ "id": "heavy_lifting",
+ "title": "Heavy lifting",
+ "track": "advanced",
+ "order": 6,
+ "minutes": 6,
+ "teaches": [
+  "An open problem",
+  "Levers and fulcrums",
+  "Asking for hands",
+  "Lightening the load"
+ ],
+ "blurb": "A cart sunk to its axles in a mire, a stubborn carter, and whatever is lying about the lane.",
+ "after": "Many ways shift a heavy thing. Hands help: people who are willing count. The world decides what really works.",
+ "refines": "Does the judge accept a sound way and refuse a weak one? Do players find people as aids (will_help)?",
+ "map": "mire_lane",
+ "start": {
+  "cell": [
+   3,
+   10
+  ]
+ },
+ "objective": "Free the cart",
+ "goal": "Get Wat's cart out of the mire",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_wat_carter": {
+   "role": "carter",
+   "step_ms": 560,
+   "goal": "free his cart",
+   "anchors": [
+    [
+     19,
+     14,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_dunna_farmer": {
+   "role": "farmer",
+   "step_ms": 500,
+   "goal": "clear the lane",
+   "anchors": [
+    [
+     22,
+     15,
+     "look",
+     600000
+    ]
+   ]
+  },
+  "npc_rook_boy": {
+   "role": "farm boy",
+   "step_ms": 380,
+   "goal": "watch the cart",
+   "anchors": [
+    [
+     17,
+     16,
+     "look",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "mire",
+   "name": "the mire",
+   "x": 18,
+   "y": 12,
+   "mass_kg": 5000.0,
+   "materials": [
+    "mud",
+    "water"
+   ],
+   "description": "Deep, sticky black mud across the lane. The cart's wheels are sunk in it to the axles.",
+   "flags": [
+    "container"
+   ],
+   "feature": "fixture",
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "cart_wat",
+   "name": "loaded cart",
+   "x": 19,
+   "y": 12,
+   "mass_kg": 520.0,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "Wat's heavy two-wheeled cart, sunk to the axles in the mire, with four barrels of cider roped aboard.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_wat_carter",
+   "installed_in": "mire"
+  },
+  {
+   "id": "barrels_wat",
+   "name": "barrels of cider",
+   "x": 20,
+   "y": 12,
+   "mass_kg": 240.0,
+   "materials": [
+    "wood",
+    "cider"
+   ],
+   "description": "Four full barrels of cider roped on the cart: a quarter of a ton between them.",
+   "flags": [
+    "rigid",
+    "container"
+   ],
+   "owner_id": "npc_wat_carter"
+  },
+  {
+   "id": "ox_wat",
+   "name": "Bess the ox",
+   "x": 22,
+   "y": 7,
+   "mass_kg": 600.0,
+   "materials": [
+    "ox"
+   ],
+   "description": "Bess, Wat's big brown ox, still yoked and unhitched from the cart, chewing patiently. She can pull a great weight if she's led.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_wat_carter"
+  },
+  {
+   "id": "rope_wat",
+   "name": "stout rope",
+   "mass_kg": 3.0,
+   "materials": [
+    "hemp"
+   ],
+   "description": "A stout hemp rope, ten yards of it.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_wat_carter",
+   "carried_by": "npc_wat_carter",
+   "length_m": 9.0
+  },
+  {
+   "id": "rail_loose",
+   "name": "loose fence rail",
+   "x": 28,
+   "y": 14,
+   "mass_kg": 9.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A long, stout split-oak fence rail, hanging loose from the fence: nobody's mended it in years.",
+   "flags": [
+    "rigid",
+    "fulcrum"
+   ],
+   "length_m": 3.5
+  },
+  {
+   "id": "stone_flat",
+   "name": "big flat stone",
+   "x": 25,
+   "y": 10,
+   "mass_kg": 18.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A big flat stone by the boulder: heavy, but one person could roll it.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "fulcrum"
+   ]
+  },
+  {
+   "id": "boards_lane",
+   "name": "old boards",
+   "x": 10,
+   "y": 7,
+   "mass_kg": 12.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A pile of old planks, grey and sound.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 2.0
+  },
+  {
+   "id": "logs_lane",
+   "name": "round logs",
+   "x": 7,
+   "y": 17,
+   "mass_kg": 15.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Round barked logs, each as thick as a leg: they'd roll.",
+   "flags": [
+    "rigid"
+   ],
+   "length_m": 1.5
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Sedge Bottom",
+   "cards": [
+    "…signal. A lane with a cart sunk to its axles in a mire, four barrels of cider aboard. Wat the carter has pushed till he's blue.",
+    "There are many ways to shift a heavy thing: levers, boards, rollers, a beast, a rope, lightening the load, or more hands. People who are willing to help count. The world decides if your way really works.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "free",
+   "title": "Out of the mire",
+   "cards": [
+    "Get Wat's cart out of the mire."
+   ],
+   "task": "Free the cart",
+   "check": {
+    "kind": "not",
+    "of": {
+     "kind": "installed",
+     "thing": "cart_wat"
+    }
+   },
+   "words_check": {
+    "kind": "not",
+    "of": {
+     "kind": "installed",
+     "thing": "cart_wat"
+    }
+   },
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_wat_carter",
+     "text": "She's out! Ha! Friend, you've saved my neck. If you're ever at the Ford Inn, the cider's on me."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_wat_carter",
+     "lead": "Wat says the cider's on him at the Ford Inn.",
+     "said": "The cider's on me at the Ford Inn."
+    }
+   ],
+   "done": "Out. How you did it was yours; whether it worked was the world's.",
+   "help": [
+    "Look at what's lying about ({right-click}): a long rail, a big flat stone, boards, logs, the ox, Wat's rope.",
+    "Or ask for hands: talk to Wat, Dunna and Rook. Those in the conversation with you will heave if you ask."
+   ],
+   "playtest": [
+    {
+     "walk_to": "rail_loose"
+    },
+    {
+     "take": "rail_loose"
+    },
+    {
+     "walk_to": "boards_lane"
+    },
+    {
+     "take": "boards_lane"
+    },
+    {
+     "walk_to": [
+      19,
+      14
+     ]
+    },
+    {
+     "do": "push the long fence rail under the cart's axle over the big flat stone as a fulcrum, lever the wheels up out of the mud, and shove the old boards under them, then roll the cart forward onto the boards"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "npc_wat_carter"
+     },
+     {
+      "say": "We'll never do it alone. Dunna, Rook, will you lend a hand? All of us at once.",
+      "to": "npc_wat_carter"
+     },
+     {
+      "say": "Dunna, will you push with us on three?",
+      "to": "npc_dunna_farmer"
+     },
+     {
+      "walk_to": [
+       19,
+       14
+      ]
+     },
+     {
+      "do": "with Wat, Dunna and Rook all heaving at the wheels and the tailboard together on three, rock the cart and push it up out of the mire"
+     }
+    ]
+   },
+   "try_also": [
+    "lever the cart out of the mud with the fence rail on the flat stone, and put boards under the wheels"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

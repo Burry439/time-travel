@@ -1,0 +1,167 @@
+{
+ "id": "ferry_landing",
+ "version": 1,
+ "name": "the ferry landing",
+ "notes": "Training level A1 (D-59): a ferry landing on the south bank of the Wend. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a muddy riverbank landing: trodden earth and gravel, reeds and tufts of grass, a cart track coming up from the bottom, scattered stones",
+  "pieces": {
+   "River": "a wide, slow, brown river with gentle ripples and reeds along its near edge",
+   "Jetty": "a short wooden jetty of weathered planks on posts, running out into water",
+   "Ferry": "a long flat wooden ferry raft with low rails, moored lengthwise in water, seen from above",
+   "Hut": "a small timber ferryman's cottage with a reed-thatched roof and a door facing down",
+   "Rack": "a long wooden rack with fishing nets hung over it to dry",
+   "Boat": "an old rowing boat lying upside down on the bank",
+   "Woodpile": "a neat stack of split firewood"
+  },
+  "bands": [
+   "River"
+  ]
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Hut",
+   "cells": [
+    3,
+    8,
+    7,
+    5
+   ],
+   "label": "Ferryman's cottage"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "River",
+   "cells": [
+    0,
+    0,
+    36,
+    6
+   ]
+  },
+  {
+   "name": "Jetty",
+   "cells": [
+    16,
+    3,
+    4,
+    4
+   ]
+  },
+  {
+   "name": "Ferry",
+   "cells": [
+    21,
+    0,
+    3,
+    6
+   ]
+  },
+  {
+   "name": "Rack",
+   "cells": [
+    12,
+    10,
+    5,
+    1
+   ]
+  },
+  {
+   "name": "Boat",
+   "cells": [
+    27,
+    12,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Woodpile",
+   "cells": [
+    5,
+    17,
+    3,
+    2
+   ]
+  }
+ ],
+ "places": {
+  "jetty": {
+   "name": "the jetty",
+   "cell": [
+    18,
+    8
+   ]
+  },
+  "door": {
+   "name": "the cottage door",
+   "cell": [
+    6,
+    14
+   ]
+  },
+  "rack": {
+   "name": "the net rack",
+   "cell": [
+    14,
+    12
+   ]
+  },
+  "boat": {
+   "name": "the old boat",
+   "cell": [
+    29,
+    15
+   ]
+  },
+  "woodpile": {
+   "name": "the woodpile",
+   "cell": [
+    6,
+    20
+   ]
+  },
+  "track": {
+   "name": "the cart track",
+   "cell": [
+    18,
+    21
+   ]
+  }
+ },
+ "entry": {
+  "place": "the far bank",
+  "decider": "Gorm",
+  "title": "",
+  "admit": "agrees to take the stranger across the river on the ferry",
+  "let_through": "agrees to take the stranger across the river on the ferry",
+  "let_in": "Gorm has agreed to take them across; they haven't gone aboard yet",
+  "arrived": "across the river",
+  "deed": [
+   "Across the river",
+   "Gorm agreed to take you over on his ferry."
+  ],
+  "fallback_admit": "Get aboard, then. Mind the gap.",
+  "fallback_vouch": "Leave it with me. I'll have a word with Gorm."
+ },
+ "after_arrest": {
+  "cell": [
+   18,
+   22
+  ],
+  "words": "throw you off the landing onto the cart track"
+ }
+}

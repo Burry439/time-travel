@@ -1,0 +1,100 @@
+{
+ "version": 1,
+ "notes": "Holt's notes on arms (training level A5, D-59): advice in the world, not a recipe system. Every attempt is still judged and nothing is keyed to these words.",
+ "title": "Sergeant Holt's Notes on Arms",
+ "intro": [
+  "Thirty years in the Duke's companies, and what I learned of making do. Most of it is: use what's lying about, and do it in the right order.",
+  "A good weapon starts as a good tool. Grind before you haft; soak hide before you bind."
+ ],
+ "chapters": [
+  {
+   "title": "Spears",
+   "recipes": [
+    {
+     "name": "A spearhead from a broken blade",
+     "need": [
+      "broken sword blade",
+      "the grindstone",
+      "the quenching trough"
+     ],
+     "steps": [
+      "Grind the broken end to a point on the grindstone, keeping it wet from the trough.",
+      "Grind both edges back from the point, so it cuts as well as stabs.",
+      "Leave a stub of tang to seat in the haft."
+     ],
+     "say": "grind the broken sword blade to a sharp spear point on the grindstone, keeping it wet",
+     "good_for": "The head of a spear. Useless on its own without a haft."
+    },
+    {
+     "name": "Hafting a spear",
+     "need": [
+      "a spearhead",
+      "ash pole",
+      "rawhide strips",
+      "the quenching trough"
+     ],
+     "steps": [
+      "Split the end of the pole a hand's length and seat the tang in it.",
+      "Soak the rawhide in the trough till it's soft.",
+      "Bind it tight round the split; it shrinks as it dries and grips like iron."
+     ],
+     "say": "seat the spearhead in the split end of the ash pole and bind it tight with soaked rawhide",
+     "good_for": "Reach. Keep them off you; a spear wins more fights than a sword."
+    }
+   ]
+  },
+  {
+   "title": "Keeping blows off",
+   "recipes": [
+    {
+     "name": "A quilted jack",
+     "need": [
+      "bolt of linen",
+      "sack of wool",
+      "needle and thread"
+     ],
+     "steps": [
+      "Cut the linen into a front, a back and sleeves, two layers each.",
+      "Stuff wool between the layers, thick as your thumb.",
+      "Quilt it in rows a finger apart so the stuffing can't slip."
+     ],
+     "say": "cut the linen into two layers, stuff the wool between them and quilt it into a padded jack",
+     "good_for": "Turns a glancing cut and softens a club. Hot to wear."
+    },
+    {
+     "name": "A buckler",
+     "need": [
+      "oak boards",
+      "rawhide strips",
+      "the quenching trough"
+     ],
+     "steps": [
+      "Lay the boards edge to edge and cut a round from them.",
+      "Soak the rawhide and bind the rim, crossing on the back for a grip.",
+      "Let it dry hard."
+     ],
+     "say": "cut a round buckler from the oak boards and bind its rim with soaked rawhide",
+     "good_for": "A small shield for the left fist: knock blows aside."
+    }
+   ]
+  },
+  {
+   "title": "Proving it",
+   "recipes": [
+    {
+     "name": "On the dummy",
+     "need": [
+      "what you made"
+     ],
+     "steps": [
+      "Put it on; take it up.",
+      "Go at the dummy as if it meant you harm.",
+      "If it holds and bites, it'll do. If it doesn't, better to learn it on straw."
+     ],
+     "say": "thrust my spear into the straw dummy to test it",
+     "good_for": "Knowing before it matters."
+    }
+   ]
+  }
+ ]
+}

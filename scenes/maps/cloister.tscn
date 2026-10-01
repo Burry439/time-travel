@@ -1,0 +1,123 @@
+[gd_scene load_steps=1 format=3]
+
+[node name="CloisterMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2688.0
+offset_bottom = 2368.0
+color = Color(0.07, 0.06, 0.05, 1)
+
+[node name="Floor" type="ColorRect" parent="Map"]
+z_index = -20
+offset_right = 1088.0
+offset_bottom = 768.0
+color = Color(0.45, 0.4, 0.28, 1)
+
+[node name="WallTop" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1088.0
+offset_bottom = 64.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="WallLeft" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 64.0
+offset_right = 32.0
+offset_bottom = 768.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="WallRight" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 1056.0
+offset_top = 64.0
+offset_right = 1088.0
+offset_bottom = 768.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="WallBottomLeft" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 32.0
+offset_top = 736.0
+offset_right = 480.0
+offset_bottom = 768.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="WallBottomRight" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 608.0
+offset_top = 736.0
+offset_right = 1056.0
+offset_bottom = 768.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Well" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 512.0
+offset_top = 320.0
+offset_right = 576.0
+offset_bottom = 384.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Hives" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 352.0
+offset_top = 224.0
+offset_right = 448.0
+offset_bottom = 256.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Herbs" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 640.0
+offset_top = 416.0
+offset_right = 736.0
+offset_bottom = 480.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Lectern" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 128.0
+offset_top = 128.0
+offset_right = 192.0
+offset_bottom = 160.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Barrels" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 864.0
+offset_top = 448.0
+offset_right = 992.0
+offset_bottom = 512.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Bench" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 160.0
+offset_top = 480.0
+offset_right = 288.0
+offset_bottom = 512.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="Basket" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 928.0
+offset_top = 96.0
+offset_right = 960.0
+offset_bottom = 128.0
+color = Color(0.29, 0.2, 0.13, 1)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

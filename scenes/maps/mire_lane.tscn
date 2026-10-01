@@ -1,0 +1,107 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/HedgeTop.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/HedgeBottom.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/FieldGate.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/Mire.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/Fence.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/Logs.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/Boulder.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/mire_lane/Boards.png" id="9_tex"]
+
+[node name="MireLaneMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1600.0
+offset_right = 2816.0
+offset_bottom = 2304.0
+color = Color(0.26, 0.31, 0.17, 1)
+
+[node name="Ground" type="Sprite2D" parent="Map"]
+z_index = -20
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
+
+[node name="HedgeTop" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1216.0
+offset_bottom = 128.0
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="HedgeBottom" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 0.0
+offset_top = 576.0
+offset_right = 480.0
+offset_bottom = 704.0
+texture = ExtResource("3_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="FieldGate" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(528.0, 640)
+scale = Vector2(0.1013, 0.1013)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -411.5)
+
+[node name="Mire" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(608.0, 416)
+scale = Vector2(0.2362, 0.2362)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -502.0)
+
+[node name="Fence" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(960.0, 512)
+scale = Vector2(0.2773, 0.2773)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -267.0)
+
+[node name="Logs" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(240.0, 512)
+scale = Vector2(0.1288, 0.1288)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -482.5)
+
+[node name="Boulder" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(800.0, 256)
+scale = Vector2(0.0739, 0.0739)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -470.0)
+
+[node name="Boards" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(336.0, 192)
+scale = Vector2(0.1149, 0.1149)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -446.5)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true

@@ -1,0 +1,208 @@
+{
+ "id": "hamlet",
+ "version": 1,
+ "name": "Oakley hamlet",
+ "notes": "Training level A2 (D-59): a hamlet of five households round a green with a well. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a village green of rough grass worn into paths between cottages, a muddy lane coming in from the bottom, daisies, a few chickens' scratchings and puddles",
+  "pieces": {
+   "ReeveHouse": "a long timber-framed farmhouse with whitewashed walls, a thatched roof and a door facing down",
+   "Cob": "a small log cottage with a turf roof and a door facing down",
+   "Liss": "a small whitewashed cottage with a thatched roof and a loom visible through a window, door facing down",
+   "Fenn": "a tiny, crooked old cottage of wattle and daub with a sagging thatch and a door facing down",
+   "Well": "a round stone village well with a wooden windlass and a bucket",
+   "Bench": "a weathered wooden bench",
+   "Woodpile": "a woodcutter's woodpile with a chopping block",
+   "Sty": "a small pigsty of wattle fencing with a muddy floor",
+   "Haystack": "a round haystack"
+  }
+ },
+ "size": [
+  40,
+  26
+ ],
+ "walk": [
+  0,
+  0,
+  40,
+  26
+ ],
+ "trees": {
+  "oak": {
+   "name": "oak tree",
+   "mass_kg": 2000.0,
+   "length_m": 12.0,
+   "description": "The great oak on the green, where the hamlet meets on feast days."
+  }
+ },
+ "buildings": [
+  {
+   "name": "ReeveHouse",
+   "cells": [
+    16,
+    2,
+    9,
+    5
+   ],
+   "label": "The reeve's house"
+  },
+  {
+   "name": "Cob",
+   "cells": [
+    3,
+    5,
+    6,
+    4
+   ],
+   "label": "Cob's cottage"
+  },
+  {
+   "name": "Liss",
+   "cells": [
+    31,
+    5,
+    6,
+    4
+   ],
+   "label": "Liss's cottage"
+  },
+  {
+   "name": "Fenn",
+   "cells": [
+    4,
+    16,
+    5,
+    4
+   ],
+   "label": "Old Fenn's cottage"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Well",
+   "cells": [
+    19,
+    12,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Bench",
+   "cells": [
+    16,
+    8,
+    3,
+    1
+   ]
+  },
+  {
+   "name": "Woodpile",
+   "cells": [
+    10,
+    6,
+    2,
+    3
+   ]
+  },
+  {
+   "name": "Sty",
+   "cells": [
+    29,
+    16,
+    4,
+    3
+   ]
+  },
+  {
+   "name": "Haystack",
+   "cells": [
+    34,
+    13,
+    3,
+    3
+   ]
+  },
+  {
+   "name": "Oak",
+   "cells": [
+    26,
+    11,
+    1,
+    1
+   ],
+   "tree": "oak",
+   "id": "tree_oak_green"
+  }
+ ],
+ "places": {
+  "bench": {
+   "name": "the reeve's bench",
+   "cell": [
+    17,
+    9
+   ]
+  },
+  "well": {
+   "name": "the well",
+   "cell": [
+    20,
+    14
+   ]
+  },
+  "cob": {
+   "name": "Cob's woodpile",
+   "cell": [
+    11,
+    10
+   ]
+  },
+  "liss": {
+   "name": "Liss's door",
+   "cell": [
+    33,
+    10
+   ]
+  },
+  "fenn": {
+   "name": "Old Fenn's door",
+   "cell": [
+    6,
+    21
+   ]
+  },
+  "sty": {
+   "name": "the pigsty",
+   "cell": [
+    30,
+    20
+   ]
+  },
+  "green": {
+   "name": "the green",
+   "cell": [
+    23,
+    16
+   ]
+  },
+  "lane": {
+   "name": "the lane",
+   "cell": [
+    20,
+    24
+   ]
+  }
+ },
+ "entry": {
+  "decider": "Reeve Agna",
+  "title": "Reeve"
+ },
+ "after_arrest": {
+  "cell": [
+   20,
+   24
+  ],
+  "words": "see you off down the lane"
+ }
+}

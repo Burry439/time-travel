@@ -1,0 +1,207 @@
+{
+ "id": "cloister",
+ "version": 1,
+ "name": "the cloister of St Ebba's",
+ "notes": "Training level A9 (D-59): a small monastery's cloister round a garden, indoors. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "indoor",
+  "ground": "a monastery cloister seen from above: a covered walk of worn sandstone flags round a square garden of grass, herbs and a gravel path",
+  "pieces": {
+   "Wall": "the inside wall of a monastery cloister: pale sandstone with a row of round Romanesque arches",
+   "Well": "a small round stone well with a wooden cover",
+   "Hives": "three straw beehives (skeps) on a low wooden stand, one of them knocked over on its side",
+   "Herbs": "a raised bed of herbs: sage, rue and lavender",
+   "Lectern": "a carved wooden lectern with a big book on it",
+   "Barrels": "a row of wine barrels on their sides",
+   "Bench": "a long stone bench",
+   "Basket": "a covered wicker basket by a small arched door"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  34,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  34,
+  24
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    34,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    22
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    33,
+    2,
+    1,
+    22
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    23,
+    14,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    19,
+    23,
+    14,
+    1
+   ],
+   "label": ""
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Well",
+   "cells": [
+    16,
+    10,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Hives",
+   "cells": [
+    11,
+    7,
+    3,
+    1
+   ]
+  },
+  {
+   "name": "Herbs",
+   "cells": [
+    20,
+    13,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Lectern",
+   "cells": [
+    4,
+    4,
+    2,
+    1
+   ]
+  },
+  {
+   "name": "Barrels",
+   "cells": [
+    27,
+    14,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Bench",
+   "cells": [
+    5,
+    15,
+    4,
+    1
+   ]
+  },
+  {
+   "name": "Basket",
+   "cells": [
+    29,
+    3,
+    1,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "hives": {
+   "name": "the beehives",
+   "cell": [
+    12,
+    9
+   ]
+  },
+  "well": {
+   "name": "the well",
+   "cell": [
+    17,
+    13
+   ]
+  },
+  "herbs": {
+   "name": "the herb bed",
+   "cell": [
+    21,
+    16
+   ]
+  },
+  "lectern": {
+   "name": "the lectern",
+   "cell": [
+    5,
+    6
+   ]
+  },
+  "cellar": {
+   "name": "the cellar door",
+   "cell": [
+    28,
+    5
+   ]
+  },
+  "barrels": {
+   "name": "the wine barrels",
+   "cell": [
+    28,
+    17
+   ]
+  },
+  "bench": {
+   "name": "the stone bench",
+   "cell": [
+    6,
+    17
+   ]
+  },
+  "gate": {
+   "name": "the gate",
+   "cell": [
+    16,
+    19
+   ]
+  }
+ }
+}

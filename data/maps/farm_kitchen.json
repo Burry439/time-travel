@@ -1,0 +1,180 @@
+{
+ "id": "farm_kitchen",
+ "version": 1,
+ "name": "the kitchen at Edric's farm",
+ "notes": "Training level A8 (D-59): a farmhouse kitchen, indoors. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "indoor",
+  "ground": "a farmhouse kitchen floor of old red quarry tiles, swept, with a rag rug or two",
+  "pieces": {
+   "Wall": "the inside wall of a farmhouse kitchen: whitewashed stone with dark oak beams, copper pans and bunches of dried herbs hanging",
+   "Hearth": "a wide stone kitchen hearth with a low fire and a black iron pot hanging over it",
+   "Table": "a long, scrubbed oak kitchen table with bread, a jug and wooden bowls on it",
+   "Dresser": "a tall oak dresser with plates and a carved wooden box on its shelf",
+   "Bin": "a big wooden flour bin",
+   "Settle": "a high-backed wooden settle bench"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  30,
+  20
+ ],
+ "walk": [
+  0,
+  0,
+  30,
+  20
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    30,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    18
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    29,
+    2,
+    1,
+    18
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    19,
+    12,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    17,
+    19,
+    12,
+    1
+   ],
+   "label": ""
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Hearth",
+   "cells": [
+    11,
+    2,
+    7,
+    2
+   ]
+  },
+  {
+   "name": "Table",
+   "cells": [
+    9,
+    8,
+    10,
+    2
+   ]
+  },
+  {
+   "name": "Dresser",
+   "cells": [
+    24,
+    2,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Bin",
+   "cells": [
+    2,
+    3,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "Settle",
+   "cells": [
+    3,
+    11,
+    1,
+    4
+   ]
+  }
+ ],
+ "places": {
+  "hearth": {
+   "name": "the hearth",
+   "cell": [
+    14,
+    5
+   ]
+  },
+  "table_n": {
+   "name": "the head of the table",
+   "cell": [
+    14,
+    7
+   ]
+  },
+  "table_w": {
+   "name": "the near end of the table",
+   "cell": [
+    12,
+    7
+   ]
+  },
+  "table_e": {
+   "name": "the far end of the table",
+   "cell": [
+    16,
+    7
+   ]
+  },
+  "dresser": {
+   "name": "the dresser",
+   "cell": [
+    25,
+    5
+   ]
+  },
+  "settle": {
+   "name": "the settle",
+   "cell": [
+    5,
+    13
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    14,
+    16
+   ]
+  }
+ }
+}

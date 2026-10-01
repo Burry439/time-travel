@@ -1,0 +1,187 @@
+{
+ "notes": "People of training level A3 (D-59).",
+ "npcs": {
+  "npc_sefa_priestess": {
+   "name": "Sefa",
+   "age": 61,
+   "role": "priestess",
+   "look": "A tall, serene woman in her sixties with long silver hair loose down her back, a white wool robe with a blue-dyed hem, a necklace of lake pebbles and bare feet.",
+   "look_kind": "old",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Serene, curious and devout; sees the Lady of the Lake's hand in every wonder, and is moved by it rather than frightened.",
+   "values": "the Lady of the Lake, wonder, kindness to the poor",
+   "fears": "the Lady's anger, the shrine forgotten",
+   "authority": "Keeps the shrine of the Lady of the Lake.",
+   "tones": [
+    "warm",
+    "shrewd"
+   ],
+   "relations": {
+    "npc_brann_fisher": "Brann the fisherman"
+   },
+   "family": [],
+   "regard": {
+    "trust": 0.3,
+    "suspicion": 0.15
+   },
+   "concerns": "The shrine's lamp went out in last night's wind and she has no flint: the fire must be lit anew.",
+   "refers": [],
+   "knowledge": {
+    "lamp": {
+     "text": "The shrine lamp must be lit with new fire, and she has no flint.",
+     "line": "The Lady's lamp went out. New fire, it must be, and I have no flint.",
+     "trusted": false,
+     "lead": "Sefa needs new fire to light the shrine's lamp."
+    },
+    "stone": {
+     "text": "The black stone on the altar pulls iron to it: a gift of the Lady, they say.",
+     "line": "That black stone? It draws iron to itself. The Lady's gift, the old ones said.",
+     "trusted": false,
+     "lead": "The black stone in Sefa's shrine draws iron to it."
+    }
+   },
+   "persuaded_by": "wonder, and kindness",
+   "style": "Slow and warm; speaks of the Lady as of a neighbour.",
+   "mood": "peaceful",
+   "voice": {
+    "samples": [
+     "The Lady sends us wonders, if we've eyes for them.",
+     "Show me, child.",
+     "Blessed. Truly blessed.",
+     "Brann sees witches under every stone, poor man."
+    ],
+    "habits": "Touches her pebble necklace; blesses people; asks how things work, then answers herself.",
+    "never": "calls anything witchcraft",
+    "greeting": "Smiles: 'Welcome to the Lady's shore, traveller.'"
+   },
+   "goals": [
+    "Relight the shrine lamp with new fire",
+    "Keep the shrine"
+   ],
+   "secrets": [],
+   "likes": "wonders, light, the lake",
+   "dislikes": "cruelty, waste",
+   "opinions": {
+    "npc_brann_fisher": {
+     "text": "a good man, too quick to fear",
+     "warmth": 0.4
+    }
+   },
+   "tasks": [
+    {
+     "id": "shrine",
+     "place": "shrine",
+     "activity": "work",
+     "dwell_s": 90,
+     "doing": "tending the shrine"
+    },
+    {
+     "id": "path",
+     "place": "path",
+     "activity": "walk",
+     "dwell_s": 20,
+     "doing": "walking the path"
+    }
+   ],
+   "superstition": {
+    "kind": "reverent",
+    "text": "Sefa sees the Lady of the Lake's hand in every wonder, and calls it a blessing."
+   }
+  },
+  "npc_brann_fisher": {
+   "name": "Brann",
+   "age": 38,
+   "role": "fisherman",
+   "look": "A lean, weather-beaten man in his late thirties with black stubble and wary eyes, a knitted grey cap, an oiled smock over a patched shirt, sea boots and a gutting knife at his belt.",
+   "look_kind": "man",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Hard-working, superstitious and quick to fear what he doesn't understand; ashamed of it after. Loyal once he trusts someone.",
+   "values": "his catch, his boat, plain things he understands",
+   "fears": "witchcraft, drowning, bad luck",
+   "authority": "None.",
+   "tones": [
+    "frightened",
+    "angry"
+   ],
+   "relations": {
+    "npc_sefa_priestess": "Mother Sefa, the priestess"
+   },
+   "family": [],
+   "regard": {
+    "trust": 0.25,
+    "suspicion": 0.35
+   },
+   "concerns": "His mother told him of a witch who made fire from water; he watches strangers for anything uncanny. His fish won't dry if the weather turns.",
+   "refers": [],
+   "knowledge": {
+    "hooks": {
+     "text": "He keeps iron fish hooks and cork floats in his hut.",
+     "line": "Hooks and floats? In the hut, on the shelf. Why?",
+     "trusted": false,
+     "lead": "Brann keeps iron fish hooks and cork floats in his hut."
+    },
+    "witch": {
+     "text": "When he was a boy a witch made fire from water at Glasmere, and the village burned her.",
+     "line": "My mother saw it. A witch made fire out of water. They burned her for it.",
+     "trusted": false,
+     "lead": "Brann believes a witch once made fire from water at Glasmere."
+    }
+   },
+   "persuaded_by": "seeing how a thing works, step by step, with his own hands",
+   "style": "Short, suspicious, plain; crosses himself when scared.",
+   "mood": "wary",
+   "voice": {
+    "samples": [
+     "What's that you're doing?",
+     "That's not natural.",
+     "Show me how. Slowly.",
+     "Hm. Well. If it's just glass and sun..."
+    ],
+    "habits": "Watches strangers' hands; makes the sign against evil; mends nets.",
+    "never": "trusts what he can't understand",
+    "greeting": "Eyes you: 'Who are you, then?'"
+   },
+   "goals": [
+    "Land and dry his catch",
+    "Keep bad luck off his boat"
+   ],
+   "secrets": [],
+   "likes": "plain dealing, a good catch",
+   "dislikes": "tricks, strangers' charms, Sefa's fuss",
+   "opinions": {
+    "npc_sefa_priestess": {
+     "text": "holy, but she'd bless a turnip if it glowed",
+     "warmth": 0.3
+    }
+   },
+   "tasks": [
+    {
+     "id": "racks",
+     "place": "racks",
+     "activity": "work",
+     "dwell_s": 70,
+     "doing": "hanging fish on the racks"
+    },
+    {
+     "id": "hut",
+     "place": "hut",
+     "activity": "work",
+     "dwell_s": 40,
+     "doing": "at his hut"
+    }
+   ],
+   "superstition": {
+    "kind": "wary",
+    "text": "Brann fears witchcraft: anything uncanny he sees done frightens him and turns him against whoever did it, unless he understands how it works."
+   }
+  }
+ }
+}

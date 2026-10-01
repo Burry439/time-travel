@@ -1,0 +1,207 @@
+{
+ "id": "market_hall",
+ "version": 1,
+ "name": "the Wendford market hall",
+ "notes": "Training level A4 (D-59): a covered market hall at closing time, indoors. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "indoor",
+  "ground": "the floor of a covered market hall: big worn flagstones with straw and a few dropped cabbage leaves",
+  "pieces": {
+   "Wall": "the inside of a long market hall's timber-framed wall with whitewashed panels and a few hanging lanterns",
+   "PieStall": "a market stall seen from above: a trestle counter with rows of golden meat pies and a pie basket, under a striped awning",
+   "ClothStall": "a market stall seen from above: a trestle with folded bolts of coloured wool cloth under a striped awning",
+   "Crates": "a stack of wooden crates",
+   "Barrels": "two upright wooden barrels",
+   "Oven": "a squat brick bread oven with a dark mouth and a woodpile beside it",
+   "Pillar": "a thick square oak pillar",
+   "Pillar2": "a thick square oak pillar"
+  },
+  "wall_rise": 2
+ },
+ "size": [
+  34,
+  22
+ ],
+ "walk": [
+  0,
+  0,
+  34,
+  22
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "WallTop",
+   "cells": [
+    0,
+    0,
+    34,
+    2
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallLeft",
+   "cells": [
+    0,
+    2,
+    1,
+    20
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallRight",
+   "cells": [
+    33,
+    2,
+    1,
+    20
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomLeft",
+   "cells": [
+    1,
+    21,
+    14,
+    1
+   ],
+   "label": ""
+  },
+  {
+   "name": "WallBottomRight",
+   "cells": [
+    19,
+    21,
+    14,
+    1
+   ],
+   "label": ""
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "PieStall",
+   "cells": [
+    4,
+    4,
+    7,
+    2
+   ]
+  },
+  {
+   "name": "ClothStall",
+   "cells": [
+    23,
+    4,
+    7,
+    2
+   ]
+  },
+  {
+   "name": "Crates",
+   "cells": [
+    27,
+    14,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Barrels",
+   "cells": [
+    3,
+    14,
+    2,
+    3
+   ]
+  },
+  {
+   "name": "Oven",
+   "cells": [
+    2,
+    8,
+    2,
+    3
+   ]
+  },
+  {
+   "name": "Pillar",
+   "cells": [
+    11,
+    10,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Pillar2",
+   "cells": [
+    22,
+    10,
+    1,
+    1
+   ]
+  }
+ ],
+ "places": {
+  "pies": {
+   "name": "the pie stall",
+   "cell": [
+    7,
+    7
+   ]
+  },
+  "cloth": {
+   "name": "the cloth stall",
+   "cell": [
+    26,
+    7
+   ]
+  },
+  "oven": {
+   "name": "the oven",
+   "cell": [
+    5,
+    10
+   ]
+  },
+  "crates": {
+   "name": "the crates",
+   "cell": [
+    26,
+    17
+   ]
+  },
+  "barrels": {
+   "name": "the barrels",
+   "cell": [
+    6,
+    16
+   ]
+  },
+  "door": {
+   "name": "the door",
+   "cell": [
+    16,
+    19
+   ]
+  },
+  "middle": {
+   "name": "the middle of the hall",
+   "cell": [
+    16,
+    12
+   ]
+  }
+ },
+ "after_arrest": {
+  "cell": [
+   16,
+   20
+  ],
+  "words": "throw you out into the rain"
+ }
+}

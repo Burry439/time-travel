@@ -1,0 +1,427 @@
+{
+ "id": "a_wonder",
+ "title": "A wonder",
+ "track": "advanced",
+ "order": 3,
+ "minutes": 7,
+ "teaches": [
+  "Showing what you know",
+  "Awe and fear",
+  "Explaining how it works",
+  "Standing with two people"
+ ],
+ "blurb": "A lake shrine at bright noon. The priestess needs new fire; the fisherman fears witchcraft.",
+ "after": "What you know is a wonder here. To some it's holy, to others it's witchcraft; shown step by step, it's simply knowledge.",
+ "refines": "Do the judge's wonder ratings (ordinary, clever, uncanny) match what players show? Does fear follow uncanny deeds, and does explaining calm it?",
+ "map": "lake_shrine",
+ "start": {
+  "cell": [
+   18,
+   22
+  ]
+ },
+ "objective": "Show them a wonder",
+ "goal": "Show them something new, and leave them friends",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 120,
+ "cast": {
+  "npc_sefa_priestess": {
+   "role": "priestess",
+   "step_ms": 560,
+   "goal": "tend the shrine",
+   "anchors": [
+    [
+     7,
+     12,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_brann_fisher": {
+   "role": "fisherman",
+   "step_ms": 480,
+   "goal": "dry his catch",
+   "anchors": [
+    [
+     20,
+     11,
+     "work",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "globe_sefa",
+   "name": "round glass flask",
+   "x": 6,
+   "y": 13,
+   "mass_kg": 0.4,
+   "materials": [
+    "glass"
+   ],
+   "description": "A clear, round glass flask the size of a fist, a rare and precious thing. Sefa keeps holy water in it.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_sefa_priestess",
+   "capacity_l": 0.5
+  },
+  {
+   "id": "lamp_sefa",
+   "name": "shrine lamp",
+   "x": 8,
+   "y": 12,
+   "mass_kg": 0.6,
+   "materials": [
+    "clay",
+    "oil"
+   ],
+   "description": "A clay oil lamp with a linen wick, cold. The shrine's lamp: it went out in the night.",
+   "flags": [
+    "container",
+    "combustible"
+   ],
+   "owner_id": "npc_sefa_priestess"
+  },
+  {
+   "id": "stone_sefa",
+   "name": "black lodestone",
+   "x": 5,
+   "y": 12,
+   "mass_kg": 0.5,
+   "materials": [
+    "lodestone"
+   ],
+   "description": "A heavy black stone from the shrine altar that pulls iron to it.",
+   "flags": [
+    "rigid",
+    "magnet_source"
+   ],
+   "owner_id": "npc_sefa_priestess"
+  },
+  {
+   "id": "bowl_sefa",
+   "name": "offering bowl",
+   "x": 9,
+   "y": 13,
+   "mass_kg": 0.3,
+   "materials": [
+    "wood"
+   ],
+   "description": "A shallow wooden offering bowl.",
+   "flags": [
+    "rigid",
+    "container",
+    "watertight"
+   ],
+   "owner_id": "npc_sefa_priestess",
+   "capacity_l": 1.0
+  },
+  {
+   "id": "hooks_brann",
+   "name": "iron fish hooks",
+   "x": 28,
+   "y": 12,
+   "mass_kg": 0.05,
+   "materials": [
+    "iron"
+   ],
+   "description": "A few small iron fish hooks on a twist of thread.",
+   "flags": [
+    "rigid",
+    "sharp_edge",
+    "ferromagnetic"
+   ],
+   "owner_id": "npc_brann_fisher"
+  },
+  {
+   "id": "floats_brann",
+   "name": "cork floats",
+   "x": 30,
+   "y": 12,
+   "mass_kg": 0.1,
+   "materials": [
+    "cork"
+   ],
+   "description": "Light cork floats for nets.",
+   "flags": [
+    "flexible",
+    "floats"
+   ],
+   "owner_id": "npc_brann_fisher"
+  },
+  {
+   "id": "reedfluff",
+   "name": "dry reed fluff",
+   "x": 15,
+   "y": 19,
+   "mass_kg": 0.05,
+   "materials": [
+    "reed"
+   ],
+   "description": "A handful of dry, fluffy seed heads from the rushes: it would catch the least spark.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ]
+  },
+  {
+   "id": "driftwood_lake",
+   "name": "dry driftwood sticks",
+   "x": 24,
+   "y": 20,
+   "mass_kg": 2.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Dry, sun-bleached driftwood sticks.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ]
+  },
+  {
+   "id": "lake_water",
+   "name": "the lake",
+   "x": 18,
+   "y": 6,
+   "mass_kg": 100000.0,
+   "materials": [
+    "water"
+   ],
+   "description": "Glasmere: cold, clear water, bright in the noon sun.",
+   "flags": [
+    "container",
+    "watertight"
+   ],
+   "capacity_l": 100000.0,
+   "water_l": 100000.0,
+   "no_sprite": true,
+   "art": "scene"
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Glasmere",
+   "cards": [
+    "…signal. A lake shrine at bright noon, and a fisherman's hut. Nothing here has ever seen a lens, a compass, a match.",
+    "What you know is a wonder to them. To Mother Sefa a wonder is a blessing. To Brann it may be witchcraft, unless he understands it.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "wonder",
+   "title": "A wonder",
+   "cards": [
+    "Show them both something they've never seen, that works: with what's here, and what you know."
+   ],
+   "task": "Show Sefa and Brann something new that works",
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "shown",
+      "npc": "npc_sefa_priestess"
+     },
+     {
+      "kind": "shown",
+      "npc": "npc_brann_fisher"
+     }
+    ]
+   },
+   "words_check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "shown",
+      "npc": "npc_sefa_priestess"
+     },
+     {
+      "kind": "shown",
+      "npc": "npc_brann_fisher"
+     },
+     {
+      "kind": "thing_with",
+      "flag": "magnetized"
+     },
+     {
+      "kind": "made",
+      "named": [
+       "fire",
+       "flame"
+      ],
+      "ever": true
+     }
+    ]
+   },
+   "done": "They've seen it. Now see what it did to each of them.",
+   "help": [
+    "Sefa needs new fire for her lamp, and has no flint. Is there sun enough here to make fire some other way? Her round glass flask is the clearest thing for miles.",
+    "Or her black stone pulls iron, and Brann has iron hooks. You know what a magnetised needle does.",
+    "Show it to them: say what you're doing, or let it speak for itself."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_sefa_priestess"
+    },
+    {
+     "say": "Mother, may I borrow your glass flask to bring new fire for your lamp?",
+     "to": "npc_sefa_priestess"
+    },
+    {
+     "take": "globe_sefa"
+    },
+    {
+     "take": "reedfluff"
+    },
+    {
+     "walk_to": "lake_water"
+    },
+    {
+     "do": "fill the round glass flask with clear lake water"
+    },
+    {
+     "walk_to": "npc_brann_fisher"
+    },
+    {
+     "do": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "stone_sefa"
+     },
+     {
+      "say": "May I use your black stone to show you something?",
+      "to": "npc_sefa_priestess"
+     },
+     {
+      "take": "stone_sefa"
+     },
+     {
+      "take": "bowl_sefa"
+     },
+     {
+      "walk_to": "hooks_brann"
+     },
+     {
+      "say": "Could I borrow a hook and a float? I'll show you a trick of the stone.",
+      "to": "npc_brann_fisher"
+     },
+     {
+      "take": "hooks_brann"
+     },
+     {
+      "take": "floats_brann"
+     },
+     {
+      "do": "stroke an iron fish hook along the black lodestone many times in one direction to magnetise it"
+     },
+     {
+      "walk_to": "lake_water"
+     },
+     {
+      "do": "fill the offering bowl with lake water"
+     },
+     {
+      "walk_to": "npc_sefa_priestess"
+     },
+     {
+      "do": "show Sefa and Brann: float the magnetised hook on a cork float in the bowl of water and let it swing to point north, then turn the bowl to show it always comes back north"
+     }
+    ]
+   },
+   "try_also": [
+    "focus the sun through the flask of water onto the reed fluff to light it, and show them"
+   ]
+  },
+  {
+   "id": "friends",
+   "title": "Friend, not witch",
+   "cards": [
+    "Leave both of them your friends. If Brann is afraid, he needs to understand it, not admire it."
+   ],
+   "task": "Leave Sefa and Brann both friendly",
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "standing",
+      "npc": "npc_sefa_priestess",
+      "is": [
+       "friendly",
+       "would_speak"
+      ]
+     },
+     {
+      "kind": "standing",
+      "npc": "npc_brann_fisher",
+      "is": [
+       "friendly",
+       "would_speak"
+      ]
+     }
+    ]
+   },
+   "done": "The same wonder can be a blessing or witchcraft. Showing how it works turns it into knowledge.",
+   "help": [
+    "Look at People in your journal ({J}): how does each of them stand toward you now?",
+    "Brann trusts what he can do with his own hands. Show him how, step by step; let him try it."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_brann_fisher"
+    },
+    {
+     "say": "There's no magic in it, Brann. Round glass full of water bends sunlight to a point, like a raindrop does. Here, hold it yourself and try.",
+     "to": "npc_brann_fisher"
+    },
+    {
+     "walk_to": "npc_sefa_priestess"
+    },
+    {
+     "say": "It's the sun's own fire, Mother. For your lamp.",
+     "to": "npc_sefa_priestess"
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "npc_brann_fisher"
+     },
+     {
+      "say": "It's only iron and the stone, Brann. The stone makes the iron want to point north. Stroke a hook yourself and see.",
+      "to": "npc_brann_fisher"
+     },
+     {
+      "walk_to": "npc_sefa_priestess"
+     },
+     {
+      "say": "Keep it, Mother: a needle that always finds north.",
+      "to": "npc_sefa_priestess"
+     }
+    ]
+   }
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

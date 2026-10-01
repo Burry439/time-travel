@@ -1,0 +1,271 @@
+{
+ "id": "manor_gate",
+ "version": 1,
+ "name": "the gate of Ashby Manor",
+ "notes": "Training level A10 (D-59): the outer yard of a walled manor; the manor courtyard (rows 0 to 5) is the inside. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "the outer yard of a manor: packed earth and cobbles, straw, hoof prints and cart ruts, a road at the bottom, and beyond a high wall at the top a neat gravel courtyard",
+  "pieces": {
+   "Manor": "the front of a stone manor house with tall mullioned windows, a slate roof and a grand door",
+   "WestWall": "the top of a high, old stone wall with moss and ivy, seen from above, running across",
+   "EastWall": "the top of a high, old stone wall with moss and ivy, seen from above, running across",
+   "EastWall2": "the top of a high, old stone wall with moss and ivy, seen from above, running across",
+   "Brambles": "a thick tangle of brambles and briars choking a gap in an old wall",
+   "Stable": "a long timber stable with a tiled roof and half-doors facing down",
+   "Trough": "a stone horse trough full of water",
+   "Hayrick": "a round hayrick",
+   "Cart": "a farm cart loaded with sacks",
+   "Woodpile": "a stack of split firewood"
+  },
+  "bands": [
+   "WestWall",
+   "EastWall",
+   "EastWall2"
+  ]
+ },
+ "size": [
+  40,
+  28
+ ],
+ "walk": [
+  0,
+  8,
+  40,
+  28
+ ],
+ "trees": {
+  "willow": {
+   "name": "willow tree",
+   "mass_kg": 900.0,
+   "length_m": 9.0,
+   "description": "A big old willow by the wall, its long whips trailing."
+  }
+ },
+ "buildings": [
+  {
+   "name": "Manor",
+   "cells": [
+    12,
+    0,
+    16,
+    3
+   ],
+   "label": "Ashby Manor"
+  },
+  {
+   "name": "Stable",
+   "cells": [
+    3,
+    15,
+    8,
+    5
+   ],
+   "label": "Stables"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "WestWall",
+   "cells": [
+    0,
+    6,
+    18,
+    2
+   ]
+  },
+  {
+   "name": "EastWall",
+   "cells": [
+    22,
+    6,
+    11,
+    2
+   ]
+  },
+  {
+   "name": "Brambles",
+   "cells": [
+    33,
+    6,
+    2,
+    2
+   ]
+  },
+  {
+   "name": "EastWall2",
+   "cells": [
+    35,
+    6,
+    5,
+    2
+   ]
+  },
+  {
+   "name": "Trough",
+   "cells": [
+    12,
+    19,
+    2,
+    1
+   ]
+  },
+  {
+   "name": "Hayrick",
+   "cells": [
+    30,
+    16,
+    3,
+    3
+   ]
+  },
+  {
+   "name": "Cart",
+   "cells": [
+    24,
+    20,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Woodpile",
+   "cells": [
+    14,
+    11,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Willow",
+   "cells": [
+    36,
+    12,
+    1,
+    1
+   ],
+   "tree": "willow",
+   "id": "tree_willow_manor"
+  }
+ ],
+ "places": {
+  "gate": {
+   "name": "the manor gate",
+   "cell": [
+    20,
+    9
+   ],
+   "gate": true
+  },
+  "stable": {
+   "name": "the stables",
+   "cell": [
+    7,
+    21
+   ]
+  },
+  "trough": {
+   "name": "the trough",
+   "cell": [
+    13,
+    21
+   ]
+  },
+  "hayrick": {
+   "name": "the hayrick",
+   "cell": [
+    31,
+    20
+   ]
+  },
+  "cart": {
+   "name": "the cart",
+   "cell": [
+    26,
+    23
+   ]
+  },
+  "woodpile": {
+   "name": "the woodpile",
+   "cell": [
+    15,
+    14
+   ]
+  },
+  "brambles": {
+   "name": "the brambles in the old wall",
+   "cell": [
+    34,
+    9
+   ]
+  },
+  "willow": {
+   "name": "the willow",
+   "cell": [
+    35,
+    14
+   ]
+  },
+  "road": {
+   "name": "the road",
+   "cell": [
+    20,
+    26
+   ]
+  }
+ },
+ "gate": {
+  "rows": [
+   6,
+   7
+  ],
+  "cols": [
+   18,
+   21
+  ],
+  "middle": [
+   20,
+   7
+  ],
+  "approach": [
+   12,
+   28,
+   14
+  ],
+  "posts": [
+   14,
+   26,
+   12
+  ]
+ },
+ "inside": {
+  "rows": [
+   0,
+   5
+  ],
+  "name": "Ashby Manor"
+ },
+ "after_arrest": {
+  "cell": [
+   20,
+   26
+  ],
+  "words": "throw you out onto the road"
+ },
+ "entry": {
+  "place": "Ashby Manor",
+  "decider": "Steward Merrick",
+  "title": "Steward",
+  "admit": "admits the stranger into Ashby Manor and has the gate opened for them",
+  "let_through": "lets the stranger through the manor gate on their own say-so, and opens it for them",
+  "let_in": "let in: the manor gate is open to them, but they haven't walked through it yet",
+  "arrived": "inside Ashby Manor",
+  "deed": [
+   "The manor gate opens",
+   "You're let into Ashby Manor."
+  ],
+  "fallback_admit": "Very well. Open the gate.",
+  "fallback_vouch": "I'll have a word with the steward for you."
+ }
+}

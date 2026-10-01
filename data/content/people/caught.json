@@ -1,0 +1,316 @@
+{
+ "notes": "People of training level A4 (D-59).",
+ "npcs": {
+  "npc_osk_pieman": {
+   "name": "Osk",
+   "age": 46,
+   "role": "pieman",
+   "look": "A round, red-faced man in his forties with floury forearms, a white baker's cap, a stained apron over a brown tunic and a big wooden pie-paddle under his arm.",
+   "look_kind": "man",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Jolly with customers and a terror to thieves; generous to anyone who works, mean to anyone who takes.",
+   "values": "his pies, honest trade, a hard day's work",
+   "fears": "thieves, a cold oven, a bad market",
+   "authority": "Owns the pie stall.",
+   "tones": [
+    "warm",
+    "angry"
+   ],
+   "relations": {
+    "npc_hobb_watchman": "Hobb the watchman",
+    "npc_kit_urchin": "Kit, the little thief"
+   },
+   "family": [],
+   "regard": {
+    "trust": 0.25,
+    "suspicion": 0.3
+   },
+   "concerns": "The oven needs kindling split for the morning bake, and he's dead on his feet. Street children have been lifting his pies all week.",
+   "refers": [],
+   "knowledge": {
+    "price": {
+     "text": "A pie costs a copper, or a bit of honest work.",
+     "line": "A copper a pie. Or work for it: there's always something wants doing.",
+     "trusted": false,
+     "lead": "Osk sells a pie for a copper, or for a bit of honest work."
+    },
+    "kit": {
+     "text": "Kit, the urchin by the crates, has been stealing his pies all week.",
+     "line": "See that one by the crates? Little thief. Had three pies off me this week.",
+     "trusted": false,
+     "lead": "Osk says Kit the urchin has been stealing his pies."
+    }
+   },
+   "persuaded_by": "honest work, a fair trade",
+   "style": "Loud and jolly; calls everyone 'friend' until they cross him.",
+   "mood": "tired",
+   "voice": {
+    "samples": [
+     "Pies! Last pies of the day!",
+     "No copper? Then there's work, friend.",
+     "Thief! Hobb!",
+     "That's a fair trade. Done."
+    ],
+    "habits": "Wipes his hands on his apron; counts his pies; shouts for Hobb.",
+    "never": "gives a pie to a thief",
+    "greeting": "Beams: 'Last pies of the day, friend!'"
+   },
+   "goals": [
+    "Sell the last pies",
+    "Get kindling split for the morning"
+   ],
+   "secrets": [],
+   "likes": "customers, a hot oven",
+   "dislikes": "thieves, waste",
+   "opinions": {
+    "npc_hobb_watchman": {
+     "text": "slow, but honest",
+     "warmth": 0.4
+    },
+    "npc_kit_urchin": {
+     "text": "a little thief",
+     "warmth": -0.5
+    }
+   },
+   "tasks": [
+    {
+     "id": "pies",
+     "place": "pies",
+     "activity": "work",
+     "dwell_s": 90,
+     "doing": "at his stall, counting pies"
+    },
+    {
+     "id": "oven",
+     "place": "oven",
+     "activity": "work",
+     "dwell_s": 30,
+     "doing": "seeing to the oven"
+    }
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Osk would want to know how it works."
+   },
+   "offers": [
+    {
+     "id": "kindling",
+     "reward": "pay",
+     "pays": [
+      "pie_reward"
+     ],
+     "task": "split the logs by the oven into kindling for the morning bake",
+     "check": "Has the stranger split the logs into kindling?",
+     "lends": [
+      "hatchet_osk",
+      "logs_osk"
+     ],
+     "done_when": {
+      "kind": "made",
+      "from": [
+       "logs_osk"
+      ],
+      "ever": true
+     }
+    }
+   ]
+  },
+  "npc_hobb_watchman": {
+   "name": "Hobb",
+   "age": 52,
+   "role": "watchman",
+   "look": "A big, slow, grizzled man in his fifties in a dented iron cap and a quilted watch coat with the town's badge, a cudgel at his belt and a lantern in his hand.",
+   "look_kind": "man",
+   "guard": true,
+   "weapon": "cudgel",
+   "combat": "a strong, slow brawler",
+   "armor": "padded",
+   "armor_text": "a quilted watch coat",
+   "personality": "Slow, thorough and fair: catches thieves, but lets go anyone who puts things right.",
+   "values": "the market's peace, the law, a quiet night",
+   "fears": "trouble on his watch",
+   "authority": "The market's watchman: he can seize thieves and throw them out.",
+   "tones": [
+    "angry",
+    "shrewd"
+   ],
+   "relations": {
+    "npc_osk_pieman": "Osk the pieman",
+    "npc_kit_urchin": "Kit the urchin"
+   },
+   "family": [],
+   "regard": {
+    "trust": 0.25,
+    "suspicion": 0.35
+   },
+   "concerns": "Pies keep going missing from Osk's stall and he's not caught the thief. He watches strangers.",
+   "refers": [],
+   "knowledge": {
+    "law": {
+     "text": "A thief who gives back what they took and pays for it walks free; one who won't goes in the stocks.",
+     "line": "Give it back and pay up, and we'll say no more. Don't, and it's the stocks.",
+     "trusted": false,
+     "lead": "In Wendford market, a thief who gives back and pays walks free."
+    }
+   },
+   "persuaded_by": "things put right",
+   "style": "Slow, heavy, final.",
+   "mood": "watchful",
+   "voice": {
+    "samples": [
+     "I've got my eye on you.",
+     "That yours? Didn't think so.",
+     "Put it back and we'll say no more.",
+     "Right. Out you go."
+    ],
+    "habits": "Walks the hall slowly, swinging his lantern; stops to stare.",
+    "never": "takes a bribe",
+    "greeting": "Looks you over: 'Evening. Hall's closing soon.'"
+   },
+   "goals": [
+    "Catch the pie thief",
+    "Keep the peace"
+   ],
+   "secrets": [],
+   "likes": "order, a quiet watch",
+   "dislikes": "thieves, liars",
+   "opinions": {
+    "npc_osk_pieman": {
+     "text": "a good man with a loud mouth",
+     "warmth": 0.4
+    },
+    "npc_kit_urchin": {
+     "text": "poor little wretch, and a thief",
+     "warmth": -0.2
+    }
+   },
+   "tasks": [
+    {
+     "id": "middle",
+     "place": "middle",
+     "activity": "patrol",
+     "dwell_s": 40,
+     "doing": "walking the hall"
+    },
+    {
+     "id": "door",
+     "place": "door",
+     "activity": "look",
+     "dwell_s": 40,
+     "doing": "watching the door"
+    },
+    {
+     "id": "cloth",
+     "place": "cloth",
+     "activity": "patrol",
+     "dwell_s": 30,
+     "doing": "walking the hall"
+    }
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Hobb would want to know how it works."
+   }
+  },
+  "npc_kit_urchin": {
+   "name": "Kit",
+   "age": 11,
+   "role": "urchin",
+   "look": "A thin, sharp-faced girl of about eleven with cropped dark hair, a filthy oversized coat, bare feet and a quick, sly grin.",
+   "look_kind": "child",
+   "guard": false,
+   "weapon": null,
+   "combat": "no fighter",
+   "armor": "none",
+   "armor_text": "no armour",
+   "personality": "Quick, sly and starving; brave until caught, then terrified. Loyal to anyone who feeds her.",
+   "values": "food, not getting caught, her little brother at home",
+   "fears": "Hobb, the stocks, winter",
+   "authority": "None.",
+   "tones": [
+    "shrewd",
+    "frightened"
+   ],
+   "relations": {
+    "npc_osk_pieman": "Osk the pieman",
+    "npc_hobb_watchman": "Hobb the watchman"
+   },
+   "family": [],
+   "regard": {
+    "trust": 0.4,
+    "suspicion": 0.3
+   },
+   "concerns": "She hasn't eaten since yesterday. She's been lifting Osk's pies, and Hobb is getting close.",
+   "refers": [],
+   "knowledge": {
+    "plan": {
+     "text": "If someone makes a fuss at the cloth stall, Osk always looks away, and a pie can be lifted.",
+     "line": "Want a pie? Easy. Go and make a fuss by the cloth stall. He always looks. I'll do the rest.",
+     "trusted": false,
+     "lead": "Kit says Osk looks away when there's a fuss at the cloth stall."
+    },
+    "hobb": {
+     "text": "Hobb lets thieves go if they give back and pay.",
+     "line": "Hobb's soft, really. Give it back and say sorry and he lets you off.",
+     "trusted": false,
+     "lead": "Kit says Hobb lets thieves go if they give back and pay."
+    }
+   },
+   "persuaded_by": "food, or someone being kind to her",
+   "style": "Fast whispers, slang, and a grin.",
+   "mood": "hungry",
+   "voice": {
+    "samples": [
+     "Psst. You hungry? I know a way.",
+     "Don't look at him. Look at me.",
+     "You didn't see me.",
+     "You're all right, you are."
+    ],
+    "habits": "Watches Osk's stall; keeps to the shadows; whispers.",
+    "never": "admits stealing to Hobb",
+    "greeting": "Sidles up: 'Psst. You hungry?'"
+   },
+   "goals": [
+    "Get something to eat",
+    "Not get caught"
+   ],
+   "secrets": [],
+   "likes": "pies, kindness, warm corners",
+   "dislikes": "Hobb, the cold",
+   "opinions": {
+    "npc_osk_pieman": {
+     "text": "mean old pie-man",
+     "warmth": -0.3
+    },
+    "npc_hobb_watchman": {
+     "text": "big slow lump, but scary",
+     "warmth": -0.2
+    }
+   },
+   "tasks": [
+    {
+     "id": "crates",
+     "place": "crates",
+     "activity": "wait",
+     "dwell_s": 90,
+     "doing": "hiding by the crates, watching the pies"
+    },
+    {
+     "id": "barrels",
+     "place": "barrels",
+     "activity": "wait",
+     "dwell_s": 30,
+     "doing": "loitering by the barrels"
+    }
+   ],
+   "superstition": {
+    "kind": "none",
+    "text": "Kit would want to know how it works."
+   }
+  }
+ }
+}

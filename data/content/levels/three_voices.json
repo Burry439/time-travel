@@ -1,0 +1,251 @@
+{
+ "id": "three_voices",
+ "title": "Three voices",
+ "track": "advanced",
+ "order": 8,
+ "minutes": 7,
+ "teaches": [
+  "A group conversation",
+  "Opinions that change",
+  "Truths people hide",
+  "Mediating"
+ ],
+ "blurb": "A farm kitchen, two brothers at each other's throats over their father's farm, and their mother between them.",
+ "after": "People change how they feel about each other for reasons they'd accept. A truth brought into the open does more than any plea.",
+ "refines": "Do group scenes stay coherent with three voices? Do feelings shift for good reasons and not for empty ones?",
+ "map": "farm_kitchen",
+ "start": {
+  "cell": [
+   14,
+   15
+  ]
+ },
+ "objective": "Make peace",
+ "goal": "Make peace between the brothers",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 150,
+ "cast": {
+  "npc_hild_widow": {
+   "role": "widow",
+   "step_ms": 620,
+   "goal": "keep the peace",
+   "anchors": [
+    [
+     14,
+     5,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_aldo_elder": {
+   "role": "farmer",
+   "step_ms": 540,
+   "goal": "hold his ground",
+   "anchors": [
+    [
+     12,
+     7,
+     "wait",
+     600000
+    ]
+   ]
+  },
+  "npc_berin_younger": {
+   "role": "returned son",
+   "step_ms": 460,
+   "goal": "hold his ground",
+   "anchors": [
+    [
+     16,
+     7,
+     "wait",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "box_edric",
+   "name": "carved wooden box",
+   "x": 25,
+   "y": 4,
+   "mass_kg": 1.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "Edric's carved oak box from the dresser, its lid worn smooth by his thumb.",
+   "flags": [
+    "rigid",
+    "container"
+   ],
+   "owner_id": "npc_hild_widow"
+  },
+  {
+   "id": "letter_edric",
+   "name": "folded letter",
+   "x": 26,
+   "y": 4,
+   "mass_kg": 0.02,
+   "materials": [
+    "parchment"
+   ],
+   "description": "A letter folded small, in Edric's careful hand, addressed 'To my boys'. Pick it up and read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "owner_id": "npc_hild_widow",
+   "readable": "edric_letter"
+  },
+  {
+   "id": "bread_hild",
+   "name": "loaf of bread",
+   "x": 12,
+   "y": 9,
+   "mass_kg": 0.6,
+   "materials": [
+    "bread"
+   ],
+   "description": "A warm brown loaf on the table.",
+   "flags": [
+    "combustible"
+   ],
+   "owner_id": "npc_hild_widow"
+  },
+  {
+   "id": "jug_hild",
+   "name": "jug of ale",
+   "x": 15,
+   "y": 9,
+   "mass_kg": 1.5,
+   "materials": [
+    "clay",
+    "ale"
+   ],
+   "description": "A clay jug of small ale.",
+   "flags": [
+    "container"
+   ],
+   "owner_id": "npc_hild_widow"
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Edric's farm",
+   "cards": [
+    "…signal. A farm kitchen. Edric was buried a week ago; his sons Aldo and Berin have quarrelled over the farm ever since, and their mother Hild is at the end of her tether.",
+    "Talk to them together and they answer together. How they feel about each other can change, but only for reasons they'd accept: being told to get along does nothing. Truths do more.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "peace",
+   "title": "Peace at the table",
+   "cards": [
+    "Bring the brothers to make peace. Neither has to win."
+   ],
+   "task": "Make peace between Aldo and Berin",
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "opinion",
+      "npc": "npc_aldo_elder",
+      "of": "npc_berin_younger",
+      "at_least": 0.0
+     },
+     {
+      "kind": "opinion",
+      "npc": "npc_berin_younger",
+      "of": "npc_aldo_elder",
+      "at_least": 0.0
+     }
+    ]
+   },
+   "done": "They're brothers again, more or less. Feelings change for reasons: you found some.",
+   "help": [
+    "Each of them knows something the other doesn't, and keeps it to himself. People tell what they're ashamed of only to someone they trust.",
+    "Hild says Edric kept papers in a box on the dresser. Ask her, before you open it."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_hild_widow"
+    },
+    {
+     "say": "Hild, may I look in Edric's box? It might help.",
+     "to": "npc_hild_widow"
+    },
+    {
+     "take": "letter_edric"
+    },
+    {
+     "ui": "book"
+    },
+    {
+     "walk_to": [
+      14,
+      7
+     ]
+    },
+    {
+     "say": "Aldo, Berin: your father left a letter, 'To my boys'. He writes: the farm to Aldo, who stayed; the north field to Berin if he comes home; share the ox; and don't fight over him. He loved you both.",
+     "to": "npc_aldo_elder"
+    },
+    {
+     "say": "Berin, Aldo has paid all your father's debts this year, alone. And Aldo, Berin came home because he lost everything. You've both been carrying it alone.",
+     "to": "npc_berin_younger"
+    },
+    {
+     "wait": 10
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "npc_aldo_elder"
+     },
+     {
+      "say": "Aldo, you've kept this farm going alone, haven't you? Who's been paying the debts?",
+      "to": "npc_aldo_elder"
+     },
+     {
+      "walk_to": "npc_berin_younger"
+     },
+     {
+      "say": "Berin, you didn't come back for money. What happened in the city?",
+      "to": "npc_berin_younger"
+     },
+     {
+      "walk_to": [
+       14,
+       7
+      ]
+     },
+     {
+      "say": "Aldo has paid your father's debts alone, Berin. And Berin came home with nothing, Aldo. Neither of you is the villain. Can you not share it, as your father would have wanted?",
+      "to": "npc_aldo_elder"
+     },
+     {
+      "wait": 10
+     }
+    ]
+   }
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

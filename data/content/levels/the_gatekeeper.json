@@ -1,0 +1,387 @@
+{
+ "id": "the_gatekeeper",
+ "title": "The gatekeeper",
+ "track": "advanced",
+ "order": 10,
+ "minutes": 8,
+ "teaches": [
+  "Everything together",
+  "A porter's own reasons",
+  "A decider and a word",
+  "A deal for a word",
+  "A way nobody guards"
+ ],
+ "blurb": "A walled manor with a porter, a steward and a groom. Get inside, by any way at all.",
+ "after": "Every way in was earning, persuading or daring. The city at the end of the road will ask the same.",
+ "refines": "Which routes do players find? Do the porter's rule, the steward's grounds and the breach each work end to end?",
+ "map": "manor_gate",
+ "start": {
+  "cell": [
+   20,
+   25
+  ]
+ },
+ "objective": "Get inside",
+ "goal": "Get inside Ashby Manor",
+ "version": 1,
+ "device_name": "the device",
+ "stuck_after_s": 150,
+ "cast": {
+  "npc_godwin_porter": {
+   "role": "porter",
+   "step_ms": 640,
+   "goal": "keep the gate",
+   "anchors": [
+    [
+     20,
+     9,
+     "look",
+     600000
+    ]
+   ],
+   "keeps_gate": true
+  },
+  "npc_merrick_steward": {
+   "role": "steward",
+   "step_ms": 520,
+   "goal": "check the deliveries",
+   "anchors": [
+    [
+     26,
+     19,
+     "work",
+     600000
+    ]
+   ]
+  },
+  "npc_ned_groom": {
+   "role": "groom",
+   "step_ms": 440,
+   "goal": "see to the horses",
+   "anchors": [
+    [
+     7,
+     21,
+     "work",
+     600000
+    ]
+   ]
+  }
+ },
+ "things": [
+  {
+   "id": "halter_ned",
+   "name": "broken halter",
+   "x": 9,
+   "y": 21,
+   "mass_kg": 0.6,
+   "materials": [
+    "leather",
+    "iron"
+   ],
+   "description": "A leather horse halter with its cheek strap snapped at the buckle.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_ned_groom"
+  },
+  {
+   "id": "awl_ned",
+   "name": "stitching awl",
+   "mass_kg": 0.1,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "A saddler's awl for punching and stitching leather.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_ned_groom",
+   "carried_by": "npc_ned_groom"
+  },
+  {
+   "id": "thong_ned",
+   "name": "waxed leather thong",
+   "x": 10,
+   "y": 21,
+   "mass_kg": 0.1,
+   "materials": [
+    "leather"
+   ],
+   "description": "A hank of waxed leather thong for stitching harness.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_ned_groom"
+  },
+  {
+   "id": "bellrope_end",
+   "name": "snapped bell rope",
+   "x": 22,
+   "y": 9,
+   "mass_kg": 0.5,
+   "materials": [
+    "hemp"
+   ],
+   "description": "The gate bell's rope, snapped a yard from the top; the frayed end hangs out of reach.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "owner_id": "npc_merrick_steward"
+  },
+  {
+   "id": "hemp_cart",
+   "name": "coil of hemp cord",
+   "x": 27,
+   "y": 22,
+   "mass_kg": 1.0,
+   "materials": [
+    "hemp"
+   ],
+   "description": "A coil of new hemp cord fallen off the delivery cart into the mud: nobody's counted it.",
+   "flags": [
+    "flexible",
+    "tieable"
+   ],
+   "length_m": 12.0
+  },
+  {
+   "id": "crate_cart",
+   "name": "empty crate",
+   "x": 24,
+   "y": 23,
+   "mass_kg": 4.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A sturdy empty crate by the cart: something to stand on.",
+   "flags": [
+    "rigid",
+    "stable_support",
+    "container"
+   ]
+  },
+  {
+   "id": "brambles",
+   "name": "brambles in the old wall",
+   "x": 34,
+   "y": 8,
+   "mass_kg": 40.0,
+   "materials": [
+    "bramble",
+    "wood"
+   ],
+   "description": "A thick tangle of brambles and briars choking a gap in the old orchard wall. With a blade and some patience, a body could cut through.",
+   "flags": [
+    "flexible"
+   ],
+   "owner_id": "npc_merrick_steward",
+   "geometry_name": "Brambles",
+   "scene_node": "Map/Brambles",
+   "no_sprite": true,
+   "art": "scene"
+  },
+  {
+   "id": "billhook_ned",
+   "name": "billhook",
+   "x": 5,
+   "y": 21,
+   "mass_kg": 1.0,
+   "materials": [
+    "iron",
+    "wood"
+   ],
+   "description": "Ned's billhook, for cutting hedges and brush.",
+   "flags": [
+    "rigid",
+    "sharp_edge"
+   ],
+   "owner_id": "npc_ned_groom"
+  },
+  {
+   "id": "kindling",
+   "name": "bundle of kindling",
+   "x": 15,
+   "y": 13,
+   "mass_kg": 3.0,
+   "materials": [
+    "wood"
+   ],
+   "description": "A bundle of split kindling by the woodpile, ready for the kitchen.",
+   "flags": [
+    "rigid",
+    "combustible"
+   ],
+   "owner_id": "npc_merrick_steward"
+  },
+  {
+   "id": "staff_godwin",
+   "name": "porter's staff",
+   "mass_kg": 1.8,
+   "materials": [
+    "wood",
+    "iron"
+   ],
+   "description": "A stout iron-shod porter's staff.",
+   "flags": [
+    "rigid"
+   ],
+   "owner_id": "npc_godwin_porter",
+   "worn_by": "npc_godwin_porter",
+   "slots": [
+    "right"
+   ],
+   "gear": {
+    "kind": "weapon",
+    "class": "staff",
+    "covers": [],
+    "quality": "fair"
+   },
+   "length_m": 1.8
+  }
+ ],
+ "roles": [],
+ "steps": [
+  {
+   "id": "welcome",
+   "title": "Ashby Manor",
+   "cards": [
+    "…signal. A walled manor. Godwin the porter keeps the gate; Steward Merrick decides who comes in; Ned the groom has the steward's ear.",
+    "Everything you've practised counts here: talk, deeds, deals, someone's word, what you make, and what you dare. There's more than one way in.",
+    "There's no one right way, and no words to copy. The device helps if you ask (H).",
+    "Press {Enter} or click Next."
+   ],
+   "task": "",
+   "check": {
+    "kind": "always"
+   },
+   "done": ""
+  },
+  {
+   "id": "inside",
+   "title": "Inside",
+   "cards": [
+    "Get inside Ashby Manor."
+   ],
+   "task": "Get inside the manor",
+   "check": {
+    "kind": "inside"
+   },
+   "words_check": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "made",
+      "from": [
+       "halter_ned",
+       "bellrope_end",
+       "hemp_cart"
+      ]
+     },
+     {
+      "kind": "shown",
+      "npc": "npc_godwin_porter"
+     }
+    ]
+   },
+   "done": "Inside. Every way in was a way of earning, persuading, or daring: the same choices the city will ask.",
+   "help": [
+    "Godwin has his own reasons for letting people through. The steward wants a reason and someone's word. Ned has a job going.",
+    "Walls have weak places, too. But what you damage, people may see."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ned_groom"
+    },
+    {
+     "say": "Good morning. Is there any work I could do? I'd like to get into the manor.",
+     "to": "npc_ned_groom"
+    },
+    {
+     "say": "I'll mend the halter.",
+     "to": "npc_ned_groom"
+    },
+    {
+     "walk_to": "halter_ned"
+    },
+    {
+     "take": "halter_ned"
+    },
+    {
+     "take": "thong_ned"
+    },
+    {
+     "do": "stitch the snapped cheek strap of the halter back to its buckle with the waxed leather thong"
+    },
+    {
+     "walk_to": "npc_ned_groom"
+    },
+    {
+     "say": "Your halter's mended. Here.",
+     "to": "npc_ned_groom"
+    },
+    {
+     "wait": 30
+    },
+    {
+     "walk_to": "npc_merrick_steward"
+    },
+    {
+     "say": "Good day, Steward. Ned will tell you I mended the mare's halter. The house is short of hands for the feast: may I come in and work?",
+     "to": "npc_merrick_steward"
+    },
+    {
+     "walk_to": [
+      20,
+      4
+     ]
+    }
+   ],
+   "routes": {
+    "2": [
+     {
+      "walk_to": "npc_ned_groom"
+     },
+     {
+      "say": "May I borrow your billhook?",
+      "to": "npc_ned_groom"
+     },
+     {
+      "walk_to": "billhook_ned"
+     },
+     {
+      "take": "billhook_ned"
+     },
+     {
+      "walk_to": [
+       34,
+       9
+      ]
+     },
+     {
+      "do": "cut a way through the brambles in the gap of the old wall with the billhook"
+     },
+     {
+      "walk_to": [
+       34,
+       4
+      ]
+     }
+    ]
+   },
+   "try_also": [
+    "sew the broken halter strap back together with the thong"
+   ]
+  }
+ ],
+ "reactions": {
+  "killed": "…You killed someone. That can't be undone. Rewind from the menu if that isn't what you meant.",
+  "arrested": "They've taken you away. Rewind from the menu to try again.",
+  "dead": "You died. Rewind to the last calm moment and try something else."
+ }
+}

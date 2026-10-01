@@ -1,0 +1,150 @@
+{
+ "id": "lake_shrine",
+ "version": 1,
+ "name": "the shrine by Glasmere",
+ "notes": "Training level A3 (D-59): a lake shore with a small shrine and a fisherman's hut, at bright noon. Fields as in data/maps/village.json.",
+ "art": {
+  "kind": "outdoor",
+  "ground": "a sunny lake shore: short grass and pale shingle, flat stones, a footpath, clumps of rushes and wildflowers",
+  "pieces": {
+   "Lake": "a calm, clear blue lake with gentle ripples glittering in bright sunshine, a shingle edge",
+   "Shrine": "a small stone shrine with a carved lintel, a stone altar inside and offerings of flowers, door facing down",
+   "Hut": "a fisherman's timber hut with a reed roof and nets hanging by the door, door facing down",
+   "Racks": "wooden racks with split fish hung up to dry",
+   "Boat": "a small wooden fishing boat pulled up on the shingle",
+   "Rocks": "a few flat, pale, sun-warmed rocks",
+   "Firepit": "a ring of blackened stones round cold ashes"
+  }
+ },
+ "size": [
+  36,
+  24
+ ],
+ "walk": [
+  0,
+  0,
+  36,
+  24
+ ],
+ "trees": {},
+ "buildings": [
+  {
+   "name": "Shrine",
+   "cells": [
+    4,
+    7,
+    6,
+    4
+   ],
+   "label": "The shrine"
+  },
+  {
+   "name": "Hut",
+   "cells": [
+    26,
+    7,
+    6,
+    4
+   ],
+   "label": "Brann's hut"
+  }
+ ],
+ "obstacles": [
+  {
+   "name": "Lake",
+   "cells": [
+    0,
+    0,
+    36,
+    6
+   ]
+  },
+  {
+   "name": "Racks",
+   "cells": [
+    18,
+    9,
+    4,
+    1
+   ]
+  },
+  {
+   "name": "Boat",
+   "cells": [
+    14,
+    6,
+    4,
+    2
+   ]
+  },
+  {
+   "name": "Rocks",
+   "cells": [
+    12,
+    17,
+    3,
+    2
+   ]
+  },
+  {
+   "name": "Firepit",
+   "cells": [
+    22,
+    16,
+    2,
+    2
+   ]
+  }
+ ],
+ "places": {
+  "shrine": {
+   "name": "the shrine",
+   "cell": [
+    7,
+    12
+   ]
+  },
+  "hut": {
+   "name": "Brann's hut",
+   "cell": [
+    29,
+    12
+   ]
+  },
+  "racks": {
+   "name": "the drying racks",
+   "cell": [
+    20,
+    11
+   ]
+  },
+  "boat": {
+   "name": "the boat",
+   "cell": [
+    16,
+    9
+   ]
+  },
+  "rocks": {
+   "name": "the flat rocks",
+   "cell": [
+    13,
+    20
+   ]
+  },
+  "firepit": {
+   "name": "the fire pit",
+   "cell": [
+    23,
+    19
+   ]
+  },
+  "path": {
+   "name": "the footpath",
+   "cell": [
+    18,
+    22
+   ]
+  }
+ }
+}
