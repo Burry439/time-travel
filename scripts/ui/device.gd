@@ -361,25 +361,3 @@ func _moment(kind: String) -> void:
 		"moment": kind, "expected_version": game.run_state.event_seq, "request_id": game.request_id("device")}, 60.0)
 	if reply.ok and not reply.data.get("skipped", false):
 		game.accept_state(reply.data.state)
-
-
-## The first morning is over: carry on, or begin a fresh journey.
-func closing_card() -> void:
-	var settings := ConfigFile.new()
-	settings.load("user://presentation.cfg")
-	settings.set_value("tutorial", "done", true)
-	settings.save("user://presentation.cfg")
-	var admitted = game.run_state.get("admitted")
-	var by := str(ui.npc_record(str(admitted.get("by", ""))).get("name", "")) if typeof(admitted) == TYPE_DICTIONARY else ""
-	var body: VBoxContainer = ui.begin_modal("The first morning", "tutorial_end", Vector2(600, 330), false)
-	var opening := ("You're in: %s has let you into the city. That's how it works here: people watch what you do, "
-		+ "pass it on, and speak for you.\n\n") % by if not by.is_empty() else "That's everything the device can teach you.\n\n"
-	ui.paragraph(body, opening + "A fresh journey starts again on the south road, with other people's problems and "
-		+ "nobody handing you the answer. The device stays with you: press H any time to talk to it.")
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	body.add_child(row)
-	row.add_child(ui.button("Walk into the city" if not by.is_empty() else "Carry on in this journey", func() -> void: ui.close_modal()))
-	row.add_child(ui.button("Begin a fresh journey", func() -> void:
-		ui.close_modal_now()
-		game.start("normal")))

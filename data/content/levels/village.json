@@ -1,7 +1,7 @@
 {
  "id": "village",
  "title": "The City Beyond",
- "notes": "A level (D-59): a scenario on a map. map: which data/maps file; start: the stranger's first cell; objective: the long goal shown when no step is running; cast: who is here, each person's routine (role: the short title over them; step_ms: their pace; goal; anchors: [x, y, activity on arrival, dwell ms], the first is where they start; keeps_gate: a gate guard, who won't leave the gate short of guards); things: what lies about or is carried at the start, each a thing as in content/world_objects.json, or the name of a content file whose objects are all included. A level with steps is a guided story (scenario.py; see tutorial.json). base: another level whose map, start, objective and cast this one takes, and whose things it adds to. The village is the main game: no steps.",
+ "notes": "A level (D-59): a scenario on a map. map: which data/maps file; start: the stranger's first cell; objective: the long goal shown when no step is running; goal: how the HUD's tracker puts it when there's no lead to follow; cast: who is here, each person's routine (role: the short title over them; step_ms: their pace; goal; anchors: [x, y, activity on arrival, dwell ms], the first is where they start; keeps_gate: a gate guard, who won't leave the gate short of guards); things: what lies about or is carried at the start, each a thing as in content/world_objects.json, or the name of a content file whose objects are all included. A level with steps is a guided story (scenario.py; see tutorial.json). base: another level whose map, start, objective and cast this one takes, and whose things it adds to. A training level also has track (basic, advanced, or test for the developer's own), order, minutes (how long it should take), teaches (short phrases) and blurb (one line), shown on the Training screen; hidden keeps it to developer builds. The village is the main game: no steps, no track.",
  "map": "village",
  "start": {
   "cell": [
@@ -10,6 +10,7 @@
   ]
  },
  "objective": "Get inside the city",
+ "goal": "Find a way into the city",
  "cast": {
   "npc_roderic_vale": {
    "role": "Gate captain",

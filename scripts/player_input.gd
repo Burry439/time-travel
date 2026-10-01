@@ -33,9 +33,13 @@ func update_nearby() -> void:
 		if plate:
 			plate.modulate.a = 1.0 if hovered == str(npc.id) else clampf((240 - distance) / 90, 0, 1)
 	nearby_target = best
-	var depth: float = game.player.position.y
-	game.ui.hud.area.text = "THE CITY GATE" if depth < 600 else "THE CRAFTSMEN'S ROW" if depth < 1200 \
-		else "THE WAYSIDE INN" if depth < 1800 else "THE SOUTH ROAD"
+	var row: float = game.player.position.y / game.CELL # Where you are, in the map's own words (data/maps).
+	var area := str(game.map_plan.get("name", ""))
+	for band in game.map_plan.get("areas", []):
+		if row < float(band.until_row):
+			area = str(band.name)
+			break
+	game.ui.hud.area.text = area.to_upper()
 
 
 ## E: act on whatever is nearest, as a left click on it would.

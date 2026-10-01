@@ -1,6 +1,14 @@
 {
  "id": "test_room",
  "title": "A test room",
+ "track": "test",
+ "order": 1,
+ "minutes": 2,
+ "teaches": [
+  "Walking to a place",
+  "Talking to someone"
+ ],
+ "blurb": "A small room for trying the engine: two village people, no guard, no gate.",
  "hidden": true,
  "notes": "For tests and trying the engine (D-59): two people from the village in a small room, no guard, no captain, no gate, and a two-step guided story. Not shown in Training.",
  "map": "test_room",
@@ -11,6 +19,7 @@
   ]
  },
  "objective": "Try anything",
+ "goal": "Try anything here",
  "version": 1,
  "device_name": "the device",
  "stuck_after_s": 60,

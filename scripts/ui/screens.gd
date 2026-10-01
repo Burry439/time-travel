@@ -1,5 +1,5 @@
 extends Node
-## The game's screens: the title, the pause menu and its settings and controls, and death.
+## The game's screens: the title, the pause menu and its settings and controls, death, and Training (D-59).
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 
@@ -31,8 +31,7 @@ func build_title(root: Control) -> void:
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_box.add_child(intro)
 	menu_box.add_child(HSeparator.new())
-	var first_time: Button = ui.button("Tutorial (first time)", game.start.bind("normal", "tutorial"))
-	menu_box.add_child(first_time)
+	menu_box.add_child(ui.button("Training", open_training.bind("basic")))
 	menu_box.add_child(ui.button("Begin a journey", game.start.bind("normal")))
 	menu_box.add_child(ui.button("Continue last journey", game.resume))
 	menu_box.add_child(ui.button("Developer playtest", game.start.bind("developer")))
@@ -194,3 +193,145 @@ func show_death(reason: String) -> void:
 	body.add_child(ui.button("Start a new journey", func() -> void:
 		ui.modal_kind = ""
 		game.back_to_menu()))
+
+
+# --- Training (D-59) ---------------------------------------------------------------------------------------------
+
+var training: Dictionary = {} # The last catalogue from the service: {tracks, levels}.
+
+
+## The Training screen: each track's levels in order, what each teaches and how long it takes, done marks, and the
+## next one suggested. Every level is open. Hidden levels (the developer's own) only in a developer build.
+func open_training(track := "basic") -> void:
+	var reply: Dictionary = await game.net.api(HTTPClient.METHOD_GET, "/training")
+	if not reply.ok:
+		game.message.text = "Start the local backend first: tools/run_m0.ps1"
+		return
+	training = reply.data
+	var levels := _shown_levels()
+	var body: VBoxContainer = ui.begin_modal("Training", "training", Vector2(780, 620))
+	ui.paragraph(body, "Short scenes, each in its own place with its own people. Play them in any order.")
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	body.add_child(tabs)
+	for each in training.tracks:
+		if each.id == "test" and not levels.any(func(level) -> bool: return level.track == "test"):
+			continue
+		var tab: Button = ui.button(str(each.title), open_training.bind(str(each.id)), "Chip")
+		tab.toggle_mode = true
+		tab.button_pressed = each.id == track
+		tabs.add_child(tab)
+	var here := levels.filter(func(level) -> bool: return level.track == track)
+	if here.is_empty():
+		ui.paragraph(body, "No levels here yet.")
+	var suggested := next_level()
+	for level in here:
+		_level_card(body, level, str(level.id) == suggested)
+
+
+func _shown_levels() -> Array:
+	return training.get("levels", []).filter(func(level) -> bool: return not level.hidden or OS.is_debug_build())
+
+
+## The level to suggest: the first not done, basics before advanced (after the one just played, if given).
+func next_level(after := "") -> String:
+	var levels := _shown_levels().filter(func(level) -> bool: return level.track != "test")
+	var start := 0
+	for i in levels.size():
+		if str(levels[i].id) == after:
+			start = i + 1
+	for i in range(start, levels.size()):
+		if not levels[i].done:
+			return str(levels[i].id)
+	return str(levels[start].id) if start < levels.size() else ""
+
+
+func _level_card(body: VBoxContainer, level: Dictionary, suggested: bool) -> void:
+	var paper := PanelContainer.new()
+	paper.theme_type_variation = "InsetPanel"
+	body.add_child(paper)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	paper.add_child(row)
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(column)
+	var title: Label = ui.label("%s%s" % [str(level.title), "   ·   Next" if suggested else ""], 19)
+	title.add_theme_font_override("font", UITheme.serif(true))
+	if suggested:
+		title.add_theme_color_override("font_color", UITheme.ACCENT)
+	column.add_child(title)
+	var about: Label = ui.paragraph(column, str(level.blurb))
+	about.custom_minimum_size.x = 520
+	var facts := "About %d min  ·  %s" % [int(level.minutes), "  ·  ".join(PackedStringArray(level.teaches))]
+	var small: Label = ui.paragraph(column, facts)
+	small.theme_type_variation = "Small"
+	if level.done:
+		var done: Label = ui.label("✓ Done" + ("  ·  best %s" % _clock(int(level.best_s)) if level.best_s != null else ""), 15)
+		done.add_theme_color_override("font_color", UITheme.ACCENT)
+		column.add_child(done)
+	var go: Button = ui.button("Play again" if level.done else "Play", play.bind(str(level.id)))
+	go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(go)
+
+
+func play(level_id: String) -> void:
+	ui.close_modal_now()
+	game.start("normal", level_id)
+
+
+func _clock(seconds: int) -> String:
+	return "%d:%02d" % [seconds / 60, seconds % 60]
+
+
+## A training level told to its end: how long it took against how long it should, what was practised, the deeds
+## of the journey, a rating for us (D-59: each level is also a lab), and where to go next.
+func level_complete() -> void:
+	var run_id := str(game.run_state.get("run_id", ""))
+	var result: Dictionary = await game.net.api(HTTPClient.METHOD_GET, "/runs/%s/result" % run_id)
+	var listing: Dictionary = await game.net.api(HTTPClient.METHOD_GET, "/training")
+	if listing.ok:
+		training = listing.data
+	var settings := ConfigFile.new() # The title stops suggesting Training to someone who has played it.
+	settings.load("user://presentation.cfg")
+	settings.set_value("tutorial", "done", true)
+	settings.save("user://presentation.cfg")
+	var level: Dictionary = game.level
+	var body: VBoxContainer = ui.begin_modal(str(level.get("title", "Training")) + ": done", "level_complete",
+		Vector2(640, 420), false)
+	if result.ok and result.data.seconds != null:
+		ui.paragraph(body, "You took %s (about %d minutes expected)." % [_clock(int(result.data.seconds)),
+			int(level.get("minutes", 5))])
+	if not str(level.get("after", "")).is_empty():
+		ui.paragraph(body, str(level.after))
+	ui.paragraph(body, "You practised: " + ", ".join(PackedStringArray(level.get("teaches", []))).to_lower() + ".")
+	var deeds: Array = (game.run_state.get("view", {}) as Dictionary).get("deeds", [])
+	if not deeds.is_empty():
+		ui.paragraph(body, "Along the way: " + ", ".join(PackedStringArray(deeds.map(func(d) -> String: return str(d.title)))) + ".")
+	ui.paragraph(body, "How was it?")
+	var ratings := HBoxContainer.new()
+	ratings.add_theme_constant_override("separation", 8)
+	body.add_child(ratings)
+	var comment := LineEdit.new()
+	comment.placeholder_text = "Anything that got in the way? (optional)"
+	comment.max_length = 500
+	var thanks: Label = ui.label("", 15)
+	for pair in [["Too easy", "too_easy"], ["About right", "about_right"], ["Confusing", "confusing"]]:
+		ratings.add_child(ui.button(pair[0], func() -> void:
+			var sent: Dictionary = await game.net.api(HTTPClient.METHOD_POST, "/runs/%s/feedback" % run_id,
+				{"rating": pair[1], "comment": comment.text})
+			thanks.text = "Thank you: that helps us improve this part of the game." if sent.ok else "Couldn't save that.", "Chip"))
+	body.add_child(comment)
+	body.add_child(thanks)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	body.add_child(row)
+	var following := next_level(str(level.get("id", "")))
+	if not following.is_empty():
+		row.add_child(ui.button("Next level", play.bind(following)))
+	row.add_child(ui.button("Play again", play.bind(str(level.get("id", "")))))
+	row.add_child(ui.button("Back to Training", func() -> void:
+		ui.close_modal_now()
+		await game.back_to_menu()
+		open_training(str(level.get("track", "basic")))))
+	row.add_child(ui.button("Carry on here", ui.close_modal, "Quiet"))

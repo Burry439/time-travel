@@ -1,6 +1,16 @@
 {
  "id": "tutorial",
  "title": "The first morning",
+ "goal": "Find a way into the city",
+ "track": "basic",
+ "order": 100,
+ "minutes": 20,
+ "teaches": [
+  "Everything in the basics, in one morning on the village road",
+  "Ends at the city gate"
+ ],
+ "blurb": "The old tutorial: Jory's burn, Kade's bout, a fire, and the captain's word. Retires once the short levels cover it.",
+ "after": "That's how it works here: people watch what you do, pass it on, and speak for you. A fresh journey starts on the south road, with other people's problems and nobody handing you the answer. The device stays with you: press H any time.",
  "base": "village",
  "map": "village",
  "version": 3,

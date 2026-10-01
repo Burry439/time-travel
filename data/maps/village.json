@@ -2,7 +2,25 @@
  "id": "village",
  "version": 3,
  "name": "the road below the city",
- "notes": "A map (GDD 4.2, D-59): the grid everyone walks, in cells of 32 px. size: [width, height] in cells; the stranger may walk anywhere inside it that nothing blocks. walk: [x0, y0, x1, y1), where people (and the stranger's planned walks) keep to. buildings block movement and sight (label: what the journal's map calls one); obstacles block movement only, and an obstacle with 'tree' is also a fellable tree of that kind (trees: the kinds), the thing called by its id. places: named cells people talk about and go to (cell: where they stand; gate: a gate post, which the gate guards keep manned). gate (optional): the wall's rows and the gap in it (cols), passable only while the gate is open; middle: the middle of the gap, where a guard steps in to stop anyone; approach [x from, x to, rows up to]: where guards stop strangers; posts [x from, x to, rows up to]: where a gate guard counts as at the gate. after_arrest: where guards march an arrested stranger (cell) and how that's told (words); otherwise to the level's start. inside (optional): the rows that end the journey when the stranger reaches them. Every place must be walkable (tests/test_content.py checks).",
+ "areas": [
+  {
+   "name": "The city gate",
+   "until_row": 18.75
+  },
+  {
+   "name": "The craftsmen's row",
+   "until_row": 37.5
+  },
+  {
+   "name": "The Wayside Inn",
+   "until_row": 56.25
+  },
+  {
+   "name": "The south road",
+   "until_row": 1000
+  }
+ ],
+ "notes": "A map (GDD 4.2, D-59): the grid everyone walks, in cells of 32 px. areas: what the HUD calls where the stranger is, in bands from the top (until_row; otherwise the map's name). size: [width, height] in cells; the stranger may walk anywhere inside it that nothing blocks. walk: [x0, y0, x1, y1), where people (and the stranger's planned walks) keep to. buildings block movement and sight (label: what the journal's map calls one); obstacles block movement only, and an obstacle with 'tree' is also a fellable tree of that kind (trees: the kinds), the thing called by its id. places: named cells people talk about and go to (cell: where they stand; gate: a gate post, which the gate guards keep manned). gate (optional): the wall's rows and the gap in it (cols), passable only while the gate is open; middle: the middle of the gap, where a guard steps in to stop anyone; approach [x from, x to, rows up to]: where guards stop strangers; posts [x from, x to, rows up to]: where a gate guard counts as at the gate. after_arrest: where guards march an arrested stranger (cell) and how that's told (words); otherwise to the level's start. inside (optional): the rows that end the journey when the stranger reaches them. Every place must be walkable (tests/test_content.py checks).",
  "size": [
   96,
   72

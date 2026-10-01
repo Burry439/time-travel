@@ -331,7 +331,7 @@ func _run() -> void:
 	await read_cards()
 	for _i in 20:
 		await create_timer(0.2).timeout
-		if scene.ui.modal_kind == "tutorial_end":
+		if scene.ui.modal_kind == "level_complete":
 			break
 	await shot("end")
 	print("\n==== TUTORIAL PLAYTEST: at %s" % step_id())

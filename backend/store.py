@@ -132,6 +132,12 @@ def db():
                 error TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+            CREATE TABLE IF NOT EXISTS feedback (
+                run_id TEXT NOT NULL REFERENCES runs(id),
+                rating TEXT NOT NULL,
+                comment TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(action_requests)")}
@@ -142,6 +148,8 @@ def db():
             connection.execute("ALTER TABLE runs ADD COLUMN scenario TEXT NOT NULL DEFAULT 'village'")
         if "save_format" not in columns:  # How its events are stored (D-58); journeys from before say 1.
             connection.execute("ALTER TABLE runs ADD COLUMN save_format INTEGER NOT NULL DEFAULT 1")
+        if "completed_at" not in columns:  # When the journey's level was done (D-59): the training's done marks.
+            connection.execute("ALTER TABLE runs ADD COLUMN completed_at TEXT")
         yield connection
         connection.commit()
     except Exception:
@@ -306,7 +314,16 @@ def record(
         snap["tick"] = tick
     if sequence % CHECKPOINT_EVERY == 0:
         save_checkpoint(connection, after)
+    if finished(after) and not finished(before):
+        connection.execute(
+            "UPDATE runs SET completed_at=CURRENT_TIMESTAMP WHERE id=? AND completed_at IS NULL", (state["run_id"],)
+        )
     return after
+
+
+def finished(state: dict) -> bool:
+    """The journey's level is done: a guided story told to its end, or the city reached (D-59)."""
+    return bool((state.get("tutorial") or {}).get("done")) or bool(state.get("inside_city"))
 
 
 def pack(payload: dict) -> bytes:

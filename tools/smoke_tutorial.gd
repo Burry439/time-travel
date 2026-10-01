@@ -2,12 +2,12 @@ extends SceneTree
 ## The tutorial, "The first morning" (GDD D-50, D-52). Needs the backend with AI_MODE=stub:
 ##   $env:AI_MODE='stub'; ./tools/run_m0.ps1
 ##   Godot --headless --path . --script res://tools/smoke_tutorial.gd  [-- --capture]
-## The title's Tutorial button starts one. The first card is up, big and centred, and the world waits (no clock).
+## The title's Training screen starts one (Basics, Play). The first card is up, big and centred, and the world waits (no clock).
 ## Next through the cards; the banner and the marker show the task; walking into the ring, a closer look, picking
 ## things up and opening the pack each move the story on, one step at a time. Then, in a developer tutorial
 ## journey: "Type it for me" fills the dialogue bar for Jory; the steps the stub judge can't do are skipped; Kade
 ## lends his staff, Pack & gear puts it in hand, the bout is fought (and a help card stops even the bout's clock);
-## the last cards lead to the closing card. Finally the wainwright's notebook opens, and its Type it for me works.
+## the last cards lead to the level complete screen. Finally the wainwright's notebook opens, and its Type it for me works.
 var scene: Node2D
 var capture := false
 
@@ -117,8 +117,16 @@ func _run() -> void:
 	var health: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/health")
 	if not check(health.ok and str(health.data.ai.mode) == "stub", "Start the backend with AI_MODE=stub for this test"):
 		return
-	var start := find_button(scene.menu, "Tutorial (first time)")
-	if not check(start != null, "No Tutorial button on the title"):
+	var training := find_button(scene.menu, "Training")
+	if not check(training != null, "No Training button on the title"):
+		return
+	training.pressed.emit() # The Training screen (D-59): the first morning is in Basics, for now.
+	for _i in 40:
+		await create_timer(0.1).timeout
+		if scene.ui.modal_kind == "training" and find_button(scene.ui.modal, "Play") != null:
+			break
+	var start := find_button(scene.ui.modal, "Play")
+	if not check(start != null, "No level to play on the Training screen"):
 		return
 	start.pressed.emit()
 	for _i in 40:
@@ -278,11 +286,11 @@ func _run() -> void:
 	await skip() # captain (Kade's word; the stub voice can't let you in); then the last step's cards are read.
 	for _i in 20:
 		await create_timer(0.2).timeout
-		if scene.ui.modal_kind == "tutorial_end":
+		if scene.ui.modal_kind == "level_complete":
 			break
-	if not check(step_id() == "done" and scene.ui.modal_kind == "tutorial_end", "No closing card: " + step_id()):
+	if not check(step_id() == "done" and scene.ui.modal_kind == "level_complete", "No level complete screen: " + step_id()):
 		return
-	await screenshot("tutorial_end")
+	await screenshot("tutorial_complete")
 	# The wainwright's notebook (D-52).
 	scene.ui.close_modal_now()
 	var village: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})

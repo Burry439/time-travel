@@ -225,7 +225,9 @@ func _wood_label(text: String, font_size: int, colour := UITheme.CREAM) -> Label
 func _track_goal(state: Dictionary) -> void:
 	var open: Array = ui.open_claims()
 	var claim: Dictionary = ui.layers.pinned_claim() if ui.layers else {}
+	var long_goal := str(game.level.get("goal", state.get("objective", ""))) # The level's (data/content/levels).
 	var gate := "The city gate is open ↑" if state.get("gate_open", false) else "Get inside the city: the gate is north ↑"
+	var hint := (gate + "  ·  " if game.gate_sprite else "") + "talk to people to find leads"
 	var admitted = state.get("admitted")
 	if typeof(admitted) == TYPE_DICTIONARY and not state.get("inside_city", false):
 		goal.text = "Walk through the city gate ↑"
@@ -241,9 +243,9 @@ func _track_goal(state: Dictionary) -> void:
 		goal.text = ui.shorten(str(suggested.lead), 90)
 		status.text = "%d open lead%s  ·  click to choose one to follow" % [open.size(), "" if open.size() == 1 else "s"]
 	else:
-		goal.text = "Find a way into the city"
-		status.text = gate + "  ·  talk to people to find leads"
-	goal.add_theme_font_size_override("font_size", 20 if goal.text == "Find a way into the city" else 16)
+		goal.text = long_goal
+		status.text = hint
+	goal.add_theme_font_size_override("font_size", 20 if goal.text == long_goal else 16)
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	goal.custom_minimum_size.x = 320
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

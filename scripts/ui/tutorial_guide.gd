@@ -37,6 +37,7 @@ var stuck_label: Button
 var arrow: Control
 var focus: Node2D
 var pages: Array = [] # [{text, kind: card|done|help|reaction, step}]
+var ending_due := false # The story was told to its end while we watched: the level complete screen comes next.
 var page := 0
 var run_id := ""
 var step_seen := -1
@@ -195,12 +196,13 @@ func refresh() -> void:
 	if str(state.get("run_id", "")) != run_id: # A different journey: pick up where it is.
 		run_id = str(state.get("run_id", ""))
 		step_seen = -1
+		ending_due = false
 		pages.clear()
 		log_seen = state.get("device_log", []).size()
 		_close()
 	var lines: Array = state.get("device_log", [])
 	for index in range(log_seen, lines.size()):
-		if str(lines[index].get("kind", "")) == "reaction" and game.run_state.get("scenario") == "tutorial":
+		if str(lines[index].get("kind", "")) == "reaction" and not steps.is_empty(): # Any guided level.
 			pages.append({"text": str(lines[index].text), "kind": "reaction", "step": -1})
 	log_seen = lines.size()
 	var tutorial = state.get("tutorial")
@@ -210,6 +212,7 @@ func refresh() -> void:
 		if finished:
 			step = steps.size()
 		if step != step_seen:
+			ending_due = ending_due or (finished and step_seen >= 0)
 			if step_seen >= 0:
 				for passed in range(step_seen, mini(step, steps.size())):
 					var done := str(steps[passed].get("done", ""))
@@ -224,6 +227,15 @@ func refresh() -> void:
 		page = 0
 		_show_page()
 	_update_banner()
+	if pages.is_empty() and not panel.visible:
+		_end()
+
+
+## Once a finished story's last cards are read: the level complete screen (D-59).
+func _end() -> void:
+	if ending_due:
+		ending_due = false
+		ui.screens.level_complete()
 
 
 func _update_banner() -> void:
@@ -376,6 +388,7 @@ func _finish() -> void:
 	if read_step >= 0 and read_step == current_step():
 		await _send(game.run_path("/tutorial/read"), {"step": read_step})
 	_update_banner()
+	_end()
 
 
 func _type_it() -> void:

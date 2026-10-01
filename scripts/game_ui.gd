@@ -250,7 +250,7 @@ func enter_run(state: Dictionary) -> void:
 	load_visited(str(state.get("run_id", "")))
 	note_cell(Vector2i(int(state.player.x), int(state.player.y)))
 	hud.refresh()
-	if state.get("scenario", "village") != "tutorial": # The tutorial teaches these one at a time (D-52).
+	if game.level.get("steps", []).is_empty(): # A guided level teaches these one at a time (D-52).
 		hud.show_hint("controls", "Hover over things to see what they are  ·  Left-click to act  ·  "
 			+ "Right-click to look closer  ·  T to say or do anything  ·  Drag things from your pack")
 

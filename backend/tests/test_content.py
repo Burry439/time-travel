@@ -206,6 +206,13 @@ def test_every_level_stands_on_open_ground(level_id):
         assert level["version"] and level["reactions"]
 
 
+@pytest.mark.parametrize("level_id", sorted(LEVELS))
+def test_every_level_file_names_its_map_and_goal_itself(level_id):
+    """The client reads level files as they are (its map scene, the HUD's goal), without following base."""
+    raw = content.read(f"content/levels/{level_id}.json")
+    assert raw["id"] == level_id and raw["map"] in MAPS and raw["goal"] and raw["title"]
+
+
 @pytest.mark.parametrize(
     ("level_id", "npc_id"), sorted((level_id, npc_id) for level_id, level in LEVELS.items() for npc_id in level["cast"])
 )

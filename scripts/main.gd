@@ -19,6 +19,7 @@ const RUN_SPEED := 368.0 # 11.5 cells/second while Shift is held.
 ## pieces are null on a map without one.
 var map_id := ""
 var map_parts: Array[Node] = []
+var map_plan: Dictionary = {} # The map's data (data/maps): its size, places, areas.
 var world_size := Vector2(3072, 2304)
 var gate_shape: CollisionShape2D
 var gate_sprite: Sprite2D
@@ -142,8 +143,8 @@ func load_map(id: String) -> void:
 		map_parts.append(part)
 	scene.free()
 	map_id = id
-	var plan: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % id))
-	world_size = Vector2(float(plan.size[0]), float(plan.size[1])) * CELL
+	map_plan = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % id))
+	world_size = Vector2(float(map_plan.size[0]), float(map_plan.size[1])) * CELL
 	camera.limit_right = int(world_size.x)
 	camera.limit_bottom = int(world_size.y)
 	gate_shape = get_node_or_null("WorldCollision/ClosedGate/CollisionShape2D") as CollisionShape2D
@@ -262,7 +263,7 @@ func _check_health() -> void:
 		var settings := ConfigFile.new()
 		var tutorial_done: bool = settings.load("user://presentation.cfg") == OK and settings.get_value("tutorial", "done", false)
 		message.text = ("Local simulation ready. Start or resume a run." + (
-			"" if tutorial_done else "\nNew here? Start with the tutorial.") + (
+			"" if tutorial_done else "\nNew here? Start with Training.") + (
 			"" if ai_ready() else "\nAI crafting is off: add OPENAI_API_KEY to backend/.env and restart the backend.")
 			) if reply["ok"] else "Start the local backend first: tools/run_m0.ps1"
 
@@ -490,7 +491,7 @@ func _flush_moves() -> void:
 			var said = reply.data.get("detail") if typeof(reply.get("data")) == TYPE_DICTIONARY else null
 			ui.notify("Connection lost. Pause and resume your journey to reconnect." if sync_error else
 				(str(said) if typeof(said) == TYPE_STRING and "gateway" in str(said) else "That path is blocked.")
-				if sending_move else "The village clock is reconnecting.")
+				if sending_move else "The clock is reconnecting.")
 			break
 	movement_sync_active = false
 
@@ -527,11 +528,6 @@ func accept_state(new_state: Dictionary) -> void:
 	ui.device.refresh()
 	ui.guide.refresh()
 	ui.layers.refresh()
-	var was_tutorial = before.get("tutorial")
-	var now_tutorial = run_state.get("tutorial")
-	if typeof(was_tutorial) == TYPE_DICTIONARY and typeof(now_tutorial) == TYPE_DICTIONARY \
-			and not was_tutorial.get("done", false) and now_tutorial.get("done", false):
-		ui.device.closing_card() # The first morning is over (D-50).
 	view.react_to(before)
 
 
