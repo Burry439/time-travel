@@ -100,16 +100,23 @@ func _play_attempt_reply(data: Dictionary) -> void:
 	game.view.sync()
 	game.view.reveal_new_objects(entry)
 	game.view.play_harm(entry)
-	if entry.category in ["success", "partial_success"]:
-		game.effects.pickup_sound.play()
-		game.player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
-		if typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY:
-			await get_tree().create_timer(1.2).timeout # Let the fall or the blow play out in view.
-	elif str(entry.category) in ["failed", "blocked", "unsupported", "unresolved"]:
-		game.ui.sounds.play("fail") # It didn't work (D-55): heard as well as read.
+	_show_outcome(entry)
+	var dramatic: bool = typeof(entry.get("transformed")) == TYPE_DICTIONARY or typeof(entry.get("harm")) == TYPE_DICTIONARY
+	if dramatic and entry.category in ["success", "partial_success"]:
+		await get_tree().create_timer(1.2).timeout # Let the fall or the blow play out in view.
 	game.request_busy = false
 	game.ui.bar.result(entry, game.last_trace)
 	story_moved_on()
+
+
+## How the stranger's own deed lands: a sound and a gesture when it works, the failure sound when it doesn't
+## (D-55: heard as well as read). The same in the world and in a round's playback.
+func _show_outcome(entry: Dictionary) -> void:
+	if entry.category in ["success", "partial_success"]:
+		game.effects.pickup_sound.play()
+		game.player_visual.play_gesture("pickup" if entry.get("action") == "take" else "gesture")
+	elif str(entry.category) in ["failed", "blocked", "unsupported", "unresolved"]:
+		game.ui.sounds.play("fail")
 
 
 ## After an attempt or a round (their states arrive outside _accept_state): the device and the tutorial's cards
@@ -202,11 +209,7 @@ func round_beat(entry: Dictionary) -> void:
 		if entry.get("kind") == "do" and not played_action.is_empty():
 			game.view.reveal_new_objects(played_action)
 			game.view.play_harm(played_action)
-			if played_action.category in ["success", "partial_success"]:
-				game.effects.pickup_sound.play()
-			elif str(played_action.category) in ["failed", "blocked", "unsupported", "unresolved"]:
-				game.ui.sounds.play("fail")
-				game.player_visual.play_gesture("pickup" if played_action.get("action") == "take" else "gesture")
+			_show_outcome(played_action)
 		return
 	var actor := game.get_node_or_null("NPCs/%s/PaintedActor" % who)
 	if actor and entry.get("kind") in ["strike", "reply", "arrive"]:
