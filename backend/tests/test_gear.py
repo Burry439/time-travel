@@ -53,6 +53,14 @@ def test_a_wooden_spear_is_dangerous_bare_and_useless_against_mail():
     armoured = person(state, [MAIL])
     blow = gear.hit(state, armoured, spear)
     assert blow["deflected"] and blow["effective"] <= 5 and blow["result"] == "deflected"
+    # Unaware, the blow is doubled and what gets through reaches the cap: still turned, not a wound (the
+    # stake_against_mail craft eval found it rated "wounded" at exactly the cap).
+    sneak = gear.hit(state, armoured, spear, aware=False)
+    assert sneak["deflected"] and sneak["effective"] == gear.SIT["deflected_max"] and sneak["result"] == "deflected"
+    # A heavy point turned by mail still delivers its force: that can wound.
+    pole = thing("great wooden pike", ["wood"], 4.0, 2.0, ("rigid", "sharp_edge"), "short_spear")
+    heavy = gear.hit(state, armoured, gear.weapon(pole), aware=False)
+    assert heavy["deflected"] and heavy["effective"] > gear.SIT["deflected_max"] and heavy["result"] == "wounded"
     iron = gear.hit(state, armoured, gear.weapon(SWORD))
     assert 0 < iron["effective"] < 10  # Mail stops most of even a sword's cut.
 

@@ -514,7 +514,9 @@ def _strike(out: dict, state: State, target: dict, attack: dict, area: str, awar
             effective=round(effective, 1),
             deflected=True,
             type="blunt",
-            result="deflected" if effective < 5 else "wounded",
+            # A light point or edge turned by armour is turned, even at its cap (an unaware guard's 5 is a bruise
+            # through the mail, not a wound); only a heavy one can still wound through it.
+            result="wounded" if heavy and effective >= 5 else "deflected",
         )
         kind = "blunt"
     else:
