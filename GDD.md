@@ -136,7 +136,7 @@ Keep it short, dismissible, and free of hints.
 
 ### Tutorial and the device (D-50, D-52)
 
-**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json`, `backend/tutorial.py`, `scripts/ui/tutorial_guide.gd`.
+**Status: CURRENT.** The title offers **Tutorial (first time)**, suggested until it's been done. It's a prologue on the same map: "The first morning", about 20 minutes, `data/content/tutorial.json` (the whole story: steps, things, roles, speeches), run by `backend/scenario.py`, with the device in `backend/device.py` and the cards in `scripts/ui/tutorial_guide.gd`.
 
 **The device** is the damaged machine that brought the stranger here. Only the stranger hears it. It knows modern science and the controls, but only what the stranger has seen or been told: never people's secrets or anything unseen.
 
@@ -184,7 +184,7 @@ Keep it short, dismissible, and free of hints.
     - Kade speaks again if a minute passes without him reaching the captain.
 18. The city: the gate is open to you, a new journey is harder, the yard and the notebook. Then **Walk into the city** or **Begin a fresh journey**.
 
-While Kade is teaching (steps 11 to 16) he stays with the stranger (a `watch` job). The voice isn't offered moves that would send him off or have him let the stranger in himself (`tutorial.keeps`).
+While Kade is teaching (steps 11 to 16) he stays with the stranger (a `watch` job). The voice isn't offered moves that would send him off or have him let the stranger in himself. All of this is Kade's **role** in the story's data (`roles` in `tutorial.json`: stays, withholds, spars), which talk, fights and the clock read through `rules.role` without knowing which story is running (D-58).
 
 The suggested words for 9, 10 and 16 are checked against the live judge (`evals/run_tutorial_live.py`), and so are two wordings players really type for the fire.
 
@@ -209,12 +209,6 @@ EXPLORE → NOTICE (a problem, a person, a material)
 
 | Kind | Examples | How it resolves | Speed target |
 | --- | --- | --- | --- |
-| D-57 | 2026-09-30 | **Say and do in one line; the first morning ends at the gate; two hands.** *(D-56 is the parked storylines work.)*<br><br>**One line, both:** spoken words blue in quotes, deeds red, with Tab switching mid-line and putting the quotes in. The backend already took a Do line with quotes as `both`; with nobody addressed, the nearest person now hears the words.<br><br>**The tutorial (story v3):**<br>- Mara fetches Kade, and they stand a moment before both come back.<br>- Kade sizes the stranger up and lends a one-handed practice sword and a shield, then the bout.<br>- He asks why they're here.<br>- A steel file and a fire he sees.<br>- He speaks for the stranger to Roderic.<br>- Roderic lets them in: himself if Kade told him they want in, otherwise when asked, on Kade's word.<br><br>**Fixed from play:**<br>- the fire step counted the earlier poultice as the demonstration, so it ended before any fire;<br>- flint on a soft iron nail was ruled sparkless;<br>- Kade walked off while Mara was talking to him.<br><br>**Found by the live tutorial playthrough (`tools/playtest_tutorial.gd`):** Mara stood beside the stranger during the bout, and a swing still in the air as it ended hit her; Kade then fought for real and killed the stranger. Now:<br>- in a practice bout the stranger's blows reach only the partner;<br>- a swing that lands after the bout is over is checked;<br>- Mara stands clear;<br>- Kade's protection (a blow at him is a bout, not an assault) lasts through all his lessons, and a talk with him no longer sends him back to his day mid-lesson.<br><br>**Two hands:** a two-handed weapon still takes both, but whatever is let go of is now named ("The wicker shield goes back in your pack: the practice staff takes both hands"), in the reply and atop Pack & gear. | The user: "we should be able to say and do things in the same dialogue … half of it will be red the other half can be blue"; "the practice combat doesn't really make sense and Kade walks away from Mara while she's talking to him"; "it said I showed them the fire before I actually made the fire and when I made the fire it just got stuck"; "the tutorial should end with Kade telling Roderic about you and then Roderic letting you in. But you still need to ask if Roderic doesn't know you want to enter the city"; "when I equip the shield in my left hand it unequips the staff".<br><br>**Live:** the fire 10/10, including the player's own wording, with Kade seeing it each time. |
-| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A to D of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map.<br><br>**Bug bash (D):** a scripted live playthrough (`tools/playtest_demo.gd`) found and fixed:<br>- theft at a bucket Hessa had offered: jobs now lend what they need;<br>- admission on the stranger's claim alone: code now requires evidence the guard holds (`grounds_to_admit`);<br>- no halt after a vouch: hearsay isn't the guards dealing with the stranger;<br>- the tracker showing facts instead of things to do.<br><br>The whole Hessa route now plays through live. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
-| D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
-| D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
-| D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
-| D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
 | **Quick action** | Pick up a loose stone, put something down, inspect | Deterministic rules, no AI | < 100 ms |
 | **Try Something** | "Tie the two branches together with the cord." "Rub the needle on the lodestone many times in one direction, then float it on a sliver of wood in the bowl of water." | Interpreter → validator → (rules, or physics judge if novel) → reducer | Rules: < 1 s. Judge: aim for p95 ≤ 12 s |
 | **Talk** | "Hessa, would your brother listen if you told him I'm harmless?" | Perception → NPC decision → voice → reducer | First words aim ≤ 2 s |
@@ -335,7 +329,7 @@ Everything here is read from what really happened (leads, memories, deals, thing
 - **Pinning.** Pin a lead in the journal. The tracker follows it, and the person it's about (a referral's target, else whoever told you) gets the pulsing **ring**, with an **arrow** at the screen's edge when they're out of sight. It hides in the tutorial, when you're beside them, and while a panel is open. This is the one world marker outside the tutorial, and the player chooses it. Pins are remembered per journey on the client.
 - **Standing** is a word and a colour, never a number:
   - the words are **Doesn't know you · Hostile · Wary · Neutral · Friendly · Would speak for you**;
-  - one backend rule (`minds.standing`) sets `mind.standing` whenever it changes;
+  - one backend rule (`reputation.standing`) sets `mind.standing` whenever it changes;
   - a **toast** with their portrait says so ("Bren ▲ Friendly · Was wary of you").
 - **Deeds** are the milestones of a journey. How warm someone is shows as their standing, not as a deed: someone friendly from the start is no achievement. Each gets a toast with a small fanfare, and all are on the Deeds page:
   - your first invention;
@@ -435,7 +429,7 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 >
 > Live: Bren admits on Hessa's word (2/2) but not as a favour (2/2); Kade ignores wonders (2/2); Oren in awe opens the gate (2/2).
 >
-> **Grounds, not claims (D-55).** Code also requires something real behind a yes (`talk.grounds_to_admit`):
+> **Grounds, not claims (D-55).** Code also requires something real behind a yes (`gatekeeping.grounds_to_admit`):
 > - evidence the guard holds: a resident's word given to them in person, something shown to work, a gift, or help they saw;
 > - for a guard going on their own motive, trust earned over time (standing Friendly or better) also counts;
 > - the captain's rule asks for the evidence.
@@ -815,7 +809,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 
 **Status: CURRENT** (data model and rules) · **EXPERIMENT** (decision engine; see §9)
 
-> **Built (27 Sep 2026, D-16 to D-18).** `backend/minds.py` and `backend/ai/decider.py`.
+> **Built (27 Sep 2026, D-16 to D-18; split by job in D-58).** `backend/perception.py` (what's seen), `reputation.py` (memories and regard), `minds.py` (deciding), `clock.py` (jobs on the clock) and `backend/ai/decider.py`.
 >
 > - **Perception** is code: sight 20 cells (D-55, doubled from 10), clear within 10 (from 5), with line of sight past buildings; the victim always knows.
 > - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
@@ -829,7 +823,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 >
 > **Added in M5 (D-22 to D-26):**
 >
-> - **Conversations** (`backend/talk.py`, `backend/ai/voice.py`): see §3 Talking.
+> - **Conversations** (`backend/conversation.py` the moves, `briefing.py` what the voice is told, `talk.py` what an exchange changes, `gatekeeping.py` who may let the stranger in, `backend/ai/voice.py`): see §3 Talking.
 > - **Regard.** Each person's trust and suspicion of the stranger start from their card. Clear evidence (a demonstration that worked, a gift, a vouch) moves them once per event; a crime they clearly saw moves them the other way.
 > - **Seeing something shown or given** is remembered but raises no alarm.
 > - **Deals and vouching.** A vouch is a walk to the captain that leaves him a memory to weigh.
@@ -952,89 +946,82 @@ Each potential witness receives a **perceived projection** of the event, meaning
 
 ### 8.2 Event store
 
-**Keep:**
+**Built (D-58):**
 
-- Append-only events with a sequence number
-- `request_id` idempotency
-- `expected_version` conflict checks
-- Checkpoints
-- Replay tests
-
-**Change:**
-
-- Event payloads carry **effects (deltas)**, not full copies of the objects and NPC lists. Replay applies the effects.
-- Every event records: `kind`, `effects[]`, `cause` (player intent / NPC decision / clock), `correlation_id` (links an intent to its steps and reactions), and `model_calls[]` (IDs into telemetry).
-- Checkpoint on a fixed cadence after **any** event kind (every 100 events), not only on move and explore.
-- Replay never calls models. It applies recorded effects only.
+- Append-only events per journey, numbered. A repeated `request_id` is answered with what was saved; a request
+  made on an older view than the player's own last action (`player_seq`) is refused, so people thinking or the clock
+  ticking never make the player's request stale.
+- **Each event stores only what changed** (`patch.py`): a patch from the world before to the world after. Records
+  with ids (people) are diffed by id, lists that only grow (the journal, memories) append, anything else is
+  replaced; payloads are compressed. Replay applies the patches in order and never calls models.
+- A full copy of the world every 512 events (the latest two kept), so a journey loads from its newest copy.
+- Saves carry a format number. A journey saved in an older format, or begun on an older starting world (a new
+  seed), gets an honest "start a new journey" (HTTP 410, D-04): a journey always replays on the world it began on.
+- Measured: a clock beat went from about 13 KB to a few hundred bytes (49× smaller); a 40-minute journey is
+  1.3 MB of events and loads in 0.05 s (it was 17–50 MB).
 
 ### 8.3 Movement and the clock
 
-The current build sends one request per grid cell crossed, plus clock beats. That's up to about 8 requests per second, with a fragile queue. It changes to:
+**Built (D-05, D-19, D-39):** Godot owns moment-to-moment movement. A **movement lane** sends the cells walked in
+batches (`/move`, up to 24 a request) and clock beats (`/explore`, up to 1 s each) one request at a time; the service
+checks every step against the walkable grid (`paths.py`). **Two thinking lanes** (`/think`: reactions, and the
+village's own life) run alongside and never stop walking or time. A request whose reply may have been lost is sent
+once more with the same id.
 
-- Godot owns moment-to-moment movement.
-- One **`/tick`** request per second of active play carries `{elapsed_ms, player_cell}`. The backend checks the new cell is reachable from the last one within the elapsed time on the collision grid, advances NPC routines, and commits one event with deltas.
-- Position also syncs immediately before any action, so reach checks use the current cell.
-- The clock pauses during menus, typing, and model waits.
-
-### 8.4 API (target)
+### 8.4 API (built)
 
 | Method and path | Purpose |
 | --- | --- |
-| `POST /runs` · `GET /runs/{id}` · `GET /runs/{id}/events` | Create, load, and inspect a run |
-| `POST /runs/{id}/tick` | Clock plus position |
-| `POST /runs/{id}/quick` | Deterministic take, drop, inspect |
-| `POST /runs/{id}/intents` → `202 {intent_id}` | Submit Try Something (asynchronous) |
-| `POST /runs/{id}/say` → `202 {turn_id}` | Conversation turn (asynchronous) |
-| `GET /runs/{id}/pending/{id}` | Poll an intent or turn: `working` or final result and state |
-| `GET /assets/{asset_id}` | Sprite PNG |
-| `GET /runs/{id}/trace/{correlation_id}` | Developer trace |
+| `GET /health` · `POST /runs` · `GET /runs/{id}` · `GET /runs/{id}/events` | The service; create, load and inspect a journey |
+| `POST /runs/{id}/move` · `/explore` | Steps walked; the clock |
+| `POST /runs/{id}/act` | The one text line (D-34): says what it is and routes it |
+| `POST /runs/{id}/say` · `/encounter/act` · `/craft` · `/quick` | Rounds, Try Something, pick up and put down |
+| `POST /runs/{id}/strike` · `/guard` · `/equip` · `/swap` · `/treat` | Hands, gear and bodies (D-49) |
+| `POST /runs/{id}/think` | People with something on their mind decide |
+| `POST /runs/{id}/tutorial/check` · `/read` · `/ui` · `/skip` · `/device/ask` | The scenario's progress; the device |
+| `POST /runs/{id}/rewind` · `/checkpoint` | Back to the last calm moment; save on leaving |
+| `GET /assets/{id}` · `POST /runs/{id}/assets/{id}/retry` · `GET /runs/{id}/traces` | Paintings; developer traces |
+| `POST /runs/{id}/dev/gate` · `/dev/fight` | Developer switches |
 
-Model calls run **outside** database transactions. Results are revalidated against the current state before committing. Only one player resolution is outstanding per run.
+Every reply that carries the world carries its **view** (`views.py`): whether each lead is done, the journey's
+deeds and the words for standing, worked out at the last moment and never saved. Model calls run outside the lock
+and their results are checked again against the world as it is when they're saved (`commands.py`).
 
-### 8.5 Repository layout (target)
+### 8.5 Repository layout
 
-> **Built backend (D-33):**
->
-> - `app.py` only assembles the routes.
-> - `store.py`: the event log, replay, checkpoints, staleness.
-> - `routes_world.py`: journeys, walking, the clock, rewind, the developer gate.
-> - `routes_craft.py`: Try Something, the code-only `/quick` pick up and put down, sprites, traces.
-> - `attempts.py`: the judge call, traces and painting, shared with rounds.
-> - `rounds.py`: `/say` and `/encounter/act`.
-> - `intent.py` and `/act` (in `routes_craft.py`): the one text line; says whether it is speech, a deed, both, waiting, giving up or leaving, and routes it (D-34).
-> - `routes_minds.py`: `/think`.
-> - The simulation lives in `crafting.py`, `minds.py`, `talk.py`, `encounter.py`, `m2.py` (the world seed) and `npc_sim.py`.
+The backend is in layers; a module imports only from the layers above it (D-58). Two genuine two-way needs are
+imported where used: violence seen starts a fight and a fight's blows are seen (`perception`, `combat`), and the
+picture library lives in the journey's picture folder (`library`, `attempts`).
 
-> **Built client UI (D-35):**
->
-> - `scripts/game_ui.gd` coordinates the UI and holds the shared wording.
-> - `scripts/ui/`:
->   - `ui_theme.gd`: palette, serif fonts, and painted frames and cursors, generated in code and cached in `user://ui_cache`.
->   - `hud.gd`: the HUD, the pack and dragging.
->   - `action_bar.gd`: the dialogue bar.
->   - `inspect_card.gd`: the inspect card.
->   - `journal_book.gd` and `journal_map.gd`: the journal and its map.
->   - `head_status.gd`: signs over heads.
->   - `ui_sounds.gd`: UI sounds.
-> - `scripts/world_cursor.gd`: hover picking.
+| Layer | Modules |
+| --- | --- |
+| Content and the grid | `content.py` (every content file, read once) · `tuning.py` (the numbers that set the feel) · `shapes.py` (what's in the records) · `paths.py` (the walkable map, routes, sight) · `gear.py` · `m2.py` (the starting things) · `npc_sim.py` (routines) · `patch.py` |
+| People | `cast.py` (who's who and where, distance, jobs, the captain) · `reputation.py` (memories, regard, standing) · `speech.py` (the line bank) · `persona.py` (character sheets) |
+| Physics | `judge_view.py` (what the judge is shown) · `crafting.py` (what code allows) · `consequences.py` (a ruling becoming the world) · `heat.py` · `combat.py` |
+| Minds and talk | `perception.py` · `minds.py` (deciding) · `conversation.py` (the moves) · `briefing.py` (what the voice is told) · `talk.py` (what an exchange changes) · `gatekeeping.py` · `encounter.py` · `village.py` |
+| Time | `clock.py` (people on the clock) |
+| Rules and stories | `rules.py` (conditions; roles) · `scenario.py` (steps, effects) · `device.py` |
+| The service | `store.py` (events, replay, checkpoints) · `commands.py` (one pipeline for every command) · `views.py` · `attempts.py` · `intent.py` · `library.py` · `routes_*.py`, `rounds.py` · `app.py` |
+
+The client: `scripts/main.gd` is the journey itself (its state, the movement and thinking lanes, the camera), with
+its parts as children: `net.gd` (the service), `object_art.gd` (pictures for things), `world_view.gd` (people,
+bubbles, falls, the gate, what changed), `player_input.gd` and `actions.gd` (the one text line, rounds, pick up and
+put down, and how each plays back). `scripts/game_ui.gd` keeps the theme, the modal host and the shared wording;
+its panels are `scripts/ui/*.gd` (`screens.gd`, `pack.gd`, `dev_views.gd`, the HUD, the bar, the journal, the
+device, the tutorial's cards). Other scripts call public names (`game.accept_state`, `game.net.api`, `game.ui.pack.open`).
 
 ```
 GDD.md                   ← this document
 AGENTS.md                ← agent instructions (points here)
 project.godot, scenes/, scripts/, assets/   (Godot client)
-backend/
-  app.py                 ← HTTP routes only
-  sim/                   ← reducer, validation, perception, npc controllers, clock, movement
-  ai/                    ← role adapters: interpreter, judge, decider, voice, illustrator
-    providers/           ← one file per provider SDK
-  prompts/               ← versioned prompt files
-  tests/
+backend/                 ← the service (the modules above), ai/ (role adapters), prompts/, tests/
 data/
   content/               ← authored world (committed)
+  world_geometry.json, npc_routines.json, places.json
   assets/                ← generated sprites (ignored by git)
   *.sqlite3              ← saves (ignored by git)
 evals/                   ← fixtures + runner (§10)
-tools/                   ← run, stop, smoke, capture scripts
+tools/                   ← check, run, stop, smoke, capture and playtest scripts
 docs/                    ← historical notes and screenshots
 ```
 
@@ -1059,6 +1046,36 @@ The developer gate button stays for map testing but is labelled as a cheat.
 - **F4** (or the F3 panel's *AI traces* button) lists the last 10 attempts, sprite jobs with their image prompts and errors (plus *Retry painting*), the model-call log, and the judge's full system prompt.
 - The same data is available from `GET /runs/{id}/traces`.
 - Normal runs never receive traces (403).
+
+### 8.7 Checks
+
+`tools/check.ps1` runs every automatic check in one command: ruff (lint and format), gdlint (files up to 900
+lines), `tools/check_refs.py` (every `game.X` and `scene.X` in every script names a real member, which Godot
+doesn't check), a compile of every GDScript, and the backend tests. With `-Full` it also runs the 16 Godot smokes
+against a throwaway stub service on its own port and database. The fast part runs before every commit
+(`.githooks/pre-commit`).
+
+The backend tests include **golden journeys** (`tests/test_golden.py`): five fixed journeys played through the
+API in stub mode (the tutorial, the Hessa route, a fight and an arrest, make-hold-strike, a rewind), whose final
+states must match recorded ones exactly, and reload to the same. They lock behaviour during a refactor;
+`GOLDEN_UPDATE=1` re-records them when behaviour is meant to change. A **content test** checks every content file
+against the rule language and the fields the game reads.
+
+### 8.8 The rule language and scenarios
+
+Content says what must hold and what happens in one language (`rules.py`, D-58). A condition is
+`{"kind": ..., fields}`: `all`, `any` and `not` combine them; the rest are registered functions, each with the
+fields it needs (the stranger near a cell or carrying something, someone talked to, told, treated, a thing made
+in this step and seen, a thing installed, a flag the story noted...). The tutorial's checks and triggers, deals'
+`done_when`, people's tasks (`when`, `unless`) and the parked stories and secrets use it.
+
+A **scenario** is data (`tutorial.json`): its steps (cards, a task, a check, triggers, what happens when it
+starts and ends), its own **things**, the **roles** it gives people for some steps, and **speeches** whose words
+may depend on what the story noted. Effects are registered the same way (`scenario.py`: someone says something,
+walks over, stays, lends, hurts, spars, goes to tell someone, speaks for the stranger, lets them in). Roles are
+the one place core rules learn about a scenario: Kade's "stays, withholds errands, spars when struck" is read by
+talk, fights and the clock through `rules.role`, never by asking which scenario is running. The training maps are
+meant to be scenarios in this form.
 
 ---
 
@@ -1130,13 +1147,14 @@ Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Game
 
 ### 9.7 Budgets (goals to measure, not promises)
 
-| Interaction | Target |
-| --- | --- |
-| Deterministic action | < 100 ms |
-| Decider reaction | p95 ≤ 1.5 s |
-| Conversation turn (first text) | p95 ≤ 3 s; hard deadline 8 s |
-| Invention judgment | p95 ≤ 12 s; hard deadline 15 s |
-| Model cost per 30-minute session | Measure in M2; set a target in the M2 retrospective |
+| Interaction | Target | Measured (live play, 27–30 Sep 2026, 2,323 calls) |
+| --- | --- | --- |
+| Deterministic action | < 100 ms | Met: code only, a few ms on the service |
+| Decider reaction | p95 ≤ 1.5 s | Not met: `gpt-6-luna` p50 2.7 s, p95 6.0 s (539 calls); Jev was p50 1.4 s, p95 2.3 s before D-47 |
+| Conversation turn (first text) | p95 ≤ 3 s; hard deadline 8 s | Not met: the voice p50 2.3 s, p95 6.3 s (213 calls); within the deadline |
+| Invention judgment | p95 ≤ 12 s; hard deadline 15 s | Met: the judge p50 3.6 s, p95 7.7 s (152 calls) |
+| A painting | (none) | p50 12.6 s, p95 14.5 s; the thing is usable at once, its picture follows |
+| Model cost per session | Measure | Text models $0.02–0.07 per 20–40 minute journey (pictures extra); one voice failure in 2,323 calls |
 
 ---
 
@@ -1369,12 +1387,12 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 
 | # | Assumption | Tested in | Status | If it's wrong |
 | --- | --- | --- | --- | --- |
-| A1 | An LLM can reliably turn casual player text into a structured Attempt that references the right objects | M2 | Untested | Require reference chips for ambiguous cases; add a clarify step; fine-tune prompts on logged failures |
-| A2 | An LLM judge plus precedents gives consistent, fair physics rulings | M2 | Untested | Move more mechanics into deterministic rules; shrink the judge to "which supported template applies?" |
+| A1 | An LLM can reliably turn casual player text into a structured Attempt that references the right objects | M2 | Holding: the judge reads attempts against the right objects (craft evals 25/26 D-40, 32/33 D-45); the one text line is read right 13/14 (D-34) | Require reference chips for ambiguous cases; add a clarify step; fine-tune prompts on logged failures |
+| A2 | An LLM judge plus precedents gives consistent, fair physics rulings | M2 | Holding: borderline cases 4/4 consistent once the world's facts were written down (D-40, D-45); code keeps the laws (V10, D-41, D-49) | Move more mechanics into deterministic rules; shrink the judge to "which supported template applies?" |
 | A3 | Jev beats a general LLM on NPC decisions for cost and latency at acceptable quality | M4 | Retired (D-47): the fallback was adopted | Use an LLM with forced-choice schemas everywhere |
-| A4 | An image model can produce style-consistent, readable sprites for arbitrary objects | M3 | Untested | Composite or silhouette approach (M3 pivots) |
-| A5 | End-to-end latency stays tolerable: invention ≤ 12 s p95, reactions ≤ 3 s | M2, M4 | Untested | Smaller models; async narration; precomputation; relax the targets if players don't mind |
-| A6 | Model cost per session is affordable for a demo | M2, M6 | Untested | Caching, cheaper roles, fewer calls per intent |
+| A4 | An image model can produce style-consistent, readable sprites for arbitrary objects | M3 | Partly: 217 things painted in play, readable in the pack and the world; style consistency not yet judged by players | Composite or silhouette approach (M3 pivots) |
+| A5 | End-to-end latency stays tolerable: invention ≤ 12 s p95, reactions ≤ 3 s | M2, M4 | Mixed (§9.7): invention p95 7.7 s; reactions p95 6.0 s and conversation p95 6.3 s are over target. Code answers the moment at once (D-39), which hides most of it | Smaller models; async narration; precomputation; relax the targets if players don't mind |
+| A6 | Model cost per session is affordable for a demo | M2, M6 | Holding: $0.02–0.07 of text models per 20–40 minute journey (§9.7), plus pictures | Caching, cheaper roles, fewer calls per intent |
 | A7 | Players enjoy expressing ideas by typing | M1 (manual), M6 | Untested | Hybrid select-then-type UI; voice input later |
 | A8 | Players find at least one route without hints | M6 | Untested | Make world problems more visible; NPC referrals; stronger journal support |
 | A9 | The property vocabulary is broad enough that most sensible attempts aren't `unsupported` | M2, M6 | Untested | Grow the vocabulary from the backlog between playtests |
@@ -1387,6 +1405,13 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-58 | 2026-10-01 | **Clean up: one way to do each thing, content out of code, one rule language.**<br><br>**Saves store only what changed:** each event is a patch (`patch.py`), a full copy every 512 events; older journeys and a new starting world retire saves (D-04). **One pipeline for every command** (`commands.py`): repeats, stale views, finished journeys, the busy lock and model calls outside it, once.<br><br>**Modules by job, in layers** (§8.5): `minds`, `crafting` and `talk` split; a public people API (`cast`); the numbers in `tuning.py`; content read once (`content.py`); record shapes named (`shapes.py`).<br><br>**One rule language** (`rules.py`, §8.8): conditions and effects are registered with the fields they need. The tutorial, deals' `done_when`, people's tasks and the parked stories all use it; the tutorial's special cases are **roles** in its data. The cast, the starting things, the captain and the tutorial's things are content; a content test checks it all.<br><br>**The client** in parts (`net`, `object_art`, `world_view`, `player_input`, `actions`; the UI's screens, pack and developer views); the service sends what the client shows (`views.py`); `tools/check.ps1` runs every check, before every commit. | The user, after the whole-game review (code 5/10, tooling 4/10): "clean up and optimise and make the code more DRY and general … balance having hard coded rules with being able to do anything", before splitting the tutorial into training maps.<br><br>**Chosen:** old saves may break; content out of code with one shared rule language (the judge keeps ruling physics); the parked storylines ported but still off; one check command and a pre-commit hook. Behaviour was locked first by golden journeys, which matched after every step. |
+| D-57 | 2026-09-30 | **Say and do in one line; the first morning ends at the gate; two hands.** *(D-56 is the parked storylines work.)*<br><br>**One line, both:** spoken words blue in quotes, deeds red, with Tab switching mid-line and putting the quotes in. The backend already took a Do line with quotes as `both`; with nobody addressed, the nearest person now hears the words.<br><br>**The tutorial (story v3):**<br>- Mara fetches Kade, and they stand a moment before both come back.<br>- Kade sizes the stranger up and lends a one-handed practice sword and a shield, then the bout.<br>- He asks why they're here.<br>- A steel file and a fire he sees.<br>- He speaks for the stranger to Roderic.<br>- Roderic lets them in: himself if Kade told him they want in, otherwise when asked, on Kade's word.<br><br>**Fixed from play:**<br>- the fire step counted the earlier poultice as the demonstration, so it ended before any fire;<br>- flint on a soft iron nail was ruled sparkless;<br>- Kade walked off while Mara was talking to him.<br><br>**Found by the live tutorial playthrough (`tools/playtest_tutorial.gd`):** Mara stood beside the stranger during the bout, and a swing still in the air as it ended hit her; Kade then fought for real and killed the stranger. Now:<br>- in a practice bout the stranger's blows reach only the partner;<br>- a swing that lands after the bout is over is checked;<br>- Mara stands clear;<br>- Kade's protection (a blow at him is a bout, not an assault) lasts through all his lessons, and a talk with him no longer sends him back to his day mid-lesson.<br><br>**Two hands:** a two-handed weapon still takes both, but whatever is let go of is now named ("The wicker shield goes back in your pack: the practice staff takes both hands"), in the reply and atop Pack & gear. | The user: "we should be able to say and do things in the same dialogue … half of it will be red the other half can be blue"; "the practice combat doesn't really make sense and Kade walks away from Mara while she's talking to him"; "it said I showed them the fire before I actually made the fire and when I made the fire it just got stuck"; "the tutorial should end with Kade telling Roderic about you and then Roderic letting you in. But you still need to ask if Roderic doesn't know you want to enter the city"; "when I equip the shield in my left hand it unequips the staff".<br><br>**Live:** the fire 10/10, including the player's own wording, with Kade seeing it each time. |
+| D-55 | 2026-09-30 | **Playable and clear: Say / Do, prompts, books in hand, wider sight; the device as a coach; progress you can see.** *(Milestones A to D of the UX overhaul.)*<br><br>**Say / Do:** a switch beside the dialogue line, taken as given by the backend (`ActRequest.mode`; `intent.explicit`), so there's no classifier call. Giving up, walking away and waiting still count in either mode. A Do line with quoted words is `both`. The log and a live preview show which is which.<br><br>**Also:** "[E] …" tags over the nearest thing; a held book opens with Space and when equipped (Read in Pack & gear); NPC sight doubled (20 cells, clear at 10, witnesses at 20, wary facing at 16).<br><br>**The device (B):** always there; the Device window with the whole history; a memory of the conversation; a coach's context and `device_v2`; remarks at key moments, rate-limited. One `minds.standing` rule (Hostile · Wary · Neutral · Friendly · Would speak for you) is kept in `mind.standing`. Live device evals: 10/10 on the coach cases (Hessa's water deal, the lever it suggested earlier, why hollow reeds make a poor spear), and no routes named.<br><br>**Game layers (C):** a goal tracker with pinning and a world marker on the pinned lead's person (the one marker outside the tutorial, and the player's choice); standing toasts; deeds read from real events (`deeds.gd`); news toasts; the reveal card for things made; success and failure sounds; a camera jolt on hits; the world dims behind panels. The journal is rebuilt: Goals, People (with the whole conversation), Deeds, Things made, Device, Log, Map.<br><br>**Bug bash (D):** a scripted live playthrough (`tools/playtest_demo.gd`) found and fixed:<br>- theft at a bucket Hessa had offered: jobs now lend what they need;<br>- admission on the stranger's claim alone: code now requires evidence the guard holds (`grounds_to_admit`);<br>- no halt after a vouch: hearsay isn't the guards dealing with the stranger;<br>- the tracker showing facts instead of things to do.<br><br>The whole Hessa route now plays through live. | The user: "we need a way to distinguish between saying something and doing something … in the same dialogue menu"; "the npcs vision range should increase, let's double it"; "you can read the book when you equip it"; and "the game is very hard to play, we need to gamify it and greatly improve the UX/UI".<br><br>**Research:** AI Dungeon's explicit Do/Say modes; studies finding that free-form input without structure overloads players; the best practice that every action gets a readable response. **Chosen:** a toggle, not a guess. |
+| D-54 | 2026-09-30 | **Luna thinks, code controls: people pass things on and act on what they hear.**<br><br>Errands survive a word in passing. When a teller arrives, the two stop and talk. One Luna call (`hearing_v1`) writes both lines (bubbles) and chooses what the listener does from code-built options: carry on, come and see the stranger, go with the teller, or pass it on. Code carries it out, so chains happen on their own.<br><br>Also: watching the stranger make something counts as being shown it (the tutorial's fire); errand labels over heads. | The user, after playing: "the npcs still aren't going to each other and telling each other stuff"; the fire for Jory didn't count. They asked whether Jev should come back as a controller: "Luna does all the thinking and Jev does the controlling".<br><br>**Chosen: Luna plans, code controls.** Carrying out a choice (walk there, say it, come back) is mechanical: code does it at once and reliably. A second model there would add a call after every conversation, and could do something the first mind didn't say (the D-46/D-47 lesson). Jev stays retired; its narrow typed interface could come back later for crowds.<br><br>**Found in the journey:**<br>- Jory chose to go and tell Kade, and the next line to him put him back to standing about.<br>- Mara's errand to Kade was cancelled the same way.<br>- A fire made in front of Jory left no memory, because it wasn't "shown" in so many words. |
+| D-53 | 2026-09-30 | **The tutorial in order, people passing things on, and honest hands.**<br><br>**Cards on time:** rounds and attempts now refresh the guide, so a step's cards appear as soon as the step starts, not when the dialogue bar closes.<br><br>**The bout:** while Kade is teaching (from when he comes over until the bout), any blow at him starts the practice bout.<br><br>**Mara fetches Kade:** after the burn is treated she walks to him and tells him; he comes when he's heard (or after 90 s).<br><br>**Good news travels:** a witness to a kindness may go and tell someone (village agendas).<br><br>**Honest hands:** people are told what they and the stranger hold (`scene_v3`); a new move, `treat_self`, puts a remedy someone was given on their own wound.<br><br>**Tools:** the Ziva MCP (in the Godot editor) is registered with Claude Code. | The user, after playing: "things are not getting done in the right order and npcs aren't calling each other and telling each other stuff".<br><br>**Found in their journeys:**<br>- The remedy step's cards arrived after four rounds of conversation: rounds set the state without refreshing the guide.<br>- Jory said "it feels cool" about a poultice still in the stranger's pack.<br>- A left-hand punch (empty hand) at Kade during his lesson began a real fight, and Kade killed the stranger with his spear.<br>- Nobody passed on any news in either journey: good deeds never made anyone go and tell. |
+| D-52 | 2026-09-30 | **A guided, linear tutorial; the wainwright's notebook; a faster start.**<br><br>**The tutorial as cards:** each step's lines are big cards in the centre with the whole world paused, read with Next. Then one task on a banner, a ring on what it's about (an arrow at the edge when it's out of sight), and a praise card when it's done. Sixteen single-lesson steps.<br><br>**Linear:** a step counts only once its cards are read (`tutorial/read`), one step at a time. UI lessons are reported (`tutorial/ui`). Help comes only on H, as cards. "Type it for me" fills the dialogue bar with the exact words, which are checked live. The timed hints and the typed-out device panel are gone from the tutorial.<br><br>**The wainwright's notebook** (seed 12): a readable book of 33 recipes for the yard's materials, opened from the pack.<br><br>**Faster start:** the committed material art is stored trimmed at 256 px (`tools/shrink_material_art.gd`). Trimming about 100 pictures at 1024 px froze the first frame of a journey for several seconds, long enough to time out the first request. | The user: the tutorial is "really hard to follow, advice is given quickly"; they asked for "a real hand holding wizard of oz … shown in big in the center of the screen while pausing the game … press next when they are done … linear so the player can actually learn without getting overwhelmed"; and "a recipe book with instructions of how to make things with these items, have a lot of examples … it then opens a readable log".<br><br>**Chosen:** exact words with a Type it for me button; the book covers weapons, armour, remedies and tools, not city routes; the same story in smaller steps.<br><br>**On the LOCKED rule against fixed recipes:** the book is advice inside the world. The judge still rules on every attempt, and nothing is keyed to the book's words, so the rule holds. |
+| D-51 | 2026-09-30 | **Fights aren't a mode; promises are kept; a yard of materials; a slowdown fixed.**<br><br>**Combat:** a fight is only some people attacking the stranger. Space and F always swing, at someone or at thin air (the blow lands on whoever is in front within reach when it lands). Talking, treating and acting go on mid-fight: speech is a short round while the fight runs; attackers can be talked down (`stop_fighting`) or forgive.<br><br>**Promises:** a general errand move, `go_tell` (walk to someone and tell them something; they remember it and may act). Someone helped by the stranger can vouch whatever their trust. The scene reports anything promised for later (`scene_v2`); code carries it out when the move didn't, or records it as unkept.<br><br>**The old wainwright's yard** (seed 11): 48 free, painted materials in the bottom-right corner.<br><br>**Performance:** the painted rig compared held pictures by writing them out as text (`var_to_str`), about 0.7 s on every world update once a held item had a 1024 px picture: the game slowed to about 16 fps, and memory grew. Now it compares instance ids. | The user, after playing: "combat doesn't work, it slowed down the game before crashing"; "combat mode … it just means certain NPCs are attacking me, not a separate mode"; "add a large amount of crafting materials in the bottom right corner of the map so I can experiment with all sorts of weapons"; "Jory said he's going to tell the guards what I did by healing him but he never actually did that … we may have lots of problems like that".<br><br>**Found:** in their journey every Space press was refused ("nobody there to hit"). Jory's promise was a plain answer because vouching needed trust 0.6. The slowdown reproduced on a copy of their journey (`tools/clone_run.py`, `tools/probe_run.gd`). |
 | D-50 | 2026-09-29 | **A tutorial, and the device from the future.**<br><br>A prologue on the village map, "The first morning": 9 steps in about 20 minutes, taught through the tutorial's own problems (Jory's burn, Kade's bout, any invention), never the main game's routes. Each step is an outcome checked by code; triggers let the story act (Kade walks over and lends his gear; the bout begins).<br><br>**Progress is an event** (`tutorial`), checked on the clock and right after each action; questions to the device are `device` events. A `scenario` per journey (`village`, `tutorial`).<br><br>**The device** is written for the story and uses the voice model only for questions (H). It knows only what the stranger knows. In the main game it answers only when asked, and never with a solution; it can be switched off.<br><br>**Also:**<br>- a sparring bout (`fight.spar`) with pulled blows, ended by "Enough!" or yielding, without an arrest;<br>- Rewind in the pause menu;<br>- worn things are no longer counted as carried in the pack bar. | The user: "a tutorial mode that will have a fixed story line with an assistant guiding you through it and recommending things for first time users".<br><br>**Chosen:** a device from the future; a prologue on the same map; about 20 minutes, everything; the device stays afterwards, optional and quiet. A fixed story is allowed here because it's a separate scenario with outcome checks: the rules that protect the main game (no fixed recipes, A8) still hold. |
 | D-49 | 2026-09-29 | **Gear, real health, and finished real-time combat.**<br><br>**One gear table** (`gear.json`, `gear.py`): about 30 weapon classes, 14 kinds of armour and clothing, shields, ammunition and remedies. The judge proposes a class for what's made (`judge_v14`); code checks it against the thing's physics (then its near kin, then its own reading) and owns every number.<br><br>**Blows by physics:** weapon and edge material against the armour covering the spot, awareness, where it lands; the penetration law generalises D-41's mail law; laws for throats and hearts, chokes and bare-handed tricks. Described attacks: the judge rules whether and where it lands (and how long a choke is held); code works out what it does.<br><br>**Bodies:** bleeding, burns, broken limbs, infection and knockouts; ordinary damage mends slowly, conditions need a remedy you make; NPCs who help bind wounds.<br><br>**Real-time:** both hands (Space, F; X swaps; Q throws), wind-ups for the stranger too, shields raised by holding their key, bows, slings and throws as missiles that land as objects, pours.<br><br>**Everyone's gear is objects** (seed 10); what the fallen have can be taken.<br><br>**Pictures:** held views and worn sheets on the rig; procedural attack poses over the real wind-up; the item library reuses pictures of exactly the same thing. | The user: "I want to be able to equip the weapons that we create and have the player hold them and attack with them with animations"; armour "should be way stronger than not having armour"; "an iron sword is extremely dangerous and so is just a blunt rock"; a described sneak attack should do "way more damage than just normally attacking"; "it should be general enough to take into account things we haven't" (strangling with a rope, a knife to the throat); healing things you make; armour as equipped assets rather than repainting the character; controls for each hand; the same item never made twice.<br><br>**Chosen:** bleeding and healing; held items and worn sprites (the full repaint was dropped when the user asked for armour as assets); NPC gear as real objects; wind-ups both ways. |
 | D-48 | 2026-09-29 | **Group conversations, and one conversation system.**<br><br>**One scene per round.** One voice call (`scene_v1`) writes 1 to 3 lines for the people in the conversation and up to three free people within 5 cells. Each speaker reads the moment and picks their own move. Code checks each line (real person, near enough, legal move) and applies it as that person's exchange. A nearby person who speaks joins.<br><br>**Purpose per person.** An encounter keeps each participant's purpose (talk, joined, halt, confront, threaten, demand payment); hostility follows from any hostile purpose. A halt arriving at a friendly chat becomes "joined".<br><br>**No side channels:**<br>- no gate halt during a conversation, or within 60 s of dealing with a guard;<br>- no meetings or chatter within earshot of a conversation;<br>- the same pair doesn't meet again for 10 minutes without news.<br><br>**Also:**<br>- deeds aimed at a nearby person open a conversation with them;<br>- face to face, words about what you'll do are words;<br>- a social step with no details changes nothing instead of "could not be resolved";<br>- everyone knows everyone in town (role and usual place);<br>- a new `gather` action (`judge_v13`) takes a leaf, twig, bark or handful without destroying the source.<br><br>**Removed:** round intents and their questions, the "round" thinking kind, `voice.converse` (`voice_v5`), `talk.chosen`. | The user spoke to Roderic, and "while I was speaking the other two guards asked what I was doing". They asked for nearby people to really join, "like a group chat".<br><br>**From that game (run 6e88596f):**<br>- The gate watch sent Bren to shout "Halt!" mid-demonstration: it only checked for an open encounter.<br>- Oren made small talk with Roderic, and Bren and Tomas gossiped about the stranger's needle, a few steps away: they were "free" because they weren't participants.<br>- A halt joining a chat turned the whole conversation hostile.<br>- "I show Roderic the compass" ran as a Try Something with no reply.<br>- "…I need to show it to the guards" was read as a deed and came back "could not be resolved".<br>- Kade didn't know Hessa; Jory and Mara made the same small talk four times; there was no way to take a leaf off a tree. |
@@ -2307,6 +2332,60 @@ Changes to this document: …
 - `WANTS_IN` reads the stranger's own words to Kade with a word list. A player who says "I need to see the captain" won't count, and must ask Roderic themselves (the fallback the user asked for).
 - A human may wander off before the fire. Kade stays, but the marker is the only guide back.
 - The practice sword's reach (1.6) is shorter than a staff's. Kade uses the same sword, so it's fair.
+
+### Retro: clean up, one rule language, content out of code (D-58), 1 Oct 2026
+
+**Built:**
+
+- A behaviour lock first: golden journeys (§8.7), recorded twice to show stub play is deterministic.
+- Saves that store only what changed (`patch.py`), one pipeline for every command (`commands.py`).
+- The backend in layers (§8.5): `minds`, `crafting` and `talk` split by job; `cast`, `paths`, `content`,
+  `tuning`, `shapes`; the longest functions in named steps.
+- Seed compatibility retired: the game builds only the current world, and the fourteen hand-written starting
+  things joined the world's content.
+- One rule language (`rules.py`), the tutorial as a scenario in data (`scenario.py`, roles, things, speeches),
+  the device on its own (`device.py`), the cast from content, the captain whoever holds `decides`, and a content
+  test. The parked stories ported onto it (still off).
+- The client in parts; the service sends the client's view (`views.py`); one check command and a pre-commit hook.
+
+**Evidence:**
+
+| | Before | After |
+| --- | --- | --- |
+| A clock beat saved | about 13 KB | a few hundred bytes |
+| A 40-minute journey | 17–50 MB | 1.3 MB, loads in 0.05 s |
+| Largest backend file | `crafting.py`, 2,194 lines | `crafting.py`, 1,194 lines |
+| Longest function | `talk.exchange`, 305 lines | `village.agenda_options`, 122 lines |
+| Calls into other modules' private helpers | 116 | 0 |
+| Imports inside functions (dodging cycles) | 38 | 2, both documented two-way needs |
+| `main.gd` / `game_ui.gd` | 1,648 / 1,245 lines | 647 / 698 lines |
+| Condition languages in content | 5 | 1 |
+| Backend tests · Godot smokes | 228 · 16 | 254 · 16, one command |
+
+- The golden journeys matched after every step, the tutorial's included. The riskiest rewrites were also checked
+  against their old versions call by call across the whole test suite: 90 steps of 16 kinds, 77 perceptions,
+  970 clock beats, 253 conversation menus and 78 blows came out identical.
+- Bugs found on the way, each fixed in its own commit: a disarmed guard still fought with the spear on their card
+  and stripped armour still protected (D-49's gear wasn't the whole truth); a deed in a round waved when it
+  failed instead of when it worked; decisions D-51 to D-57 had been filed in §3's interaction table.
+
+**Lessons:**
+
+- Lock behaviour before refactoring. Twenty commits moved most of the backend and none changed a journey,
+  because every step had to match the recorded ones.
+- A module named like a common local variable (`people`, `memory`) broke code silently when it was introduced:
+  check a new name against every name in use first.
+- Compatibility with old saves was the most expensive feature in the code: retiring it removed more than any
+  split did. A prototype should retire saves freely (D-04).
+- Godot doesn't check `game.X` on an untyped node, so a moved member only fails when its line runs. A 60-line
+  checker that resolves every reference caught what the compiler couldn't.
+
+**To watch:**
+
+- 31 one-off label styles still set their sizes by hand, so the text-size setting doesn't reach them.
+- `views.py` works out deeds and leads for every reply: cheap now, worth measuring with a longer journal.
+- The ported stories are checked only by evaluating every condition once; they need tests when they're switched on.
+- The decider and the voice are over their latency targets (§9.7).
 
 ---
 

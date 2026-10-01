@@ -121,8 +121,10 @@ Start a **Developer playtest**.
 
 ## Tests
 
-- **Backend:** `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`
-- **Godot flow, no key needed:**
+- **Everything at once:** `./tools/check.ps1` lints the Python and GDScript, checks every script's references to the game, compiles every script and runs the backend tests (about a minute). `./tools/check.ps1 -Full` also runs all the Godot smoke tests against a throwaway stub backend on port 8766 with its own database, so your game on 8765 and your saves are never touched. The quick part runs before every commit (`git config core.hooksPath .githooks` sets that up in a fresh clone).
+- **Behaviour lock:** the backend tests include five golden journeys (`backend/tests/test_golden.py`) whose final states must match recorded ones exactly. When a change is meant to alter behaviour, re-record them with `$env:GOLDEN_UPDATE='1'` and check the difference.
+- **Backend only:** `backend/.venv/Scripts/python.exe -m pytest backend/tests -q`
+- **Godot flow by hand, no key needed:**
   1. Start the backend with `$env:AI_MODE='stub'; ./tools/run_m0.ps1`.
   2. Run `Godot_v4.7.2-stable_win64_console.exe --headless --path . --script res://tools/smoke_ui.gd` (and `smoke_talk.gd`, `smoke_craft.gd`). Leave out `--headless` and add `-- --capture` to save screenshots to `docs/screenshots/`.
   3. Restart the backend normally afterwards.
