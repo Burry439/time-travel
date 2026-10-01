@@ -1,18 +1,17 @@
 extends Control
-## The journal's map, drawn in ink on parchment from data/maps/village.json. Only places you have
+## The journal's map, drawn in ink on parchment from the journey's map (data/maps). Only places you have
 ## walked near are revealed (fog of war, remembered per journey). People you've met show where you
 ## last saw them; open leads get a small red mark on the person they point to. Nothing is marked in
 ## the world itself.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
-const CELLS := Vector2(96, 72)
 const BLOCK := 4 # Fog is revealed in 4×4-cell blocks.
-const LABELS := {"Smithy": "Smithy", "Inn": "The Wayside Inn", "Carpenter": "Carpenter's yard",
-	"Wagon": "Merchant's wagon", "EastWorkshop": "Workshop", "SouthHouse": "House"}
 
 var ui: Control
 var game: Node2D
 var geometry: Dictionary = {}
+var map_id := ""
+var cells := Vector2(96, 72) # The map's size in cells.
 var font: Font = UITheme.serif(true) # Held here: a font freed mid-frame draws as black boxes.
 var small: Font = UITheme.serif(false, true)
 
@@ -20,8 +19,6 @@ var small: Font = UITheme.serif(false, true)
 func setup(owner_ui: Control, owner_game: Node2D) -> void:
 	ui = owner_ui
 	game = owner_game
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/village.json"))
-	geometry = parsed if typeof(parsed) == TYPE_DICTIONARY else {"buildings": [], "obstacles": []}
 	custom_minimum_size = Vector2(640, 440)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -29,11 +26,11 @@ func setup(owner_ui: Control, owner_game: Node2D) -> void:
 
 
 func _scale() -> float:
-	return minf(size.x / CELLS.x, size.y / CELLS.y)
+	return minf(size.x / cells.x, size.y / cells.y)
 
 
 func _origin() -> Vector2:
-	return (size - CELLS * _scale()) * 0.5
+	return (size - cells * _scale()) * 0.5
 
 
 func to_map(cell: Vector2) -> Vector2:
@@ -45,8 +42,13 @@ func revealed(cell: Vector2i) -> bool:
 
 
 func _draw() -> void:
+	if str(game.map_id) != map_id: # The journey's map, read when it changes.
+		map_id = str(game.map_id)
+		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % map_id))
+		geometry = parsed if typeof(parsed) == TYPE_DICTIONARY else {"size": [96, 72], "buildings": [], "obstacles": []}
+		cells = Vector2(float(geometry.size[0]), float(geometry.size[1]))
 	var s := _scale()
-	var area := Rect2(_origin(), CELLS * s)
+	var area := Rect2(_origin(), cells * s)
 	var ink := Color(UITheme.INK, 0.85)
 	draw_texture_rect(UITheme.texture("map_paper"), area, true)
 	# The road north to the gate, and the wall.
@@ -73,7 +75,7 @@ func _draw() -> void:
 			var end := Vector2(minf(i + rect.size.y, rect.size.x), maxf(0, rect.size.y - (rect.size.x - i)))
 			draw_line(rect.position + Vector2(i, rect.size.y), rect.position + end, Color(ink, 0.25), 1.0)
 		draw_rect(rect, ink, false, 1.5)
-		_label(font, str(LABELS.get(str(item.name), item.name)), rect.get_center() + Vector2(0, rect.size.y * 0.5 + 12), 13, ink)
+		_label(font, str(item.get("label", item.name)), rect.get_center() + Vector2(0, rect.size.y * 0.5 + 12), 13, ink)
 	for item in geometry.get("obstacles", []):
 		if str(item.name) in cleared or not str(item.name).begins_with("Tree"):
 			continue
@@ -82,8 +84,8 @@ func _draw() -> void:
 		draw_arc(at, s * 1.4, 0, TAU, 16, Color(ink, 0.6), 1.0, true)
 	# Fog over everything not yet walked near.
 	var fog := Color(UITheme.PARCHMENT_DARK.lerp(UITheme.PARCHMENT, 0.4), 0.93)
-	for by in range(0, int(CELLS.y) / BLOCK):
-		for bx in range(0, int(CELLS.x) / BLOCK):
+	for by in range(0, int(cells.y) / BLOCK):
+		for bx in range(0, int(cells.x) / BLOCK):
 			if not ui.visited.has(Vector2i(bx, by)):
 				draw_rect(Rect2(to_map(Vector2(bx, by) * BLOCK) - Vector2(0.5, 0.5), Vector2.ONE * BLOCK * s + Vector2.ONE), fog)
 	# Leads point at people: a red ring on each.

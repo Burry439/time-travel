@@ -1,0 +1,55 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/generated/village_foliage.png" id="1_foliage"]
+
+[sub_resource type="AtlasTexture" id="Atlas_oak"]
+atlas = ExtResource("1_foliage")
+region = Rect2(0, 0, 704, 800)
+
+[node name="TestRoomMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="Map" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Surround" type="ColorRect" parent="Map"]
+z_index = -21
+offset_left = -1600.0
+offset_top = -1200.0
+offset_right = 2240.0
+offset_bottom = 1712.0
+color = Color(0.08, 0.07, 0.06, 1)
+
+[node name="Floor" type="ColorRect" parent="Map"]
+z_index = -20
+offset_right = 640.0
+offset_bottom = 512.0
+color = Color(0.45, 0.36, 0.26, 1)
+
+[node name="Table" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 288.0
+offset_top = 192.0
+offset_right = 384.0
+offset_bottom = 256.0
+color = Color(0.3, 0.2, 0.12, 1)
+
+[node name="Barrel" type="ColorRect" parent="Map"]
+z_index = -19
+offset_left = 544.0
+offset_top = 384.0
+offset_right = 576.0
+offset_bottom = 416.0
+color = Color(0.36, 0.24, 0.14, 1)
+
+[node name="M2Objects" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Foliage" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Sapling" type="Sprite2D" parent="Foliage"]
+position = Vector2(80, 400)
+scale = Vector2(0.12, 0.12)
+texture = SubResource("Atlas_oak")
+offset = Vector2(0, -380)

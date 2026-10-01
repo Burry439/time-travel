@@ -237,7 +237,8 @@ func round_played() -> void:
 		await get_tree().create_timer(0.5).timeout
 		await game.ui.fade(0.0)
 		game.request_busy = false
-		game.ui.notify("The guards march you back down the south road. You're not welcome at the gate for a while.")
+		var arrests: Array = game.run_state.get("journal", []).filter(func(e) -> bool: return e.get("kind") == "arrest")
+		game.ui.notify(str(arrests[-1].reason) if arrests else "The guards march you off.") # The map says where (D-59).
 	if not game.run_state["player"].get("alive", true) and game.gameplay_active:
 		await game.die()
 

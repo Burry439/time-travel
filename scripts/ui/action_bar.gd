@@ -552,16 +552,10 @@ func portrait_for(id: String) -> Texture2D:
 		var art: Texture2D = game.art.texture_for(game.run_state.objects[id])
 		if art:
 			return art
-	var atlas: Texture2D = PaintedActor.TRAVELER
-	if actor == "hessa":
-		atlas = PaintedActor.HESSA
-	elif PaintedActor.CAST_ART.has(actor):
-		atlas = PaintedActor.CAST_ART[actor]
-	else:
-		actor = "traveler"
-	var bounds: Rect2i = PaintedActor.BOUNDS[actor][0]
+	var sheet: Dictionary = PaintedActor.sheet_for(actor)
+	var bounds: Rect2i = sheet.views[0]
 	var crop := AtlasTexture.new()
-	crop.atlas = atlas
+	crop.atlas = sheet.texture
 	crop.region = Rect2(bounds.position.x, bounds.position.y, bounds.size.x, minf(bounds.size.y, bounds.size.x * 1.05))
 	return crop
 

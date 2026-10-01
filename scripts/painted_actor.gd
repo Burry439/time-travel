@@ -18,7 +18,9 @@ const CAST_ART := {
 	"kade": preload("res://assets/generated/kade_painted_turnaround.png")
 }
 
-@export_enum("traveler", "hessa", "roderic", "bren", "oren", "mara", "jory", "tomas", "darin", "elin", "kade") var actor_id := "traveler":
+## Whose painting: the traveler, or a person's name in lower case (the village's people are below; anyone else is
+## assets/people/<name>.png, D-59).
+@export var actor_id := "traveler":
 	set(value):
 		actor_id = value
 		if is_inside_tree():
@@ -99,6 +101,36 @@ func _ready() -> void:
 	set_motion(0, "idle", 0.0, 0.0)
 
 
+const PEOPLE_DIR := "res://assets/people/"
+const STAND_IN := "tomas" # Drawn for anyone whose painting isn't made yet, so a level plays before its art exists.
+static var _sheets := {}
+
+
+## Someone's painted sheet: {texture, views (the painted box of each view on it), order (which box faces which
+## way), gait}. The traveler and the village's people are measured above; anyone else painted for a level is
+## assets/people/<name>.png with <name>.json beside it, written by tools/make_person.py (D-59).
+static func sheet_for(id: String) -> Dictionary:
+	if _sheets.has(id):
+		return _sheets[id]
+	var sheet := {}
+	if id == "traveler":
+		sheet = {"texture": TRAVELER, "views": BOUNDS[id], "order": TRAVELER_ORDER, "gait": GAIT_LENGTH[id]}
+	elif id == "hessa" or CAST_ART.has(id):
+		sheet = {"texture": HESSA if id == "hessa" else CAST_ART[id], "views": BOUNDS[id], "order": CAST_ORDER,
+			"gait": GAIT_LENGTH[id]}
+	elif ResourceLoader.exists(PEOPLE_DIR + id + ".png") and FileAccess.file_exists(PEOPLE_DIR + id + ".json"):
+		var spec: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(PEOPLE_DIR + id + ".json"))
+		var views: Array[Rect2i] = []
+		for box in spec.views:
+			views.append(Rect2i(int(box[0]), int(box[1]), int(box[2]), int(box[3])))
+		sheet = {"texture": load(PEOPLE_DIR + id + ".png"), "views": views, "order": spec.get("order", CAST_ORDER),
+			"gait": float(spec.get("gait", 1.0))}
+	else:
+		sheet = sheet_for(STAND_IN)
+	_sheets[id] = sheet
+	return sheet
+
+
 func _build() -> void:
 	for child in get_children():
 		remove_child(child)
@@ -111,11 +143,10 @@ func _build() -> void:
 	hand_points.clear()
 	held_nodes.clear()
 	var view_count := 8 if actor_id == "traveler" else 4
+	var sheet := sheet_for(actor_id)
 	for row in view_count:
-		var atlas: Texture2D = TRAVELER_DIAGONALS if row >= 4 else TRAVELER if actor_id == "traveler" \
-			else HESSA if actor_id == "hessa" else CAST_ART[actor_id]
-		var atlas_order := TRAVELER_ORDER if actor_id == "traveler" else CAST_ORDER
-		var box: Rect2i = DIAGONAL_BOUNDS[row - 4] if row >= 4 else BOUNDS[actor_id][atlas_order[row]]
+		var atlas: Texture2D = TRAVELER_DIAGONALS if row >= 4 else sheet.texture
+		var box: Rect2i = DIAGONAL_BOUNDS[row - 4] if row >= 4 else sheet.views[sheet.order[row]]
 		var whole := Node2D.new()
 		whole.name = ["Front", "Left", "Back", "Right", "Southeast", "Southwest", "Northwest", "Northeast"][row]
 		whole.visible = row == facing
@@ -315,7 +346,7 @@ func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
 	locomotion = mode
 	pose_clock += delta
 	if mode == "walk" or mode == "run":
-		stride_phase += distance * TAU / ((96.0 if mode == "walk" else 118.0) * float(GAIT_LENGTH[actor_id]))
+		stride_phase += distance * TAU / ((96.0 if mode == "walk" else 118.0) * float(sheet_for(actor_id).gait))
 	for i in views.size():
 		views[i].visible = i == facing
 	var rig: Dictionary = joints[facing]

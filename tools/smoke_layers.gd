@@ -40,6 +40,10 @@ func _run() -> void:
 	scene.enter_run(created.data, false)
 	await create_timer(0.8).timeout
 	scene.gameplay_active = false # Hold the world still: no clock syncs replacing this copy of the state.
+	for _i in 100: # Nor a thought already on its way back, which would replace it too.
+		if not scene.thinking_active:
+			break
+		await create_timer(0.1).timeout
 	var ui: Control = scene.ui
 	if not check(ui.hud.goal.text == "Find a way into the city", "The tracker doesn't start on the long goal: " + ui.hud.goal.text):
 		return

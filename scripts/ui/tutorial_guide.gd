@@ -5,7 +5,7 @@ extends Control
 ## sight) marks what the task is about. When it's done, a short praise card, then the next step's cards. Help comes
 ## only when asked (H, or "Stuck?"). "Type it for me" fills the dialogue bar with the suggested words.
 ## The backend counts a step only once its cards are read (POST tutorial/read); ui lessons are reported
-## (POST tutorial/ui). Everything else is presentation, from data/content/levels/tutorial.json.
+## (POST tutorial/ui). Everything else is presentation, from the journey's level (data/content/levels).
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const GLOW := Color(0.55, 0.85, 0.95)
@@ -14,8 +14,12 @@ const KEY_CAP := "[bgcolor=#3a2a18][color=#f3e6c8][b] %s [/b][/color][/bgcolor]"
 
 var ui: Control
 var game: Node2D
-var story: Dictionary = {}
-var steps: Array = []
+var story: Dictionary: ## The journey's level (game.level): its steps, the device's name, when to offer help.
+	get:
+		return game.level
+var steps: Array:
+	get:
+		return game.level.get("steps", [])
 var shade: ColorRect
 var panel: PanelContainer
 var header: Label
@@ -46,10 +50,6 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	game = owner_game
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var file := FileAccess.open("res://data/content/levels/tutorial.json", FileAccess.READ)
-	if file:
-		story = JSON.parse_string(file.get_as_text())
-		steps = story.get("steps", [])
 	arrow = Control.new()
 	arrow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE

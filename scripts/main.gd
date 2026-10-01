@@ -8,16 +8,23 @@ const PlayerInput := preload("res://scripts/player_input.gd")
 const Actions := preload("res://scripts/actions.gd")
 
 const CELL := 32.0
-const WORLD_SIZE := Vector2(3072, 2304)
 const WALK_SPEED := 230.0 # 7.1875 cells/second, shared with the service.
 const RUN_SPEED := 368.0 # 11.5 cells/second while Shift is held.
 @onready var player: CharacterBody2D = $Player
 @onready var player_sprite: Sprite2D = $Player/Sprite2D
 @onready var player_visual: Node2D = $Player/PaintedActor
 @onready var camera: Camera2D = $Player/Camera2D
-@onready var gate_shape: CollisionShape2D = $WorldCollision/ClosedGate/CollisionShape2D
-@onready var gate_sprite: Sprite2D = $Map/Gate
-@onready var gate_opening: ColorRect = $Map/GateOpening
+## The journey's map (data/maps, scenes/maps): its pieces are this node's own children (Map, M2Objects, Foliage,
+## WorldCollision, BuildingCollision...), so everything finds them by the same paths on every map. The gate's
+## pieces are null on a map without one.
+var map_id := ""
+var map_parts: Array[Node] = []
+var world_size := Vector2(3072, 2304)
+var gate_shape: CollisionShape2D
+var gate_sprite: Sprite2D
+var gate_opening: ColorRect
+## The level the journey plays (data/content/levels): its title, map and, if guided, its steps.
+var level: Dictionary = {}
 
 ## The game's parts (children of this node): the service, pictures, the world on screen, the player's input
 ## and actions. This script is the journey itself: its state, the movement and thinking lanes, the camera.
@@ -100,10 +107,8 @@ func _ready() -> void:
 	actions.game = self
 	add_child(actions)
 	net.server = net.address()
-	$NPCPreview.hide()
-	$M2Objects.hide()
+	load_map("village")
 	_build_ui()
-	_extend_ground()
 	effects = preload("res://scripts/feel_effects.gd").new()
 	effects.z_index = -1
 	add_child(effects)
@@ -117,6 +122,52 @@ func _ready() -> void:
 		sound_volume = clampf(float(settings.get_value("feel", "volume", 0.7)), 0.0, 1.0)
 	save_settings()
 	_check_health()
+
+
+## Swap in a map: the old one's pieces go, the new one's become this node's children (in front of nothing else,
+## so the stranger and people draw over the ground), and the camera, collisions and gate follow it.
+func load_map(id: String) -> void:
+	if id == map_id:
+		return
+	for part in map_parts:
+		remove_child(part)
+		part.queue_free()
+	map_parts.clear()
+	var scene: Node = load("res://scenes/maps/%s.tscn" % id).instantiate()
+	for part in scene.get_children():
+		scene.remove_child(part)
+		_unown(part)
+		add_child(part)
+		move_child(part, map_parts.size())
+		map_parts.append(part)
+	scene.free()
+	map_id = id
+	var plan: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % id))
+	world_size = Vector2(float(plan.size[0]), float(plan.size[1])) * CELL
+	camera.limit_right = int(world_size.x)
+	camera.limit_bottom = int(world_size.y)
+	gate_shape = get_node_or_null("WorldCollision/ClosedGate/CollisionShape2D") as CollisionShape2D
+	gate_sprite = get_node_or_null("Map/Gate") as Sprite2D
+	gate_opening = get_node_or_null("Map/GateOpening") as ColorRect
+	for preview in ["NPCPreview", "M2Objects"]: # Editor previews; the world's things are drawn from the state.
+		if has_node(preview):
+			get_node(preview).hide()
+	if has_node("Map/Ground"):
+		_extend_ground()
+	view.apply_building_geometry(id)
+
+
+func _unown(node: Node) -> void:
+	node.owner = null
+	for child in node.get_children():
+		_unown(child)
+
+
+## The level a journey plays, read from its file (its map is named there).
+func level_of(state: Dictionary) -> Dictionary:
+	var id := str(state.get("scenario", "village"))
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/content/levels/%s.json" % id))
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {"id": id, "map": "village"}
 
 
 ## The ground carries on a little past the south edge of the map, fading into shadow, so the view can
@@ -253,13 +304,14 @@ func enter_run(state: Dictionary, save_pointer := true) -> void:
 	request_busy = false
 	ui.modal.hide()
 	ui.modal_kind = ""
-	view.apply_building_geometry()
+	level = level_of(state)
+	load_map(str(level.get("map", "village")))
 	last_trace = null
 	for child in $M2Objects.get_children():
 		if child.has_meta("dynamic"):
 			$M2Objects.remove_child(child)
 			child.queue_free()
-	for tree in $Foliage.get_children(): # A previous journey may have felled some.
+	for tree in get_node("Foliage").get_children() if has_node("Foliage") else []: # A previous journey may have felled some.
 		if tree.name.begins_with("Tree"):
 			tree.visible = true
 			tree.rotation = 0.0
@@ -359,7 +411,7 @@ func _physics_process(delta: float) -> void:
 	player.velocity = player.velocity.move_toward(direction * speed, (9600.0 if direction == Vector2.ZERO else 7200.0) * delta)
 	var before := player.position
 	player.move_and_slide()
-	player.position = player.position.clamp(Vector2(10, 10), WORLD_SIZE - Vector2(10, 10))
+	player.position = player.position.clamp(Vector2(10, 10), world_size - Vector2(10, 10))
 	var travelled := player.position.distance_to(before)
 	camera.offset = camera.offset.lerp(direction * 10.0 + Vector2(0, lift), minf(1.0, delta * 14.0))
 	if direction != Vector2.ZERO:

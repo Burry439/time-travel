@@ -126,10 +126,21 @@ func apply_building_geometry(map_id := "village") -> void:
 	if typeof(geometry) != TYPE_DICTIONARY:
 		push_error("Could not load the map: " + file_name)
 		return
+	var holder := game.get_node_or_null("BuildingCollision")
+	if holder == null: # A map scene may leave its collisions to the data: they're made here.
+		holder = Node2D.new()
+		holder.name = "BuildingCollision"
+		game.add_child(holder)
+		game.map_parts.append(holder)
 	for item in geometry["buildings"] + geometry["obstacles"]:
-		var body := game.get_node_or_null("BuildingCollision/" + str(item["name"])) as StaticBody2D
+		var body := holder.get_node_or_null(str(item["name"])) as StaticBody2D
 		if body == null:
-			continue
+			body = StaticBody2D.new()
+			body.name = str(item["name"])
+			var made := CollisionShape2D.new()
+			made.name = "CollisionShape2D"
+			body.add_child(made)
+			holder.add_child(body)
 		var cells: Array = item["cells"]
 		var shape_node := body.get_node("CollisionShape2D") as CollisionShape2D
 		var rectangle := RectangleShape2D.new()
@@ -147,9 +158,10 @@ func sync() -> void:
 
 
 func _sync_now() -> void:
-	game.gate_shape.set_deferred("disabled", bool(game.run_state["gate_open"]))
-	game.gate_sprite.visible = not bool(game.run_state["gate_open"])
-	game.gate_opening.visible = bool(game.run_state["gate_open"])
+	if game.gate_sprite: # Only the village map has a gate.
+		game.gate_shape.set_deferred("disabled", bool(game.run_state["gate_open"]))
+		game.gate_sprite.visible = not bool(game.run_state["gate_open"])
+		game.gate_opening.visible = bool(game.run_state["gate_open"])
 	for object_id in game.run_state.get("objects", {}):
 		var obj: Dictionary = game.run_state["objects"][object_id]
 		if obj.has("scene_node") or obj.get("no_sprite", false): # Map trees and building parts keep their authored art.
@@ -214,7 +226,7 @@ func _place_on_gate(sprite: Sprite2D, obj: Dictionary) -> void:
 	var brackets := str(obj.id) == "gate_brackets"
 	sprite.z_index = 1 if on_gate or brackets else 0
 	sprite.rotation = -0.5 if on_gate else 0.0
-	if not (on_gate or brackets):
+	if not (on_gate or brackets) or game.gate_sprite == null:
 		return
 	sprite.position = game.gate_sprite.position + Vector2(0, 34)
 	if on_gate and sprite.texture:

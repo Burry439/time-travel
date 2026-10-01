@@ -18,7 +18,6 @@ const QUICK := ["What should I do next?", "Why did that fail?", "Who could help 
 
 var ui: Control
 var game: Node2D
-var story: Dictionary = {}
 var panel: PanelContainer
 var words: RichTextLabel
 var badge: Label
@@ -50,9 +49,6 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	game = owner_game
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var file := FileAccess.open("res://data/content/levels/tutorial.json", FileAccess.READ)
-	if file:
-		story = JSON.parse_string(file.get_as_text())
 	var settings := ConfigFile.new()
 	if settings.load("user://presentation.cfg") == OK:
 		mode = "asked" if str(settings.get_value("device", "mode", "speaks")) in ["asked", "off"] else "speaks"
