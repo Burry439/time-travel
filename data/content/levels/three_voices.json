@@ -97,7 +97,6 @@
     "flexible",
     "combustible"
    ],
-   "owner_id": "npc_hild_widow",
    "readable": "edric_letter"
   },
   {
@@ -207,6 +206,18 @@
      "to": "npc_berin_younger"
     },
     {
+     "say": "Here: read it yourselves. Your father wanted you to share the ox and look after your mother together.",
+     "to": "npc_aldo_elder"
+    },
+    {
+     "say": "Berin, will you shake your brother's hand, and work the north field beside him?",
+     "to": "npc_berin_younger"
+    },
+    {
+     "say": "Aldo, he came home with nothing and you've carried everything. You need each other.",
+     "to": "npc_aldo_elder"
+    },
+    {
      "wait": 10
     }
    ],
@@ -235,6 +246,18 @@
      {
       "say": "Aldo has paid your father's debts alone, Berin. And Berin came home with nothing, Aldo. Neither of you is the villain. Can you not share it, as your father would have wanted?",
       "to": "npc_aldo_elder"
+     },
+     {
+      "say": "Berin, you never knew about the debts. Aldo, he never meant to take what you earned. What would it take to make it right between you?",
+      "to": "npc_berin_younger"
+     },
+     {
+      "say": "The north field to Berin, the farm to Aldo, and the ox between you: could you both live with that?",
+      "to": "npc_aldo_elder"
+     },
+     {
+      "say": "You're brothers. Your mother has buried a husband; don't make her bury a family too.",
+      "to": "npc_berin_younger"
      },
      {
       "wait": 10

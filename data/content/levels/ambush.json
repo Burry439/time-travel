@@ -261,14 +261,14 @@
       "npc": "npc_sken_deserter"
      },
      {
-      "kind": "held_by",
-      "thing": "loaf_player",
-      "npc": "npc_dobbs_deserter"
+      "kind": "remembers",
+      "npc": "npc_dobbs_deserter",
+      "of": "gift"
      },
      {
-      "kind": "held_by",
-      "thing": "loaf_player",
-      "npc": "npc_sken_deserter"
+      "kind": "remembers",
+      "npc": "npc_sken_deserter",
+      "of": "gift"
      }
     ]
    },
@@ -367,6 +367,9 @@
      {
       "say": "No. Stand aside.",
       "to": "npc_sken_deserter"
+     },
+     {
+      "do": "lunge at Dobbs and stab him with my knife"
      },
      {
       "strike": "right",

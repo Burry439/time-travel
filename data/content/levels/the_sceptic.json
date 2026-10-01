@@ -287,7 +287,7 @@
       "take": "pitch_pot"
      },
      {
-      "do": "twist the hemp fibre into a long, strong three-strand rope and tar it with the pitch"
+      "do": "twist the hemp fibre by hand into a stout rope and coat it with the pine pitch"
      },
      {
       "walk_to": "npc_gorm_ferry"
@@ -297,6 +297,10 @@
      },
      {
       "say": "Your old tow rope is going. I made you a new one. Will you take me across?",
+      "to": "npc_gorm_ferry"
+     },
+     {
+      "say": "I'm going to the city to find honest work, and I'll pay my way when I can. I'm no thief: you've seen what my hands do.",
       "to": "npc_gorm_ferry"
      }
     ]

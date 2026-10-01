@@ -142,18 +142,19 @@
   {
    "id": "knife_cob",
    "name": "drawknife",
+   "x": 11,
+   "y": 9,
    "mass_kg": 0.6,
    "materials": [
     "iron",
     "wood"
    ],
-   "description": "Cob's two-handled drawknife, for shaving wood.",
+   "description": "Cob's two-handled drawknife, for shaving wood, left on the chopping block.",
    "flags": [
     "rigid",
     "sharp_edge"
    ],
-   "owner_id": "npc_cob_woodman",
-   "carried_by": "npc_cob_woodman"
+   "owner_id": "npc_cob_woodman"
   },
   {
    "id": "branches_oak",
@@ -179,11 +180,17 @@
    "materials": [
     "linen"
    ],
-   "description": "Clean linen strips from Liss's loom, rolled up by her door.",
+   "description": "Clean linen strips from Liss's loom, rolled up by her door: they'd bind a wound.",
    "flags": [
     "flexible"
    ],
-   "owner_id": "npc_liss_weaver"
+   "owner_id": "npc_liss_weaver",
+   "gear": {
+    "kind": "remedy",
+    "class": "bandage",
+    "covers": [],
+    "quality": "fair"
+   }
   },
   {
    "id": "yarrow",
@@ -234,11 +241,20 @@
    "cards": [
     "Earn Agna's guest-stick. She won't give it on your word: let the hamlet's word reach her."
    ],
-   "task": "Get Agna to give you the guest-stick",
+   "task": "Get Agna to let you carry the guest-stick",
    "check": {
-    "kind": "has",
-    "named": [
-     "guest-stick"
+    "kind": "any",
+    "of": [
+     {
+      "kind": "has",
+      "named": [
+       "guest-stick"
+      ]
+     },
+     {
+      "kind": "lent",
+      "thing": "stick_agna"
+     }
     ]
    },
    "words_check": {
@@ -307,6 +323,14 @@
     {
      "say": "Good day, Reeve. I've been helping Cob. May I carry the guest-stick?",
      "to": "npc_agna_reeve"
+    },
+    {
+     "say": "I'd be glad to help anyone else here, too. Is there anyone who needs a hand?",
+     "to": "npc_agna_reeve"
+    },
+    {
+     "say": "Thank you for hearing me out, Reeve. Oakley's a good place.",
+     "to": "npc_agna_reeve"
     }
    ],
    "routes": {
@@ -332,6 +356,22 @@
       "to": "npc_liss_weaver"
      },
      {
+      "walk_to": "branches_oak"
+     },
+     {
+      "take": "branches_oak"
+     },
+     {
+      "walk_to": "npc_fenn_old"
+     },
+     {
+      "do": "give Old Fenn the fallen oak branches for his fire"
+     },
+     {
+      "say": "For your hearth, grandfather. It's cold for sitting out.",
+      "to": "npc_fenn_old"
+     },
+     {
       "wait": 40
      },
      {
@@ -339,6 +379,14 @@
      },
      {
       "say": "Good day, Reeve. Liss will tell you I helped her. May I carry the guest-stick?",
+      "to": "npc_agna_reeve"
+     },
+     {
+      "say": "I'll help anyone here who needs it. I only want a place by a fire tonight.",
+      "to": "npc_agna_reeve"
+     },
+     {
+      "say": "Thank you for hearing me out, Reeve. Oakley's a good place.",
       "to": "npc_agna_reeve"
      }
     ]

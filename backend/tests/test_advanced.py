@@ -145,6 +145,32 @@ def test_word_gets_around_through_cobs_word(world):
     assert at_step(state) == "done" and store.finished(state)
 
 
+def test_a_deal_hands_over_what_the_lender_holds():
+    """A job lends what it needs; what the person has in hand is handed over, not left with them (found live by A2:
+    Cob's drawknife stayed in his hands, so the handle could not be made)."""
+    import app as service
+    import talk
+
+    state = service.initial_state(
+        {
+            "id": "deal0000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+            "scenario": "word_gets_around",
+        }
+    )
+    cob = cast.find(state["npcs"], COB)
+    state["objects"]["knife_cob"].update(holder_id=COB)
+    cob.setdefault("equipped", {})["right"] = "knife_cob"
+    learned, lent = [], []
+    talk.propose(state, cob, "handle", 1, "Here, use my things.", learned, lent)
+    knife = state["objects"]["knife_cob"]
+    assert knife["holder_id"] == "player" and knife["lent_to"] == "player" and knife["owner_id"] == COB
+    assert "knife_cob" not in cob["equipped"].values()
+    assert {"id": "knife_cob", "holder_id": "player"} in lent
+
+
 def test_word_gets_around_through_liss(world):
     """Liss's cut bound: she owes the stranger a kindness and goes to the reeve herself."""
     state = new_run(world, scenario="word_gets_around")
@@ -395,9 +421,9 @@ def test_ambush_paying_your_way(world):
     give = judged("give", give={"item_ids": ["purse_player"], "recipient_id": SKEN})
     state = do(world, state, "give Sken my purse", give)
     assert set(state["encounter"]["participants"]) == {SKEN, DOBBS}  # The other came up while the round passed.
-    world.replies.append([(SKEN, said("stand_aside")), (DOBBS, said("stand_aside"))])
+    world.replies.append([(SKEN, said("stand_aside")), (DOBBS, said("answer"))])
     state = post(world, state, "say", {"npc_id": SKEN, "text": "That's all I have. Let me pass."})["state"]
-    assert all(cast.find(state["npcs"], r)["mind"].get("stood_aside") for r in (SKEN, DOBBS))
+    assert all(cast.find(state["npcs"], r)["mind"].get("stood_aside") for r in (SKEN, DOBBS))  # Dobbs follows Sken.
     state = walk(world.http, state, 20, 4)
     state = beat(world, state)
     assert at_step(state) == "done" and store.finished(state)
@@ -433,7 +459,7 @@ def test_three_voices(world):
     state = read(world, read(world, state))
     state = take(world, state, "letter_edric")
     state = walk(world.http, state, 14, 7)
-    world.replies.append([(ALDO, softer(BERIN, "Much better")), (BERIN, softer(ALDO, "Much better"))])
+    world.replies.append([(ALDO, softer(BERIN, "A little better")), (BERIN, softer(ALDO, "A little better"))])
     state = post(world, state, "say", {"npc_id": ALDO, "text": "Your father left you both a letter."})["state"]
     aldo = cast.find(state["npcs"], ALDO)
     assert persona.opinions(aldo)[BERIN]["warmth"] == -0.15 and at_step(state) == "peace"

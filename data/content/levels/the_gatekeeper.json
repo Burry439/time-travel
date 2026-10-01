@@ -89,18 +89,19 @@
   {
    "id": "awl_ned",
    "name": "stitching awl",
+   "x": 8,
+   "y": 21,
    "mass_kg": 0.1,
    "materials": [
     "iron",
     "wood"
    ],
-   "description": "A saddler's awl for punching and stitching leather.",
+   "description": "A saddler's awl for punching and stitching leather, by the halter.",
    "flags": [
     "rigid",
     "sharp_edge"
    ],
-   "owner_id": "npc_ned_groom",
-   "carried_by": "npc_ned_groom"
+   "owner_id": "npc_ned_groom"
   },
   {
    "id": "thong_ned",
@@ -286,6 +287,10 @@
      {
       "kind": "shown",
       "npc": "npc_godwin_porter"
+     },
+     {
+      "kind": "cleared",
+      "thing": "brambles"
      }
     ]
    },
@@ -356,6 +361,12 @@
      },
      {
       "take": "billhook_ned"
+     },
+     {
+      "walk_to": [
+       33,
+       22
+      ]
      },
      {
       "walk_to": [

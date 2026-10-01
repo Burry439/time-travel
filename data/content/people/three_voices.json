@@ -167,7 +167,7 @@
     },
     "npc_berin_younger": {
      "text": "a wastrel who ran off and came back for his share",
-     "warmth": -0.45
+     "warmth": -0.3
     }
    },
    "tasks": [
@@ -259,7 +259,7 @@
     },
     "npc_aldo_elder": {
      "text": "a cold, greedy stick who kept everything",
-     "warmth": -0.45
+     "warmth": -0.3
     }
    },
    "tasks": [

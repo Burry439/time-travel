@@ -70,7 +70,7 @@ offset = Vector2(0, -464.0)
 
 [node name="Dummy" type="Sprite2D" parent="Map"]
 texture_filter = 1
-position = Vector2(912.0, 416)
+position = Vector2(656.0, 512)
 scale = Vector2(0.0494, 0.0494)
 texture = ExtResource("6_tex")
 offset = Vector2(0, -504.5)

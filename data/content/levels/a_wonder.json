@@ -157,6 +157,21 @@
    "owner_id": "npc_brann_fisher"
   },
   {
+   "id": "nail_boat",
+   "name": "rusty iron nail",
+   "x": 17,
+   "y": 8,
+   "mass_kg": 0.02,
+   "materials": [
+    "iron"
+   ],
+   "description": "A long iron boat nail, rusty, dropped by the boat. Nobody's.",
+   "flags": [
+    "rigid",
+    "ferromagnetic"
+   ]
+  },
+  {
    "id": "reedfluff",
    "name": "dry reed fluff",
    "x": 15,
@@ -295,7 +310,10 @@
      "do": "fill the round glass flask with clear lake water"
     },
     {
-     "walk_to": "npc_brann_fisher"
+     "walk_to": [
+      13,
+      12
+     ]
     },
     {
      "do": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens"
@@ -304,10 +322,26 @@
    "routes": {
     "2": [
      {
-      "walk_to": "stone_sefa"
+      "walk_to": "nail_boat"
      },
      {
-      "say": "May I use your black stone to show you something?",
+      "take": "nail_boat"
+     },
+     {
+      "walk_to": "driftwood_lake"
+     },
+     {
+      "take": "driftwood_lake"
+     },
+     {
+      "walk_to": "npc_sefa_priestess"
+     },
+     {
+      "say": "Mother, may I borrow your black stone? I'll show you both something.",
+      "to": "npc_sefa_priestess"
+     },
+     {
+      "say": "And your offering bowl too, for a little water?",
       "to": "npc_sefa_priestess"
      },
      {
@@ -317,20 +351,7 @@
       "take": "bowl_sefa"
      },
      {
-      "walk_to": "hooks_brann"
-     },
-     {
-      "say": "Could I borrow a hook and a float? I'll show you a trick of the stone.",
-      "to": "npc_brann_fisher"
-     },
-     {
-      "take": "hooks_brann"
-     },
-     {
-      "take": "floats_brann"
-     },
-     {
-      "do": "stroke an iron fish hook along the black lodestone many times in one direction to magnetise it"
+      "do": "stroke the iron nail along the black lodestone many times in one direction to magnetise it"
      },
      {
       "walk_to": "lake_water"
@@ -339,10 +360,13 @@
       "do": "fill the offering bowl with lake water"
      },
      {
-      "walk_to": "npc_sefa_priestess"
+      "walk_to": [
+       13,
+       12
+      ]
      },
      {
-      "do": "show Sefa and Brann: float the magnetised hook on a cork float in the bowl of water and let it swing to point north, then turn the bowl to show it always comes back north"
+      "do": "show Sefa and Brann: float one of the dry driftwood sticks in the bowl of water, lay the magnetised nail on it and let it swing to point north, then turn the bowl to show it always comes back north"
      }
     ]
    },
@@ -378,6 +402,10 @@
      }
     ]
    },
+   "words_check": {
+    "kind": "shown",
+    "npc": "npc_brann_fisher"
+   },
    "done": "The same wonder can be a blessing or witchcraft. Showing how it works turns it into knowledge.",
    "help": [
     "Look at People in your journal ({J}): how does each of them stand toward you now?",
@@ -389,6 +417,13 @@
     },
     {
      "say": "There's no magic in it, Brann. Round glass full of water bends sunlight to a point, like a raindrop does. Here, hold it yourself and try.",
+     "to": "npc_brann_fisher"
+    },
+    {
+     "do": "show Brann, slowly and plainly, how a single round drop of lake water on the dry driftwood also gathers the sunlight into a tiny bright spot: the same trick, small and ordinary, that any dewdrop does"
+    },
+    {
+     "say": "You see? Anyone can do it, with clear glass and a bright sun. Even you.",
      "to": "npc_brann_fisher"
     },
     {
@@ -405,14 +440,21 @@
       "walk_to": "npc_brann_fisher"
      },
      {
-      "say": "It's only iron and the stone, Brann. The stone makes the iron want to point north. Stroke a hook yourself and see.",
+      "say": "It's only iron and the stone, Brann. The stone makes the iron want to point north. Stroke a nail yourself and see.",
+      "to": "npc_brann_fisher"
+     },
+     {
+      "do": "show Brann slowly how it's done: stroke the nail along the black stone one way only, then float it on the stick in the bowl and watch it swing north. Plain iron and stone, nothing hidden"
+     },
+     {
+      "say": "Anyone can do it. Keep one in your boat for foggy days, and you'll always find the shore.",
       "to": "npc_brann_fisher"
      },
      {
       "walk_to": "npc_sefa_priestess"
      },
      {
-      "say": "Keep it, Mother: a needle that always finds north.",
+      "say": "It's yours, Mother: a needle that always finds north. And here's your stone and bowl back.",
       "to": "npc_sefa_priestess"
      }
     ]

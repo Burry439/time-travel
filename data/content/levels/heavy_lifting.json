@@ -69,7 +69,7 @@
  "things": [
   {
    "id": "mire",
-   "name": "the mire",
+   "name": "mire",
    "x": 18,
    "y": 12,
    "mass_kg": 5000.0,
@@ -169,8 +169,8 @@
   {
    "id": "stone_flat",
    "name": "big flat stone",
-   "x": 25,
-   "y": 10,
+   "x": 22,
+   "y": 13,
    "mass_kg": 18.0,
    "materials": [
     "stone"
@@ -187,11 +187,11 @@
    "name": "old boards",
    "x": 10,
    "y": 7,
-   "mass_kg": 12.0,
+   "mass_kg": 8.0,
    "materials": [
     "wood"
    ],
-   "description": "A pile of old planks, grey and sound.",
+   "description": "A few old planks, grey and sound.",
    "flags": [
     "rigid"
    ],
@@ -295,10 +295,16 @@
    "routes": {
     "2": [
      {
+      "walk_to": "boards_lane"
+     },
+     {
+      "take": "boards_lane"
+     },
+     {
       "walk_to": "npc_wat_carter"
      },
      {
-      "say": "We'll never do it alone. Dunna, Rook, will you lend a hand? All of us at once.",
+      "say": "We'll never do it alone. Dunna, Rook, will you lend a hand? All of us at once, with boards under the wheels.",
       "to": "npc_wat_carter"
      },
      {
@@ -312,7 +318,7 @@
       ]
      },
      {
-      "do": "with Wat, Dunna and Rook all heaving at the wheels and the tailboard together on three, rock the cart and push it up out of the mire"
+      "do": "with the old boards shoved under the wheels for grip, and Wat, Dunna, Rook and me all heaving at the wheels and the tailboard together on three, work the cart up out of the mire"
      }
     ]
    },

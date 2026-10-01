@@ -281,9 +281,18 @@
     ]
    },
    "words_check": {
-    "kind": "made",
-    "from": [
-     "logs_osk"
+    "kind": "any",
+    "of": [
+     {
+      "kind": "made",
+      "from": [
+       "logs_osk"
+      ]
+     },
+     {
+      "kind": "trade_offered",
+      "npc": "npc_osk_pieman"
+     }
     ]
    },
    "done": "Yours, fairly. However you came by it, the hall saw how.",
