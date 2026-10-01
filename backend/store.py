@@ -33,10 +33,11 @@ GEOMETRY_VERSION = WORLD_GEOMETRY["version"]
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
 SEED_VERSION = (
-    12  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
+    13  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
 )
 # 11: the old wainwright's yard, a free stock of materials for weapons and armour (D-51).
 # 12: the wainwright's notebook, a readable recipe book (D-52).
+# 13: Hessa's bucket holds ten litres, not one.
 # A journey replays on the world it began with, so a new starting world (a seed bump) retires the journeys
 # begun on an older one (GDD D-04: no save compatibility between prototypes; D-58).
 OLDEST_SEED = SEED_VERSION

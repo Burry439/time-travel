@@ -1012,18 +1012,19 @@ def _give(state, judged, available, notes, reason, effort, key) -> dict:
             "item_ids": ids,
             "recipient_id": npc["id"],
             "recipient_name": npc["name"],
-            "names": [
-                state["objects"][i]["name"]
-                + (
-                    f" with {state['objects'][i]['water_l']:g} L of water in it"
-                    if state["objects"][i].get("water_l")
-                    else ""
-                )
-                for i in ids
-            ],
+            "names": [_given_name(state["objects"][i]) for i in ids],
         },
         property=_property(state, others, "given away"),
     )
+
+
+def _given_name(obj: dict) -> str:
+    """A thing as the person handed it sees it: a container says how much water is in it, and whether it's full."""
+    water = obj.get("water_l") or 0.0
+    if not water:
+        return obj["name"]
+    full = obj.get("capacity_l") and water >= obj["capacity_l"]
+    return obj["name"] + (f", full ({water:g} L of water)" if full else f" with {water:g} L of water in it")
 
 
 def _install(state, judged, available, notes, reason, effort, key) -> dict:

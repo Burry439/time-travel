@@ -94,12 +94,12 @@
     "wood",
     "iron"
    ],
-   "description": "Hessa's wooden bucket with an iron band and rope handle.",
+   "description": "Hessa's wooden bucket with an iron band and rope handle; it holds about ten litres.",
    "flags": [
     "container",
     "watertight"
    ],
-   "capacity_l": 1.0,
+   "capacity_l": 10.0,
    "capabilities": [
     "carry",
     "fill",

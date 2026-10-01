@@ -1684,9 +1684,9 @@
     "fill",
     "pour"
    ],
-   "capacity_l": 1.0,
+   "capacity_l": 10.0,
    "condition": "usable",
-   "description": "Hessa's wooden bucket with an iron band and rope handle.",
+   "description": "Hessa's wooden bucket with an iron band and rope handle; it holds about ten litres.",
    "flags": [
     "container",
     "watertight"
@@ -6039,7 +6039,7 @@
  "run_id": "<run0>",
  "safe_seq": 13,
  "scenario": "tutorial",
- "seed_version": 12,
+ "seed_version": 13,
  "sim_time_ms": 48500,
  "tick": 48,
  "tutorial": {

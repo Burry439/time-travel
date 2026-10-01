@@ -127,7 +127,7 @@
      "gourd_a"
     ],
     "names": [
-     "dried gourd of water with 1 L of water in it"
+     "dried gourd of water, full (1 L of water)"
     ],
     "recipient_id": "npc_hessa_marr",
     "recipient_name": "Hessa"
@@ -193,8 +193,8 @@
    "event_id": 29,
    "kind": "talk",
    "npc_id": "npc_hessa_marr",
-   "reason": "Hessa: “(voiced) The stranger gave Hessa a dried gourd of water with 1 L of water in it.”",
-   "reply": "(voiced) The stranger gave Hessa a dried gourd of water with 1 L of water in it.",
+   "reason": "Hessa: “(voiced) The stranger gave Hessa a dried gourd of water, full (1 L of water).”",
+   "reply": "(voiced) The stranger gave Hessa a dried gourd of water, full (1 L of water).",
    "text": "",
    "walk": []
   },
@@ -237,7 +237,7 @@
     "gourd_a"
    ],
    "names": [
-    "dried gourd of water with 1 L of water in it"
+    "dried gourd of water, full (1 L of water)"
    ],
    "recipient_id": "npc_hessa_marr",
    "recipient_name": "Hessa"
@@ -791,7 +791,7 @@
      "anger": 0.0,
      "fear": 0.0
     },
-    "fresh": "gave me a dried gourd of water with 1 L of water in it",
+    "fresh": "gave me a dried gourd of water, full (1 L of water)",
     "job": {
      "kind": "watch",
      "until": 63000
@@ -801,7 +801,7 @@
      "episodes": [
       {
        "at": 32000,
-       "text": "The stranger said “Any way I can help?”; Hessa replied “(voiced) Any way I can help?”. The stranger said “Gladly, I'll fetch it.”; Hessa replied “(voiced) Gladly, I'll fetch it.”. The stranger The stranger gave Hessa a dried gourd of water with 1 L of water in it.; Hessa replied “(voiced) The stranger gave Hessa a dried gourd of water with 1 L of water in it.”. The stranger said “Here's your water"
+       "text": "The stranger said “Any way I can help?”; Hessa replied “(voiced) Any way I can help?”. The stranger said “Gladly, I'll fetch it.”; Hessa replied “(voiced) Gladly, I'll fetch it.”. The stranger The stranger gave Hessa a dried gourd of water, full (1 L of water).; Hessa replied “(voiced) The stranger gave Hessa a dried gourd of water, full (1 L of water).”. The stranger said “Here's your water.”; He"
       }
      ],
      "heard": [],
@@ -817,12 +817,12 @@
       "at": 15000,
       "clarity": "clear",
       "event": 29,
-      "item": "dried gourd of water with 1 L of water in it",
+      "item": "dried gourd of water, full (1 L of water)",
       "kind": "gift",
       "severity": 1,
-      "short": "gave me a dried gourd of water with 1 L of water in it",
+      "short": "gave me a dried gourd of water, full (1 L of water)",
       "source": "received",
-      "summary": "The stranger gave Hessa a dried gourd of water with 1 L of water in it.",
+      "summary": "The stranger gave Hessa a dried gourd of water, full (1 L of water).",
       "victim": "npc_hessa_marr"
      },
      {
@@ -917,13 +917,13 @@
      {
       "at": 15000,
       "doubted": false,
-      "text": "(The stranger gave Hessa a dried gourd of water with 1 L of water in it.)",
+      "text": "(The stranger gave Hessa a dried gourd of water, full (1 L of water).)",
       "who": "stranger"
      },
      {
       "at": 15000,
       "reply": "answer",
-      "text": "(voiced) The stranger gave Hessa a dried gourd of water with 1 L of water in it.",
+      "text": "(voiced) The stranger gave Hessa a dried gourd of water, full (1 L of water).",
       "who": "them"
      },
      {
@@ -1631,9 +1631,9 @@
     "fill",
     "pour"
    ],
-   "capacity_l": 1.0,
+   "capacity_l": 10.0,
    "condition": "usable",
-   "description": "Hessa's wooden bucket with an iron band and rope handle.",
+   "description": "Hessa's wooden bucket with an iron band and rope handle; it holds about ten litres.",
    "flags": [
     "container",
     "watertight"
@@ -5880,7 +5880,7 @@
  "run_id": "<run0>",
  "safe_seq": 53,
  "scenario": "village",
- "seed_version": 12,
+ "seed_version": 13,
  "sim_time_ms": 53000,
  "tick": 53,
  "trades": {},

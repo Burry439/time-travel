@@ -35,7 +35,7 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v3"  # D-51: errands, promises kept, talk mid-fight. D-53: things change hands only by moves.
+SCENE_VERSION = "scene_v4"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal.
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
 DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).

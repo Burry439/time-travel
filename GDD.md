@@ -1115,7 +1115,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `voice_v5` (converse): reads the moment, says the reply and picks the move, and returns a memory note and any name given. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
+| Voice (built, D-22, D-36, D-38, D-44) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `scene_v4` (D-48): one call a round writes the lines for everyone in the conversation (and anyone nearby who joins), each with their reading of the moment, their move, a memory note and any name given; v4 (D-58): a deal's reward waits for the deal. `voice_v3` still phrases fixed decisions. The same model keeps memory (`recollect_v1`) and voices villagers' chats (`chatter_v1`). Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17; one model since D-47) | `gpt-6-luna`, reasoning `low` (`MODEL_DECIDER`, `DECIDER_REASONING`), a strict per-question JSON schema over code-built options; about $0.0002 and 1.5–3 s per decision | A typed engine such as Jev behind the same interface, only if crowds inside the city make volume and cost matter |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
@@ -2365,6 +2365,15 @@ Changes to this document: …
 - The golden journeys matched after every step, the tutorial's included. The riskiest rewrites were also checked
   against their old versions call by call across the whole test suite: 90 steps of 16 kinds, 77 perceptions,
   970 clock beats, 253 conversation menus and 78 blows came out identical.
+- **The final live checks.** The live tutorial playthrough had no blockers: Kade stood still while Mara told him,
+  called the bout, saw the fire, and Roderic, told the stranger wants in, let them in 32 s later. The live demo
+  playthrough found one blocker: Hessa's water deal stayed undone. Her bucket held 1 L, which she read as "a little
+  water", and she set off to speak for the stranger the moment the deal was agreed (the scene prompt's
+  "promises are kept" rule made the voice carry out her reward at once). Fixed in its own commit: the bucket holds
+  10 L (seed 13), what's handed over says when it's full, and `scene_v4` keeps a deal's reward for when the deal
+  is done. Played again: no blockers, the deal done on the hand-over and Hessa at the captain in 16 s. Live talk
+  evals 30/32 (`oren_in_awe` already failing; `jory_given_a_poultice` 3 of 4 alone). The eval scripts had been
+  left on the old module names (they sit outside `backend/`) and were brought along.
 - Bugs found on the way, each fixed in its own commit: a disarmed guard still fought with the spear on their card
   and stripped armour still protected (D-49's gear wasn't the whole truth); a deed in a round waved when it
   failed instead of when it worked; decisions D-51 to D-57 had been filed in §3's interaction table.
