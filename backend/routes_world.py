@@ -18,10 +18,11 @@ import m2
 import paths
 import routes_tutorial
 import store
+import views
 from ai import config as ai_config
 from ai import decider
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 
 
 class NewRun(BaseModel):
@@ -204,7 +205,10 @@ def move(run_id: str, request: Move):
             state["inside_city"] = True
             cmd.save("objective_complete", tick)
     if problem:
-        return JSONResponse({"detail": problem[1], "state": state, "accepted": len(accepted)}, status_code=problem[0])
+        body = views.shown(
+            {"detail": problem[1], "state": state, "accepted": len(accepted)}
+        )  # Built by hand: shown here.
+        return JSONResponse(body, status_code=problem[0])
     return {"state": state, "duplicate": False}
 
 

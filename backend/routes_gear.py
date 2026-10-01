@@ -20,9 +20,10 @@ import library
 import perception
 import routes_tutorial
 import store
+import views
 from shapes import State, Thing
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 
 
 class Strike(BaseModel):

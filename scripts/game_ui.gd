@@ -482,12 +482,14 @@ func npc_record(id: String) -> Dictionary:
 func open_claims() -> Array:
 	var claims := []
 	var seen := {}
-	for claim in game.run_state.get("learned", []):
+	var learned: Array = game.run_state.get("learned", [])
+	for index in learned.size():
+		var claim: Dictionary = learned[index]
 		var lead := str(claim.get("lead", "")) if claim.get("lead") != null else ""
 		if lead.is_empty() or seen.has(lead):
 			continue
 		seen[lead] = true
-		if not _lead_done(claim):
+		if not lead_done(index):
 			claims.append(claim)
 	return claims
 
@@ -507,30 +509,17 @@ static func shorten(text: String, most: int) -> String:
 
 func open_leads() -> PackedStringArray:
 	var leads := PackedStringArray()
-	var seen := {}
-	for claim in game.run_state.get("learned", []):
-		var lead := str(claim.get("lead", "")) if claim.get("lead") != null else ""
-		if lead.is_empty() or seen.has(lead):
-			continue
-		seen[lead] = true
-		if not _lead_done(claim):
-			leads.append(lead)
+	for claim in open_claims():
+		leads.append(str(claim.lead))
 	return leads
 
 
-## Whether what a lead points to has happened: a deal done, a loan returned, a person met.
-func _lead_done(claim: Dictionary) -> bool:
-	if claim.has("fulfilled") or claim.has("gift") or claim.has("trade"):
-		return true
-	if claim.has("offer"):
-		return str(game.run_state.get("agreements", {}).get(str(claim.offer), {}).get("status", "")) == "fulfilled"
-	if claim.has("lend"):
-		var thing: Dictionary = game.run_state.get("objects", {}).get(str(claim.lend), {})
-		return thing.get("holder_id") == claim.npc_id or thing.get("lent_to") != "player"
-	if claim.has("refer"):
-		var their_mind = npc_record(str(claim.refer)).get("mind")
-		return typeof(their_mind) == TYPE_DICTIONARY and their_mind.get("met", false)
-	return false
+## Whether what the learned thing at this index points to has happened (a deal done, a loan returned, a person
+## met), as the service worked it out (backend/views.py).
+func lead_done(index: int) -> bool:
+	var view = game.run_state.get("view")
+	var done: Array = view.get("lead_done", []) if typeof(view) == TYPE_DICTIONARY else []
+	return index < done.size() and bool(done[index])
 
 
 func chip_note(obj: Dictionary) -> String:

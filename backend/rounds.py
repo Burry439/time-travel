@@ -30,11 +30,12 @@ import routes_tutorial
 import store
 import talk
 import tuning
+import views
 from ai import config as ai_config
 from ai import judge, telemetry, voice
 from shapes import Npc, State
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 
 
 class SayRequest(BaseModel):

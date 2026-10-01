@@ -88,8 +88,10 @@ func _draw() -> void:
 				draw_rect(Rect2(to_map(Vector2(bx, by) * BLOCK) - Vector2(0.5, 0.5), Vector2.ONE * BLOCK * s + Vector2.ONE), fog)
 	# Leads point at people: a red ring on each.
 	var pointed := {}
-	for claim in game.run_state.get("learned", []):
-		if ui._lead_done(claim):
+	var learned: Array = game.run_state.get("learned", [])
+	for index in learned.size():
+		var claim: Dictionary = learned[index]
+		if ui.lead_done(index):
 			continue
 		for key in ["refer", "npc_id"]:
 			if claim.has(key) and (key == "refer" or claim.has("offer") or claim.has("lend")):

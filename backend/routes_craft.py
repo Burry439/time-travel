@@ -30,11 +30,12 @@ import rounds
 import routes_tutorial
 import store
 import tuning
+import views
 from ai import config as ai_config
 from ai import decider, judge, telemetry, voice
 from shapes import State
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 
 
 class CraftRequest(BaseModel):

@@ -110,7 +110,7 @@ func refresh() -> void:
 		if not first and not before.is_empty() and before != now and now != "unknown":
 			var warmer := Deeds.STANDING_ORDER.find(now) > Deeds.STANDING_ORDER.find(before)
 			var mark := "·" if before == "unknown" else "▲" if warmer else "▼"
-			_toast(ui.bar.portrait_for(id), "%s  %s  %s" % [npc.name, mark, Deeds.STANDING_WORDS.get(now, now)],
+			_toast(ui.bar.portrait_for(id), "%s  %s  %s" % [npc.name, mark, Deeds.word(state, now)],
 				str(Deeds.STANDING_BEFORE.get(before, "")), Deeds.STANDING_COLOURS.get(now, UITheme.INK))
 		seen_standing[id] = now
 		var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}

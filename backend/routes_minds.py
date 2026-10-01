@@ -22,12 +22,13 @@ import minds
 import persona
 import store
 import tuning
+import views
 import village
 from ai import config as ai_config
 from ai import decider, telemetry, voice
 from shapes import Npc, State
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 KINDS = ("decide", "agenda", "meet", "recollect", "told")
 REACTING = ("decide",)
 RECOLLECT_BATCH = 3

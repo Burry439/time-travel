@@ -24,6 +24,7 @@ UPDATE = os.environ.get("GOLDEN_UPDATE") == "1"
 
 
 def normalised(state: dict, run_ids: list[str]) -> dict:
+    state = {k: v for k, v in state.items() if k != "view"}  # Worked out from the state (views.py), not part of it.
     text = json.dumps(state, sort_keys=True, ensure_ascii=False)
     for index, run_id in enumerate(run_ids):
         text = text.replace(run_id, f"<run{index}>").replace(run_id[:8], f"<r{index}>")

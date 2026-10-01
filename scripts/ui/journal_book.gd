@@ -159,9 +159,10 @@ func _goals(body: VBoxContainer) -> void:
 	for claim in open:
 		open_names.append(str(claim.lead))
 	var done := PackedStringArray()
-	for claim in game.run_state.get("learned", []):
-		var lead := str(claim.get("lead", ""))
-		if not lead.is_empty() and ui._lead_done(claim) and not lead in done and not lead in open_names:
+	var learned: Array = game.run_state.get("learned", [])
+	for index in learned.size():
+		var lead := str(learned[index].get("lead", ""))
+		if not lead.is_empty() and ui.lead_done(index) and not lead in done and not lead in open_names:
 			done.append(lead)
 	if not done.is_empty():
 		_heading(body, "DONE")
@@ -209,7 +210,7 @@ func _people(body: VBoxContainer) -> void:
 		var row := _card(body, ui.bar.portrait_for(id), "%s  ·  %s" % [npc.name, str(npc.get("role", "")).capitalize()],
 			"\n".join(told.slice(-3)))
 		var standing := Label.new()
-		standing.text = Deeds.STANDING_WORDS.get(word, word) + ("" if npc.get("alive", true) else "  ·  dead")
+		standing.text = Deeds.word(game.run_state, word) + ("" if npc.get("alive", true) else "  ·  dead")
 		standing.add_theme_color_override("font_color", Deeds.STANDING_COLOURS.get(word, UITheme.INK))
 		standing.add_theme_font_override("font", UITheme.serif(true, true))
 		standing.add_theme_font_size_override("font_size", 15)

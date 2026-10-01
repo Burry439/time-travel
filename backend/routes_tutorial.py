@@ -16,11 +16,12 @@ from pydantic import BaseModel, Field
 import commands
 import device
 import scenario
+import views
 from ai import config as ai_config
 from ai import telemetry, voice
 from shapes import State
 
-router = APIRouter()
+router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
 
 # What a story step may change: taken from the copy it was worked out on (the rest of the world stays as it was).
 TUTORIAL_FIELDS = (
