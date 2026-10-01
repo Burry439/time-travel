@@ -1,4 +1,22 @@
-[gd_scene load_steps=1 format=3]
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/ground.png" id="1_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Wall.png" id="2_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Well.png" id="3_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Hives.png" id="4_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Herbs.png" id="5_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Lectern.png" id="6_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Barrels.png" id="7_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Bench.png" id="8_tex"]
+
+[ext_resource type="Texture2D" path="res://assets/maps/cloister/Basket.png" id="9_tex"]
 
 [node name="CloisterMap" type="Node2D"]
 y_sort_enabled = true
@@ -14,107 +32,110 @@ offset_right = 2688.0
 offset_bottom = 2368.0
 color = Color(0.07, 0.06, 0.05, 1)
 
-[node name="Floor" type="ColorRect" parent="Map"]
+[node name="Ground" type="Sprite2D" parent="Map"]
 z_index = -20
-offset_right = 1088.0
-offset_bottom = 768.0
-color = Color(0.45, 0.4, 0.28, 1)
+texture_filter = 1
+centered = false
+texture = ExtResource("1_tex")
 
-[node name="WallTop" type="ColorRect" parent="Map"]
+[node name="WallTop" type="TextureRect" parent="Map"]
 z_index = -19
 offset_left = 0.0
-offset_top = 0.0
+offset_top = -64.0
 offset_right = 1088.0
 offset_bottom = 64.0
-color = Color(0.29, 0.2, 0.13, 1)
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="WallLeft" type="ColorRect" parent="Map"]
+[node name="WallLeft" type="TextureRect" parent="Map"]
 z_index = -19
 offset_left = 0.0
 offset_top = 64.0
 offset_right = 32.0
 offset_bottom = 768.0
-color = Color(0.29, 0.2, 0.13, 1)
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="WallRight" type="ColorRect" parent="Map"]
+[node name="WallRight" type="TextureRect" parent="Map"]
 z_index = -19
 offset_left = 1056.0
 offset_top = 64.0
 offset_right = 1088.0
 offset_bottom = 768.0
-color = Color(0.29, 0.2, 0.13, 1)
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="WallBottomLeft" type="ColorRect" parent="Map"]
+[node name="WallBottomLeft" type="TextureRect" parent="Map"]
 z_index = -19
 offset_left = 32.0
 offset_top = 736.0
 offset_right = 480.0
 offset_bottom = 768.0
-color = Color(0.29, 0.2, 0.13, 1)
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="WallBottomRight" type="ColorRect" parent="Map"]
+[node name="WallBottomRight" type="TextureRect" parent="Map"]
 z_index = -19
 offset_left = 608.0
 offset_top = 736.0
 offset_right = 1056.0
 offset_bottom = 768.0
-color = Color(0.29, 0.2, 0.13, 1)
+texture = ExtResource("2_tex")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Well" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 512.0
-offset_top = 320.0
-offset_right = 576.0
-offset_bottom = 384.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Well" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(544.0, 384)
+scale = Vector2(0.0675, 0.0675)
+texture = ExtResource("3_tex")
+offset = Vector2(0, -487.5)
 
-[node name="Hives" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 352.0
-offset_top = 224.0
-offset_right = 448.0
-offset_bottom = 256.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Hives" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(400.0, 256)
+scale = Vector2(0.1013, 0.1013)
+texture = ExtResource("4_tex")
+offset = Vector2(0, -343.0)
 
-[node name="Herbs" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 640.0
-offset_top = 416.0
-offset_right = 736.0
-offset_bottom = 480.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Herbs" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(688.0, 480)
+scale = Vector2(0.1013, 0.1013)
+texture = ExtResource("5_tex")
+offset = Vector2(0, -337.5)
 
-[node name="Lectern" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 128.0
-offset_top = 128.0
-offset_right = 192.0
-offset_bottom = 160.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Lectern" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(160.0, 160)
+scale = Vector2(0.0718, 0.0718)
+texture = ExtResource("6_tex")
+offset = Vector2(0, -512.0)
 
-[node name="Barrels" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 864.0
-offset_top = 448.0
-offset_right = 992.0
-offset_bottom = 512.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Barrels" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(928.0, 512)
+scale = Vector2(0.1350, 0.1350)
+texture = ExtResource("7_tex")
+offset = Vector2(0, -304.0)
 
-[node name="Bench" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 160.0
-offset_top = 480.0
-offset_right = 288.0
-offset_bottom = 512.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Bench" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(224.0, 512)
+scale = Vector2(0.1350, 0.1350)
+texture = ExtResource("8_tex")
+offset = Vector2(0, -256.0)
 
-[node name="Basket" type="ColorRect" parent="Map"]
-z_index = -19
-offset_left = 928.0
-offset_top = 96.0
-offset_right = 960.0
-offset_bottom = 128.0
-color = Color(0.29, 0.2, 0.13, 1)
+[node name="Basket" type="Sprite2D" parent="Map"]
+texture_filter = 1
+position = Vector2(944.0, 128)
+scale = Vector2(0.0350, 0.0350)
+texture = ExtResource("9_tex")
+offset = Vector2(0, -512.0)
 
 [node name="M2Objects" type="Node2D" parent="."]
 y_sort_enabled = true

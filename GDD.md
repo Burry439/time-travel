@@ -1445,8 +1445,8 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 ### Training (D-59)
 
 **Status: CURRENT.** Phases A to F built: all nine basic levels, painted and played live. G built: the ten advanced
-levels, each played to its outcome in stub mode by one or two routes; their people and nine of ten maps painted;
-the live word evals and playtests, the cloister's map and the levels' loose things wait for image and model credits.
+levels, each played to its outcome in stub mode by one or two routes, and all painted (the cloister's map and the
+levels' 79 loose things by Codex); the live word evals and playtests wait for model credits.
 The first morning retires once the user has played the basics.
 
 **Goal:** many short training levels, each a self-contained episode on its own small map (some indoors) with its
@@ -1505,7 +1505,11 @@ in it shows what to fix in the systems the main game shares.
   background), clears the haze round each figure and writes the box of each view beside it. `tools/make_map.py`
   writes a map's scene from its data and, with `--paint`, paints its ground and pieces (`map.art`); a wall is a band
   cut from one painting, and anything unpainted is a plain block, so a map plays before its art exists. The first
-  four people took one try each.
+  four people took one try each. **Since phase G, development art is painted by Codex** from a task Claude writes
+  (every file's path, size, transparency, style references and description, and nothing else touched): the image
+  API cost about $11 for the advanced levels. The tools then only write scenes (`make_map.py` without `--paint`),
+  measure sheets (`make_person.py --measure`) and shrink and import. Pictures made while the user plays (the
+  illustrator) still use the image model.
 - **Lab tools** (built): `tools/capture_level.gd` (a picture of a level as it starts), `tools/playtest_level.gd` (a
   scripted live playtest of any level, from each step's `playtest`, with each step's time),
   `evals/run_level_words.py` (each step's words and its `try_also` against the live judge), and
@@ -1584,8 +1588,10 @@ in it shows what to fix in the systems the main game shares.
     talking walks you up to the person, which can leave a third out of earshot (A8's brothers now stand closer);
     a remedy's materials must use the gear table's words ("leaf", not "leaves"); thing flags must be the judge's
     words (now a content check).
-  - **To do when credits return:** paint the cloister and the levels' loose things; the live word evals and the
-    live playtests of every route; then fix what they find.
+  - **Painted:** 26 people and nine maps by the image API (about $11); the cloister's map and the levels' 79 loose
+    things by Codex from a written task, which is how development art is made from now on (phase D above).
+  - **To do when credits return:** the live word evals and the live playtests of every route; then fix what they
+    find.
 
 **Exit criteria (each level):**
 - its content checks pass;
