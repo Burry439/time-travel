@@ -196,8 +196,9 @@ func _sync_now() -> void:
 		# A fire that has burnt out goes cold and grey.
 		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) == "burnt out" else Color.WHITE
 		sprite.position = game.cell_center(int(obj["x"]), int(obj["y"]))
-		if obj.get("installed_in") != null:
-			sprite.position.y -= 36.0 # Up in its fixture, not on the ground.
+		var fixture: Dictionary = game.run_state["objects"].get(str(obj.get("installed_in", "")), {})
+		if not fixture.is_empty() and not fixture.get("no_sprite", false):
+			sprite.position.y -= 36.0 # Up in its fixture (a bar in its brackets), not stuck in ground art like a mire.
 		_place_on_gate(sprite, obj)
 	_apply_world_features()
 	for npc in game.run_state.get("npcs", []):

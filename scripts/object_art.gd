@@ -102,7 +102,8 @@ func apply_to(sprite: Sprite2D, obj: Dictionary) -> void:
 	sprite.texture = texture
 	var size := texture.get_size()
 	# Trees stand tall and heavy things read larger; everyday items share one small size.
-	var height := 150.0 if str(obj.get("feature", "")) == "tree" else OBJECT_HEIGHT if "carry" in obj.capabilities else 64.0
+	var big := 104.0 if float(obj.get("mass_kg", 0.0)) >= 300.0 else 64.0 # A cart or an ox reads bigger than a trough.
+	var height := 150.0 if str(obj.get("feature", "")) == "tree" else OBJECT_HEIGHT if "carry" in obj.capabilities else big
 	var width := height * 1.3 if height > OBJECT_HEIGHT else OBJECT_MAX_WIDTH
 	sprite.scale = Vector2.ONE * minf(height / size.y, width / size.x)
 	# Tall things stand on their cell (so a tree falls from its base); small items stay centred.

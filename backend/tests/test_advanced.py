@@ -364,11 +364,12 @@ def test_heavy_lifting_with_willing_hands(world):
     """People count as aids only when they're willing (in the conversation, or well disposed), and close by."""
     state = new_run(world, scenario="heavy_lifting")
     state = read(world, read(world, state))
-    state = walk(world.http, state, 20, 14)
+    state = walk(world.http, state, 19, 14)  # Between Wat and Dunna, within reach of both.
     state = do(world, state, "push it out with Rook", lift(ROOK))  # Rook hasn't been asked: not an aid.
     assert state["objects"]["cart_wat"]["installed_in"] == "mire"
     state = say(world, state, WAT, "We'll do it together. All of us at once.", said("answer"))
     state = say(world, state, DUNNA, "Dunna, will you push with us on three?", said("answer"))
+    state = walk(world.http, state, 19, 14)  # Talking walked over to each; back between them, by the cart.
     state = do(world, state, "all heave together on three", lift(WAT, DUNNA))
     state = beat(world, state)
     assert not state["objects"]["cart_wat"].get("installed_in") and at_step(state) == "done"

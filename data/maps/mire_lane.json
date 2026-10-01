@@ -18,7 +18,8 @@
   },
   "bands": [
    "HedgeTop",
-   "HedgeBottom"
+   "HedgeBottom",
+   "Mire"
   ]
  },
  "size": [
@@ -111,8 +112,8 @@
   "mire": {
    "name": "the mire",
    "cell": [
-    19,
-    14
+    16,
+    13
    ]
   },
   "logs": {

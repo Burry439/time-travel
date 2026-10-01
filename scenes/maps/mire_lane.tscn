@@ -65,12 +65,15 @@ scale = Vector2(0.1013, 0.1013)
 texture = ExtResource("4_tex")
 offset = Vector2(0, -411.5)
 
-[node name="Mire" type="Sprite2D" parent="Map"]
-texture_filter = 1
-position = Vector2(608.0, 416)
-scale = Vector2(0.2362, 0.2362)
+[node name="Mire" type="TextureRect" parent="Map"]
+z_index = -19
+offset_left = 512.0
+offset_top = 256.0
+offset_right = 704.0
+offset_bottom = 416.0
 texture = ExtResource("5_tex")
-offset = Vector2(0, -502.0)
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Fence" type="Sprite2D" parent="Map"]
 texture_filter = 1
