@@ -27,6 +27,7 @@ offset_top = -1600.0
 offset_right = 2688.0
 offset_bottom = 2304.0
 color = Color(0.26, 0.31, 0.17, 1)
+mouse_filter = 2
 
 [node name="Ground" type="Sprite2D" parent="Map"]
 z_index = -20

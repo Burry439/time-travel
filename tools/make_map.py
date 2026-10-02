@@ -124,6 +124,8 @@ class Scene:
         return rid
 
     def node(self, name: str, kind: str, parent: str | None, **props: str) -> None:
+        if kind in ("ColorRect", "TextureRect"):  # Ground art, not a control: clicks go through to the world.
+            props.setdefault("mouse_filter", "2")
         head = f'[node name="{name}" type="{kind}"' + (f' parent="{parent}"' if parent else "") + "]"
         self.nodes.append("\n".join([head] + [f"{key} = {value}" for key, value in props.items()]))
 

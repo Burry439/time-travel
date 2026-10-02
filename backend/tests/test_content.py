@@ -276,3 +276,12 @@ def test_every_playtest_names_what_is_in_its_level(level_id):
     if any(step.get("playtest") for step in level["steps"]):  # Scripted (the first morning has its own script).
         missing = [s["id"] for s in level["steps"] if s.get("task") and not s.get("playtest")]
         assert not missing, f"steps with a task but no playtest: {missing}"
+
+
+def test_every_map_scene_lets_clicks_through():
+    """A map's ground, bands and blocks are pictures, not controls: one that took the mouse would swallow every click
+    on the world (D-59: no right-click worked in the training levels)."""
+    for scene in sorted((content.ROOT / "scenes" / "maps").glob("*.tscn")):
+        for block in scene.read_text(encoding="utf-8").split("\n\n"):
+            if 'type="ColorRect"' in block or 'type="TextureRect"' in block:
+                assert "mouse_filter = 2" in block, f"{scene.name}: {block.splitlines()[0]}"

@@ -1620,6 +1620,11 @@ in it shows what to fix in the systems the main game shares.
       A3 gained a free nail); Aldric refused a stranger binding his hand, was bound anyway, and objected; a field
       gate named "Gate" and a mire drawn upright hid the cart (now a band, and heavy things are drawn bigger).
 
+  - **The user's first play (B1, 2 Oct 2026), and the fixes (each shared with the main game):**
+    - No click worked on a training map. The painted ground, bands and blocks of every generated map scene were
+      Controls, which caught the mouse before the world did. `make_map.py` now makes them let clicks through
+      (`mouse_filter`), a content test checks every map scene, and the levels smoke right-clicks a painted map.
+
 **Exit criteria (each level):**
 - its content checks pass;
 - a stub run through every step passes;
