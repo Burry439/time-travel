@@ -141,7 +141,7 @@ func _run() -> void:
 			break
 	if not check(has_text(scene.ui.modal, "Thank you"), "The rating wasn't saved"):
 		return
-	find_button(scene.ui.modal, "Back to Training").pressed.emit()
+	find_button(scene.ui.modal, "Next").pressed.emit() # Next is the Training menu, never another journey.
 	if not check(await wait_text("✓ Done"), "Back in Training, no done mark"):
 		return
 	print("TRAINING SMOKE PASS: the catalogue, a level to its end, its complete screen and rating, and the done mark")

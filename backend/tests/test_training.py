@@ -34,7 +34,8 @@ def test_every_training_level_says_what_the_screen_needs():
 
 def test_a_finished_level_is_marked_done_with_its_time_and_can_be_rated(world):
     http = world.http
-    state = new_run(world, scenario="test_room")
+    lab = new_run(world, scenario="test_room")  # A developer's (or the lab's scripted) journey: never a done mark.
+    state = new_run(world, scenario="test_room", mode="normal")
     assert not store.finished(state) and http.get(f"/runs/{state['run_id']}/result").json()["done"] is False
     state = read(world, state)
     state = walk_to(http, state, 3, 4)
@@ -49,7 +50,7 @@ def test_a_finished_level_is_marked_done_with_its_time_and_can_be_rated(world):
     result = http.get(f"/runs/{state['run_id']}/result").json()
     assert result == {"level": "test_room", "done": True, "seconds": result["seconds"]} and result["seconds"] >= 0
     listed = next(level for level in http.get("/training").json()["levels"] if level["id"] == "test_room")
-    assert listed["done"] and listed["best_s"] is not None
+    assert listed["done"] and listed["best_s"] is not None and lab["mode"] == "developer"
     assert http.post(f"/runs/{state['run_id']}/feedback", json={"rating": "bored"}).status_code == 422
     saved = http.post(
         f"/runs/{state['run_id']}/feedback", json={"rating": "about_right", "comment": "Short and clear."}

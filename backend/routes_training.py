@@ -36,7 +36,7 @@ def training():
     with store.db() as connection:
         rows = connection.execute(
             f"SELECT scenario, COUNT(*) AS done, MIN({SECONDS}) AS best FROM runs "
-            "WHERE completed_at IS NOT NULL GROUP BY scenario"
+            "WHERE completed_at IS NOT NULL AND mode = 'normal' GROUP BY scenario"  # Not the lab's scripted runs.
         ).fetchall()
     done = {row["scenario"]: row for row in rows}
     levels = [

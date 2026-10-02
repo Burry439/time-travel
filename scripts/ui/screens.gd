@@ -326,12 +326,11 @@ func level_complete() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	body.add_child(row)
-	var following := next_level(str(level.get("id", "")))
-	if not following.is_empty():
-		row.add_child(ui.button("Next level", play.bind(following)))
-	row.add_child(ui.button("Play again", play.bind(str(level.get("id", "")))))
-	row.add_child(ui.button("Back to Training", func() -> void:
+	# Next is the Training menu, the next level marked there: never straight into another journey (D-59: it once
+	# took the user into the first morning, the city prologue).
+	row.add_child(ui.button("Next", func() -> void:
 		ui.close_modal_now()
 		await game.back_to_menu()
 		open_training(str(level.get("track", "basic")))))
+	row.add_child(ui.button("Play again", play.bind(str(level.get("id", "")))))
 	row.add_child(ui.button("Carry on here", ui.close_modal, "Quiet"))
