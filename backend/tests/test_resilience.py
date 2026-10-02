@@ -68,6 +68,7 @@ def test_one_malformed_answer_is_asked_again(monkeypatch):
     line = voice.SceneLine(
         speaker_id="npc_kade_east",
         text="Haven't seen her. Ask at the inn.",
+        brought_up_story_beat=False,
         move="answer",
         impression="Unchanged",
         suspicion="Unchanged",
@@ -112,6 +113,7 @@ def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
     line = {
         "speaker_id": "npc_kade_east",
         "text": "Inn door.",
+        "brought_up_story_beat": False,
         "move": "answer",
         "impression": "Unchanged",
         "suspicion": "Unchanged",

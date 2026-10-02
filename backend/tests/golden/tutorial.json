@@ -657,12 +657,6 @@
    "category": "heard",
    "kind": "npc",
    "npc_id": "npc_kade_east",
-   "reason": "Kade: “Handy with a burn, are they? I'll come and see.”"
-  },
-  {
-   "category": "heard",
-   "kind": "npc",
-   "npc_id": "npc_kade_east",
    "reason": "Kade: “So you're the one who dressed Jory's arm. No name, no papers, and walking this road alone? It's thick with cutpurses. Let's see if you can look after yourself. Here: a practice sword and a wicker shield.”"
   },
   {
@@ -889,7 +883,7 @@
     "mood": "weary",
     "said": {
      "at": 47500,
-     "key": "npc_roderic_vale:47500:58",
+     "key": "npc_roderic_vale:47500:57",
      "text": "Kade tells me you dressed the smith's boy's burn, stood a bout with him, and struck fire from a stone in front of him. And that you want to come into the city. His word is good enough for me: you may enter."
     },
     "standing": "unknown",
@@ -1418,17 +1412,12 @@
     "mood": "irritable",
     "said": {
      "at": 47500,
-     "key": "npc_kade_east:47500:55",
+     "key": "npc_kade_east:47500:54",
      "text": "Fire in a few strikes, from a scrap of steel and a stone. That's useful work. I've seen enough: the captain should hear about you."
     },
     "standing": "unknown",
     "stranger_seen": false,
     "talk": [
-     {
-      "at": 47500,
-      "text": "Handy with a burn, are they? I'll come and see.",
-      "who": "them"
-     },
      {
       "at": 47500,
       "text": "So you're the one who dressed Jory's arm. No name, no papers, and walking this road alone? It's thick with cutpurses. Let's see if you can look after yourself. Here: a practice sword and a wicker shield.",

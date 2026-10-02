@@ -351,11 +351,17 @@ SHARED = ("stranger_says", "what_just_happened", "conversation_so_far")  # Said 
 
 
 def scene_context(
-    state: State, addressed: dict | None, participants: list[dict], nearby: list[dict], text: str, happened: str | None
+    state: State,
+    addressed: dict | None,
+    participants: list[dict],
+    nearby: list[dict],
+    text: str,
+    happened: str | None,
+    beats: dict | None = None,
 ) -> dict:
     """Everything the voice needs for one group moment (D-48): what the stranger just said or did, the
     conversation so far, and for each person (addressed first, then those taking part, then those nearby)
-    their sheet, purpose, regard, open deals and legal moves."""
+    their sheet, purpose, regard, open deals and legal moves, and any story beat due in their reply (D-59)."""
     encounter = state.get("encounter") or {}
     people = []
     order = ([addressed] if addressed else []) + [p for p in participants if p is not addressed] + nearby
@@ -367,6 +373,8 @@ def scene_context(
             person.pop("the_way_around_town", None)
             person["why_they_are_here"] = f"{npc['name']} is nearby and can hear the conversation."
         person["id"] = npc["id"]
+        if beat := (beats or {}).get(npc["id"]):  # What the story has them get across now (beats.due).
+            person["story_beat"] = {k: beat[k] for k in ("get_across", "only_if") if k in beat}
         person["in_the_conversation"] = (
             "addressed" if npc is addressed else "nearby" if npc in nearby else "taking part"
         )

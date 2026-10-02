@@ -35,7 +35,7 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v6"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal.
+SCENE_VERSION = "scene_v7"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal. v7: story beats (D-59).
 _SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
 SCENE_LINES = 3
 DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).
@@ -69,6 +69,7 @@ class SceneLine(BaseModel):
 
     speaker_id: str
     text: str
+    brought_up_story_beat: bool  # The line gets the speaker's story beat across (D-59).
     move: str
     impression: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
     suspicion: Literal[
@@ -269,6 +270,7 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
                     "speaker_id": line.speaker_id.strip(),
                     "text": spoken,
                     "move": line.move.strip(),
+                    "story_beat": line.brought_up_story_beat,
                     "answers": reading(line),
                     "remember": " ".join(line.remember.split())[:300],
                     "errand_to": line.errand_to.strip()[:60],

@@ -264,6 +264,19 @@
      "do": "“I'm sorry, that was wrong of me.” give the jug back to Sela",
      "to": "npc_sela_potter"
     }
+   ],
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_corr_watch",
+     "text": "Hm. Gave it back. Once, I let that go. Clever, are you? Orrin the shepherd up by the brook could use clever."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_corr_watch",
+     "lead": "Orrin the shepherd by the brook needs help against the fog.",
+     "said": "Orrin the shepherd up by the brook could use clever."
+    }
    ]
   },
   {
@@ -277,19 +290,6 @@
     "kind": "ui",
     "key": "journal"
    },
-   "on_done": [
-    {
-     "kind": "npc_says",
-     "npc": "npc_corr_watch",
-     "text": "Hm. Gave it back. Once, I let that go. Clever, are you? Orrin the shepherd up by the brook could use clever."
-    },
-    {
-     "kind": "lead",
-     "npc": "npc_corr_watch",
-     "lead": "Orrin the shepherd by the brook needs help against the fog.",
-     "said": "Orrin the shepherd up by the brook could use clever."
-    }
-   ],
    "done": "People don't forget, but they do forgive what's put right.",
    "help": [
     "Press {J}, then People."

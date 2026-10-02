@@ -192,13 +192,29 @@
     "button": true,
     "mode": "say"
    },
-   "task": "Talk to Hal",
+   "task": "Tell Hal you want to learn",
    "focus": {
     "npc": "npc_hal_brand"
    },
    "check": {
-    "kind": "talked_to",
-    "npc": "npc_hal_brand"
+    "kind": "said_to",
+    "npc": "npc_hal_brand",
+    "words": [
+     "learn",
+     "learning",
+     "teach",
+     "train",
+     "training",
+     "lesson",
+     "lessons",
+     "fight",
+     "fighting",
+     "spar",
+     "practice",
+     "practise",
+     "sword",
+     "swordplay"
+    ]
    },
    "on_done": [
     {
@@ -217,7 +233,8 @@
    ],
    "done": "A practice sword and a wicker shield, lent to you: yours to use, not to keep.",
    "help": [
-    "{Left-click} Hal and type something, then press {Enter}."
+    "{Left-click} Hal, tell him you want to learn to fight, then press {Enter}.",
+    "Or press Type it for me on the card, then {Enter}."
    ],
    "playtest": [
     {

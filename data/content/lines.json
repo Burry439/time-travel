@@ -159,22 +159,22 @@
   },
   "vouch": {
    "official": [
-    "Captain. I'll speak for this stranger: {why}",
-    "Captain, a word for the stranger: {why}"
+    "{to}. I'll speak for this stranger: {why}",
+    "{to}, a word for the stranger: {why}"
    ],
    "protective": [
-    "Captain, I'll vouch for this one: {why}",
-    "Roderic, hear me out. {why}"
+    "{to}, I'll vouch for this one: {why}",
+    "{name}, hear me out. {why}"
    ],
    "angry": [
-    "Captain. For what it's worth, I'll speak for the stranger: {why}"
+    "{to}. For what it's worth, I'll speak for the stranger: {why}"
    ],
    "frightened": [
-    "Captain, sir, I can speak for the stranger: {why}"
+    "{to}, sir, I can speak for the stranger: {why}"
    ],
    "shrewd": [
-    "Captain, a matter of business: {why}",
-    "Roderic, you'll want to hear this. {why}"
+    "{to}, a matter of business: {why}",
+    "{name}, you'll want to hear this. {why}"
    ]
   },
   "caught": {

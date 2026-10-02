@@ -626,6 +626,7 @@ func _render_encounter(playing: Dictionary) -> Array:
 	var shown_round := -1
 	var fresh: Array = playing.get("entries", [])
 	var hidden: Array = []
+	var after_round := false # What follows the round's own lines (the rest of a story's line, D-59) plays after them.
 	for entry in log:
 		if int(entry.get("round", 0)) != shown_round:
 			shown_round = int(entry.get("round", 0))
@@ -645,7 +646,8 @@ func _render_encounter(playing: Dictionary) -> Array:
 			else:
 				node = _line("[color=#%s]%s[/color]" % [SAY_COLOUR.to_html(false), esc(str(entry.text))])
 		log_box.add_child(node)
-		if entry in fresh:
+		if entry in fresh or after_round:
+			after_round = true
 			node.visible = false
 			hidden.append([node, entry])
 			if str(entry.get("who", "")) == "player" and entry.get("kind") == "do" and not game.actions.played_action.is_empty():

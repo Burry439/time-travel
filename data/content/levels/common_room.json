@@ -206,6 +206,11 @@
    },
    "on_done": [
     {
+     "kind": "npc_says",
+     "npc": "npc_doran_inn",
+     "text": "Gate's shut to strangers since the fever. Captain lets you in only if someone'll speak for you."
+    },
+    {
      "kind": "lead",
      "npc": "npc_doran_inn",
      "lead": "The city lets strangers in only if someone will speak for them.",
@@ -301,6 +306,11 @@
     "npc": "npc_wynn_pilgrim"
    },
    "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_wynn_pilgrim",
+     "text": "Ada at the mill pays fair, and she's always short a pair of hands."
+    },
     {
      "kind": "lead",
      "npc": "npc_wynn_pilgrim",

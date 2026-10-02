@@ -4,17 +4,20 @@ its check count, one step at a time. Checks and triggers are conditions in the r
 by code, so any way the player finds counts; what the story does (someone speaks, walks over, lends something,
 a bout begins) are effects, registered here. The parts it gives people for a while (Kade the teacher) are roles,
 read by the core rules through rules.role. Progress happens only through `tick`, `read` and `ui`, saved as
-`tutorial` events (routes_tutorial), so replay is exact.
+`tutorial` events (routes_tutorial), so replay is exact. What a moment has people say is a story beat (beats.py):
+said in their own words in the reply that brought it about, if they did, and as written if not.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
+import beats
 import cast
 import combat
 import content
 import device
+import encounter
 import gatekeeping
 import gear
 import reputation
@@ -101,7 +104,7 @@ def tick(state: State) -> bool:
         key = f"{current['id']}:{trigger['id']}"
         if key not in tutorial["fired"] and rules.holds(state, trigger["when"], ctx):
             tutorial["fired"].append(key)
-            run(state, trigger["do"], now)
+            run(state, trigger["do"], now, key)
             changed = True
     if not rules.holds(state, current["check"], ctx):
         return changed
@@ -113,7 +116,7 @@ def _complete(state: State, current: dict, now: int) -> None:
     tutorial = state["tutorial"]
     if current.get("done"):
         device.says(state, current["done"], "story")
-    run(state, current.get("on_done", []), now)
+    run(state, current.get("on_done", []), now, current["id"])
     if tutorial["step"] + 1 >= len(steps(state)):
         tutorial["done"] = True
         state["objective"] = story(state)["objective"]
@@ -134,7 +137,7 @@ def skip(state: State) -> None:
         key = f"{current['id']}:{trigger['id']}"
         if key not in tutorial["fired"] and trigger.get("skippable", True):
             tutorial["fired"].append(key)
-            run(state, trigger["do"], now)
+            run(state, trigger["do"], now, key)
     tutorial["read"] = tutorial["step"]
     _complete(state, current, now)
 
@@ -146,7 +149,7 @@ def _start_step(state: State, now: int) -> None:
     state["objective"] = current.get("task") or current["title"]
     for line in current.get("cards", []):
         device.says(state, line, "story")
-    run(state, current.get("on_start", []), now)
+    run(state, current.get("on_start", []), now, f"{current['id']}:start")
 
 
 def _react(state: State, now: int) -> bool:
@@ -202,9 +205,10 @@ def effect(kind: str, *needs: str) -> Callable[[Effect], Effect]:
     return register
 
 
-def run(state: State, effects: list[dict], now: int) -> None:
-    """Carry out effects in order; one with a `when` only if it holds."""
-    ctx = _ctx(state, now)
+def run(state: State, effects: list[dict], now: int, moment: str | None = None) -> None:
+    """Carry out effects in order; one with a `when` only if it holds. moment is the story moment they belong to (a
+    step's id, or step:trigger), whose beats people may already have told in their own words."""
+    ctx = _ctx(state, now) | {"moment": moment}
     for spec in effects:
         if spec.get("when") and not rules.holds(state, spec["when"], ctx):
             continue
@@ -231,10 +235,18 @@ def _text(state: State, parts, ctx: dict) -> str:
 
 @effect("npc_says", "npc", "text")
 def _says(state, spec, ctx):
+    """Someone says an authored line: only what they haven't just said in their own words (a story beat)."""
     npc = _person(state, spec)
-    if npc and npc.get("alive", True):
-        speech.say(npc, spec["text"], ctx["now"], state, state["journal"])
-        cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": spec["text"], "at": ctx["now"]})
+    if npc is None or not npc.get("alive", True):
+        return
+    answer = None if npc is state["player"] else beats.answered(npc, ctx.get("moment"))
+    text = beats.left_to_say(spec["text"], answer)
+    if text:
+        speech.say(npc, text, ctx["now"], state, state["journal"])
+        cast.mind(npc).setdefault("talk", []).append({"who": "them", "text": text, "at": ctx["now"]})
+        encounter.said_aside(state, npc, text)  # Face to face, the conversation shows it too.
+        if answer:  # Their bubble shows it as one thing said: their own words, then the rest.
+            cast.mind(npc)["said"]["text"] = f"{answer} {text}"
 
 
 @effect("approach", "npc")
@@ -358,12 +370,21 @@ def _lead(state, spec, ctx):
     """Someone tells the stranger something worth keeping: a lead in the journal. One the story asks of the stranger
     carries done_when, a condition, and counts as done when it holds (views.lead_done)."""
     npc = _person(state, spec)
+    learned = state.setdefault("learned", [])
+    known = next((e for e in learned if npc and e.get("npc_id") == npc["id"] and e.get("lead") == spec["lead"]), None)
+    if known:  # Already in the journal, as their reply shared it: kept once, in their words.
+        if spec.get("done_when"):
+            known.update(asks=True, done_when=spec["done_when"])
+        return
     if npc:
-        entry = {"npc_id": npc["id"], "name": npc["name"], "said": spec.get("said", spec["lead"]), "event_id": None}
+        said = spec.get("said", spec["lead"])
+        answer = beats.answered(npc, ctx.get("moment"))
+        said = answer if beats.says_all(answer, said) else said  # Their own words, when those carried it.
+        entry = {"npc_id": npc["id"], "name": npc["name"], "said": said, "event_id": None}
         entry["lead"] = spec["lead"]
         if spec.get("done_when"):
             entry.update(asks=True, done_when=spec["done_when"])
-        state.setdefault("learned", []).append(entry)
+        learned.append(entry)
 
 
 @effect("give", "npc", "objects")
@@ -384,4 +405,6 @@ def _offer(state, spec, ctx):
     Agreeing to it and doing it are the stranger's, as any deal (D-55)."""
     npc = _person(state, spec)
     if npc and not any(d.get("template") == spec["offer"] for d in (state.get("agreements") or {}).values()):
-        talk.propose(state, npc, spec["offer"], None, spec.get("says", ""), state.setdefault("learned", []), [])
+        says, answer = spec.get("says", ""), beats.answered(npc, ctx.get("moment"))
+        says = answer if says and beats.says_all(answer, says) else says
+        talk.propose(state, npc, spec["offer"], None, says, state.setdefault("learned", []), [])

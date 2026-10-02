@@ -459,11 +459,6 @@
      },
      "do": [
       {
-       "kind": "npc_says",
-       "npc": "npc_kade_east",
-       "text": "Handy with a burn, are they? I'll come and see."
-      },
-      {
        "kind": "hold",
        "npc": "npc_kade_east",
        "with": [

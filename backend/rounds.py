@@ -18,6 +18,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 import attempts
+import beats
 import briefing
 import cast
 import clock
@@ -153,11 +154,13 @@ def scene(
     nearby = [
         n for n in (briefing.bystanders(draft) if nearby is None else nearby) if n["id"] not in current["participants"]
     ]
-    context = briefing.scene_context(draft, addressed, inside, nearby, text, happened)
+    due = beats.due(draft, addressed_id, text, happened, draft.get("sim_time_ms", 0))
+    context = briefing.scene_context(draft, addressed, inside, nearby, text, happened, due)
     call = voice.scene(context, briefing.fallback_line(draft, addressed, "answer"), allowed=allowed)
     return {
         "call": call,
         "context": context,
+        "beats": due,
         "addressed": addressed_id,
         "inside": [n["id"] for n in inside],
         "nearby": [n["id"] for n in nearby],
@@ -241,6 +244,11 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
         )
         if unkept:
             exchange["journal_entry"]["unkept_promise"] = unkept
+        beat = (moment.get("beats") or {}).get(npc["id"])
+        said_beat = bool(beat and call.status == "ok" and line.get("story_beat"))  # The voice's word for it.
+        answered = bool(beat and call.status == "ok" and beats.came(draft, beat))
+        if answered:  # Their own words in the round that brought it about: authored lines say only the rest (D-59).
+            beats.mark_answered(npc, beat, line["text"])
         felt = [
             shifted
             for f in line.get("feelings") or []
@@ -267,6 +275,9 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
                     "why": "addressed" if npc["id"] == moment["addressed"] else "in the scene",
                     "promised_later": promised,
                     "unkept_promise": unkept,
+                    "story_beat": beat,
+                    "said_beat": said_beat,
+                    "answered_beat": answered,
                     "feelings": felt,
                     "reply": line["text"],
                     "regard_change": exchange["regard_change"],

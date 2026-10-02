@@ -129,6 +129,18 @@ def _log(encounter: dict, who: str, kind: str, text: str, seen: str | None = Non
     return entry
 
 
+def said_aside(state: State, npc: dict, text: str) -> None:
+    """Someone in the conversation says something between rounds (a story's line, D-59): the log shows it, in the
+    round it follows, so it reads as the rest of what they said."""
+    current = active(state)
+    if current is None or npc["id"] not in current["participants"]:
+        return
+    log = current["log"]
+    entry = {"who": npc["id"], "kind": "reply", "text": f"{npc['name']}: “{text}”"}
+    log.append({"round": log[-1]["round"] if log else current["round"]} | entry)
+    del log[:-LOG_KEPT]
+
+
 def prune(state: State) -> None:
     """Drop people who are dead or have wandered off from a conversation; end it when nobody is left."""
     encounter = active(state)

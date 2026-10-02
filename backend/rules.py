@@ -39,12 +39,15 @@ def condition(kind: str, *needs: str) -> Callable[[Condition], Condition]:
 
 
 def holds(state: State, spec: dict | None, ctx: dict | None = None) -> bool:
-    """Whether a condition holds now. No condition always holds."""
+    """Whether a condition holds now. No condition always holds. ctx "assume" (a test of a single condition) makes
+    the conditions it picks out count as holding: whether a moment could come if someone decided it (story beats)."""
     if spec is None:
         return True
     kind = spec["kind"]
     if kind not in CONDITIONS:
         raise ValueError(f"Unknown condition {kind}")
+    if (ctx or {}).get("assume") and kind not in ("all", "any", "not") and ctx["assume"](spec):
+        return True
     return CONDITIONS[kind](state, spec, ctx or {})
 
 

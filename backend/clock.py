@@ -62,8 +62,10 @@ def _deliver_report(state: State, npc: Npc, target: dict, now: int, journal: lis
 
 def _deliver_vouch(state: State, npc: Npc, captain: Npc, now: int, journal: list[dict], job: Job) -> None:
     """Someone speaks for the stranger to the captain: evidence he weighs when the stranger asks to enter."""
-    choices = speech.choose_lines(state, npc, "vouch", {"why": job["why"]})
-    line_id, text = choices[0] if choices else (None, f"Captain, I'll speak for the stranger: {job['why']}")
+    # Whoever decides here, by title or name: the city's captain, or a ferryman (D-59: Ilse called Gorm "Captain").
+    to = "Captain" if "captain" in cast.card(captain)["role"].lower() else captain["name"]
+    choices = speech.choose_lines(state, npc, "vouch", {"why": job["why"], "to": to, "name": captain["name"]})
+    line_id, text = choices[0] if choices else (None, f"{to}, I'll speak for the stranger: {job['why']}")
     speech.say(npc, text, now, state, journal, line_id)
     reputation.remember(
         captain,
