@@ -197,24 +197,8 @@
     "npc": "npc_hal_brand"
    },
    "check": {
-    "kind": "said_to",
-    "npc": "npc_hal_brand",
-    "words": [
-     "learn",
-     "learning",
-     "teach",
-     "train",
-     "training",
-     "lesson",
-     "lessons",
-     "fight",
-     "fighting",
-     "spar",
-     "practice",
-     "practise",
-     "sword",
-     "swordplay"
-    ]
+    "kind": "talked_to",
+    "npc": "npc_hal_brand"
    },
    "on_done": [
     {

@@ -193,16 +193,9 @@
     "npc": "npc_doran_inn"
    },
    "check": {
-    "kind": "said_to",
+    "kind": "talked_to",
     "npc": "npc_doran_inn",
-    "words": [
-     "city",
-     "gate",
-     "road",
-     "news",
-     "get in",
-     "inside"
-    ]
+    "since_step": true
    },
    "on_done": [
     {
@@ -219,7 +212,7 @@
    ],
    "done": "What people tell you goes in your journal, under who told you.",
    "help": [
-    "Type a question with the city or the gate in it."
+    "Ask Doran about the city, in your own words: how a stranger gets in."
    ],
    "playtest": [
     {
@@ -289,15 +282,15 @@
    "id": "group",
    "title": "A group",
    "cards": [
-    "Wynn the pilgrim has been listening. Talk to her: when people are near each other, more than one may answer, and they talk among themselves."
+    "Wynn the pilgrim has been listening. Ask her if she knows of any work: when people are near each other, more than one may answer, and they talk among themselves."
    ],
    "suggest": {
-    "text": "Where are you travelling to?",
+    "text": "Do you know of any work around here?",
     "to": "npc_wynn_pilgrim",
     "button": true,
     "mode": "say"
    },
-   "task": "Talk to Wynn",
+   "task": "Ask Wynn about work",
    "focus": {
     "npc": "npc_wynn_pilgrim"
    },
@@ -327,7 +320,7 @@
      "walk_to": "npc_wynn_pilgrim"
     },
     {
-     "say": "Where are you travelling to?",
+     "say": "Do you know of any work around here?",
      "to": "npc_wynn_pilgrim"
     }
    ]

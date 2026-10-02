@@ -566,6 +566,62 @@
    "require_wonder": [
     "ordinary"
    ]
+  },
+  {
+   "id": "hand_in_fire",
+   "group": "self",
+   "text": "I put my hand into the cooking fire",
+   "carry": [],
+   "player_at": [
+    38,
+    53
+   ],
+   "expect": [
+    "success"
+   ],
+   "require_hurt": [
+    "burn"
+   ]
+  },
+  {
+   "id": "hand_in_fire_walk",
+   "group": "self",
+   "text": "I walk over to the cooking fire and put my hand in the flames",
+   "carry": [],
+   "player_at": [
+    38,
+    56
+   ],
+   "expect": [
+    "success"
+   ],
+   "require_hurt": [
+    "burn"
+   ]
+  },
+  {
+   "id": "hand_in_doused_fire",
+   "group": "self",
+   "text": "I put my hand into the fire to see if it's really out",
+   "carry": [],
+   "player_at": [
+    38,
+    53
+   ],
+   "expect": [
+    "success",
+    "failed"
+   ],
+   "forbid_hurt": true,
+   "set": {
+    "cookfire_hessa": {
+     "burning": false,
+     "flags": [],
+     "condition": "put out",
+     "temperature": "warm",
+     "description": "A ring of stones in the inn yard round a cooking fire, put out: wet, blackened wood and ash, still warm."
+    }
+   }
   }
  ]
 }

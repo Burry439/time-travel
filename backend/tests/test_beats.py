@@ -93,10 +93,19 @@ def test_what_her_reply_left_out_is_all_that_follows_it(world, shown):
     assert asked["said"] == "My cup's by the well. Fill it for me, would you?"  # Her own words didn't carry it all.
 
 
-def test_a_reply_about_something_else_is_followed_by_the_whole_line(world, shown):
-    state, asked = ask_wenna(world, said("answer"))  # The model kept it back: the story still moves on.
-    assert their_lines(state, WENNA)[-1].startswith(AUTHORED_ASK)
-    assert asked["said"] == "My cup's by the well. Fill it for me, would you?"
+def test_a_reply_that_keeps_it_back_is_never_spoken_over(world, shown):
+    """She answers a greeting and keeps her thirst to herself: no scripted ask follows, and the story waits until
+    she says it, offered again the next time she speaks."""
+    state = at_talk(world)
+    world.replies.append({**said("answer"), "text": "Good morning to you, dear."})
+    state = beat(world, post(world, state, "say", {"npc_id": WENNA, "text": "Good morning!"})["state"])
+    assert at_step(state) == "talk" and their_lines(state, WENNA) == ["Good morning to you, dear."]
+    assert not any(c.get("asks") for c in state.get("learned", []))  # Nothing asked of you she didn't ask.
+    world.replies.append(voiced(said("answer"), HER_OWN_ASK))
+    state = post(world, state, "say", {"npc_id": WENNA, "text": "Are you all right?"})["state"]
+    assert AUTHORED_ASK in beat_for(shown[-1], WENNA)["get_across"]  # Still on her mind.
+    state = beat(world, state)
+    assert at_step(state) == "look" and their_lines(state, WENNA)[-1] == HER_OWN_ASK
 
 
 def test_her_thanks_wait_for_the_water_and_come_with_it(world, shown):
@@ -121,11 +130,14 @@ def test_her_thanks_wait_for_the_water_and_come_with_it(world, shown):
     state = post(world, state, "say", {"npc_id": WENNA, "text": "Your water's coming."})["state"]
     assert beat_for(shown[-1], WENNA) is None  # Not given yet: her thanks (and the mill) wait.
     world.rulings.append(attempt(judged("give", give={"item_ids": ["cup_wenna"], "recipient_id": WENNA})))
-    thanks = "Oh, bless you, child. Now listen: Ada at the mill pays in flour for a strong pair of hands. Tell her Wenna sent you."
+    thanks = (
+        "Oh, bless you, child. Ada from the mill's by the coop for her eggs; she's always short of strong hands. "
+        "Pip, run and tell her what this one did for me!"
+    )
     world.replies.append(voiced(said("answer"), thanks))
     body = {"kind": "do", "text": "give the cup of water to Wenna", "target_id": WENNA, "selected_ids": ["cup_wenna"]}
     state = post(world, state, "encounter/act", body)["state"]
-    assert "Ada at the mill" in beat_for(shown[-1], WENNA)["get_across"]  # Handed over in this round: due now.
+    assert "Ada from the mill" in beat_for(shown[-1], WENNA)["get_across"]  # Handed over in this round: due now.
     state = beat(world, state)
     assert at_step(state) == "journal" and their_lines(state, WENNA)[-1] == thanks  # Nothing scripted after.
     mill = next(c for c in state["learned"] if "mill" in c["lead"])
@@ -161,7 +173,7 @@ def test_a_yes_that_is_his_to_give_comes_only_if_he_gives_it(world, shown):
 def test_the_next_steps_opening_words_come_in_the_same_reply(monkeypatch):
     """A step's end and the next step's opening lines are one moment: a person who says both says them in one
     reply (Kade, after a bout the stranger gave up in words), and neither is said again after it."""
-    kade = {"id": "npc_kade_east", "name": "Kade", "mind": {}}
+    kade = {"id": "npc_kade_east", "name": "Kade", "mind": {"memories": [], "feelings": {}}}
     level = {
         "id": "beats_probe",
         "version": 1,
@@ -257,7 +269,7 @@ def test_an_authored_line_says_only_what_the_reply_left_out():
 def test_the_next_steps_outcome_can_come_in_the_same_round(monkeypatch):
     """The trough filled in front of Ada, and Ada judging the job done, in one round: her pay comes in that reply,
     only if she judges it done (the next step's line, offered one step ahead)."""
-    ada = {"id": "npc_ada_miller", "name": "Ada", "mind": {}}
+    ada = {"id": "npc_ada_miller", "name": "Ada", "mind": {"memories": [], "feelings": {}}}
     level = {
         "id": "beats_ahead",
         "version": 1,
@@ -282,3 +294,44 @@ def test_a_word_for_the_stranger_is_addressed_to_whoever_decides():
     for tone, templates in content.LINES["lines"]["vouch"].items():
         for template in templates:
             assert "Captain" not in template and "Roderic" not in template, (tone, template)
+
+
+ULF = "npc_ulf_charcoal"
+ULF_ASKS = "Fill my pot at the river"
+
+
+def test_a_story_asks_nothing_of_someone_the_stranger_has_wronged(world, shown):
+    """The user's play (2 Oct 2026): they took Ulf's pot without asking and scalded him with it, and Ulf then asked
+    them for boiling water and lent them his things. The story proposes, people decide: robbed, Ulf is hostile, so
+    nothing it asks of him happens, the step that is his asking waits, and the device says why, once."""
+    state = read(world, read(world, new_run(world, scenario="fire_and_water")))
+    pot = state["objects"]["pot_ulf"]
+    state = walk(world.http, state, pot["x"], pot["y"] + 1)
+    state = post(world, state, "quick", {"verb": "take", "object_id": "pot_ulf"})["state"]  # Not lent yet: theft.
+    state = next_to(world, state, ULF)
+    world.replies.append({**said("demand:pot_ulf"), "text": "That's my pot. Give it back."})
+    state = post(world, state, "say", {"npc_id": ULF, "text": "Hello. Can I help?"})["state"]
+    assert beat_for(shown[-1], ULF) is None  # Wronged: the story gives him nothing to ask of you.
+    for _ in range(3):
+        state = beat(world, state)
+    assert at_step(state) == "hello"  # His asking is the step: it doesn't come by being spoken to.
+    assert not any(ULF_ASKS in line for line in their_lines(state, ULF))
+    assert not any(state["objects"][i].get("lent_to") for i in ("flint_ulf", "steel_ulf", "logs_ulf"))
+    told = [e["text"] for e in state["device_log"] if "Ulf won't do anything for you" in e["text"]]
+    assert len(told) == 1
+
+
+def test_what_a_person_does_for_the_stranger_waits_on_their_will():
+    """Every favour a story asks (lines, leads, loans, gifts, a word for the stranger) is the person's to do: never
+    by someone hostile or down. A step's opening is the world going on, theirs only while they can."""
+    state = {"npcs": [], "player": {"x": 0, "y": 0}, "journal": [], "objects": {}, "tutorial": {"fired": []}}
+    hal = {"id": "npc_hal_brand", "name": "Hal", "x": 1, "y": 0, "mind": {"memories": [], "feelings": {"anger": 0.9}}}
+    state["npcs"].append(hal)
+    says = {"kind": "npc_says", "npc": hal["id"], "text": "Here: practice ones."}
+    assert not scenario._goes_ahead(state, says, {"moment": "hello"})  # Angry with the stranger: not now.
+    assert scenario._goes_ahead(state, says, {"moment": "bout:start"})  # The world going on.
+    hal["mind"]["feelings"]["anger"] = 0.0
+    assert scenario._goes_ahead(state, says, {"moment": "hello"})
+    hal["down"] = True
+    assert not scenario._goes_ahead(state, says, {"moment": "bout:start"})
+    assert scenario._goes_ahead(state, {"kind": "hurt", "npc": hal["id"], "condition": {}}, {"moment": "x"})

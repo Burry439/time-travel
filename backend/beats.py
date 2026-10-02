@@ -25,8 +25,11 @@ import re
 import cast
 import content
 import conversation
+import reputation
 import rules
 from shapes import Npc, State
+
+TALKS = ("talked_to", "said_to", "in_conversation")  # A step whose outcome is someone telling the stranger something.
 
 COVERED = 0.5  # A sentence is said if more than this share of its key words are in what they said.
 SMALL_WORDS = frozenset(
@@ -88,6 +91,17 @@ def mark_answered(npc: Npc, beat: dict, line: str) -> None:
         cast.mind(npc).setdefault("answered", {})[key] = line
 
 
+def mark_held(npc: Npc, beat: dict) -> None:
+    """They spoke in the round that brought this beat's moments about, and kept it to themselves (it didn't fit,
+    as they saw it): the story waits for them, and offers it again the next time they speak."""
+    for key in beat["keys"]:
+        cast.mind(npc).setdefault("held", []).append(key)
+
+
+def held(npc: Npc, key: str) -> bool:
+    return key in (cast.mind(npc).get("held") or []) and answered(npc, key) is None
+
+
 def _key_words(text: str) -> set[str]:
     return {w[:4] for w in re.findall(r"[a-z]+", text.lower()) if len(w) > 2 and w not in SMALL_WORDS}
 
@@ -120,6 +134,30 @@ def left_to_say(text: str, said: str | None) -> str:
     rest = sentences[reached[-1] + 1 :] if reached else sentences
     rest = [s for s in rest if not (_short(s) and _covered(s, said))]
     return "" if all(_short(s) for s in rest) else " ".join(rest)
+
+
+def taken_up(text: str, said: str) -> bool:
+    """Whether what they said took this up at all: any sentence of it said, in their own words."""
+    return any(not _short(s) and _covered(s, said) for s in _sentences(text))
+
+
+def waiting_on(state: State, step: dict) -> Npc | None:
+    """Who a step that is someone telling the stranger something waits for, though its check holds: someone it gives
+    lines to who isn't willing (scalded, robbed, afraid), or who spoke and kept their piece back. The step is their
+    telling: it comes when they tell it, never by a line said over them. None if it waits for nobody."""
+    if not _talks(step["check"]):
+        return None
+    for spec in step.get("on_done", []):
+        npc = cast.find(state["npcs"], spec.get("npc", "")) if spec["kind"] == "npc_says" else None
+        if npc and (not reputation.willing(state, npc) or held(npc, step["id"])):
+            return npc
+    return None
+
+
+def _talks(spec: dict) -> bool:
+    if spec["kind"] in ("all", "any"):
+        return any(_talks(part) for part in spec["of"])
+    return spec["kind"] in TALKS
 
 
 def says_all(said: str | None, text: str) -> bool:
@@ -200,6 +238,8 @@ def due(draft: State, addressed_id: str, text: str, happened: str | None, now: i
                 npc = cast.find(draft["npcs"], npc_id)
                 if npc_id in found or npc is None or answered(npc, key) is not None:
                     continue
+                if not reputation.willing(draft, npc):
+                    continue  # Hurt, wronged or afraid: the story asks nothing of them now.
                 if decision and not _open_to(draft, npc, decision[1]):
                     continue  # Theirs to decide, but not open to them yet: the beat waits.
                 beat = here.setdefault(npc_id, {"keys": [], "get_across": []})

@@ -246,9 +246,13 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             exchange["journal_entry"]["unkept_promise"] = unkept
         beat = (moment.get("beats") or {}).get(npc["id"])
         said_beat = bool(beat and call.status == "ok" and line.get("story_beat"))  # The voice's word for it.
-        answered = bool(beat and call.status == "ok" and beats.came(draft, beat))
-        if answered:  # Their own words in the round that brought it about: authored lines say only the rest (D-59).
-            beats.mark_answered(npc, beat, line["text"])
+        answered = False
+        if beat and call.status == "ok" and beats.came(draft, beat):  # They spoke as the moment came (D-59).
+            answered = beats.taken_up(beat["get_across"], line["text"])
+            if answered:  # In their own words: authored lines say only the rest.
+                beats.mark_answered(npc, beat, line["text"])
+            else:  # They kept it back: the story waits for them, never says it over them.
+                beats.mark_held(npc, beat)
         felt = [
             shifted
             for f in line.get("feelings") or []

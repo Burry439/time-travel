@@ -232,6 +232,18 @@ def remember(npc: Npc, memory: Memory) -> None:
         memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
 
 
+def willing(state: State, npc: Npc) -> bool:
+    """Would do the stranger a good turn now (D-59): alive and on their feet, not fighting them, not hostile to them
+    (a wrong of theirs unsettled, or angry) and not afraid of them. Whatever a story asks of a person (to say their
+    piece, lend, give, tell, speak for the stranger, teach) waits on this: scald Ulf and he asks for no tea."""
+    if not npc.get("alive", True) or npc.get("down"):
+        return False
+    if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
+        return False
+    fear = ((npc.get("mind") or {}).get("feelings") or {}).get("fear", 0.0)
+    return standing(npc) != "hostile" and fear < tuning.AFRAID
+
+
 def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool:
     """Would lend a hand with something heavy right now (D-59): on their feet, close by (to the stranger, or to the
     thing being moved, at), not against the stranger, and either talking with them (asked) or well disposed."""

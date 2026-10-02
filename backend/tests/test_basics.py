@@ -14,7 +14,7 @@ import paths
 import store
 import views
 
-WENNA = "npc_wenna_ash"
+WENNA, PIP, ADA = "npc_wenna_ash", "npc_pip_ash", "npc_ada_miller"
 
 
 def at_step(state) -> str:
@@ -56,7 +56,7 @@ def next_to(world, state, npc_id):
 
 def test_a_cup_of_water(world):
     state = new_run(world, scenario="cup_of_water")
-    assert {n["id"] for n in state["npcs"]} == {WENNA, "npc_pip_ash"} and (
+    assert {n["id"] for n in state["npcs"]} == {WENNA, PIP, ADA} and (
         state["player"]["x"],
         state["player"]["y"],
     ) == (20, 23)
@@ -101,9 +101,22 @@ def test_a_cup_of_water(world):
     state = ui(world, state, "journal")
     state = read(world, state)
     assert at_step(state) == "device"
-    state = post(world, state, "device/ask", {"question": "What should I do now?"})["state"]
+    state = post(world, state, "device/ask", {"question": "Who's Ada?"})["state"]
+    state = read(world, beat(world, state))
+    assert at_step(state) == "ada"  # It ends with Ada, who heard what you did from Pip, not from you.
+    state = settle(
+        world,
+        state,
+        lambda s: any(
+            h["from"] == PIP for h in (cast.find(s["npcs"], ADA)["mind"].get("knows") or {}).get("heard", [])
+        ),
+    )
+    state = next_to(world, state, ADA)
+    world.replies.append(said("answer"))
+    state = post(world, state, "say", {"npc_id": ADA, "text": "Good morning. I'm new here."})["state"]
     state = beat(world, state)
     assert at_step(state) == "done" and store.finished(state)
+    assert any("drew Gran's water" in m["summary"] for m in cast.find(state["npcs"], ADA)["mind"]["memories"])
     assert world.http.get(f"/runs/{state['run_id']}/result").json()["done"]
 
 
@@ -375,6 +388,8 @@ def test_fire_and_water(world):
     assert at_step(state) == "boil"
     state = read(world, state)
     fire_id = next(o["id"] for o in state["objects"].values() if o.get("feature") == "fire" and o.get("burning"))
+    pit = state["objects"]["pit_ulf"]  # Made beside Ulf's pit, though the judge didn't name it: it burns in it.
+    assert (state["objects"][fire_id]["x"], state["objects"][fire_id]["y"]) == (pit["x"], pit["y"])
     world.rulings.append(
         attempt(
             judged(

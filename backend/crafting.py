@@ -186,7 +186,9 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
         notes.append(f"action '{action}' without a {PAYLOAD[action]}: nothing changes.")
         action = "other"
     if action not in handlers:
-        return ruling("success", reason, notes, effort, action="other", precedent_key=key)
+        return _hurt_self(
+            state, judged, available, ruling("success", reason, notes, effort, action="other", precedent_key=key)
+        )
     # Things further than arm's reach are reached by walking there first.
     walk = paths.plan_walk(state, _walk_targets(state, action, judged, available))
     if walk is None:
@@ -207,6 +209,36 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
     verdict = handlers[action](probe, judged, available, notes, reason, effort, key)
     if verdict["category"] == "success":
         verdict["walk"] = walk
+    return _hurt_self(probe, judged, available, verdict)
+
+
+def _hurt_self(state: State, judged: dict, available: dict, verdict: dict) -> dict:
+    """What the stranger's own step does to their body (D-59): theirs to do, never refused for it. Code checks the
+    cause is real and at hand: a burn needs something burning or hot now (a hand in a fire that's out burns nobody),
+    and a hand put into something a few steps off walks there first."""
+    plan = judged.get("hurts_you")
+    if not plan or verdict["category"] != "success":
+        return verdict
+    cause = available.get(plan.get("cause_id") or "")
+    if cause is None:
+        verdict["notes"].append("Ignored hurts_you: its cause isn't here.")
+        return verdict
+    if plan["condition"] == "burn" and not (cause.get("burning") or cause.get("temperature") in ("hot", "boiling")):
+        verdict["notes"].append(f"Ignored hurts_you: the {cause['name']} isn't hot enough to burn.")
+        return verdict
+    far = cause["holder_id"] != "player" and cast.distance(state["player"], cause) > tuning.REACH_CELLS
+    if far and not verdict.get("walk"):
+        walk = paths.plan_walk(state, [(cause["x"], cause["y"])])
+        if not walk:
+            verdict["notes"].append(f"Ignored hurts_you: the {cause['name']} can't be reached.")
+            return verdict
+        verdict["walk"] = walk
+        verdict["effort_seconds"] += math.ceil(len(walk) / tuning.WALK_CELLS_PER_SECOND)
+    wound = {"kind": plan["condition"], "area": plan["area"], "severity": tuning.SELF_HURT[plan["severity"]]}
+    body = copy.deepcopy(state["player"])
+    gear.add_condition(body, wound, state["sim_time_ms"])
+    body["health"] = max(1, body.get("health", 100) - wound["severity"])
+    verdict["hurt_self"] = {"conditions": body["conditions"], "health": body["health"], **wound}
     return verdict
 
 
@@ -404,12 +436,24 @@ def _change(state, judged, available, notes, reason, effort, key) -> dict:
             burns_until=state["sim_time_ms"] + effort * 1000 + span,
             flags=_dedupe(target.get("flags", []) + ["heat_source", "light_source"]),
         )
+        if target.get("condition") == "put out":  # Lit again: a fire once more, as it looks and as it reads.
+            fields.update(condition="usable", description=f"A {target.get('base_name', target['name'])}, alight.")
     elif plan.get("burning") is False and target.get("burning"):
         fields.update(
             burning=False,
             burns_until=None,
             flags=[f for f in target.get("flags", []) if f not in ("heat_source", "light_source")],
         )
+        if target.get("feature") == "fire" or target.get("created_by") == "player" and not target.get("capacity_l"):
+            # Put out, it is out: it looks and reads so (the user found "flames licking" on a doused fire, D-59),
+            # and it is still warm for a while.
+            name = target.get("base_name", target["name"])
+            fields.update(
+                condition="put out",
+                description=f"A {name}, put out: wet, blackened wood and ash, still warm.",
+                temperature="warm",
+                heated_at=state["sim_time_ms"] + effort * 1000,
+            )
     pour = []
     litres = float(plan.get("pour_litres") or 0.0)
     if litres > 0:

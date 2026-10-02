@@ -91,6 +91,11 @@ def check(case: dict, judged: judge.JudgeCall, verdict: dict) -> list[str]:
     wanted_steps = case.get("require_step_actions")
     if wanted_steps and [st["action"] for st in verdict.get("steps", [])] != wanted_steps:
         problems.append(f"steps {[st['action'] for st in verdict.get('steps', [])]} are not {wanted_steps}")
+    hurt = verdict.get("hurt_self")  # What the stranger's own step did to them (D-59).
+    if case.get("require_hurt") and (not hurt or hurt["kind"] not in case["require_hurt"]):
+        problems.append(f"no {case['require_hurt']} to the stranger: {hurt}")
+    if case.get("forbid_hurt") and hurt:
+        problems.append(f"hurt the stranger: {hurt['kind']}")
     if case.get("require_crafted_weapon") and verdict["category"] == "success":
         if not harm or not str(harm.get("weapon_id", "")).startswith("made_"):
             problems.append(f"the attack did not use the object made earlier (weapon {harm.get('weapon_id')})")

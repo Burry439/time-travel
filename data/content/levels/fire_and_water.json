@@ -163,6 +163,23 @@
    "capacity_l": 6.0
   },
   {
+   "id": "pit_ulf",
+   "name": "fire pit",
+   "x": 17,
+   "y": 13,
+   "mass_kg": 400.0,
+   "materials": [
+    "stone"
+   ],
+   "description": "A ring of blackened stones round a hollow of old ash, where Ulf makes his cooking fire.",
+   "flags": [
+    "rigid"
+   ],
+   "no_sprite": true,
+   "art": "scene",
+   "feature": "hearth"
+  },
+  {
    "id": "river_ulf",
    "name": "river",
    "x": 28,

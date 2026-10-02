@@ -158,7 +158,8 @@ def start(state: State, npc_ids: list[str], now: int, why: str, lethal: bool | N
         fight.setdefault("lethal", {})[npc["id"]] = reputation.knows_a_crime(npc) if lethal is None else lethal
         cast.set_job(npc, {"kind": "fight", "target": "player", "speed": "run"}, now)
         cast.mind(npc)["facing_player"] = True
-        cast.mind(npc)["feelings"]["anger"] = max(cast.mind(npc)["feelings"].get("anger", 0.0), 0.67)
+        if not fight.get("spar"):  # A practice bout angers nobody: Hal isn't hostile after teaching you (D-59).
+            cast.mind(npc)["feelings"]["anger"] = max(cast.mind(npc)["feelings"].get("anger", 0.0), 0.67)
         _log(
             state,
             npc["id"],

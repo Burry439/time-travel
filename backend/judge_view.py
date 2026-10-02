@@ -64,7 +64,7 @@ def fallen_holders(state: State) -> dict[str, dict]:
 
 def available_items(state: State, costs: dict | None = None) -> list[dict]:
     """Carried items plus anything intact the player can walk to nearby, whoever owns it (including what someone
-    down or dead has on them)."""
+    down or dead has on them). A fire put out or burnt out is still there to touch, stir or light again (D-59)."""
     costs = walk_costs(state) if costs is None else costs
     fallen = fallen_holders(state)
     return [
@@ -73,7 +73,7 @@ def available_items(state: State, costs: dict | None = None) -> list[dict]:
         if obj["id"] in costs
         and (obj["holder_id"] in (None, "player") or obj["holder_id"] in fallen)
         and "water_source" not in obj["capabilities"]
-        and obj["condition"] in ("usable", "installed")
+        and obj["condition"] in ("usable", "installed", "put out", "burnt out")
     ]
 
 

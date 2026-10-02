@@ -12,7 +12,8 @@
   "Filling a cup",
   "Giving",
   "Your journal",
-  "The device"
+  "The device",
+  "Word gets around"
  ],
  "blurb": "An old woman on a farm can't reach her well. Walk, look, talk, and take her a drink.",
  "after": "Wenna will remember you, and so will anyone she tells. That's how it works everywhere here: people see what you do, and pass it on.",
@@ -71,6 +72,19 @@
      18,
      "look",
      8000
+    ]
+   ]
+  },
+  "npc_ada_miller": {
+   "role": "miller",
+   "step_ms": 460,
+   "goal": "buy eggs at Wenna's hen coop",
+   "anchors": [
+    [
+     32,
+     9,
+     "wait",
+     600000
     ]
    ]
   }
@@ -157,7 +171,8 @@
     "fill",
     "give",
     "journal",
-    "device"
+    "device",
+    "ada"
    ],
    "stays": {
     "kind": "always"
@@ -419,16 +434,23 @@
     {
      "kind": "npc_says",
      "npc": "npc_wenna_ash",
-     "text": "Ahh. Bless you, child. Now listen: Ada at the mill pays in flour for a strong pair of hands. Tell her Wenna sent you."
+     "text": "Ahh. Bless you, child. Ada from the mill's over by the coop for her eggs, and she's always short of a strong pair of hands. Pip! Run and tell her what this one did for me."
     },
     {
      "kind": "lead",
      "npc": "npc_wenna_ash",
-     "lead": "Ada at the water mill pays in flour for help. Say Wenna sent you.",
-     "said": "Ada at the mill pays in flour for a strong pair of hands."
+     "lead": "Ada from the mill is by the hen coop, and she's short of hands.",
+     "said": "Ada from the mill's over by the coop for her eggs, and she's always short of a strong pair of hands."
+    },
+    {
+     "kind": "errand",
+     "npc": "npc_pip_ash",
+     "to": "npc_ada_miller",
+     "voiced": true,
+     "message": "The stranger drew Gran's water at the well and brought it to her, when her leg wouldn't carry her."
     }
    ],
-   "done": "She'll remember that. People here remember what you do for them, and they talk.",
+   "done": "She'll remember that. And Pip's off to tell Ada: people here pass on what they see you do.",
    "help": [
     "Walk up to Wenna. Drag the cup from your pack onto her and press {Enter}.",
     "Or click her and type: give her the cup of water."
@@ -471,19 +493,78 @@
    "id": "device",
    "title": "Ask me",
    "cards": [
-    "Last thing: me. Press {H} and ask me anything. I only know what you've seen and been told. Try asking me about that mill Wenna mentioned."
+    "Now me. Press {H} and ask me anything. I only know what you've seen and been told. Try asking me who Ada is."
    ],
-   "task": "Press H and ask the device about the mill",
+   "task": "Press H and ask the device about Ada",
    "check": {
     "kind": "asked_device"
    },
-   "done": "That's the basics: walk, look, take, talk, do, give. Everything else is the same, with bigger problems.",
+   "done": "Ask me whenever you're stuck. I'll point the way, but I won't walk it for you.",
    "help": [
     "Press {H}, type a question and press {Enter}. Or click one of the ready questions."
    ],
    "playtest": [
     {
-     "ask": "Where's the mill Wenna told me about?"
+     "ask": "Who's Ada?"
+    }
+   ]
+  },
+  {
+   "id": "ada",
+   "title": "Word gets around",
+   "cards": [
+    "Pip's run off to tell Ada what you did. Nobody asked him to keep it quiet.",
+    "Go and talk to Ada by the hen coop, and see what she's heard."
+   ],
+   "suggest": {
+    "text": "Good morning. I'm new here.",
+    "to": "npc_ada_miller",
+    "button": true,
+    "mode": "say"
+   },
+   "task": "Talk to Ada by the hen coop",
+   "focus": {
+    "npc": "npc_ada_miller"
+   },
+   "check": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "heard_from",
+      "npc": "npc_ada_miller",
+      "from": "npc_pip_ash"
+     },
+     {
+      "kind": "talked_to",
+      "npc": "npc_ada_miller",
+      "since_step": true
+     }
+    ]
+   },
+   "done": "That's the basics: walk, look, take, talk, do, give. And word travels: Ada heard about you from Pip.",
+   "help": [
+    "She's by the hen coop, east of the well. Click her and say anything."
+   ],
+   "playtest": [
+    {
+     "walk_to": "npc_ada_miller"
+    },
+    {
+     "say": "Good morning. I'm new here.",
+     "to": "npc_ada_miller"
+    }
+   ],
+   "on_done": [
+    {
+     "kind": "npc_says",
+     "npc": "npc_ada_miller",
+     "text": "You'll be the one who drew Wenna's water, then. Pip came running to tell me. If it's work you're after, come down to the mill."
+    },
+    {
+     "kind": "lead",
+     "npc": "npc_ada_miller",
+     "lead": "Ada at the water mill has work for a pair of hands.",
+     "said": "If it's work you're after, come down to the mill."
     }
    ]
   }

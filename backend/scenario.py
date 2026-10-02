@@ -108,7 +108,21 @@ def tick(state: State) -> bool:
             changed = True
     if not rules.holds(state, current["check"], ctx):
         return changed
+    waiting = beats.waiting_on(state, current)  # Someone's telling: it comes when they tell it (D-59).
+    if waiting is not None:
+        return _estranged(state, current, waiting) or changed
     _complete(state, current, now)
+    return True
+
+
+def _estranged(state: State, current: dict, npc: dict) -> bool:
+    """The device says, once, when a step waits on someone who won't do anything for the stranger now."""
+    key = f"estranged:{current['id']}:{npc['id']}"
+    if not npc.get("alive", True) or reputation.willing(state, npc) or key in state["tutorial"]["reacted"]:
+        return False
+    state["tutorial"]["reacted"].append(key)
+    words = story(state).get("reactions", {}).get("estranged") or ESTRANGED
+    device.says(state, words.format(name=npc["name"], Esc="{Esc}"), "reaction")
     return True
 
 
@@ -205,14 +219,42 @@ def effect(kind: str, *needs: str) -> Callable[[Effect], Effect]:
     return register
 
 
+# What a story asks of a person toward the stranger: theirs to do, only if they're willing (D-59). The rest (a burn,
+# robbers stepping out, standing a moment) is the world going on.
+FAVOURS = ("npc_says", "approach", "keep", "vouch", "admit", "lend", "spar", "errand", "lead", "give", "offer")
+WORDS = ("npc_says", "lead", "offer")  # What they'd tell the stranger: not if they kept it to themselves.
+ESTRANGED = (
+    "{name} won't do anything for you now, not after what happened. What you do here is real: put it right if you "
+    "can, or Rewind to before it ({Esc}, then Rewind)."
+)
+
+
 def run(state: State, effects: list[dict], now: int, moment: str | None = None) -> None:
-    """Carry out effects in order; one with a `when` only if it holds. moment is the story moment they belong to (a
-    step's id, or step:trigger), whose beats people may already have told in their own words."""
+    """Carry out effects in order; one with a `when` only if it holds, one a person does for the stranger only if they
+    will. moment is the story moment they belong to (a step's id, step:trigger or step:start), whose beats people
+    may already have told in their own words."""
     ctx = _ctx(state, now) | {"moment": moment}
     for spec in effects:
         if spec.get("when") and not rules.holds(state, spec["when"], ctx):
             continue
-        EFFECTS[spec["kind"]](state, spec, ctx)
+        if _goes_ahead(state, spec, ctx):
+            EFFECTS[spec["kind"]](state, spec, ctx)
+
+
+def _goes_ahead(state: State, spec: dict, ctx: dict) -> bool:
+    """Whether the person an effect asks something of does it: the story proposes, people decide (D-59). Scalded,
+    robbed or afraid, Ulf neither asks for his tea nor lends his pot; someone who kept their piece back in their
+    reply isn't spoken over. A step's opening lines are the world going on (Tam burns his hand), only theirs to say
+    while they can."""
+    npc = _person(state, spec)
+    if spec["kind"] not in FAVOURS or npc is None or npc is state["player"]:
+        return True
+    moment = ctx.get("moment") or ""
+    if spec["kind"] == "npc_says" and moment.endswith(":start"):
+        return npc.get("alive", True) and not npc.get("down")
+    if spec["kind"] in WORDS and beats.held(npc, moment):
+        return False
+    return reputation.willing(state, npc)
 
 
 def _person(state: State, spec: dict) -> dict | None:
@@ -358,11 +400,13 @@ def _spar(state, spec, ctx):
 
 @effect("errand", "npc", "to", "message")
 def _errand(state, spec, ctx):
-    """Someone goes and tells someone (D-51): one written line, and only the story moves on."""
+    """Someone goes and tells someone (D-51): one written line, and only the story moves on; or, voiced, a real
+    errand: they tell it in their own words, and the listener answers and decides what to do (Pip tells Ada what the
+    stranger did for his gran, D-59)."""
     npc = _person(state, spec)
     if npc and npc.get("alive", True):
         job = {"kind": "tell", "target": spec["to"], "speed": "walk", "message": spec["message"], "event": None}
-        cast.set_job(npc, {**job, "quiet": True}, ctx["now"])
+        cast.set_job(npc, {**job, "quiet": not spec.get("voiced")}, ctx["now"])
 
 
 @effect("lead", "npc", "lead")

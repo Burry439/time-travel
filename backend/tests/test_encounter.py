@@ -151,7 +151,10 @@ def world(tmp_path, monkeypatch):
         return scenes.scene_call(
             context,
             replies.pop(0) if replies else {},
-            lambda ctx, person, move: f"(voiced) {ctx['what_just_happened'] or ctx['stranger_says']}"[:120],
+            lambda ctx, person, move: (
+                (person.get("story_beat") or {}).get("get_across")  # Takes a story beat up.
+                or f"(voiced) {ctx['what_just_happened'] or ctx['stranger_says']}"[:120]
+            ),
         )
 
     monkeypatch.setattr(service.voice, "scene", fake_voice)

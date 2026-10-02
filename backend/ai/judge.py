@@ -19,7 +19,7 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = "judge_v16"
+PROMPT_VERSION = "judge_v17"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -104,6 +104,15 @@ class Harm(BaseModel):
     held_seconds: int  # A choke: how long it is held. Otherwise 0.
     result: Literal["missed", "deflected", "wounded", "knocked_out", "disabled", "killed"]  # Only "other" is taken.
     injury: str
+
+
+class HurtsYou(BaseModel):
+    """The stranger's own action hurts them (a hand in the flames, a slipped blade, a fall), D-59."""
+
+    condition: Literal["burn", "bleeding", "broken"]
+    area: Literal["head", "torso", "arm", "leg"]
+    severity: Literal["minor", "serious"]
+    cause_id: str  # The listed thing that does it (the fire, the boiling pot, the knife).
 
 
 class Treat(BaseModel):
@@ -210,6 +219,7 @@ class Step(BaseModel):
     gather: Gather | None
     treat: Treat | None
     equip: Equip | None
+    hurts_you: HurtsYou | None  # When this step itself hurts the stranger (D-59).
 
 
 class JudgeResult(BaseModel):
@@ -330,6 +340,7 @@ def _stub_judgement(context: dict) -> JudgeCall:
         "gather": None,
         "treat": None,
         "equip": None,
+        "hurts_you": None,
     }
     if not chosen:
         step = Step(

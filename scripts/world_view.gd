@@ -193,8 +193,8 @@ func _sync_now() -> void:
 		if sprite.has_meta("dynamic"):
 			game.art.apply_to(sprite, obj)
 		sprite.visible = obj["holder_id"] == null
-		# A fire that has burnt out goes cold and grey.
-		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) == "burnt out" else Color.WHITE
+		# A fire that has burnt out, or been put out, goes grey.
+		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) in ["burnt out", "put out"] else Color.WHITE
 		sprite.position = game.cell_center(int(obj["x"]), int(obj["y"]))
 		var fixture: Dictionary = game.run_state["objects"].get(str(obj.get("installed_in", "")), {})
 		if not fixture.is_empty() and not fixture.get("no_sprite", false):

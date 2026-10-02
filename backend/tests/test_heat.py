@@ -6,6 +6,7 @@ from test_craft import commit, judged
 from test_talk import npc, unit_state
 
 import heat
+import judge_view
 
 
 def beside(state, x, y):
@@ -112,3 +113,38 @@ def test_cold_water_only_soaks_and_boiling_water_scalds():
     summary = commit(state, judged("harm", harm=dict(harm)))
     assert summary["harm"]["result"] == "missed" and "soaks" in summary["reason"]
     assert state["objects"]["bowl_hessa"]["water_l"] == 0 and state["objects"]["bowl_hessa"]["name"] == "clay bowl"
+
+
+def test_a_fire_put_out_is_out_and_a_hand_in_a_burning_one_is_burnt():
+    """The user's play (2 Oct 2026): a doused fire still read "flames licking" and still looked lit, and putting a
+    hand into it was refused as "out of reach" from beside it. Put out, a fire reads and looks out, and is warm for
+    a while; the stranger may put their hand into anything, walking over to it, and a burning fire burns it (D-59)."""
+    state = beside(unit_state(), 45, 66)
+    state["objects"]["horseshoe_a"].update(x=45, y=66)
+    for item in ("flint_a", "grass_a", "branch_a", "horseshoe_a"):
+        state["objects"][item]["holder_id"] = "player"
+    campfire = {
+        "name": "small fire",
+        "description": "A small fire of grass and a branch, with flames licking above it.",
+        "materials": ["wood", "grass"],
+        "consumes": ["grass_a", "branch_a"],
+        "tools_used": ["flint_a", "horseshoe_a"],
+        "mass_kg": 1.0,
+        "length_m": None,
+        "capacity_l": None,
+        "rated_load_kg": None,
+        "flags": ["heat_source", "light_source", "combustible"],
+        "capabilities": [],
+    }
+    commit(state, judged("make", new_object=campfire))
+    fire = state["objects"][f"made_{state['event_seq']}"]
+    hand = {"condition": "burn", "area": "arm", "severity": "minor", "cause_id": fire["id"]}
+    beside(state, fire["x"], fire["y"] + 3)  # Three steps off: they walk over first.
+    commit(state, judged("other", hurts_you=hand))
+    assert [c["kind"] for c in state["player"]["conditions"]] == ["burn"] and state["player"]["health"] == 92
+    assert abs(state["player"]["y"] - fire["y"]) <= 2
+    commit(state, judged("change", change=change(fire["id"], burning=False)))
+    assert fire["condition"] == "put out" and "flames" not in fire["description"] and fire["temperature"] == "warm"
+    assert fire["id"] in {o["id"] for o in judge_view.available_items(state)}  # Still there to touch.
+    commit(state, judged("other", hurts_you=hand))  # Out: warm, and it burns nobody.
+    assert len(state["player"]["conditions"]) == 1 and state["player"]["health"] == 92

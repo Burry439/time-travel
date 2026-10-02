@@ -7,6 +7,7 @@ from __future__ import annotations
 import copy
 import re
 
+import cast
 import content
 import crafting
 import gear
@@ -121,6 +122,9 @@ def _step_deltas(state: State, run_id: str, text: str, verdict: dict, event_id: 
     }
     work = CHANGES.get(verdict["action"])
     parts = work(state, verdict, step) if work else {}
+    if verdict.get("hurt_self"):  # What it did to the stranger's own body (D-59).
+        body = {k: verdict["hurt_self"][k] for k in ("conditions", "health")}
+        parts.setdefault("water", []).append({"id": "__player__", **body})
     deltas = {
         "consumed_ids": parts.get("consumed_ids", []),
         "new_objects": parts.get("new_objects", []),
@@ -169,6 +173,20 @@ def _made(state: State, verdict: dict, step: dict) -> dict:
     )
     if spec.get("burning"):  # A fire: it stays where it was lit and burns down with its fuel.
         span = max(tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(spec["mass_kg"] * tuning.FIRE_MS_PER_KG)))
+        hearth = next(  # Lit in something fixed (Ulf's fire pit, a hearth), or beside one: it burns there (D-59).
+            (o for i in verdict["tool_ids"] if "carry" not in (o := state["objects"][i]).get("capabilities", [])),
+            None,
+        ) or min(
+            (
+                o
+                for o in state["objects"].values()
+                if o.get("feature") == "hearth" and cast.distance(step["at"], o) <= tuning.REACH_CELLS
+            ),
+            key=lambda o: cast.distance(step["at"], o),
+            default=None,
+        )
+        if hearth is not None:
+            made.update(x=hearth["x"], y=hearth["y"])
         made.update(
             burning=True,
             feature="fire",
@@ -560,6 +578,7 @@ def resolve_attempt(
         "lift_out": next((v["lift_out"] for v in reversed(committed) if v["lift_out"]), None),
         "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
         "gather": next((v["gather"] for v in reversed(committed) if v["gather"]), None),
+        "hurt_self": next((v["hurt_self"] for v in reversed(committed) if v.get("hurt_self")), None),
         "precedent_key": (judged or {}).get("precedent_key"),
         "steps": [
             {"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
