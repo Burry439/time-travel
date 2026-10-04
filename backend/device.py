@@ -1,6 +1,7 @@
-"""The device from the future (D-50, D-55): what it says, remembers and is told when asked. In the first morning
-it guides the story (its cards and hints); in the main game it coaches from what the stranger knows. It never
-knows anyone's secrets or anything the stranger hasn't seen."""
+"""The device from the future (D-50, D-55): what it says, remembers and is told when asked. In a basic training
+level it guides the story (its cards and how-to hints); in the main game and the advanced levels it coaches from
+what the stranger knows. It never knows anyone's secrets, a level's intended answers, or anything the stranger
+hasn't seen (D-59: it once told the user that Sefa needed fire for her lamp, which nobody had told them)."""
 
 from __future__ import annotations
 
@@ -31,9 +32,6 @@ DEVICE_LOG_KEPT = 400
 
 
 CONVERSATION_KEPT = 16  # Exchanges the device is given word for word; older questions are listed.
-
-
-MOMENTS = ("new_lead", "failure", "angry", "news", "stuck")
 
 
 CONTROLS = (
@@ -186,7 +184,7 @@ def context(state: State, question: str, moment: str | None = None) -> dict:
         if o.get("holder_id") is None and "carry" in o["capabilities"] and cast.distance(o, here) <= tuning.SIGHT_CELLS
     ]
     attempts = [e for e in state.get("journal", []) if e.get("kind") == "craft"][-3:]
-    current = rules.scene_step(state)
+    current = guided_step(state)
     log = state.get("device_log", [])
     talked = [e for e in log if e.get("question") or e.get("kind") in ("answer", "remark")]
     conversation = [
@@ -209,7 +207,7 @@ def context(state: State, question: str, moment: str | None = None) -> dict:
         }
         if current
         else None,
-        "goal": "Get inside the city (the gate to the north is shut to strangers)",
+        "goal": content.level(state).get("goal") or state.get("objective", ""),
         "you_carry": [{"name": o["name"], "what_it_is": gear.words(o)} for o in rules.carried(state)],
         "you_wear": sorted(
             {
@@ -243,9 +241,16 @@ def context(state: State, question: str, moment: str | None = None) -> dict:
     }
 
 
+def guided_step(state: State) -> dict | None:
+    """The step a basic level is guiding the stranger through, with its how-to hints. An advanced level has a goal
+    and no answers to give: there the device coaches from what the stranger knows, as in the main game."""
+    current = rules.scene_step(state)
+    return current if current and content.level(state).get("track") != "advanced" else None
+
+
 def fallback_answer(state: State) -> str:
     """When the model can't be asked: the current step's first hint, or the controls."""
-    current = rules.scene_step(state)
+    current = guided_step(state)
     if current and current.get("help"):
         return current["help"][0]
     return "I can't reach far right now. Look around, talk to people, and try what you know. H asks me again."

@@ -213,6 +213,3 @@ func _treats(obj: Dictionary, kind: String) -> bool:
 	var remedy: Dictionary = game.fight.table.get("remedies", {}).get(str(record.get("class", "")), {})
 	return remedy.get("treats", {}).has(kind)
 
-
-func open_bag() -> void:
-	open()

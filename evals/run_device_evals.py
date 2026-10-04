@@ -25,13 +25,12 @@ from ai import config, voice  # noqa: E402
 
 
 def state_for(case: dict) -> dict:
+    level = case.get("level", "village")
     state = app.initial_state({"id": "deviceval", "mode": "developer", "seed_version": app.SEED_VERSION,
-                               "geometry_version": app.GEOMETRY_VERSION, "scenario": "tutorial"})
-    if case["step"] is None:
-        state["tutorial"]["done"] = True
-        state["objective"] = "Get inside the city"
-    else:
-        state["tutorial"]["step"] = next(i for i, s in enumerate(content.LEVELS["tutorial"]["steps"]) if s["id"] == case["step"])
+                               "geometry_version": app.GEOMETRY_VERSION, "scenario": level})
+    if case.get("step"):
+        steps = content.LEVELS[level]["steps"]
+        state["tutorial"]["step"] = next(i for i, s in enumerate(steps) if s["id"] == case["step"])
     if case.get("attempt"):
         state["journal"].append({"kind": "craft", **case["attempt"]})
     for entry in case.get("learned", []):  # What people told the stranger (D-55: the coach builds on it).

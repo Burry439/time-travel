@@ -61,7 +61,17 @@ func clicks_reach_the_world() -> bool:
 	if not check(scene.ui.card.visible, why):
 		return false
 	scene.ui.card.hide()
-	return true
+	return await water_spreads_over_its_painting()
+
+
+## A river painted into the map is the river wherever it's painted, not at one point (the user, 4 Oct 2026: water
+## "only sometimes" worked, and dragging a pot onto the river couldn't).
+func water_spreads_over_its_painting() -> bool:
+	await scene.start("developer", "fire_and_water")
+	await create_timer(1.0).timeout
+	await read_cards()
+	var over: Dictionary = scene.ui.cursor.pick(scene.cell_center(32, 21))
+	return check(str(over.get("id", "")) == "river_ulf", "the painted river isn't the river: %s" % str(over))
 
 
 func _run() -> void:

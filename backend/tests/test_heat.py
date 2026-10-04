@@ -148,3 +148,28 @@ def test_a_fire_put_out_is_out_and_a_hand_in_a_burning_one_is_burnt():
     assert fire["id"] in {o["id"] for o in judge_view.available_items(state)}  # Still there to touch.
     commit(state, judged("other", hurts_you=hand))  # Out: warm, and it burns nobody.
     assert len(state["player"]["conditions"]) == 1 and state["player"]["health"] == 92
+
+
+def test_a_lake_is_water_all_along_its_shore():
+    """The user's play (4 Oct 2026): by the lake at (29, 18) "fill the bowl with water" found no water within reach,
+    and a moment later, elsewhere, the same words worked: the lake was one point. Water that spreads over an area
+    (a lake, a river) is reached from its nearest cell (D-59)."""
+    import app as service
+
+    state = service.initial_state(
+        {
+            "id": "lake0000",
+            "mode": "developer",
+            "seed_version": service.SEED_VERSION,
+            "geometry_version": service.GEOMETRY_VERSION,
+            "scenario": "a_wonder",
+        }
+    )
+    state["objects"]["bowl_sefa"].update(holder_id="player")
+    beside(state, 29, 18)  # Where the user stood: the lake's point was out of range, its shore is a short walk.
+    sources = judge_view.build_context(state, "fill the bowl with water", [])["water_sources"]
+    assert [s["id"] for s in sources] == ["lake_water"] and 0 < sources[0]["walk_steps"] <= 14
+    summary = commit(
+        state, judged("fill", fill={"container_id": "bowl_sefa", "source_id": "lake_water", "litres": 1.0})
+    )
+    assert summary["category"] == "success" and state["objects"]["bowl_sefa"]["water_l"] > 0

@@ -28,10 +28,17 @@ def owner_label(state: State, obj: Thing) -> str:
 def walk_costs(state: State) -> dict[str, int]:
     """Steps the player must walk to be within reach of each loose object and person nearby."""
     start = (state["player"]["x"], state["player"]["y"])
-    _, steps = paths.bfs(start, paths.grid(state), tuning.NEARBY_WALK_STEPS)
+    _, far = paths.bfs(start, paths.grid(state), tuning.NEARBY_WALK_STEPS * 2)
+    steps = {cell: n for cell, n in far.items() if n <= tuning.NEARBY_WALK_STEPS}
 
     def cost(x: int, y: int) -> int | None:
         options = [n for cell, n in steps.items() if math.dist(cell, (x, y)) <= tuning.REACH_CELLS]
+        return min(options) if options else None
+
+    def to_water(obj: dict) -> int | None:
+        """Water spread over an area (a lake, a river) is reached from beside any part of it, and worth a longer
+        walk than a loose thing: the user, a short way from the lake, was told there was no water (D-59)."""
+        options = [n for cell, n in far.items() if math.dist(cell, cast.nearest(obj, cell)) <= tuning.REACH_CELLS]
         return min(options) if options else None
 
     costs = {}
@@ -45,6 +52,10 @@ def walk_costs(state: State) -> dict[str, int]:
                 found = cost(npc["x"], npc["y"])
                 if found is not None:
                     costs[obj["id"]] = found
+        elif obj["holder_id"] is None and obj.get("area"):
+            found = to_water(obj)
+            if found is not None:
+                costs[obj["id"]] = found
         elif obj["holder_id"] is None and cast.distance(start, obj) <= tuning.NEARBY_WALK_STEPS + 3:
             found = cost(obj["x"], obj["y"])
             if found is not None:

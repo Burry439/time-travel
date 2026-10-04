@@ -27,7 +27,6 @@ HAND_SLOTS = ("right", "left")
 SLOTS = BODY_SLOTS + HAND_SLOTS + ("ammo",)
 COVERS = BODY_SLOTS + ("neck",)  # A coif or gorget covers the throat; nothing is equipped "on the neck" alone.
 AREAS = tuple(SIT["areas"])
-FAMILIES = ("blow", "missile", "pour", "choke", "other")
 RESULTS = ("missed", "blocked", "deflected", "wounded", "knocked_out", "disabled", "killed")
 
 
@@ -892,9 +891,3 @@ def swap_hands(state: State, person: Person) -> dict:
     if right is not None:
         kit["left"] = right["id"]
     return {"ok": True, "seconds": GEAR["equip_seconds"]["swap"], "text": "You change hands."}
-
-
-def worn_mass(state: State, person: Person) -> float:
-    """Worn armour and clothes (not held things): they don't count toward what you can carry, but they're heavy."""
-    ids = {oid for s, oid in equipped(person).items() if s in BODY_SLOTS and worn(state, person, s)}
-    return round(sum(state["objects"][i]["mass_kg"] for i in ids), 2)

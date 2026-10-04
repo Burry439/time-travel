@@ -76,6 +76,16 @@ def distance(a, b) -> float:
     return math.dist(_at(a), _at(b))
 
 
+def nearest(thing: dict, frm) -> tuple[int, int]:
+    """Where a thing is, as seen from somewhere: its cell, or the nearest cell of the area it spreads over (a lake, a
+    river: D-59, a lake was one point, so water was out of reach from much of its own shore)."""
+    if not thing.get("area"):
+        return thing["x"], thing["y"]
+    x, y, w, h = thing["area"]
+    fx, fy = _at(frm)
+    return min(max(round(fx), x), x + w - 1), min(max(round(fy), y), y + h - 1)
+
+
 def _at(where) -> tuple:
     return (where["x"], where["y"]) if isinstance(where, dict) else where
 

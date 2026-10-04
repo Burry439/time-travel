@@ -297,10 +297,6 @@
     }
    ],
    "done": "Through. However you managed it, you're alive, which is what counts.",
-   "help": [
-    "Robbers want what you carry, not a fight. Pay, bargain, frighten them, or reason with them.",
-    "If it comes to blows, keep your distance, raise your guard, or throw stones ({Q}). If you're beaten, yield and they'll take your purse and go."
-   ],
    "playtest": [
     {
      "walk_to": [

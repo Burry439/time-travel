@@ -51,10 +51,6 @@ func _set_cursor(kind: String) -> void:
 		Input.set_custom_mouse_cursor(UITheme.cursor(kind), Input.CURSOR_ARROW, Vector2(2, 2))
 
 
-func cursor_kind() -> String:
-	return _cursor_kind
-
-
 ## The most specific thing under a world position: people first, then the smallest thing hit.
 func pick(at: Vector2) -> Dictionary:
 	var best_id := ""
@@ -90,6 +86,8 @@ func object_box(obj: Dictionary) -> Rect2:
 		node = game.get_node_or_null(str(obj.scene_node)) as CanvasItem
 	else:
 		node = game.get_node_or_null("M2Objects/" + str(obj.id)) as CanvasItem
+	if node == null and obj.get("no_sprite", false): # Painted into the map: a lake, a river, a well, a fire pit (D-59).
+		return painted_box(obj)
 	if node == null or not node.is_visible_in_tree():
 		return Rect2()
 	var sprite := node as Sprite2D
@@ -101,6 +99,25 @@ func object_box(obj: Dictionary) -> Rect2:
 		return box.grow(4)
 	var at: Vector2 = (node as Node2D).global_position if node is Node2D else game.cell_center(int(obj.x), int(obj.y))
 	return Rect2(at - Vector2(24, 30), Vector2(48, 48))
+
+
+## Where a thing painted into the map lies: the cells it spreads over (a lake, a river), or its own cell.
+func painted_box(obj: Dictionary) -> Rect2:
+	var area: Array = obj.get("area", [])
+	if area.size() == 4:
+		var half: Vector2 = (game.cell_center(1, 1) - game.cell_center(0, 0)) / 2.0
+		var first: Vector2 = game.cell_center(int(area[0]), int(area[1])) - half
+		var past: Vector2 = game.cell_center(int(area[0] + area[2]), int(area[1] + area[3])) - half
+		return Rect2(first, past - first)
+	return Rect2(game.cell_center(int(obj.x), int(obj.y)) - Vector2(24, 30), Vector2(48, 48))
+
+
+## The cell of a thing nearest to a cell: its own, or the nearest of the area it spreads over.
+func nearest_cell(obj: Dictionary, from: Vector2) -> Vector2:
+	var area: Array = obj.get("area", [])
+	if area.size() != 4:
+		return Vector2(int(obj.x), int(obj.y))
+	return Vector2(clampf(from.x, area[0], area[0] + area[2] - 1), clampf(from.y, area[1], area[1] + area[3] - 1))
 
 
 ## A hover for a person or thing: its name, what left-click does, and whether it's within reach.
@@ -123,7 +140,7 @@ func describe(id: String) -> Dictionary:
 		var obj: Dictionary = game.run_state.get("objects", {}).get(id, {})
 		if obj.is_empty():
 			return {}
-		cell = Vector2(int(obj.x), int(obj.y))
+		cell = nearest_cell(obj, here)
 		var name := str(obj.name)
 		result.merge({"kind": "object", "name": name, "at": game.cell_center(int(cell.x), int(cell.y))}, true)
 		var owner: String = game.actions.owner_name(obj)

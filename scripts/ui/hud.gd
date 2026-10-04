@@ -258,7 +258,7 @@ func refresh() -> void:
 	if state.is_empty():
 		return
 	var tutorial = state.get("tutorial")
-	# The first morning (D-50): its task is on the guide's banner (D-52), so the objective panel steps aside.
+	# A guided level (D-52): its task is on the guide's banner, so the objective panel steps aside.
 	objective.visible = not (typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false))
 	_track_goal(state)
 	var carried := carried_objects()

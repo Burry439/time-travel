@@ -170,7 +170,7 @@ class State(TypedDict, total=False):
     safe_seq: int  # The latest calm moment, to rewind to.
     last_action: dict | None
     last_round: dict | None
-    tutorial: dict  # The first morning's progress (tutorial.py).
+    tutorial: dict  # A guided level's progress (scenario.py).
     device_log: list[dict]
     village: dict
     water_spilled_l: float

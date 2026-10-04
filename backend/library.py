@@ -16,8 +16,6 @@ from pathlib import Path
 
 from shapes import Thing
 
-VIEWS = ("world", "held", "worn")
-
 
 def library_dir() -> Path:
     """Beside the journey's own pictures (data/assets/library)."""

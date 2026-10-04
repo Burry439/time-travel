@@ -23,9 +23,7 @@ from pydantic import BaseModel, ValidationError
 
 from . import config
 
-PROMPT_VERSION = "voice_v3"
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
-_PROMPT = (_PROMPTS / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
 SUSPICION = [
     "Much less suspicious",
@@ -49,12 +47,6 @@ MAX_CHARS = 360
 
 class DeviceLine(BaseModel):
     text: str
-
-
-class DialogueLine(BaseModel):
-    text: str
-    remember: str
-    stranger_name: str
 
 
 class FeelingShift(BaseModel):
@@ -120,7 +112,7 @@ class VoiceCall:
     status: str  # "ok", "fallback" (no model, capped or failed: the authored line was used)
     text: str
     model: str | None = None
-    prompt_version: str = PROMPT_VERSION
+    prompt_version: str = SCENE_VERSION
     latency_ms: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -218,23 +210,6 @@ def _unavailable(fallback: str, allowed: bool, version: str) -> VoiceCall | None
             error=None if config.mode() == "stub" else "No OPENAI_API_KEY in backend/.env.",
         )
     return None
-
-
-def speak(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
-    """The person's line for the decided reply (and their note of it); the fallback line if the model can't be used."""
-    skipped = _unavailable(fallback, allowed, PROMPT_VERSION)
-    if skipped:
-        return skipped
-    call, parsed = _parse(_PROMPT, context, DialogueLine, PROMPT_VERSION)
-    call.text = fallback
-    spoken = tidy(parsed.text) if parsed is not None else ""
-    if spoken:
-        call.status, call.text = "ok", spoken
-        call.remember = " ".join(parsed.remember.split())[:300]
-        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
-    elif call.error is None:
-        call.error = "The model returned no line."
-    return call
 
 
 def reading(parsed: SceneLine) -> dict:

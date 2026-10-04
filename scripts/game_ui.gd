@@ -449,24 +449,12 @@ func _write_line(text: String, person: String, refs: Array) -> void:
 	hud.show_hint("drag", "Check the words, change anything you like, then press Enter.")
 
 
-# --- Compatibility with the tools and older call sites ----------------------------------------
-
-func open_encounter(target := "", prefill := "", playing: Dictionary = {}) -> void:
-	bar.open(target, prefill, playing)
-
-
-func open_talk(id: String, prefill := "") -> void:
-	bar.open(id, prefill)
-
+# --- Used by the test tools ------------------------------------------------------------------
 
 func open_try(prefill := "") -> void:
 	if game.run_state.is_empty() or game.request_busy or not game.gameplay_active:
 		return
 	bar.open("", prefill)
-
-
-func encounter_ended(playing: Dictionary = {}) -> void:
-	bar.ended(playing)
 
 
 # --- Shared wording -----------------------------------------------------------------------------

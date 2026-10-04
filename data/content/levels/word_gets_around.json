@@ -279,10 +279,6 @@
     ]
    },
    "done": "News travelled, and Agna heard it. People here carry what you do to everyone else, good and bad.",
-   "help": [
-    "Everyone here needs something: Cob's axe, Liss's hand, Old Fenn's cold hearth. Help one and they'll talk.",
-    "You can ask someone you've helped to put in a word with Agna. Or wait: they meet at the well and pass on the news."
-   ],
    "playtest": [
     {
      "walk_to": "npc_cob_woodman"

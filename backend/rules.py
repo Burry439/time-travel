@@ -5,13 +5,12 @@ model never says whether one holds (GDD 1).
 
 A condition is {"kind": ..., ...its fields}; all, any and not combine them. ctx says whose rule it is ("npc", for
 a person's task or secret) and where a scenario stands ("progress": when the step began, what was noticed).
-The parts a scenario gives people (Kade the teacher staying with the stranger) are read here too: role().
+The parts a scenario gives people (Hal the teacher staying with the stranger) are read here too: role().
 """
 
 from __future__ import annotations
 
 import math
-import re
 from collections.abc import Callable
 
 import cast
@@ -88,24 +87,6 @@ def _not(state, spec, ctx):
 # --- Where a scenario stands -------------------------------------------------------------------------------------
 
 
-@condition("flag", "key")
-def _flag(state, spec, ctx):
-    """Something the story noted (D-57): whether Kade told the captain the stranger wants in."""
-    return bool(_progress(ctx).get("flags", {}).get(spec["key"]))
-
-
-@condition("fired", "key")
-def _fired(state, spec, ctx):
-    """A step's trigger has happened ("step:trigger")."""
-    return spec["key"] in _progress(ctx).get("fired", [])
-
-
-@condition("step_time", "seconds")
-def _step_time(state, spec, ctx):
-    """A fallback: this long since the step began."""
-    return state.get("sim_time_ms", 0) - _progress(ctx).get("started_at", 0) >= spec["seconds"] * 1000
-
-
 @condition("ui", "key")
 def _ui(state, spec, ctx):
     """Something the client reports the stranger did on screen (the pack opened, a closer look, the book read)."""
@@ -131,11 +112,6 @@ def holding(state: State, kind: str) -> bool:
 @condition("near", "cell", "within")
 def _near(state, spec, ctx):
     return math.dist(cast.player_cell(state), tuple(spec["cell"])) <= spec["within"]
-
-
-@condition("carrying", "count")
-def _carrying(state, spec, ctx):
-    return len(carried(state)) >= spec["count"]
 
 
 @condition("carrying_id", "ids")
@@ -173,13 +149,6 @@ def _inside(state, spec, ctx):
 # --- People ------------------------------------------------------------------------------------------------------
 
 
-@condition("able")
-def _able(state, spec, ctx):
-    """Alive and on their feet."""
-    npc = _npc(state, spec, ctx)
-    return bool(npc) and npc.get("alive", True) and not npc.get("down")
-
-
 @condition("npc_near", "npc", "within")
 def _npc_near(state, spec, ctx):
     npc = _npc(state, spec, ctx)
@@ -193,17 +162,6 @@ def _talked_to(state, spec, ctx):
     since = _progress(ctx).get("started_at", 0) if spec.get("since_step") else -1
     return bool(npc) and any(
         t.get("who") == "stranger" and t.get("at", 0) >= since for t in (npc.get("mind") or {}).get("talk", [])
-    )
-
-
-@condition("said_to", "words")
-def _said_to(state, spec, ctx):
-    """The stranger's own words to them included any of these (whole words, any case)."""
-    npc = _npc(state, spec, ctx)
-    words = re.compile(r"\b(" + "|".join(re.escape(w) for w in spec["words"]) + r")\b", re.IGNORECASE)
-    return bool(npc) and any(
-        t.get("who") == "stranger" and words.search(str(t.get("text", "")))
-        for t in (npc.get("mind") or {}).get("talk", [])
     )
 
 
@@ -253,38 +211,6 @@ def _demonstration_seen(state, spec, ctx):
     )
 
 
-@condition("made_seen", "flag", "by")
-def _made_seen(state, spec, ctx):
-    """Something with this flag made by the stranger in this step, and this person saw it."""
-    progress = _progress(ctx)
-    made = any(
-        o.get("created_by") == "player"
-        and spec["flag"] in o.get("flags", [])
-        and int(o.get("created_event_id") or 0) > progress.get("started_seq", 0)
-        for o in state["objects"].values()
-    )
-    npc = _npc(state, spec, ctx, "by")
-    return (
-        made
-        and bool(npc)
-        and any(
-            m.get("kind") == "demonstration"
-            and m.get("clarity") != "vague"
-            and m.get("at", 0) >= progress.get("started_at", 0)
-            for m in (npc.get("mind") or {}).get("memories", [])
-        )
-    )
-
-
-@condition("vouched", "npc")
-def _vouched(state, spec, ctx):
-    """This person has spoken for the stranger to the captain."""
-    captain = cast.captain(state)
-    return bool(captain) and any(
-        m.get("kind") == "vouch" and m.get("by") == spec["npc"] for m in (captain.get("mind") or {}).get("memories", [])
-    )
-
-
 @condition("asked_device")
 def _asked_device(state, spec, ctx):
     """The stranger asked the device something in this step (H)."""
@@ -300,12 +226,6 @@ def _attempt_failed(state, spec, ctx):
         e.get("kind") == "craft" and e.get("category") in ("failed", "blocked") and int(e.get("event_id") or 0) > since
         for e in state.get("journal", [])
     )
-
-
-@condition("told_by", "npc")
-def _told_by(state, spec, ctx):
-    """This person has told the stranger something worth keeping: a lead from them in the journal."""
-    return any(entry.get("npc_id") == spec["npc"] for entry in state.get("learned") or [])
 
 
 @condition("in_conversation")
@@ -355,13 +275,6 @@ def _standing(state, spec, ctx):
     wary, neutral, friendly, would_speak)."""
     npc = _npc(state, spec, ctx)
     return bool(npc) and reputation.standing(npc) in spec["is"]
-
-
-@condition("stood_aside", "npc")
-def _stood_aside(state, spec, ctx):
-    """A robber has given up the hold-up: paid, talked round, scared off, or done (D-59)."""
-    npc = _npc(state, spec, ctx)
-    return bool(npc) and bool((npc.get("mind") or {}).get("stood_aside"))
 
 
 @condition("opinion", "npc", "of", "at_least")

@@ -37,14 +37,6 @@ from shapes import Npc, State
 
 LOG_KEPT = 30
 HOSTILE_PURPOSES = ("halt", "confront", "threaten", "demand_payment")
-REASON_WORDS = {
-    "halt": "a guard stopped the stranger at the gate",
-    "confront": "they confronted the stranger",
-    "threaten": "they came to threaten the stranger",
-    "demand_payment": "they came to demand payment",
-    "talk": "the stranger spoke to them",
-    "joined": "they joined the conversation",
-}
 
 
 # --- Opening, joining and ending ------------------------------------------------------------------

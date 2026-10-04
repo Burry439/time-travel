@@ -270,12 +270,13 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
         for i in _dedupe(ids)
         if i in available and available[i]["holder_id"] != "player"
     ]
+    here = state["player"]
     source = state["objects"].get((judged.get("fill") or {}).get("source_id") or "") if action == "fill" else None
     if source is not None:
-        cells.append((source["x"], source["y"]))
+        cells.append(cast.nearest(source, here))
     if action == "demonstrate":  # Showing something in a trough or other water source: go to it.
         cells += [
-            (o["x"], o["y"]) for i in ids if (o := state["objects"].get(i)) and "water_source" in o["capabilities"]
+            cast.nearest(o, here) for i in ids if (o := state["objects"].get(i)) and "water_source" in o["capabilities"]
         ]
     recipient = (
         (judged.get("give") or {}).get("recipient_id")
@@ -297,7 +298,8 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
 def _water_at_hand(state: State, thing_id: str) -> bool:
     """A water source within reach (a trough, the lake's edge): something to soak or wet a thing in as it's made."""
     thing = state["objects"].get(thing_id) or {}
-    return "water_source" in thing.get("capabilities", []) and cast.distance(state["player"], thing) <= (
+    here = state["player"]
+    return "water_source" in thing.get("capabilities", []) and cast.distance(here, cast.nearest(thing, here)) <= (
         tuning.REACH_CELLS + 1
     )
 
@@ -963,7 +965,7 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
         return unresolved(notes, f"not a water source: {plan['source_id']}")
     if "container" not in container.get("flags", []) or not container.get("capacity_l"):
         return ruling("blocked", f"The {container['name']} can't hold water.", notes, action="fill", precedent_key=key)
-    if cast.distance(state["player"], source) > tuning.REACH_CELLS:
+    if cast.distance(state["player"], cast.nearest(source, state["player"])) > tuning.REACH_CELLS:
         return ruling("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
     room = round(container["capacity_l"] - container.get("water_l", 0.0), 3)
     if room <= 0:

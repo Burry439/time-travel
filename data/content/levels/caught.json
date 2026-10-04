@@ -296,10 +296,6 @@
     ]
    },
    "done": "Yours, fairly. However you came by it, the hall saw how.",
-   "help": [
-    "Osk pays for work. Or you carry something of your own: a trade is fair.",
-    "If you take one, someone may see. Giving it back and paying makes it right; running makes it worse."
-   ],
    "playtest": [
     {
      "walk_to": "npc_osk_pieman"

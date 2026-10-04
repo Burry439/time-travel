@@ -295,10 +295,6 @@
     ]
    },
    "done": "Inside. Every way in was a way of earning, persuading, or daring: the same choices the city will ask.",
-   "help": [
-    "Godwin has his own reasons for letting people through. The steward wants a reason and someone's word. Ned has a job going.",
-    "Walls have weak places, too. But what you damage, people may see."
-   ],
    "playtest": [
     {
      "walk_to": "npc_ned_groom"

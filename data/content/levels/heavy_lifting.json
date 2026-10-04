@@ -265,10 +265,6 @@
     }
    ],
    "done": "Out. How you did it was yours; whether it worked was the world's.",
-   "help": [
-    "Look at what's lying about ({right-click}): a long rail, a big flat stone, boards, logs, the ox, Wat's rope.",
-    "Or ask for hands: talk to Wat, Dunna and Rook. Those in the conversation with you will heave if you ask."
-   ],
    "playtest": [
     {
      "walk_to": "rail_loose"

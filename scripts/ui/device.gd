@@ -220,11 +220,6 @@ func open_ask() -> void:
 	ask_line.grab_focus.call_deferred()
 
 
-func close_ask() -> void:
-	if ui.modal_kind == "device":
-		ui.close_modal()
-
-
 func _render_history() -> void:
 	for child in history_box.get_children():
 		history_box.remove_child(child)

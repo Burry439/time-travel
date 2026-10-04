@@ -177,11 +177,6 @@ func reply_problem(reply: Dictionary) -> String:
 	return "The attempt couldn't be completed (HTTP %s). Your journey is safe." % reply.status
 
 
-## One exchange in a conversation: the voice model reads the moment and replies on the server.
-func say_to(npc_id: String, text: String) -> void:
-	await act(text, npc_id, [])
-
-
 ## A plain round move without words: walking away (Esc), or waiting / giving up from the tools.
 ## Face to face, everyone else's committed actions resolve at the same moment on the server.
 func encounter_act(kind: String, text: String, target: String) -> void:

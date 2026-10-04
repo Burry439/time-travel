@@ -29,7 +29,7 @@ import reputation
 import rules
 from shapes import Npc, State
 
-TALKS = ("talked_to", "said_to", "in_conversation")  # A step whose outcome is someone telling the stranger something.
+TALKS = ("talked_to", "in_conversation")  # A step whose outcome is someone telling the stranger something.
 
 COVERED = 0.5  # A sentence is said if more than this share of its key words are in what they said.
 SMALL_WORDS = frozenset(
@@ -49,7 +49,6 @@ DECIDED = {
     "knows": ("you tell the stranger what you've kept to yourself (share)", "share"),
     "standing": ("you now think well of the stranger", None),
     "lent": ("you lend it to the stranger (lend)", "lend"),
-    "vouched": ("you go and speak for the stranger (vouch)", "vouch"),
 }
 DEAL_DECIDED = {
     "proposed": ("you offer the stranger the deal (offer)", "offer"),

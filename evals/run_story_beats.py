@@ -37,7 +37,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 app.store.DB_PATH = Path(tempfile.mkdtemp()) / "beats.sqlite3"
 app.attempts._generate_asset = lambda asset_id: None  # No paintings: this is about words.
 http = TestClient(app.app)
-TALK = ("talked_to", "said_to")
+TALK = ("talked_to",)
 OPENERS = ["Hello.", "Lovely day, isn't it?", "Who are you?", "Can I help with anything?", "I'm lost. Where am I?"]
 
 

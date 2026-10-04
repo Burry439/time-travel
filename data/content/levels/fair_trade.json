@@ -108,7 +108,13 @@
    "capacity_l": 100000.0,
    "water_l": 100000.0,
    "no_sprite": true,
-   "art": "scene"
+   "art": "scene",
+   "area": [
+    31,
+    0,
+    5,
+    24
+   ]
   },
   {
    "id": "flour_ada",

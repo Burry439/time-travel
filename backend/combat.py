@@ -38,8 +38,6 @@ SHIELD_BASH = {
     "name": "shield",
 }
 # Kept for older callers and tests.
-ARM_REACH = gear.WEAPONS["fists"]["reach"]
-DOWN_AT = gear.COND["down_at"]
 
 
 def active(state: State) -> dict | None:

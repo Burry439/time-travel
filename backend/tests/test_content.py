@@ -38,13 +38,6 @@ def conditions_in(spec, where: str):
         yield from conditions_in(spec["of"], f"{where}.of")
 
 
-def text_conditions(parts, where: str):
-    """Conditions inside words written in parts ({text, when})."""
-    for index, part in enumerate(parts if isinstance(parts, list) else []):
-        if isinstance(part, dict) and part.get("when"):
-            yield part["when"], f"{where}[{index}].when"
-
-
 def level_rules(level: dict):
     """(conditions, effects) of a guided level, each with where it is."""
     conditions, effects = [], []
@@ -64,15 +57,9 @@ def level_rules(level: dict):
                 for key in ("when", "done_when"):
                     if effect.get(key):
                         conditions.append((effect[key], f"{where}[{index}].{key}"))
-                for key in ("why", "summary"):
-                    conditions += list(text_conditions(effect.get(key), f"{where}[{index}].{key}"))
     for role in level.get("roles", []):
         if isinstance(role.get("stays"), dict):
             conditions.append((role["stays"], f"role {role['npc']}.stays"))
-    for name, speech in level.get("speeches", {}).items():
-        conditions += [(c, f"speech {name}.notes.{key}") for key, c in speech.get("notes", {}).items()]
-        for key in ("why", "summary"):
-            conditions += list(text_conditions(speech.get(key), f"speech {name}.{key}"))
     return conditions, effects
 
 
@@ -116,7 +103,6 @@ def all_rules():
 def test_every_rule_is_a_known_kind_with_what_it_needs():
     conditions, effects = all_rules()
     assert conditions and effects
-    speeches = {name for level in GUIDED.values() for name in level.get("speeches", {})}
     problems = []
     for top, where in conditions:
         for spec, at in conditions_in(top, where):
@@ -133,8 +119,6 @@ def test_every_rule_is_a_known_kind_with_what_it_needs():
             problems.append(f"{at}: unknown effect {kind!r}")
         else:
             problems += [f"{at}: {kind} needs {field}" for field in scenario.NEEDS[kind] if field not in spec]
-        if kind == "vouch" and not (spec.get("speech") in speeches or "why" in spec):
-            problems.append(f"{at}: a vouch needs a speech or its own words")
     assert not problems, "\n".join(problems)
 
 
@@ -273,7 +257,7 @@ def test_every_playtest_names_what_is_in_its_level(level_id):
             assert action.get("take") in (None, *things), (step["id"], action)
             assert action.get("to") in (None, *people), (step["id"], action)
             assert action.get("ui") in (None, "pack", "inspect", "journal", "book"), (step["id"], action)
-    if any(step.get("playtest") for step in level["steps"]):  # Scripted (the first morning has its own script).
+    if any(step.get("playtest") for step in level["steps"]):  # Every guided level is scripted.
         missing = [s["id"] for s in level["steps"] if s.get("task") and not s.get("playtest")]
         assert not missing, f"steps with a task but no playtest: {missing}"
 

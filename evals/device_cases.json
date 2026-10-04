@@ -1,9 +1,9 @@
 {
- "notes": "Live evals for the device (D-50): the real voice model with device_v1. step: the tutorial step it's on (null = the main game, tutorial done). must_any: at least one of these words appears. must_not: none of these appear (routes the stranger hasn't found, secrets, breaking character). attempt: a recent failed attempt in the journal. D-55: the main game's device is a coach; general advice (find someone to vouch for you) is fine, naming a specific undiscovered route is not.",
+ "notes": "Live evals for the device (D-50): the real voice model with device_v1. level and step: the training level and step it's on (no level: the main game). must_any: at least one of these words appears. must_not: none of these appear (routes the stranger hasn't found, secrets, breaking character). attempt: a recent failed attempt in the journal. D-55: the main game's device is a coach; general advice (find someone to vouch for you) is fine, naming a specific undiscovered route is not.",
  "cases": [
   {
    "id": "stuck_on_remedy",
-   "step": "remedy",
+   "step": "poultice",
    "question": "I don't know what to do.",
    "must_any": [
     "plantain",
@@ -13,21 +13,23 @@
     "leaf",
     "cloth",
     "water"
-   ]
+   ],
+   "level": "patched_up"
   },
   {
    "id": "shield_key",
-   "step": "bout",
+   "step": "guard",
    "question": "How do I raise my shield?",
    "must_any": [
     " F",
     "F key",
     "hold F"
-   ]
+   ],
+   "level": "training_yard"
   },
   {
    "id": "why_did_it_fail",
-   "step": "fire",
+   "step": "torch",
    "question": "Why didn't that work?",
    "attempt": {
     "text": "make a bow from the dry grass",
@@ -41,7 +43,8 @@
     "springy",
     "rod",
     "flex"
-   ]
+   ],
+   "level": "tinkers_book"
   },
   {
    "id": "no_routes_in_main_game",
@@ -89,7 +92,8 @@
     "prompt",
     "video game",
     "player"
-   ]
+   ],
+   "level": "cup_of_water"
   },
   {
    "id": "coach_water_deal",
@@ -151,6 +155,17 @@
     "wood",
     "stave",
     "shaft"
+   ]
+  },
+  {
+   "id": "no_designers_answers",
+   "level": "a_wonder",
+   "step": "wonder",
+   "question": "so i want to create a compass with what i have how do i do that",
+   "must_not": [
+    "lamp",
+    "fire",
+    "flask"
    ]
   }
  ]

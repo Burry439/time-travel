@@ -15,7 +15,7 @@ import store
 def test_the_catalogue_is_every_level_in_a_track_in_order():
     levels = routes_training.catalogue()
     ids = [level["id"] for level in levels]
-    assert "village" not in ids and {"tutorial", "test_room"} <= set(ids)
+    assert "village" not in ids and {"cup_of_water", "test_room"} <= set(ids) and "tutorial" not in ids
     tracks = [track for track, _ in routes_training.TRACKS]
     assert [tracks.index(level["track"]) for level in levels] == sorted(
         tracks.index(level["track"]) for level in levels

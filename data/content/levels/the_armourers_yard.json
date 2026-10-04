@@ -380,10 +380,6 @@
     "ever": true
    },
    "done": "Made, not found. You know how it's put together, so you can mend it.",
-   "help": [
-    "Holt's notes are on the workbench: pick them up and read them ({Space} with them in hand).",
-    "A broken blade is no use until it has a point; a point is no use until it has a haft."
-   ],
    "playtest": [
     {
      "walk_to": "book_holt"
@@ -483,9 +479,6 @@
     "ever": true
    },
    "done": "Steel is better, but quilted linen has saved more lives.",
-   "help": [
-    "The notes have a quilted jack (linen, wool, a needle) and a buckler (boards and rawhide)."
-   ],
    "playtest": [
     {
      "walk_to": "linen_bolt"
@@ -559,10 +552,6 @@
     "npc": "npc_holt_sergeant"
    },
    "done": "It bites. Better learned on straw.",
-   "help": [
-    "Open Pack & gear ({I}) to take it up and put things on.",
-    "Then try it on the dummy where Holt can see."
-   ],
    "playtest": [
     {
      "equip": "made:weapon"
@@ -650,9 +639,6 @@
     }
    ],
    "done": "Made, tested and tried. That's how you know your kit.",
-   "help": [
-    "Walk up to Holt with your weapon ready. Watch his wind-up; raise your guard ({F}) or step back."
-   ],
    "playtest": [
     {
      "walk_to": "npc_holt_sergeant"

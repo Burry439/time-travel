@@ -91,8 +91,8 @@ func _run() -> void:
 	find_button(scene.menu, "Training").pressed.emit()
 	if not check(await wait_for("training", "Play"), "The Training screen didn't open on Basics"):
 		return
-	if not check(has_text(scene.ui.modal, "The first morning") and has_text(scene.ui.modal, "Next"),
-			"Basics doesn't list the first morning, suggested"):
+	if not check(has_text(scene.ui.modal, "A cup of water") and has_text(scene.ui.modal, "Next"),
+			"Basics doesn't list its first level, suggested"):
 		return
 	await shot("training")
 	find_button(scene.ui.modal, "Developer").pressed.emit()

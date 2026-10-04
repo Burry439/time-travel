@@ -56,15 +56,15 @@ def test_a_real_journey_state_roundtrips():
         "mode": "developer",
         "seed_version": service.SEED_VERSION,
         "geometry_version": service.GEOMETRY_VERSION,
-        "scenario": "tutorial",
+        "scenario": "cup_of_water",
     }
     before = patch.snapshot(service.initial_state(run))
     after = copy.deepcopy(before)
     after["npcs"][0]["x"] += 1
-    after["objects"]["plantain_a"]["holder_id"] = "player"
+    after["objects"]["cup_wenna"]["holder_id"] = "player"
     after["journal"].append({"kind": "craft", "reason": "You pick it up."})
     after["tutorial"]["step"] = 3
-    del after["objects"]["flint_a"]
+    del after["objects"]["apple_windfall"]
     changes = roundtrip(before, after)
     assert set(changes) == {"npcs", "objects", "journal", "tutorial"}
 

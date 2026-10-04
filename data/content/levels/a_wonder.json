@@ -218,7 +218,13 @@
    "capacity_l": 100000.0,
    "water_l": 100000.0,
    "no_sprite": true,
-   "art": "scene"
+   "art": "scene",
+   "area": [
+    0,
+    0,
+    36,
+    6
+   ]
   }
  ],
  "roles": [],
@@ -284,11 +290,6 @@
     ]
    },
    "done": "They've seen it. Now see what it did to each of them.",
-   "help": [
-    "Sefa needs new fire for her lamp, and has no flint. Is there sun enough here to make fire some other way? Her round glass flask is the clearest thing for miles.",
-    "Or her black stone pulls iron, and Brann has iron hooks. You know what a magnetised needle does.",
-    "Show it to them: say what you're doing, or let it speak for itself."
-   ],
    "playtest": [
     {
      "walk_to": "npc_sefa_priestess"
@@ -407,10 +408,6 @@
     "npc": "npc_brann_fisher"
    },
    "done": "The same wonder can be a blessing or witchcraft. Showing how it works turns it into knowledge.",
-   "help": [
-    "Look at People in your journal ({J}): how does each of them stand toward you now?",
-    "Brann trusts what he can do with his own hands. Show him how, step by step; let him try it."
-   ],
    "playtest": [
     {
      "walk_to": "npc_brann_fisher"

@@ -173,10 +173,6 @@
     ]
    },
    "done": "They're brothers again, more or less. Feelings change for reasons: you found some.",
-   "help": [
-    "Each of them knows something the other doesn't, and keeps it to himself. People tell what they're ashamed of only to someone they trust.",
-    "Hild says Edric kept papers in a box on the dresser. Ask her, before you open it."
-   ],
    "playtest": [
     {
      "walk_to": "npc_hild_widow"

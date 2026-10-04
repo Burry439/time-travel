@@ -18,7 +18,6 @@ import tuning
 from shapes import Npc, State
 
 MOODS = ["content", "cheerful", "weary", "irritable", "anxious", "excited", "grieving"]
-MOOD_WORDS = {m: m for m in MOODS}
 NOTES_KEPT = 12  # Notes from the current conversation.
 EPISODES_KEPT = 6  # Past conversations kept as short summaries; older ones merge into long_memory.
 NEARBY_CELLS = 16

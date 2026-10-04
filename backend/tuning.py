@@ -98,8 +98,6 @@ MOMENT_GAP_MS = 120_000  # The device speaks up on its own at most this often (D
 
 # --- Fighting and hurt -----------------------------------------------------------------------------------------------
 
-WOUND_DAMAGE = 45
-DISABLED_HEALTH = 20  # Down and out of the fight, but alive (D-41).
 SUBDUE_DAMAGE = 15  # A spear butt, a fist, a shove to the ground: hurts, doesn't kill (D-44).
 SUBDUED_AT = 25  # Beaten down to this, the stranger is at their mercy: a guard arrests them; anyone else stops.
 SPAR_ENOUGH_AT = 40  # A sparring partner beaten down to this calls it: "Enough!" (D-50).

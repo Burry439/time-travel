@@ -229,10 +229,6 @@
     }
    ],
    "done": "He'll take you. Not because of what you said, but because of what he saw, was given, or heard from someone he trusts.",
-   "help": [
-    "Gorm goes on what he sees, what he's given, and who speaks for him. Talk to Ilse: she might have work, and he listens to her.",
-    "Or look around the landing ({right-click} things): is there something Gorm needs that you could make?"
-   ],
    "playtest": [
     {
      "walk_to": "npc_ilse_ferry"

@@ -128,7 +128,13 @@
    "capacity_l": 100000.0,
    "water_l": 100000.0,
    "no_sprite": true,
-   "art": "scene"
+   "art": "scene",
+   "area": [
+    27,
+    0,
+    4,
+    24
+   ]
   },
   {
    "id": "bark_meadow",
