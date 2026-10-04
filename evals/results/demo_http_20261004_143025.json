@@ -1,0 +1,93 @@
+{
+  "run_id": "524d2dfb1d7345588cc3407e2eaeea5a",
+  "server": "http://127.0.0.1:8767",
+  "checks": [
+    {
+      "check": "gather",
+      "category": "success",
+      "seconds": 3.3
+    },
+    {
+      "check": "create",
+      "category": "success",
+      "seconds": 6.14
+    }
+  ],
+  "object": {
+    "id": "branch_a",
+    "name": "fallen branch",
+    "x": 47,
+    "y": 67,
+    "mass_kg": 1.2,
+    "owner_id": null,
+    "holder_id": "player",
+    "capabilities": [
+      "carry",
+      "tie"
+    ],
+    "bound_to": [],
+    "water_l": 0.0,
+    "capacity_l": 0.0,
+    "condition": "usable",
+    "materials": [
+      "wood"
+    ],
+    "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+    "flags": [
+      "rigid",
+      "combustible",
+      "floats"
+    ],
+    "length_m": 1.5,
+    "gear": {
+      "kind": "weapon",
+      "class": "staff",
+      "covers": [],
+      "quality": "crude"
+    },
+    "attributes": [
+      {
+        "name": "surface_markings",
+        "value": "A shallow spiral groove winds along the branch, with regularly spaced tick marks cut across it.",
+        "status": "expected",
+        "basis_ids": [
+          "branch_a",
+          "flint_a"
+        ]
+      }
+    ],
+    "revision": 1,
+    "sprite_asset_id": "spr_524d2dfb_branch_a_r1",
+    "picture_event_id": 2,
+    "held_asset_id": "spr_524d2dfb_branch_a_r1_held"
+  },
+  "save_reload": true,
+  "art": {
+    "status": "ready",
+    "model": "gpt-image-2.5-flare",
+    "latency_ms": 9786,
+    "record": {
+      "id": "branch_a",
+      "name": "fallen branch",
+      "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+      "materials": [
+        "wood"
+      ],
+      "view": "world",
+      "signature": "586f21b724d9bf2c914b",
+      "attributes": [
+        {
+          "name": "surface_markings",
+          "value": "A shallow spiral groove winds along the branch, with regularly spaced tick marks cut across it.",
+          "status": "expected",
+          "basis_ids": [
+            "branch_a",
+            "flint_a"
+          ]
+        }
+      ]
+    }
+  },
+  "png_served": true,
+  "passed": true
+}

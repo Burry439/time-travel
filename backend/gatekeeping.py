@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import cast
 import content
-import reputation
 from shapes import Npc, State
 
 # How a level speaks of getting in (D-59): the village's gate, unless the map names its own way in (a ferry across a
@@ -54,8 +53,6 @@ def can_admit(state: State, npc: Npc) -> bool:
         and npc.get("alive", True)
         and not state.get("admitted")
         and state["player"].get("alive", True)
-        and not reputation.knows_a_crime(npc)
-        and not barred(state)
     )
 
 
@@ -63,9 +60,7 @@ def grounds_to_admit(npc: Npc) -> bool:
     """Something real behind letting the stranger in, never their word alone (D-55): evidence this guard holds
     (a resident's word given in person, something shown to work, a gift, help they saw). A guard going on their
     own motive may also go on trust earned over time; the captain's rule asks for the evidence."""
-    if any(reputation.is_evidence(m) for m in cast.mind(npc).get("memories", [])):
-        return True
-    return not cast.card(npc).get("decides") and reputation.standing(npc) in ("friendly", "would_speak")
+    return bool(admission_rule(npc))  # The guard weighs their duty, risk, fear and incentives.
 
 
 def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int) -> None:

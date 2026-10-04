@@ -33,6 +33,9 @@ def signature(obj: Thing, precedent_key: str | None = None) -> str:
         "materials": sorted(m.lower() for m in obj.get("materials") or []),
         "gear": [record.get("kind"), record.get("class"), sorted(record.get("covers") or [])],
         "flags": sorted(obj.get("flags") or []),
+        "attributes": sorted(
+            (a["name"], a["value"]) for a in obj.get("attributes", []) if a.get("status") in ("expected", "observed")
+        ),
         "length": round(float(obj.get("length_m") or 0), 1),
         "mass": round(float(obj.get("mass_kg") or 0), 1),
     }

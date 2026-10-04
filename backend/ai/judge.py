@@ -19,7 +19,7 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = "judge_v18"  # v18 (D-61): an ache can be treated (Kade's knees).
+PROMPT_VERSION = "judge_v19"  # D-62: extensible physical properties and explicit causal inputs.
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -60,7 +60,24 @@ class Capability(BaseModel):
     status: Literal["expected", "untested"]
 
 
+class PhysicalAttribute(BaseModel):
+    """An extensible physical fact, kept apart from an untested claim."""
+
+    name: str
+    value: str
+    status: Literal["expected", "untested", "observed", "failed"]
+    basis_ids: list[str]
+
+
+class PhysicalEffect(BaseModel):
+    kind: Literal["attribute", "connect", "disconnect"]
+    target_id: str
+    other_id: str | None
+    attribute: PhysicalAttribute | None
+
+
 class NewObject(BaseModel):
+    attributes: list[PhysicalAttribute] = []
     name: str
     description: str
     materials: list[str]
@@ -76,6 +93,7 @@ class NewObject(BaseModel):
 
 
 class Piece(BaseModel):
+    attributes: list[PhysicalAttribute] = []
     name: str
     description: str
     materials: list[str]
@@ -185,6 +203,10 @@ class Gather(BaseModel):
 
 
 class Step(BaseModel):
+    effects: list[PhysicalEffect] = []
+    resource_ids: list[str] = []
+    helper_ids: list[str] = []
+    preconditions: list[str] = []
     action: Literal[
         "make",
         "take",
@@ -201,6 +223,7 @@ class Step(BaseModel):
         "treat",
         "equip",
         "other",
+        "physical",
     ]
     outcome: Literal["success", "failed", "blocked", "unsupported"]
     reason: str

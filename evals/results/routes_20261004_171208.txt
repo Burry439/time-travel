@@ -1,0 +1,36 @@
+
+=== SPONSOR: HESSA'S WATER ===
+  TRY: pick up the dried gourd
+    [success] You pick up the dried gourd; it is light and within arm’s reach.
+  YOU → Hessa: Good day! I'm Ash, a traveller. Your yard looks busy. Can I help with anything?
+    [offer:water_haul] “Oh, love, if you've a mind to help, bring me a full container of water from the trough for the kitchen. I'll put in a good word for you with the captain once it's done.”  (person 3044 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.1}
+  YOU → Hessa: Gladly. I'll bring you water from the trough right away.
+    [answer] “That’s kind of you, love. I’ll look for you when you’ve filled the bucket.”  (person 3346 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.9, 'done': 0.1}
+  TRY: fill the gourd with water from the trough and hand it to Hessa
+    [success] You fill the dried gourd from Hessa's water trough. You hand the filled gourd to Hessa.
+  YOU → Hessa: There you are: a gourd full of water for your kitchen.
+    [go_tell] “That’s kind of you, love—and just what the kitchen needed. You’ve done honest work; I’ll go speak for you to Captain Roderic.”  (person 3639 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.9}
+  YOU → Roderic: Captain, Hessa the innkeeper has spoken for me. I'd like to enter the city to find honest work.
+    [admit] “Hessa's word counts. Open the gate and let the stranger through.”  (person 11230 ms) beliefs {'threat': 0.1, 'reason': 0.9, 'accepts': 0.1, 'done': 0.9}
+  Admitted because: ['Hessa spoke for the stranger.']
+  ✓ INSIDE THE CITY
+
+=== BUSINESS: DARIN HIRES YOU ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You gather the hollow reeds and flint shard into your hands.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You saw a short section from a hollow reed with the sharp flint, then carve a notch at one end. The notched tube can make a whistle when blown across the opening.
+  YOU → Darin: Good day, sir. I'm Ash, a traveller with a knack for making useful little things.
+    [offer:trade_goods] “Friend, useful little things can be worth a good deal—or gather dust. Show me something I could sell at a profit, and I’ll take you on as a hired hand for trade inside the city under my permit.”  (person 5488 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.1}
+  YOU → Darin: Agreed. Let me show you.
+    [answer] “Good, friend. Show me what you've made; I'll judge its value with my own eyes.”  (person 5234 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.9, 'done': 0.1}
+  TRY: blow the reed whistle for Darin to show him how loud and clear it is
+    [success] You blow across the reed whistle's notched end, producing a clear whistle for Darin to hear.
+  YOU → Darin: There: a whistle anyone could carry, made from a reed. Travellers and herders would buy those.
+    [answer] “A clear call, and small enough to sell by the handful. The bargain stands, friend: I’ll take you on as a hired hand for trade inside the city under my permit.”  (person 5885 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.9, 'done': 0.9}
+  YOU → Roderic: Captain, I'm Darin the merchant's hired hand; he's taking me in under his trade permit.
+    [admit] “Darin has given his word, and the work is legitimate. Open the gate; you may enter under his permit.”  (person 10953 ms) beliefs {'threat': 0.1, 'reason': 0.9, 'accepts': 0.1, 'done': 0.9}
+  Admitted because: ["Darin has hired the stranger as a hand for trade in the city, under Darin's trade permit."]
+  ✓ INSIDE THE CITY
+
+RESULTS: {'sponsor': True, 'business': True} in 120 s

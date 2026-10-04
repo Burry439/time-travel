@@ -343,6 +343,9 @@ func close() -> void:
 
 ## Esc or ×: face to face this is walking away (a round of its own); otherwise it just closes.
 func escape() -> void:
+	if game.intent_pending:
+		close()
+		return
 	if round_playing or waiting or game.request_busy:
 		return
 	if showing_encounter() and not _encounter().is_empty():

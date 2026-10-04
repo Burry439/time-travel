@@ -170,7 +170,7 @@ def test_treating_someone_earns_their_trust_like_a_gift():
     assert kade_after["conditions"][0]["treated"] == 1
     perception.apply_perceptions(after, perception.perceive(after, payload["journal_entry"]))
     kade_after = cast.find(after["npcs"], "npc_kade_east")
-    assert reputation.regard(kade_after)["trust"] > before
+    assert reputation.regard(kade_after)["trust"] == before  # Evidence awaits their own decision.
     assert any(m["kind"] == "help" for m in kade_after["mind"]["memories"])
 
 

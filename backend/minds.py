@@ -1,23 +1,13 @@
-"""NPC minds: perception, memories, feelings, decisions and the actions that follow.
-
-Code decides who could perceive an event (and how clearly), which actions are legal for each
-person, what those actions do over time, and how fights go. The decider role (the language model, typed questions) is asked only
-at decision points: it chooses among the legal options - each paired with lines in that person's
-voice - and rates feelings. Everyone deciding at the same moment shares one decider request.
-
-Flow: a committed player act -> perceive() gives witnesses memories and queues them in
-state["pending_minds"] -> the client's thinking lane calls /think -> batch_request() -> the decider ->
-apply_decision() starts jobs (flee, hide, shout, warn, whistle, report, confront, threaten,
-demand payment, attack, help) -> advance_world() moves people along their jobs each clock beat
-and applies calm ambient rules. Anyone who reaches the stranger to address them (a halt, a
-confrontation, an attack) opens or joins an encounter (encounter.py), where everything happens
-in simultaneous rounds; blows are a seeded roll there, never on the clock.
-"""
+"""NPC decisions and their execution. Private perception queues each person's model request;
+models choose motives, speech, goals and physical intentions. The backend validates authority,
+resources and commitments and advances jobs. Physical work uses the shared judge and reducer."""
 
 from __future__ import annotations
 
 import math
 
+import actors
+import agreements
 import cast
 import combat
 import paths
@@ -278,12 +268,17 @@ def raise_alarm(state: State, npc: Npc, line: str, radius: float, now: int, guar
             or (guards_only and not cast.card(other).get("guard"))
         ):
             continue
-        if worst is not None and reputation.knows(other, worst.get("event")):
+        if worst is not None and reputation.knows(other, worst):
             continue  # Old news to them.
         if cast.distance(other, npc) > radius:
             continue
         heard = f"{npc['name']} called out “{line}”"
         memory = {
+            **(
+                {k: worst[k] for k in ("evidence_id", "object_id", "actor_id", "revision", "application") if k in worst}
+                if worst
+                else {}
+            ),
             "kind": worst["kind"] if worst else "alarm",
             "severity": worst["severity"] if worst else 1,
             "event": worst.get("event") if worst else None,
@@ -303,8 +298,44 @@ def raise_alarm(state: State, npc: Npc, line: str, radius: float, now: int, guar
                 known["reported"] = True  # A guard heard: the caller has done their part.
 
 
+def apply_personal_decision(state, npc, decision, now, journal):
+    """One contract for subjective judgments and resource-checked intentions in every lane."""
+    import talk
+
+    talk.update_regard(npc, decision["answers"])
+    cast.mind(npc)["feelings"]["anger"] = float(decision["answers"]["anger"]["score"]) / 3
+    cast.mind(npc)["standing_plan"] = {"defend": bool(decision.get("defend_if_attacked"))}
+    rejected = []
+    for intent in decision.get("intents", []):
+        if not agreements.execute(state, npc, intent, state["event_seq"] + 1):
+            rejected.append("The intended action is unavailable with the resources here.")
+    if decision.get("agreement"):
+        valid, detail = agreements.apply(state, npc, decision["agreement"], state["event_seq"] + 1)
+        if not valid:
+            rejected.append(detail)
+    if decision.get("text"):
+        speech.say(
+            npc,
+            decision["text"] if not rejected else "I can't carry that out with what I have here.",
+            now,
+            state,
+            journal,
+        )
+    cast.mind(npc)["decision_reason"] = decision.get("remember", "")[:400]
+    if rejected:
+        cast.mind(npc)["rejected_intents"] = rejected
+    return rejected
+
+
 def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: list[dict]) -> dict:
     """Carry out one person's decision (action and line). Returns a short record for the trace."""
+    if answers.get("actor_physical"):
+        result = actors.perform(state, npc["id"], answers["actor_physical"])
+        return {"npc_id": npc["id"], "action": "physical", "category": result["category"]}
+    decision = answers.get("npc_decision")
+    if decision:
+        apply_personal_decision(state, npc, decision, now, journal)
+        answers = {"action": {"choice": decision["move"]}, "believes": decision["answers"]["believes"]}
     my_mind = cast.mind(npc)
     levels = len(reputation.FEAR_LEVELS) - 1
     stirred = my_mind.get("stirred") or {}

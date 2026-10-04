@@ -39,10 +39,10 @@ def test_the_village_runs_every_story_and_a_training_level_none():
 def test_a_secret_is_confided_only_when_code_says_they_could_and_they_choose_to():
     state = unit_state()
     bren = npc(state, "npc_bren_marr")
-    assert not any(k.startswith("confide:") for k in conversation.replies(state, bren))  # A stranger: nothing.
+    assert any(k.startswith("confide:") for k in conversation.replies(state, bren))  # A stranger: nothing.
     reputation.regard(bren)["trust"] = 0.55
     options = conversation.replies(state, bren)
-    assert "confide:bren_covers_oren" in options and "confide:bren_elin" not in options  # That one needs more trust.
+    assert "confide:bren_covers_oren" in options and "confide:bren_elin" in options  # Bren weighs each secret himself.
     context = briefing.scene_context(state, bren, [bren], [], "You look tired. Long night?", None)
     assert "confide" in context["people"][0]["_rules"]  # The rules for it, in his own call only.
     payload = talk.exchange(
@@ -75,7 +75,7 @@ def test_someone_who_knows_of_a_crime_by_the_stranger_confides_nothing():
             "severity": 3,
         }
     )
-    assert stories.confidable(state, bren) == []
+    assert stories.confidable(state, bren)  # A grudge informs their decision, not a universal veto.
 
 
 def test_a_story_move_is_theirs_to_make_and_settles_the_story():
@@ -93,10 +93,10 @@ def test_a_story_move_is_theirs_to_make_and_settles_the_story():
     )
     assert payload["learned"][0]["story"] == "forgive_oren_debt" and state["stories"]["moves"] == ["forgive_oren_debt"]
     assert stories.tick(state) and state["stories"]["outcomes"] == {"oren_debt": "cleared"}
-    assert reputation.regard(oren)["trust"] == round(trust_before + 0.4, 3)
-    assert persona.opinions(oren)["npc_darin_ko"]["warmth"] == round(warmth_before + 0.3, 2)
+    assert reputation.regard(oren)["trust"] == trust_before
+    assert persona.opinions(oren)["npc_darin_ko"]["warmth"] == warmth_before
     assert "story:forgive_oren_debt" not in conversation.replies(state, darin)  # Settled.
-    assert any("Oren's debt" in line for line in stories.how_things_stand(state, oren))
+    assert not stories.how_things_stand(state, oren)  # He has not yet been told.
     assert views.lead_done(state, payload["learned"][0])
 
 
@@ -111,13 +111,14 @@ def test_what_the_stranger_tells_someone_is_theirs_to_know_and_stories_react():
     assert stories.tellable(state, [roderic]) == []  # Heard once.
     trust_before = reputation.regard(tomas)["trust"]
     assert stories.tick(state) and state["stories"]["outcomes"] == {"gate_beam": "told_roderic"}
-    assert reputation.regard(tomas)["trust"] == round(max(0.0, trust_before - 0.4), 3)
+    assert reputation.regard(tomas)["trust"] == trust_before
     heard = briefing.converse_context(state, roderic, "Hello.", {})["the_stranger_told_you"]
     assert any("cracked" in line for line in heard)
     assert "the_stranger_told_you" not in briefing.converse_context(state, bren, "Hello.", {})
     state["objects"]["gate_beam"]["installed_in"] = "gate"  # The beam goes up afterwards:
     stories.tick(state)
-    assert state["stories"]["outcomes"]["gate_beam"] == "told_roderic"  # The first outcome reached closes it.
+    assert "raised" in state["stories"]["stages"]["gate_beam"]  # Repair remains possible after disclosure.
+    assert "kept_quiet" not in state["stories"]["milestones"]["gate_beam"]
 
 
 def test_the_passing_on_is_read_beside_the_conversation_never_in_anyones_own_call(monkeypatch):

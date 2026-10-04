@@ -13,6 +13,7 @@ const OBJECT_MAX_WIDTH := 60.0
 
 
 var object_textures: Dictionary = {} # object id -> resolved Texture2D
+var object_assets: Dictionary = {} # object id -> the asset version that texture depicts
 
 
 var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
@@ -21,20 +22,23 @@ var sprite_state: Dictionary = {} # asset id -> "polling" | "failed"
 ## Picture for any object: authored node, committed material art, painted sprite, or placeholder.
 func texture_for(obj: Dictionary) -> Texture2D:
 	var id := str(obj["id"])
+	var asset_id := str(obj.get("sprite_asset_id", ""))
+	if str(object_assets.get(id, "")) != asset_id:
+		object_textures.erase(id)
+		object_assets[id] = asset_id
 	if object_textures.has(id):
 		return object_textures[id]
 	var authored := game.get_node_or_null("M2Objects/" + id) as Sprite2D
-	if authored and not authored.has_meta("dynamic"):
-		return authored.texture
-	if obj.has("scene_node"):
+	if asset_id.is_empty() and authored and not authored.has_meta("dynamic"):
+		return authored.get_meta("original_texture", authored.texture)
+	if asset_id.is_empty() and obj.has("scene_node"):
 		var scene_art := game.get_node_or_null(str(obj["scene_node"])) as Sprite2D
 		if scene_art:
 			return scene_art.texture
 	var material_art := "res://assets/generated/materials/%s.png" % id
-	if ResourceLoader.exists(material_art):
+	if asset_id.is_empty() and ResourceLoader.exists(material_art):
 		object_textures[id] = _trimmed((load(material_art) as Texture2D).get_image())
 		return object_textures[id]
-	var asset_id := str(obj.get("sprite_asset_id", ""))
 	var cached := "user://assets/%s.png" % asset_id
 	if not asset_id.is_empty() and FileAccess.file_exists(cached):
 		var image := Image.load_from_file(cached)
@@ -47,6 +51,9 @@ func texture_for(obj: Dictionary) -> Texture2D:
 
 
 func is_placeholder(obj: Dictionary) -> bool:
+	var asset_id := str(obj.get("sprite_asset_id", ""))
+	if not asset_id.is_empty():
+		return str(object_assets.get(str(obj.id), "")) != asset_id or not object_textures.has(str(obj.id))
 	if obj.has("scene_node"):
 		return false
 	var authored := game.get_node_or_null("M2Objects/" + str(obj["id"])) as Sprite2D
@@ -82,6 +89,10 @@ func _trimmed_now(image: Image) -> Texture2D:
 
 
 func apply_to(sprite: Sprite2D, obj: Dictionary) -> void:
+	if not sprite.has_meta("dynamic") and not sprite.has_meta("original_texture"):
+		sprite.set_meta("original_texture", sprite.texture)
+		sprite.set_meta("original_scale", sprite.scale)
+		sprite.set_meta("original_offset", sprite.offset)
 	var texture := texture_for(obj)
 	var ring := sprite.get_node_or_null("LoadingRing")
 	if texture == null:
@@ -122,9 +133,10 @@ func _poll(object_id: String, asset_id: String) -> void:
 			if image.load_png_from_buffer(reply.body) == OK:
 				DirAccess.make_dir_recursive_absolute("user://assets")
 				image.save_png("user://assets/%s.png" % asset_id)
-				object_textures[object_id] = _trimmed(image)
 				sprite_state.erase(asset_id)
-				refresh()
+				if str(object_assets.get(object_id, "")) == asset_id:
+					object_textures[object_id] = _trimmed(image)
+					refresh()
 				return
 		if reply.status != 202:
 			sprite_state[asset_id] = "failed" # Keep the placeholder; developer mode can retry.

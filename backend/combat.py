@@ -11,6 +11,7 @@ events, so replay is exact.
 
 from __future__ import annotations
 
+import copy
 import math
 
 import cast
@@ -280,6 +281,7 @@ def strike(state: State, hand: str, target_id: str | None, now: int, facing: lis
         "lands_at": now + int(profile["windup_ms"]),
         "animation": profile["animation"],
         "object_id": (obj or {}).get("id"),
+        "profile": dict(profile),
         "ranged": ranged,
         "aim": aim,
         "facing": list(facing or [0.0, 1.0]),
@@ -317,6 +319,7 @@ def throw(state: State, hand: str, target_id: str | None, now: int, facing: list
         "animation": "throw",
         "object_id": obj["id"],
         "ranged": True,
+        "profile": dict(profile),
         "thrown": True,
         "aim": aim,
     }
@@ -374,11 +377,32 @@ def busy(state: State) -> bool:
     return bool(active(state) or (state["player"].get("swings")) or state.get("projectiles"))
 
 
-def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: paths.Grid, journal: list[dict]) -> None:
+def _tick_slice(
+    state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: paths.Grid, journal: list[dict]
+) -> None:
     """This stretch of time: the stranger's blows and missiles land; attackers close in, wind up, and their blows
     land or miss."""
     end = now + elapsed_ms
+    fight_before = active(state)
+    due = [
+        (npc, dict(swing), dict(swing.get("profile") or npc_weapon(state, npc)))
+        for oid, swing in list((fight_before or {}).get("swings", {}).items())
+        if swing["lands_at"] <= end and (npc := cast.find(npcs, oid)) is not None and not down(npc)
+    ]
+    alive_before = state["player"].get("alive", True)
+    down_before = bool(state["player"].get("down"))
+    for npc, swing, profile in due:
+        if _bound_weapon(state, npc, swing):
+            _npc_lands(state, fight_before, npc, swing, profile, journal)
+        fight_before["swings"].pop(npc["id"], None)
+    alive_after = state["player"].get("alive", True)
+    down_after = bool(state["player"].get("down"))
+    # Both committed impacts at the same timestamp are eligible from the pre-impact state.
+    state["player"]["alive"] = alive_before
+    state["player"]["down"] = down_before
     _player_swings(state, npcs, end, journal)
+    state["player"]["alive"] = alive_after
+    state["player"]["down"] = down_after
     _missiles(state, npcs, end, journal)
     fight = active(state)
     if fight is None:
@@ -420,6 +444,8 @@ def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: path
             controller["step_carry_ms"] = carry if cast.distance(npc, here) > reach else 0
         if cast.distance(npc, here) <= reach and end >= fight.get("recover", {}).get(npc_id, 0):
             fight["swings"][npc_id] = {
+                "profile": dict(profile),
+                "object_id": (gear.held(state, npc, "right") or {}).get("id"),
                 "started": end,
                 "lands_at": end + profile["windup_ms"],
                 "animation": profile["animation"],
@@ -520,13 +546,14 @@ def _player_swings(state: State, npcs: list[Npc], end: int, journal: list[dict])
         if end < swing["lands_at"]:
             continue
         player["swings"].pop(hand)
-        if not player.get("alive", True):
+        if not player.get("alive", True) or not _bound_weapon(state, player, swing):
             continue
         if swing.get("ranged"):
             _launch(state, swing)
         else:
             _player_lands(state, npcs, swing, journal)
-        profile, _ = hand_use(state, hand)
+        current_profile, _ = hand_use(state, hand)
+        profile = swing.get("profile") or current_profile
         player.setdefault("ready_at", {})[hand] = swing["lands_at"] + int(profile.get("recover_ms", 600))
 
 
@@ -534,7 +561,8 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
     """The stranger's blow (or pour) lands on the one they aimed at, if they're still there; a blow aimed at
     nobody lands on whoever is now in front of them within reach, or on thin air."""
     at = swing["lands_at"]
-    profile, obj = hand_use(state, swing["hand"])
+    current_profile, obj = hand_use(state, swing["hand"])
+    profile = swing.get("profile") or current_profile
     if swing.get("spar_with"):  # Swung in a practice bout: only ever at the partner, and only while it lasts (D-57).
         if not (active(state) or {}).get("spar"):
             _log(state, "player", "miss", "You check your swing: the bout is over.", at, journal)
@@ -548,6 +576,7 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
         )
     if npc is None or not npc.get("alive", True):
         return
+    swing["victim_awake"] = not npc.get("down")
     _spar_instead(state, npc, at)
     distance = cast.distance(npc, state["player"])
     if distance > profile["reach"] + 0.01:
@@ -676,18 +705,8 @@ def _fell(npc: Npc, result: str, now: int) -> None:
 def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
     """In a fight: someone downed drops out; someone hit who wasn't fighting now is. Outside one: an assault that
     everyone who could see it remembers, and answers (D-39, D-41)."""
-    fight = active(state)
-    if fight is not None:
-        if down(npc):
-            fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
-            fight["swings"].pop(npc["id"], None)
-            if cast.card(npc).get("robs"):
-                _robbers_run(state, npc, now)
-            if not fight["attackers"]:
-                finish(state, now)
-        elif result not in ("missed",) and npc["id"] not in fight["attackers"]:
-            start(state, [npc["id"]], now, "struck")
-        return
+    if (active(state) or {}).get("spar"):
+        return  # Consensual practice is not an assault.
     word = {
         "missed": "missed",
         "deflected": "deflected",
@@ -711,7 +730,27 @@ def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
         "harm": harm,
         "property": [],
     }
-    perception.apply_perceptions(state, perception.perceive(state, entry))
+    entry["sim_time_ms"] = now
+    before = copy.deepcopy(state)
+    victim = cast.find(before["npcs"], npc["id"])
+    if swing.get("victim_awake", True):
+        victim.update(alive=True, down=False)
+    perception.apply_perceptions(state, perception.perceive(state, entry, before))
+    fight = active(state)
+    if fight is not None:
+        if down(npc):
+            fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
+            fight["swings"].pop(npc["id"], None)
+            if cast.card(npc).get("robs"):
+                _robbers_run(state, npc, now)
+            if not fight["attackers"]:
+                finish(state, now)
+        elif (
+            result not in ("missed",)
+            and npc["id"] not in fight["attackers"]
+            and (cast.mind(npc).get("standing_plan") or {}).get("defend")
+        ):
+            start(state, [npc["id"]], now, "struck")
 
 
 def _robbers_run(state: State, fallen: Npc, now: int) -> None:
@@ -750,7 +789,8 @@ def _launch(state: State, swing: dict) -> None:
         change_object(state, obj_id, holder_id="in_flight")
         flying = obj_id
     else:
-        profile, _ = hand_use(state, hand)
+        current_profile, _ = hand_use(state, hand)
+        profile = swing.get("profile") or current_profile
         ammo_id = gear.equipped(player).get("ammo")
         ammo = state["objects"].get(ammo_id or "")
         if ammo is None:
@@ -806,6 +846,7 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
     hit = npc is not None and npc.get("alive", True) and cast.distance(npc, tuple(shot["to"])) <= tuning.HIT_RADIUS
     landing = tuple(shot["to"])
     if hit:
+        victim_awake = not npc.get("down")
         _spar_instead(state, npc, at)
         shield = gear.shield_of(state, npc)
         aware = cast.aware(state, npc)
@@ -816,13 +857,13 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
         ):
             worn = _wear_shield(state, shield, profile)
             _log(state, "player", "blocked", f"{npc['name']} catches it on the {shield['name']}." + worn, at, journal)
-            _react(state, npc, "deflected", {"object_id": shot.get("object_id")}, at)
+            _react(state, npc, "deflected", {"object_id": shot.get("object_id"), "victim_awake": victim_awake}, at)
         else:
             outcome = gear.hit(state, npc, profile, aware=aware)
             result = gear.apply(npc, outcome, at)
             _fell(npc, result, at)
             _log(state, "player", "hit", _blow_words(npc, profile, result, outcome), at, journal)
-            _react(state, npc, result, {"object_id": shot.get("object_id")}, at)
+            _react(state, npc, result, {"object_id": shot.get("object_id"), "victim_awake": victim_awake}, at)
         landing = cast.cell(npc)
     elif shot.get("target"):
         name = npc["name"] if npc else "them"
@@ -846,3 +887,29 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
                 "mass_kg": round(source.get("mass_kg", 0.3) / max(1, source.get("count", 1) + 1), 3),
             }
             add_object(state, spent)
+
+
+def _bound_weapon(state, actor, swing):
+    if "object_id" not in swing:
+        return True  # Compatibility with a hand-built event in old fixtures.
+    obj = gear.held(state, actor, swing.get("hand", "right"))
+    return (obj or {}).get("id") == swing["object_id"]
+
+
+def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: paths.Grid, journal: list[dict]) -> None:
+    """A single millisecond chronology gives identical events for every clock partition.
+
+    Idle worlds skip this loop. All impacts due at one timestamp use actors eligible before impact;
+    movement carries and recovery start at the actual instant, rather than the end of the request.
+    """
+    if not busy(state):
+        return
+    _tick_slice(state, npcs, 0, now, blocked, journal)
+    import clock
+
+    for at in range(now + 1, now + elapsed_ms + 1):
+        if not busy(state):
+            clock._bodies(state, npcs, now + elapsed_ms - at + 1, at - 1, journal)
+            break
+        clock._bodies(state, npcs, 1, at - 1, journal)
+        _tick_slice(state, npcs, 1, at - 1, blocked, journal)

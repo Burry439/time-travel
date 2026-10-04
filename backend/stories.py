@@ -1,28 +1,17 @@
-"""The village's storylines and people's hidden layers (GDD D-56, D-61).
-
-Stories (data/content/stories.json) have fixed goals and no methods: each stage and outcome is a result in the
-world, checked here by code, so any way the stranger finds counts. Outcomes of one story exclude each other: the
-first reached closes it, and its effects (how people regard the stranger, how they feel about each other) are
-applied once. A story move is something a person may choose to do in conversation (Darin letting Oren's debt
-go) once code says it's possible; that person, in their own call, decides whether they do. A level says which
-stories run in it (the village: all of them).
-
-Secrets (each person's file, data/people) come out the same way: code decides when a person could confide one
-(trust high enough, the stranger already knowing a related secret, help given...), and they decide whether they
-do. What the stranger tells one person about another is recorded (who heard which secret: a reading of the
-stranger's words beside the conversation, never in anyone's own call), and stories react.
-
-Everything changes only through `tick` (saved as an event with the resulting fields, see routes_tutorial) and
-through the conversation's own moves (talk.exchange), so replay is exact.
-"""
+"""Authored story milestones and private secrets. Milestones observe committed world facts;
+reaching one does not freeze later consequences or change absent people's minds. Secrets are
+available only from their owner's context and are revealed when that person chooses to confide."""
 
 from __future__ import annotations
 
 import cast
 import content
+import evidence
+import paths
 import persona
 import reputation
 import rules
+import tuning
 from shapes import Npc, State, Thing
 
 DATA = content.read("content/stories.json")
@@ -104,14 +93,10 @@ def helped(state: State, npc: Npc) -> bool:
 
 def confidable(state: State, npc: Npc) -> list[dict]:
     """Secrets this person could confide in the stranger now (code's side; the voice decides whether they do)."""
-    if not npc.get("alive", True) or reputation.knows_a_crime(npc):
+    if not npc.get("alive", True) or npc.get("down"):
         return []
     told = set(_mind(npc).get("confided", []))
-    return [
-        s
-        for s in cast.card(npc).get("secrets", [])
-        if "id" in s and s["id"] not in told and s.get("unlock") and rules.holds(state, s["unlock"], {"npc": npc})
-    ]
+    return [s for s in cast.card(npc).get("secrets", []) if "id" in s and s["id"] not in told and s.get("unlock")]
 
 
 def heard(npc: Npc) -> list[str]:
@@ -158,6 +143,31 @@ def tell(state: State, secret_ids: list[str], listeners: list[dict], event_id: i
             told.append(
                 {"secret": secret_id, "to": npc["id"], "to_name": npc["name"], "about": known[secret_id]["whose"]}
             )
+    for delivery in told:
+        receiver = cast.find(state["npcs"], delivery["to"])
+        memory = {
+            "kind": "disclosure",
+            "event": event_id,
+            "object_id": delivery["secret"],
+            "victim": delivery["to"],
+            "at": now,
+            "severity": 1,
+            "clarity": "clear",
+            "source": "received",
+            "summary": f"The stranger told {delivery['to_name']} a confidence about {delivery['about']}.",
+            "short": "passed on a confidence",
+        }
+        reputation.remember(receiver, memory)
+        cast.add_pending(state, receiver["id"], "decide", "heard a confidence")
+        # Others may hear this disclosure only while present and within hearing range.
+        for npc in state["npcs"]:
+            if npc["id"] == receiver["id"] or not npc.get("alive", True) or npc.get("down"):
+                continue
+            if cast.distance(npc, state["player"]) <= tuning.HEAR_TALK_CELLS and paths.line_of_sight(
+                state, cast.cell(npc), cast.player_cell(state)
+            ):
+                reputation.remember(npc, {**memory, "source": "overheard"})
+                cast.add_pending(state, npc["id"], "decide", "overheard a confidence being disclosed")
     return told
 
 
@@ -226,7 +236,7 @@ def _seen_demonstration(state, spec, ctx):
     wonder, if asked)."""
     for npc_id in spec.get("npcs", []):
         npc = cast.find(state["npcs"], npc_id)
-        for memory in _mind(npc).get("memories", []) if npc else []:
+        for memory in (evidence.held(npc) or _mind(npc).get("memories", [])) if npc else []:
             if memory["kind"] != "demonstration" or not memory.get("works", True) or memory.get("clarity") != "clear":
                 continue
             if spec.get("wonder") and memory.get("wonder") not in spec["wonder"]:
@@ -247,6 +257,7 @@ def _given(state, spec, ctx):
         o.get("given_by") == "player"  # consequences.apply marks a gift (D-61).
         and (o.get("holder_id") in people or o.get("owner_id") in people)
         and _flags_match(o, spec)
+        and (not spec.get("flags") or any(c.get("status") == "observed" for c in o.get("known_capabilities", [])))
         for o in state["objects"].values()
     )
 
@@ -263,9 +274,8 @@ def moves_for(state: State, npc: Npc) -> list[dict]:
         if m["story"] in here
         and m["npc"] == npc["id"]
         and m["id"] not in record["moves"]
-        and m["story"] not in record["outcomes"]
         and npc.get("alive", True)
-        and rules.holds(state, m["when"])
+        and _physical_conditions(state, m["when"])
     ]
 
 
@@ -288,14 +298,16 @@ def pending(state: State) -> bool:
         reached = record["stages"].get(story["id"], [])
         if any(s["id"] not in reached and rules.holds(state, s["when"]) for s in story.get("stages", [])):
             return True
-        if story["id"] not in record["outcomes"] and any(rules.holds(state, o["when"]) for o in story["outcomes"]):
+        if any(
+            o["id"] not in record.get("milestones", {}).get(story["id"], []) and rules.holds(state, o["when"])
+            for o in story["outcomes"]
+        ):
             return True
     return False
 
 
 def tick(state: State) -> bool:
-    """Record stages the stranger has now reached and close any story whose outcome has happened (applying its
-    effects once). Returns whether anything changed."""
+    """Record newly reached stages and outcomes while leaving later consequences observable."""
     record = book(state)
     now = state.get("sim_time_ms", 0)
     changed = False
@@ -307,17 +319,21 @@ def tick(state: State) -> bool:
                 record["log"].append({"story": story["id"], "stage": stage["id"], "at": now})
                 _journal(state, story, "stage", stage["id"], stage["summary"])
                 changed = True
-        if story["id"] in record["outcomes"]:
-            continue
+        completed = record.setdefault("milestones", {}).setdefault(story["id"], [])
         for outcome in story.get("outcomes", []):
-            if rules.holds(state, outcome["when"]):
+            if outcome["id"] not in completed and rules.holds(state, outcome["when"]):
                 record["outcomes"][story["id"]] = outcome["id"]
                 record["log"].append({"story": story["id"], "outcome": outcome["id"], "at": now})
-                for effect in outcome.get("effects", []):
-                    EFFECTS[effect["kind"]](state, effect)
+                completed.append(outcome["id"])
+                # Story entries project facts; each person's interpretation belongs to their own call.
+                for npc in state["npcs"]:
+                    if _knows_outcome(state, npc, outcome["when"]):
+                        cast.mind(npc).setdefault("story_facts", []).append(
+                            {"story": story["id"], "outcome": outcome["id"], "summary": outcome["summary"], "at": now}
+                        )
+                        cast.add_pending(state, npc["id"], "decide", "a story fact they learned")
                 _journal(state, story, "outcome", outcome["id"], outcome["summary"])
                 changed = True
-                break
     for story_id in [k for k, v in record["stages"].items() if not v]:
         del record["stages"][story_id]  # Only stories the stranger has come into.
     return changed
@@ -368,17 +384,11 @@ NEEDS = {"shift_regard": ("npc",), "shift_opinion": ("npc", "of", "warmth")}
 
 def how_things_stand(state: State, npc: Npc) -> list[str]:
     """Stories this person is part of that have been settled, in plain words (for their character sheet)."""
-    record = _record(state)
-    lines = []
-    for story_id, outcome_id in record["outcomes"].items():
-        story = STORIES.get(story_id)
-        people = (story or {}).get("people", {})
-        if story and npc["id"] in [people.get("owner"), *people.get("helps", []), *people.get("opposes", [])]:
-            outcome = next(o for o in story["outcomes"] if o["id"] == outcome_id)
-            lines.append(
-                f"{story['title']}: {outcome['summary'].replace('You ', 'The stranger ').replace('you', 'the stranger')}"
-            )
-    return lines
+    return [
+        f"{STORIES[f['story']]['title']}: {f['summary']}"
+        for f in _mind(npc).get("story_facts", [])
+        if f["story"] in STORIES
+    ]
 
 
 def page(state: State) -> list[dict] | None:
@@ -410,3 +420,32 @@ def page(state: State) -> list[dict] | None:
 
 def near_enough(state: State, npc: Npc, cells: float) -> bool:
     return cast.distance(npc, state["player"]) <= cells
+
+
+def _physical_conditions(state, spec):
+    """Authored motives are suggestions; actual resources remain prerequisites."""
+    if not spec:
+        return True
+    if spec.get("kind") in ("regard", "willing", "helped"):
+        return True
+    if spec.get("kind") == "all":
+        return all(_physical_conditions(state, c) for c in spec["of"])
+    if spec.get("kind") == "any":
+        return any(_physical_conditions(state, c) for c in spec["of"])
+    return rules.holds(state, spec)
+
+
+def _knows_outcome(state, npc, spec):
+    text = str(spec)
+    if "told" in text:
+        # Knowing a secret is separate from knowing who betrayed it to whom.
+        return any(m.get("kind") == "disclosure" and m.get("object_id") in text for m in evidence.held(npc))
+    if "learned" in text and "given" not in text and "installed" not in text and "treated" not in text:
+        return False
+    return (
+        any(
+            m.get("kind") in ("gift", "help", "demonstration") and m.get("clarity") == "clear"
+            for m in evidence.held(npc)
+        )
+        and cast.distance(npc, state["player"]) <= tuning.SIGHT_CELLS
+    )

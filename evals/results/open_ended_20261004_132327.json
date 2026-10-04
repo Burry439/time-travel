@@ -1,0 +1,70 @@
+[
+  {
+    "name": "novel_groove",
+    "passed": false,
+    "seconds": 4.34,
+    "category": "unresolved",
+    "reason": "The judge couldn't be reached, so nothing was decided and nothing changed.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "proposal": null,
+    "persisted_novel_attributes": false,
+    "run": 1
+  },
+  {
+    "name": "absurd_capacity",
+    "passed": false,
+    "seconds": 0.23,
+    "category": "unresolved",
+    "reason": "The judge couldn't be reached, so nothing was decided and nothing changed.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "proposal": null,
+    "run": 1
+  },
+  {
+    "name": "bronze_magnet",
+    "passed": false,
+    "seconds": 0.22,
+    "category": "unresolved",
+    "reason": "The judge couldn't be reached, so nothing was decided and nothing changed.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "proposal": null,
+    "run": 1
+  },
+  {
+    "name": "uncommitted_helper",
+    "passed": false,
+    "seconds": 0.21,
+    "category": "unresolved",
+    "reason": "The judge couldn't be reached, so nothing was decided and nothing changed.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "proposal": null,
+    "run": 1
+  },
+  {
+    "name": "negotiated_task",
+    "passed": false,
+    "seconds": 0.2,
+    "lines": [],
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "model": "gpt-6-luna",
+    "run": 1
+  },
+  {
+    "name": "individual_duty_exception",
+    "passed": false,
+    "seconds": 0.19,
+    "lines": [],
+    "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Your API key has expired. Create a new API key to continue.', 'type': 'invalid_request_error', 'code': 'expired_secret_key', 'param': None}, 'status': 401}",
+    "model": "gpt-6-luna",
+    "choice": null,
+    "run": 1
+  }
+]

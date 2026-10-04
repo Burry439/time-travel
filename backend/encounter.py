@@ -29,7 +29,6 @@ import content
 import conversation
 import minds
 import paths
-import perception
 import reputation
 import speech
 import tuning
@@ -234,12 +233,11 @@ def resolve(
     elif kind == "do":
         payload, verdict, _ = consequences.resolve_attempt(draft, run_id, text, judged, service_error, trace_id, now)
         consequences.apply_payload(draft, payload)
-        draft["sim_time_ms"] = now  # Time passes once, for the whole round.
+
+        encounter = active(draft) or encounter
         entry = payload["journal_entry"]
         record["entry"], record["effort_seconds"], record["verdict"] = entry, verdict["effort_seconds"], verdict
-        perceptions = perception.perceive(draft, entry)
-        perception.apply_perceptions(draft, perceptions)
-        reputation.after_deed(draft, entry)
+        perceptions = [p for d in payload["steps"] for p in d.get("observations", [])]
         inside = set(encounter["participants"])
         draft["pending_minds"] = [
             p for p in draft.get("pending_minds", []) if not (p["npc_id"] in inside and p["kind"] == "decide")
@@ -267,7 +265,13 @@ def resolve(
             (n for n in [encounter["opened_by"]] + encounter["participants"] if n in encounter["participants"]), None
         )
     )
-    if target and draft["player"].get("alive", True) and not record["walked_away"] and not record["seized_by"]:
+    if (
+        target
+        and active(draft)
+        and draft["player"].get("alive", True)
+        and not record["walked_away"]
+        and not record["seized_by"]
+    ):
         record["replier"] = target
     return draft, record
 

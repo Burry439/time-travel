@@ -22,6 +22,8 @@ def scene_call(context: dict, scripted, text_for=None) -> voice.VoiceCall:
                 "story_beat": reply.get("story_beat", False),  # The line got the speaker's story beat across (D-59).
                 "answers": reply,
                 "remember": reply.get("remember", ""),
+                "intents": reply.get("intents", []),
+                "agreement": reply.get("agreement"),
                 "feelings": reply.get("feelings", []),  # [{person_id, change}] (D-59).
             }
         )

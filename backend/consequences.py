@@ -7,13 +7,20 @@ from __future__ import annotations
 import copy
 import re
 
+import actors
 import cast
+import clock
 import content
 import crafting
 import gear
 import heat
+import judge_view
 import m2
 import paths
+import perception
+import precedents
+import reputation
+import store
 import tuning
 from shapes import State, Thing
 
@@ -97,6 +104,8 @@ def _object(
         "length_m": spec.get("length_m"),
         "rated_load_kg": spec.get("rated_load_kg"),
         "known_capabilities": spec["known_capabilities"],
+        "attributes": copy.deepcopy(spec.get("attributes", [])),
+        "revision": 0,
         "components": components,
         "tools_used": tools,
         **({"gear": spec["gear"]} if spec.get("gear") else {}),
@@ -109,7 +118,9 @@ def _object(
     }
 
 
-def _step_deltas(state: State, run_id: str, text: str, verdict: dict, event_id: int, number: int) -> dict:
+def _step_deltas(
+    state: State, run_id: str, text: str, verdict: dict, event_id: int, number: int, actor_id: str = "player"
+) -> dict:
     """World changes for one validated step; ids stay unique across the steps of one attempt."""
     walk = verdict.get("walk") or []
     px, py = walk[-1] if walk else (state["player"]["x"], state["player"]["y"])
@@ -117,7 +128,7 @@ def _step_deltas(state: State, run_id: str, text: str, verdict: dict, event_id: 
         "run_id": run_id,
         "text": text,
         "event_id": event_id,
-        "suffix": "" if number == 1 else f"_{number}",
+        "suffix": ("" if number == 1 else f"_{number}") + (f"_{actor_id}" if actor_id != "player" else ""),
         "at": (px, py),
     }
     work = CHANGES.get(verdict["action"])
@@ -126,6 +137,7 @@ def _step_deltas(state: State, run_id: str, text: str, verdict: dict, event_id: 
         body = {k: verdict["hurt_self"][k] for k in ("conditions", "health")}
         parts.setdefault("water", []).append({"id": "__player__", **body})
     deltas = {
+        "effects": verdict.get("effects", []),
         "consumed_ids": parts.get("consumed_ids", []),
         "new_objects": parts.get("new_objects", []),
         "taken_ids": parts.get("taken_ids", []),
@@ -398,9 +410,35 @@ CHANGES = {
 }
 
 
-def apply_step(state: State, deltas: dict) -> None:
+def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
+    actor = state["player"] if actor_id == "player" else cast.find(state["npcs"], actor_id)
+    for effect in deltas.get("effects", []):
+        obj = state["objects"][effect["target_id"]]
+        if effect["kind"] == "attribute":
+            attributes = obj.setdefault("attributes", [])
+            prior = next((a for a in attributes if a["name"] == effect["attribute"]["name"]), None)
+            if prior != effect["attribute"]:
+                attributes[:] = [a for a in attributes if a["name"] != effect["attribute"]["name"]]
+                attributes.append(copy.deepcopy(effect["attribute"]))
+                obj["revision"] = obj.get("revision", 0) + 1
+                sprite = f"spr_{state['run_id'][:8]}_{obj['id']}_r{obj['revision']}"
+                obj.update(sprite_asset_id=sprite, picture_event_id=state["event_seq"] + 1)
+                obj.update(_picture_ids(obj, sprite))
+        else:
+            other = state["objects"][effect["other_id"]]
+            for first, second in ((obj, other), (other, obj)):
+                links = first.setdefault("bound_to", [])
+                changed = False
+                if effect["kind"] == "connect" and second["id"] not in links:
+                    links.append(second["id"])
+                    changed = True
+                elif effect["kind"] == "disconnect" and second["id"] in links:
+                    links.remove(second["id"])
+                    changed = True
+                if changed:
+                    first["revision"] = first.get("revision", 0) + 1
     if deltas.get("player_to"):
-        state["player"].update(x=deltas["player_to"][0], y=deltas["player_to"][1])
+        actor.update(x=deltas["player_to"][0], y=deltas["player_to"][1])
     for landed in deltas.get("moved", []):
         if landed.get("used_up"):  # A bandage or poultice, used (D-49).
             state["objects"][landed["id"]].update(holder_id="used", condition="used up")
@@ -415,10 +453,10 @@ def apply_step(state: State, deltas: dict) -> None:
             state["objects"][obj["id"]] = obj
             heat.rename(obj)
     for item_id in deltas.get("taken_ids", []):
-        state["objects"][item_id]["holder_id"] = "player"
+        state["objects"][item_id]["holder_id"] = actor_id
     for change in deltas.get("water", []):  # Water moved, heated, poured; any change of state in place.
         if change["id"] == "__player__":  # The stranger's own body and kit (D-49).
-            state["player"].update(copy.deepcopy({k: v for k, v in change.items() if k != "id"}))
+            actor.update(copy.deepcopy({k: v for k, v in change.items() if k != "id"}))
             continue
         state["objects"][change["id"]].update({k: v for k, v in change.items() if k != "id"})
         if not state["objects"][change["id"]].get("water_l"):
@@ -452,7 +490,7 @@ def apply_step(state: State, deltas: dict) -> None:
         state.setdefault("trades", {})[deltas["trade"]["id"]] = dict(deltas["trade"])
     given = deltas.get("given")
     for item_id in (given or {}).get("ids", []):
-        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id], given_by="player")
+        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id], given_by=actor_id)
         if given["owners"][item_id] == given["to"]:
             state["objects"][item_id].pop("lent_to", None)  # Back in its owner's hands: the loan is over.
     transformed = deltas.get("transformed")
@@ -519,7 +557,14 @@ def humanize(text: str, state: State, made_by_step: dict[int, str]) -> str:
 
 
 def resolve_attempt(
-    state: State, run_id: str, text: str, judged: dict | None, service_error: str | None, trace_id: str, now_ms: int
+    state: State,
+    run_id: str,
+    text: str,
+    judged: dict | None,
+    service_error: str | None,
+    trace_id: str,
+    now_ms: int,
+    actor_id: str = "player",
 ) -> tuple[dict, dict, dict]:
     """Validate and apply the judge's steps in order on a draft world; stop at the first that fails.
 
@@ -527,6 +572,7 @@ def resolve_attempt(
     """
     event_id = state["event_seq"] + 1
     draft = copy.deepcopy(state)
+    actor = draft["player"] if actor_id == "player" else cast.find(draft["npcs"], actor_id)
     verdicts, deltas, made_by_step = [], [], {}
     if judged is None:
         verdicts.append(crafting.validate(draft, None, service_error))
@@ -536,15 +582,64 @@ def resolve_attempt(
         verdicts.append(crafting.unresolved([], "the judge returned no steps"))
     else:
         for number, step in enumerate(judged["steps"][:MAX_STEPS], 1):
-            verdict = crafting.validate(draft, _resolve_references(step, made_by_step))
+            proposal = _resolve_references(step, made_by_step)
+            proposal["precedent_key"] = judged.get("precedent_key")
+            verdict = crafting.validate(actors.view(draft, actor_id), proposal)
+            if verdict["category"] != "success":
+                if verdict["category"] == "failed":
+                    _advance(draft, verdict["effort_seconds"] * 1000)
+                _precedent(draft, draft, proposal, verdict, text)
+                verdicts.append(verdict)
+                break
+            start = draft["sim_time_ms"]
+            interrupted = False
+            # Walking and work happen before the effect, in bounded stretches of world time.
+            walk = verdict.get("walk", [])
+            walk_ms = min(verdict["effort_seconds"] * 1000, len(walk) * tuning.WALK_STEP_MS)
+            for cell in walk:
+                actor = draft["player"] if actor_id == "player" else cast.find(draft["npcs"], actor_id)
+                actor.update(x=cell[0], y=cell[1])
+                _advance(draft, tuning.WALK_STEP_MS)
+                if _interrupted(draft, actor_id):
+                    interrupted = True
+                    break
+            remaining = max(0, verdict["effort_seconds"] * 1000 - walk_ms)
+            while remaining and not interrupted:
+                span = min(remaining, 100 if draft.get("fight") else 10000)
+                _advance(draft, span)
+                remaining -= span
+                interrupted = _interrupted(draft, actor_id)
+            if interrupted:
+                verdicts.append(
+                    crafting.ruling(
+                        "blocked",
+                        "The work was interrupted before this step was completed.",
+                        [],
+                        (draft["sim_time_ms"] - start) // 1000,
+                        action=proposal["action"],
+                    )
+                )
+                break
+            # Revalidate moving targets and resources at the instant the effect happens.
+            verdict = crafting.validate(actors.view(draft, actor_id), proposal)
+            verdict["effort_seconds"] = (draft["sim_time_ms"] - start) // 1000
+            verdict["walk"] = walk
             verdicts.append(verdict)
             if verdict["category"] != "success":
                 break
-            step_deltas = _step_deltas(draft, run_id, text, verdict, event_id, number)
-            apply_step(draft, step_deltas)
+            before = copy.deepcopy(draft)
+            step_deltas = _step_deltas(actors.view(draft, actor_id), run_id, text, verdict, event_id, number, actor_id)
+            actors.normalize(step_deltas, actor_id)
+            apply_step(draft, step_deltas, actor_id)
             deltas.append(step_deltas)
             if step_deltas["new_objects"]:
                 made_by_step[number] = step_deltas["new_objects"][0]["id"]
+            step_entry = _step_entry(draft, verdict, step_deltas, event_id, number, text, actor_id)
+            observed = perception.perceive(draft, step_entry, before)
+            perception.apply_perceptions(draft, observed)
+            reputation.after_deed(draft, step_entry)
+            step_deltas["observations"] = observed
+            _precedent(draft, before, proposal, verdict, text)
         if len(judged["steps"]) > MAX_STEPS and verdicts[-1]["category"] == "success":
             verdicts[-1]["notes"].append(f"Only the first {MAX_STEPS} steps were attempted.")
     for verdict in verdicts:
@@ -586,9 +681,11 @@ def resolve_attempt(
         ],
     }
     transformed = next((d["transformed"] for d in reversed(deltas) if d["transformed"]), None)
-    px, py = state["player"]["x"], state["player"]["y"]
+    actor = draft["player"] if actor_id == "player" else cast.find(draft["npcs"], actor_id)
+    px, py = actor["x"], actor["y"]
     entry = {
         "kind": "craft",
+        "actor_id": actor_id,
         "action": summary["action"],
         "text": text,
         "category": category,
@@ -597,7 +694,7 @@ def resolve_attempt(
         "step": {
             "step_id": "step_1",
             "operation_key": "craft",
-            "actor_id": "player",
+            "actor_id": actor_id,
             "input_refs": [
                 {"existing_entity_id": i}
                 for i in summary["consumed_ids"]
@@ -636,11 +733,38 @@ def resolve_attempt(
         "precedent_key": summary["precedent_key"],
         "trace_id": trace_id,
     }
-    payload = {"steps": deltas, "journal_entry": entry, "sim_time_ms": now_ms + summary["effort_seconds"] * 1000}
+    payload = {
+        "steps": deltas,
+        "journal_entry": entry,
+        "sim_time_ms": draft["sim_time_ms"],
+        "journal_added": copy.deepcopy(draft["journal"][len(state["journal"]) :]),
+        "world": {
+            k: copy.deepcopy(v)
+            for k, v in draft.items()
+            if k not in ("journal", "last_action", "event_seq", "player_seq", "tick")
+        },
+    }
     return payload, summary, draft
 
 
 def apply_payload(state: State, payload: dict) -> None:
+    if "world" in payload:
+        world = copy.deepcopy(payload["world"])
+        for oid, obj in world.pop("objects").items():
+            state["objects"].setdefault(oid, {}).update(obj)
+        for npc in world.pop("npcs"):
+            existing = cast.find(state["npcs"], npc["id"])
+            if existing is None:
+                state["npcs"].append(npc)
+            else:
+                existing.clear()
+                existing.update(npc)
+        state["player"].update(world.pop("player"))
+        state.update(world)
+        state["journal"].extend(payload.get("journal_added", []))
+        state["journal"].append(payload["journal_entry"])
+        state["last_action"] = payload["journal_entry"]
+        return
     # People first, so wounds and deaths recorded by the steps are applied on top of their movement.
     if "npcs" in payload:
         state["npcs"] = payload["npcs"]
@@ -649,3 +773,72 @@ def apply_payload(state: State, payload: dict) -> None:
     state["journal"].append(payload["journal_entry"])
     state["last_action"] = payload["journal_entry"]
     state["sim_time_ms"] = payload["sim_time_ms"]
+
+
+def _advance(state, elapsed):
+    payload = clock.advance_people(state, elapsed)
+    store.apply_people(state, payload)
+    state["sim_time_ms"] += elapsed
+
+
+def _interrupted(state, actor_id):
+    actor = state["player"] if actor_id == "player" else cast.find(state["npcs"], actor_id)
+    return not actor.get("alive", True) or actor.get("down", False) or state.get("subdued_by")
+
+
+def _step_entry(state, verdict, delta, event, number, text, actor_id):
+    made = delta["new_objects"]
+    return {
+        "kind": "craft",
+        "category": verdict["category"],
+        "action": verdict["action"],
+        "reason": verdict["reason"],
+        "text": text,
+        "event_id": event,
+        "step_number": number,
+        "actor_id": actor_id,
+        "player_cell": list(
+            cast.player_cell(state) if actor_id == "player" else cast.cell(cast.find(state["npcs"], actor_id))
+        ),
+        "property": verdict["property"],
+        "made_ids": [o["id"] for o in made],
+        "made_name": made[0]["name"] if made else None,
+        **{k: verdict.get(k) for k in ("harm", "demonstration", "give", "install", "lift_out")},
+        "treated": verdict.get("treat"),
+    }
+
+
+def _precedent(state, before, proposal, verdict, text):
+    refs = set(verdict["consumed_ids"] + verdict["tool_ids"] + verdict["take_ids"])
+    # Preserve causal input state, independent of descriptive prose.
+    refs.update(proposal.get("resource_ids", []))
+
+    def named(value):
+        if isinstance(value, str) and value in before["objects"]:
+            refs.add(value)
+        elif isinstance(value, dict):
+            for item in value.values():
+                named(item)
+        elif isinstance(value, list):
+            for item in value:
+                named(item)
+
+    named(proposal)
+    people = {p["id"]: p for p in judge_view.people_nearby(before)}
+    helper_refs = set(proposal.get("helper_ids", []))
+    for operation in ("install", "lift_out"):
+        helper_refs.update((proposal.get(operation) or {}).get("aid_ids", []))
+    helpers = {i: precedents.helper_fingerprint(people[i]) for i in helper_refs if i in people}
+    inputs = {i: copy.deepcopy(before["objects"][i]) for i in sorted(refs) if i in before["objects"]}
+    case = {
+        "intention": text,
+        "proposal": copy.deepcopy(proposal),
+        "inputs": inputs,
+        "helpers": helpers,
+        "outcome": verdict["category"],
+        "reason": verdict["reason"],
+        "at": state["sim_time_ms"],
+    }
+    key = proposal.get("precedent_key") or str(len(state.setdefault("precedents", [])))
+    case["key"] = key
+    state.setdefault("precedents", []).append(case)

@@ -65,9 +65,16 @@ def health():
     return {
         "status": "ok",
         "seed_version": store.SEED_VERSION,
+        "rules_revision": "D-62",
         "geometry_version": store.GEOMETRY_VERSION,
         "ai": {**ai_config.status(), **decider.status()},
     }
+
+
+@router.get("/health/ai")
+def ai_readiness():
+    """An explicit credential/model check; no generation and no world mutation."""
+    return ai_config.credential_readiness(ai_config.api_key(), ai_config.judge_model())
 
 
 @router.post("/runs", status_code=201)

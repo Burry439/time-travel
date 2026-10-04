@@ -40,7 +40,7 @@ def test_someone_helped_can_speak_for_the_stranger_whatever_their_trust():
     state = unit_state()
     jory = npc(state, "npc_jory_venn")
     reputation.regard(jory)["trust"] = 0.3
-    assert "vouch" not in conversation.replies(state, jory)
+    assert "vouch" in conversation.replies(state, jory)
     treated(state, "npc_jory_venn")
     reputation.regard(jory)["trust"] = 0.3  # Evidence raised it; the help alone must be enough.
     assert "vouch" in conversation.replies(state, jory)

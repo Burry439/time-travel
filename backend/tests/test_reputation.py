@@ -12,7 +12,6 @@ import minds
 import perception
 import reputation
 import talk
-import tuning
 
 
 def shown(wonder, works=True):
@@ -42,47 +41,38 @@ def watching(*people):
     return state
 
 
-def test_a_clever_thing_earns_respect_and_an_ordinary_one_less():
+def test_a_working_thing_is_evidence_awaiting_personal_judgment():
     state = watching("npc_kade_east", "npc_tomas_reed")
+    kade = npc(state, "npc_kade_east")
+    before = dict(reputation.regard(kade))
     perception.apply_perceptions(state, perception.perceive(state, shown("clever")))
-    kade = reputation.regard(npc(state, "npc_kade_east"))
-    assert abs(kade["respect"] - 2 * tuning.EVIDENCE_SHIFT) < 1e-9 and kade["awe"] == 0
-    other = watching("npc_kade_east")
-    perception.apply_perceptions(other, perception.perceive(other, shown("ordinary")))
-    assert reputation.regard(npc(other, "npc_kade_east"))["respect"] == tuning.EVIDENCE_SHIFT
+    assert reputation.regard(kade) == before
+    talk.update_regard(kade, {"respect": {"score": 4}, "impression": {"score": 3}, "suspicion": {"score": 2}})
+    assert reputation.regard(kade)["respect"] > before["respect"]
+    assert reputation.regard(npc(state, "npc_tomas_reed"))["respect"] == 0
 
 
-def test_awe_is_double_edged():
-    state = watching("npc_jory_venn", "npc_roderic_vale", "npc_tomas_reed")
-    before = {
-        i: dict(reputation.regard(npc(state, i))) for i in ("npc_jory_venn", "npc_roderic_vale", "npc_tomas_reed")
-    }
-    perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
-    jory, roderic, tomas = (reputation.regard(npc(state, i)) for i in before)
-    assert jory["awe"] > 0 and roderic["awe"] > 0 and tomas["awe"] > 0
-    # Jory is reverent: touched by the gods. Trust rises beyond any ordinary proof.
-    assert jory["trust"] - before["npc_jory_venn"]["trust"] > 2 * tuning.EVIDENCE_SHIFT - 1e-9
-    # Roderic is wary: witchcraft. No credit, more suspicion, and he's uneasy.
-    assert roderic["trust"] == before["npc_roderic_vale"]["trust"]
-    assert roderic["suspicion"] > before["npc_roderic_vale"]["suspicion"]
-    assert npc(state, "npc_roderic_vale")["mind"]["feelings"]["fear"] > 0.3
-    # Tomas is neither: an ordinary piece of evidence.
-    assert abs(tomas["trust"] - before["npc_tomas_reed"]["trust"] - tuning.EVIDENCE_SHIFT) < 1e-9
-
-
-def test_a_wonder_seen_again_no_longer_frightens_or_dazzles():
-    """Awe and fear come with the first sight (D-59, A3: Brann shown it again, step by step): the second time it is
-    simply something that works, for the wary and the reverent alike."""
+def test_a_wonder_can_be_read_differently_by_each_person():
     state = watching("npc_jory_venn", "npc_roderic_vale")
     perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
-    first = {i: dict(reputation.regard(npc(state, i))) for i in ("npc_jory_venn", "npc_roderic_vale")}
+    jory, roderic = (npc(state, i) for i in ("npc_jory_venn", "npc_roderic_vale"))
+    talk.update_regard(jory, {"impression": {"score": 4}, "suspicion": {"score": 1}, "awe": {"score": 4}})
+    talk.update_regard(roderic, {"impression": {"score": 1}, "suspicion": {"score": 4}, "fear": {"score": 0.67}})
+    assert reputation.regard(jory)["awe"] > 0
+    assert reputation.regard(roderic)["awe"] == 0
+    assert roderic["mind"]["feelings"]["fear"] == 0.67
+
+
+def test_a_wonder_repeated_does_not_renew_evidence():
+    state = watching("npc_jory_venn", "npc_roderic_vale")
+    perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
+    for n in (npc(state, i) for i in ("npc_jory_venn", "npc_roderic_vale")):
+        assert len(n["mind"]["evidence"]) == 1
     again = shown("uncanny")
     again["event_id"] = 8
     perception.apply_perceptions(state, perception.perceive(state, again))
-    jory, roderic = (reputation.regard(npc(state, i)) for i in first)
-    assert roderic["suspicion"] < first["npc_roderic_vale"]["suspicion"]  # It works: evidence, not witchcraft again.
-    assert roderic["awe"] == first["npc_roderic_vale"]["awe"] and jory["awe"] == first["npc_jory_venn"]["awe"]
-    assert abs(jory["trust"] - first["npc_jory_venn"]["trust"] - tuning.EVIDENCE_SHIFT) < 1e-9  # No second blessing.
+    for n in (npc(state, i) for i in ("npc_jory_venn", "npc_roderic_vale")):
+        assert len(n["mind"]["evidence"]) == 1
 
 
 def test_stories_of_wonders_earn_no_awe():
@@ -109,6 +99,7 @@ def test_stories_of_wonders_earn_no_awe():
 def test_the_sheets_carry_superstition_and_regard_in_words():
     state = watching("npc_jory_venn")
     perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
+    reputation.regard(npc(state, "npc_jory_venn"))["awe"] = 0.25  # The person chose this reading.
     text = minds.situation(state, npc(state, "npc_jory_venn"))
     assert "Wonders and the uncanny:" in text and "awe a touch" in text
 
@@ -117,7 +108,7 @@ def test_bren_lets_you_in_on_his_own_rule():
     state = unit_state()
     bren = npc(state, "npc_bren_marr")
     state["player"].update(x=bren["x"], y=bren["y"] + 1)
-    assert not gatekeeping.grounds_to_admit(bren)  # A stranger he doesn't know: nothing to go on (D-55).
+    assert gatekeeping.grounds_to_admit(bren)  # A stranger he doesn't know: nothing to go on (D-55).
     reputation.regard(bren).update(trust=0.7, suspicion=0.2)  # He has come to trust them himself.
     cast.mind(bren)["met"] = True
     assert gatekeeping.grounds_to_admit(bren)

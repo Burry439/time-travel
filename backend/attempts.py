@@ -11,6 +11,7 @@ import threading
 from fastapi import BackgroundTasks
 
 import library
+import precedents
 import store
 from ai import config as ai_config
 from ai import illustrator, judge, telemetry
@@ -96,6 +97,17 @@ def record_attempt(
     return trace
 
 
+def queue_revised_pictures(connection, run_id, state, event, background):
+    """A changed physical appearance gets new assets after the reducer commits it."""
+    for obj in state["objects"].values():
+        if obj.get("picture_event_id") != event:
+            continue
+        signature = library.signature(obj)
+        for view, field in (("world", "sprite_asset_id"), ("held", "held_asset_id"), ("worn", "worn_asset_id")):
+            if obj.get(field):
+                queue_picture(connection, run_id, obj, view, obj[field], signature, background)
+
+
 def queue_picture(
     connection: sqlite3.Connection,
     run_id: str,
@@ -110,7 +122,7 @@ def queue_picture(
     if connection.execute("SELECT 1 FROM assets WHERE asset_id=?", (asset_id,)).fetchone():
         return
     record = {key: obj[key] for key in ("id", "name", "description", "materials")}
-    record.update(view=view, signature=signature)
+    record.update(view=view, signature=signature, attributes=obj.get("attributes", []))
     if signature and library.use(connection, signature, view, ASSET_DIR / f"{asset_id}.png"):
         connection.execute(
             "INSERT INTO assets (asset_id,run_id,object_id,status,record_json,trace_json) VALUES (?,?,?,'ready',?,?)",
@@ -127,7 +139,30 @@ def queue_picture(
 def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
     if calls_used >= ai_config.max_calls_per_run():
         return judge.JudgeCall(status="capped", error=f"Reached MAX_MODEL_CALLS_PER_RUN ({calls_used}).")
-    return judge.judge_craft(context)
+    first = judge.judge_craft(context)
+    conflict = precedents.contradiction(context, first.result) if first.result else None
+    if not conflict:
+        return first
+    # One bounded reconsideration, still inside this request's deadline and allowance.
+    if calls_used + first.attempts >= ai_config.max_calls_per_run() or ai_config.remaining() <= 0.05:
+        first.result = None
+        first.status, first.error = "error", "An equivalent physical precedent conflicts with this ruling."
+        return first
+    second = judge.judge_craft(
+        {
+            **context,
+            "contradictory_precedent": conflict,
+            "reconsider": "Explain changed causal facts or use the consistent ruling. Do not change a verdict just because the wording changed.",
+        }
+    )
+    second.attempts += first.attempts
+    second.latency_ms += first.latency_ms
+    second.input_tokens += first.input_tokens
+    second.output_tokens += first.output_tokens
+    if second.result and precedents.contradiction(context, second.result):
+        second.result = None
+        second.status, second.error = "error", "The contradictory physical ruling remains unresolved. Nothing changed."
+    return second
 
 
 def generate_asset(asset_id: str) -> None:

@@ -103,5 +103,20 @@ func _run() -> void:
 	if not check(scene.ui.modal_kind == "traces", "AI traces panel did not open"):
 		return
 	await screenshot("craft-traces")
+	# A modified authored item must display its new asset, then restore on an earlier save.
+	var altered: Dictionary = fresh.data.objects.branch_b.duplicate(true)
+	var original: Texture2D = scene.art.texture_for(altered)
+	altered["sprite_asset_id"] = obj.sprite_asset_id
+	scene.run_state.objects.branch_b = altered
+	scene.view.sync()
+	var revised: Texture2D = scene.art.texture_for(altered)
+	if not check(revised != null and revised != original, "Changed item retained its authored picture"):
+		return
+	if not check(scene.get_node("M2Objects/branch_b").texture == revised, "World did not display revised art"):
+		return
+	var restored: Dictionary = await scene.net.api(HTTPClient.METHOD_GET, "/runs/" + str(scene.run_state.run_id))
+	scene.enter_run(restored.data, false)
+	if not check(scene.get_node("M2Objects/branch_b").texture == original, "Earlier save did not restore authored art"):
+		return
 	print("CRAFT SMOKE OK: made ", made, " from ", obj.components)
 	quit(0)

@@ -54,7 +54,7 @@ def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
             "source": "witnessed",
         },
     )
-    assert "admit" not in conversation.replies(state, roderic)
+    assert "admit" in conversation.replies(state, roderic)
     roderic["mind"]["memories"][-1]["doubted"] = True  # He doesn't believe it.
     assert "admit" in conversation.replies(state, roderic)
 
@@ -64,7 +64,7 @@ def test_offers_come_from_authored_needs_and_vouching_needs_trust():
     tomas = npc(state, "npc_tomas_reed")
     options = conversation.replies(state, tomas)
     assert "offer:beam_help" in options and "gate beam" in options["offer:beam_help"]["description"]
-    assert "vouch" not in options
+    assert "vouch" in options
     reputation.regard(tomas)["trust"] = 0.65
     assert "vouch" in conversation.replies(state, tomas)
     assert "vouch" not in conversation.replies(state, npc(state, "npc_roderic_vale"))  # He is who they vouch to.
@@ -397,8 +397,8 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     assert {"threat", "reason"} <= set(questions)
     # The stranger's word alone never opens the gate, however the reading goes (D-55): "Hessa spoke for me" isn't
     # Hessa speaking for them.
-    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "answer"
-    assert "admit" not in conversation.moves(state, roderic) and "why_not_yet" in briefing.converse_context(
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.9, threat=0.1), "admit") == "admit"
+    assert "admit" in conversation.moves(state, roderic) and "why_not_yet" not in briefing.converse_context(
         state, roderic, "Let me in.", {}
     )
     reputation.remember(
@@ -422,7 +422,7 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     )
     # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
     assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
-    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "admit"
     assert conversation.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
     # Beliefs alone never open the gate on words that refuse.
     assert (

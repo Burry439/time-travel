@@ -41,10 +41,13 @@ func api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeout
 ## A POST that may have been lost: tried once more when there was no answer or the service stumbled (the same
 ## request id makes that safe). A 503 (no model to ask) is final unless retry_unavailable.
 func post(path: String, body: Dictionary = {}, timeout := 5.0, retry_unavailable := true) -> Dictionary:
+	var started := Time.get_ticks_msec()
 	var reply := await api(HTTPClient.METHOD_POST, path, body, timeout)
 	var status := int(reply.status)
 	if not reply.ok and (status == 0 or status >= 500) and (retry_unavailable or status != 503):
-		reply = await api(HTTPClient.METHOD_POST, path, body, timeout)
+		var remaining := timeout - float(Time.get_ticks_msec() - started) / 1000.0
+		if remaining > 0.1:
+			reply = await api(HTTPClient.METHOD_POST, path, body, remaining)
 	return reply
 
 

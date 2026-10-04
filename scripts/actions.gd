@@ -74,7 +74,9 @@ func act(text: String, target: String, selected_ids: Array, mode := "") -> void:
 		body["target_id"] = target
 	if mode in ["say", "do"]: # The bar's Say / Do switch (D-55): the backend takes it as given.
 		body["mode"] = mode
-	var reply: Dictionary = await game.net.post(game.run_path("/act"), body, 150.0, false)
+	game.intent_pending = true
+	var reply: Dictionary = await game.net.post(game.run_path("/act"), body, 16.0, false)
+	game.intent_pending = false
 	if not reply.ok:
 		await _act_failed(reply)
 		return
@@ -90,12 +92,20 @@ func act(text: String, target: String, selected_ids: Array, mode := "") -> void:
 		await _play_attempt_reply(reply.data)
 
 
+func _accept_result(state: Dictionary) -> void:
+	while game.movement_sync_active:
+		await get_tree().process_frame
+	game.accept_state(state)
+	game.move_queue.clear()
+	game.snap_to_server()
+
+
 ## An attempt outside a face-to-face: walk there, let it happen in the world, then the result.
 func _play_attempt_reply(data: Dictionary) -> void:
-	game.run_state = data.state
+	await _accept_result(data.state)
 	game.last_trace = data.get("trace")
-	var entry: Dictionary = game.run_state.last_action
-	await walk_along(entry.get("walk", [])) # Go there first, as the server already decided.
+	var entry: Dictionary = data.state.last_action
+
 	game.view.start_fall(entry) # Copy the falling thing before the sync hides it.
 	game.view.sync()
 	game.view.reveal_new_objects(entry)
@@ -133,14 +143,11 @@ func _play_round_reply(data: Dictionary, target: String) -> void:
 	game.last_trace = data.get("trace")
 	var before_action = game.run_state.get("last_action")
 	var round: Dictionary = data.round
-	var walk: Array = round.get("walk", []) if typeof(round.get("walk")) == TYPE_ARRAY else []
-	game.run_state = data.state
-	if not walk.is_empty(): # Walked over to the person first.
-		await walk_along(walk)
-	var entry = game.run_state.get("last_action")
+	await _accept_result(data.state)
+
+	var entry = data.state.get("last_action")
 	var did: bool = typeof(entry) == TYPE_DICTIONARY and entry != before_action
 	if did:
-		await walk_along(entry.get("walk", []))
 		game.view.start_fall(entry)
 	game.request_busy = false
 	game.view.sync()
@@ -187,7 +194,9 @@ func encounter_act(kind: String, text: String, target: String) -> void:
 		"request_id": game.request_id("round")}
 	if not target.is_empty():
 		body["target_id"] = target
-	var reply: Dictionary = await game.net.post(game.run_path("/encounter/act"), body, 150.0, false)
+	game.intent_pending = true
+	var reply: Dictionary = await game.net.post(game.run_path("/encounter/act"), body, 16.0, false)
+	game.intent_pending = false
 	if reply.ok:
 		await _play_round_reply(reply.data, target)
 	else:

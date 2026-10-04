@@ -57,6 +57,7 @@ def ruling(category: str, reason: str, notes: list[str], effort: int = 0, **extr
         "property": [],
         "precedent_key": None,
         "walk": [],
+        "effects": [],
     }
     base.update(extra)
     return base
@@ -147,6 +148,7 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
             "install",
             "lift_out",
             "offer_trade",
+            "effects",
         )
     )
     if outcome != "success" and proposed_change:
@@ -160,10 +162,15 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
     if outcome == "failed":
         return ruling("failed", reason, notes, max(1, effort), action=action, precedent_key=key)
     available = {o["id"]: o for o in judge_view.available_items(state)}
+    for helper_id in judged.get("helper_ids", []):
+        helper = cast.find(state["npcs"], helper_id)
+        if helper is None or not reputation.will_help(state, helper):
+            return unresolved(notes, "the proposed helper has not committed to this work or is unavailable")
     if effort < 1 and action != "other":
         notes.append("Effort raised to 1 s: doing something takes time.")
     effort = max(1, effort) if action != "other" else effort
     handlers = {
+        "physical": _physical,
         "make": _make,
         "take": _take,
         "transform": _transform,
@@ -265,6 +272,7 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
     harm = judged.get("harm") if action == "harm" else None
     if harm and harm.get("method", "melee") != "thrown" and harm.get("weapon_id"):
         ids = [harm["weapon_id"]]
+    ids += judged.get("resource_ids", []) + [e["target_id"] for e in judged.get("effects", [])]
     cells = [
         (available[i]["x"], available[i]["y"])
         for i in _dedupe(ids)
@@ -332,10 +340,19 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     materials = _checked_materials(spec["materials"], input_materials, notes)
     input_mass = round(sum(available[i]["mass_kg"] for i in consumes), 3)
     mass = float(spec["mass_kg"])
-    if not 0 < mass <= input_mass:
-        clamped = max(0.01, min(mass, input_mass))
-        notes.append(f"Mass {mass} kg clamped to {clamped} kg (consumed items weigh {input_mass} kg).")
-        mass = clamped
+    if not math.isfinite(mass) or not 0 < mass <= input_mass + 0.001:
+        return unresolved(notes, f"output mass {mass} kg contradicts the {input_mass} kg of available material")
+    for field in ("length_m", "capacity_l", "rated_load_kg"):
+        value = spec.get(field)
+        if value is not None and (not math.isfinite(float(value)) or float(value) < 0):
+            return unresolved(notes, f"invalid physical quantity {field}")
+    if any(f in spec["flags"] for f in ("magnetized", "ferromagnetic", "magnet_source")) and not {
+        "iron",
+        "steel",
+        "magnetite",
+        "lodestone",
+    }.intersection(materials):
+        return unresolved(notes, "the proposed magnetic property contradicts the non-ferromagnetic material")
     capabilities = [dict(c) for c in spec["capabilities"]]
     support = {
         f
@@ -350,6 +367,9 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     if capacity and "container" not in flags:
         notes.append("Dropped capacity_l: the object is not flagged as a container.")
         capacity = None
+    attributes = _checked_attributes(spec, consumes + tools)
+    if attributes is None:
+        return unresolved(notes, "physical attributes need bounded values, real resources and unprotected names")
     new_spec = {
         "name": spec["name"].strip().lower()[:60] or "made thing",
         "description": spec["description"].strip()[:400],
@@ -360,6 +380,7 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
         "rated_load_kg": _positive(spec.get("rated_load_kg")),
         "flags": flags,
         "known_capabilities": capabilities[:6],
+        "attributes": attributes,
         **({"burning": True} if "heat_source" in flags else {}),
     }  # Made alight: a fire.
     new_spec["gear"] = gear.checked(_gear_proposal(spec.get("gear")), new_spec, notes)
@@ -606,11 +627,13 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
         notes,
     )
     count = max(1, min(MAX_PIECES, int(piece["count"])))
-    each = max(0.005, float(piece["mass_kg"]))
+    each = float(piece["mass_kg"])
     cap = min(tuning.GATHER_MAX_KG, source["mass_kg"] / 2)
-    if each * count > cap:
-        notes.append(f"Gathered mass cut to {cap} kg: a part, not the whole {source['name']}.")
-        each = round(cap / count, 3)
+    if not math.isfinite(each) or each <= 0 or each * count > cap:
+        return unresolved(notes, "gathered mass must be finite, positive and a small part of the source")
+    attributes = _checked_attributes(piece, [source["id"]] + tools)
+    if attributes is None:
+        return unresolved(notes, "gathered attributes need real causal resources and unprotected names")
     if m2.inventory_mass(state) + each * count > tuning.CARRY_LIMIT_KG:
         return ruling("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
     support = {f for i in [source["id"]] + tools for f in available[i].get("flags", [])}
@@ -625,6 +648,7 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
         "rated_load_kg": None,
         "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
         "known_capabilities": capabilities[:4],
+        "attributes": attributes,
     }
     spec["gear"] = gear.checked(_gear_proposal(piece.get("gear")), spec, notes)
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
@@ -749,29 +773,30 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
         total += count
         capabilities = [dict(c) for c in piece["capabilities"]]
         materials = _checked_materials(piece["materials"], target_materials, notes)
+        mass = float(piece["mass_kg"])
+        if not math.isfinite(mass) or mass <= 0:
+            return unresolved(notes, "transformed mass must be finite and positive")
+        attributes = _checked_attributes(piece, [target_id] + tools)
+        if attributes is None:
+            return unresolved(notes, "transformed attributes need real causal resources and unprotected names")
         made = {
             "name": piece["name"].strip().lower()[:60] or "piece",
             "description": piece["description"].strip()[:400],
             "materials": materials,
             "count": count,
-            "mass_kg": max(0.01, float(piece["mass_kg"])),
+            "mass_kg": mass,
             "length_m": _positive(piece.get("length_m")),
             "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
             "known_capabilities": capabilities[:4],
+            "attributes": attributes,
         }
         made["gear"] = gear.checked(_gear_proposal(piece.get("gear")), made, notes)
         pieces.append(made)
     if not pieces:
         return unresolved(notes, "transform produced no pieces")
     produced = sum(p["mass_kg"] * p["count"] for p in pieces)
-    if produced > target["mass_kg"]:
-        scale = target["mass_kg"] / produced
-        for piece in pieces:
-            piece["mass_kg"] = round(piece["mass_kg"] * scale, 3)
-        notes.append(
-            f"Piece masses scaled by {scale:.2f}: they weighed {produced:.1f} kg, "
-            f"more than the {target['mass_kg']} kg {target['name']}."
-        )
+    if produced > target["mass_kg"] + 0.001:
+        return unresolved(notes, "transformed pieces cannot contain more mass than the target")
     transform = {"target_id": target_id, "result_state": plan["result_state"], "pieces": pieces}
     tools_not_ours = [i for i in tools if available[i]["holder_id"] != "player"]
     return ruling(
@@ -1009,7 +1034,14 @@ def _demonstrate(state, judged, available, notes, reason, effort, key) -> dict:
     if far:
         return ruling("blocked", f"The {far[0]} is too far away.", notes, action="demonstrate", precedent_key=key)
     shown = available[plan["object_id"]]
-    living = {n["id"] for n in state["npcs"] if n.get("alive", True)}
+    living = {
+        n["id"]
+        for n in state["npcs"]
+        if n.get("alive", True)
+        and not n.get("down")
+        and cast.distance(n, state["player"]) <= tuning.SIGHT_CELLS
+        and paths.line_of_sight(state, cast.cell(n), cast.player_cell(state))
+    }
     results = [
         {"text": " ".join(r["text"].split())[:120], "status": r["status"]}
         for r in plan["capabilities"][:4]
@@ -1273,3 +1305,77 @@ def _gear_proposal(judged: dict | None) -> dict | None:
         "covers": judged.get("covers") or [],
         "quality": judged.get("quality", "fair"),
     }
+
+
+PROTECTED_ATTRIBUTES = {
+    "owner_id",
+    "holder_id",
+    "health",
+    "alive",
+    "gate_open",
+    "admitted",
+    "mind",
+    "trust",
+    "permission",
+    "mass_kg",
+    "capacity_l",
+    "rated_load_kg",
+    "temperature",
+    "burning",
+    "water_l",
+    "flags",
+    "condition",
+}
+
+
+def _checked_attributes(spec, resources):
+    attributes = copy.deepcopy(spec.get("attributes", []))
+    for attribute in attributes:
+        if (
+            not attribute["name"].strip()
+            or attribute["name"].strip().lower() in PROTECTED_ATTRIBUTES
+            or len(attribute["name"]) > 80
+            or len(attribute["value"]) > 400
+            or not attribute.get("basis_ids")
+            or any(i not in resources for i in attribute["basis_ids"])
+        ):
+            return None
+        if attribute["status"] == "observed":
+            attribute["status"] = "expected"
+    return attributes
+
+
+def _physical(state, judged, available, notes, reason, effort, key):
+    effects = judged.get("effects", [])
+    refs = set(judged.get("resource_ids", []))
+    for effect in effects:
+        refs.add(effect["target_id"])
+        if effect.get("other_id"):
+            refs.add(effect["other_id"])
+        refs.update((effect.get("attribute") or {}).get("basis_ids", []))
+    if not effects or any(i not in available for i in refs):
+        return unresolved(notes, "physical effects need actual accessible objects and resources")
+    for helper_id in judged.get("helper_ids", []):
+        helper = cast.find(state["npcs"], helper_id)
+        if helper is None or not reputation.will_help(state, helper):
+            return unresolved(notes, "the proposed helper has not committed to this work or is unavailable")
+    for effect in effects:
+        attribute = effect.get("attribute")
+        if effect["kind"] == "attribute":
+            if not attribute or attribute["name"].lower().strip() in PROTECTED_ATTRIBUTES:
+                return unresolved(notes, "a physical attribute cannot override protected world fields")
+            if not attribute.get("basis_ids") or len(attribute["name"]) > 80 or len(attribute["value"]) > 400:
+                return unresolved(notes, "a physical attribute needs a bounded value and a real causal basis")
+        elif not effect.get("other_id") or effect["target_id"] == effect["other_id"]:
+            return unresolved(notes, "connections require two distinct accessible objects")
+    return ruling(
+        "success",
+        reason,
+        notes,
+        effort,
+        action="physical",
+        effects=effects,
+        tool_ids=sorted(refs),
+        property=_property(state, sorted(refs), "used"),
+        precedent_key=key,
+    )

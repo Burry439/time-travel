@@ -47,9 +47,9 @@ def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
     roderic = npc(state, "npc_roderic_vale")
     memory = next(m for m in roderic["mind"]["memories"] if m["kind"] == "breach")
     assert memory["kind"] == "breach" and memory["severity"] == 3 and "unbarred" in memory["summary"]
-    assert "npc_roderic_vale" in state["fight"]["attackers"] and len(state["fight"]["attackers"]) >= 2
-    assert any("gate" in (n["mind"].get("said") or {}).get("text", "").lower() for n in state["npcs"] if n.get("mind"))
-    assert reputation.knows_a_crime(roderic) and not gatekeeping.can_admit(state, roderic)
+    assert not state.get("fight")
+    assert any(p["npc_id"] == roderic["id"] for p in state["pending_minds"])
+    assert reputation.knows_a_crime(roderic) and gatekeeping.can_admit(state, roderic)
 
 
 def test_doing_tomas_s_swap_is_work_not_an_assault():
@@ -92,7 +92,7 @@ def test_through_the_unbarred_gate_over_http(world, monkeypatch):
     state = post(world, state, "craft", {"text": "lever the bar off the gate on the crates", "selected_ids": []})[
         "state"
     ]
-    assert state["gate_open"] and state["fight"]  # Seen: the guards come for you.
+    assert state["gate_open"] and state["pending_minds"]  # Seen: the guards come for you.
     while (state["player"]["x"], state["player"]["y"]) != (48, 9):  # Back beside the gate (the lift walked us).
         x, y = state["player"]["x"], state["player"]["y"]
         state = post(world, state, "move", {"x": x + (x < 48) - (x > 48), "y": y + (y < 9) - (y > 9)})["state"]

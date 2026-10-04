@@ -10,6 +10,7 @@ import math
 import cast
 import content
 import conversation
+import evidence
 import gatekeeping
 import minds
 import persona
@@ -378,6 +379,9 @@ def scene_context(
             person.pop("the_way_around_town", None)
             person["why_they_are_here"] = f"{npc['name']} is nearby and can hear the conversation."
         person["id"], person["name"] = npc["id"], npc["name"]
+        person["evidence"] = evidence.held(npc)
+        person["owned_resources"] = [o for o in state["objects"].values() if o.get("owner_id") == npc["id"]]
+        person["agreements"] = conversation.deals(state, npc["id"], "proposed", "accepted")
         if beat := (beats or {}).get(npc["id"]):  # What the story has them get across now (beats.due).
             person["story_beat"] = {k: beat[k] for k in ("get_across", "only_if") if k in beat}
         # Which rules this person's own call carries besides the core (D-59: each person is their own agent).

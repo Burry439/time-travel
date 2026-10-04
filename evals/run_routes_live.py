@@ -23,7 +23,7 @@ import paths  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 app.store.DB_PATH = Path(tempfile.mkdtemp()) / "routes.sqlite3"
-app.attempts._generate_asset = lambda asset_id: None  # No paintings: this is about the route, not the art.
+app.attempts.generate_asset = lambda asset_id: None  # No paintings: this is about the route, not the art.
 http = TestClient(app.app)
 log: list[str] = []
 
@@ -82,7 +82,7 @@ class Route:
         beliefs = {k: round(v["noul"], 2) for k, v in trace["call"]["answers"].items()
                    if k in ("threat", "reason", "accepts", "done") and "noul" in v}
         note(f"  YOU → {self.person(npc_id)['name']}: {text}\n    [{trace['action']}] “{trace['reply']}”  "
-             f"(decider {trace['call']['latency_ms']} ms, voice {trace['voice']['latency_ms']} ms)"
+             f"(person {trace['voice'].get('latency_ms', 0)} ms)"
              + (f" beliefs {beliefs}" if beliefs else ""))
         return trace["action"]
 

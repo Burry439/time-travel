@@ -36,6 +36,8 @@ def open_ground(state, *people):
     state["player"].update(x=48, y=60)
     for spot, npc_id in zip(SPOTS, people):
         npc(state, npc_id).update(x=spot[0], y=spot[1])
+        if cast.card(npc(state, npc_id)).get("guard"):
+            cast.mind(npc(state, npc_id))["standing_plan"] = {"defend": True}
     return state
 
 
@@ -91,8 +93,8 @@ def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
     started = stay["fight"]["swings"]["npc_bren_marr"]
     spear = combat.npc_weapon(stay, npc(stay, "npc_bren_marr"))
     assert spear["class"] == "short_spear" and started["lands_at"] - started["started"] == spear["windup_ms"]
-    for _ in range(3):
-        beat(stay)
+    while not any(e.get("category") == "hit" for e in stay["journal"]):
+        beat(stay, 1)
     struck = 100 - stay["player"]["health"]
     assert 40 <= struck <= 50  # An iron spear through travelling clothes: fixed, no roll...
     assert any(c["kind"] == "bleeding" for c in stay["player"]["conditions"])  # ...and it bleeds.

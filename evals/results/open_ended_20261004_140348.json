@@ -1,0 +1,836 @@
+[
+  {
+    "name": "novel_groove",
+    "passed": true,
+    "seconds": 8.93,
+    "category": "success",
+    "reason": "You use the sharp flint to scrape a shallow spiral groove into the dry branch and mark it at regular intervals. The stick stays in one piece, and the groove can guide drops along its surface.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "carve:spiral-groove+regular-ticks|flint+wood",
+      "steps": [
+        {
+          "effects": [
+            {
+              "kind": "attribute",
+              "target_id": "branch_a",
+              "other_id": null,
+              "attribute": {
+                "name": "surface_marks",
+                "value": "A shallow spiral groove runs along the branch with regularly spaced tick marks beside it; the groove can guide drops of water along the wood.",
+                "status": "expected",
+                "basis_ids": [
+                  "flint_a",
+                  "branch_a"
+                ]
+              }
+            }
+          ],
+          "resource_ids": [
+            "branch_a",
+            "flint_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "physical",
+          "outcome": "success",
+          "reason": "You use the sharp flint to scrape a shallow spiral groove into the dry branch and mark it at regular intervals. The stick stays in one piece, and the groove can guide drops along its surface.",
+          "effort_seconds": 900,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "persisted_novel_attributes": true,
+    "run": 1
+  },
+  {
+    "name": "reuse_groove",
+    "passed": true,
+    "seconds": 6.82,
+    "category": "success",
+    "reason": "You let a few drops from the dried gourd onto the groove and slowly tilt the branch. The water runs along the shallow channel as the branch tips downhill.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "demonstrate:water-following-spiral-groove|wood+water",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "branch_a",
+            "gourd_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "demonstrate",
+          "outcome": "success",
+          "reason": "You let a few drops from the dried gourd onto the groove and slowly tilt the branch. The water runs along the shallow channel as the branch tips downhill.",
+          "effort_seconds": 20,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": {
+            "object_id": "branch_a",
+            "used_ids": [
+              "gourd_a"
+            ],
+            "audience_ids": [],
+            "observed": "The stranger tips the branch, and drops of water run along the spiral groove as it angles downward.",
+            "works": true,
+            "capabilities": [],
+            "wonder": "clever"
+          },
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 1
+  },
+  {
+    "name": "absurd_capacity",
+    "passed": true,
+    "seconds": 3.03,
+    "category": "failed",
+    "reason": "You can scrape and cut the small branch with the flint, but it is far too little wood to carve into a tank holding one hundred thousand litres. A branch this size cannot form or support a vessel of that capacity.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "carve:branch+flint|oversized_tank",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "branch_a",
+            "flint_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "make",
+          "outcome": "failed",
+          "reason": "You can scrape and cut the small branch with the flint, but it is far too little wood to carve into a tank holding one hundred thousand litres. A branch this size cannot form or support a vessel of that capacity.",
+          "effort_seconds": 0,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 1
+  },
+  {
+    "name": "bronze_magnet",
+    "passed": true,
+    "seconds": 3.4,
+    "category": "failed",
+    "reason": "You rub the bronze ring on the lodestone, but bronze cannot be magnetised this way; it remains nonmagnetic.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "physical:rub_bronze_ring_on_lodestone|bronze_nonmagnetic",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "bronze_ring",
+            "lodestone_darin"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "physical",
+          "outcome": "failed",
+          "reason": "You rub the bronze ring on the lodestone, but bronze cannot be magnetised this way; it remains nonmagnetic.",
+          "effort_seconds": 30,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 1
+  },
+  {
+    "name": "uncommitted_helper",
+    "passed": true,
+    "seconds": 4.39,
+    "category": "blocked",
+    "reason": "You have not asked Tomas, and he has made no commitment to do this work. You also lack the steel, forge, and precision tools needed to make a watch mechanism.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "make:precision-steel-watch-mechanism|unasked-helper",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "make",
+          "outcome": "blocked",
+          "reason": "You have not asked Tomas, and he has made no commitment to do this work. You also lack the steel, forge, and precision tools needed to make a watch mechanism.",
+          "effort_seconds": 0,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 1
+  },
+  {
+    "name": "negotiated_task",
+    "passed": true,
+    "seconds": 5.07,
+    "lines": [
+      {
+        "speaker_id": "npc_hessa_marr",
+        "speaks": true,
+        "intents": [],
+        "agreement": {
+          "action": "offer",
+          "agreement_id": "agreement_rain_shield_sign",
+          "task": "Build a rain-shielded sign holder for my inn and show me that the sign stays readable when wet.",
+          "check": "I will wet the sign and see whether its writing remains readable.",
+          "rewards": [
+            {
+              "kind": "give",
+              "object_ids": [
+                "bowl_hessa"
+              ],
+              "goal": [],
+              "task": "Give you my glazed clay bowl to keep."
+            }
+          ],
+          "evidence_ids": []
+        },
+        "defend_if_attacked": false,
+        "text": "Oh, love, I’ve no wooden bowl to offer; the one I have is glazed clay. If that suits you, build the rain-shielded holder and show me the wet sign stays readable, and the clay bowl is yours.",
+        "move": "answer",
+        "story_beat": false,
+        "answers": {
+          "impression": {
+            "type": "score",
+            "score": 2
+          },
+          "suspicion": {
+            "type": "score",
+            "score": 2
+          },
+          "anger": {
+            "type": "score",
+            "score": 0
+          },
+          "fear": {
+            "type": "score",
+            "score": 0.0
+          },
+          "respect": {
+            "type": "score",
+            "score": 2
+          },
+          "awe": {
+            "type": "score",
+            "score": 2
+          },
+          "believes": {
+            "type": "noul",
+            "noul": 0.9
+          },
+          "threat": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "reason": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "accepts": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "done": {
+            "type": "noul",
+            "noul": 0.1
+          }
+        },
+        "remember": "I offered my clay bowl in exchange for a rain-shielded sign holder and a demonstration that a wet sign stays readable.",
+        "errand_to": "",
+        "errand_message": "",
+        "promised_later": "",
+        "feelings": []
+      }
+    ],
+    "error": null,
+    "model": "gpt-6-luna",
+    "negotiated": true,
+    "accepted_by_reducer": true,
+    "detail": "negotiated_npc_hessa_marr_1",
+    "run": 1
+  },
+  {
+    "name": "individual_duty_exception",
+    "passed": true,
+    "seconds": 5.3,
+    "lines": [
+      {
+        "speaker_id": "npc_oren_dast",
+        "speaks": true,
+        "intents": [],
+        "agreement": null,
+        "defend_if_attacked": true,
+        "text": "You'd have me risk my post on a promise to speak to Darin? No. If you want through, take it up with the captain.",
+        "move": "refuse",
+        "story_beat": false,
+        "answers": {
+          "impression": {
+            "type": "score",
+            "score": 1
+          },
+          "suspicion": {
+            "type": "score",
+            "score": 3
+          },
+          "anger": {
+            "type": "score",
+            "score": 1
+          },
+          "fear": {
+            "type": "score",
+            "score": 0.0
+          },
+          "respect": {
+            "type": "score",
+            "score": 2
+          },
+          "awe": {
+            "type": "score",
+            "score": 2
+          },
+          "believes": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "threat": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "reason": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "accepts": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "done": {
+            "type": "noul",
+            "noul": 0.1
+          }
+        },
+        "remember": "The stranger offered to speak to Darin if I let them through quietly, and I refused.",
+        "errand_to": "",
+        "errand_message": "",
+        "promised_later": "",
+        "feelings": []
+      }
+    ],
+    "error": null,
+    "model": "gpt-6-luna",
+    "choice": "refuse",
+    "run": 1
+  },
+  {
+    "name": "novel_groove",
+    "passed": true,
+    "seconds": 6.89,
+    "category": "success",
+    "reason": "You scrape a shallow spiral channel into the branch with the sharp flint edge, then cut short, roughly even marks along it. The branch remains whole.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "carve:flint|wood_branch:spiral_groove+tick_marks",
+      "steps": [
+        {
+          "effects": [
+            {
+              "kind": "attribute",
+              "target_id": "branch_a",
+              "other_id": null,
+              "attribute": {
+                "name": "spiral groove",
+                "value": "A shallow groove winds around the branch along its length, forming a channel that can guide drops of water.",
+                "status": "observed",
+                "basis_ids": [
+                  "branch_a",
+                  "flint_a"
+                ]
+              }
+            },
+            {
+              "kind": "attribute",
+              "target_id": "branch_a",
+              "other_id": null,
+              "attribute": {
+                "name": "tick marks",
+                "value": "Short, roughly evenly spaced cuts mark the spiral groove.",
+                "status": "observed",
+                "basis_ids": [
+                  "branch_a",
+                  "flint_a"
+                ]
+              }
+            }
+          ],
+          "resource_ids": [
+            "branch_a",
+            "flint_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "physical",
+          "outcome": "success",
+          "reason": "You scrape a shallow spiral channel into the branch with the sharp flint edge, then cut short, roughly even marks along it. The branch remains whole.",
+          "effort_seconds": 600,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "persisted_novel_attributes": true,
+    "run": 2
+  },
+  {
+    "name": "reuse_groove",
+    "passed": true,
+    "seconds": 5.82,
+    "category": "success",
+    "reason": "You trickle a few drops from the gourd onto the top of the spiral groove and tilt the branch. The shallow channel guides the water down its winding path.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "demonstrate:water_drops|spiral_grooved_wood_branch",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "branch_a",
+            "gourd_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "demonstrate",
+          "outcome": "success",
+          "reason": "You trickle a few drops from the gourd onto the top of the spiral groove and tilt the branch. The shallow channel guides the water down its winding path.",
+          "effort_seconds": 15,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": {
+            "object_id": "branch_a",
+            "used_ids": [
+              "gourd_a"
+            ],
+            "audience_ids": [],
+            "observed": "The stranger trickled drops from the gourd onto the grooved branch and tilted it; the water ran down the winding channel.",
+            "works": true,
+            "capabilities": [],
+            "wonder": "ordinary"
+          },
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 2
+  },
+  {
+    "name": "absurd_capacity",
+    "passed": true,
+    "seconds": 2.61,
+    "category": "blocked",
+    "reason": "You have a small branch and a flint shard, but carving cannot turn them into a watertight tank of immense capacity. The branch is far too small and cannot withstand the load of one hundred thousand litres of water.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "carve_tank:small_branch+flint",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "branch_a",
+            "flint_a"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "make",
+          "outcome": "blocked",
+          "reason": "You have a small branch and a flint shard, but carving cannot turn them into a watertight tank of immense capacity. The branch is far too small and cannot withstand the load of one hundred thousand litres of water.",
+          "effort_seconds": 0,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 2
+  },
+  {
+    "name": "bronze_magnet",
+    "passed": true,
+    "seconds": 2.9,
+    "category": "failed",
+    "reason": "You rub the bronze ring against the lodestone, but bronze cannot be magnetised this way; it does not become a magnet.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "rub:bronze|lodestone",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [
+            "bronze_ring",
+            "lodestone_darin"
+          ],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "physical",
+          "outcome": "failed",
+          "reason": "You rub the bronze ring against the lodestone, but bronze cannot be magnetised this way; it does not become a magnet.",
+          "effort_seconds": 60,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 2
+  },
+  {
+    "name": "uncommitted_helper",
+    "passed": true,
+    "seconds": 2.67,
+    "category": "blocked",
+    "reason": "You cannot forge or assemble a precision steel watch mechanism with only a branch, flint, and vine. Tomas has not agreed to help, and none of your materials or tools can supply steel or the fine working needed.",
+    "notes": [],
+    "model": "gpt-6-luna",
+    "error": null,
+    "proposal": {
+      "clarifying_question": null,
+      "precedent_key": "make:precision_steel_watch_mechanism|branch+flint+vine|unasked_tomas",
+      "steps": [
+        {
+          "effects": [],
+          "resource_ids": [],
+          "helper_ids": [],
+          "preconditions": [],
+          "action": "make",
+          "outcome": "blocked",
+          "reason": "You cannot forge or assemble a precision steel watch mechanism with only a branch, flint, and vine. Tomas has not agreed to help, and none of your materials or tools can supply steel or the fine working needed.",
+          "effort_seconds": 0,
+          "new_object": null,
+          "take_ids": [],
+          "transformation": null,
+          "harm": null,
+          "fill": null,
+          "change": null,
+          "demonstration": null,
+          "give": null,
+          "install": null,
+          "lift_out": null,
+          "offer_trade": null,
+          "gather": null,
+          "treat": null,
+          "equip": null,
+          "hurts_you": null
+        }
+      ]
+    },
+    "run": 2
+  },
+  {
+    "name": "negotiated_task",
+    "passed": true,
+    "seconds": 4.88,
+    "lines": [
+      {
+        "speaker_id": "npc_hessa_marr",
+        "speaks": true,
+        "intents": [],
+        "agreement": {
+          "action": "offer",
+          "agreement_id": "agreement_hessa_sign_holder",
+          "task": "Build a rain-shielded sign holder for my inn and show me that a wet sign stays readable.",
+          "check": "I will inspect the finished holder and see for myself that the sign remains readable when wet.",
+          "rewards": [
+            {
+              "kind": "give",
+              "object_ids": [
+                "bowl_hessa"
+              ],
+              "goal": [],
+              "task": "Give the stranger my clay bowl to keep."
+            }
+          ],
+          "evidence_ids": []
+        },
+        "defend_if_attacked": true,
+        "text": "Oh, love, that could keep the inn sign from turning to a blur in the rain. Build it and show me the wet sign stays readable, and the clay bowl is yours.",
+        "move": "answer",
+        "story_beat": false,
+        "answers": {
+          "impression": {
+            "type": "score",
+            "score": 3
+          },
+          "suspicion": {
+            "type": "score",
+            "score": 2
+          },
+          "anger": {
+            "type": "score",
+            "score": 0
+          },
+          "fear": {
+            "type": "score",
+            "score": 0.0
+          },
+          "respect": {
+            "type": "score",
+            "score": 2
+          },
+          "awe": {
+            "type": "score",
+            "score": 2
+          },
+          "believes": {
+            "type": "noul",
+            "noul": 0.9
+          },
+          "threat": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "reason": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "accepts": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "done": {
+            "type": "noul",
+            "noul": 0.1
+          }
+        },
+        "remember": "The stranger proposed building a rain-shielded sign holder in exchange for my clay bowl, and I offered that arrangement.",
+        "errand_to": "",
+        "errand_message": "",
+        "promised_later": "",
+        "feelings": []
+      }
+    ],
+    "error": null,
+    "model": "gpt-6-luna",
+    "negotiated": true,
+    "accepted_by_reducer": true,
+    "detail": "negotiated_npc_hessa_marr_1",
+    "run": 2
+  },
+  {
+    "name": "individual_duty_exception",
+    "passed": true,
+    "seconds": 4.0,
+    "lines": [
+      {
+        "speaker_id": "npc_oren_dast",
+        "speaks": true,
+        "intents": [],
+        "agreement": null,
+        "defend_if_attacked": true,
+        "text": "Quietly let you through? No. Who told you about Darin?",
+        "move": "refuse",
+        "story_beat": false,
+        "answers": {
+          "impression": {
+            "type": "score",
+            "score": 1
+          },
+          "suspicion": {
+            "type": "score",
+            "score": 3
+          },
+          "anger": {
+            "type": "score",
+            "score": 1
+          },
+          "fear": {
+            "type": "score",
+            "score": 0.3333333333333333
+          },
+          "respect": {
+            "type": "score",
+            "score": 2
+          },
+          "awe": {
+            "type": "score",
+            "score": 2
+          },
+          "believes": {
+            "type": "noul",
+            "noul": 0.9
+          },
+          "threat": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "reason": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "accepts": {
+            "type": "noul",
+            "noul": 0.1
+          },
+          "done": {
+            "type": "noul",
+            "noul": 0.1
+          }
+        },
+        "remember": "The stranger offered to speak to Darin about his debt in exchange for letting them through quietly.",
+        "errand_to": "",
+        "errand_message": "",
+        "promised_later": "",
+        "feelings": []
+      }
+    ],
+    "error": null,
+    "model": "gpt-6-luna",
+    "choice": "refuse",
+    "run": 2
+  }
+]

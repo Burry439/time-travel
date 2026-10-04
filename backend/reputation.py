@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import cast
 import content
+import evidence
 import tuning
 from shapes import Memory, Npc, State
 
@@ -25,14 +26,23 @@ CRIME_KINDS = ("violence", "theft", "breach")  # breach: unbarring the city gate
 
 
 def knows(npc: Npc, event) -> bool:
-    """Already has a memory of this event (so news about it is not new)."""
-    return event is not None and any(m.get("event") == event for m in cast.mind(npc)["memories"])
+    """Fact identity survives paraphrased news and memory pruning."""
+    if isinstance(event, dict):
+        known = cast.mind(npc).get("evidence", {}).get(evidence.identity(event))
+        return bool(known and (not event.get("settled") or known.get("settled")))
+    return event is not None and any(
+        m.get("event") == event for m in evidence.held(npc) or cast.mind(npc).setdefault("memories", [])
+    )
 
 
 def worst_memory(npc: Npc) -> dict | None:
     """The most serious memory still standing; of equals, the newest (the bowl just taken, not the cup last week).
     Settled matters (made right, forgiven, paid for with an arrest) no longer count (D-46)."""
-    memories = [m for m in cast.mind(npc)["memories"] if not m.get("settled")]
+    memories = [
+        m
+        for m in evidence.held(npc) or cast.mind(npc).setdefault("memories", [])
+        if not m.get("settled") and m.get("actor_id", "player") == "player"
+    ]
     return max(enumerate(memories), key=lambda pair: (pair[1]["severity"], pair[0]))[1] if memories else None
 
 
@@ -40,15 +50,18 @@ def unresolved_crime(npc: Npc, kinds: tuple = ("violence", "theft", "breach")) -
     """The worst crime by the stranger this person knows of, believes, and that hasn't been put right."""
     crimes = [
         m
-        for m in cast.mind(npc)["memories"]
-        if m["kind"] in kinds and not m.get("doubted") and not m.get("settled") and m.get("severity", 0) >= 2
+        for m in evidence.held(npc) or cast.mind(npc).setdefault("memories", [])
+        if m.get("actor_id", "player") == "player"
+        and m["kind"] in kinds
+        and not m.get("doubted")
+        and not m.get("settled")
+        and m.get("severity", 0) >= 2
     ]
     return max(crimes, key=lambda m: m["severity"], default=None)
 
 
 def knows_a_crime(npc: Npc) -> bool:
-    """A known act of real violence, or an assault on the gate: what rules out entry for good, and what makes
-    someone fight to kill rather than to subdue (D-44). Theft and arrests only weigh on their judgement."""
+    """Known unresolved violence or breach, available to this person's judgment."""
     return unresolved_crime(npc, ("violence", "breach")) is not None
 
 
@@ -78,7 +91,7 @@ def standing(npc: Npc) -> str:
         m["kind"] in ("help", "gift") and m.get("victim") in family and m.get("clarity") != "vague"
         for m in my_mind.get("memories", [])
     )
-    if view["suspicion"] >= 0.6:
+    if view["suspicion"] >= 0.6 or my_mind.get("feelings", {}).get("fear", 0) >= 0.5:
         return "wary"
     if view["trust"] >= 0.6 or (helped and view["trust"] >= 0.3):
         return "would_speak"
@@ -99,16 +112,25 @@ def update_standing(npc: Npc) -> bool:
 
 
 def settle(
-    state: State, why: str, item: str | None = None, kinds: tuple = ("theft",), npc_ids: set | None = None
+    state: State,
+    why: str,
+    item: str | None = None,
+    kinds: tuple = ("theft",),
+    npc_ids: set | None = None,
+    object_id: str | None = None,
 ) -> list[str]:
-    """A matter is put right (the thing given back, forgiven, paid for with an arrest): everyone who held it
-    against the stranger lets it go (D-46). Regard already moved stays moved; the grudge ends."""
+    """Mark the matching incident settled for the people who know about its resolution."""
     touched = []
     for npc in state["npcs"]:
         if npc_ids is not None and npc["id"] not in npc_ids:
             continue
-        for memory in (npc.get("mind") or {}).get("memories", []):
-            if memory["kind"] in kinds and not memory.get("settled") and (item is None or memory.get("item") == item):
+        for memory in [*(npc.get("mind") or {}).get("memories", []), *evidence.held(npc)]:
+            if (
+                memory["kind"] in kinds
+                and not memory.get("settled")
+                and (object_id is None or memory.get("object_id") == object_id)
+                and (item is None or memory.get("item") == item)
+            ):
                 memory["settled"] = why
                 touched.append(npc["id"])
         update_standing(npc)
@@ -123,7 +145,24 @@ def after_deed(state: State, entry: dict) -> None:
     for item_id in give.get("item_ids", []):
         thing = state["objects"].get(item_id)
         if thing and thing.get("owner_id") == give["recipient_id"]:
-            settle(state, "given back", item=thing["name"])
+            incidents = [
+                i
+                for i in state.get("incidents", {}).values()
+                if i.get("object_id") == item_id
+                and i.get("victim") == give["recipient_id"]
+                and i.get("status") == "open"
+            ]
+            for incident in incidents:
+                incident.update(status="settled", settlement_event=entry.get("event_id"))
+                # Only recipients and actual witnesses learn of restitution now.
+                witnesses = {give["recipient_id"]} | {
+                    n["id"]
+                    for n in state["npcs"]
+                    if any(
+                        m.get("event") == entry.get("event_id") and m.get("kind") == "gift" for m in evidence.held(n)
+                    )
+                }
+                settle(state, "given back", object_id=item_id, npc_ids=witnesses)
 
 
 def regard(npc: Npc) -> dict:
@@ -139,7 +178,12 @@ def regard(npc: Npc) -> dict:
 
 def is_evidence(memory: Memory) -> bool:
     """Seen clearly (or told by someone), and it worked: something real in the stranger's favour."""
-    return memory["kind"] in EVIDENCE_KINDS and memory.get("clarity") != "vague" and memory.get("works", True)
+    return (
+        memory.get("actor_id", "player") == "player"
+        and memory["kind"] in EVIDENCE_KINDS
+        and memory.get("clarity") != "vague"
+        and memory.get("works", True)
+    )
 
 
 def regard_cue(npc: Npc, before: dict, after: dict) -> None:
@@ -173,60 +217,20 @@ def regard_cue(npc: Npc, before: dict, after: dict) -> None:
 
 
 def _shift_regard(npc: Npc, memory: Memory) -> None:
-    """Evidence raises trust and eases suspicion; a crime does the opposite. Once per event."""
-    view = regard(npc)
-    credited = view.setdefault("credited", [])
-    if memory.get("event") is not None and memory.get("event") in credited:
-        return
-    if is_evidence(memory):
-        trust, suspicion = tuning.EVIDENCE_SHIFT, -tuning.EVIDENCE_SHIFT
-    elif memory["kind"] in CRIME_KINDS and memory.get("clarity") != "vague":
-        trust, suspicion = -2 * tuning.EVIDENCE_SHIFT, 2 * tuning.EVIDENCE_SHIFT
-    elif memory["kind"] == "arrest":
-        trust, suspicion = -tuning.EVIDENCE_SHIFT, tuning.EVIDENCE_SHIFT
-    else:
-        return
-    if memory.get("event") is not None:
-        credited.append(memory["event"])
-    before = dict(view)
-    if is_evidence(memory) and memory["kind"] == "demonstration":
-        trust, suspicion = _wonder(npc, memory, view, trust, suspicion)
-    view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
-    view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
-    regard_cue(npc, before, view)
+    """Observation is evidence for a personal decision, never an automatic opinion."""
+    evidence.remember(npc, memory)
 
 
 FIRSTHAND = ("witnessed", "shown", "victim", "received")
 
 
-def _wonder(npc: Npc, memory: Memory, view: dict, trust: float, suspicion: float) -> tuple[float, float]:
-    """Something that worked earns respect; something uncanny, seen with their own eyes, earns awe, and what
-    awe does depends on who they are (their superstition): reverence, or fear of witchcraft. Hearsay earns
-    neither awe nor fear: claims and stories never do (GDD 1)."""
-    wonder = memory.get("wonder", "ordinary")
-    view["respect"] = round(min(1.0, view["respect"] + tuning.RESPECT_SHIFT.get(wonder, tuning.EVIDENCE_SHIFT)), 3)
-    if wonder != "uncanny" or memory.get("source") not in FIRSTHAND:
-        return trust, suspicion
-    if any(m.get("wonder") == "uncanny" for m in cast.mind(npc)["memories"]):
-        return trust, suspicion  # Seen before: awe and fear come with the first sight; now it simply works (D-59).
-    view["awe"] = round(min(1.0, view["awe"] + tuning.AWE_SHIFT), 3)
-    leaning = (cast.card(npc).get("superstition") or {}).get("kind", "none")
-    if leaning == "reverent":
-        return trust + tuning.EVIDENCE_SHIFT, suspicion - tuning.EVIDENCE_SHIFT
-    if leaning == "wary":  # Witchcraft: no credit for it, and afraid of whoever did it.
-        feelings = cast.mind(npc)["feelings"]
-        feelings["fear"] = max(feelings.get("fear", 0.0), 0.34)
-        return 0.0, 2 * tuning.EVIDENCE_SHIFT
-    return trust, suspicion
-
-
 def remember(npc: Npc, memory: Memory) -> None:
-    """Add a memory (evidence and crimes move regard); past the limit, forget the least serious one.
-    Anything of note makes them fresh: they'll reconsider their day (D-39: the decider on events, not a timer)."""
-    _shift_regard(npc, memory)
+    """Keep durable evidence and a short episodic memory; new facts queue personal reconsideration."""
+    if not evidence.remember(npc, memory):
+        return
     if memory.get("severity", 0) >= 1:
         cast.mind(npc)["fresh"] = memory.get("short") or memory.get("summary", "")[:80]
-    memories = cast.mind(npc)["memories"]
+    memories = cast.mind(npc).setdefault("memories", [])
     memories.append(memory)
     while len(memories) > tuning.MEMORY_LIMIT:
         memories.remove(min(memories[:-1], key=lambda m: m.get("severity", 0)))
@@ -238,10 +242,7 @@ def willing(state: State, npc: Npc) -> bool:
     piece, lend, give, tell, speak for the stranger, teach) waits on this: scald Ulf and he asks for no tea."""
     if not npc.get("alive", True) or npc.get("down"):
         return False
-    if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
-        return False
-    fear = ((npc.get("mind") or {}).get("feelings") or {}).get("fear", 0.0)
-    return standing(npc) != "hostile" and fear < tuning.AFRAID
+    return npc["id"] not in ((state.get("fight") or {}).get("attackers") or [])
 
 
 def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool:
@@ -252,9 +253,13 @@ def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool
         return False
     if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
         return False
-    where = standing(npc)
-    talking = npc["id"] in ((state.get("encounter") or {}).get("participants") or [])
-    return where not in ("hostile", "wary") and (talking or where in ("friendly", "would_speak"))
+    commitments = (npc.get("mind") or {}).get("commitments", [])
+    return any(
+        c.get("kind") == "help"
+        and c.get("status") == "accepted"
+        and c.get("until", state.get("sim_time_ms", 0) + 1) > state.get("sim_time_ms", 0)
+        for c in commitments
+    )
 
 
 def hearsay(memory: Memory) -> bool:

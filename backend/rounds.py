@@ -13,11 +13,13 @@ import json
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
+import agreements
 import attempts
 import beats
 import briefing
@@ -28,6 +30,7 @@ import commands
 import conversation
 import encounter
 import judge_view
+import minds
 import persona
 import routes_tutorial
 import store
@@ -163,7 +166,9 @@ def scene(
     could = stories.tellable(draft, inside + nearby) if text.strip() else []
     reading = {"stranger_says": conversation.clean(text), "told_to": [n["name"] for n in inside + nearby]}
     with ThreadPoolExecutor(max_workers=1) as pool:
-        told = pool.submit(voice.told, reading | {"could_pass_on": could}, allowed) if could else None
+        told = (
+            pool.submit(copy_context().run, voice.told, reading | {"could_pass_on": could}, allowed) if could else None
+        )
         call = voice.scene(context, briefing.fallback_line(draft, addressed, "answer"), allowed=allowed)
         told_call, told_ids = told.result() if told else (None, [])
     return {
@@ -209,7 +214,7 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
     Returns what was said: [{npc_id, name, line, kind, key, trace}]. A nearby person who speaks joins first."""
     call, said = moment["call"], []
     lines = (
-        call.lines
+        call.lines + call.decisions
         if call.status == "ok"
         else [{"speaker_id": moment["addressed"], "text": call.text, "move": "answer", "answers": {}, "remember": ""}]
     )
@@ -218,7 +223,14 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
     for line in lines:
         npc = cast.find(draft["npcs"], line["speaker_id"])
         current = encounter.active(draft)
-        if npc is None or current is None or any(s["npc_id"] == npc["id"] for s in said):
+        if (
+            npc is None
+            or not npc.get("alive", True)
+            or npc.get("down")
+            or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
+            or current is None
+            or any(s["npc_id"] == npc["id"] for s in said)
+        ):
             continue  # Not a real person here, the conversation is over, or they've already spoken.
         joining = npc["id"] not in current["participants"]
         if joining and (
@@ -227,6 +239,9 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
         ):
             continue  # Only someone who was really near enough to hear can join in.
+        if not line.get("speaks", True):
+            minds.apply_personal_decision(draft, npc, {**line, "text": ""}, now, draft["journal"])
+            continue
         if joining:
             encounter.join(draft, npc, "joined", None, now)
         answers = line.get("answers") or {}
@@ -253,6 +268,21 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             errand_to=errand_to,
             errand_message=errand_message,
         )
+        rejected = []
+        for proposed_intent in line.get("intents", []):
+            if not agreements.execute(draft, npc, proposed_intent, draft["event_seq"] + 1):
+                rejected.append("That action is no longer possible with the resources here.")
+        if line.get("agreement"):
+            valid, detail = agreements.apply(draft, npc, line["agreement"], draft["event_seq"] + 1)
+            if not valid:
+                rejected.append(detail)
+        if "defend_if_attacked" in line:
+            cast.mind(npc)["standing_plan"] = {"defend": bool(line["defend_if_attacked"])}
+        if rejected:
+            exchange["journal_entry"]["rejected_intents"] = rejected
+            exchange["journal_entry"]["reason"] = " ".join(rejected)
+            line["text"] = "I can't carry that out with what I have here."
+            exchange["journal_entry"]["reply"] = line["text"]
         if unkept:
             exchange["journal_entry"]["unkept_promise"] = unkept
         beat = (moment.get("beats") or {}).get(npc["id"])
@@ -352,6 +382,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
             calls_used = telemetry.calls_for_run(cmd.connection, run_id)
     except commands.Reply as reply:
         return reply.body
+    if ai_config.deadline.get() is None:
+        ai_config.deadline.set(time.monotonic() + (15.0 if request.kind == "do" else 8.0))
     try:
         judged = attempts.judge_attempt(context, calls_used) if context else None  # Outside the lock.
         timing["judge_ms"] = judged.latency_ms if judged else 0
@@ -390,7 +422,7 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                     ),
                 },
             )
-        with commands.reopen(run_id, request, body=body) as cmd:
+        with commands.reopen(run_id, request, body=body, stale=False) as cmd:
             state = cmd.state
             walk = _round_setup(state, request)
             draft, record = _round_draft(state, run_id, request, walk, judged)  # Redone on the latest world.
@@ -405,13 +437,20 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 elif act == "rob":  # A hold-up turned to force: to beat the stranger down and rob them (D-59).
                     combat.start(draft, [line["npc_id"]], now, "rob", lethal=False)
             encounter.finish(draft, record, now, [{k: v for k, v in s.items() if k != "trace"} for s in said])
-            _pass_round_time(draft, now, encounter.round_ms(record))
+            _pass_round_time(
+                draft,
+                now,
+                0
+                if combat.active(draft)
+                else max(0, encounter.round_ms(record) - record.get("effort_seconds", 0) * 1000),
+            )
             _adopt_round(state, draft, record, state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0))
             cmd.save("round")
             craft_trace = _traces(
                 cmd, request, context, judged, record, said, moment, spoken, timing, started, background
             )
     finally:
+        ai_config.deadline.set(None)
         commands.release(run_id)
     routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
     timing["total_ms"] = round((time.perf_counter() - started) * 1000)
@@ -424,6 +463,9 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
 
 # What a round may change (anything a Try Something can, a reply, people moving on): taken from its worked-out copy.
 ROUND_FIELDS = (
+    "facts",
+    "incidents",
+    "precedents",
     "objects",
     "npcs",
     "player",
@@ -446,7 +488,8 @@ def _adopt_round(state: State, draft: State, record: dict, safe_seq: int) -> Non
     journal_before, learned_before = len(state["journal"]), len(state.get("learned", []))
     admitted_now = draft.get("admitted") and not state.get("admitted")
     for key in ROUND_FIELDS:
-        state[key] = draft.get(key)
+        if key in draft:
+            state[key] = draft[key]
     state["trades"] = draft.get("trades") or {}
     state["journal"].extend(draft["journal"][journal_before:])
     state.setdefault("learned", []).extend(draft.get("learned", [])[learned_before:])
@@ -486,6 +529,7 @@ def _traces(cmd, request, context, judged, record, said, moment, spoken, timing,
     """The developer's view of the round: the judged deed (if any), each line's thinking, and the round itself."""
     state, connection, run_id = cmd.state, cmd.connection, cmd.run_id
     craft_trace = None
+    attempts.queue_revised_pictures(connection, run_id, state, state["event_seq"], background)
     if record.get("verdict"):
         made = [state["objects"][i] for i in record["entry"].get("made_ids", []) if i in state["objects"]]
         craft_trace = attempts.record_attempt(

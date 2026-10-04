@@ -45,10 +45,25 @@ def _deliver_report(state: State, npc: Npc, target: dict, now: int, journal: lis
     )
     for known in cast.mind(npc)["memories"]:
         known["reported"] = True  # The teller has done their part.
-    if reputation.knows(target, worst.get("event")):
+    if reputation.knows(target, worst):
         return
     memory = {
-        **{k: worst.get(k) for k in ("kind", "severity", "short", "victim", "item")},
+        **{
+            k: worst.get(k)
+            for k in (
+                "kind",
+                "severity",
+                "short",
+                "victim",
+                "item",
+                "object_id",
+                "evidence_id",
+                "actor_id",
+                "works",
+                "revision",
+                "application",
+            )
+        },
         "event": worst.get("event"),
         "clarity": "told",
         "summary": f"{npc['name']} told them: {worst['summary']}",
@@ -240,8 +255,10 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
         if ((npc.get("mind") or {}).get("knows") or {}).get("notes") and npc["id"] not in talking:
             cast.add_pending(working, npc["id"], "recollect", "the conversation ended")  # Remember it (D-36).
         _on_the_job(working, npcs, npc, elapsed_ms, end, blocked, journal)
-    combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Real-time fighting: wind-ups, blows, misses (D-41).
-    _bodies(working, npcs, elapsed_ms, now, journal)  # Bleeding, festering, waking, mending (D-49).
+    combat_running = combat.busy(working)
+    combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Chronological impacts and body time.
+    if not combat_running:
+        _bodies(working, npcs, elapsed_ms, now, journal)  # Bleeding, festering, waking, mending (D-49).
     if not working.get("encounter") and not working.get("fight"):
         _gate_watch(working, npcs, end)  # Nobody needs halting while the stranger is already face to face with someone.
     encounter.prune(working)
@@ -252,6 +269,9 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
     if working.get("subdued_by"):
         state["subdued_by"] = working["subdued_by"]
     state["projectiles"] = working.get("projectiles") or []
+    for field in ("facts", "incidents"):
+        if field in working:
+            state[field] = working[field]
     state["people_objects_changed"] = working.get("objects_changed") or {}
     state["people_objects_added"] = working.get("objects_added") or []
     for npc in npcs:  # How each stands toward the stranger (D-55), kept current for the journal and toasts.
@@ -443,6 +463,7 @@ def advance_people(state: State, elapsed_ms: int) -> dict:
         "encounter": probe.get("encounter"),
         "fight": probe.get("fight"),
         "objects_changed": changed,
+        **{k: probe[k] for k in ("facts", "incidents") if k in probe},
         "projectiles": probe.get("projectiles") or [],
     }
     if probe.get("people_objects_added"):

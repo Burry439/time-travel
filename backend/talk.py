@@ -1,34 +1,17 @@
-"""Conversations (D-44, D-46): the voice model reads the moment, talks and picks the move; code applies.
-
-1. The reply reads the moment, as this person: how the exchange changed their view of the
-   stranger, their anger, whether they believe what was said, and (when it matters) whether a deal
-   was agreed or done and whether a guard has reason enough to let the stranger in.
-2. Code builds the moves this person may make now: tell something they actually know, send them to
-   someone, offer a deal, lend or give, demand stolen goods back, take them back, arrest, attack,
-   fetch a guard, refuse, tell them to leave, end it, or simply talk. Moves that need a belief
-   (letting someone in, a deal) are checked by code against that same reading.
-3. The voice model (ai/voice.py) says what this person would say, in their own voice, knowing why
-   they are here, and picks one of those moves. Ordinary talk (directions, an apology accepted or
-   not, a question back) needs no menu.
-4. Code applies every effect: regard (capped: words alone earn only a little goodwill; more needs
-   new evidence), what the player learned (their journal), the move, and memories for anyone close
-   enough to overhear.
-
-Deals (GDD 6.6) come from each person's authored offers: the person may offer one; whether the stranger
-accepted, and later whether they have done it, are yes/no questions in the same request, answered
-only from what that person has seen or been given. The reward is a job: the person walks to the
-captain and speaks for the stranger. Any guard may let the stranger in for their own reasons (D-43), never
-while they know of a crime by the stranger.
-"""
+"""Apply a person's conversation decisions. Models judge feelings, beliefs and social choices;
+code validates resources, authority and local knowledge, and bounds opinion changes against durable
+evidence. Authored example deals coexist with negotiated tasks and rewards in agreements.py."""
 
 from __future__ import annotations
 
 import re
 
+import agreements
 import cast
 import combat
 import conversation
 import encounter
+import evidence
 import gatekeeping
 import gear
 import persona
@@ -47,9 +30,16 @@ def update_regard(npc: Npc, answers: dict) -> dict:
     """Apply the reply's reading. Words alone move regard only so far either way (goodwill, which new evidence
     renews; ill will, capped the same): deeds and crimes move it in full, through what people see (D-46)."""
     view = reputation.regard(npc)
-    evidence = {m.get("event") for m in cast.mind(npc)["memories"] if reputation.is_evidence(m)}
-    budget = max(0.0, tuning.TALK_GOODWILL + tuning.EVIDENCE_GOODWILL * len(evidence) - view["goodwill_used"])
-    grudge = max(0.0, tuning.TALK_ILLWILL - view.setdefault("illwill_used", 0.0))
+    proofs = {evidence.identity(m) for m in evidence.held(npc) if reputation.is_evidence(m)}
+    budget = max(0.0, tuning.TALK_GOODWILL + tuning.EVIDENCE_GOODWILL * len(proofs) - view["goodwill_used"])
+    crimes = {
+        evidence.identity(m)
+        for m in evidence.held(npc)
+        if m["kind"] in reputation.CRIME_KINDS and not m.get("doubted") and m.get("clarity") != "vague"
+    }
+    grudge = max(
+        0.0, tuning.TALK_ILLWILL + tuning.EVIDENCE_GOODWILL * len(crimes) - view.setdefault("illwill_used", 0.0)
+    )
     before = dict(view)
     trust, suspicion = (
         tuning.SHIFTS[conversation.level(answers, "impression")],
@@ -69,6 +59,16 @@ def update_regard(npc: Npc, answers: dict) -> dict:
     view["illwill_used"] = round(view["illwill_used"] + max(-trust, 0.0) + max(suspicion, 0.0), 3)
     view["trust"] = round(min(1.0, max(0.0, view["trust"] + trust)), 3)
     view["suspicion"] = round(min(1.0, max(0.0, view["suspicion"] + suspicion)), 3)
+    for axis in ("respect", "awe"):
+        reading = answers.get(axis, {})
+        delta = tuning.SHIFTS[min(4, max(0, int(reading.get("score", 2))))]
+        used = view.setdefault("judged_proofs", {}).setdefault(axis, [])
+        fresh = proofs - set(used)
+        if fresh:
+            view[axis] = round(min(1.0, max(0.0, view.get(axis, 0.0) + delta)), 3)
+            used.extend(sorted(fresh))
+    if "fear" in answers:
+        cast.mind(npc)["feelings"]["fear"] = min(1.0, max(0.0, float(answers["fear"].get("score", 0))))
     reputation.regard_cue(npc, before, view)
     return {"trust": round(trust, 3), "suspicion": round(suspicion, 3)}
 
@@ -228,6 +228,10 @@ def _settle_deals(state: State, npc: Npc, answers: dict, line: str, event_id: in
     if not (accepted and conversation.yes(answers, "done", tuning.DONE_YES)):
         return None
     deal = accepted[0]
+    if deal["reward"] == "pay" and any(
+        not agreements.authorized(state, npc, {"kind": "give", "object_ids": [i]}) for i in deal.get("pays", [])
+    ):
+        return None
     deal.update(status="fulfilled", fulfilled_event=event_id)
     deal.setdefault("evidence_event_ids", []).append(event_id)
     if deal["reward"] == "pay":  # Paid in goods (D-59): theirs, now the stranger's.
@@ -396,7 +400,7 @@ def _then(
             cast.watch(npc, now, tuning.TALK_WATCH_MS)
     elif act == "take_back":  # Out of the stranger's hands.
         thing = state["objects"][target]
-        reputation.settle(state, "taken back", item=thing["name"])
+        reputation.settle(state, "taken back", object_id=thing["id"], npc_ids={npc_id})
         thing.update(holder_id=npc_id)  # The owner has it back; a guard holds it for them.
         lent.append({"id": target, "holder_id": npc_id, "owner_id": thing["owner_id"]})
         cast.watch(npc, now, tuning.TALK_WATCH_MS)

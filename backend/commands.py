@@ -86,10 +86,10 @@ class Command:
             self.saves += 1
         tick = self.state["sim_time_ms"] // 1000 if tick is None else tick
         self.before = store.record(self.connection, self.before, self.state, kind, request_id, tick, meta)
-        if self.body is not None and request_id == self.request_id:
+        if self.body is not None and self.request_id is not None:
             self.connection.execute(
-                "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?)",
-                (self.run_id, request_id, self.state["event_seq"], self.body),
+                "INSERT INTO action_requests (run_id,request_id,final_seq,request_json) VALUES (?,?,?,?) ON CONFLICT(run_id,request_id) DO UPDATE SET final_seq=excluded.final_seq",
+                (self.run_id, self.request_id, self.state["event_seq"], self.body),
             )
 
     def claim(self) -> None:
@@ -161,6 +161,7 @@ def reopen(run_id: str, request, body: dict | None = None, stale: bool = True) -
     unless stale=False: what it adds doesn't depend on what the player saw)."""
     with store.lock, store.db() as connection:
         run, state = store.load_run(connection, run_id)
+        _playable(state)
         if stale and store.is_stale(state, request.expected_version):
             raise HTTPException(409, {"reason": "stale_state", "state": state})
         body_json = json.dumps(body, sort_keys=True) if body is not None else None

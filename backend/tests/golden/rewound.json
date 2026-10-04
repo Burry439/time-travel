@@ -2,6 +2,26 @@
  "agreements": {},
  "encounter": null,
  "event_seq": 3,
+ "facts": {
+  "effect:player:2:1:2000": {
+   "action": "take",
+   "actor": "player",
+   "event": 2,
+   "id": "effect:player:2:1:2000",
+   "result": "You pick up the fallen branch.",
+   "step": 1,
+   "witnesses": []
+  },
+  "effect:player:3:1:5000": {
+   "action": "take",
+   "actor": "player",
+   "event": 3,
+   "id": "effect:player:3:1:5000",
+   "result": "You pick up the short cord.",
+   "step": 1,
+   "witnesses": []
+  }
+ },
  "fight": null,
  "gate_open": false,
  "geometry_version": 3,
@@ -9,6 +29,7 @@
  "journal": [
   {
    "action": "take",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -65,6 +86,7 @@
   },
   {
    "action": "take",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -81,7 +103,7 @@
    "offer_trade": null,
    "player_cell": [
     47,
-    68
+    67
    ],
    "precedent_key": "quick:take",
    "property": [],
@@ -107,9 +129,7 @@
     {
      "action": "take",
      "category": "success",
-     "notes": [
-      "Walked 1 cells first (1 s)."
-     ],
+     "notes": [],
      "reason": "You pick up the short cord."
     }
    ],
@@ -129,6 +149,7 @@
  ],
  "last_action": {
   "action": "take",
+  "actor_id": "player",
   "category": "success",
   "crafted": null,
   "demonstration": null,
@@ -145,7 +166,7 @@
   "offer_trade": null,
   "player_cell": [
    47,
-   68
+   67
   ],
   "precedent_key": "quick:take",
   "property": [],
@@ -171,9 +192,7 @@
    {
     "action": "take",
     "category": "success",
-    "notes": [
-     "Walked 1 cells first (1 s)."
-    ],
+    "notes": [],
     "reason": "You pick up the short cord."
    }
   ],
@@ -196,28 +215,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "look",
+    "anchor_index": 0,
     "destination": [
-     47,
-     13
+     48,
+     11
     ],
     "goal": "watch the gate",
     "next_at_ms": 2500,
-    "path": [
-     [
-      47,
-      11
-     ],
-     [
-      47,
-      12
-     ],
-     [
-      47,
-      13
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -232,17 +238,16 @@
    "id": "npc_roderic_vale",
    "injuries": [],
    "mind": {
-    "facing_player": false,
     "feelings": {
      "anger": 0.0,
      "fear": 0.0
     },
     "job": null,
     "memories": [],
-    "mood": "weary",
     "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
+    "standing_plan": {
+     "defend": true
+    }
    },
    "name": "Roderic",
    "role": "Gate captain",
@@ -252,14 +257,14 @@
   {
    "alive": true,
    "controller": {
-    "activity": "patrol",
-    "anchor_index": 1,
+    "activity": "look",
+    "anchor_index": 0,
     "destination": [
-     42,
-     17
+     44,
+     14
     ],
     "goal": "patrol the west approach",
-    "next_at_ms": 5700,
+    "next_at_ms": 1670,
     "path": [],
     "source": "routine",
     "step_carry_ms": 0,
@@ -275,56 +280,34 @@
    "id": "npc_bren_marr",
    "injuries": [],
    "mind": {
-    "facing_player": false,
     "feelings": {
      "anger": 0.0,
      "fear": 0.0
     },
     "job": null,
     "memories": [],
-    "mood": "content",
     "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
+    "standing_plan": {
+     "defend": true
+    }
    },
    "name": "Bren",
    "role": "Gate guard",
-   "x": 42,
-   "y": 17
+   "x": 44,
+   "y": 14
   },
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "look",
+    "anchor_index": 0,
     "destination": [
-     54,
-     17
+     52,
+     14
     ],
     "goal": "patrol the east approach",
     "next_at_ms": 2040,
-    "path": [
-     [
-      53,
-      14
-     ],
-     [
-      54,
-      14
-     ],
-     [
-      54,
-      15
-     ],
-     [
-      54,
-      16
-     ],
-     [
-      54,
-      17
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 360
@@ -339,17 +322,16 @@
    "id": "npc_oren_dast",
    "injuries": [],
    "mind": {
-    "facing_player": false,
     "feelings": {
      "anger": 0.0,
      "fear": 0.0
     },
     "job": null,
     "memories": [],
-    "mood": "anxious",
     "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
+    "standing_plan": {
+     "defend": true
+    }
    },
    "name": "Oren",
    "role": "Gate guard",
@@ -359,24 +341,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "wait",
+    "anchor_index": 0,
     "destination": [
-     36,
+     34,
      51
     ],
     "goal": "tend the inn yard",
     "next_at_ms": 2710,
-    "path": [
-     [
-      35,
-      51
-     ],
-     [
-      36,
-      51
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -384,19 +357,6 @@
    "health": 100,
    "id": "npc_hessa_marr",
    "injuries": [],
-   "mind": {
-    "facing_player": false,
-    "feelings": {
-     "anger": 0.0,
-     "fear": 0.0
-    },
-    "job": null,
-    "memories": [],
-    "mood": "cheerful",
-    "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
-   },
    "name": "Hessa",
    "role": "Innkeeper",
    "x": 34,
@@ -405,32 +365,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "work",
+    "anchor_index": 0,
     "destination": [
-     20,
-     27
+     18,
+     25
     ],
     "goal": "work at the smithy",
     "next_at_ms": 4280,
-    "path": [
-     [
-      19,
-      25
-     ],
-     [
-      20,
-      25
-     ],
-     [
-      20,
-      26
-     ],
-     [
-      20,
-      27
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -441,19 +384,6 @@
    "health": 100,
    "id": "npc_mara_venn",
    "injuries": [],
-   "mind": {
-    "facing_player": false,
-    "feelings": {
-     "anger": 0.0,
-     "fear": 0.0
-    },
-    "job": null,
-    "memories": [],
-    "mood": "irritable",
-    "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
-   },
    "name": "Mara",
    "role": "Blacksmith",
    "x": 18,
@@ -462,28 +392,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "work",
+    "anchor_index": 0,
     "destination": [
-     23,
-     27
+     21,
+     28
     ],
     "goal": "help around the forge",
     "next_at_ms": 3250,
-    "path": [
-     [
-      22,
-      28
-     ],
-     [
-      23,
-      28
-     ],
-     [
-      23,
-      27
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -491,19 +408,6 @@
    "health": 100,
    "id": "npc_jory_venn",
    "injuries": [],
-   "mind": {
-    "facing_player": false,
-    "feelings": {
-     "anger": 0.0,
-     "fear": 0.0
-    },
-    "job": null,
-    "memories": [],
-    "mood": "excited",
-    "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
-   },
    "name": "Jory",
    "role": "Smith apprentice",
    "x": 21,
@@ -512,32 +416,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "work",
+    "anchor_index": 0,
     "destination": [
-     66,
-     28
+     64,
+     26
     ],
     "goal": "work at the carpentry yard",
     "next_at_ms": 4520,
-    "path": [
-     [
-      65,
-      26
-     ],
-     [
-      66,
-      26
-     ],
-     [
-      66,
-      27
-     ],
-     [
-      66,
-      28
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -548,19 +435,6 @@
    "health": 100,
    "id": "npc_tomas_reed",
    "injuries": [],
-   "mind": {
-    "facing_player": false,
-    "feelings": {
-     "anger": 0.0,
-     "fear": 0.0
-    },
-    "job": null,
-    "memories": [],
-    "mood": "weary",
-    "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
-   },
    "name": "Tomas",
    "role": "Carpenter",
    "x": 64,
@@ -569,32 +443,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "wait",
+    "anchor_index": 0,
     "destination": [
-     83,
-     31
+     80,
+     30
     ],
     "goal": "tend the merchant wagon",
     "next_at_ms": 3090,
-    "path": [
-     [
-      81,
-      30
-     ],
-     [
-      82,
-      30
-     ],
-     [
-      83,
-      30
-     ],
-     [
-      83,
-      31
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -605,19 +462,6 @@
    "health": 100,
    "id": "npc_darin_ko",
    "injuries": [],
-   "mind": {
-    "facing_player": false,
-    "feelings": {
-     "anger": 0.0,
-     "fear": 0.0
-    },
-    "job": null,
-    "memories": [],
-    "mood": "content",
-    "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
-   },
    "name": "Darin",
    "role": "Merchant",
    "x": 80,
@@ -626,48 +470,15 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "look",
+    "anchor_index": 0,
     "destination": [
-     44,
-     28
+     47,
+     23
     ],
     "goal": "watch the south road",
     "next_at_ms": 2360,
-    "path": [
-     [
-      46,
-      23
-     ],
-     [
-      45,
-      23
-     ],
-     [
-      44,
-      23
-     ],
-     [
-      44,
-      24
-     ],
-     [
-      44,
-      25
-     ],
-     [
-      44,
-      26
-     ],
-     [
-      44,
-      27
-     ],
-     [
-      44,
-      28
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 360
@@ -680,17 +491,16 @@
    "id": "npc_elin_west",
    "injuries": [],
    "mind": {
-    "facing_player": false,
     "feelings": {
      "anger": 0.0,
      "fear": 0.0
     },
     "job": null,
     "memories": [],
-    "mood": "content",
     "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
+    "standing_plan": {
+     "defend": true
+    }
    },
    "name": "Elin",
    "role": "Watch scout",
@@ -708,44 +518,15 @@
     }
    ],
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "look",
+    "anchor_index": 0,
     "destination": [
-     55,
-     39
+     52,
+     35
     ],
     "goal": "patrol the village approach",
     "next_at_ms": 2630,
-    "path": [
-     [
-      53,
-      35
-     ],
-     [
-      54,
-      35
-     ],
-     [
-      55,
-      35
-     ],
-     [
-      55,
-      36
-     ],
-     [
-      55,
-      37
-     ],
-     [
-      55,
-      38
-     ],
-     [
-      55,
-      39
-     ]
-    ],
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 360
@@ -758,17 +539,16 @@
    "id": "npc_kade_east",
    "injuries": [],
    "mind": {
-    "facing_player": false,
     "feelings": {
      "anger": 0.0,
      "fear": 0.0
     },
     "job": null,
     "memories": [],
-    "mood": "irritable",
     "said": null,
-    "standing": "unknown",
-    "stranger_seen": false
+    "standing_plan": {
+     "defend": true
+    }
    },
    "name": "Kade",
    "role": "Patrol guard",
@@ -5223,11 +5003,127 @@
   "y": 67
  },
  "player_seq": 3,
+ "precedents": [
+  {
+   "at": 2000,
+   "helpers": {},
+   "inputs": {
+    "branch_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+     "flags": [
+      "rigid",
+      "combustible",
+      "floats"
+     ],
+     "gear": {
+      "class": "staff",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": null,
+     "id": "branch_a",
+     "length_m": 1.5,
+     "mass_kg": 1.2,
+     "materials": [
+      "wood"
+     ],
+     "name": "fallen branch",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 47,
+     "y": 67
+    }
+   },
+   "intention": "take branch_a",
+   "key": "quick:take",
+   "outcome": "success",
+   "proposal": {
+    "action": "take",
+    "drop_ids": [],
+    "effort_seconds": 2,
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "quick:take",
+    "reason": "You pick up the fallen branch.",
+    "take_ids": [
+     "branch_a"
+    ],
+    "transformation": null
+   },
+   "reason": "You pick up the fallen branch."
+  },
+  {
+   "at": 5000,
+   "helpers": {},
+   "inputs": {
+    "cord_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+     "flags": [
+      "flexible",
+      "tieable",
+      "combustible"
+     ],
+     "gear": {
+      "class": null,
+      "covers": [],
+      "kind": "none",
+      "quality": "fair"
+     },
+     "holder_id": null,
+     "id": "cord_a",
+     "length_m": 1.0,
+     "mass_kg": 0.2,
+     "materials": [
+      "plant fiber"
+     ],
+     "name": "short cord",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 49,
+     "y": 66
+    }
+   },
+   "intention": "take cord_a",
+   "key": "quick:take",
+   "outcome": "success",
+   "proposal": {
+    "action": "take",
+    "drop_ids": [],
+    "effort_seconds": 2,
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "quick:take",
+    "reason": "You pick up the short cord.",
+    "take_ids": [
+     "cord_a"
+    ],
+    "transformation": null
+   },
+   "reason": "You pick up the short cord."
+  }
+ ],
  "projectiles": [],
  "run_id": "<run1>",
  "safe_seq": 2,
  "scenario": "village",
- "seed_version": 13,
+ "seed_version": 14,
  "sim_time_ms": 5000,
  "tick": 5,
  "water_spilled_l": 0.0

@@ -38,6 +38,13 @@ class SpriteCall:
 
 def sprite_prompt(record: dict) -> str:
     subject = f"a {record['name']}. {record.get('description', '')}".strip()
+    features = [
+        f"{a['name']}: {a['value']}"
+        for a in record.get("attributes", [])
+        if a.get("status") in ("expected", "observed")
+    ]
+    if features:
+        subject += " Physical features: " + "; ".join(features) + "."
     materials = ", ".join(record.get("materials") or ["ordinary materials"])
     template = _TEMPLATES.get(record.get("view", "world"), _TEMPLATE)
     return template.replace("{subject}", subject).replace("{materials}", materials)
@@ -64,7 +71,7 @@ def generate_sprite(record: dict, destination: Path) -> SpriteCall:
     for model in dict.fromkeys([config.image_model(), config.image_fallback_model()]):
         call.model = model
         try:
-            response = config.client().images.generate(
+            response = config.image_client().images.generate(
                 model=model,
                 prompt=prompt,
                 size="1024x1024",

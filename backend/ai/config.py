@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import time
+from contextvars import ContextVar
 from functools import lru_cache
 from pathlib import Path
 
@@ -51,7 +53,7 @@ def voice_model() -> str:
 
 
 def voice_reasoning() -> str:
-    return _env("VOICE_REASONING", "none")  # It only phrases a decided reply (D-30: same quality, faster).
+    return _env("VOICE_REASONING", "low")  # It only phrases a decided reply (D-30: same quality, faster).
 
 
 def image_model() -> str:
@@ -98,8 +100,44 @@ def status() -> dict:
 def _client(key: str):
     from openai import OpenAI
 
-    return OpenAI(api_key=key, timeout=180.0, max_retries=1)
+    return OpenAI(api_key=key, timeout=8.0, max_retries=0)
+
+
+deadline = ContextVar("model_request_deadline", default=None)
+
+
+def remaining() -> float:
+    end = deadline.get()
+    return max(0.0, end - time.monotonic()) if end is not None else 8.0
 
 
 def client():
-    return _client(api_key())
+    seconds = remaining()
+    if seconds <= 0.05:
+        raise TimeoutError("The request's model budget is exhausted.")
+    return _client(api_key()).with_options(timeout=seconds, max_retries=0)
+
+
+def image_client():
+    return _client(api_key()).with_options(timeout=180.0, max_retries=1)
+
+
+@lru_cache(maxsize=1)
+def credential_readiness(key: str, model: str) -> dict:
+    if mode() == "stub":
+        return {"ready": True, "mode": "stub", "reason": None}
+    if not key or mode() != "live":
+        return {"ready": False, "mode": mode(), "reason": "missing_configuration"}
+    try:
+        _client(key).with_options(timeout=5.0, max_retries=0).models.retrieve(model)
+        return {"ready": True, "mode": "live", "reason": None}
+    except Exception as error:
+        code = getattr(error, "status_code", None)
+        reason = (
+            "invalid_or_expired_key"
+            if code == 401
+            else "model_unavailable"
+            if code in (403, 404)
+            else "provider_unreachable"
+        )
+        return {"ready": False, "mode": "live", "reason": reason}

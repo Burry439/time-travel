@@ -105,7 +105,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
-	var hands_free: bool = game.gameplay_active and not game.request_busy and not game.ui.modal.visible and not game.ui.bar.visible
+	var hands_free: bool = game.gameplay_active and (not game.request_busy or game.intent_pending) \
+		and not game.ui.modal.visible and not game.ui.bar.visible
 	match event.keycode:
 		KEY_ESCAPE:
 			if game.ui.card.visible:

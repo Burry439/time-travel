@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import cast
 import content
+import evidence
 import minds
 import paths
 import persona
@@ -112,7 +113,7 @@ def agenda_options(state: State, npc: Npc) -> dict[str, dict]:
                 (
                     o
                     for o in state["npcs"]
-                    if o["id"] != npc["id"] and free(state, o) and not reputation.knows(o, grievance.get("event"))
+                    if o["id"] != npc["id"] and free(state, o) and not reputation.knows(o, grievance)
                 ),
                 key=lambda o: (
                     not cast.is_family(npc, o["id"]),
@@ -135,7 +136,7 @@ def agenda_options(state: State, npc: Npc) -> dict[str, dict]:
                     if o["id"] != npc["id"]
                     and o.get("alive", True)
                     and not o.get("down")
-                    and not reputation.knows(o, good.get("event"))
+                    and not reputation.knows(o, good)
                     and cast.distance(o, npc) > tuning.MEET_CELLS
                 ),
                 key=lambda o: (
@@ -445,11 +446,15 @@ def topics(state: State, a: dict, b: dict) -> dict[str, dict]:
     told = _told(a, b)
     for memory in cast.mind(a)["memories"]:
         event = memory.get("event")
-        if event is None or reputation.knows(b, event) or (memory["kind"] == "talk" and memory.get("severity", 0) < 1):
+        if event is None or reputation.knows(b, memory) or (memory["kind"] == "talk" and memory.get("severity", 0) < 1):
             continue
-        options[f"news:{event}"] = {
-            "description": f"{a['name']} tells {b['name']}: {memory['summary']}",
-            "fact": memory["summary"],
+        key = f"news:{event}"
+        if key in options:
+            key += ":" + evidence.identity(memory)
+        fact = memory["summary"] + (f" The matter was {memory['settled']}." if memory.get("settled") else "")
+        options[key] = {
+            "description": f"{a['name']} tells {b['name']}: {fact}",
+            "fact": fact,
             "kind": "news",
             "memory": memory,
         }
@@ -622,11 +627,25 @@ def _pass_on(state: State, teller: Npc, listener: Npc, topic: dict, believed: bo
         memory = topic["memory"]
         told = {
             **{k: memory.get(k) for k in ("kind", "severity", "short", "victim", "item", "works")},
+            **{
+                k: memory[k]
+                for k in (
+                    "evidence_id",
+                    "actor_id",
+                    "step_number",
+                    "object_id",
+                    "revision",
+                    "application",
+                    "settled",
+                    "incident_id",
+                )
+                if k in memory
+            },
             "event": memory.get("event"),
             "clarity": "told",
             "source": f"told_by:{teller['id']}",
             "at": now,
-            "summary": f"{teller['name']} told them: {memory['summary']}",
+            "summary": f"{teller['name']} told them: {topic.get('fact', memory['summary'])}",
             "doubted": not believed,
         }
         reputation.remember(listener, told)

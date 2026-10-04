@@ -1,0 +1,22 @@
+
+=== BUSINESS: DARIN HIRES YOU ===
+  TRY: pick up the hollow reeds and the flint shard
+    [success] You walk a few steps to the hollow reeds and pick them up, then walk on to the flint shard and pick it up.
+  TRY: cut a short length of reed with the flint and carve a notch to make a whistle
+    [success] You cut a short piece from a hollow reed with the sharp flint, then carve a notch near one end. The notch and hollow tube can make a simple whistle when you blow across it.
+  YOU → Darin: Good day, sir. I'm Ash, a traveller with a knack for making useful little things.
+    [ask_back] “Friend, useful little things can earn their keep. What have you made that I might sell at a profit?”  (person 2978 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.1}
+  YOU → Darin: Would a merchant like you have use for someone who makes new things to sell?
+    [offer:trade_goods] “Friend, I have use for something new if it can turn a profit. Show me a thing you've made, and if I judge it worth selling, I'll take you on as a hired hand for trade inside the city under my permit.”  (person 2484 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.1}
+  YOU → Darin: Agreed. Let me show you.
+    [answer] “Good. Show me what you've made, friend, and let me judge whether it has a market.”  (person 4409 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.9, 'done': 0.1}
+  TRY: blow the reed whistle for Darin to show him how loud and clear it is
+    [success] You blow across the notch in the reed whistle, and a clear, high tone sounds for Darin. It carries nearby, though it is not especially loud.
+  YOU → Darin: There: a whistle anyone could carry, made from a reed. Travellers and herders would buy those.
+    [answer] “A marketable notion, friend; that clear note carries well enough to catch a traveller’s ear. I’ve seen enough to take you on under my permit, as promised.”  (person 4261 ms) beliefs {'threat': 0.1, 'reason': 0.1, 'accepts': 0.1, 'done': 0.1}
+  YOU → Roderic: Captain, I'm Darin the merchant's hired hand; he's taking me in under his trade permit.
+    [admit] “Darin’s permit covers honest trade, and he has given his word for you. Open the gate; enter and keep to your business.”  (person 8143 ms) beliefs {'threat': 0.1, 'reason': 0.9, 'accepts': 0.1, 'done': 0.1}
+  Admitted because: ["Darin has hired the stranger as a hand for trade in the city, under Darin's trade permit."]
+  ✓ INSIDE THE CITY
+
+RESULTS: {'business': True} in 56 s

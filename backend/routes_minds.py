@@ -14,11 +14,16 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
+import actors
+import attempts
 import cast
 import commands
+import conversation
+import evidence
+import judge_view
 import minds
 import persona
 import store
@@ -26,7 +31,7 @@ import tuning
 import views
 import village
 from ai import config as ai_config
-from ai import decider, telemetry, voice
+from ai import decider, judge, telemetry, voice
 from shapes import Npc, State
 
 router = APIRouter(route_class=views.Shown)  # Replies carry their state's view (views.py).
@@ -111,7 +116,7 @@ def _apply_recollection(npc: Npc, context: dict, result: dict, now: int) -> dict
 
 @router.post("/runs/{run_id}/think")
 @commands.answers
-def think(run_id: str, request: ThinkRequest):
+def think(run_id: str, request: ThinkRequest, background: BackgroundTasks):
     """Let people with something on their mind decide what to do (model calls run outside the lock)."""
     with commands.open(run_id, request, playable=False, stale=False) as cmd:
         if not cmd.state.get("pending_minds"):
@@ -130,7 +135,7 @@ def think(run_id: str, request: ThinkRequest):
         heard = _ask(plan)
         with commands.reopen(run_id, request, stale=False) as cmd:
             _log_calls(cmd, heard)
-            records = _apply(cmd, plan, heard)
+            records = _apply(cmd, plan, heard, background)
     finally:
         _thinking_runs.discard(guard)
     response = {"state": cmd.state, "duplicate": False}
@@ -183,7 +188,17 @@ def _ask(plan: dict) -> dict:
             pool.submit(voice.recollect, context, fallback, writing_allowed)
             for _, context, fallback in plan["memory_jobs"]
         ]
-        for pending, call in zip(ask, decider.decide_many([decision_request(snapshot, p) for p in ask])):
+        requests = [
+            (pending, pool.submit(_personal_reaction, snapshot, pending))
+            for pending in ask
+            if pending["kind"] in ("decide", "agenda", "meet", "told") and ai_config.mode() == "live"
+        ]
+        ordinary = [
+            p for p in ask if not (p["kind"] in ("decide", "agenda", "meet", "told") and ai_config.mode() == "live")
+        ]
+        returned = list(zip(ordinary, decider.decide_many([decision_request(snapshot, p) for p in ordinary])))
+        returned += [(pending, future.result()) for pending, future in requests]
+        for pending, call in returned:
             calls[pending["npc_id"]] = call
             if call.ok:
                 answers[pending["npc_id"]] = call.answers
@@ -234,7 +249,7 @@ def _log_calls(cmd: commands.Command, heard: dict) -> None:
             telemetry.log(cmd.connection, cmd.run_id, role, call)
 
 
-def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
+def _apply(cmd: commands.Command, plan: dict, heard: dict, background: BackgroundTasks) -> list[dict]:
     """What everyone decided, on the latest world (worked out on a copy, then saved as one `minds` event)."""
     state, connection = cmd.state, cmd.connection
     batch, snapshot = plan["batch"], plan["snapshot"]
@@ -262,8 +277,16 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
             "skipped": None,
         }
         mine = answers.get(pending["npc_id"])
-        if npc is None or not npc.get("alive", True):
-            record["skipped"] = "no longer alive"
+        if (
+            npc
+            and npc.get("alive", True)
+            and not npc.get("down")
+            and pending["kind"] != "decide"
+            and (mine or {}).get("npc_decision")
+        ):
+            minds.apply_personal_decision(working, npc, mine["npc_decision"], now, journal)
+        if npc is None or not npc.get("alive", True) or npc.get("down"):
+            record["skipped"] = "no longer able to act"
         elif pending["kind"] == "agenda":
             if village.free(working, npc):
                 record.update(village.apply_agenda(working, npc, mine or {}, now))  # No answer: carry on.
@@ -326,8 +349,35 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
         "learned_added": learned,
         "village": working.get("village", state.get("village", {"chatter_at": []})),
     }
+    state["sim_time_ms"] = working["sim_time_ms"]
+    state["journal"] = working["journal"]
+    for field in (
+        "facts",
+        "incidents",
+        "precedents",
+        "water_spilled_l",
+        "trades",
+        "projectiles",
+        "barred_until",
+        "last_action",
+        "gate_unbarred_by",
+    ):
+        if field in working:
+            state[field] = working[field]
+    state["objects"] = working["objects"]
+    state["agreements"] = working.get("agreements", {})
+    state["gate_open"] = working.get("gate_open", False)
+    if working.get("admitted"):
+        state["admitted"] = working["admitted"]
     state["npcs"], state["player"] = people["npcs"], people["player"]
     store.apply_people(state, people)
+    for obj in state["objects"].values():
+        if obj.get("created_by", "player") == "player" or obj.get("created_event_id") != state["event_seq"] + 1:
+            continue
+        for view, field in (("world", "sprite_asset_id"), ("held", "held_asset_id"), ("worn", "worn_asset_id")):
+            if obj.get(field):
+                attempts.queue_picture(connection, cmd.run_id, obj, view, obj[field], None, background)
+    attempts.queue_revised_pictures(connection, cmd.run_id, state, state["event_seq"] + 1, background)
     cmd.save("minds", state["tick"])
     return records
 
@@ -355,3 +405,46 @@ def _brief(state: State, npc: Npc, pending: dict, prefix: str = "") -> tuple[str
 def decision_request(state: State, pending: dict) -> tuple[str, dict]:
     """One person's own request: only their brief, never anyone else's (D-59: each person is their own agent)."""
     return _brief(state, cast.find(state["npcs"], pending["npc_id"]), pending)
+
+
+def _personal_reaction(state, pending):
+    npc = cast.find(state["npcs"], pending["npc_id"])
+    if intention := cast.mind(npc).get("physical_intention"):
+        call = judge.judge_craft(judge_view.build_context(actors.view(state, npc["id"]), intention, []))
+        return decider.DeciderCall(
+            provider="llm",
+            model=call.model,
+            answers={"actor_physical": call.result} if call.result else {},
+            latency_ms=call.latency_ms,
+            input_tokens=call.input_tokens,
+            output_tokens=call.output_tokens,
+            error=call.error,
+        )
+    situation, questions = (
+        _brief(state, npc, pending)
+        if pending["kind"] != "told"
+        else (minds.situation(state, npc) + "\n" + str(pending.get("message", "")), minds.questions(state, npc))
+    )
+    choice_key = {"agenda": "agenda", "meet": "topic"}.get(pending["kind"], "action")
+    options = questions.get(choice_key, {}).get("criteria", minds.legal_actions(state, npc))
+    call, decision = voice.react(
+        {
+            "your_part": pending["kind"],
+            "you": persona.sheet_lines(state, npc),
+            "evidence": evidence.held(npc),
+            "situation": situation,
+            "moves_they_may_make": options,
+            "message_from": pending.get("why") if pending["kind"] == "told" else None,
+            "owned_resources": [o for o in state["objects"].values() if o.get("owner_id") == npc["id"]],
+            "agreements": conversation.deals(state, npc["id"], "proposed", "accepted"),
+        }
+    )
+    return decider.DeciderCall(
+        provider="llm",
+        model=call.model,
+        answers={"npc_decision": decision, choice_key: {"choice": decision["move"]}} if decision else {},
+        latency_ms=call.latency_ms,
+        input_tokens=call.input_tokens,
+        output_tokens=call.output_tokens,
+        error=call.error,
+    )

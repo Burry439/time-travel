@@ -2,7 +2,7 @@ extends SceneTree
 ## The moment itself (GDD D-39). Needs the backend with AI_MODE=stub:
 ##   $env:AI_MODE='stub'; ./tools/run_m0.ps1
 ##   Godot --headless --path . --script res://tools/smoke_react.gd  [-- --capture]
-## Take Hessa's bowl: she shouts and shows "!" at once (code), and her considered reaction (the reaction lane)
+## Take Hessa's bowl: she perceives the actual incident, and her individual reaction (the reaction lane)
 ## still arrives while the dialogue bar is open.
 var scene: Node2D
 var capture := false
@@ -55,15 +55,12 @@ func _run() -> void:
 	var started := Time.get_ticks_msec()
 	await scene.actions.quick_action("take", "bowl_hessa")
 	await process_frame
-	var bubble := scene.get_node_or_null("NPCs/npc_hessa_marr/Speech/Words") as Label
-	if not check(bubble != null and ("bowl" in bubble.text or "mine" in bubble.text),
-			"Hessa didn't shout at once: " + (bubble.text if bubble else "no bubble")):
+	var hessa: Dictionary = scene.ui.npc_record("npc_hessa_marr")
+	if not check(hessa.get("mind", {}).get("memories", []).any(
+			func(m: Dictionary) -> bool: return m.kind == "theft" and m.get("object_id") == "bowl_hessa"),
+			"Hessa did not perceive the actual stolen bowl"):
 		return
-	var status: Node2D = scene.get_node("NPCs/npc_hessa_marr/Status")
-	await process_frame
-	if not check("alarmed" in status.signs, "No '!' over Hessa: " + str(status.signs)):
-		return
-	print("Bark after ", Time.get_ticks_msec() - started, " ms (including the walk there)")
+	print("Theft perceived after ", Time.get_ticks_msec() - started, " ms")
 	await screenshot("react-bowl")
 	# Her considered reaction (the reaction lane) arrives even with the dialogue bar open.
 	scene.ui.open_try()

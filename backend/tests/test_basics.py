@@ -133,7 +133,7 @@ def made(name, consumes, materials, flags=("flexible",)):
             "materials": materials,
             "consumes": consumes,
             "tools_used": [],
-            "mass_kg": 0.4,
+            "mass_kg": 0.05,
             "length_m": 1.0,
             "capacity_l": None,
             "rated_load_kg": None,
@@ -599,6 +599,7 @@ def test_something_new(world):
     state = post(world, state, "craft", {"text": "fill the bowl at the brook", "selected_ids": []})["state"]
     compass = made("floating needle compass", ["needle_mey", "bark_meadow"], ["iron", "bark"], ("floats", "magnetized"))
     compass["new_object"]["tools_used"] = ["lodestone_orrin", "bowl_orrin"]
+    compass["new_object"]["mass_kg"] = sum(state["objects"][i]["mass_kg"] for i in ("needle_mey", "bark_meadow"))
     world.rulings.append(attempt(compass))
     state = post(world, state, "craft", {"text": "rub the needle on the lodestone and float it", "selected_ids": []})[
         "state"

@@ -2,6 +2,35 @@
  "agreements": {},
  "encounter": null,
  "event_seq": 10,
+ "facts": {
+  "effect:player:2:1:2000": {
+   "action": "take",
+   "actor": "player",
+   "event": 2,
+   "id": "effect:player:2:1:2000",
+   "result": "You pick up the fallen branch.",
+   "step": 1,
+   "witnesses": []
+  },
+  "effect:player:3:1:5000": {
+   "action": "take",
+   "actor": "player",
+   "event": 3,
+   "id": "effect:player:3:1:5000",
+   "result": "You pick up the short cord.",
+   "step": 1,
+   "witnesses": []
+  },
+  "effect:player:4:1:10000": {
+   "action": "make",
+   "actor": "player",
+   "event": 4,
+   "id": "effect:player:4:1:10000",
+   "result": "It happens.",
+   "step": 1,
+   "witnesses": []
+  }
+ },
  "fight": null,
  "gate_open": false,
  "geometry_version": 3,
@@ -9,6 +38,7 @@
  "journal": [
   {
    "action": "take",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -65,6 +95,7 @@
   },
   {
    "action": "take",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -81,7 +112,7 @@
    "offer_trade": null,
    "player_cell": [
     47,
-    68
+    67
    ],
    "precedent_key": "quick:take",
    "property": [],
@@ -107,9 +138,7 @@
     {
      "action": "take",
      "category": "success",
-     "notes": [
-      "Walked 1 cells first (1 s)."
-     ],
+     "notes": [],
      "reason": "You pick up the short cord."
     }
    ],
@@ -128,6 +157,7 @@
   },
   {
    "action": "make",
+   "actor_id": "player",
    "category": "success",
    "crafted": "made_4",
    "demonstration": null,
@@ -192,6 +222,7 @@
  ],
  "last_action": {
   "action": "make",
+  "actor_id": "player",
   "category": "success",
   "crafted": "made_4",
   "demonstration": null,
@@ -259,15 +290,24 @@
   {
    "alive": true,
    "controller": {
-    "activity": "look",
+    "activity": "walk",
     "anchor_index": 2,
     "destination": [
      49,
      13
     ],
     "goal": "watch the gate",
-    "next_at_ms": 15300,
-    "path": [],
+    "next_at_ms": 14800,
+    "path": [
+     [
+      48,
+      13
+     ],
+     [
+      49,
+      13
+     ]
+    ],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -292,48 +332,47 @@
     "mood": "weary",
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Roderic",
    "role": "Gate captain",
-   "x": 49,
+   "x": 47,
    "y": 13
   },
   {
    "alive": true,
    "controller": {
     "activity": "walk",
-    "anchor_index": 3,
+    "anchor_index": 2,
     "destination": [
-     47,
-     17
+     45,
+     20
     ],
     "goal": "patrol the west approach",
-    "next_at_ms": 14300,
+    "next_at_ms": 13700,
     "path": [
      [
-      46,
-      20
+      45,
+      17
      ],
      [
-      47,
-      20
-     ],
-     [
-      47,
-      19
-     ],
-     [
-      47,
+      45,
       18
      ],
      [
-      47,
-      17
+      45,
+      19
+     ],
+     [
+      45,
+      20
      ]
     ],
     "source": "routine",
-    "step_carry_ms": 0,
+    "step_carry_ms": 280,
     "step_ms": 360
    },
    "equipped": {
@@ -356,27 +395,47 @@
     "mood": "content",
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Bren",
    "role": "Gate guard",
-   "x": 45,
-   "y": 20
+   "x": 44,
+   "y": 17
   },
   {
    "alive": true,
    "controller": {
-    "activity": "look",
+    "activity": "walk",
     "anchor_index": 2,
     "destination": [
      51,
      20
     ],
     "goal": "patrol the east approach",
-    "next_at_ms": 15200,
-    "path": [],
+    "next_at_ms": 13700,
+    "path": [
+     [
+      51,
+      17
+     ],
+     [
+      51,
+      18
+     ],
+     [
+      51,
+      19
+     ],
+     [
+      51,
+      20
+     ]
+    ],
     "source": "routine",
-    "step_carry_ms": 0,
+    "step_carry_ms": 280,
     "step_ms": 360
    },
    "equipped": {
@@ -399,40 +458,30 @@
     "mood": "anxious",
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Oren",
    "role": "Gate guard",
-   "x": 51,
-   "y": 20
+   "x": 52,
+   "y": 17
   },
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 2,
+    "activity": "work",
+    "anchor_index": 1,
     "destination": [
-     32,
-     52
+     36,
+     51
     ],
     "goal": "tend the inn yard",
-    "next_at_ms": 13200,
-    "path": [
-     [
-      33,
-      51
-     ],
-     [
-      32,
-      51
-     ],
-     [
-      32,
-      52
-     ]
-    ],
+    "next_at_ms": 15200,
+    "path": [],
     "source": "routine",
-    "step_carry_ms": 120,
+    "step_carry_ms": 0,
     "step_ms": 440
    },
    "health": 100,
@@ -448,14 +497,14 @@
     "job": null,
     "memories": [],
     "mood": "cheerful",
-    "next_agenda_at": 30000,
+    "next_agenda_at": 32000,
     "said": null,
     "standing": "unknown",
-    "stranger_seen": false
+    "stranger_seen": true
    },
    "name": "Hessa",
    "role": "Innkeeper",
-   "x": 34,
+   "x": 36,
    "y": 51
   },
   {
@@ -468,7 +517,7 @@
      27
     ],
     "goal": "work at the smithy",
-    "next_at_ms": 26000,
+    "next_at_ms": 29000,
     "path": [],
     "source": "routine",
     "step_carry_ms": 0,
@@ -483,7 +532,7 @@
    "mind": {
     "chatting_with": {
      "id": "npc_jory_venn",
-     "until": 26000
+     "until": 29000
     },
     "facing_player": false,
     "feelings": {
@@ -512,7 +561,7 @@
      27
     ],
     "goal": "help around the forge",
-    "next_at_ms": 26000,
+    "next_at_ms": 29000,
     "path": [],
     "source": "routine",
     "step_carry_ms": 0,
@@ -524,7 +573,7 @@
    "mind": {
     "chatting_with": {
      "id": "npc_mara_venn",
-     "until": 26000
+     "until": 29000
     },
     "facing_player": false,
     "feelings": {
@@ -568,22 +617,17 @@
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 2,
+    "activity": "work",
+    "anchor_index": 1,
     "destination": [
-     62,
-     27
+     66,
+     28
     ],
     "goal": "work at the carpentry yard",
-    "next_at_ms": 12700,
-    "path": [
-     [
-      62,
-      27
-     ]
-    ],
+    "next_at_ms": 15700,
+    "path": [],
     "source": "routine",
-    "step_carry_ms": 240,
+    "step_carry_ms": 0,
     "step_ms": 440
    },
    "equipped": {
@@ -607,21 +651,42 @@
    },
    "name": "Tomas",
    "role": "Carpenter",
-   "x": 62,
+   "x": 66,
    "y": 28
   },
   {
    "alive": true,
    "controller": {
-    "activity": "work",
+    "activity": "walk",
     "anchor_index": 2,
     "destination": [
      78,
      31
     ],
     "goal": "tend the merchant wagon",
-    "next_at_ms": 17200,
-    "path": [],
+    "next_at_ms": 14200,
+    "path": [
+     [
+      82,
+      31
+     ],
+     [
+      81,
+      31
+     ],
+     [
+      80,
+      31
+     ],
+     [
+      79,
+      31
+     ],
+     [
+      78,
+      31
+     ]
+    ],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -647,21 +712,50 @@
    },
    "name": "Darin",
    "role": "Merchant",
-   "x": 78,
+   "x": 83,
    "y": 31
   },
   {
    "alive": true,
    "controller": {
-    "activity": "look",
+    "activity": "walk",
     "anchor_index": 2,
     "destination": [
      47,
      32
     ],
     "goal": "watch the south road",
-    "next_at_ms": 15200,
-    "path": [],
+    "next_at_ms": 14700,
+    "path": [
+     [
+      45,
+      28
+     ],
+     [
+      46,
+      28
+     ],
+     [
+      47,
+      28
+     ],
+     [
+      47,
+      29
+     ],
+     [
+      47,
+      30
+     ],
+     [
+      47,
+      31
+     ],
+     [
+      47,
+      32
+     ]
+    ],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 360
@@ -684,12 +778,15 @@
     "mood": "content",
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Elin",
    "role": "Watch scout",
-   "x": 47,
-   "y": 32
+   "x": 44,
+   "y": 28
   },
   {
    "alive": true,
@@ -702,15 +799,40 @@
     }
    ],
    "controller": {
-    "activity": "look",
+    "activity": "walk",
     "anchor_index": 2,
     "destination": [
      53,
      43
     ],
     "goal": "patrol the village approach",
-    "next_at_ms": 15400,
-    "path": [],
+    "next_at_ms": 14700,
+    "path": [
+     [
+      54,
+      39
+     ],
+     [
+      53,
+      39
+     ],
+     [
+      53,
+      40
+     ],
+     [
+      53,
+      41
+     ],
+     [
+      53,
+      42
+     ],
+     [
+      53,
+      43
+     ]
+    ],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 360
@@ -733,12 +855,15 @@
     "mood": "irritable",
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Kade",
    "role": "Patrol guard",
-   "x": 53,
-   "y": 43
+   "x": 55,
+   "y": 39
   }
  ],
  "objective": "Get inside the city",
@@ -2130,6 +2255,7 @@
    "y": 60
   },
   "made_4": {
+   "attributes": [],
    "base_name": "bound club",
    "bound_to": [],
    "capabilities": [
@@ -2167,6 +2293,7 @@
    "owner_id": "player",
    "placeholder": "wood",
    "rated_load_kg": null,
+   "revision": 0,
    "sprite_asset_id": "spr_<r0>_made_4",
    "tools_used": [],
    "water_l": 0.0,
@@ -5235,6 +5362,7 @@
  "player": {
   "alive": true,
   "conditions": [],
+  "down": false,
   "equipped": {
    "body": "clothes_player",
    "right": "made_4"
@@ -5248,11 +5376,235 @@
   "y": 67
  },
  "player_seq": 6,
+ "precedents": [
+  {
+   "at": 2000,
+   "helpers": {},
+   "inputs": {
+    "branch_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+     "flags": [
+      "rigid",
+      "combustible",
+      "floats"
+     ],
+     "gear": {
+      "class": "staff",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": null,
+     "id": "branch_a",
+     "length_m": 1.5,
+     "mass_kg": 1.2,
+     "materials": [
+      "wood"
+     ],
+     "name": "fallen branch",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 47,
+     "y": 67
+    }
+   },
+   "intention": "take branch_a",
+   "key": "quick:take",
+   "outcome": "success",
+   "proposal": {
+    "action": "take",
+    "drop_ids": [],
+    "effort_seconds": 2,
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "quick:take",
+    "reason": "You pick up the fallen branch.",
+    "take_ids": [
+     "branch_a"
+    ],
+    "transformation": null
+   },
+   "reason": "You pick up the fallen branch."
+  },
+  {
+   "at": 5000,
+   "helpers": {},
+   "inputs": {
+    "cord_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+     "flags": [
+      "flexible",
+      "tieable",
+      "combustible"
+     ],
+     "gear": {
+      "class": null,
+      "covers": [],
+      "kind": "none",
+      "quality": "fair"
+     },
+     "holder_id": null,
+     "id": "cord_a",
+     "length_m": 1.0,
+     "mass_kg": 0.2,
+     "materials": [
+      "plant fiber"
+     ],
+     "name": "short cord",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 49,
+     "y": 66
+    }
+   },
+   "intention": "take cord_a",
+   "key": "quick:take",
+   "outcome": "success",
+   "proposal": {
+    "action": "take",
+    "drop_ids": [],
+    "effort_seconds": 2,
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "quick:take",
+    "reason": "You pick up the short cord.",
+    "take_ids": [
+     "cord_a"
+    ],
+    "transformation": null
+   },
+   "reason": "You pick up the short cord."
+  },
+  {
+   "at": 10000,
+   "helpers": {},
+   "inputs": {
+    "branch_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A dry, fairly straight fallen branch about 1.5 m long and wrist-thick.",
+     "flags": [
+      "rigid",
+      "combustible",
+      "floats"
+     ],
+     "gear": {
+      "class": "staff",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": "player",
+     "id": "branch_a",
+     "length_m": 1.5,
+     "mass_kg": 1.2,
+     "materials": [
+      "wood"
+     ],
+     "name": "fallen branch",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 47,
+     "y": 67
+    },
+    "cord_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "tie"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A short length of twisted plant-fibre cord, about 1 m long.",
+     "flags": [
+      "flexible",
+      "tieable",
+      "combustible"
+     ],
+     "gear": {
+      "class": null,
+      "covers": [],
+      "kind": "none",
+      "quality": "fair"
+     },
+     "holder_id": "player",
+     "id": "cord_a",
+     "length_m": 1.0,
+     "mass_kg": 0.2,
+     "materials": [
+      "plant fiber"
+     ],
+     "name": "short cord",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 49,
+     "y": 66
+    }
+   },
+   "intention": "wind the cord round the branch",
+   "key": "test",
+   "outcome": "success",
+   "proposal": {
+    "action": "make",
+    "clarifying_question": null,
+    "effort_seconds": 5,
+    "harm": null,
+    "new_object": {
+     "capabilities": [],
+     "capacity_l": null,
+     "consumes": [
+      "branch_a",
+      "cord_a"
+     ],
+     "description": "A branch with cord wound tight round its grip.",
+     "flags": [
+      "rigid"
+     ],
+     "length_m": 0.9,
+     "mass_kg": 1.2,
+     "materials": [
+      "wood",
+      "plant fibre"
+     ],
+     "name": "bound club",
+     "rated_load_kg": null,
+     "tools_used": []
+    },
+    "outcome": "success",
+    "precedent_key": "test",
+    "reason": "It happens.",
+    "take_ids": [],
+    "transformation": null
+   },
+   "reason": "It happens."
+  }
+ ],
  "projectiles": [],
  "run_id": "<run0>",
  "safe_seq": 3,
  "scenario": "village",
- "seed_version": 13,
+ "seed_version": 14,
  "sim_time_ms": 15000,
  "tick": 15,
  "water_spilled_l": 0.0

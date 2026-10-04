@@ -6,6 +6,7 @@ import difflib
 import json
 import re
 import sqlite3
+import time
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Literal
@@ -16,7 +17,6 @@ from pydantic import BaseModel, Field
 
 import attempts
 import cast
-import clock
 import combat
 import commands
 import consequences
@@ -24,8 +24,6 @@ import crafting
 import encounter
 import intent
 import judge_view
-import perception
-import reputation
 import rounds
 import routes_tutorial
 import store
@@ -109,6 +107,7 @@ class ActRequest(BaseModel):
 @router.post("/runs/{run_id}/act")
 def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     """Whatever the stranger typed: words, a deed, both, or waiting / giving up / walking away (GDD D-34)."""
+    ai_config.deadline.set(time.monotonic() + (8.0 if request.mode == "say" else 15.0))
     with commands.peek(run_id) as state:
         current = encounter.active(state)
     here = cast.player_cell(state)
@@ -249,6 +248,8 @@ def _attempt(
     except commands.Reply as reply:
         return reply.body
     try:
+        if ai_config.deadline.get() is None:
+            ai_config.deadline.set(time.monotonic() + 15.0)
         judged = propose(seen, context, calls_used)  # Any model call happens outside the lock.
         with commands.reopen(run_id, request, body=body, stale=False) as cmd:
             state = cmd.state
@@ -259,14 +260,11 @@ def _attempt(
             payload, verdict, after = consequences.resolve_attempt(
                 state, run_id, text, judged.result, attempts.service_message(judged), request_id, state["sim_time_ms"]
             )
-            payload["perceptions"] = perception.perceive(after, payload["journal_entry"])
-            perception.apply_perceptions(after, payload["perceptions"])
-            reputation.after_deed(after, payload["journal_entry"])  # e.g. giving someone back their own things (D-46)
             payload["safe_seq"] = state["event_seq"] if cast.calm(state) else state.get("safe_seq", 0)
-            payload.update(clock.advance_people(after, verdict["effort_seconds"] * 1000))
             consequences.apply_payload(state, payload)
-            store.apply_people(state, payload)
+            state["safe_seq"] = payload["safe_seq"]
             cmd.save("craft", payload["sim_time_ms"] // 1000)
+            attempts.queue_revised_pictures(cmd.connection, run_id, state, state["event_seq"], background)
             new_objects = [obj for step in payload["steps"] for obj in step["new_objects"]]
             trace = (
                 None
@@ -286,6 +284,7 @@ def _attempt(
                 )
             )
     finally:
+        ai_config.deadline.set(None)
         commands.release(run_id)
     routes_tutorial.after_action(state)  # The tutorial may move on (D-50).
     return _craft_response(cmd.run, state, trace, duplicate=False)

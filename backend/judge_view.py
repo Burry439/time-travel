@@ -158,7 +158,15 @@ def _judge_view(state: State, obj: Thing, costs: dict) -> dict:
         "materials": obj.get("materials", []),
         "mass_kg": obj["mass_kg"],
         "length_m": obj.get("length_m"),
+        "capacity_l": obj.get("capacity_l", 0),
+        "water_l": obj.get("water_l", 0),
+        "temperature": obj.get("temperature", "cold"),
+        "burning": obj.get("burning", False),
         "flags": obj.get("flags", []),
+        "attributes": obj.get("attributes", []),
+        "connections": obj.get("bound_to", []),
+        "revision": obj.get("revision", 0),
+        "condition": obj.get("condition"),
         "carried_by_player": obj["holder_id"] == "player",
         "portable": "carry" in obj["capabilities"],
         **({"on_someone_down": obj["on_person"]} if obj.get("on_person") else {}),
@@ -214,4 +222,20 @@ def build_context(state: State, text: str, selected_ids: list[str]) -> dict:
         "water_sources": water_sources(state, costs),
         "people_nearby": people,
         "prior_rulings": prior_rulings(state),
+        "relevant_precedents": [p for p in (state.get("precedents") or []) if any(i in known for i in p["inputs"])][
+            -12:
+        ],
+        "accepted_commitments": [
+            c
+            for n in state["npcs"]
+            for c in (n.get("mind") or {}).get("commitments", [])
+            if c.get("status") == "accepted" and n["id"] in known and c.get("until", 0) > state["sim_time_ms"]
+        ],
+        "player_abilities": {
+            "baseline": state.get("actor_abilities")
+            or "An ordinary adult with future knowledge; no magic or supernatural strength. Precision work must be justified by the described method, tools and actual help.",
+            "conditions": state["player"].get("conditions", []),
+            "health": state["player"].get("health", 100),
+            "down": bool(state["player"].get("down")),
+        },
     }

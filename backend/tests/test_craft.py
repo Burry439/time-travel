@@ -185,25 +185,15 @@ def test_invalid_proposals_change_nothing(world, change, note):
     assert any(note in n for n in body["trace"]["validator"]["notes"])
 
 
-def test_validator_clamps_mass_strips_invented_material_and_unearned_flags(world):
-    http = world.http
-    state = walk_to(http, http.post("/runs", json={}).json(), 45, 66)
-    world.replies.append(
-        spear(
-            materials=["wood", "flint", "vine", "iron"],
-            mass_kg=50.0,
-            flags=["sharp_edge", "magnetized", "light_source", "ferromagnetic"],
-        )
-    )
-    state = craft(http, state, "make a magic glowing spear", "clamp").json()["state"]
-    made = next(o for o in state["objects"].values() if o["id"].startswith("made_"))
-    assert "iron" not in made["materials"]
-    assert made["mass_kg"] == pytest.approx(1.2 + 0.3 + 0.4)
-    assert made["flags"] == ["sharp_edge"]
-    assert {c["text"] for c in made["known_capabilities"] if c["status"] == "untested"} >= {
-        "could give light if lit",
-        "might become magnetic if touched to a real magnet",
-    }
+def test_validator_rejects_contradictory_physical_proposals(world):
+    http, rulings = world.http, world.replies
+    state = http.post("/runs", json={"mode": "developer"}).json()
+    rulings.append(spear(materials=["wood", "iron"], mass_kg=100.0, flags=["rigid", "magnetized"]))
+    before = state["objects"]
+    state = craft(http, state, "make a magic glowing spear", "contradiction").json()["state"]
+    assert state["last_action"]["category"] == "unresolved"
+    assert state["objects"] == before
+    assert "mass" in state["last_action"]["reason"].lower() or state["last_action"]["steps"][0]["notes"]
 
 
 @pytest.mark.parametrize("outcome", ["failed", "blocked", "unsupported", "needs_clarification"])
@@ -389,7 +379,7 @@ def test_felling_a_tree_clears_its_cell_and_leaves_pieces(world):
     assert http.get(f"/runs/{state['run_id']}").json() == state
 
 
-def test_transform_mass_is_capped_by_the_target():
+def test_transform_rejects_mass_exceeding_the_target():
     state = fresh_state(37, 67)  # Beside the birch sapling (12 kg) at (38, 67).
     plan = judged(
         "transform",
@@ -412,9 +402,8 @@ def test_transform_mass_is_capped_by_the_target():
         },
     )
     verdict = crafting.validate(state, plan)
-    piece = verdict["transform"]["pieces"][0]
-    assert piece["mass_kg"] * piece["count"] == pytest.approx(12.0)
-    assert piece["materials"] == ["wood"] and piece["flags"] == []
+    assert verdict["category"] == "unresolved"
+    assert "more mass" in verdict["notes"][-1]
 
 
 def harm(target, result, weapon=None, area="torso"):
@@ -693,5 +682,42 @@ def test_gathering_keeps_to_the_source_and_to_a_handful(world):
     world.replies.append(attempt(gather_step(name="iron leaf", materials=("iron",), count=3, mass=2.0)))
     state = craft(http, state, "pull some iron leaves off the tree", "iron").json()["state"]
     made = [o for o in state["objects"].values() if o["id"].startswith("gathered_")]
-    assert len(made) == 3 and all(o["materials"] == ["wood"] for o in made)  # Iron doesn't grow on oaks.
-    assert sum(o["mass_kg"] for o in made) <= tuning.GATHER_MAX_KG + 0.01
+    assert not made  # An impossible quantity is rejected, never silently manufactured at a smaller mass.
+    assert state["last_action"]["category"] == "unresolved"
+
+
+def test_changed_physical_shape_queues_matching_new_art(world):
+    import json
+
+    import library
+    from ai import illustrator
+
+    http = world.http
+    state = http.post("/runs", json={"mode": "developer"}).json()
+    before = dict(state["objects"]["branch_a"])
+    feature = {
+        "name": "channel",
+        "value": "shallow spiral groove",
+        "status": "expected",
+        "basis_ids": ["branch_a", "flint_a"],
+    }
+    world.replies.append(
+        attempt(
+            judged(
+                "physical",
+                resource_ids=["branch_a", "flint_a"],
+                effects=[{"kind": "attribute", "target_id": "branch_a", "other_id": None, "attribute": feature}],
+            )
+        )
+    )
+    reply = craft(http, state, "Carve a shallow groove in the branch with the flint", "shaped")
+    assert reply.status_code == 200, reply.text
+    obj = reply.json()["state"]["objects"]["branch_a"]
+    assert obj["sprite_asset_id"] != before.get("sprite_asset_id")
+    assert library.signature(obj) != library.signature(before)
+    with service.store.db() as db:
+        row = db.execute("SELECT record_json,status FROM assets WHERE asset_id=?", (obj["sprite_asset_id"],)).fetchone()
+    record = json.loads(row["record_json"])
+    assert row["status"] == "ready" and record["attributes"] == [feature]
+    assert "shallow spiral groove" in illustrator.sprite_prompt(record)
+    assert http.get(f"/runs/{state['run_id']}").json()["objects"]["branch_a"] == obj

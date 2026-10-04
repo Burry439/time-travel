@@ -19,12 +19,9 @@ def test_a_theft_is_answered_at_once_in_the_victims_own_words(world, monkeypatch
     state = post(world, state, "move", {"cells": [[x, 55] for x in range(47, 38, -1)]})["state"]
     state = post(world, state, "quick", {"verb": "take", "object_id": "bowl_hessa"})["state"]  # Walks there first.
     hessa = npc(state, "npc_hessa_marr")
-    assert hessa["mind"]["said"]["text"] in (
-        "Oi! That's my clay bowl!",
-        "Hey! Put my clay bowl down!",
-        "Thief! That's mine!",
-    ), hessa["mind"]["said"]
-    assert hessa["mind"]["facing_player"] and hessa["mind"]["feelings"]["anger"] >= 0.67
+    assert not hessa["mind"].get("said")  # The observation queues her own response.
+    assert hessa["mind"]["facing_player"]
+    assert hessa["mind"]["feelings"].get("anger", 0) == 0
     assert {"npc_id": "npc_hessa_marr", "kind": "decide", "why": "victim"} in state["pending_minds"]
     assert not asked  # All of that by code: the decider decides what she does next, in the reaction lane.
     assert reputation.worst_memory(hessa)["item"] == "clay bowl" and reputation.worst_memory(hessa)["severity"] == 2

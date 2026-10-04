@@ -126,7 +126,7 @@ def open_trades(state: State, npc: Npc) -> list[dict]:
 
 def deal_possible(state: State, deal: Deal) -> bool:
     """A deal with a world condition (the beam in its brackets) can only be done once that holds."""
-    return rules.holds(state, cast.offer_of(state, deal).get("done_when"))
+    return deal.get("type") != "negotiated" and rules.holds(state, cast.offer_of(state, deal).get("done_when"))
 
 
 def lendable(state: State, npc: Npc) -> list[dict]:
@@ -219,9 +219,8 @@ def _talking(state: State, npc: Npc, options: dict) -> None:
             "ask_back",
             f"{name} asks the stranger a question of their own: who they are, what they want, or what they meant.",
         )
-    trust = reputation.regard(npc)["trust"]
     for fact_id, fact in knowledge(npc).items():
-        if fact_id in my_mind.get("shared", []) or (fact.get("trusted") and trust < tuning.SHARE_TRUST):
+        if fact_id in my_mind.get("shared", []):
             continue
         options[f"share:{fact_id}"] = _option("share", f"{name} tells the stranger: {fact['text']}", fact_id)
     for secret in stories.confidable(state, npc):  # Code says they could; whether they do is theirs (D-61).
@@ -255,7 +254,7 @@ def _offering(state: State, npc: Npc, options: dict) -> None:
         options[f"lend:{obj['id']}"] = _option(
             "lend", f"{name} lets the stranger take and use their {obj['name']}.", obj["id"]
         )
-    if reputation.regard(npc)["trust"] >= tuning.GIVE_TRUST:
+    if not npc.get("down"):
         for obj in lendable(state, npc)[:3]:
             options[f"give:{obj['id']}"] = _option(
                 "give", f"{name} gives the stranger their {obj['name']} to keep.", obj["id"]
@@ -343,7 +342,6 @@ def _going(state: State, npc: Npc, options: dict) -> None:
         and captain.get("alive", True)
         and not my_mind.get("vouched")
         and not fighting
-        and (reputation.regard(npc)["trust"] >= tuning.VOUCH_TRUST or helped_by_stranger(npc))
     ):
         options["vouch"] = _option(
             "vouch", f"{name} goes to {gatekeeping.decider_called(state, captain)} now and speaks for the stranger."
@@ -398,8 +396,6 @@ def admits_now(state: State, npc: Npc, answers: dict) -> bool:
     return (
         "admit" in replies(state, npc)
         and yes(answers, "reason", tuning.REASON_YES)
-        and "threat" in answers
-        and float(answers["threat"].get("noul", 1.0)) < tuning.THREAT_NO
         and gatekeeping.grounds_to_admit(npc)
     )
 

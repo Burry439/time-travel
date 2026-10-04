@@ -70,6 +70,10 @@ class Job(TypedDict, total=False):
 class Mind(TypedDict, total=False):
     """What a villager feels, knows and is doing (cast.mind)."""
 
+    evidence: dict[str, Memory]  # Durable identities; pruning episodic memories never renews proof budgets.
+    standing_plan: dict
+    commitments: list[dict]
+    physical_intention: str
     memories: list[Memory]
     feelings: dict[str, float]  # fear, anger: 0..1
     regard: dict[str, float]  # trust, suspicion, respect, awe, goodwill_used, illwill_used (reputation.regard)
@@ -100,6 +104,8 @@ class Npc(Person, total=False):
 class Thing(TypedDict, total=False):
     """Any object in the world: seeded from content (m2.py), made, gathered or cut in play (consequences.py)."""
 
+    attributes: list[dict]  # Novel physical facts: name, value, status, basis_ids.
+    revision: int
     id: str
     name: str
     description: str
@@ -137,6 +143,9 @@ class Deal(TypedDict, total=False):
     check: str
     reward: str
     status: str  # proposed, accepted, fulfilled
+    rewards: list[dict]  # Resource-checked negotiated NPC intentions.
+    evidence_ids: list[str]
+    objective_evidence_ids: list[str]
     offered_event: int
     accepted_event: int
     fulfilled_event: int
@@ -145,6 +154,9 @@ class Deal(TypedDict, total=False):
 class State(TypedDict, total=False):
     """The whole world of one journey, as rebuilt from its events (store.py)."""
 
+    facts: dict[str, dict]
+    incidents: dict[str, dict]
+    precedents: list[dict]
     run_id: str
     mode: str  # normal or developer
     scenario: str  # village or tutorial

@@ -16,6 +16,7 @@ import tuning
 def rope_theft(state):
     """Tomas's rope, taken; Tomas saw it and told Kade."""
     state["objects"]["rope_tomas"]["holder_id"] = "player"
+    state["incidents"] = {"rope_theft": {"object_id": "rope_tomas", "victim": "npc_tomas_reed", "status": "open"}}
     for who, source in (("npc_tomas_reed", "victim"), ("npc_kade_east", "told_by:npc_tomas_reed")):
         reputation.remember(
             npc(state, who),
@@ -26,6 +27,7 @@ def rope_theft(state):
                 "clarity": "clear",
                 "victim": "npc_tomas_reed",
                 "item": "coil of rope",
+                "object_id": "rope_tomas",
                 "source": source,
                 "summary": "The stranger took Tomas's coil of rope.",
                 "short": "stole the rope",
@@ -46,12 +48,14 @@ def test_giving_it_back_settles_it_for_everyone_who_knew():
     state = unit_state()
     rope_theft(state)
     tomas = npc(state, "npc_tomas_reed")
+    npc(state, "npc_kade_east").update(x=10, y=65)
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
     commit(state, judged("give", give={"item_ids": ["rope_tomas"], "recipient_id": "npc_tomas_reed"}))
     reputation.after_deed(state, state["last_action"])
     assert reputation.unresolved_crime(npc(state, "npc_tomas_reed")) is None
-    assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is None
-    assert "seize" not in conversation.moves(state, npc(state, "npc_kade_east"))
+    assert reputation.unresolved_crime(npc(state, "npc_kade_east")) is not None  # Absent: not yet told of restitution.
+    npc(state, "npc_kade_east").update(x=tomas["x"], y=tomas["y"] + 2)
+    assert "seize" in conversation.moves(state, npc(state, "npc_kade_east"))
 
 
 def test_an_arrest_answers_for_the_theft():
@@ -65,6 +69,7 @@ def test_forgiving_settles_their_own_grudge():
     state = unit_state()
     rope_theft(state)
     tomas = npc(state, "npc_tomas_reed")
+    npc(state, "npc_kade_east").update(x=10, y=65)
     state["player"].update(x=tomas["x"], y=tomas["y"] + 1)
     assert "forgive" in conversation.moves(state, tomas)
     state["event_seq"] = 9

@@ -36,6 +36,7 @@ var controls: PlayerInput
 var actions: Actions
 var run_state: Dictionary = {}
 var request_busy := false
+var intent_pending := false
 var gameplay_active := false
 var movement_sync_active := false
 var move_queue: Array[Dictionary] = []
@@ -393,14 +394,14 @@ func _physics_process(delta: float) -> void:
 			and ui.modal_kind != "death":
 		ui.close_modal_now()
 		ui.bar.open()
-	if in_fight() and gameplay_active and not sync_error and (request_busy or ui.blocks_movement()) \
+	if in_fight() and gameplay_active and not sync_error and ((request_busy and not intent_pending) or ui.blocks_movement()) \
 			and not ui.guide.is_open(): # The tutorial's cards stop even a fight (D-52).
 		# A fight doesn't wait while you type or think: the clock and the blows run on (D-41).
 		view.animate_people(delta)
 		clock_pending_ms += delta * 1000.0
 		if not movement_sync_active and clock_pending_ms >= 500.0:
 			_flush_moves()
-	if not gameplay_active or request_busy or ui.blocks_movement() or sync_error:
+	if not gameplay_active or (request_busy and not intent_pending) or ui.blocks_movement() or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
 			return
 		player.velocity = Vector2.ZERO
@@ -410,7 +411,7 @@ func _physics_process(delta: float) -> void:
 	started = Time.get_ticks_usec()
 	view.animate_people(delta)
 	_prof("animate_npcs", started)
-	if int(run_state.get("seed_version", 1)) >= 3 and not in_encounter():
+	if int(run_state.get("seed_version", 1)) >= 3 and (not in_encounter() or intent_pending):
 		clock_pending_ms += delta * 1000.0 # Face to face, rounds move time instead.
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var is_running := Input.is_action_pressed("run")

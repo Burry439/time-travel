@@ -111,6 +111,7 @@ def test_cues_show_only_when_regard_crosses_a_band():
             "source": "shown",
         },
     )
+    talk.update_regard(hessa, {"impression": {"score": 4}, "suspicion": {"score": 2}})
     assert hessa["mind"]["cue"]["kind"] in ("warmer", "easier")
 
 

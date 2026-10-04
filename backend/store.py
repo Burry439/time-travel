@@ -31,9 +31,7 @@ GEOMETRY_VERSION = content.MAPS["village"]["version"]  # Recorded with each jour
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = (
-    13  # 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
-)
+SEED_VERSION = 14  # Open-ended physical facts and personal evidence/agreements (D-62). 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
 # 11: the old wainwright's yard, a free stock of materials for weapons and armour (D-51).
 # 12: the wainwright's notebook, a readable recipe book (D-52).
 # 13: Hessa's bucket holds ten litres, not one.
@@ -236,6 +234,9 @@ def apply_people(state: State, payload: dict) -> None:
             state["objects"][object_id].update(fields)
     if "projectiles" in payload:
         state["projectiles"] = payload["projectiles"]
+    for field in ("facts", "incidents"):
+        if field in payload:
+            state[field] = payload[field]
     state.setdefault("learned", []).extend(payload.get("learned_added", []))  # e.g. gossip the stranger overheard
     if "village" in payload:
         state["village"] = payload["village"]

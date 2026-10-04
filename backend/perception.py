@@ -1,16 +1,15 @@
-"""What people see of what the stranger does: who could see it and how clearly, the memory each takes away,
-and the moment itself (they turn, they're angry or afraid, the nearest shouts), decided by code. What they
-then choose to do is the decider's (minds.py)."""
+"""Physical perception: record each step for people who can actually see or hear it.
+Evidence queues personal reactions; the person's model chooses their interpretation and response."""
 
 from __future__ import annotations
 
 import cast
+import evidence
 import m2
 import paths
 import reputation
-import speech
 import tuning
-from shapes import Memory, Npc, State
+from shapes import State
 
 
 def _describe(state: State, entry: dict) -> list[dict]:
@@ -26,7 +25,7 @@ def _describe(state: State, entry: dict) -> list[dict]:
     shown = entry.get("demonstration") if isinstance(entry.get("demonstration"), dict) else None
     views = [
         _violence(state, harm, names) if harm else None,
-        None if harm else _theft(entry, names),  # A weapon grabbed for an attack is part of the attack.
+        *[_theft({**entry, "property": [claim]}, names) for claim in entry.get("property", [])],
         _demonstration(shown) if shown else None,
         None if shown or harm else _making(entry),
         _installing(entry.get("install")),
@@ -49,7 +48,7 @@ def _view(kind: str, victim: str | None, item: str | None, clear: tuple, vague: 
     }
 
 
-SHOWN = {"think": False, "works": True, "audience": []}  # Seen and remembered, not reacted to.
+SHOWN = {"think": True, "works": True, "audience": []}  # Seen and remembered, not reacted to.
 
 
 def _violence(state: State, harm: dict, names: dict) -> dict:
@@ -109,6 +108,7 @@ def _theft(entry: dict, names: dict) -> dict | None:
         claim["name"],
         (f"The stranger {verb} {owner}'s {claim['name']} without asking.", f"stole {owner}'s {claim['name']}", 2),
         (f"The stranger was handling {owner}'s things.", f"was handling {owner}'s things", 1),
+        object_id=claim["id"],
     )
 
 
@@ -120,10 +120,13 @@ def _demonstration(shown: dict) -> dict:
         (shown["observed"], f"showed off a {shown['object_name']}", 1),
         ("The stranger was showing people something; it was hard to see what.", "was showing something", 0),
         audience=shown.get("audience_ids", []),
-        think=False,
+        think=True,
         works=shown["works"],
         wonder=shown.get("wonder", "ordinary"),
-        object_id=shown["object_id"],  # What was shown, for stories that ask what it was (D-61).
+        object_id=shown["object_id"],
+        application=tuple(
+            sorted(shown.get("used_ids", []))
+        ),  # What was shown, for stories that ask what it was (D-61).
     )
 
 
@@ -138,7 +141,8 @@ def _making(entry: dict) -> dict | None:
         name,
         (f"The stranger made a {name} in front of them: {entry.get('reason', '')}", f"made a {name}", 1),
         ("The stranger was making something; it was hard to see what.", "was making something", 0),
-        **SHOWN,
+        **{**SHOWN, "works": False},
+        application="construction",
         wonder="ordinary",
         object_id=entry["made_ids"][0],
     )
@@ -212,7 +216,7 @@ def _gift(give) -> dict | None:
         things,
         (f"The stranger gave {to} a {things}.", f"gave {to} a {things}", 1),
         (f"The stranger handed something to {to}.", f"handed something to {to}", 0),
-        think=False,
+        think=True,
     )
 
 
@@ -231,7 +235,7 @@ def _help(treated) -> dict | None:
             1,
         ),
         (f"The stranger was tending to {patient}.", f"tended to {patient}", 0),
-        think=False,
+        think=True,
     )
 
 
@@ -249,19 +253,21 @@ def gate_work_agreed(state: State) -> bool:
     return False
 
 
-def perceive(state: State, entry: dict) -> list[dict]:
+def perceive(state: State, entry: dict, before: State | None = None) -> list[dict]:
     """Memories for everyone who could see what the player just did (and for the people it involved).
 
     Close witnesses see what happened; those further off only see something going on.
     """
-    here = cast.player_cell(state)
+    here = tuple(entry.get("player_cell", cast.player_cell(state)))
     perceptions = []
     for seen in _describe(state, entry):
         victim = cast.find(state["npcs"], seen["victim"] or "")
-        involved = {seen["victim"], *seen.get("audience", [])} - {None}
+        involved = {seen["victim"]} - {None}
         for npc in state["npcs"]:
-            if not npc.get("alive", True) or npc.get("down"):
-                continue  # The dead and the knocked-down see nothing.
+            observer = cast.find(before["npcs"], npc["id"]) if before else npc
+            if observer is None or not observer.get("alive", True) or observer.get("down"):
+                continue  # Awareness is measured immediately before impact.
+            npc = observer
             views = []
             if cast.distance(npc, here) <= tuning.SIGHT_CELLS and paths.line_of_sight(state, cast.cell(npc), here):
                 views.append(cast.distance(npc, here))
@@ -276,34 +282,46 @@ def perceive(state: State, entry: dict) -> list[dict]:
                 continue
             clarity = "clear" if close or min(views) <= seen.get("clear_cells", tuning.CLEAR_VIEW_CELLS) else "vague"
             source = (
-                SOURCES.get(seen["kind"], "shown") if npc["id"] == seen["victim"] else "shown" if close else "witnessed"
+                SOURCES.get(seen["kind"], "shown")
+                if npc["id"] == seen["victim"]
+                else "shown"
+                if npc["id"] in seen.get("audience", []) and views
+                else "witnessed"
             )
             memory = {
                 "kind": seen["kind"],
+                "actor_id": entry.get("actor_id", "player"),
                 "victim": seen["victim"],
                 "item": seen.get("item"),
                 **seen[clarity],
                 "clarity": clarity,
-                "at": state["sim_time_ms"],
+                "at": entry.get("sim_time_ms", state["sim_time_ms"]),
                 "event": entry.get("event_id"),
+                "step_number": entry.get("step_number", 1),
                 "source": source,
             }
+            if entry.get("actor_id", "player") != "player":
+                doer = cast.find(state["npcs"], entry["actor_id"])
+                memory["summary"] = memory["summary"].replace("The stranger", doer["name"])
+                memory["short"] = memory["short"].replace("stranger", doer["name"])
             if "works" in seen:
                 memory["works"] = seen["works"]
             if seen.get("wonder") and clarity == "clear":
                 memory["wonder"] = seen["wonder"]
             if seen.get("object_id") and clarity == "clear":
                 memory["object_id"] = seen["object_id"]
+                memory["revision"] = state["objects"].get(seen["object_id"], {}).get("revision", 0)
+                memory["application"] = seen.get("application", "function")
             if npc["id"] == seen["victim"]:  # They tell it in the first person: "attacked me", "stole my plank".
                 memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
             perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})
+    evidence.record(state, entry, perceptions)
     return perceptions
 
 
 def apply_perceptions(state: State, perceptions: list[dict]) -> None:
     """Remember what was seen; people who clearly saw a crime react at once by code (they turn, they're angry
     or afraid, the nearest one shouts), and then decide what to do about it (the decider)."""
-    barked = False
     here = cast.player_cell(state)
     order = sorted(
         perceptions,
@@ -315,7 +333,7 @@ def apply_perceptions(state: State, perceptions: list[dict]) -> None:
     )
     for perception in order:
         npc = cast.find(state["npcs"], perception["npc_id"])
-        if npc is None or not npc.get("alive", True):
+        if npc is None:
             continue
         memory = perception["memory"]
         reputation.remember(npc, memory)
@@ -323,47 +341,18 @@ def apply_perceptions(state: State, perceptions: list[dict]) -> None:
             cast.mind(npc)["rethinks"] = 0
             cast.add_pending(state, npc["id"], "decide", memory["source"])
         if memory["kind"] in reputation.CRIME_KINDS and memory.get("clarity") == "clear":
-            barked = _react_at_once(state, npc, memory, barked) or barked
-    # Violence clearly seen: guards (and an armed victim still standing) fight at once (D-41). Imported here because
-    # combat imports this module (a blow is seen like any deed).
+            cast.mind(npc)["facing_player"] = True
+    # A previously chosen defensive plan can start instantly. New motives wait for that person's judgment.
     import combat
 
-    fighters = combat.responders(state, perceptions)
+    fighters = [
+        p["npc_id"]
+        for p in perceptions
+        if p["memory"]["kind"] == "violence"
+        and p["memory"].get("actor_id", "player") == "player"
+        and (cast.mind(cast.find(state["npcs"], p["npc_id"])).get("standing_plan") or {}).get("defend")
+        and not cast.find(state["npcs"], p["npc_id"]).get("down")
+        and cast.find(state["npcs"], p["npc_id"]).get("alive", True)
+    ]
     if fighters and state["player"].get("alive", True):
         combat.start(state, fighters, state["sim_time_ms"], "violence")
-
-
-def _react_at_once(state: State, npc: Npc, memory: Memory, barked: bool) -> bool:
-    """The moment itself, decided by code: face the stranger, feel it, and (the nearest) shout."""
-    feelings, victim = cast.mind(npc)["feelings"], memory.get("victim") == npc["id"]
-    guard = cast.card(npc).get("guard")
-    if memory["kind"] == "theft":
-        feelings["anger"] = max(feelings.get("anger", 0.0), 0.67 if victim else 0.34)
-    elif guard or victim and cast.armed_with(state, npc):
-        feelings["anger"] = max(feelings.get("anger", 0.0), 0.67)
-    else:
-        feelings["fear"] = max(feelings.get("fear", 0.0), 0.67)
-    distance = cast.distance(npc, state["player"])
-    cast.mind(npc)["facing_player"] = distance <= tuning.AMBIENT_CELLS * 1.5
-    # The moment's feelings hold for a while, whatever is decided next.
-    cast.mind(npc)["stirred"] = {
-        "until": state["sim_time_ms"] + tuning.STIRRED_MS,
-        "fear": feelings.get("fear", 0.0),
-        "anger": feelings.get("anger", 0.0),
-    }
-    if barked or distance > tuning.BARK_CELLS:
-        return False
-    tone = {
-        ("theft", True): "theft",
-        ("theft", False): "theft_witness",
-        ("breach", False): "breach",
-        ("violence", True): "violence_victim",
-        ("violence", False): "violence",
-    }[(memory["kind"], victim)]
-    bank = speech.LINES.get("caught", {}).get(tone) or []
-    if not bank:
-        return False
-    words = speech.slots(state, npc)
-    text = bank[(len(cast.mind(npc)["memories"]) + len(npc["id"])) % len(bank)].format(**words)
-    speech.say(npc, text, state["sim_time_ms"], state, [], f"caught.{tone}")
-    return True

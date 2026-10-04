@@ -51,7 +51,7 @@ try {
             foreach ($smoke in Get-ChildItem (Join-Path $root 'tools') -Filter 'smoke_*.gd' | Sort-Object Name) {
                 $name = $smoke.BaseName
                 $out = Join-Path ([IO.Path]::GetTempPath()) "check-$name.txt"
-                $proc = Start-Process -FilePath $godot -NoNewWindow -Wait -PassThru -RedirectStandardOutput $out `
+                $proc = Start-Process -FilePath $godot -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $out `
                     -RedirectStandardError "$out.err" -ArgumentList @('--path', $root, '--script', "res://tools/$($smoke.Name)")
                 if ($proc.ExitCode -eq 0) { Write-Output "   $name passed" }
                 else {

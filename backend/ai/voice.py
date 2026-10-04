@@ -20,6 +20,7 @@ import json
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -38,7 +39,7 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-PERSON_VERSION = "person_v2"  # D-60: each person their own agent: a core and the rules that apply to them. v2 (D-61): secrets confided and story moves.
+PERSON_VERSION = "person_v3"  # D-60: each person their own agent: a core and the rules that apply to them. v2 (D-61): secrets confided and story moves.
 SCENE_LINES = 3
 WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 
@@ -73,10 +74,32 @@ class FeelingShift(BaseModel):
     change: Literal["Much worse", "A little worse", "A little better", "Much better"]
 
 
+class NpcIntent(BaseModel):
+    kind: Literal["help", "give", "lend", "vouch", "admit", "go", "physical"]
+    object_ids: list[str]
+    goal: list[int]
+    task: str
+
+
+class NegotiatedAgreement(BaseModel):
+    action: Literal["offer", "accept", "satisfied"]
+    agreement_id: str
+    task: str
+    check: str
+    rewards: list[NpcIntent]
+    evidence_ids: list[str]
+
+
 class PersonLine(BaseModel):
     """One person's turn in a moment of conversation, written by their own call (D-59): whether they speak, what
     they say and do, how they read it."""
 
+    respect: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"] = "Unchanged"
+    awe: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"] = "Unchanged"
+    fear: Literal["Not afraid", "Uneasy", "Afraid", "Terrified"] = "Not afraid"
+    intents: list[NpcIntent] = []
+    agreement: NegotiatedAgreement | None = None
+    defend_if_attacked: bool = False
     speaks: bool
     text: str
     brought_up_story_beat: bool  # The line gets the speaker's story beat across (D-59).
@@ -137,6 +160,7 @@ class VoiceCall:
     stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
     answers: dict = field(default_factory=dict)  # Their reading of the moment, in the typed-answer shape code uses.
     lines: list = field(default_factory=list)  # A group moment (scene): [{speaker_id, text, move, answers, remember}].
+    decisions: list = field(default_factory=list)  # Silent NPC decisions still apply, without dialogue.
     turns: list = field(default_factory=list)  # Each person's own call in a moment: [{speaker_id, status, ms, tokens}].
 
     def as_dict(self) -> dict:
@@ -239,6 +263,9 @@ def reading(parsed: PersonLine) -> dict:
         "impression": {"type": "score", "score": IMPRESSION.index(parsed.impression)},
         "suspicion": {"type": "score", "score": SUSPICION.index(parsed.suspicion)},
         "anger": {"type": "score", "score": ANGER.index(parsed.anger)},
+        "fear": {"type": "score", "score": ["Not afraid", "Uneasy", "Afraid", "Terrified"].index(parsed.fear) / 3},
+        "respect": {"type": "score", "score": IMPRESSION.index(parsed.respect)},
+        "awe": {"type": "score", "score": IMPRESSION.index(parsed.awe)},
         "believes": yes(parsed.believes_what_was_said),
         "threat": yes(parsed.sees_the_stranger_as_a_threat),
         "reason": yes(parsed.reason_enough_to_let_them_through),
@@ -265,9 +292,17 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     if first and len(people) > 1:
         heard = [f"{people[0]['name']}: \u201c{first['text']}\u201d"]
         with ThreadPoolExecutor(max_workers=len(people) - 1) as pool:
-            others = list(pool.map(lambda person: _turn(shared, person, people, heard), people[1:]))
+            futures = [pool.submit(copy_context().run, _turn, shared, person, people, heard) for person in people[1:]]
+            others = [f.result() for f in futures]
         turns += list(zip(people[1:], (call for call, _ in others)))
-        lines += [line for _, line in others if line][: SCENE_LINES - 1]
+        spoken_count = 1
+        for _, line in others:
+            if line is None:
+                continue
+            if line["speaks"] and spoken_count >= SCENE_LINES:
+                line["speaks"] = False
+            spoken_count += int(line["speaks"])
+            lines.append(line)
     result = VoiceCall(status="fallback", text=fallback, model=first_call.model, prompt_version=PERSON_VERSION)
     result.latency_ms = round((time.perf_counter() - started) * 1000)
     result.input_tokens = sum(call.input_tokens for _, call in turns)
@@ -277,7 +312,9 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
         for person, call in turns
     ]
     if first:
-        result.status, result.lines, result.text = "ok", lines, first["text"]
+        result.status, result.text = "ok", first["text"]
+        result.lines = [line for line in lines if line.get("speaks", True)]
+        result.decisions = [line for line in lines if not line.get("speaks", True)]
         result.stranger_name = first.pop("stranger_name")
         for line in lines[1:]:
             line.pop("stranger_name", None)
@@ -308,16 +345,21 @@ def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> t
     prompt = "\n\n".join(MODULES[rule] for rule in rules)
     # A secret they could confide or something a story lets them agree to is a decision to weigh, not just a line to
     # phrase: those calls get a moment's thought (D-61: with none, a merchant handed his price still said no).
-    weighty = WEIGHTY_REASONING if {"confide", "story"} & set(rules) else None
+    weighty = WEIGHTY_REASONING
     call, parsed = _parse(prompt, payload, PersonLine, PERSON_VERSION, weighty)
     if parsed is None:
         return call, None
     call.status = "ok"
     spoken = tidy(parsed.text)
-    if not spoken or not (parsed.speaks or person["in_the_conversation"] == "addressed"):
-        return call, None  # They stay quiet: a turn well taken.
+    speaks = parsed.speaks or person["in_the_conversation"] == "addressed"
+    if speaks and not spoken:
+        return call, None
     return call, {
         "speaker_id": person["id"],
+        "speaks": speaks,
+        "intents": [i.model_dump() for i in parsed.intents],
+        "agreement": parsed.agreement.model_dump() if parsed.agreement else None,
+        "defend_if_attacked": parsed.defend_if_attacked,
         "text": spoken,
         "move": parsed.move.strip(),
         "story_beat": parsed.brought_up_story_beat,
@@ -463,3 +505,25 @@ def _both(first: VoiceCall, second: VoiceCall) -> VoiceCall:
     first.output_tokens += second.output_tokens
     first.error = first.error or second.error
     return first
+
+
+# The same personal decision contract is used for witnessing and conversation.
+NpcDecision = PersonLine
+
+
+def react(context: dict) -> tuple[VoiceCall, dict | None]:
+    if config.mode() != "live":
+        return VoiceCall(status="fallback", text="", model="stub"), None
+    call, parsed = _parse(MODULES["core"], context, NpcDecision, PERSON_VERSION, WEIGHTY_REASONING)
+    if parsed is None:
+        return call, None
+    call.status = "ok"
+    return call, {
+        "answers": reading(parsed),
+        "move": parsed.move,
+        "text": tidy(parsed.text) if parsed.speaks else "",
+        "remember": parsed.remember,
+        "intents": [i.model_dump() for i in parsed.intents],
+        "agreement": parsed.agreement.model_dump() if parsed.agreement else None,
+        "defend_if_attacked": parsed.defend_if_attacked,
+    }

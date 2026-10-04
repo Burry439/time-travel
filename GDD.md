@@ -1,6 +1,8 @@
 # The City Beyond — Game Design Document
 
-**Version 1.9 · 29 September 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49; 1.9: the tutorial and the device, D-50)
+**Version 1.10 · 4 October 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49; 1.9: the tutorial and the device, D-50)
+
+D-62 updates the CURRENT gameplay and EXPERIMENT AI implementation below. Earlier decisions and retros remain historical; the LOCKED vision and core loop remain in force.
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -420,13 +422,13 @@ Elin watches the road between the gate and the row. Kade patrols the village app
 
 ### 4.3 Why the gate is closed
 
-> **Built (D-26).** Roderic's card carries this rule (`decides`). In conversation his reply's reading answers two beliefs for him (D-46): is the stranger a threat, and has he seen or been told of a legitimate reason. He admits when reason ≥ 0.45 and threat < 0.5, unless his chosen reply is hostile. Code never offers admission while he knows of a crime by the stranger he doesn't doubt. Guards stop an unadmitted stranger in the gate approach.
+> **Built (D-26).** Roderic's card carries this rule (`decides`). In conversation his reply's reading answers two beliefs for him (D-46): is the stranger a threat, and has he seen or been told of a legitimate reason. D-62: his individual judgment can grant or refuse an exception; code checks his authority and physical ability. Guards stop an unadmitted stranger in the gate approach.
 
 **Status: CURRENT**
 
 The city runs controlled entry. Unknown travellers need **a credible reason**: a known sponsor, legitimate business, a recognised pass, or the captain's direct approval. It's a social rule enforced by people, not a magic lock. Roderic admits by the rule below; since D-43, **any guard may let someone through for their own reasons** (below). The guards can also stop, question, warn, report, and call the captain.
 
-> **Built (D-43): any guard, for their own reasons.** Each guard's card carries `admits`, the captain's `decides`. In conversation the reply's reading answers the same two yes/no beliefs for any guard: by their own lights, is there reason enough, and is the stranger a threat? Code admits on reason ≥ 0.45 and threat < 0.5, never after a crime or breach they know of, never while barred, never by someone who's down.
+> **Built (D-43): any guard, for their own reasons.** Each guard's card carries `admits`, the captain's `decides`. In conversation the reply's reading answers the same two yes/no beliefs for any guard: by their own lights, is there reason enough, and is the stranger a threat? D-62: the model chooses admission from individual motives, including fear or an exception to duty. Code checks actual authority and ability; knowledge of a crime is context, not a blanket veto.
 >
 > - **Bren:** on trust alone (his own, or Hessa's word); never for a stranger he doesn't know.
 > - **Oren:** out of fear or awe, or if his debt to Darin is settled; never out of goodwill.
@@ -435,12 +437,7 @@ The city runs controlled entry. Unknown travellers need **a credible reason**: a
 >
 > Live: Bren admits on Hessa's word (2/2) but not as a favour (2/2); Kade ignores wonders (2/2); Oren in awe opens the gate (2/2).
 >
-> **Grounds, not claims (D-55).** Code also requires something real behind a yes (`gatekeeping.grounds_to_admit`):
-> - evidence the guard holds: a resident's word given to them in person, something shown to work, a gift, or help they saw;
-> - for a guard going on their own motive, trust earned over time (standing Friendly or better) also counts;
-> - the captain's rule asks for the evidence.
->
-> Without grounds, "admit" isn't among the voice's moves, and the context says why ("nothing to go on but the stranger's own word"). The live playtest found Roderic admitting on "Hessa has spoken for me" before she had.
+> **Private evidence and individual permission (D-62).** The guard receives only their own evidence and memories. Evidence, responsibility, fear, debts and claims are weighed by that person. Code checks that they actually control entry and can act; it does not require a universal amount of trust or proof. The model must distinguish a claimed recommendation from one actually received, and record why it grants an exception.
 
 > **Any level's way in (D-59).** Admission isn't only the city's: a ferryman who takes you across (A1) and a manor's
 > porter and steward (A10) use the same rules. The words come from the map (`entry`: the place, who decides and their
@@ -690,7 +687,7 @@ Player text (+ optional reference chips)
 ① INTERPRET  → structured Attempt: steps, inputs (existing IDs only), tools, intended result
   │            ambiguous in a way that matters? → needs_clarification (one question)
   ▼
-② VALIDATE PRECONDITIONS (code)  → references, reach, possession, permission, facility access,
+② VALIDATE PRECONDITIONS (code)  → references, physical reach, possession, resources,
   │                                quantities, carry limit  → fail → blocked
   ▼
 ③ RESOLVE each step
@@ -698,10 +695,10 @@ Player text (+ optional reference chips)
   │  novel method or new object → PHYSICS JUDGE proposes an outcome
   │                               (uses material facts, precedents, knowledge baseline)
   ▼
-④ VALIDATE OUTCOME (code)  → conservation, material facts, property vocabulary,
+④ VALIDATE OUTCOME (code)  → conservation, material facts, extensible properties,
   │                          skill, precedent consistency, allowed effect types
   ▼
-⑤ COMMIT (reducer)  → one atomic event per step: effects + clock + journal entry
+⑤ COMMIT (reducer)  → save the ordered completed steps: effects + clock + journal
   │
   ▼
 ⑥ PERCEIVE  → witnesses get what they could observe → NPC decisions (§7)
@@ -723,16 +720,18 @@ These are hard rules. No model output bypasses them.
 | # | Rule |
 | --- | --- |
 | V1 | **References.** Every input is an existing, undestroyed entity. Models can't name objects that don't exist yet except as outputs. |
-| V2 | **Access.** Each input is carried by the player, or within reach and permitted. Facilities (the forge) need permission from whoever controls them. |
+| V2 | **Access.** Inputs must actually be available and physically reachable. Ownership, loans and illegal taking are recorded; lack of permission is not a universal ban on attempting an illegal physical action. |
 | V3 | **Conservation.** Consumed inputs become components of the output or are destroyed with a recorded reason. Output mass ≤ consumed mass. Liquids are conserved. Tools aren't consumed but may lose condition. |
 | V4 | **Material facts.** No proposed property may contradict §4.5; for example, magnetised bronze is rejected. |
-| V5 | **Property vocabulary.** Mechanical properties must come from the registry (§6.4). Anything else becomes a *descriptive* capability marked **untested**. |
-| V6 | **Skill.** Specialist work (forging, precise joinery) needs a skilled NPC working under an agreement. An average adult can do ordinary handling. |
+| V5 | **Extensible properties.** Existing mechanical fields have registered reducers. Novel physical attributes persist as name, value, expected/untested/observed/failed status and real basis IDs. They are available in later judgment; descriptive attributes cannot override protected physical, ownership or social fields. |
+| V6 | **Ability.** The judge weighs the described method, ordinary player abilities, injury, tools, precision, effort and committed helpers. No recipe or numeric skill level defines the set of possible inventions. A named helper must actually have accepted the work and be available. |
 | V7 | **Time.** Every step declares effort seconds within bounds. |
 | V8 | **Precedent.** A result must agree with earlier rulings (§6.5). A conflict is escalated or rejected, never silently committed. |
-| V9 | **Authority.** Physical resolution can't grant permissions, change beliefs or relationships, open the gate, or complete the objective. Those come only through NPC decisions and objective rules. |
+| V9 | **Authority.** Physical resolution cannot grant permission or change opinions. Physical manipulation may unbar a gate; permission, physical opening and actual entry remain distinct facts. NPC favors require actual authority and resources. |
 | V10 | **General laws, not recipes (D-40, D-41).** The judge proposes any change of state that makes sense ("the water in the bowl is now boiling"); nothing is programmed per recipe. Code keeps only general laws: heat and flame need something burning within reach, water is conserved, cold water can't scald, and mail stops what can't get through mail. A law overrides the judge (the result becomes blocked, missed or deflected, and the trace says why). **The stranger's own body is theirs (D-59, `judge_v17`):** any step may say it hurts them (`hurts_you`: a burn, a cut or a break, where, how badly, and what did it). The judge never refuses, or calls something out of reach, because it would hurt them, and hurt comes only from what they choose to do to their body, never as a mishap of ordinary careful work (holding a pot over a fire). Code keeps the law: a burn needs something burning or hot now (a hand in a fire that's out burns nobody), and a hand put into something a few steps off walks there first. |
 | V11 | **No dice (D-41).** Nothing in the simulation is a percentage roll. What makes sense works; what doesn't, doesn't. The judge rules on what would happen, code applies it, and the same situation always has the same outcome. |
+
+**D-62 quantities and execution.** The judge proposes plausible dimensions, capacities and loads from actual materials and method; the reducer rejects non-finite values and mass creation instead of silently clamping an impossible object. Magnetising bronze with a lodestone is rejected. Walking and work advance the evolving world before each effect (at most 10 seconds per work segment, smaller during combat). Revalidate at the impact; interrupted unfinished work has no effect, while completed earlier steps and every victim's evidence persist. Named audiences never bypass sight or hearing.
 
 ### 6.3 The object record
 
@@ -768,6 +767,8 @@ The simulation mechanically understands only these properties. The list grows be
 
 ### 6.5 Precedents
 
+**CURRENT, D-62:** save causal cases alongside events: input objects and properties, proposed method, outcome, reason and time. The judge receives relevant cases for reuse of inventions. An equivalent single-step method with unchanged input fingerprints and helpers receives one bounded reconsideration if the proposed outcome conflicts; a continuing contradiction is unresolved. Changed resources or methods warrant a fresh ruling. This is a case memory, not a catalog of permitted solutions.
+
 LLM judgments can vary, but the world's physics must not. Every physics ruling is stored as a **precedent**:
 
 - **Key:** a normalised method signature (materials + operations + key conditions)
@@ -781,6 +782,8 @@ Two layers:
 The judge receives the relevant precedents and must stay consistent with them. Validator rule V8 enforces this. The developer trace flags any conflict.
 
 ### 6.6 Agreements and NPC help
+
+**CURRENT, D-62:** authored offers remain examples. An individual can negotiate an unauthored task, their satisfaction criterion and structured rewards they actually control. Propose, accept, then satisfy an agreement; validate all promised reward resources before paying, and pay once. NPC satisfaction is a belief and can be mistaken or deceived. Store their private cited evidence separately from first-hand evidence of physical success; their satisfaction cannot certify an invention. Help requires an explicit accepted commitment, never high trust or merely talking. An NPC may propose physical work; the same judge and reducer run with that NPC's body and resources, preserving the player's inventory.
 
 > **Built (D-25).** `task_for_reward` deals from authored offers, with states proposed → accepted → fulfilled. Acceptance and completion are yes/no readings returned with the reply itself (D-46), judged only from what that person saw or was given, never from the stranger's word. The reward is applied once. **Lending** is a reply: a person lets the stranger use one of their things, and using a lent thing is not recorded as theft. **A job lends what it needs (D-55):** an offer's authored `lends` (Hessa's bucket and trough; Tomas's beam, rope, ladder, fulcrum, trestles and hammer) are lent when the offer is made, and the lead says so ("You may use Hessa's wooden bucket and water trough for it"). Handed back to its owner, a lent thing's loan is over. What the person has in hand is handed over with the job
 (D-59: Cob's drawknife stayed in his hands, so his handle couldn't be made). The live playtest found Hessa crying theft at her own bucket, then turning hostile after the water was delivered. Not built yet: escort, barter, loans with a return deadline, and breach.
@@ -801,6 +804,8 @@ The player often needs things they don't own or skills they don't have. **Agreem
 
 ### 6.8 Gear, bodies and remedies (D-49)
 
+**CURRENT, D-62 combat timing:** resolve impacts and recovery in chronological order, age wounds on that same clock, and retain the weapon/profile bound when a swing starts. Losing that weapon cancels the swing. A large clock batch cannot erase an earlier NPC impact. People conscious before an impact can remember it even if the blow kills or disables them. When an assault begins real-time combat, stop advancing dialogue-round time and return control.
+
 **Status: CURRENT.** `data/content/gear.json` and `backend/gear.py`. Code owns every number; the judge only proposes a class for something made (checked against its physics, then its near kin, then code's own reading).
 
 **Weapons** (damage against an unarmoured torso, iron edge, health 100): fists 10; knife 35; sickle 35; short sword 50; long sword 60; great sword 70; hand axe 50; great axe 70; scythe 45; pointed stake 30; short spear 50; long spear 55; pitchfork 40; club 25, mace 45, hammer 40, sledge 60, staff 22, a stone in the hand 25 (blunt scales with the square root of mass); flail 35; whip 8; a burning brand 15; a bow 45 at 25 paces and a sling 25 at 20 (with arrows or stones in the quiver); a javelin 45 at 12; anything thrown by hand; a container of hot liquid (boiling 45 and down, hot 20, cold nothing). Each has hands, reach, wind-up, recovery and an animation. The edge's material scales cut and pierce (steel 1.1, iron 1, bronze 0.9, flint 0.8, bone 0.6, fire-hardened wood 0.55; a wooden "blade" clubs).
@@ -813,7 +818,7 @@ The player often needs things they don't own or skills they don't have. **Agreem
 
 **Equipping:** slots head, body, arms, legs, hands, feet, right and left hand, quiver; two-handed weapons take both hands; putting things on takes time (a weapon 1 s, mail 60 s; only weapons and shields in a fight); worn armour doesn't count toward what you carry. Everyone's gear is real objects (seed 10): Roderic's sword, mail and helmet, the guards' spears and mail, Kade's and Elin's padded jackets, the smiths' hammers, Darin's knife, your own clothes. What someone down or dead has on them can be taken (theft).
 
-**Pictures:** a weapon or shield also gets a held view (diagonal, grip low left); armour and clothes get a worn sheet (front, facing left, back, facing right) fitted to the rig's head, torso and legs. The **item library** keeps every picture by the thing's exact signature (method, name, materials, gear class, flags, size and weight to a tenth): anyone making the very same thing gets them at once; anything different is painted anew (`tools/export_library.py`).
+**Pictures:** a weapon or shield also gets a held view (diagonal, grip low left); armour and clothes get a worn sheet (front, facing left, back, facing right) fitted to the rig's head, torso and legs. The **item library** keeps every picture by the thing's exact signature (method, name, materials, physical attributes, gear class, flags, size and weight to a tenth): anyone making the very same thing gets them at once; anything different is painted anew (`tools/export_library.py`).
 
 ### 6.7 Generated sprites
 
@@ -830,67 +835,12 @@ The player often needs things they don't own or skills they don't have. **Agreem
 
 **Status: CURRENT** (data model and rules) · **EXPERIMENT** (decision engine; see §9)
 
-> **Built (27 Sep 2026, D-16 to D-18; split by job in D-58).** `backend/perception.py` (what's seen), `reputation.py` (memories and regard), `minds.py` (deciding), `clock.py` (jobs on the clock) and `backend/ai/decider.py`.
->
-> - **Perception** is code: sight 20 cells (D-55, doubled from 10), clear within 10 (from 5), with line of sight past buildings; the victim always knows.
-> - **Memories** carry a source (saw / victim / heard / told by) and an event id, so old news doesn't retrigger anyone.
-> - **Decisions:** one batched decider request (the language model answering typed questions, D-47) for everyone deciding at once. It chooses among code-built legal actions (carry on, watch, flee, shout for help, report to a named guard, confront, attack, help the hurt) and scores fear and anger. If someone was told something, it also asks whether they believe it.
-> - **Jobs** play out on the clock: a report reaches the guard and makes the guard think. Anyone who reaches the stranger to address them opens an encounter (D-28); anyone who attacks starts a real-time fight (D-41).
-> - **Blows** are real time and fixed (D-41, replacing D-20's seeded roll): a wind-up per weapon, a hit only if the target is still in reach when it lands. Since D-49 what a blow does is the gear table (§6.8): the weapon in hand against the armour covering the spot, how aware the target was, and the conditions that follow. At 25 or less someone in the world is **down** (alive, out of the fight, sees nothing); the stranger drops only when knocked out or scalded.
-> - **Shouts** carry 30 cells, once per event.
-> - **Reconsidering:** shaken people think again at most twice.
-> - **Thinking** runs through the client's one-at-a-time save loop (`/think`), alternating with clock beats so it can never stop time.
-> - **Player** health, death, and `/rewind` to the last calm moment.
->
-> **Added in M5 (D-22 to D-26):**
->
-> - **Conversations** (`backend/conversation.py` the moves, `briefing.py` what the voice is told, `talk.py` what an exchange changes, `gatekeeping.py` who may let the stranger in, `backend/ai/voice.py`): see §3 Talking.
-> - **Regard.** Each person's trust and suspicion of the stranger start from their card. Clear evidence (a demonstration that worked, a gift, a vouch) moves them once per event; a crime they clearly saw moves them the other way.
-> - **Seeing something shown or given** is remembered but raises no alarm.
-> - **Deals and vouching.** A vouch is a walk to the captain that leaves him a memory to weigh.
-> - **The guards' halt** at the gate.
-> - **Memories** past the limit forget the least serious one first.
->
-> **Added in 1.5, a living village (D-36 to D-38):**
->
-> - **Memory of the stranger** (`mind.knows`, D-36).
->   - Every exchange leaves a one-sentence note from the voice's output.
->   - The stranger's name is kept only if they actually said it.
->   - Claims the person didn't believe are kept.
->   - When a conversation ends, the thinking lane turns its notes into an **episode** (Luna, `recollect_v1`).
->   - After six episodes, the oldest fold into a **long memory**.
->   - The decider and the voice both see it all next time, so people greet you by name, recall your trade and hold a lie against you.
-> - **Agendas** (`backend/village.py`, D-37).
->   - The decider asks a free person what to do next only when something is fresh for them (a new memory or piece of news, the stranger coming into view, a visit arriving), at most every 20 simulated seconds (D-39). Otherwise routines carry on by code.
->   - The options are built by code: carry on, a task at a real place, visit someone they know, tell someone what happened, have it out with the stranger (if wronged), look in on the stranger, or rest.
->   - **Being told something (D-54).** When someone arrives on an errand (`tell`), the two stop and talk. The teller says it in a call of their own and the listener answers in theirs (`hearing_v2`, D-60), shown as bubbles (overheard in the journal if the stranger is near), and picks what the listener does, from options code builds: carry on, go and see the stranger, go with the teller to find them, or pass it on to someone else. Code carries it out, so news can travel from person to person on its own: Mara tells Kade, Kade comes to see.
->   - **Errands last (D-54).** A word from the stranger in passing doesn't cancel someone's errand; they answer and go on their way. Over their head, a small label shows where they're going ("→ Kade", "→ you").
->   - **Good news travels too (D-53).** Someone who clearly saw the stranger help, give or show something that worked may walk over and tell family, a friend or a guard (a `tell` errand: they say it aloud on arrival, and the listener remembers who told them).
->   - The gate never drops below two guards.
->   - The same errand isn't offered twice in a row.
->   - The decider also picks their mood.
->   - A finished plan drifts back to the authored routine, which is the fallback whenever the decider can't or needn't decide.
-> - **Meetings and gossip** (D-37).
->   - People who visit, or who stand idle near someone they know, stop and talk.
->   - The decider picks the topic: news the other hasn't heard, word of the stranger, a worry, an opinion, or small talk. Yes/no questions settle whether news is passed on, in either direction.
->   - Nobody repeats a topic to the same person. The same two don't meet again for 10 simulated minutes unless one has news (D-48).
->   - Nobody stops to chat within earshot of the stranger's conversation; they may join it instead (D-48).
->   - News becomes a "told by" memory, and a crime makes the listener think. Word of the stranger becomes hearsay, including their name, and rubs off on regard a little. Opinions warm or cool.
->   - Within the stranger's sight, Luna voices the two lines as bubbles, each side in its own call (`chatter_v2`, D-60; at most two chats a minute). Within 5 cells they go in the journal as overheard.
->
-> **Added in 1.6 (D-39, D-41):**
->
-> - **The moment itself is code.** A crime is answered in the same event: clear witnesses turn to face the stranger, anger or fear is set and held for 20 s, and the nearest victim or witness within 8 cells shouts in their own words (`lines.json` `caught`). The decider then decides what comes next.
-> - **Two thinking lanes.** Reactions (`decide`) never wait behind the village's own life or memory work, and thinking never pauses for the dialogue bar or a panel.
-> - **Respect and awe** (D-43) join trust and suspicion. A demonstration or installation that works earns respect: a clever one twice as much. An uncanny one, seen with their own eyes, earns awe, and the judge rates each demonstration's wonder against the knowledge baseline. Each card's `superstition` makes awe double-edged:
->   - **reverent** (Jory, Oren, Hessa): trust rises beyond any ordinary proof;
->   - **wary** (Roderic, Mara, Elin, Kade): witchcraft; no credit, more suspicion, and fear;
->   - **none** (Bren, Tomas, Darin): ordinary evidence.
->
->   Stories of wonders earn no awe: only seeing does (§1). Both models see all four in words, with the superstition.
->   Awe and fear come with the first sight (D-59): a wonder seen again earns neither, and is simply evidence that it
->   works, so a frightened fisherman shown it again, slowly, comes round, and a believer isn't dazzled twice.
-> - **Fights** (`backend/combat.py`): guards who clearly see violence fight at once; anyone else decides (the smith may take up her hammer, the merchant runs). An attacker gives up beyond 28 cells. It ends when every attacker is down, dead or gone, the stranger dies, or gives up (a guard arrests them; otherwise they're left be).
+**Built, D-62:** `evidence.py` keeps durable world facts, incidents and each NPC's private evidence ledger. Episodic summaries may be pruned; proof identities and reputation budgets survive. `person_v3` supplies the shared NPC decision contract for conversation, witnessed reactions, news and day plans. Each person receives only their own sheet, memories, evidence and motives. Routines and previously selected plans continue while a model thinks.
+
+A proof records the actual object, revision, application and result. Repeating that unchanged proof, relabeling it as a wonder or passing it around as rumor does not create new credit. The personal model chooses trust, suspicion, respect, awe, fear and anger; witnessing an object does not automatically confer trust or trigger a superstition table. The HUD's standing word summarizes these feelings and never vetoes a plausible favor.
+
+Urgent witnessed harm enters the reaction lane. A previously chosen defensive plan can execute immediately; a new motive requires the individual decision. Every physical step projects its own victims and witnesses. Stories record ongoing factual milestones and do not automatically modify opinions or inform absent people. An untested gift cannot count as a demonstrated working compass.
+
 ### 7.1 Three layers of truth
 
 | Layer | Example |
@@ -916,7 +866,7 @@ Code decides who **could** perceive an event:
 
 - **Sight:** within 20 cells, with no building between; clear detail within 10 (D-55).
 - **Speech:** normal talk carries 5 cells; shouting carries 12.
-- Direct address is always perceived.
+- Direct address and a named audience require actual range and visibility; names never make a remote NPC a witness. Projection uses awareness before the effect, so a newly injured victim can remember the blow.
 
 Each potential witness receives a **perceived projection** of the event, meaning what they could observe. They never receive the omniscient event, and they never learn hidden intent.
 
@@ -934,23 +884,17 @@ Each potential witness receives a **perceived projection** of the event, meaning
 
 ### 7.5 How a decision is made
 
-1. **Code builds the options.** It generates the legal candidate actions for this NPC right now, such as `ignore`, `watch`, `ask_question`, `approach`, `call_captain`, `warn`, `refuse`, `offer_agreement`, `accept_agreement`, `vouch`, `admit`, `report`, or `leave`. Authority limits the list: only Roderic gets `admit`.
-2. **The decider answers typed questions** about a compact context packet (the card, relevant memories and beliefs, the perceived event, candidate actions):
-   - Noticed? (yes/no probability)
-   - Believes the claim? (score)
-   - Cares? (score)
-   - Which action? (choice)
-3. **Code commits** the chosen action as effects: belief updates (with evidence IDs), relationship deltas (capped per event), agreements, movement jobs.
-4. **The voice** writes 1–3 sentences expressing the committed decision in the character's style. The voice can't add promises, facts, or permissions the decision didn't include.
-
-**Novel situations.** When an unfamiliar object creates a situation the candidate list doesn't cover, a language model may propose new candidate intentions for that NPC. Code checks they're legal, the decider ranks them, and code executes one.
+1. **Build a private context:** this NPC's authored motives, current body and resources, perceived event, held evidence, beliefs and agreements. Convenient executable moves express authority and physical availability; they are not the space of possible ideas.
+2. **The individual model proposes an NPC decision:** mental readings, speech, a reason, a standing defensive plan, intentions and optionally a negotiated agreement. Silent NPCs still judge and can act. Duty, fear, greed, resentment and sympathy are context, not universal backend thresholds. Helping an enemy or granting entry under duress can be plausible.
+3. **The reducer validates and commits:** hard authority, actual reachable resources, consent, targets and bounded evidence-based changes. Invalid intentions receive factual feedback instead of a promise that was not performed. A person's free text does not write the world.
+4. **General physical intentions share the player pipeline:** the NPC can undertake unauthored physical work with their own resources. Existing movement and cached defense continue during model requests.
 
 ### 7.6 Anti-exploit rules
 
 - Trust gains need **new evidence**. Repetition, paraphrase, flattery, and circular rumours don't stack.
 - A claim of authority ("I'm the king's envoy") is a claim. It changes beliefs only through the decider, with the claim as evidence of what was said, and lies can be caught.
 - Player text is **data** to every model, never instructions (§9.6).
-- Relationship and belief changes are capped per event, and every change cites an event ID.
+- Relationship changes consume a bounded conversation allowance plus allowances for unique durable evidence. Memory pruning, paraphrase, repeated demonstration and circular news never renew that allowance. Returning the actual object settles its incident only for those who perceive or learn the return; a same-name copy does not.
 
 ### 7.7 Hold-ups and feelings between people (D-59)
 
@@ -987,6 +931,8 @@ Each potential witness receives a **perceived projection** of the event, meaning
 
 ### 8.2 Event store
 
+**D-62 baseline:** seed 14 and save format 2. Older seed journeys are retired with HTTP 410; their database is not deleted. Repeated request IDs resolve to the command's final saved event sequence, including commands that save multiple events. Save/reload remains deterministic and never calls a model.
+
 **Built (D-58):**
 
 - Append-only events per journey, numbered. A repeated `request_id` is answered with what was saved; a request
@@ -1002,6 +948,8 @@ Each potential witness receives a **perceived projection** of the event, meaning
   1.3 MB of events and loads in 0.05 s (it was 17–50 MB).
 
 ### 8.3 Movement and the clock
+
+**D-62 pending intentions:** one physical or conversation intention may be in flight. Escape dismisses its bar so movement and defense can continue; it does not cancel or submit a second intention. Revalidate the proposed result on the latest world after the model returns, including death and moving targets. Responses never overwrite newer client state, and completed server movement is reconciled rather than replayed over new player movement.
 
 **Built (D-05, D-19, D-39):** Godot owns moment-to-moment movement. A **movement lane** sends the cells walked in
 batches (`/move`, up to 24 a request) and clock beats (`/explore`, up to 1 s each) one request at a time; the service
@@ -1185,8 +1133,7 @@ news about the old soldier, which he hadn't.
 **The story proposes, people decide (D-59).** The user scalded Ulf with his own pot, and Ulf then asked them for
 boiling water and lent them his things. A story's script must never override the world:
 - **Favours are the person's to do.** What a story asks a person to do for the stranger happens only if they're
-  willing (`reputation.willing`: alive, on their feet, not fighting the stranger, not hostile to them over a wrong
-  unsettled or in anger, not afraid of them). That covers their lines, leads, offers, loans, gifts, their word for
+  physically able (`reputation.willing`: alive, on their feet, not currently fighting the stranger). Their own model weighs hostility, fear and the requested favor; these are not blanket vetoes. That covers their lines, leads, offers, loans, gifts, their word for
   the stranger, an errand, a lesson, and coming over at the story's call. A step's opening (Tam burns his hand) is
   the world going on, so it isn't theirs to refuse.
 - **A telling step comes when they tell it.** A step whose outcome is someone telling the stranger something (its
@@ -1213,6 +1160,8 @@ Content rules (`tests/test_beats.py`) keep stories reading as people answering w
 **Status: EXPERIMENT.** This is the section we expect to rewrite. It defines **roles and contracts**, which are stable. The **models** behind each role are swappable configuration.
 
 ### 9.1 Roles
+
+**EXPERIMENT, D-62:** `judge_v19` reasons about physical feasibility and extensible attributes; `person_v3` is the common private NPC decision contract. Existing model configuration remains swappable; implementation does not require a new provider or a catalog of authored inventions. The image role remains asynchronous.
 
 | Role | Job | Input → output | Called when |
 | --- | --- | --- | --- |
@@ -1244,7 +1193,7 @@ Checked against OpenAI's model catalogue on 27 Sep 2026.
 | --- | --- | --- |
 | Physics judge (Try Something, built) | `gpt-6-luna`, reasoning `low` (`MODEL_JUDGE`, `JUDGE_REASONING`); see D-14 | `gpt-6-sol` if evals show Luna is not careful enough |
 | Illustrator (built) | `gpt-image-2.5-flare`, fallback `gpt-image-2` (`MODEL_IMAGE`, `MODEL_IMAGE_FALLBACK`) | `gpt-image-2.5-sunburst` |
-| Voice (built, D-22, D-36, D-38, D-44, D-60) | `gpt-6-luna`, reasoning `none` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `person_v1` (D-60): each person is their own agent. The person addressed answers in a call of their own, holding only their own sheet, memory, knowledge and secrets, what anyone there could see and hear, and the rules that apply to them: a core (speak as yourself, one move, read the moment) plus a module for each thing they are (a guard, a robber), have (an open deal, a story beat, §8.8) or are in (a fight, a group). Everyone else there then decides in their own call, in parallel, whether to say something, having heard that answer. Up to three lines a round. (Before D-60, `scene_v1` to `scene_v8` wrote everyone's lines in one call, every sheet and secret side by side.) The same model keeps memory (`recollect_v1`), voices villagers' chats (`chatter_v2`) and someone coming to tell someone something (`hearing_v2`), each side in its own call. Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
+| Voice (built, D-22, D-36, D-38, D-44, D-60) | `gpt-6-luna`, reasoning `low` (`MODEL_VOICE`, `VOICE_REASONING`), prompt `person_v3` (D-60): each person is their own agent. The person addressed answers in a call of their own, holding only their own sheet, memory, knowledge and secrets, what anyone there could see and hear, and the rules that apply to them: a core (speak as yourself, one move, read the moment) plus a module for each thing they are (a guard, a robber), have (an open deal, a story beat, §8.8) or are in (a fight, a group). Everyone else there then decides in their own call, in parallel, whether to say something, having heard that answer. Up to three lines a round. (Before D-60, `scene_v1` to `scene_v8` wrote everyone's lines in one call, every sheet and secret side by side.) The same model keeps memory (`recollect_v1`), voices villagers' chats (`chatter_v2`) and someone coming to tell someone something (`hearing_v2`), each side in its own call. Authored fallback lines when unavailable | `VOICE_REASONING=low` measured no better for distinctness (68% vs 73%) |
 | Interpreter | `gpt-6-luna` | The judge model |
 | Decider (built, D-17; one model since D-47) | `gpt-6-luna`, reasoning `low` (`MODEL_DECIDER`, `DECIDER_REASONING`), a strict per-question JSON schema over code-built options; about $0.0002 and 1.5–3 s per decision | A typed engine such as Jev behind the same interface, only if crowds inside the city make volume and cost matter |
 | Hard social cases, candidate NPC intentions | `gpt-6-sol` | `gpt-6-astra` |
@@ -1275,6 +1224,8 @@ Each role's model is chosen in `backend/.env` (see `backend/.env.example`). Game
 - A per-run **spend cap** (config) warns and then pauses model calls. Hitting the cap shows an honest message; it never masquerades as an NPC refusing.
 
 ### 9.7 Budgets (goals to measure, not promises)
+
+**CURRENT deadlines, D-62:** speech has an 8-second total model budget; physical requests have 15 seconds, including interpretation, retries, reconsideration and replies. Pass the remaining deadline through worker contexts and disable implicit SDK retries. A timed-out or invalid response cannot fabricate a world change. Images have a separate asynchronous budget. The client retries only within its remaining request budget. `/health/ai` explicitly checks credential/model readiness without generation.
 
 | Interaction | Target | Measured (live play, 27–30 Sep 2026, 2,323 calls) |
 | --- | --- | --- |
@@ -1511,6 +1462,14 @@ Each milestone lists its goal, what we build, its **exit criteria**, the **quest
 **Pivot options:**
 - **Routes too hard:** make open problems more visible, and make NPCs refer the player to each other more often.
 - **Too easy:** tighten evidence requirements.
+
+### Open-ended demo repair (D-62, 4 Oct 2026)
+
+**Authorized implementation branch:** `codex/open-ended-demo`, based on the preserved `codex/demo-baseline` checkpoint (994def4). `main` and the existing save database remain available.
+
+**Implemented:** repair repeated-proof credit, remote story opinions, prematurely closed milestones and false functional gifts, lost victims in several-step deeds, combat chronology and weapon substitution, impossible mass/magnetism, fake remote audiences, and restitution by name. Add persistent novel physical attributes and causal cases, a shared private NPC decision contract, resource-checked NPC work, negotiated agreements, bounded model deadlines, current-world revalidation and the pending-intention movement lane.
+
+**Demo gate:** run `tools/check.ps1 -Full`; retain API golden journeys with deliberately reviewed expectations. Run `evals/run_open_ended_live.py` for unauthored construction/reuse, impossible quantities/materials, uncommitted helpers, negotiated rewards and individual motives. Use `tools/run_demo.ps1` for isolated demo saves. Record actual results in `docs/OPEN_ENDED_DEMO.md`. Human playtests in §10.3 remain required before declaring M6 complete. An expired credential or a missing human session is not a passing result.
 
 ### M6: Demo hardening
 
@@ -1793,6 +1752,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-62 | 2026-10-04 | **Open-ended demo logic repair.** Preserve the LOCKED knowledge/invention/art/NPC core loop. Replace automatic proof credit and superstition outcomes with durable private evidence and individual judgments; replace universal motive gates with physical/resource/authority checks. Add extensible physical attributes, causal cases with bounded reconsideration, NPC physical intentions and negotiated agreements. Resolve several-step work and combat chronologically, retain every victim, and settle restitution by object/incident identity. Record ongoing factual story milestones, preserve knowledge boundaries, keep movement and defense available during pending intentions, revalidate the latest world, and enforce total 8/15-second model budgets. Seed 14 / save format 2. Implement on `codex/open-ended-demo`; retain checkpoint 994def4 on `codex/demo-baseline`. | The user explicitly rejected fixed recipes and scripted possibilities: the AI judge must reason from the actual resources and described method, and each predefined NPC must react from its own knowledge and motives. The 4 Oct review found eight concrete consistency/exploit failures. Validation includes regressions, API replay, Godot smoke tests and live held-out cases; human demo validation remains a separate recorded gate. |
 | D-60 | 2026-10-04 | **Each person is their own agent.**<br><br>The user asked whether each NPC had its own agent and file, "cause if we're stuffing it all into one file it's no wonder things are getting confused". They didn't:<br>- One rulebook (`scene_v8`, 13,600 characters) covered every situation for everyone.<br>- One call wrote a whole group's lines with every person's sheet, secrets included, side by side.<br>- The decider batched up to six people's briefs into one request.<br>- One call wrote both sides of a chat or an errand.<br><br>**Now:**<br>- **One file per person:** `data/people/<name>.json`, 54 sheets.<br>- **One private call per person in conversation:** the person addressed first; everyone else there in parallel, deciding whether to speak, having heard them.<br>- **A short core plus modules:** `person_v1` is a 6,900-character core, plus a module only for what applies to that person (guard, robber, deals, story beat, fight, group).<br>- **No batching:** each person decides on their own (the decider), and each side of a chat or errand is its own call (`chatter_v2`, `hearing_v2`).<br>- Tests prove each call holds only that person's secrets and rules (`tests/test_agents.py`).<br><br>**Measured, before and after:**<br>- Characters told apart 42/60 → 43/60; replies opening alike 20 → 16.<br>- Story beats carried in full 28/45 → 30/45 (none ignored either way).<br>- A one-on-one reply ~4,700 → ~3,950 tokens, at about the same speed.<br>- A group round adds the bystanders' calls, in parallel. | Isolation is what the parked storylines need: secrets confided only to someone trusted can't bleed into anyone else's words if nobody else's call contains them. Focused rules: a shy pilgrim no longer carries the robbers' rules, and a change to one module can't disturb people it doesn't apply to (as one paragraph once made the judge refuse sparks from iron). |
 | D-59 | 2026-10-01 | **Training: many short levels, each on its own map with its own people (planned); first, any level on any map (built).**<br><br>**The plan (§11 Training):** a Training button with two tracks, Basics (9 guided levels, about 5 minutes each) and Advanced (10 open levels, 5 to 8 minutes). Each level is its own small map, some indoors, with new people; every level is open, with the next suggested. Each isolates a gameplay element and doubles as a lab for it, so what players do in it improves the systems the main game shares. New maps and people are painted by the image model in the village's style. "The first morning" retires once the basics cover its lessons.<br><br>**Built (phase A):** a journey plays a level (`data/content/levels`): its map (`data/maps`: size, where people walk, buildings, obstacles and trees, named places, and optionally the gate, the inside and where an arrested stranger is taken), its cast, its things and, if guided, its steps. A level may take another's map, cast and things (`base`). The grid, sight, places, routines, the gate's guards and the captain come from the journey's level. A map without a gate has no halts; a level without anyone who decides has no captain; people skip tasks at places not on the map. The village and the first morning play exactly as before (the golden journeys match; the steel file now carries its gear reading, which was worked out on demand before).<br><br>**Built (phase B):** each map is a scene (`scenes/maps/village.tscn` holds what `main.tscn` held), loaded when a journey starts; collisions come from the map's data; people are drawn from their sheet, with a stand-in until a new person's is painted; the guide and the journal's map read the journey's level and map; the arrest notice is the server's own words. The village looks as it did.<br><br>**Built (phase C):** the title's Training replaces "Tutorial (first time)"; a level told to its end shows its complete screen, which replaces the first morning's closing card (its words are the level's `after`); `runs.completed_at`, `/training`, `/runs/{id}/result` and ratings in a `feedback` table. The HUD's area names and long goal are the map's and the level's.<br><br>**Built (phase F):** the other seven basic levels (B3 to B9), painted and played live without blockers; the findings that feed the main game are in §11 Training (a friendly talk now ends when you walk off; deals can pay in goods; a sharper lodestone fact; open: demonstrations that change nothing).<br><br>**Phase G played live:** every route of the ten advanced levels to its end; the fixes it found are in §11 (mending is a make, `judge_v16`; water is a tool; a loan hands over what's held; words that hand things over are moves, `scene_v6`; robbers' followers; help near the thing; awe once). Development art from Codex; development runs paint nothing (`IMAGES=off`).<br><br>**Built (phase G):** the ten advanced levels (A1 to A10): a goal with several ways to it, checked by code, no words to copy. The engine they needed, shared with the main game: any level's way in (the words from the map; a breach in a wall), hands to help as aids (`judge_v15`), hold-ups by robbers, feelings between people changed in conversation (`scene_v5`), and new conditions. Each played to its outcome in stub mode, most by two routes; people and nine maps painted; the live checks wait for credits.<br><br>**After the user's first play (B1):**<br>- Clicks reach the world on every painted map.<br>- Story beats (§8.8, `scene_v7`): what a story has someone say comes in the reply that brings the moment about, answering what the stranger said. An authored line says only what that reply left out, and a lead quotes the person's own words when those carry it.<br>- Content rules keep stories reading as people answering what happened.<br>- The vouch lines address whoever decides.<br><br>**After the user's second play (B1 to B5):**<br>- The story proposes, people decide (§8.8): what a story asks of a person happens only if they're willing, a telling step comes when they tell it, and a reply that keeps its piece back is never spoken over (`scene_v8`). The training levels' word lists are gone.<br>- A practice bout angers nobody.<br>- B1 ends with Ada, who heard what the stranger did from Pip (a voiced errand).<br>- Next opens the Training menu; done marks count only the player's own journeys.<br>- Fire: a hearth holds the fire made beside it, and a fire put out is out. The stranger may hurt themselves (`hurts_you`, `judge_v17`), and distance is never a reason to block.<br><br>**The clean-up after the user's third play (A3, 4 Oct 2026):**<br>- "The first morning" retired: its level, test, golden journey, smoke, playtest and live eval. Its engine tests moved to B1 and B3 (`tests/test_story.py`), and the device eval's cases moved to the levels that teach the same things.<br>- Dead code removed: ten conditions and six effects nothing used (`said_to`, the word-list check, among them; speeches and flags), the old one-to-one voice (`voice_v3`, `speak`; the persona eval now measures the group voice), 29 old prompt versions, unused names, seven unused client functions, and one-off prototype tools.<br>- The device in an advanced level coaches from what the stranger knows, as in the main game; the advanced levels' hints (their intended answers) are gone, and its goal is the level's, not "get into the city".<br>- Water spreads over its painting: a lake or a river is reached from beside any part of it, over a longer walk. Things painted into the map (water, a well, a fire pit) can be hovered and dropped onto.<br><br>**Built (phases D and E, so far):** the art tools (people from their cards' looks, maps from their data) and the lab tools (capture, scripted playtest, words eval, level report); the first two basic levels, played through in stub mode. The image model painted four people and the farmyard; the account ran out of credits during the workshop, so its shelves, hearth, table, barrels, crates and anvil and the levels' loose things are unpainted, and the live playtests and word evals wait for credits. | The user: "split it up into many short 5 minute levels … each one of them should be its own self contained level on its own different map, some can even be inside like an inn, with different new npcs … another purpose of the training will be to refine and improve specific gameplay elements so we can improve the main game afterwards".<br><br>**Chosen (asked):** generated art in the village style; levels are episodes in the same world, so their people can return in quests; all open, the next suggested; the first morning retires once the basics cover it. |
 | D-58 | 2026-10-01 | **Clean up: one way to do each thing, content out of code, one rule language.**<br><br>**Saves store only what changed:** each event is a patch (`patch.py`), a full copy every 512 events; older journeys and a new starting world retire saves (D-04). **One pipeline for every command** (`commands.py`): repeats, stale views, finished journeys, the busy lock and model calls outside it, once.<br><br>**Modules by job, in layers** (§8.5): `minds`, `crafting` and `talk` split; a public people API (`cast`); the numbers in `tuning.py`; content read once (`content.py`); record shapes named (`shapes.py`).<br><br>**One rule language** (`rules.py`, §8.8): conditions and effects are registered with the fields they need. The tutorial, deals' `done_when`, people's tasks and the parked stories all use it; the tutorial's special cases are **roles** in its data. The cast, the starting things, the captain and the tutorial's things are content; a content test checks it all.<br><br>**The client** in parts (`net`, `object_art`, `world_view`, `player_input`, `actions`; the UI's screens, pack and developer views); the service sends what the client shows (`views.py`); `tools/check.ps1` runs every check, before every commit. | The user, after the whole-game review (code 5/10, tooling 4/10): "clean up and optimise and make the code more DRY and general … balance having hard coded rules with being able to do anything", before splitting the tutorial into training maps.<br><br>**Chosen:** old saves may break; content out of code with one shared rule language (the judge keeps ruling physics); the parked storylines ported but still off; one check command and a pre-commit hook. Behaviour was locked first by golden journeys, which matched after every step. |
@@ -2809,6 +2769,15 @@ Changes to this document: …
 ## 15. Appendix: schemas
 
 These are drafts. The Pydantic models in `backend/` become the source of truth once written; update these sketches to match.
+
+### D-62 runtime additions
+
+- `Thing.attributes`: `{name, value, status, basis_ids}[]`; `revision` advances for actual changes, not no-op edits.
+- `State.facts` and `State.incidents`: stable identities, actors, object/victim IDs, time, actual witnesses and incident status.
+- `Mind.evidence`: private durable identity-to-projection ledger, distinct from bounded episodic memories; `standing_plan`, `commitments`, `physical_intention` and the last decision reason.
+- Judge steps can propose `physical` effects (`attribute`, `connect`, `disconnect`) and real resource/helper IDs. Protected reducer fields cannot be written through these attributes.
+- `NpcDecision` (`PersonLine`): mental readings, speech, existing move, resource-checked intentions, standing defense and optional `NegotiatedAgreement`.
+- Negotiated agreements: issuer, task/check, structured rewards, proposed/accepted/fulfilled status and private/objective evidence IDs. Causal cases store input snapshots, helper availability, method and outcome. Modified physical attributes receive new sprite IDs; painting prompts and cache signatures include their actual properties, so a changed shape does not reuse the old picture.
 
 ### WorldObject
 

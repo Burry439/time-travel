@@ -125,6 +125,17 @@ def test_someone_who_walks_up_mid_encounter_joins_it():
 def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "DB_PATH", tmp_path / "enc.sqlite3")
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
+    # These combat fixtures assume guards have previously chosen to defend their post.
+    original = service.store.initial_state
+
+    def seeded(run):
+        state = original(run)
+        for person in state["npcs"]:
+            if cast.card(person).get("guard"):
+                cast.mind(person)["standing_plan"] = {"defend": True}
+        return state
+
+    monkeypatch.setattr(service.store, "initial_state", seeded)
     replies, choices, rulings = [], [], []
 
     def fake_decide(situation, questions):

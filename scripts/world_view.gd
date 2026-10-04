@@ -190,8 +190,16 @@ func _sync_now() -> void:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			sprite.set_meta("dynamic", true)
 			game.get_node("M2Objects").add_child(sprite)
-		if sprite.has_meta("dynamic"):
+		if sprite.has_meta("dynamic") or not str(obj.get("sprite_asset_id", "")).is_empty():
 			game.art.apply_to(sprite, obj)
+		elif sprite.has_meta("original_texture"):
+			sprite.texture = sprite.get_meta("original_texture")
+			sprite.scale = sprite.get_meta("original_scale")
+			sprite.offset = sprite.get_meta("original_offset")
+			var ring := sprite.get_node_or_null("LoadingRing")
+			if ring:
+				sprite.remove_child(ring)
+				ring.queue_free()
 		sprite.visible = obj["holder_id"] == null
 		# A fire that has burnt out, or been put out, goes grey.
 		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) in ["burnt out", "put out"] else Color.WHITE

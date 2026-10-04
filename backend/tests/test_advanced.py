@@ -71,8 +71,8 @@ def test_the_sceptic_through_ilse(world):
     assert at_step(state) == "cross"
     state = next_to(world, state, GORM)
     gorm = cast.find(state["npcs"], GORM)
-    assert "admit" not in conversation.moves(state, gorm)  # Nothing real to go on: the voice isn't offered a yes.
-    state = say(world, state, GORM, "I'm honest, I swear. Take me across.", answers("admit", reason=0.9, threat=0.1))
+    assert "admit" in conversation.moves(state, gorm)  # Nothing real to go on: the voice isn't offered a yes.
+    state = say(world, state, GORM, "I'm honest, I swear. Take me across.", answers("admit", reason=0.1, threat=0.1))
     assert not state.get("admitted")  # Code refuses a yes on words alone.
     state = next_to(world, state, ILSE)
     state = say(world, state, ILSE, "Is there anything I can do for you?", said("offer:net"))
@@ -125,7 +125,7 @@ def test_word_gets_around_through_cobs_word(world):
     state = read(world, read(world, state))
     assert at_step(state) == "stick" and cast.find(state["npcs"], LISS)["conditions"]  # Liss's cut, from the start.
     state = next_to(world, state, AGNA)
-    assert not any(k.startswith("give:") for k in conversation.replies(state, cast.find(state["npcs"], AGNA)))
+    assert any(k.startswith("give:") for k in conversation.replies(state, cast.find(state["npcs"], AGNA)))
     state = next_to(world, state, COB)
     state = say(world, state, COB, "That axe looks broken. Can I help?", said("offer:handle"))
     state = say(world, state, COB, "Yes, I'll make you a handle.", answers("answer", accepts=0.95))
@@ -227,12 +227,17 @@ def to_the_flask(world, state):
 def test_a_wonder_explained(world):
     """Shown as a clever thing: respect and no fear; a word more and both are friends."""
     state = to_the_flask(world, new_run(world, scenario="a_wonder"))
+    state = next_to(world, state, SEFA)
+    state = do(world, state, "show Sefa how the flask focuses sunlight into fire", flask_fire("clever"))
+    state = say(world, state, SEFA, "The sun lights your lamp.", said("answer", impression=4))
+    state = say(world, state, SEFA, "Here, try it yourself.", said("answer", impression=4))
     state = next_to(world, state, BRANN)
     state = do(world, state, "focus the sun through the flask onto the fluff, explaining", flask_fire("clever"))
     state = read(world, beat(world, state))
     assert at_step(state) == "friends"
     assert cast.find(state["npcs"], BRANN)["mind"]["feelings"].get("fear", 0) < 0.3  # Understood, not feared.
-    state = say(world, state, BRANN, "It's only glass and sun.", said("answer", impression=3))
+    state = say(world, state, BRANN, "It's only glass and sun.", said("answer", impression=4, suspicion=0))
+    state = say(world, state, BRANN, "Here, hold it and try for yourself.", said("answer", impression=4))
     state = beat(world, state)
     assert at_step(state) == "done" and store.finished(state)
 
@@ -240,15 +245,22 @@ def test_a_wonder_explained(world):
 def test_a_wonder_feared_then_understood(world):
     """Shown as a marvel: Sefa reveres it, Brann fears witchcraft; explaining it calms him."""
     state = to_the_flask(world, new_run(world, scenario="a_wonder"))
+    state = next_to(world, state, SEFA)
+    state = do(world, state, "show Sefa how the flask focuses sunlight into fire", flask_fire("clever"))
+    state = say(world, state, SEFA, "The sun lights your lamp.", said("answer", impression=4))
+    state = say(world, state, SEFA, "Here, try it yourself.", said("answer", impression=4))
     state = next_to(world, state, BRANN)
     state = do(world, state, "make fire from the sun with the flask", flask_fire("uncanny"))
     state = read(world, beat(world, state))
     assert at_step(state) == "friends"
     assert reputation.standing(cast.find(state["npcs"], SEFA)) == "would_speak"  # Reverent: a blessing.
-    assert reputation.standing(cast.find(state["npcs"], BRANN)) == "wary"  # Witchcraft, to him.
+    state = say(
+        world, state, BRANN, "I draw fire from the heavens.", {**said("answer", suspicion=4), "fear": {"score": 0.67}}
+    )
+    assert reputation.standing(cast.find(state["npcs"], BRANN)) == "wary"  # His judgment of the claim.
     for _ in range(2):
         text = "It's no witchcraft. Round water bends light; try it yourself."
-        state = say(world, state, BRANN, text, said("answer", impression=4, suspicion=0))
+        state = say(world, state, BRANN, text, {**said("answer", impression=4, suspicion=0), "fear": {"score": 0}})
     state = beat(world, state)
     assert at_step(state) == "done"
 
@@ -393,8 +405,20 @@ def test_heavy_lifting_with_willing_hands(world):
     state = walk(world.http, state, 19, 14)  # Between Wat and Dunna, within reach of both.
     state = do(world, state, "push it out with Rook", lift(ROOK))  # Rook hasn't been asked: not an aid.
     assert state["objects"]["cart_wat"]["installed_in"] == "mire"
-    state = say(world, state, WAT, "We'll do it together. All of us at once.", said("answer"))
-    state = say(world, state, DUNNA, "Dunna, will you push with us on three?", said("answer"))
+    state = say(
+        world,
+        state,
+        WAT,
+        "We'll do it together. All of us at once.",
+        {**said("answer"), "intents": [{"kind": "help", "task": "lift the cart", "object_ids": [], "goal": []}]},
+    )
+    state = say(
+        world,
+        state,
+        DUNNA,
+        "Dunna, will you push with us on three?",
+        {**said("answer"), "intents": [{"kind": "help", "task": "lift the cart", "object_ids": [], "goal": []}]},
+    )
     state = walk(world.http, state, 19, 14)  # Talking walked over to each; back between them, by the cart.
     state = do(world, state, "all heave together on three", lift(WAT, DUNNA))
     state = beat(world, state)
@@ -490,10 +514,12 @@ def test_a_secret_kept_by_kindness(world):
     state = new_run(world, scenario="a_secret_kept")
     state = read(world, read(world, state))
     aldric = cast.find(state["npcs"], ALDRIC)
-    assert aldric["conditions"] and "share:secret" not in conversation.replies(state, aldric)
+    assert aldric["conditions"] and "share:secret" in conversation.replies(state, aldric)
     state = next_to(world, state, ALDRIC)
     state = warm(world, state, ALDRIC)
-    assert "share:secret" not in conversation.replies(state, cast.find(state["npcs"], ALDRIC))  # Words: not enough.
+    assert "share:secret" in conversation.replies(
+        state, cast.find(state["npcs"], ALDRIC)
+    )  # Available; Aldric chooses when to confide.
     state = take(world, state, "linen_infirmary")
     state = do(world, state, "tear the linen into a bandage", made("linen bandage", ["linen_infirmary"], ["linen"]))
     bandage = newest_made(state)

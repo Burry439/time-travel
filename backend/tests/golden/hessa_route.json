@@ -4,7 +4,7 @@
    "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen."
   ],
   "by": "npc_roderic_vale",
-  "event_id": 54
+  "event_id": 53
  },
  "agreements": {
   "deal_27": {
@@ -24,10 +24,53 @@
    "type": "task_for_reward"
   }
  },
- "barred_until": null,
  "encounter": null,
  "entered_by": "admitted",
- "event_seq": 56,
+ "event_seq": 55,
+ "facts": {
+  "effect:player:17:1:5000": {
+   "action": "take",
+   "actor": "player",
+   "event": 17,
+   "id": "effect:player:17:1:5000",
+   "result": "It happens.",
+   "step": 1,
+   "witnesses": []
+  },
+  "effect:player:29:1:20000": {
+   "action": "fill",
+   "actor": "player",
+   "event": 29,
+   "id": "effect:player:29:1:20000",
+   "result": "It happens.",
+   "step": 1,
+   "witnesses": []
+  },
+  "effect:player:29:2:26000": {
+   "action": "give",
+   "actor": "player",
+   "event": 29,
+   "id": "effect:player:29:2:26000",
+   "result": "It happens.",
+   "step": 2,
+   "witnesses": [
+    "npc_hessa_marr"
+   ]
+  },
+  "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
+   "actor": "player",
+   "at": 26000,
+   "event": 29,
+   "id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
+   "kind": "gift",
+   "object_id": null,
+   "step": 2,
+   "victim": "npc_hessa_marr",
+   "witnesses": [
+    "npc_hessa_marr"
+   ]
+  }
+ },
  "fight": null,
  "gate_open": true,
  "geometry_version": 3,
@@ -35,6 +78,7 @@
  "journal": [
   {
    "action": "take",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -113,6 +157,7 @@
   },
   {
    "action": "give",
+   "actor_id": "player",
    "category": "success",
    "crafted": null,
    "demonstration": null,
@@ -141,7 +186,7 @@
    "made_name": null,
    "offer_trade": null,
    "player_cell": [
-    36,
+    35,
     53
    ],
    "precedent_key": "fill+give",
@@ -170,9 +215,7 @@
     {
      "action": "give",
      "category": "success",
-     "notes": [
-      "Walked 1 cells first (1 s)."
-     ],
+     "notes": [],
      "reason": "It happens."
     }
    ],
@@ -212,7 +255,7 @@
   {
    "act": "admit",
    "category": "talk",
-   "event_id": 54,
+   "event_id": 53,
    "kind": "talk",
    "npc_id": "npc_roderic_vale",
    "reason": "You to Roderic: “Hessa has spoken for me.”  Roderic: “(voiced) Hessa has spoken for me.”",
@@ -223,6 +266,7 @@
  ],
  "last_action": {
   "action": "give",
+  "actor_id": "player",
   "category": "success",
   "crafted": null,
   "demonstration": null,
@@ -251,7 +295,7 @@
   "made_name": null,
   "offer_trade": null,
   "player_cell": [
-   36,
+   35,
    53
   ],
   "precedent_key": "fill+give",
@@ -280,9 +324,7 @@
    {
     "action": "give",
     "category": "success",
-    "notes": [
-     "Walked 1 cells first (1 s)."
-    ],
+    "notes": [],
     "reason": "It happens."
    }
   ],
@@ -350,7 +392,7 @@
      11
     ],
     "goal": "watch the gate",
-    "next_at_ms": 48500,
+    "next_at_ms": 46300,
     "path": [],
     "source": "job",
     "step_carry_ms": 0,
@@ -366,12 +408,22 @@
    "id": "npc_roderic_vale",
    "injuries": [],
    "mind": {
-    "cue": {
-     "key": "npc_roderic_vale:cue:1",
-     "kind": "warmer",
-     "text": "Roderic looks more interested."
+    "evidence": {
+     "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]": {
+      "at": 47000,
+      "by": "npc_hessa_marr",
+      "clarity": "told",
+      "event": 31,
+      "evidence_id": "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]",
+      "item": null,
+      "kind": "vouch",
+      "severity": 1,
+      "short": "has Hessa's word",
+      "source": "told_by:npc_hessa_marr",
+      "summary": "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.",
+      "victim": null
+     }
     },
-    "cue_count": 1,
     "facing_player": true,
     "feelings": {
      "anger": 0.0,
@@ -380,7 +432,7 @@
     "fresh": "the stranger came into view",
     "job": {
      "kind": "watch",
-     "until": 68000
+     "until": 67000
     },
     "knows": {
      "claims": [],
@@ -396,10 +448,11 @@
     },
     "memories": [
      {
-      "at": 48000,
+      "at": 47000,
       "by": "npc_hessa_marr",
       "clarity": "told",
       "event": 31,
+      "evidence_id": "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]",
       "item": null,
       "kind": "vouch",
       "severity": 1,
@@ -411,7 +464,7 @@
     ],
     "met": true,
     "mood": "weary",
-    "next_agenda_at": 68000,
+    "next_agenda_at": 67000,
     "opinions": {
      "npc_bren_marr": {
       "text": "his most dependable guard",
@@ -448,31 +501,39 @@
     },
     "regard": {
      "awe": 0.0,
-     "credited": [
-      31
-     ],
      "goodwill_used": 0.0,
      "illwill_used": 0.0,
+     "judged_proofs": {
+      "awe": [
+       "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]"
+      ],
+      "respect": [
+       "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]"
+      ]
+     },
      "respect": 0.0,
-     "suspicion": 0.53,
-     "trust": 0.3
+     "suspicion": 0.68,
+     "trust": 0.15
     },
     "said": {
-     "at": 48000,
-     "key": "npc_roderic_vale:talk:54",
+     "at": 47000,
+     "key": "npc_roderic_vale:talk:53",
      "text": "(voiced) Hessa has spoken for me."
     },
-    "standing": "neutral",
+    "standing": "wary",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": true,
     "talk": [
      {
-      "at": 48000,
+      "at": 47000,
       "doubted": false,
       "text": "Hessa has spoken for me.",
       "who": "stranger"
      },
      {
-      "at": 48000,
+      "at": 47000,
       "reply": "admit",
       "text": "(voiced) Hessa has spoken for me.",
       "who": "them"
@@ -481,8 +542,8 @@
    },
    "name": "Roderic",
    "role": "Gate captain",
-   "x": 48,
-   "y": 11
+   "x": 49,
+   "y": 13
   },
   {
    "alive": true,
@@ -494,7 +555,7 @@
      14
     ],
     "goal": "patrol the west approach",
-    "next_at_ms": 49000,
+    "next_at_ms": 51000,
     "path": [
      [
       46,
@@ -537,7 +598,22 @@
    "mind": {
     "chatting_with": {
      "id": "npc_oren_dast",
-     "until": 41000
+     "until": 43000
+    },
+    "evidence": {
+     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+      "at": 47000,
+      "clarity": "heard",
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "item": null,
+      "kind": "talk",
+      "severity": 0,
+      "short": "was talking with Roderic",
+      "source": "overheard",
+      "summary": "Overheard the stranger say to Roderic: “Hessa has spoken for me.”, and Roderic reply: “(voiced) Hessa has spoken for me.”",
+      "victim": null
+     }
     },
     "facing_player": false,
     "feelings": {
@@ -556,12 +632,13 @@
      "since": 0,
      "talks": 0
     },
-    "last_met": 33000,
+    "last_met": 35000,
     "memories": [
      {
-      "at": 48000,
+      "at": 47000,
       "clarity": "heard",
-      "event": 54,
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -572,10 +649,10 @@
      }
     ],
     "met_with": {
-     "npc_oren_dast": 33000
+     "npc_oren_dast": 35000
     },
     "mood": "content",
-    "next_agenda_at": 73000,
+    "next_agenda_at": 72000,
     "opinions": {
      "npc_darin_ko": {
       "text": "smiles too much for an honest man",
@@ -608,7 +685,6 @@
     },
     "regard": {
      "awe": 0.0,
-     "credited": [],
      "goodwill_used": 0.0,
      "respect": 0.0,
      "suspicion": 0.62,
@@ -616,6 +692,9 @@
     },
     "said": null,
     "standing": "wary",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": true,
     "told": {
      "npc_oren_dast": []
@@ -636,7 +715,7 @@
      14
     ],
     "goal": "patrol the east approach",
-    "next_at_ms": 49000,
+    "next_at_ms": 51000,
     "path": [
      [
       50,
@@ -679,7 +758,22 @@
    "mind": {
     "chatting_with": {
      "id": "npc_bren_marr",
-     "until": 41000
+     "until": 43000
+    },
+    "evidence": {
+     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+      "at": 47000,
+      "clarity": "heard",
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "item": null,
+      "kind": "talk",
+      "severity": 0,
+      "short": "was talking with Roderic",
+      "source": "overheard",
+      "summary": "Overheard the stranger say to Roderic: “Hessa has spoken for me.”, and Roderic reply: “(voiced) Hessa has spoken for me.”",
+      "victim": null
+     }
     },
     "facing_player": false,
     "feelings": {
@@ -698,12 +792,13 @@
      "since": 0,
      "talks": 0
     },
-    "last_met": 33000,
+    "last_met": 35000,
     "memories": [
      {
-      "at": 48000,
+      "at": 47000,
       "clarity": "heard",
-      "event": 54,
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -714,10 +809,10 @@
      }
     ],
     "met_with": {
-     "npc_bren_marr": 33000
+     "npc_bren_marr": 35000
     },
     "mood": "anxious",
-    "next_agenda_at": 73000,
+    "next_agenda_at": 72000,
     "opinions": {
      "npc_bren_marr": {
       "text": "decent, but asks too many questions",
@@ -742,7 +837,6 @@
     },
     "regard": {
      "awe": 0.0,
-     "credited": [],
      "goodwill_used": 0.0,
      "respect": 0.0,
      "suspicion": 0.72,
@@ -750,6 +844,9 @@
     },
     "said": null,
     "standing": "wary",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": true,
     "told": {
      "npc_bren_marr": []
@@ -764,9 +861,9 @@
    "alive": true,
    "controller": {
     "activity": "look",
-    "anchor_index": 1,
+    "anchor_index": 0,
     "destination": [
-     36,
+     34,
      51
     ],
     "goal": "tend the inn yard",
@@ -780,12 +877,36 @@
    "id": "npc_hessa_marr",
    "injuries": [],
    "mind": {
-    "cue": {
-     "key": "npc_hessa_marr:cue:1",
-     "kind": "warmer",
-     "text": "Hessa seems to warm to you."
+    "evidence": {
+     "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
+      "actor_id": "player",
+      "at": 26000,
+      "clarity": "clear",
+      "event": 29,
+      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
+      "item": "dried gourd of water, full (1 L of water)",
+      "kind": "gift",
+      "severity": 1,
+      "short": "gave me a dried gourd of water, full (1 L of water)",
+      "source": "received",
+      "step_number": 2,
+      "summary": "The stranger gave Hessa a dried gourd of water, full (1 L of water).",
+      "victim": "npc_hessa_marr"
+     },
+     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+      "at": 47000,
+      "clarity": "heard",
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "item": null,
+      "kind": "talk",
+      "severity": 0,
+      "short": "was talking with Roderic",
+      "source": "overheard",
+      "summary": "Overheard the stranger say to Roderic: “Hessa has spoken for me.”, and Roderic reply: “(voiced) Hessa has spoken for me.”",
+      "victim": null
+     }
     },
-    "cue_count": 1,
     "facing_player": true,
     "feelings": {
      "anger": 0.0,
@@ -794,7 +915,7 @@
     "fresh": "gave me a dried gourd of water, full (1 L of water)",
     "job": {
      "kind": "watch",
-     "until": 63000
+     "until": 62000
     },
     "knows": {
      "claims": [],
@@ -814,21 +935,25 @@
     "last_line": "vouch.frightened.0",
     "memories": [
      {
-      "at": 15000,
+      "actor_id": "player",
+      "at": 26000,
       "clarity": "clear",
       "event": 29,
+      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
       "item": "dried gourd of water, full (1 L of water)",
       "kind": "gift",
       "severity": 1,
       "short": "gave me a dried gourd of water, full (1 L of water)",
       "source": "received",
+      "step_number": 2,
       "summary": "The stranger gave Hessa a dried gourd of water, full (1 L of water).",
       "victim": "npc_hessa_marr"
      },
      {
-      "at": 48000,
+      "at": 47000,
       "clarity": "heard",
-      "event": 54,
+      "event": 53,
+      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -840,7 +965,6 @@
     ],
     "met": true,
     "mood": "cheerful",
-    "next_agenda_at": 25000,
     "opinions": {
      "npc_bren_marr": {
       "text": "her little brother; she worries about him",
@@ -873,18 +997,24 @@
     },
     "regard": {
      "awe": 0.0,
-     "credited": [
-      29
-     ],
      "goodwill_used": 0.0,
      "illwill_used": 0.0,
+     "judged_proofs": {
+      "awe": [
+       "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
+      ],
+      "respect": [
+       "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
+      ]
+     },
      "respect": 0.0,
-     "suspicion": 0.2,
-     "trust": 0.55
+     "suspicion": 0.35,
+     "trust": 0.4
     },
+    "rethinks": 0,
     "said": {
-     "at": 48000,
-     "key": "npc_hessa_marr:48000:0",
+     "at": 47000,
+     "key": "npc_hessa_marr:47000:0",
      "text": "Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly."
     },
     "standing": "would_speak",
@@ -915,13 +1045,13 @@
       "who": "them"
      },
      {
-      "at": 15000,
+      "at": 26000,
       "doubted": false,
       "text": "(The stranger gave Hessa a dried gourd of water, full (1 L of water).)",
       "who": "stranger"
      },
      {
-      "at": 15000,
+      "at": 26000,
       "reply": "answer",
       "text": "(voiced) The stranger gave Hessa a dried gourd of water, full (1 L of water).",
       "who": "them"
@@ -944,33 +1074,20 @@
    "name": "Hessa",
    "role": "Innkeeper",
    "x": 48,
-   "y": 12
+   "y": 14
   },
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 0,
+    "activity": "look",
+    "anchor_index": 1,
     "destination": [
-     18,
-     25
+     20,
+     27
     ],
     "goal": "work at the smithy",
-    "next_at_ms": 49900,
-    "path": [
-     [
-      17,
-      26
-     ],
-     [
-      18,
-      26
-     ],
-     [
-      18,
-      25
-     ]
-    ],
+    "next_at_ms": 53100,
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -1039,34 +1156,21 @@
    },
    "name": "Mara",
    "role": "Blacksmith",
-   "x": 16,
-   "y": 26
+   "x": 20,
+   "y": 27
   },
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "work",
+    "anchor_index": 2,
     "destination": [
-     23,
+     19,
      27
     ],
     "goal": "help around the forge",
-    "next_at_ms": 49400,
-    "path": [
-     [
-      22,
-      28
-     ],
-     [
-      23,
-      28
-     ],
-     [
-      23,
-      27
-     ]
-    ],
+    "next_at_ms": 53800,
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -1132,38 +1236,21 @@
    },
    "name": "Jory",
    "role": "Smith apprentice",
-   "x": 21,
-   "y": 28
+   "x": 19,
+   "y": 27
   },
   {
    "alive": true,
    "controller": {
-    "activity": "walk",
-    "anchor_index": 1,
+    "activity": "work",
+    "anchor_index": 0,
     "destination": [
-     66,
-     28
+     64,
+     26
     ],
     "goal": "work at the carpentry yard",
-    "next_at_ms": 51500,
-    "path": [
-     [
-      65,
-      26
-     ],
-     [
-      66,
-      26
-     ],
-     [
-      66,
-      27
-     ],
-     [
-      66,
-      28
-     ]
-    ],
+    "next_at_ms": 55500,
+    "path": [],
     "source": "routine",
     "step_carry_ms": 0,
     "step_ms": 440
@@ -1196,29 +1283,25 @@
    "alive": true,
    "controller": {
     "activity": "walk",
-    "anchor_index": 1,
+    "anchor_index": 0,
     "destination": [
-     83,
-     31
+     80,
+     30
     ],
     "goal": "tend the merchant wagon",
-    "next_at_ms": 48900,
+    "next_at_ms": 47200,
     "path": [
      [
-      81,
-      30
-     ],
-     [
-      82,
-      30
-     ],
-     [
-      83,
-      30
-     ],
-     [
-      83,
+      79,
       31
+     ],
+     [
+      80,
+      31
+     ],
+     [
+      80,
+      30
      ]
     ],
     "source": "routine",
@@ -1246,20 +1329,20 @@
    },
    "name": "Darin",
    "role": "Merchant",
-   "x": 80,
-   "y": 30
+   "x": 78,
+   "y": 31
   },
   {
    "alive": true,
    "controller": {
-    "activity": "patrol",
-    "anchor_index": 3,
+    "activity": "look",
+    "anchor_index": 2,
     "destination": [
-     50,
-     28
+     47,
+     32
     ],
     "goal": "watch the south road",
-    "next_at_ms": 53700,
+    "next_at_ms": 53200,
     "path": [],
     "source": "routine",
     "step_carry_ms": 0,
@@ -1282,15 +1365,18 @@
     "job": null,
     "memories": [],
     "mood": "content",
-    "next_agenda_at": 73000,
+    "next_agenda_at": 72000,
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": true
    },
    "name": "Elin",
    "role": "Watch scout",
-   "x": 50,
-   "y": 28
+   "x": 47,
+   "y": 32
   },
   {
    "alive": true,
@@ -1363,7 +1449,6 @@
      "anger": 0.0,
      "fear": 0.0
     },
-    "fresh": null,
     "job": null,
     "knows": {
      "claims": [],
@@ -1378,7 +1463,6 @@
     "last_agenda": "carry_on",
     "memories": [],
     "mood": "irritable",
-    "next_agenda_at": 25000,
     "opinions": {
      "npc_bren_marr": {
       "text": "all right",
@@ -1399,6 +1483,9 @@
     },
     "said": null,
     "standing": "unknown",
+    "standing_plan": {
+     "defend": true
+    },
     "stranger_seen": false
    },
    "name": "Kade",
@@ -5884,14 +5971,224 @@
   "x": 48,
   "y": 3
  },
- "player_seq": 56,
+ "player_seq": 55,
+ "precedents": [
+  {
+   "at": 5000,
+   "helpers": {},
+   "inputs": {
+    "gourd_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "fill"
+     ],
+     "capacity_l": 1.0,
+     "condition": "usable",
+     "description": "A hollow dried bottle gourd with a hard shell and a small hole at the neck.",
+     "flags": [
+      "rigid",
+      "container",
+      "watertight",
+      "floats"
+     ],
+     "gear": {
+      "class": "container",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": null,
+     "id": "gourd_a",
+     "length_m": null,
+     "mass_kg": 0.3,
+     "materials": [
+      "gourd"
+     ],
+     "name": "dried gourd",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 45,
+     "y": 53
+    }
+   },
+   "intention": "take the gourd",
+   "key": "take",
+   "outcome": "success",
+   "proposal": {
+    "action": "take",
+    "clarifying_question": null,
+    "effort_seconds": 5,
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "take",
+    "reason": "It happens.",
+    "take_ids": [
+     "gourd_a"
+    ],
+    "transformation": null
+   },
+   "reason": "It happens."
+  },
+  {
+   "at": 20000,
+   "helpers": {},
+   "inputs": {
+    "gourd_a": {
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "fill"
+     ],
+     "capacity_l": 1.0,
+     "condition": "usable",
+     "description": "A hollow dried bottle gourd with a hard shell and a small hole at the neck.",
+     "flags": [
+      "rigid",
+      "container",
+      "watertight",
+      "floats"
+     ],
+     "gear": {
+      "class": "container",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": "player",
+     "id": "gourd_a",
+     "length_m": null,
+     "mass_kg": 0.3,
+     "materials": [
+      "gourd"
+     ],
+     "name": "dried gourd",
+     "owner_id": null,
+     "water_l": 0.0,
+     "x": 45,
+     "y": 53
+    },
+    "trough_hessa": {
+     "bound_to": [],
+     "capabilities": [
+      "water_source"
+     ],
+     "capacity_l": 0.0,
+     "condition": "usable",
+     "description": "A long wooden water trough in Hessa's yard.",
+     "flags": [
+      "container",
+      "watertight"
+     ],
+     "holder_id": null,
+     "id": "trough_hessa",
+     "length_m": null,
+     "lent_to": "player",
+     "mass_kg": 80.0,
+     "materials": [
+      "wood"
+     ],
+     "name": "water trough",
+     "owner_id": "npc_hessa_marr",
+     "water_l": 80.0,
+     "x": 36,
+     "y": 52
+    }
+   },
+   "intention": "fill the gourd at the trough and give it to Hessa",
+   "key": "fill+give",
+   "outcome": "success",
+   "proposal": {
+    "action": "fill",
+    "clarifying_question": null,
+    "effort_seconds": 5,
+    "fill": {
+     "container_id": "gourd_a",
+     "litres": 1.0,
+     "source_id": "trough_hessa"
+    },
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "fill+give",
+    "reason": "It happens.",
+    "take_ids": [],
+    "transformation": null
+   },
+   "reason": "It happens."
+  },
+  {
+   "at": 26000,
+   "helpers": {},
+   "inputs": {
+    "gourd_a": {
+     "base_name": "dried gourd",
+     "bound_to": [],
+     "capabilities": [
+      "carry",
+      "fill"
+     ],
+     "capacity_l": 1.0,
+     "condition": "usable",
+     "description": "A hollow dried bottle gourd with a hard shell and a small hole at the neck.",
+     "flags": [
+      "rigid",
+      "container",
+      "watertight",
+      "floats"
+     ],
+     "gear": {
+      "class": "container",
+      "covers": [],
+      "kind": "weapon",
+      "quality": "crude"
+     },
+     "holder_id": "player",
+     "id": "gourd_a",
+     "length_m": null,
+     "mass_kg": 0.3,
+     "materials": [
+      "gourd"
+     ],
+     "name": "dried gourd of water",
+     "owner_id": null,
+     "water_l": 1.0,
+     "x": 45,
+     "y": 53
+    }
+   },
+   "intention": "fill the gourd at the trough and give it to Hessa",
+   "key": "fill+give",
+   "outcome": "success",
+   "proposal": {
+    "action": "give",
+    "clarifying_question": null,
+    "effort_seconds": 5,
+    "give": {
+     "item_ids": [
+      "gourd_a"
+     ],
+     "recipient_id": "npc_hessa_marr"
+    },
+    "harm": null,
+    "new_object": null,
+    "outcome": "success",
+    "precedent_key": "fill+give",
+    "reason": "It happens.",
+    "take_ids": [],
+    "transformation": null
+   },
+   "reason": "It happens."
+  }
+ ],
  "projectiles": [],
  "run_id": "<run0>",
- "safe_seq": 53,
+ "safe_seq": 52,
  "scenario": "village",
- "seed_version": 13,
- "sim_time_ms": 53000,
- "tick": 53,
+ "seed_version": 14,
+ "sim_time_ms": 52000,
+ "tick": 52,
  "trades": {},
  "village": {
   "chatter_at": []
