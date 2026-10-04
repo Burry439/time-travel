@@ -57,13 +57,13 @@
     "npc_hessa_marr"
    ]
   },
-  "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
+  "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
    "actor": "player",
    "at": 26000,
    "event": 29,
-   "id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
+   "id": "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
    "kind": "gift",
-   "object_id": null,
+   "object_id": "gourd_a",
    "step": 2,
    "victim": "npc_hessa_marr",
    "witnesses": [
@@ -878,14 +878,20 @@
    "injuries": [],
    "mind": {
     "evidence": {
-     "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
+     "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
       "actor_id": "player",
+      "application": "function",
       "at": 26000,
       "clarity": "clear",
       "event": 29,
-      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
+      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
       "item": "dried gourd of water, full (1 L of water)",
       "kind": "gift",
+      "object_id": "gourd_a",
+      "object_ids": [
+       "gourd_a"
+      ],
+      "revision": 0,
       "severity": 1,
       "short": "gave me a dried gourd of water, full (1 L of water)",
       "source": "received",
@@ -936,12 +942,18 @@
     "memories": [
      {
       "actor_id": "player",
+      "application": "function",
       "at": 26000,
       "clarity": "clear",
       "event": 29,
-      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
+      "evidence_id": "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]",
       "item": "dried gourd of water, full (1 L of water)",
       "kind": "gift",
+      "object_id": "gourd_a",
+      "object_ids": [
+       "gourd_a"
+      ],
+      "revision": 0,
       "severity": 1,
       "short": "gave me a dried gourd of water, full (1 L of water)",
       "source": "received",
@@ -1001,10 +1013,10 @@
      "illwill_used": 0.0,
      "judged_proofs": {
       "awe": [
-       "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
+       "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
       ],
       "respect": [
-       "evidence:[\"gift\",\"player\",29,2,26000,null,\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
+       "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]"
       ]
      },
      "respect": 0.0,

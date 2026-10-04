@@ -107,7 +107,8 @@ class ActRequest(BaseModel):
 @router.post("/runs/{run_id}/act")
 def act(run_id: str, request: ActRequest, background: BackgroundTasks):
     """Whatever the stranger typed: words, a deed, both, or waiting / giving up / walking away (GDD D-34)."""
-    ai_config.deadline.set(time.monotonic() + (8.0 if request.mode == "say" else 15.0))
+    budget = ai_config.SPEECH_BUDGET_S if request.mode == "say" else ai_config.DEED_BUDGET_S
+    ai_config.deadline.set(time.monotonic() + budget)
     with commands.peek(run_id) as state:
         current = encounter.active(state)
     here = cast.player_cell(state)
@@ -249,7 +250,7 @@ def _attempt(
         return reply.body
     try:
         if ai_config.deadline.get() is None:
-            ai_config.deadline.set(time.monotonic() + 15.0)
+            ai_config.deadline.set(time.monotonic() + ai_config.DEED_BUDGET_S)
         judged = propose(seen, context, calls_used)  # Any model call happens outside the lock.
         with commands.reopen(run_id, request, body=body, stale=False) as cmd:
             state = cmd.state

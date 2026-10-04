@@ -170,6 +170,7 @@ def _installing(placed) -> dict | None:
         ("The stranger was heaving something heavy into place.", "was working on something heavy", 0),
         **SHOWN,
         clear_cells=tuning.SIGHT_CELLS,  # A beam going up: anyone can see it.
+        object_id=placed["object_id"],  # Which thing went up: stories ask who saw it (D-63).
     )
 
 
@@ -217,6 +218,8 @@ def _gift(give) -> dict | None:
         (f"The stranger gave {to} a {things}.", f"gave {to} a {things}", 1),
         (f"The stranger handed something to {to}.", f"handed something to {to}", 0),
         think=True,
+        object_id=give["item_ids"][0],
+        object_ids=list(give["item_ids"]),  # Which things changed hands: stories ask who saw the gift (D-63).
     )
 
 
@@ -312,6 +315,8 @@ def perceive(state: State, entry: dict, before: State | None = None) -> list[dic
                 memory["object_id"] = seen["object_id"]
                 memory["revision"] = state["objects"].get(seen["object_id"], {}).get("revision", 0)
                 memory["application"] = seen.get("application", "function")
+            if seen.get("object_ids") and clarity == "clear":
+                memory["object_ids"] = list(seen["object_ids"])
             if npc["id"] == seen["victim"]:  # They tell it in the first person: "attacked me", "stole my plank".
                 memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
             perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})

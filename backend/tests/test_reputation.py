@@ -12,6 +12,7 @@ import minds
 import perception
 import reputation
 import talk
+import tuning
 
 
 def shown(wonder, works=True):
@@ -39,6 +40,45 @@ def watching(*people):
     for n, npc_id in enumerate(people):
         npc(state, npc_id).update(x=41 + n, y=40)
     return state
+
+
+def test_most_people_are_awed_by_a_wonder_the_superstitious_are_afraid_instead():
+    """D-63 (the user: "most people should be able to be awed, but some should be superstitious, depending on the
+    character"). Seen with their own eyes: Tomas (none) is awed, Jory (reverent) doubly, Roderic (wary) is afraid and
+    not awed. Trust is still each person's own to give."""
+    state = watching("npc_jory_venn", "npc_roderic_vale", "npc_tomas_reed")
+    jory, roderic, tomas = (npc(state, i) for i in ("npc_jory_venn", "npc_roderic_vale", "npc_tomas_reed"))
+    trust = {n["id"]: reputation.regard(n)["trust"] for n in (jory, roderic, tomas)}
+    perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
+    assert reputation.regard(tomas)["awe"] == tuning.AWE_SHIFT
+    assert reputation.regard(jory)["awe"] == 2 * tuning.AWE_SHIFT
+    assert reputation.regard(roderic)["awe"] == 0 and roderic["mind"]["feelings"]["fear"] == tuning.SUPERSTITIOUS_FEAR
+    assert len(reputation.feared_wonders(roderic)) == 1 and not reputation.feared_wonders(tomas)
+    assert {n["id"]: reputation.regard(n)["trust"] for n in (jory, roderic, tomas)} == trust
+    perception.apply_perceptions(state, perception.perceive(state, {**shown("uncanny"), "event_id": 9}))
+    assert reputation.regard(tomas)["awe"] == tuning.AWE_SHIFT  # The same wonder again: no more awe.
+    clever = watching("npc_tomas_reed")
+    perception.apply_perceptions(clever, perception.perceive(clever, shown("clever")))
+    assert reputation.regard(npc(clever, "npc_tomas_reed"))["awe"] == 0  # Clever is not uncanny.
+
+
+def test_explained_properly_a_superstitious_person_is_awed_too():
+    """D-63: even a superstitious person can be awed if the stranger explains the thing properly. Whether it made
+    sense is the person's own reading in their own call; bluster explains nothing."""
+    state = watching("npc_roderic_vale")
+    roderic = npc(state, "npc_roderic_vale")
+    perception.apply_perceptions(state, perception.perceive(state, shown("uncanny")))
+    person = briefing.scene_context(state, roderic, [roderic], [], "Let me explain.", None)["people"][0]
+    assert "wonder" in person["_rules"] and "witchcraft" in person["a_wonder_that_frightens_you"][0]
+    talk.exchange(state, "npc_roderic_vale", "It's a gift from the gods.", {}, "answer", "Witchcraft.", [])
+    assert reputation.feared_wonders(roderic) and reputation.regard(roderic)["awe"] == 0  # Bluster: still afraid.
+    understood = {"understood": {"type": "noul", "noul": 0.9}}
+    words = "The needle was rubbed on a lodestone; it turns to the north as the stone does. Watch, I'll do it again."
+    talk.exchange(state, "npc_roderic_vale", words, understood, "answer", "Hm. So that's all it is.", [])
+    assert not reputation.feared_wonders(roderic) and reputation.regard(roderic)["awe"] == tuning.AWE_SHIFT
+    assert roderic["mind"]["feelings"]["fear"] == 0
+    after = briefing.scene_context(state, roderic, [roderic], [], "Hello.", None)["people"][0]
+    assert "wonder" not in after["_rules"] and "a_wonder_that_frightens_you" not in after
 
 
 def test_a_working_thing_is_evidence_awaiting_personal_judgment():
@@ -108,7 +148,7 @@ def test_bren_lets_you_in_on_his_own_rule():
     state = unit_state()
     bren = npc(state, "npc_bren_marr")
     state["player"].update(x=bren["x"], y=bren["y"] + 1)
-    assert gatekeeping.grounds_to_admit(bren)  # A stranger he doesn't know: nothing to go on (D-55).
+    assert gatekeeping.grounds_to_admit(bren)  # A rule of his own (D-62): whether a stranger meets it is his call.
     reputation.regard(bren).update(trust=0.7, suspicion=0.2)  # He has come to trust them himself.
     cast.mind(bren)["met"] = True
     assert gatekeeping.grounds_to_admit(bren)

@@ -115,7 +115,7 @@ def test_showing_updates_what_it_is_known_to_do_and_who_saw_it():
     assert far["id"] not in by
     state.setdefault("pending_minds", [])
     perception.apply_perceptions(state, [p for p in perceptions if p["memory"]["kind"] == "demonstration"])
-    assert state["pending_minds"]  # Seeing something shown is remembered, not an alarm.
+    assert state["pending_minds"]  # Remembered, and (D-62) they think again about the stranger: no alarm.
     # What she saw is evidence: she can now come to trust the stranger beyond what words earn.
     for _ in range(10):
         talk.update_regard(hessa, {"impression": {"score": 4}, "suspicion": {"score": 0}})

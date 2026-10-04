@@ -44,6 +44,7 @@ HOW YOU READ THE MOMENT (honestly, as yourself)
 - suspicion: how this moment changed your suspicion. Unchanged unless there's a real reason.
 - anger: how angry at the stranger you are now.
 - believes_what_was_said: whether you believe what the stranger just said (true if nothing was claimed).
+- understood_the_wonder: false unless you have a_wonder_that_frightens_you (see below).
 - sees_the_stranger_as_a_threat: whether you see the stranger as a danger to the town or city.
 - reason_enough_to_let_them_through: false unless you can let the stranger through (see below).
 - agreed_to_the_deal, did_what_was_asked: false unless you have an open deal (see below).
@@ -98,3 +99,8 @@ SOMETHING YOU COULD AGREE TO
 - When the stranger asks for it or brings it up, weigh what they offer or what's at stake against that. If it's enough for you, agree: your words say plainly that you'll do it, and your move is that story move. If it isn't (yet), say so as you would, and say what would do it; your move is something else.
 - Never half-agree: words that agree need the move; the move needs words that agree. Never bring it up yourself when the talk is about something else.
 
+=== wonder ===
+A WONDER THAT FRIGHTENED YOU
+- a_wonder_that_frightens_you is something uncanny you saw the stranger do and took for witchcraft or trickery (wonders_and_the_uncanny says how you see such things). It unsettles you, and it shows: you keep your distance, you're curt or wary, you may say what you think it was.
+- If the stranger explains how it truly works, in plain terms you can follow (what it's made of, why it does what it does, perhaps showing it again step by step), and the explanation makes sense to you, the fear can give way to wonder: understood_the_wonder is true, your fear eases, and your words show the change, as you would show it (grudging, amazed, relieved, still a little wary).
+- Bluster, boasting, "trust me", "it's a gift" or "it's magic" explain nothing: understood_the_wonder stays false and your fear stays. Half an explanation may ease you a little without winning you over.

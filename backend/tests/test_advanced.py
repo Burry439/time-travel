@@ -71,7 +71,7 @@ def test_the_sceptic_through_ilse(world):
     assert at_step(state) == "cross"
     state = next_to(world, state, GORM)
     gorm = cast.find(state["npcs"], GORM)
-    assert "admit" in conversation.moves(state, gorm)  # Nothing real to go on: the voice isn't offered a yes.
+    assert "admit" in conversation.moves(state, gorm)  # His to weigh from the start (D-62); his reading must agree.
     state = say(world, state, GORM, "I'm honest, I swear. Take me across.", answers("admit", reason=0.1, threat=0.1))
     assert not state.get("admitted")  # Code refuses a yes on words alone.
     state = next_to(world, state, ILSE)
@@ -125,6 +125,7 @@ def test_word_gets_around_through_cobs_word(world):
     state = read(world, read(world, state))
     assert at_step(state) == "stick" and cast.find(state["npcs"], LISS)["conditions"]  # Liss's cut, from the start.
     state = next_to(world, state, AGNA)
+    # Giving is offered (D-62: no trust threshold); whether she gives is her own call.
     assert any(k.startswith("give:") for k in conversation.replies(state, cast.find(state["npcs"], AGNA)))
     state = next_to(world, state, COB)
     state = say(world, state, COB, "That axe looks broken. Can I help?", said("offer:handle"))
@@ -514,6 +515,7 @@ def test_a_secret_kept_by_kindness(world):
     state = new_run(world, scenario="a_secret_kept")
     state = read(world, read(world, state))
     aldric = cast.find(state["npcs"], ALDRIC)
+    # His secret is his to tell from the start (D-62); the level is about his choosing to, after kindness.
     assert aldric["conditions"] and "share:secret" in conversation.replies(state, aldric)
     state = next_to(world, state, ALDRIC)
     state = warm(world, state, ALDRIC)

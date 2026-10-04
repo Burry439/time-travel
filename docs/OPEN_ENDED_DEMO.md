@@ -30,7 +30,7 @@ The shared person contract covers speech, silent reactions, news and day plans. 
 - [Live HTTP and art report](../evals/results/demo_http_20261004_143025.json): creation and save/reload passed; the revised branch received an actual transparent 1024×1024 PNG from `gpt-image-2.5-flare` in **9.79 seconds**, which was served by the backend. Visual inspection confirmed the groove and tick marks. The sprite itself is generated save data and is not committed.
 - Earlier reports remain available: [5/7](../evals/results/open_ended_20261004_133233.json) exposed an empty evaluation gourd and an offer incorrectly requiring immediate reach; [10/12](../evals/results/open_ended_20261004_135047.json) exposed properties lost by transformation. Those issues were corrected before the final held-out run.
 
-Speech uses a shared eight-second model budget; physical requests use fifteen seconds, including retries and reconsideration. Network and response-processing overhead can add a little wall time. Image generation has its own background budget and does not hold movement or the action response.
+Speech uses a shared twelve-second model budget (D-63: eight seconds cut off a quarter of a group's calls); physical requests use fifteen seconds, including retries and reconsideration. Network and response-processing overhead can add a little wall time. Image generation has its own background budget and does not hold movement or the action response.
 
 ## Play and rollback
 

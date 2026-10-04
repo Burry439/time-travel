@@ -225,9 +225,11 @@ FIRSTHAND = ("witnessed", "shown", "victim", "received")
 
 
 def remember(npc: Npc, memory: Memory) -> None:
-    """Keep durable evidence and a short episodic memory; new facts queue personal reconsideration."""
+    """Keep durable evidence and a short episodic memory; new facts queue personal reconsideration. A wonder seen
+    for the first time moves them at once (first_sight, D-63)."""
     if not evidence.remember(npc, memory):
         return
+    first_sight(npc, memory)
     if memory.get("severity", 0) >= 1:
         cast.mind(npc)["fresh"] = memory.get("short") or memory.get("summary", "")[:80]
     memories = cast.mind(npc).setdefault("memories", [])
@@ -239,10 +241,15 @@ def remember(npc: Npc, memory: Memory) -> None:
 def willing(state: State, npc: Npc) -> bool:
     """Would do the stranger a good turn now (D-59): alive and on their feet, not fighting them, not hostile to them
     (a wrong of theirs unsettled, or angry) and not afraid of them. Whatever a story asks of a person (to say their
-    piece, lend, give, tell, speak for the stranger, teach) waits on this: scald Ulf and he asks for no tea."""
+    piece, lend, give, tell, speak for the stranger, teach) waits on this: scald Ulf and he asks for no tea. An
+    authored favour has no call of its own to decide it, so the person's own feelings decide it (D-63): their anger,
+    fear and regard, which their own calls and what they saw have set."""
     if not npc.get("alive", True) or npc.get("down"):
         return False
-    return npc["id"] not in ((state.get("fight") or {}).get("attackers") or [])
+    if npc["id"] in ((state.get("fight") or {}).get("attackers") or []):
+        return False
+    fear = ((npc.get("mind") or {}).get("feelings") or {}).get("fear", 0.0)
+    return standing(npc) != "hostile" and fear < tuning.AFRAID
 
 
 def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool:
@@ -260,6 +267,57 @@ def will_help(state: State, npc: Npc, at: tuple[int, int] | None = None) -> bool
         and c.get("until", state.get("sim_time_ms", 0) + 1) > state.get("sim_time_ms", 0)
         for c in commitments
     )
+
+
+def superstition(npc: Npc) -> str:
+    """How this person takes the uncanny (their card): "wary" (superstitious: witchcraft or trickery), "reverent"
+    (a sign, a blessing) or "none" (a wonder, and they'd like to know how it works)."""
+    return (cast.card(npc).get("superstition") or {}).get("kind", "none")
+
+
+def first_sight(npc: Npc, memory: Memory) -> None:
+    """Something uncanny, seen working with their own eyes for the first time (D-63, as D-43 before D-62): most
+    people are awed, the reverent doubly; the superstitious are afraid instead, with no awe, until it's explained to
+    them (understood). Hearing of a wonder earns neither: only seeing does. Trust is still theirs to give."""
+    if (
+        memory.get("kind") != "demonstration"
+        or memory.get("wonder") != "uncanny"
+        or not memory.get("works", True)
+        or memory.get("clarity") != "clear"
+        or memory.get("source") not in FIRSTHAND
+        or memory.get("actor_id", "player") != "player"
+    ):
+        return
+    view, leaning = regard(npc), superstition(npc)
+    seen = {"evidence_id": memory.get("evidence_id"), "what": memory.get("short", ""), "at": memory.get("at", 0)}
+    if leaning == "wary":
+        feelings = cast.mind(npc).setdefault("feelings", {})
+        feelings["fear"] = max(feelings.get("fear", 0.0), tuning.SUPERSTITIOUS_FEAR)
+        seen["feared"] = True
+    else:
+        lift = tuning.AWE_SHIFT * (2 if leaning == "reverent" else 1)
+        view["awe"] = round(min(1.0, view.get("awe", 0.0) + lift), 3)
+    cast.mind(npc).setdefault("wonders", []).append(seen)
+
+
+def feared_wonders(npc: Npc) -> list[dict]:
+    """Wonders this superstitious person saw and took for witchcraft, not yet explained to them."""
+    return [w for w in (npc.get("mind") or {}).get("wonders", []) if w.get("feared") and not w.get("explained")]
+
+
+def understood(npc: Npc, now: int) -> bool:
+    """The stranger explained a wonder this person feared, and it made sense to them (their own call's reading,
+    D-63): the fear gives way to awe. Returns whether anything changed."""
+    feared = feared_wonders(npc)
+    if not feared:
+        return False
+    for wonder in feared:
+        wonder.update(explained=True, explained_at=now)
+    view = regard(npc)
+    view["awe"] = round(min(1.0, view.get("awe", 0.0) + tuning.AWE_SHIFT), 3)
+    feelings = cast.mind(npc).setdefault("feelings", {})
+    feelings["fear"] = round(max(0.0, feelings.get("fear", 0.0) - tuning.SUPERSTITIOUS_FEAR), 2)
+    return True
 
 
 def hearsay(memory: Memory) -> bool:

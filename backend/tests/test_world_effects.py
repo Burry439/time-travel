@@ -111,7 +111,7 @@ def test_an_offered_trade_happens_only_if_they_accept():
     assert replayed == patch.snapshot(state)
 
 
-def test_people_give_things_only_to_someone_they_trust():
+def test_people_give_their_own_things_when_they_choose_to():
     state = fresh_state(79, 32)
     darin = npc(state, "npc_darin_ko")
     assert any(k.startswith("give:") for k in conversation.replies(state, darin))

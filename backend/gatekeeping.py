@@ -45,8 +45,9 @@ def admission_rule(npc: Npc) -> str:
 
 
 def can_admit(state: State, npc: Npc) -> bool:
-    """Any guard with their own reasons (D-43), standing, for a living stranger who isn't barred, never after
-    violence or an assault on the gate they know of."""
+    """Any guard with their own reasons (D-43), conscious and alive, for a living stranger not yet admitted. A known
+    crime, a barred gate or a stranger with nothing to show are theirs to weigh (D-62): permission is not the
+    physical way in, which a barred gate still shuts."""
     return (
         bool(cast.card(npc).get("guard") and admission_rule(npc))
         and not npc.get("down")
@@ -57,10 +58,10 @@ def can_admit(state: State, npc: Npc) -> bool:
 
 
 def grounds_to_admit(npc: Npc) -> bool:
-    """Something real behind letting the stranger in, never their word alone (D-55): evidence this guard holds
-    (a resident's word given in person, something shown to work, a gift, help they saw). A guard going on their
-    own motive may also go on trust earned over time; the captain's rule asks for the evidence."""
-    return bool(admission_rule(npc))  # The guard weighs their duty, risk, fear and incentives.
+    """Whether this guard has a rule of their own to admit by. Since D-62 the evidence behind a yes is the guard's to
+    weigh in their own call (who_they_would_let_through, and their own evidence ledger), not a code threshold; the
+    reply's own reading must still agree with the move (conversation.admits_now)."""
+    return bool(admission_rule(npc))
 
 
 def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int) -> None:

@@ -39,7 +39,7 @@ def test_the_gate_starts_barred_and_opens_when_the_bar_is_off():
     assert state["gate_open"] and state["gate_unbarred_by"] == "player" and not m2.gate_barred(state)
 
 
-def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
+def test_guards_who_see_it_remember_a_breach_and_decide_what_to_do():
     state = at_the_gate(fresh_state())
     commit(state, lift_out())
     seen = perception.perceive(state, state["last_action"])
@@ -47,7 +47,7 @@ def test_guards_who_see_it_fight_and_the_captain_will_never_let_you_in():
     roderic = npc(state, "npc_roderic_vale")
     memory = next(m for m in roderic["mind"]["memories"] if m["kind"] == "breach")
     assert memory["kind"] == "breach" and memory["severity"] == 3 and "unbarred" in memory["summary"]
-    assert not state.get("fight")
+    assert not state.get("fight")  # No fight by code (D-62): each guard who saw it decides, in their own call.
     assert any(p["npc_id"] == roderic["id"] for p in state["pending_minds"])
     assert reputation.knows_a_crime(roderic) and gatekeeping.can_admit(state, roderic)
 
@@ -92,7 +92,7 @@ def test_through_the_unbarred_gate_over_http(world, monkeypatch):
     state = post(world, state, "craft", {"text": "lever the bar off the gate on the crates", "selected_ids": []})[
         "state"
     ]
-    assert state["gate_open"] and state["pending_minds"]  # Seen: the guards come for you.
+    assert state["gate_open"] and state["pending_minds"]  # Seen: the guards who saw it think what to do.
     while (state["player"]["x"], state["player"]["y"]) != (48, 9):  # Back beside the gate (the lift walked us).
         x, y = state["player"]["x"], state["player"]["y"]
         state = post(world, state, "move", {"x": x + (x < 48) - (x > 48), "y": y + (y < 9) - (y > 9)})["state"]

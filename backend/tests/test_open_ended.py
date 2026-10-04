@@ -516,7 +516,7 @@ def test_conversation_shares_one_deadline_across_its_model_calls(world, monkeypa
         },
     )
     assert reply.status_code == 200, reply.text
-    assert budgets and all(0 < b <= 8 for b in budgets)
+    assert budgets and all(0 < b <= service.ai_config.SPEECH_BUDGET_S for b in budgets)
 
 
 def test_a_redundant_authored_reward_acknowledgment_does_not_deny_or_pay_twice():

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "notes": "Ongoing factual milestones; independent NPC models judge what they learn. Authored stories describe example goals, never the available methods. Rewards and opinions require an actual authorized NPC decision.",
+ "notes": "The village's storylines (D-56, D-61, D-62, D-63). Authored stories describe example goals, never the available methods: every stage and outcome is a result in the world, checked by code (the rule language, backend/rules.py, plus the kinds stories.py registers: learned, told, move, treated, given, seen_demonstration, regard, helped, knows_story). Outcomes are ongoing milestones: reaching one never closes the story. Each story has people (owner, helps, opposes). An outcome reaches each person when they come to know it, from what they hold themselves (they saw it, were told the secret, were in the conversation, or were brought the news); then its effects for that person apply once (shift_regard: trust, suspicion, respect, awe; shift_opinion: of another, warmth): their authored reaction, as a card's motives are. moves are things a person may choose to do in conversation, in their own call: description says what; would_agree_if is their own price, which they weigh, and name when it isn't met; tells is whom they then go and tell, and what (the news is how that person learns of it).",
  "stories": [
   {
    "id": "gate_beam",
@@ -694,7 +694,11 @@
      }
     ]
    },
-   "would_agree_if": "for a friend he trusts who asks it of him, to square his account after a real gift or good turn from the stranger, or to keep someone who knows his permit is running out on his side. He haggles first, as he always does, but he knows a good bargain when he's offered one"
+   "would_agree_if": "for a friend he trusts who asks it of him, to square his account after a real gift or good turn from the stranger, or to keep someone who knows his permit is running out on his side. He haggles first, as he always does, but he knows a good bargain when he's offered one",
+   "tells": {
+    "to": "npc_oren_dast",
+    "message": "I've let your debt go. You owe me nothing now; thank the stranger for it."
+   }
   },
   {
    "id": "settle_lodging",
@@ -729,7 +733,11 @@
      }
     ]
    },
-   "would_agree_if": "for a friend he trusts who asks it of him, or to keep someone who knows how things stand with him on his side: he can't afford a sour name in town before he trades inside the walls"
+   "would_agree_if": "for a friend he trusts who asks it of him, or to keep someone who knows how things stand with him on his side: he can't afford a sour name in town before he trades inside the walls",
+   "tells": {
+    "to": "npc_hessa_marr",
+    "message": "Here's the three weeks' lodging I owe you. The stranger set me straight."
+   }
   },
   {
    "id": "trust_clean_water",

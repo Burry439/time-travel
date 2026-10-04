@@ -53,7 +53,9 @@ def voice_model() -> str:
 
 
 def voice_reasoning() -> str:
-    return _env("VOICE_REASONING", "low")  # It only phrases a decided reply (D-30: same quality, faster).
+    return _env(
+        "VOICE_REASONING", "low"
+    )  # Each person decides as well as speaks (D-62), so they get a moment's thought.
 
 
 def image_model() -> str:
@@ -96,11 +98,19 @@ def status() -> dict:
     }
 
 
+# Each request's model calls share one budget (D-62), retries and reconsideration included. Speech: the person
+# addressed, then everyone else there in parallel. D-63: 12 s, measured at the gate (captain plus two guards, live):
+# 8 s cut off 7 of 30 people's calls (their turn, and any silent decision in it, lost); 12 s cut 1 of 30, and the
+# median round barely moved (7.2 s against 8.0 s): the budget is a ceiling, not a wait.
+SPEECH_BUDGET_S = 12.0
+DEED_BUDGET_S = 15.0  # A Try Something: the judge, one bounded reconsideration and the reply.
+
+
 @lru_cache(maxsize=1)
 def _client(key: str):
     from openai import OpenAI
 
-    return OpenAI(api_key=key, timeout=8.0, max_retries=0)
+    return OpenAI(api_key=key, timeout=SPEECH_BUDGET_S, max_retries=0)
 
 
 deadline = ContextVar("model_request_deadline", default=None)
@@ -108,7 +118,7 @@ deadline = ContextVar("model_request_deadline", default=None)
 
 def remaining() -> float:
     end = deadline.get()
-    return max(0.0, end - time.monotonic()) if end is not None else 8.0
+    return max(0.0, end - time.monotonic()) if end is not None else SPEECH_BUDGET_S
 
 
 def client():

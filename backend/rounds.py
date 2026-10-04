@@ -383,7 +383,8 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
     except commands.Reply as reply:
         return reply.body
     if ai_config.deadline.get() is None:
-        ai_config.deadline.set(time.monotonic() + (15.0 if request.kind == "do" else 8.0))
+        budget = ai_config.DEED_BUDGET_S if request.kind == "do" else ai_config.SPEECH_BUDGET_S
+        ai_config.deadline.set(time.monotonic() + budget)
     try:
         judged = attempts.judge_attempt(context, calls_used) if context else None  # Outside the lock.
         timing["judge_ms"] = judged.latency_ms if judged else 0

@@ -28,9 +28,10 @@ def test_a_seized_stranger_loses_what_they_stole_and_is_marched_off():
     assert gatekeeping.barred(draft) and draft["journal"][-1]["kind"] == "arrest"
     roderic = npc(draft, "npc_roderic_vale")
     assert roderic["mind"]["memories"][-1]["kind"] == "arrest"
-    assert "admit" in conversation.replies(draft, roderic)  # Not while barred...
+    # Barred after an arrest: the captain weighs it himself (D-62), and an arrest isn't the end of the road.
+    assert "admit" in conversation.replies(draft, roderic)
     draft["sim_time_ms"] = draft["barred_until"] + 1
-    assert "admit" in conversation.replies(draft, roderic)  # ...but an arrest isn't the end of the road.
+    assert "admit" in conversation.replies(draft, roderic)
 
 
 def test_walking_off_from_someone_you_wronged():
@@ -92,7 +93,7 @@ def test_giving_up_a_fight_a_guard_takes_you_otherwise_they_let_you_be():
     assert state["objects"]["cloth_darin"]["holder_id"] == "npc_darin_ko" and gatekeeping.barred(state)
 
 
-def test_only_violence_rules_out_entry_for_good():
+def test_a_theft_weighs_on_a_guard_without_barring_the_way():
     state = unit_state()
     roderic = npc(state, "npc_roderic_vale")
     reputation.remember(
@@ -109,7 +110,7 @@ def test_only_violence_rules_out_entry_for_good():
         },
     )
     assert "admit" in conversation.replies(state, roderic)  # Theft weighs on him; it doesn't bar the stranger forever.
-    assert reputation.regard(roderic)["suspicion"] == 0.68
+    assert reputation.regard(roderic)["suspicion"] == 0.68  # Seeing it moves nothing by code (D-62): his to judge.
 
 
 def test_giving_up_to_a_guard_is_an_arrest_in_one_round_that_replays(world):

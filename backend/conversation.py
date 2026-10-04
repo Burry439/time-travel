@@ -391,18 +391,22 @@ def said_or_did(text: str, happened: str | None) -> str:
 
 
 def admits_now(state: State, npc: Npc, answers: dict) -> bool:
-    """A guard's own rule met, by the reply's reading: reason enough and no threat (GDD 4.3, D-43), with real
-    grounds in what they hold, so a claim ("Hessa has spoken for me") never opens the gate by itself (D-55)."""
+    """A guard lets the stranger in only as their own reply reads the moment (D-62, D-63): reason enough, by their
+    own lights, and either they don't see the stranger as a threat or they're afraid (letting a threat through
+    under duress is a choice a frightened guard may make). Code never decides the reasons; it holds the move to them."""
+    afraid = ((npc.get("mind") or {}).get("feelings") or {}).get("fear", 0.0) >= tuning.AFRAID
     return (
         "admit" in replies(state, npc)
         and yes(answers, "reason", tuning.REASON_YES)
+        and (not yes(answers, "threat", tuning.THREAT_NO) or afraid)
         and gatekeeping.grounds_to_admit(npc)
     )
 
 
 def moves(state: State, npc: Npc, answers: dict | None = None) -> dict[str, str]:
-    """The moves the voice may pick from: every legal reply. Letting the stranger in is offered to a guard who
-    could; code then checks the same reply's own reading (reason enough, no threat) before the gate opens (D-46)."""
+    """The moves the voice may pick from: every legal reply. Letting the stranger in is offered to any guard with
+    their own reasons (D-62: they weigh it themselves); code then holds the move to the same reply's own reading
+    (admits_now) before the gate opens."""
     options = {k: o["description"] for k, o in replies(state, npc).items()}
     if "admit" in options and not gatekeeping.grounds_to_admit(npc):
         del options["admit"]  # Nothing real to go on yet (D-55): the voice isn't offered a yes that code would refuse.

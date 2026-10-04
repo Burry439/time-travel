@@ -39,7 +39,9 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-PERSON_VERSION = "person_v3"  # D-60: each person their own agent: a core and the rules that apply to them. v2 (D-61): secrets confided and story moves.
+# D-60: each person their own agent, a core and the rules that apply to them. v2 (D-61): secrets confided and story
+# moves. v3 (D-62): one decision contract for talk, reactions, news and plans. v4 (D-63): a feared wonder explained.
+PERSON_VERSION = "person_v4"
 SCENE_LINES = 3
 WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 
@@ -97,6 +99,7 @@ class PersonLine(BaseModel):
     respect: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"] = "Unchanged"
     awe: Literal["Much worse", "A little worse", "Unchanged", "A little better", "Much better"] = "Unchanged"
     fear: Literal["Not afraid", "Uneasy", "Afraid", "Terrified"] = "Not afraid"
+    understood_the_wonder: bool = False  # A feared wonder, explained, made sense to them (D-63).
     intents: list[NpcIntent] = []
     agreement: NegotiatedAgreement | None = None
     defend_if_attacked: bool = False
@@ -271,6 +274,7 @@ def reading(parsed: PersonLine) -> dict:
         "reason": yes(parsed.reason_enough_to_let_them_through),
         "accepts": yes(parsed.agreed_to_the_deal),
         "done": yes(parsed.did_what_was_asked),
+        "understood": yes(parsed.understood_the_wonder),
     }
 
 

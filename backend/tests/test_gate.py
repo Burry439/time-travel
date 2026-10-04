@@ -35,7 +35,7 @@ def answers(reply, **yes):
     return out
 
 
-def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
+def test_any_guard_with_their_own_reasons_may_admit_and_weighs_a_crime_themselves():
     state = unit_state()
     roderic, bren = npc(state, "npc_roderic_vale"), npc(state, "npc_bren_marr")
     assert "admit" in conversation.replies(state, roderic) and "admit" in conversation.replies(state, bren)  # D-43.
@@ -54,17 +54,17 @@ def test_any_guard_with_their_own_reasons_admits_but_never_after_a_crime():
             "source": "witnessed",
         },
     )
-    assert "admit" in conversation.replies(state, roderic)
+    assert "admit" in conversation.replies(state, roderic)  # A crime he knows of is his to weigh (D-62).
     roderic["mind"]["memories"][-1]["doubted"] = True  # He doesn't believe it.
     assert "admit" in conversation.replies(state, roderic)
 
 
-def test_offers_come_from_authored_needs_and_vouching_needs_trust():
+def test_offers_come_from_authored_needs_and_vouching_is_theirs_to_offer():
     state = unit_state()
     tomas = npc(state, "npc_tomas_reed")
     options = conversation.replies(state, tomas)
     assert "offer:beam_help" in options and "gate beam" in options["offer:beam_help"]["description"]
-    assert "vouch" in options
+    assert "vouch" in options  # No trust threshold (D-62): whether Tomas speaks for them is his own call.
     reputation.regard(tomas)["trust"] = 0.65
     assert "vouch" in conversation.replies(state, tomas)
     assert "vouch" not in conversation.replies(state, npc(state, "npc_roderic_vale"))  # He is who they vouch to.
@@ -420,9 +420,13 @@ def test_the_captain_admits_when_he_believes_his_own_rule_is_met():
     assert "admit" in conversation.moves(state, roderic) and "why_not_yet" not in briefing.converse_context(
         state, roderic, "x", {}
     )
-    # Letting someone in is a move the voice may choose, and code allows it only when the beliefs agree (D-44).
+    # Letting someone in is a move the voice may choose, and code allows it only when his own reading agrees (D-44):
+    # reason enough, and no threat, unless he's afraid (D-63: letting a threat through under duress).
     assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.2), "admit") == "admit"
+    assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "answer"
+    roderic["mind"]["feelings"]["fear"] = 0.8
     assert conversation.decided_reply(state, roderic, answers("admit", reason=0.8, threat=0.7), "admit") == "admit"
+    roderic["mind"]["feelings"]["fear"] = 0.0
     assert conversation.decided_reply(state, roderic, answers("admit", reason=0.3, threat=0.1), "admit") == "answer"
     # Beliefs alone never open the gate on words that refuse.
     assert (

@@ -323,6 +323,12 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
             f"work. Claims about what others said or did prove nothing until {npc['name']} "
             f"hears or sees it."
         )
+    if feared := reputation.feared_wonders(npc):  # Uncanny, seen, and taken for witchcraft (D-63).
+        context["a_wonder_that_frightens_you"] = [
+            f"You saw the stranger {w['what'].removeprefix('the stranger ')}, and it looked to you like witchcraft "
+            f"or trickery."
+            for w in feared
+        ]
     if told := stories.told_you(npc):  # Others' secrets the stranger passed on to them: theirs now (D-61).
         context["the_stranger_told_you"] = told
     if settled := stories.how_things_stand(state, npc):
@@ -394,6 +400,7 @@ def scene_context(
                 ("beat", "story_beat" in person),
                 ("confide", any(k.startswith("confide:") for k in person["moves_they_may_make"])),
                 ("story", any(k.startswith("story:") for k in person["moves_they_may_make"])),
+                ("wonder", "a_wonder_that_frightens_you" in person),
             )
             if applies
         ]

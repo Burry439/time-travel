@@ -11,6 +11,7 @@ from test_talk import npc, said, unit_state
 
 import briefing
 import cast
+import clock
 import content
 import conversation
 import gear
@@ -19,6 +20,7 @@ import reputation
 import rounds
 import stories
 import talk
+import tuning
 import views
 from ai import config, voice
 
@@ -36,10 +38,10 @@ def test_the_village_runs_every_story_and_a_training_level_none():
     assert stories.running({**state, "scenario": level}) == [] and stories.page({**state, "scenario": level}) is None
 
 
-def test_a_secret_is_confided_only_when_code_says_they_could_and_they_choose_to():
+def test_a_secret_is_its_owners_to_confide_when_they_choose_to():
     state = unit_state()
     bren = npc(state, "npc_bren_marr")
-    assert any(k.startswith("confide:") for k in conversation.replies(state, bren))  # A stranger: nothing.
+    assert any(k.startswith("confide:") for k in conversation.replies(state, bren))  # His to weigh (D-62).
     reputation.regard(bren)["trust"] = 0.55
     options = conversation.replies(state, bren)
     assert "confide:bren_covers_oren" in options and "confide:bren_elin" in options  # Bren weighs each secret himself.
@@ -98,6 +100,15 @@ def test_a_story_move_is_theirs_to_make_and_settles_the_story():
     assert "story:forgive_oren_debt" not in conversation.replies(state, darin)  # Settled.
     assert not stories.how_things_stand(state, oren)  # He has not yet been told.
     assert views.lead_done(state, payload["learned"][0])
+    # Darin goes and tells him (the move's "tells", D-63); Oren's reaction comes with the news, once.
+    job = cast.mind(darin)["job"]
+    assert job["kind"] == "tell" and job["target"] == "npc_oren_dast" and job["event"] == state["event_seq"] + 1
+    clock._deliver_message(state, darin, oren, 5000, [], job)
+    assert stories.pending(state) and stories.tick(state)
+    assert reputation.regard(oren)["trust"] == round(trust_before + 0.4, 3)
+    assert persona.opinions(oren)["npc_darin_ko"]["warmth"] == round(warmth_before + 0.3, 2)
+    assert any("Oren's debt" in line and "the stranger" in line for line in stories.how_things_stand(state, oren))
+    assert not stories.pending(state) and not stories.tick(state)  # Delivered once.
 
 
 def test_what_the_stranger_tells_someone_is_theirs_to_know_and_stories_react():
@@ -119,6 +130,61 @@ def test_what_the_stranger_tells_someone_is_theirs_to_know_and_stories_react():
     stories.tick(state)
     assert "raised" in state["stories"]["stages"]["gate_beam"]  # Repair remains possible after disclosure.
     assert "kept_quiet" not in state["stories"]["milestones"]["gate_beam"]
+    # Tomas learns of it only when it reaches him (D-63): here, someone tells him what the captain was told.
+    reputation.remember(
+        tomas,
+        {
+            "kind": "disclosure",
+            "event": 7,
+            "object_id": "tomas_cracked",
+            "victim": "npc_roderic_vale",
+            "at": 2000,
+            "severity": 1,
+            "clarity": "told",
+            "source": "told_by:npc_bren_marr",
+            "summary": "…",
+            "short": "…",
+        },
+    )
+    assert stories.tick(state)
+    assert reputation.regard(tomas)["trust"] == round(max(0.0, trust_before - 0.4), 3)
+    assert any("Roderic" in line for line in stories.how_things_stand(state, tomas))
+
+
+def test_nobody_learns_an_outcome_by_standing_near_or_having_once_seen_something():
+    """Before D-63 anyone within sight who had ever seen any gift counted as knowing any outcome. Now: in sight but
+    out of earshot, Kade doesn't hear the captain told; once someone tells him, he knows."""
+    state = unit_state()
+    kade, roderic = npc(state, "npc_kade_east"), npc(state, "npc_roderic_vale")
+    state["player"].update(x=roderic["x"], y=roderic["y"] + 1)
+    kade.update(x=roderic["x"], y=roderic["y"] + 1 + tuning.HEAR_TALK_CELLS + 3)  # Within sight, out of earshot.
+    reputation.remember(
+        kade,
+        {
+            "kind": "gift",
+            "event": 2,
+            "object_id": "rope_x",
+            "object_ids": ["rope_x"],
+            "victim": "npc_kade_east",
+            "at": 0,
+            "severity": 1,
+            "clarity": "clear",
+            "source": "received",
+            "summary": "…",
+            "short": "…",
+        },
+    )
+    learn(state, secret="kade_knees", npc_id="npc_kade_east")
+    trust_before = reputation.regard(kade)["trust"]
+    stories.tell(state, ["kade_knees"], [roderic], 9, 1000)
+    assert stories.tick(state) and "told_roderic" in state["stories"]["milestones"]["kade_knees"]
+    told = {"kind": "told", "npc": "npc_roderic_vale", "secrets": ["kade_knees"]}
+    knew = stories.knowers(state, told)  # The captain, and the guards beside him who overheard it.
+    assert "npc_roderic_vale" in knew and "npc_kade_east" not in knew
+    assert reputation.regard(kade)["trust"] == trust_before and not stories.how_things_stand(state, kade)
+    clock._deliver_message(state, roderic, kade, 3000, [], {"message": "I hear about your knees.", "event": 9})
+    assert "npc_kade_east" in stories.knowers(state, told) and stories.tick(state)
+    assert reputation.regard(kade)["trust"] == round(max(0.0, trust_before - 0.5), 3)
 
 
 def test_the_passing_on_is_read_beside_the_conversation_never_in_anyones_own_call(monkeypatch):

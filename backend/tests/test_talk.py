@@ -48,12 +48,12 @@ def said(reply, impression=2, suspicion=2, anger=0, believes=0.9):
     }
 
 
-def test_replies_come_from_code_and_follow_trust():
+def test_replies_come_from_code():
     state = unit_state()
     darin = npc(state, "npc_darin_ko")
     options = conversation.replies(state, darin)
     assert {"answer", "ask_back", "share:lodestone", "share:goods", "refuse", "tell_to_leave", "end"} <= set(options)
-    assert "share:oren_debt" in options  # Only told to someone he trusts.
+    assert "share:oren_debt" in options  # A trusted fact: whether he tells a stranger is his call (D-62).
     assert "refer:npc_hessa_marr" in options and any(k.startswith("call_guard:") for k in options)
     reputation.regard(darin)["trust"] = 0.6
     assert "share:oren_debt" in conversation.replies(state, darin)

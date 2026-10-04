@@ -145,15 +145,16 @@ def test_her_thanks_wait_for_the_water_and_come_with_it(world, shown):
 
 
 def test_a_yes_that_is_his_to_give_comes_only_if_he_gives_it(world, shown):
-    """Gorm's "get aboard" is offered only_if he lets the stranger across, and only once a yes is open to him: with
-    nothing to go on, it waits (live, he said it with no yes to give); a yes code refuses is never his answer."""
+    """Gorm's "get aboard" is offered only_if he lets the stranger across. Since D-62 a yes is open to him from the
+    start (he weighs it himself), so the beat is on offer; he keeps it back while he has no reason, and a yes his own
+    reading doesn't support is never his answer."""
     state = new_run(world, scenario="the_sceptic")
     state = read(world, read(world, state))
     state = next_to(world, state, GORM)
     say = {"npc_id": GORM, "text": "I'm honest, I swear. Take me across."}
     world.replies.append(voiced(answers("answer", reason=0.1, threat=0.1), "I need a reason to trust you first."))
     state = post(world, state, "say", say)["state"]
-    assert beat_for(shown[-1], GORM) is not None  # Nothing real to go on: no yes is open to him, so no "get aboard".
+    assert beat_for(shown[-1], GORM) is not None  # His to weigh (D-62): offered, only_if he lets them across.
     assert not state.get("admitted") and beats.answered(cast.find(state["npcs"], GORM), "cross") is None
     state = take(world, state, "hemp_boat")
     state = next_to(world, state, GORM)
@@ -311,14 +312,14 @@ def test_a_story_asks_nothing_of_someone_the_stranger_has_wronged(world, shown):
     state = next_to(world, state, ULF)
     world.replies.append({**said("demand:pot_ulf"), "text": "That's my pot. Give it back."})
     state = post(world, state, "say", {"npc_id": ULF, "text": "Hello. Can I help?"})["state"]
-    assert beat_for(shown[-1], ULF) is not None  # Wronged: the story gives him nothing to ask of you.
+    assert beat_for(shown[-1], ULF) is None  # Wronged: the story gives him nothing to ask of you.
     for _ in range(3):
         state = beat(world, state)
     assert at_step(state) == "hello"  # His asking is the step: it doesn't come by being spoken to.
     assert not any(ULF_ASKS in line for line in their_lines(state, ULF))
     assert not any(state["objects"][i].get("lent_to") for i in ("flint_ulf", "steel_ulf", "logs_ulf"))
     told = [e["text"] for e in state["device_log"] if "Ulf won't do anything for you" in e["text"]]
-    assert not told  # No universal refusal is invented for Ulf.
+    assert len(told) == 1  # Why the story waits, said once (his own feelings decide it, D-63).
 
 
 def test_what_a_person_does_for_the_stranger_waits_on_their_will():
@@ -328,7 +329,7 @@ def test_what_a_person_does_for_the_stranger_waits_on_their_will():
     hal = {"id": "npc_hal_brand", "name": "Hal", "x": 1, "y": 0, "mind": {"memories": [], "feelings": {"anger": 0.9}}}
     state["npcs"].append(hal)
     says = {"kind": "npc_says", "npc": hal["id"], "text": "Here: practice ones."}
-    assert scenario._goes_ahead(state, says, {"moment": "hello"})  # Angry with the stranger: not now.
+    assert not scenario._goes_ahead(state, says, {"moment": "hello"})  # Angry with the stranger: not now.
     assert scenario._goes_ahead(state, says, {"moment": "bout:start"})  # The world going on.
     hal["mind"]["feelings"]["anger"] = 0.0
     assert scenario._goes_ahead(state, says, {"moment": "hello"})

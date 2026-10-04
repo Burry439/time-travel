@@ -202,6 +202,8 @@ def _take_in(
     my_mind = cast.mind(npc)
     my_mind["met"] = True
     change = update_regard(npc, answers)
+    if conversation.yes(answers, "understood"):  # A wonder they feared, explained to their satisfaction (D-63).
+        reputation.understood(npc, now)
     if "anger" in answers:
         top = len(reputation.ANGER_LEVELS) - 1
         my_mind["feelings"]["anger"] = round(min(top, conversation.level(answers, "anger")) / top, 2)
@@ -380,6 +382,19 @@ def _then(
         learned.append(
             _lead(npc, line, event_id, "errand", other["id"], f"{name} went to tell {other['name']}: {words}")
         )
+    elif act == "story" and (tells := stories.MOVES[target].get("tells")):  # They go and say so (D-63).
+        other = cast.find(state["npcs"], tells["to"])
+        if other is not None and other.get("alive", True):
+            job = {
+                "kind": "tell",
+                "target": other["id"],
+                "speed": "walk",
+                "message": tells["message"],
+                "event": event_id,
+            }
+            cast.set_job(npc, job, now)
+        else:
+            cast.watch(npc, now, tuning.TALK_WATCH_MS)
     elif act == "stop_fighting":
         combat.withdraw(state, npc_id, now)
     elif act == "stand_aside":
