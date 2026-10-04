@@ -76,11 +76,13 @@ def _deliver_report(state: State, npc: Npc, target: dict, now: int, journal: lis
 
 
 def _deliver_vouch(state: State, npc: Npc, captain: Npc, now: int, journal: list[dict], job: Job) -> None:
-    """Someone speaks for the stranger to the captain: evidence he weighs when the stranger asks to enter."""
+    """A recommendation carries its purpose, and the listener can respond without another player request."""
     # Whoever decides here, by title or name: the city's captain, or a ferryman (D-59: Ilse called Gorm "Captain").
     to = "Captain" if "captain" in cast.card(captain)["role"].lower() else captain["name"]
     choices = speech.choose_lines(state, npc, "vouch", {"why": job["why"], "to": to, "name": captain["name"]})
     line_id, text = choices[0] if choices else (None, f"{to}, I'll speak for the stranger: {job['why']}")
+    if job.get("message"):
+        line_id, text = None, job["message"]
     speech.say(npc, text, now, state, journal, line_id)
     reputation.remember(
         captain,
@@ -94,10 +96,20 @@ def _deliver_vouch(state: State, npc: Npc, captain: Npc, now: int, journal: list
             "clarity": "told",
             "source": f"told_by:{npc['id']}",
             "at": now,
-            "summary": job["summary"],
+            "summary": f"{job['summary']} {npc['name']} said: {text}",
             "short": f"has {npc['name']}'s word",
         },
     )
+    heard = persona.knows(captain).setdefault("heard", [])
+    heard.append({"from": npc["id"], "from_name": npc["name"], "text": text, "at": now})
+    del heard[:-8]
+    for person, other in ((npc, captain), (captain, npc)):
+        controller = person.get("controller") or {}
+        controller["next_at_ms"] = max(controller.get("next_at_ms", 0), now + 12_000)
+        cast.mind(person)["chatting_with"] = {"id": other["id"], "until": now + 12_000}
+    cast.add_pending(state, captain["id"], "decide", f"{npc['name']} spoke for the stranger")
+    pending = next(p for p in state["pending_minds"] if p["npc_id"] == captain["id"] and p["kind"] == "decide")
+    pending["incoming_recommendation"] = {"from": npc["id"], "from_name": npc["name"], "text": text}
 
 
 def _deliver_message(state: State, npc: Npc, target: dict, now: int, journal: list[dict], job: Job) -> None:

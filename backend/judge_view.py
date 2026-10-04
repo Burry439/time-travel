@@ -219,6 +219,11 @@ def build_context(state: State, text: str, selected_ids: list[str]) -> dict:
         "highlighted_ids": [i for i in selected_ids if i in known],
         "player_cell": [state["player"]["x"], state["player"]["y"]],
         "available_items": [_judge_view(state, o, costs) for o in items],
+        "engine_access": {
+            "available_items": "Every listed item can be reached by the engine's automatic walk. A positive walk_steps is time to walk, not a barrier to working on it.",
+            "carried_by_player": "These items are already in hand; do not add a pickup prerequisite.",
+            "connections": "These are actual attachments. Retained parts belong in an assembly's inputs, materials, mass and appearance.",
+        },
         "water_sources": water_sources(state, costs),
         "people_nearby": people,
         "prior_rulings": prior_rulings(state),

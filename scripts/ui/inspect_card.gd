@@ -128,6 +128,8 @@ func _object(obj: Dictionary) -> void:
 	var feel: String = ui.flag_words(obj.get("flags", []))
 	if not feel.is_empty():
 		_text("Qualities: " + feel + ".")
+	for attribute in obj.get("attributes", []):
+		_text("• " + str(attribute.value) + str(ui.CAPABILITY_NOTES.get(str(attribute.status), "")))
 	if obj.get("created_by") == "player":
 		_text(ui.provenance(obj)).add_theme_color_override("font_color", UITheme.ACCENT)
 		for capability in obj.get("known_capabilities", []):

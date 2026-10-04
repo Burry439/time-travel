@@ -594,7 +594,19 @@ def resolve_attempt(
         for number, step in enumerate(judged["steps"][:MAX_STEPS], 1):
             proposal = _resolve_references(step, made_by_step)
             proposal["precedent_key"] = judged.get("precedent_key")
-            verdict = crafting.validate(actors.view(draft, actor_id), proposal)
+            actor_view = actors.view(draft, actor_id)
+            if (
+                proposal.get("action") == "take"
+                and proposal.get("outcome") == "success"
+                and proposal.get("take_ids")
+                and all(actor_view["objects"].get(i, {}).get("holder_id") == "player" for i in proposal["take_ids"])
+                and not proposal.get("effects")
+                and not proposal.get("hurts_you")
+                and len(judged["steps"]) > 1
+            ):
+                # A satisfied prerequisite is not a new deed, and cannot stop the actual work.
+                continue
+            verdict = crafting.validate(actor_view, proposal)
             if verdict["category"] != "success":
                 if verdict["category"] == "failed":
                     _advance(draft, verdict["effort_seconds"] * 1000)
@@ -650,8 +662,10 @@ def resolve_attempt(
             reputation.after_deed(draft, step_entry)
             step_deltas["observations"] = observed
             _precedent(draft, before, proposal, verdict, text)
-        if len(judged["steps"]) > MAX_STEPS and verdicts[-1]["category"] == "success":
+        if len(judged["steps"]) > MAX_STEPS and verdicts and verdicts[-1]["category"] == "success":
             verdicts[-1]["notes"].append(f"Only the first {MAX_STEPS} steps were attempted.")
+    if not verdicts:
+        verdicts.append(crafting.ruling("success", "You already have those materials with you.", []))
     for verdict in verdicts:
         verdict["reason"] = humanize(verdict["reason"], draft, made_by_step)
     committed = [v for v in verdicts if v["category"] == "success"]

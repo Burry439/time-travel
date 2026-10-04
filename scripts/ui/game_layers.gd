@@ -21,6 +21,7 @@ var run_id := ""
 var seen_standing := {}
 var seen_deeds := {}
 var seen_made := {}
+var seen_revisions := {}
 var seen_tellers := {}
 var pinned := "" # The pinned lead's text, this journey (the goal tracker and the marker follow it).
 var waiting_reveal: Array[Dictionary] = [] # Made while a tutorial card was up: shown once it's read (D-57).
@@ -100,6 +101,7 @@ func refresh() -> void:
 		run_id = str(state.get("run_id", ""))
 		seen_standing.clear()
 		seen_made.clear()
+		seen_revisions.clear()
 		seen_tellers.clear()
 		seen_deeds = _load_seen()
 		pinned = _load_pin()
@@ -136,12 +138,28 @@ func refresh() -> void:
 			str(deed.text), Color("9a6a12"), "deed")
 	if fresh_deeds:
 		_save_seen()
+	var revised_objects: Array[Dictionary] = []
 	for obj in state.get("objects", {}).values():
-		if obj.get("created_by") != "player" or seen_made.has(str(obj.id)):
-			continue
-		seen_made[str(obj.id)] = true
-		if not first:
+		var id := str(obj.id)
+		var revision := int(obj.get("revision", 0))
+		var revised: bool = seen_revisions.has(id) and revision > int(seen_revisions[id]) \
+			and obj.has("picture_event_id") and str(obj.get("condition", "usable")) == "usable"
+		seen_revisions[id] = revision
+		var made: bool = obj.get("created_by") == "player" and not seen_made.has(id)
+		if made:
+			seen_made[id] = true
+		var near: bool = obj.get("holder_id") == "player" or Vector2(float(obj.x), float(obj.y)).distance_to(\
+			Vector2(float(state.player.x), float(state.player.y))) <= 12.0
+		if not first and made:
 			_reveal(obj)
+		elif not first and revised and near:
+			revised_objects.append(obj)
+	if not revised_objects.is_empty():
+		revised_objects.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			var a_score: int = (10 if a.get("holder_id") == "player" else 0) + a.get("attributes", []).size()
+			var b_score: int = (10 if b.get("holder_id") == "player" else 0) + b.get("attributes", []).size()
+			return a_score > b_score)
+		_reveal(revised_objects[0])
 
 
 func _toast(icon: Texture2D, title: String, text: String, colour: Color, sound := "toast") -> void:
@@ -191,10 +209,12 @@ func _reveal(obj: Dictionary) -> void:
 		reveal_icon.remove_child(old)
 		old.queue_free()
 	reveal_icon.add_child(ui.object_icon(obj, 112))
-	reveal_title.text = str(obj.name).capitalize()
+	reveal_title.text = ("Changed: " if obj.has("picture_event_id") else "") + str(obj.name).capitalize()
 	var words := PackedStringArray()
 	if not str(obj.get("description", "")).is_empty():
 		words.append(str(obj.description))
+	for attribute in obj.get("attributes", []):
+		words.append("• " + str(attribute.value) + str(ui.CAPABILITY_NOTES.get(str(attribute.status), "")))
 	var use: String = ui.pack.gear_words(obj)
 	if not use.is_empty():
 		words.append(use)

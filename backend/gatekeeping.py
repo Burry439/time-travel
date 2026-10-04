@@ -64,13 +64,21 @@ def grounds_to_admit(npc: Npc) -> bool:
     return bool(admission_rule(npc))
 
 
-def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int) -> None:
+def speak_for(state: State, npc: Npc, why: str, summary: str, event_id: int, now: int, message: str = "") -> None:
     """The person walks to the captain and speaks for the stranger (minds.advance_world delivers it). Nobody to
     speak to in a level without a captain."""
     if (captain := cast.captain_id(state)) is None:
         return
-    cast.set_job(
+    cast.add_errand(
         npc,
-        {"kind": "vouch", "target": captain, "speed": "walk", "why": why, "summary": summary, "event": event_id},
+        {
+            "kind": "vouch",
+            "target": captain,
+            "speed": "walk",
+            "why": why,
+            "summary": summary,
+            "event": event_id,
+            "message": " ".join(message.split())[:400],
+        },
         now,
     )

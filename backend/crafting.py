@@ -196,6 +196,29 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
         return _hurt_self(
             state, judged, available, ruling("success", reason, notes, effort, action="other", precedent_key=key)
         )
+    # An assembly includes its existing bindings. Account for them before planning the walk.
+    if action == "make" and judged.get("new_object"):
+        judged = copy.deepcopy(judged)
+        spec = judged["new_object"]
+        original = _dedupe(spec["consumes"])
+        consumes = connected_items(state, original)
+        attached = [i for i in consumes if i not in original]
+        if attached:
+            unavailable = [i for i in attached if i not in available or "carry" not in available[i]["capabilities"]]
+            if unavailable:
+                return ruling(
+                    "blocked",
+                    "Something attached to these materials cannot be moved into the assembly.",
+                    notes + [f"Attached parts unavailable or fixed: {unavailable}."],
+                    action=action,
+                    precedent_key=key,
+                )
+            spec["consumes"] = consumes
+            spec["mass_kg"] += sum(available[i]["mass_kg"] for i in attached)
+            spec["materials"] = _dedupe(spec["materials"] + [m for i in attached for m in available[i]["materials"]])
+            retained = ", ".join(available[i]["name"] for i in attached)
+            spec["description"] = f"{spec['description']} Attached parts remain: {retained}."
+            notes.append(f"Included existing attached parts, their materials and mass: {attached}.")
     # Things further than arm's reach are reached by walking there first.
     walk = paths.plan_walk(state, _walk_targets(state, action, judged, available))
     if walk is None:
@@ -217,6 +240,20 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
     if verdict["category"] == "success":
         verdict["walk"] = walk
     return _hurt_self(probe, judged, available, verdict)
+
+
+def connected_items(state: State, ids: list[str]) -> list[str]:
+    """The whole assembly, including old one-sided links; no recipe or inferred connection."""
+    connected = _dedupe(ids)
+    for item_id in connected:
+        obj = state["objects"].get(item_id)
+        if obj is None:
+            continue
+        partners = set(obj.get("bound_to", [])) | {
+            o["id"] for o in state["objects"].values() if item_id in o.get("bound_to", [])
+        }
+        connected.extend(i for i in sorted(partners) if i not in connected)
+    return connected
 
 
 def _hurt_self(state: State, judged: dict, available: dict, verdict: dict) -> dict:

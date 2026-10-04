@@ -125,7 +125,8 @@ def test_a_vouch_walks_to_the_captain_and_becomes_his_evidence():
     assert run(state, lambda: any(m["kind"] == "vouch" for m in cast.mind(npc(state, "npc_roderic_vale"))["memories"]))
     memory = npc(state, "npc_roderic_vale")["mind"]["memories"][-1]
     assert memory["by"] == "npc_tomas_reed" and memory["source"] == "told_by:npc_tomas_reed"
-    assert not state["pending_minds"]  # He weighs it when the stranger comes to him.
+    assert any(p["npc_id"] == "npc_roderic_vale" and p["kind"] == "decide" for p in state["pending_minds"])
+    assert not state.get("admitted")  # He responds to the recommendation; delivery itself grants nothing.
 
 
 def test_guards_halt_a_stranger_at_the_gate_but_not_once_admitted():

@@ -10,6 +10,8 @@ import actors
 import agreements
 import cast
 import combat
+import conversation
+import gatekeeping
 import paths
 import persona
 import reputation
@@ -49,6 +51,8 @@ def options_for(state: State, npc: Npc) -> dict[str, dict]:
         ("watch", f"{name} stays where they are and keeps a wary eye on the stranger.", None, None),
         ("flee", f"{name} runs away from the stranger to somewhere safe.", "flee", None),
     ]
+    if gatekeeping.can_admit(state, npc):
+        bases.append(("admit", f"{name} {gatekeeping.words(state)['admit']}.", None, None))
     if not me.get("guard"):
         bases.append(("hide", f"{name} slips away out of the stranger's sight and stays hidden.", None, None))
         bases.append(
@@ -307,6 +311,9 @@ def apply_personal_decision(state, npc, decision, now, journal):
     cast.mind(npc)["standing_plan"] = {"defend": bool(decision.get("defend_if_attacked"))}
     rejected = []
     for intent in decision.get("intents", []):
+        if intent.get("kind") == "admit" and not conversation.admits_now(state, npc, decision["answers"]):
+            rejected.append("The permission disagrees with this guard's own judgment.")
+            continue
         if not agreements.execute(state, npc, intent, state["event_seq"] + 1):
             rejected.append("The intended action is unavailable with the resources here.")
     if decision.get("agreement"):
@@ -333,6 +340,7 @@ def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: lis
         result = actors.perform(state, npc["id"], answers["actor_physical"])
         return {"npc_id": npc["id"], "action": "physical", "category": result["category"]}
     decision = answers.get("npc_decision")
+    reading = decision["answers"] if decision else answers
     if decision:
         apply_personal_decision(state, npc, decision, now, journal)
         answers = {"action": {"choice": decision["move"]}, "believes": decision["answers"]["believes"]}
@@ -363,6 +371,14 @@ def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: lis
     if action == "carry_on":
         if not on_errand:
             cast.set_job(npc, None, now)
+    elif action == "admit":
+        if conversation.admits_now(state, npc, reading):
+            agreements.execute(
+                state,
+                npc,
+                {"kind": "admit", "task": (decision or {}).get("remember") or "their own judgment"},
+                state["event_seq"] + 1,
+            )
     elif action == "watch":
         if not on_errand:
             cast.watch(npc, now, tuning.WATCH_MS)

@@ -88,6 +88,35 @@ func _run() -> void:
 	if not check(ui.layers.reveal.visible and ui.layers.reveal_title.text == "Reed Whistle", "No reveal card for something made"):
 		return
 	await shot("layers_toasts")
+	# A successful change to an authored object keeps its identity and is visible without making another item.
+	var count_before: int = scene.run_state.objects.size()
+	var changed: Dictionary = scene.run_state.objects.branch_a
+	changed.holder_id = "player"
+	changed.revision = int(changed.get("revision", 0)) + 1
+	changed.picture_event_id = 100
+	changed.attributes = [{"name": "shaved_grip", "value": "A carved grip wrapped with leather.", "status": "observed"}]
+	# Its binding changes too; the reveal should show the worked object, not an empty card for the cord.
+	var binding: Dictionary = scene.run_state.objects.cord_a
+	binding.revision = int(binding.get("revision", 0)) + 1
+	binding.picture_event_id = 100
+	binding.x = scene.run_state.player.x
+	binding.y = scene.run_state.player.y
+	ui.layers.refresh()
+	if not check(ui.layers.reveal.visible and ui.layers.reveal_title.text.begins_with("Changed: ")
+			and "carved grip" in ui.layers.reveal_text.text and scene.run_state.objects.size() == count_before,
+			"An existing object's changed grip has no clear reveal"):
+		return
+	ui.card.show_for("branch_a")
+	var inspected := false
+	for label in ui.card.find_children("*", "Label", true, false):
+		inspected = inspected or "carved grip" in label.text
+	if not check(inspected, "Inspect hides the object's new physical attributes"):
+		return
+	ui.card.hide()
+	ui.layers.reveal.hide()
+	ui.layers.refresh()
+	if not check(not ui.layers.reveal.visible, "Refreshing unchanged state repeats the changed-object reveal"):
+		return
 	# The journal: Goals first, then every page.
 	ui.open_journal()
 	await process_frame

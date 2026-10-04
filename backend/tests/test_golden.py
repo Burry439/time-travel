@@ -94,6 +94,12 @@ def test_golden_hessa_route(world):
         lambda s: any(m["kind"] == "vouch" for m in cast.mind(cast.find(s["npcs"], "npc_roderic_vale"))["memories"]),
     )
     roderic = cast.find(state["npcs"], "npc_roderic_vale")
+    state = settle(
+        world,
+        state,
+        lambda s: not any(p["npc_id"] == roderic["id"] and p["kind"] == "decide" for p in s.get("pending_minds", [])),
+    )
+    roderic = cast.find(state["npcs"], "npc_roderic_vale")
     state = walk(http, state, roderic["x"], roderic["y"] + 2)
     world.replies.append(answers("admit", reason=0.8, threat=0.1))
     state = post(world, state, "say", {"npc_id": "npc_roderic_vale", "text": "Hessa has spoken for me."})["state"]

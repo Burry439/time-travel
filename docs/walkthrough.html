@@ -71,7 +71,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
       <li>You stand on the south road. Everything below is one way to play; any other way you can describe also counts.</li>
     </ol>
   </div>
-  <p class="stamp">Current as of 4 Oct 2026 · main at 6890218</p>
+  <p class="stamp">Current as of 4 Oct 2026 · codex/player-run-flow-fixes · D-64</p>
 </header>
 
 <section id="rules">
@@ -80,7 +80,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
     <li><strong>Win:</strong> someone with the right to let you in agrees (the captain, or any gate guard by their own rule), then you walk north through the gate.</li>
     <li><strong>Say and Do in plain words.</strong> There are no magic phrases. <span class="say">"Fill the gourd at the trough"</span> and <span class="say">"dip the gourd in the water"</span> both work. The lines below are examples, not passwords.</li>
     <li><strong>People decide for themselves.</strong> They remember what you did, tell each other, and can say no. If someone refuses, ask what would change their mind.</li>
-    <li><strong>The world follows physics.</strong> The judge rules on whether a deed can work with what's at hand, and says why when it can't.</li>
+    <li><strong>The world follows physics.</strong> The judge rules on whether a deed can work with what's at hand, and says why when it can't. Nearby materials are walked to automatically. Retrying can use what you already carry. Existing bindings stay in an assembly.</li>
     <li><strong>Things belong to people.</strong> Taking something that isn't yours shows "Steal" in red. Witnesses remember it.</li>
   </ul>
 </section>
@@ -146,7 +146,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
         <li>Ask Hessa for work: <span class="say">"Can I help with anything?"</span> She asks for water for her kitchen.</li>
         <li>Agree, fill the gourd at her trough (drag it onto the trough), and give it to her.</li>
         <li>She walks to the gate to speak for you. Wait until she has (her label shows where she's going).</li>
-        <li>Tell Roderic who you are and that Hessa spoke for you. Then walk north.</li>
+        <li>If you asked Hessa to help you get in, her recommendation carries that request. Roderic responds when she arrives; he may let you through or ask for a missing detail. Go to him if needed, then walk north once admitted.</li>
       </ol>
       <span class="tag good">Tested</span>
     </article>
@@ -261,9 +261,18 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <ul class="plain">
     <li>Replies take about 4 to 8 seconds; a group at the gate can take up to 12.</li>
     <li>People sometimes say no. That's their choice. Try another angle, or ask what would change their mind.</li>
-    <li>Pictures of new things are painted in the background and can take a little while to appear.</li>
+    <li>Pictures of new or changed things are painted in the background and can take a little while to appear. A carved grip or other change can keep the same item: its reveal and right-click card show its new attributes.</li>
+    <li>Heavy creations can be left at your feet when your pack is full. Cutting iron still needs a physically suitable method and tools.</li>
     <li>If you die, you can rewind to the last calm moment.</li>
     <li>Note anything confusing, unfair or slow, with what you typed. That's what the next round of fixes is for.</li>
+  </ul>
+</section>
+<section id="keeping-current">
+  <h2>Keeping this page current</h2>
+  <p>Source: <code>docs/walkthrough.html</code>. Claude and Codex update it with gameplay changes; Claude republishes the saved source to the same address.</p>
+  <ul class="plain">
+    <li>4 Oct 2026: created for the main village game.</li>
+    <li>4 Oct 2026 · D-64: Codex updated Hessa's recommendation route, crafting retries and bindings, existing-object feedback, and heavy-item outcomes. Claude should republish.</li>
   </ul>
 </section>
 </main>

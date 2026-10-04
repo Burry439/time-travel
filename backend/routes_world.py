@@ -65,7 +65,7 @@ def health():
     return {
         "status": "ok",
         "seed_version": store.SEED_VERSION,
-        "rules_revision": "D-62",
+        "rules_revision": "D-64",
         "geometry_version": store.GEOMETRY_VERSION,
         "ai": {**ai_config.status(), **decider.status()},
     }

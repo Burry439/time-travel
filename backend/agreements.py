@@ -138,7 +138,13 @@ def execute(state, npc, intent, event):
         )
     elif kind == "vouch":
         gatekeeping.speak_for(
-            state, npc, intent.get("task", "their own judgment"), f"{npc['name']} spoke for the stranger.", event, now
+            state,
+            npc,
+            intent.get("task", "their own judgment"),
+            f"{npc['name']} spoke for the stranger.",
+            event,
+            now,
+            intent.get("task", ""),
         )
     elif kind == "admit":
         state.update(

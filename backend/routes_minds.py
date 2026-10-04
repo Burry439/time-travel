@@ -23,6 +23,7 @@ import cast
 import commands
 import conversation
 import evidence
+import gatekeeping
 import judge_view
 import minds
 import persona
@@ -431,10 +432,14 @@ def _personal_reaction(state, pending):
         {
             "your_part": pending["kind"],
             "you": persona.sheet_lines(state, npc),
+            "_rules": ["guard"] if cast.card(npc).get("guard") else [],
+            "can_let_the_stranger_through": gatekeeping.can_admit(state, npc),
+            "who_they_would_let_through": gatekeeping.admission_rule(npc),
             "evidence": evidence.held(npc),
             "situation": situation,
             "moves_they_may_make": options,
             "message_from": pending.get("why") if pending["kind"] == "told" else None,
+            "incoming_recommendation": pending.get("incoming_recommendation"),
             "owned_resources": [o for o in state["objects"].values() if o.get("owner_id") == npc["id"]],
             "agreements": conversation.deals(state, npc["id"], "proposed", "accepted"),
         }

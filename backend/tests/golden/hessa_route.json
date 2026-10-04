@@ -1,10 +1,10 @@
 {
  "admitted": {
   "because": [
-   "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen."
+   "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen. Hessa said: Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly."
   ],
   "by": "npc_roderic_vale",
-  "event_id": 53
+  "event_id": 54
  },
  "agreements": {
   "deal_27": {
@@ -26,7 +26,7 @@
  },
  "encounter": null,
  "entered_by": "admitted",
- "event_seq": 55,
+ "event_seq": 56,
  "facts": {
   "effect:player:17:1:5000": {
    "action": "take",
@@ -255,7 +255,7 @@
   {
    "act": "admit",
    "category": "talk",
-   "event_id": 53,
+   "event_id": 54,
    "kind": "talk",
    "npc_id": "npc_roderic_vale",
    "reason": "You to Roderic: “Hessa has spoken for me.”  Roderic: “(voiced) Hessa has spoken for me.”",
@@ -392,7 +392,7 @@
      11
     ],
     "goal": "watch the gate",
-    "next_at_ms": 46300,
+    "next_at_ms": 59000,
     "path": [],
     "source": "job",
     "step_carry_ms": 0,
@@ -408,6 +408,10 @@
    "id": "npc_roderic_vale",
    "injuries": [],
    "mind": {
+    "chatting_with": {
+     "id": "npc_hessa_marr",
+     "until": 59000
+    },
     "evidence": {
      "evidence:[\"vouch\",\"player\",31,1,47000,null,null,null]": {
       "at": 47000,
@@ -420,7 +424,7 @@
       "severity": 1,
       "short": "has Hessa's word",
       "source": "told_by:npc_hessa_marr",
-      "summary": "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.",
+      "summary": "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen. Hessa said: Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly.",
       "victim": null
      }
     },
@@ -429,7 +433,7 @@
      "anger": 0.0,
      "fear": 0.0
     },
-    "fresh": "the stranger came into view",
+    "fresh": "has Hessa's word",
     "job": {
      "kind": "watch",
      "until": 67000
@@ -437,7 +441,14 @@
     "knows": {
      "claims": [],
      "episodes": [],
-     "heard": [],
+     "heard": [
+      {
+       "at": 47000,
+       "from": "npc_hessa_marr",
+       "from_name": "Hessa",
+       "text": "Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly."
+      }
+     ],
      "long_memory": "",
      "name": null,
      "notes": [
@@ -458,13 +469,12 @@
       "severity": 1,
       "short": "has Hessa's word",
       "source": "told_by:npc_hessa_marr",
-      "summary": "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen.",
+      "summary": "Hessa vouched for the stranger, who had done what Hessa asked: bring Hessa a container full of water from the trough for her kitchen. Hessa said: Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly.",
       "victim": null
      }
     ],
     "met": true,
     "mood": "weary",
-    "next_agenda_at": 67000,
     "opinions": {
      "npc_bren_marr": {
       "text": "his most dependable guard",
@@ -517,7 +527,7 @@
     },
     "said": {
      "at": 47000,
-     "key": "npc_roderic_vale:talk:53",
+     "key": "npc_roderic_vale:talk:54",
      "text": "(voiced) Hessa has spoken for me."
     },
     "standing": "wary",
@@ -601,11 +611,11 @@
      "until": 43000
     },
     "evidence": {
-     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+     "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]": {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -637,8 +647,8 @@
      {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -761,11 +771,11 @@
      "until": 43000
     },
     "evidence": {
-     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+     "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]": {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -797,8 +807,8 @@
      {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -867,7 +877,7 @@
      51
     ],
     "goal": "tend the inn yard",
-    "next_at_ms": 2710,
+    "next_at_ms": 59000,
     "path": [],
     "source": "job",
     "step_carry_ms": 0,
@@ -877,6 +887,10 @@
    "id": "npc_hessa_marr",
    "injuries": [],
    "mind": {
+    "chatting_with": {
+     "id": "npc_roderic_vale",
+     "until": 59000
+    },
     "evidence": {
      "evidence:[\"gift\",\"player\",29,2,26000,\"gourd_a\",\"npc_hessa_marr\",\"dried gourd of water, full (1 L of water)\"]": {
       "actor_id": "player",
@@ -899,11 +913,11 @@
       "summary": "The stranger gave Hessa a dried gourd of water, full (1 L of water).",
       "victim": "npc_hessa_marr"
      },
-     "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]": {
+     "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]": {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -964,8 +978,8 @@
      {
       "at": 47000,
       "clarity": "heard",
-      "event": 53,
-      "evidence_id": "evidence:[\"talk\",\"player\",53,1,47000,null,null,null]",
+      "event": 54,
+      "evidence_id": "evidence:[\"talk\",\"player\",54,1,47000,null,null,null]",
       "item": null,
       "kind": "talk",
       "severity": 0,
@@ -5948,11 +5962,6 @@
  },
  "pending_minds": [
   {
-   "kind": "agenda",
-   "npc_id": "npc_roderic_vale",
-   "why": "has Hessa's word"
-  },
-  {
    "kind": "recollect",
    "npc_id": "npc_roderic_vale",
    "why": "the conversation ended"
@@ -5983,7 +5992,7 @@
   "x": 48,
   "y": 3
  },
- "player_seq": 55,
+ "player_seq": 56,
  "precedents": [
   {
    "at": 5000,
@@ -6196,7 +6205,7 @@
  ],
  "projectiles": [],
  "run_id": "<run0>",
- "safe_seq": 52,
+ "safe_seq": 53,
  "scenario": "village",
  "seed_version": 14,
  "sim_time_ms": 52000,

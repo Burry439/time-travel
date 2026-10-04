@@ -270,6 +270,9 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
         )
         rejected = []
         for proposed_intent in line.get("intents", []):
+            if proposed_intent.get("kind") == "admit" and not conversation.admits_now(draft, npc, answers):
+                rejected.append("The permission disagrees with this guard's own judgment.")
+                continue
             if not agreements.execute(draft, npc, proposed_intent, draft["event_seq"] + 1):
                 rejected.append("That action is no longer possible with the resources here.")
         if line.get("agreement"):

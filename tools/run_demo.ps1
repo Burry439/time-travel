@@ -20,7 +20,7 @@ if (-not $BackendOnly -and -not (Test-Path -LiteralPath $GodotPath)) {
 $server = "http://127.0.0.1:$Port"
 $health = $null
 try { $health = Invoke-RestMethod "$server/health" -TimeoutSec 2 } catch {}
-if ($health -and ($health.seed_version -ne 14 -or $health.rules_revision -ne 'D-62')) {
+if ($health -and ($health.seed_version -ne 14 -or $health.rules_revision -ne 'D-64')) {
     throw "Port $Port is running a different simulation. Choose another port with -Port."
 }
 if (-not $health) {
@@ -57,7 +57,7 @@ if (-not $Stub) {
         throw "Live AI is unavailable: $($readiness.reason). Update backend/.env and restart this launcher-owned backend. Use -Stub for offline verification."
     }
 }
-Write-Output "Demo backend ready at $server ($wantedMode, rules D-62, seed 14)."
+Write-Output "Demo backend ready at $server ($wantedMode, rules D-64, seed 14)."
 Write-Output 'Demo saves: data/open-ended-demo.sqlite3; your original data/demo.sqlite3 is preserved.'
 if (-not $BackendOnly) {
     # The game is the interactive application the user requested.

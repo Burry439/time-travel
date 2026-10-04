@@ -19,7 +19,9 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = "judge_v19"  # D-62: extensible physical properties and explicit causal inputs.
+PROMPT_VERSION = (
+    "judge_v21"  # D-64: reachable work, existing bindings and already held prerequisites (v20 was discarded).
+)
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[

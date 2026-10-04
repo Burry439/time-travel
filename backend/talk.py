@@ -140,7 +140,7 @@ def exchange(
     change = _take_in(npc, answers, text, happened, key, line, note, name_given, now, event_id)
     learned, lent, agreements = [], [], state.setdefault("agreements", {})
     reward_job = _settle_deals(state, npc, answers, line, event_id, learned)
-    if act == "vouch":
+    if act == "vouch" and reward_job is None:
         reward_job = (
             "I've come to trust them.",
             f"{npc['name']} vouched for the stranger and says they can be trusted.",
@@ -148,7 +148,7 @@ def exchange(
     admission = _hand_over(state, npc, act, target, line, event_id, learned, lent)
     if reward_job and npc_id != cast.captain_id(state):
         my_mind["vouched"] = True
-        gatekeeping.speak_for(state, npc, reward_job[0], reward_job[1], event_id, now)
+        gatekeeping.speak_for(state, npc, reward_job[0], reward_job[1], event_id, now, errand_message)
     else:
         _then(state, npc, act, target, task, fighting, line, event_id, now, learned, lent)
     if errand_before and ((my_mind.get("job") or {}).get("kind") in (None, "watch")):

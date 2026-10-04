@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 4 Oct 2026 · main at 8606fa0 · decisions up to D-63</p>
+  <p class="stamp">Current as of 4 Oct 2026 · codex/player-run-flow-fixes · decisions up to D-64</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -110,7 +110,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>The client</strong> (Godot) moves the player and draws the world. It never decides outcomes; it sends requests and shows the state that comes back.</li>
     <li><strong>A backend command</strong> takes the journey's lock, checks the request, and asks the models outside the lock. Speech has a 12-second model budget, deeds 15 seconds.</li>
-    <li><strong>Models</strong> only propose: the judge (<code>judge_v19</code>) for deeds and physics, and each person's own call (<code>person_v4</code>) for what they say and choose.</li>
+    <li><strong>Models</strong> only propose: the judge (<code>judge_v21</code>) for deeds and physics, and each person's own call (<code>person_v5</code>) for what they say and choose.</li>
     <li><strong>The reducer</strong> checks every proposal against the world and the rules, then commits it as an event (<code>consequences.py</code>, <code>rounds.py</code>, <code>talk.py</code>). Journeys replay exactly from <code>store.py</code>.</li>
     <li><strong>The clock</strong> runs between your actions: routines, errands, fights, and stories checking whether something new has happened (<code>clock.py</code>, <code>stories.py</code>).</li>
   </ul>
@@ -140,7 +140,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>Each person is their own agent.</strong> Their call holds only their own sheet, memories, secrets and the rules that apply to them. Nobody's call contains anyone else's secrets.</li>
     <li><strong>Code builds the moves</strong> a person may choose: answer, share a fact, confide a secret, agree to a story move (Darin letting a debt go), lend, give, send you to someone, let you through the gate. The person picks one, or none.</li>
-    <li><strong>Words must match the move.</strong> A guard who reads you as a threat lets you in only if they're afraid (duress). Promises to go and tell someone become real errands.</li>
+    <li><strong>Words must match the move.</strong> A guard who reads you as a threat lets you in only if they're afraid (duress). Promises to go and tell someone become real errands. A recommendation carries the request its speaker heard; the recipient responds when it arrives and may decide entry then.</li>
     <li><strong>The told reading</strong> runs beside the conversation and says whether your words passed on someone's secret. Whoever heard it, or overheard it, now knows it. A secret is never news to the person it's about (<code>known_by</code>).</li>
   </ul>
 </section>
@@ -166,8 +166,9 @@ tr:last-child td { border-bottom: 0; }
   </svg>
   </div>
   <ul>
-    <li><strong>No recipes.</strong> The judge reasons about your method and what's actually at hand. New inventions keep their properties as attributes (a "magnetized" nail) for later use.</li>
+    <li><strong>No recipes.</strong> The judge reasons about your method and what's actually at hand. New inventions keep their properties as attributes (a "magnetized" nail) for later use. Changes to existing objects also appear in reveal and inspection cards.</li>
     <li><strong>The validator holds the judge to physics:</strong> reach, mass (no matter from nowhere; water at hand can go into a poultice and leaves the pot), materials (bronze can't be magnetised), and capacity (a gourd bowl holds what a vessel its weight could).</li>
+    <li><strong>Work continues.</strong> Reachable materials are walked to automatically; a blocked proposal involving a walk gets one bounded review. Already held pickup prerequisites are skipped. Assemblies retain actual attached parts, their mass and materials; fixed or unavailable attachments still block.</li>
     <li><strong>Witnesses are physical.</strong> Only people with real range and line of sight remember a deed firsthand; naming someone far away doesn't make them a witness. Repeating the same proof earns no new credit.</li>
   </ul>
 </section>
@@ -211,6 +212,7 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">4 Oct 2026 · D-64</span><p>Codex: recommendations keep their purpose and queue a response; crafting handles retained bindings and retries; changes to existing objects are visible. Prompts now judge_v21 and person_v5. Claude should republish this source.</p></div>
     <div><span class="stamp">4 Oct 2026</span><p>Created after D-63: overview, talking, doing, who decides what, storyline status.</p></div>
   </div>
 </section>

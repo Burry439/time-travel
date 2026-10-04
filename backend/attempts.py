@@ -141,20 +141,28 @@ def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
         return judge.JudgeCall(status="capped", error=f"Reached MAX_MODEL_CALLS_PER_RUN ({calls_used}).")
     first = judge.judge_craft(context)
     conflict = precedents.contradiction(context, first.result) if first.result else None
-    if not conflict:
+    steps = (first.result or {}).get("steps", [])
+    check_access = bool(steps and steps[0].get("outcome") == "blocked" and _reachable_inputs(context, steps[0]))
+    if not conflict and not check_access:
         return first
     # One bounded reconsideration, still inside this request's deadline and allowance.
     if calls_used + first.attempts >= ai_config.max_calls_per_run() or ai_config.remaining() <= 0.05:
+        if not conflict:
+            return first
         first.result = None
         first.status, first.error = "error", "An equivalent physical precedent conflicts with this ruling."
         return first
-    second = judge.judge_craft(
-        {
-            **context,
-            "contradictory_precedent": conflict,
-            "reconsider": "Explain changed causal facts or use the consistent ruling. Do not change a verdict just because the wording changed.",
-        }
+    review = {**context, "proposal_to_check": first.result}
+    if conflict:
+        review["contradictory_precedent"] = conflict
+    review["reconsider"] = (
+        "Check the proposed blocking facts against this exact world. All available_items are reachable by the engine's automatic walk; "
+        "walk_steps and distance_cells never by themselves prevent using one. Already carried materials need no pickup. "
+        "Keep genuine obstacles, missing tools, unsupported methods and physical limits; do not invent resources or turn an impossible method into success. "
+        "If a reachable action was wrongly blocked, propose its actual steps and tools. "
+        "Explain changed causal facts or use the consistent precedent. Do not change a verdict just because the wording changed."
     )
+    second = judge.judge_craft(review)
     second.attempts += first.attempts
     second.latency_ms += first.latency_ms
     second.input_tokens += first.input_tokens
@@ -163,6 +171,21 @@ def judge_attempt(context: dict, calls_used: int) -> judge.JudgeCall:
         second.result = None
         second.status, second.error = "error", "The contradictory physical ruling remains unresolved. Nothing changed."
     return second
+
+
+def _reachable_inputs(context: dict, step: dict) -> bool:
+    reachable = {o["id"] for o in context.get("available_items", []) if (o.get("walk_steps") or 0) > 0}
+
+    def refers(value) -> bool:
+        if isinstance(value, str):
+            return value in reachable
+        if isinstance(value, dict):
+            return any(refers(v) for v in value.values())
+        if isinstance(value, list):
+            return any(refers(v) for v in value)
+        return False
+
+    return refers(precedents.mechanism(step))
 
 
 def generate_asset(asset_id: str) -> None:
