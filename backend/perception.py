@@ -4,6 +4,7 @@ Evidence queues personal reactions; the person's model chooses their interpretat
 from __future__ import annotations
 
 import cast
+import effects
 import evidence
 import m2
 import paths
@@ -33,7 +34,26 @@ def _describe(state: State, entry: dict) -> list[dict]:
         _gift(entry.get("give")),
         _help(entry.get("treated")),
     ]
-    return [view for view in views if view]
+    views = [view for view in views if view]
+    if not views and (entry.get("seen_as") or "").strip():  # Any other deed is still seen (D-65): a kiss, a soaking.
+        views.append(_deed(entry))
+    return views
+
+
+def _deed(entry: dict) -> dict:
+    """A deed no specific view covers, as an onlooker saw it (the judge's seen_as). The person it touched remembers
+    it as done to them and thinks about it in their own call; everyone else in sight remembers it."""
+    touched = [i for i in entry.get("touched", []) if i != "player"]
+    seen = " ".join(entry["seen_as"].split())[:300]
+    return _view(
+        "deed",
+        touched[0] if touched else None,
+        None,
+        (seen, seen[:80], 1 if touched else 0),
+        ("The stranger was doing something; it was hard to see what.", "was doing something", 0),
+        think=bool(touched),
+        audience=touched[1:],
+    )
 
 
 def _view(kind: str, victim: str | None, item: str | None, clear: tuple, vague: tuple, **extra) -> dict:
@@ -242,7 +262,7 @@ def _help(treated) -> dict | None:
     )
 
 
-SOURCES = {"violence": "victim", "theft": "victim", "gift": "received", "help": "received"}
+SOURCES = {"violence": "victim", "theft": "victim", "gift": "received", "help": "received", "deed": "victim"}
 
 
 def gate_work_agreed(state: State) -> bool:
@@ -272,10 +292,18 @@ def perceive(state: State, entry: dict, before: State | None = None) -> list[dic
                 continue  # Awareness is measured immediately before impact.
             npc = observer
             views = []
-            if cast.distance(npc, here) <= tuning.SIGHT_CELLS and paths.line_of_sight(state, cast.cell(npc), here):
+            blind = effects.limited(npc, "see")  # Asleep or blindfolded: they see nothing (D-65).
+            if blind and npc["id"] not in involved:
+                continue
+            if (
+                not blind
+                and cast.distance(npc, here) <= tuning.SIGHT_CELLS
+                and paths.line_of_sight(state, cast.cell(npc), here)
+            ):
                 views.append(cast.distance(npc, here))
             if (
                 victim is not None
+                and not blind
                 and cast.distance(npc, victim) <= tuning.SIGHT_CELLS
                 and paths.line_of_sight(state, cast.cell(npc), cast.cell(victim))
             ):

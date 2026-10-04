@@ -161,6 +161,10 @@ func _person(npc: Dictionary) -> void:
 		_text(str(npc.name) + " lies still on the ground." + ("\nCause: " + str(injuries[-1]) if not injuries.is_empty() else ""))
 	elif not injuries.is_empty():
 		_text(str(npc.name) + " is hurt: " + "; ".join(injuries) + ".")
+	for state in npc.get("states", []): # Soaked, tied up, blindfolded (D-65): plain to see.
+		_text("• " + str(state.name).capitalize() + (": " + str(state.value) if str(state.get("value", "")) != "" else ""))
+	for attribute in npc.get("attributes", []):
+		_text("• " + str(attribute.value))
 	var their_mind = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
 	var known = their_mind.get("knows") if typeof(their_mind.get("knows")) == TYPE_DICTIONARY else {}
 	if alive:

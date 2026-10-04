@@ -12,6 +12,7 @@ import cast
 import clock
 import content
 import crafting
+import effects
 import gear
 import heat
 import judge_view
@@ -422,31 +423,13 @@ CHANGES = {
 
 def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
     actor = state["player"] if actor_id == "player" else cast.find(state["npcs"], actor_id)
-    for effect in deltas.get("effects", []):
-        obj = state["objects"][effect["target_id"]]
-        if effect["kind"] == "attribute":
-            attributes = obj.setdefault("attributes", [])
-            prior = next((a for a in attributes if a["name"] == effect["attribute"]["name"]), None)
-            if prior != effect["attribute"]:
-                attributes[:] = [a for a in attributes if a["name"] != effect["attribute"]["name"]]
-                attributes.append(copy.deepcopy(effect["attribute"]))
-                obj["revision"] = obj.get("revision", 0) + 1
-                sprite = f"spr_{state['run_id'][:8]}_{obj['id']}_r{obj['revision']}"
-                obj.update(sprite_asset_id=sprite, picture_event_id=state["event_seq"] + 1)
-                obj.update(_picture_ids(obj, sprite))
-        else:
-            other = state["objects"][effect["other_id"]]
-            for first, second in ((obj, other), (other, obj)):
-                links = first.setdefault("bound_to", [])
-                changed = False
-                if effect["kind"] == "connect" and second["id"] not in links:
-                    links.append(second["id"])
-                    changed = True
-                elif effect["kind"] == "disconnect" and second["id"] in links:
-                    links.remove(second["id"])
-                    changed = True
-                if changed:
-                    first["revision"] = first.get("revision", 0) + 1
+
+    def repaint(obj: dict) -> None:  # A changed thing gets a new picture.
+        sprite = f"spr_{state['run_id'][:8]}_{obj['id']}_r{obj['revision']}"
+        obj.update(sprite_asset_id=sprite, picture_event_id=state["event_seq"] + 1)
+        obj.update(_picture_ids(obj, sprite))
+
+    effects.apply(state, deltas.get("effects", []), state["sim_time_ms"], actor_id, repaint)  # D-65's blocks.
     if deltas.get("player_to"):
         actor.update(x=deltas["player_to"][0], y=deltas["player_to"][1])
     for landed in deltas.get("moved", []):
@@ -698,6 +681,7 @@ def resolve_attempt(
         "offer_trade": next((v["offer_trade"] for v in reversed(committed) if v["offer_trade"]), None),
         "gather": next((v["gather"] for v in reversed(committed) if v["gather"]), None),
         "hurt_self": next((v["hurt_self"] for v in reversed(committed) if v.get("hurt_self")), None),
+        "say_instead": next((v["say_instead"] for v in verdicts if v.get("say_instead")), None),  # D-65
         "precedent_key": (judged or {}).get("precedent_key"),
         "steps": [
             {"action": v["action"], "category": v["category"], "reason": v["reason"], "notes": v["notes"]}
@@ -756,6 +740,7 @@ def resolve_attempt(
         "property": summary["property"],
         "precedent_key": summary["precedent_key"],
         "trace_id": trace_id,
+        **({"say_instead": summary["say_instead"]} if summary.get("say_instead") else {}),
     }
     payload = {
         "steps": deltas,
@@ -829,6 +814,16 @@ def _step_entry(state, verdict, delta, event, number, text, actor_id):
         "made_name": made[0]["name"] if made else None,
         **{k: verdict.get(k) for k in ("harm", "demonstration", "give", "install", "lift_out")},
         "treated": verdict.get("treat"),
+        "seen_as": verdict.get("seen_as"),  # What onlookers see of a deed no specific view covers (D-65).
+        "touched": list(
+            dict.fromkeys(
+                e["target_id"]
+                for e in verdict.get("effects", [])
+                if e.get("target_id")
+                and e["target_id"] != actor_id
+                and (e["target_id"] == "player" or cast.find(state["npcs"], e["target_id"]))
+            )
+        ),
     }
 
 

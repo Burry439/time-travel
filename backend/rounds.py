@@ -28,6 +28,7 @@ import clock
 import combat
 import commands
 import conversation
+import effects
 import encounter
 import judge_view
 import minds
@@ -227,6 +228,7 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             npc is None
             or not npc.get("alive", True)
             or npc.get("down")
+            or effects.limited(npc, "speak")  # Gagged, or the like: no words come out (D-65).
             or cast.distance(npc, here) > tuning.HEAR_TALK_CELLS + 1
             or current is None
             or any(s["npc_id"] == npc["id"] for s in said)
@@ -360,6 +362,13 @@ def _passed_on(draft: State, moment: dict, said: list[dict], now: int) -> None:
         said[0]["trace"]["passed_on"] = told
 
 
+def said_instead(judged) -> dict | None:
+    """The words, when the judge read a deed as something to say instead (D-65)."""
+    steps = ((judged.result if judged else None) or {}).get("steps") or []
+    said = (steps[0].get("say_instead") if steps else None) or {}
+    return said if (said.get("words") or "").strip() else None
+
+
 def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
     """One round: the stranger's part (judged if it's a deed), then the scene's answer, then time passing. The two
     model calls happen outside the lock; the round is worked out again on the latest world before it's saved."""
@@ -391,6 +400,12 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
     try:
         judged = attempts.judge_attempt(context, calls_used) if context else None  # Outside the lock.
         timing["judge_ms"] = judged.latency_ms if judged else 0
+        said = said_instead(judged)
+        if said:  # Words typed as a deed ("ask Hessa what's up"): they're said to whoever they're for (D-65).
+            request = request.model_copy(
+                update={"kind": "say", "text": said["words"], "target_id": said.get("to_id") or request.target_id}
+            )
+            judged = None
         with commands.reopen(run_id, request) as cmd:
             draft, record = _round_draft(cmd.state, run_id, request, walk, judged)
             happened = " ".join(record["happened"]) or None

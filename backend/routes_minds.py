@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 import actors
 import attempts
+import briefing
 import cast
 import commands
 import conversation
@@ -442,6 +443,7 @@ def _personal_reaction(state, pending):
             "incoming_recommendation": pending.get("incoming_recommendation"),
             "owned_resources": [o for o in state["objects"].values() if o.get("owner_id") == npc["id"]],
             "agreements": conversation.deals(state, npc["id"], "proposed", "accepted"),
+            **briefing.world_as_seen(state, npc),  # Their own body and what's plain to see (D-65).
         }
     )
     return decider.DeciderCall(

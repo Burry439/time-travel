@@ -8,6 +8,7 @@ import copy
 
 import cast
 import combat
+import effects
 import encounter
 import gear
 import heat
@@ -247,6 +248,7 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
 
     Returns (npcs, journal lines, player). May queue thinking in state["pending_minds"].
     """
+    held = {n["id"]: (n["x"], n["y"]) for n in state["npcs"] if effects.limited(n, "move")}  # Tied up (D-65).
     npcs = npc_sim.advance_npcs(state, state["npcs"], elapsed_ms, now)
     working = copy.copy(state)
     working["npcs"] = npcs
@@ -267,6 +269,10 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
         if ((npc.get("mind") or {}).get("knows") or {}).get("notes") and npc["id"] not in talking:
             cast.add_pending(working, npc["id"], "recollect", "the conversation ended")  # Remember it (D-36).
         _on_the_job(working, npcs, npc, elapsed_ms, end, blocked, journal)
+    for npc in npcs:  # Someone whose state stops them walking stays where they are.
+        if npc["id"] in held:
+            npc["x"], npc["y"] = held[npc["id"]]
+    effects.expire({"player": working["player"], "npcs": npcs}, end)  # A soaking dries, a drunk sobers (D-65).
     combat_running = combat.busy(working)
     combat.tick(working, npcs, elapsed_ms, now, blocked, journal)  # Chronological impacts and body time.
     if not combat_running:

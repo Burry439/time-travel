@@ -37,6 +37,12 @@ def normalize(delta, actor_id):
         for field in ("owner_id", "holder_id"):
             if obj.get(field) == "player":
                 obj[field] = actor_id
+    for effect in delta.get("effects", []):  # In their view they are "player"; the stranger is "__stranger__" (D-65).
+        for field in ("target_id", "other_id"):
+            if effect.get(field) == "player":
+                effect[field] = actor_id
+            elif effect.get(field) == "__stranger__":
+                effect[field] = "player"
     if delta.get("given"):
         delta["given"]["owners"] = {
             i: actor_id if owner == "player" else "player" if owner == "__stranger__" else owner

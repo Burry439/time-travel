@@ -14,6 +14,7 @@ import clock
 import combat
 import commands
 import content
+import effects
 import encounter
 import m2
 import paths
@@ -154,6 +155,10 @@ def move(run_id: str, request: Move):
         state = cmd.state
         if encounter.hostile(state):
             raise HTTPException(409, {"reason": "encounter_active", "state": state})
+        if stuck := effects.limited(state["player"], "move"):  # Tied up, or the like (D-65).
+            raise HTTPException(
+                409, {"reason": "cannot_move", "message": f"You can't walk: {stuck['name']}.", "state": state}
+            )
         cells = request.cells or ([[request.x, request.y]] if request.x is not None and request.y is not None else [])
         if not cells or any(len(cell) != 2 for cell in cells):
             raise HTTPException(422, "Send x and y, or a list of [x, y] cells")

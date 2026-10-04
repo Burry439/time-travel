@@ -11,6 +11,7 @@ import copy
 import math
 
 import cast
+import effects
 import gear
 import heat
 import judge_view
@@ -161,6 +162,12 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
         return ruling(outcome, reason, notes, action=action, precedent_key=key)
     if outcome == "failed":
         return ruling("failed", reason, notes, max(1, effort), action=action, precedent_key=key)
+    said = judged.get("say_instead") or {}
+    if said.get("words", "").strip():  # Words typed as a deed: they go to talk (D-65).
+        return ruling("say_instead", reason, notes, action="other", precedent_key=key, say_instead=dict(said))
+    bound = effects.limited(state["player"], "hands")
+    if bound and action not in ("other", "physical"):
+        return ruling("blocked", f"You can't use your hands: {bound['name']}.", notes, action=action, precedent_key=key)
     available = {o["id"]: o for o in judge_view.available_items(state)}
     for helper_id in judged.get("helper_ids", []):
         helper = cast.find(state["npcs"], helper_id)
@@ -192,10 +199,9 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
         # something later): nothing changes, and the judge's reason stands, rather than "could not be resolved" (D-48).
         notes.append(f"action '{action}' without a {PAYLOAD[action]}: nothing changes.")
         action = "other"
-    if action not in handlers:
-        return _hurt_self(
-            state, judged, available, ruling("success", reason, notes, effort, action="other", precedent_key=key)
-        )
+    if action not in handlers:  # Nothing a typed action does: its effects (if any) are the whole deed (D-65).
+        verdict = ruling("success", reason, notes, effort, action="other", precedent_key=key)
+        return _hurt_self(state, judged, available, _with_effects(state, judged, available, verdict))
     # An assembly includes its existing bindings. Account for them before planning the walk.
     if action == "make" and judged.get("new_object"):
         judged = copy.deepcopy(judged)
@@ -239,7 +245,43 @@ def validate(state: State, judged: dict | None, service_error: str | None = None
     verdict = handlers[action](probe, judged, available, notes, reason, effort, key)
     if verdict["category"] == "success":
         verdict["walk"] = walk
+        verdict = _with_effects(probe, judged, available, verdict)
     return _hurt_self(probe, judged, available, verdict)
+
+
+def _with_effects(state: State, judged: dict, available: dict, verdict: dict) -> dict:
+    """A successful step keeps the effects it proposes, if every one keeps the world's laws (effects.py), and what an
+    onlooker sees of it (seen_as). Any action may carry effects, not only physical (D-65: chalk writing on bark and
+    water over Bren were "done" and changed nothing)."""
+    if verdict["category"] != "success":
+        return verdict
+    proposed = copy.deepcopy(judged.get("effects") or [])
+    for effect in proposed:  # Only a real test asserts observed; writing is plainly there to see.
+        if (effect.get("attribute") or {}).get("status") == "observed":
+            effect["attribute"]["status"] = "expected"
+    water = {w["id"]: state["objects"][w["id"]] for w in judge_view.water_sources(state, judge_view.walk_costs(state))}
+    problem = effects.check(state, proposed, {"available": available, "water": water, "actor_id": "player"})
+    if problem:
+        return unresolved(verdict["notes"], f"an effect breaks a law: {problem}")
+    if proposed:
+        verdict["effects"] = verdict.get("effects", []) + [e for e in proposed if e not in verdict.get("effects", [])]
+        claimed = {c["id"] for c in verdict.get("property", [])}
+        eaten = [e["target_id"] for e in proposed if e["kind"] == "consume" and e["target_id"] not in claimed]
+        marked = [
+            e["target_id"]
+            for e in proposed
+            if e["kind"] in ("write", "mark", "attribute", "connect", "disconnect")
+            and e.get("target_id") in available
+            and e["target_id"] not in claimed | set(eaten)
+        ]  # Someone else's thing eaten, written on or altered: theirs, used (a witness may call it theft).
+        verdict["property"] = (
+            verdict.get("property", [])
+            + _property(state, eaten, "used up")
+            + _property(state, list(dict.fromkeys(marked)), "used")
+        )
+    if (judged.get("seen_as") or "").strip():
+        verdict["seen_as"] = " ".join(judged["seen_as"].split())[:300]
+    return verdict
 
 
 def connected_items(state: State, ids: list[str]) -> list[str]:
@@ -984,6 +1026,20 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
         else plan["injury"].strip()[:200],
         "witnesses": witnesses,
     }
+    soaked = []
+    landed = plan.get("outcome") == "landed" and plan["result"] != "missed"  # As the judge saw it, before the laws.
+    if method == "poured" and landed:  # A law: liquid poured over someone leaves them wet (D-65).
+        vessel = available[weapon]
+        soaked = [
+            {
+                "kind": "condition",
+                "target_id": npc["id"],
+                "name": "soaked",
+                "value": f"drenched with water from the {vessel['name']}",
+                "minutes": tuning.SOAKED_MINUTES,
+                "limits": [],
+            }
+        ]
     return ruling(
         "success",
         reason,
@@ -994,6 +1050,7 @@ def _harm(state, judged, available, notes, reason, effort, key) -> dict:
         precedent_key=key,
         take_ids=picked_up,
         property=_property(state, picked_up, "taken"),
+        effects=soaked,
     )
 
 
@@ -1423,36 +1480,25 @@ def _checked_attributes(spec, resources):
 
 
 def _physical(state, judged, available, notes, reason, effort, key):
-    effects = judged.get("effects", [])
+    """Changes to things already in the world, made only of effects (D-62); their laws are effects.py's, checked
+    with every other step's (_with_effects)."""
+    if not judged.get("effects"):
+        return unresolved(notes, "physical work needs at least one effect")
     refs = set(judged.get("resource_ids", []))
-    for effect in effects:
-        refs.add(effect["target_id"])
-        if effect.get("other_id"):
-            refs.add(effect["other_id"])
-        refs.update((effect.get("attribute") or {}).get("basis_ids", []))
-    if not effects or any(i not in available for i in refs):
-        return unresolved(notes, "physical effects need actual accessible objects and resources")
+    if any(i not in available for i in refs):
+        return unresolved(notes, "physical work needs actual accessible resources")
     for helper_id in judged.get("helper_ids", []):
         helper = cast.find(state["npcs"], helper_id)
         if helper is None or not reputation.will_help(state, helper):
             return unresolved(notes, "the proposed helper has not committed to this work or is unavailable")
-    for effect in effects:
-        attribute = effect.get("attribute")
-        if effect["kind"] == "attribute":
-            if not attribute or attribute["name"].lower().strip() in PROTECTED_ATTRIBUTES:
-                return unresolved(notes, "a physical attribute cannot override protected world fields")
-            if not attribute.get("basis_ids") or len(attribute["name"]) > 80 or len(attribute["value"]) > 400:
-                return unresolved(notes, "a physical attribute needs a bounded value and a real causal basis")
-        elif not effect.get("other_id") or effect["target_id"] == effect["other_id"]:
-            return unresolved(notes, "connections require two distinct accessible objects")
+    used = sorted(refs | {e["target_id"] for e in judged["effects"] if e.get("target_id") in available})
     return ruling(
         "success",
         reason,
         notes,
         effort,
         action="physical",
-        effects=effects,
-        tool_ids=sorted(refs),
-        property=_property(state, sorted(refs), "used"),
+        tool_ids=used,
+        property=_property(state, used, "used"),
         precedent_key=key,
     )

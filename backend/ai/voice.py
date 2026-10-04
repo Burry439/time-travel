@@ -41,7 +41,9 @@ SUSPICION = [
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 # D-60: each person their own agent, a core and the rules that apply to them. v2 (D-61): secrets confided and story
 # moves. v3 (D-62): one decision contract for talk, reactions, news and plans. v4 (D-63): a feared wonder explained.
-PERSON_VERSION = "person_v5"  # D-64: carry a request through a recommendation and finish the conversational handoff.
+# v5 (D-64): carry a request through a recommendation and finish the conversational handoff.
+# v6 (D-65): how you are and what you can see (your body, others, writing nearby) are facts you know.
+PERSON_VERSION = "person_v6"
 SCENE_LINES = 3
 WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 

@@ -7,6 +7,8 @@ from __future__ import annotations
 # --- Seeing and hearing (in cells; a cell is about a pace) -----------------------------------------------------------
 
 SIGHT_CELLS = 20.0  # D-55: doubled (was 10).
+READ_CELLS = 3.0  # Close enough to read writing or make out a mark on something (D-65).
+SOAKED_MINUTES = 30  # Water poured over someone: how long until they dry (D-65).
 CLEAR_VIEW_CELLS = (
     10.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle (D-55: was 5).
 )

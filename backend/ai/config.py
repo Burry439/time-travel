@@ -110,7 +110,7 @@ DEED_BUDGET_S = 15.0  # A Try Something: the judge, one bounded reconsideration 
 def _client(key: str):
     from openai import OpenAI
 
-    return OpenAI(api_key=key, timeout=SPEECH_BUDGET_S, max_retries=0)
+    return OpenAI(api_key=key, timeout=DEED_BUDGET_S, max_retries=0)
 
 
 deadline = ContextVar("model_request_deadline", default=None)
@@ -118,7 +118,7 @@ deadline = ContextVar("model_request_deadline", default=None)
 
 def remaining() -> float:
     end = deadline.get()
-    return max(0.0, end - time.monotonic()) if end is not None else SPEECH_BUDGET_S
+    return max(0.0, end - time.monotonic()) if end is not None else DEED_BUDGET_S  # No deadline: the longer one.
 
 
 def client():

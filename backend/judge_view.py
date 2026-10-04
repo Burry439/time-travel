@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 
 import cast
+import effects
 import gear
 import paths
 import reputation
@@ -124,6 +125,7 @@ def people_nearby(state: State, costs: dict | None = None) -> list[dict]:
                     "armour": _worn_words(state, npc),
                     "weapon": _held_words(state, npc),
                     **({"conditions": [gear.describe(c) for c in npc["conditions"]]} if npc.get("conditions") else {}),
+                    **({"states": effects.how_they_are(npc)} if effects.how_they_are(npc) else {}),  # D-65
                     "aware_of_you": cast.aware(state, npc),
                     "willing_to_help": reputation.will_help(state, npc),
                     "activity": (npc.get("controller") or {}).get("activity", "standing"),
@@ -240,6 +242,7 @@ def build_context(state: State, text: str, selected_ids: list[str]) -> dict:
             "baseline": state.get("actor_abilities")
             or "An ordinary adult with future knowledge; no magic or supernatural strength. Precision work must be justified by the described method, tools and actual help.",
             "conditions": state["player"].get("conditions", []),
+            "states": effects.how_they_are(state["player"]),  # Soaked, tied up... (D-65)
             "health": state["player"].get("health", 100),
             "down": bool(state["player"].get("down")),
         },

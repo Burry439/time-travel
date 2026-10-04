@@ -174,6 +174,24 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
             ),
             background,
         )
+        said = (reply.get("state") or {}).get("last_action", {}).get("say_instead") or {}
+        if said.get("words", "").strip() and not reply.get("duplicate"):  # Words typed as a deed go to talk (D-65).
+            to = cast.find(state["npcs"], said.get("to_id") or "") or (near[0] if near else None)
+            if to is None:
+                return {**reply, "intent": heard, "notice": "Nobody is close enough to hear you."}
+            reply = rounds.play_round(
+                run_id,
+                rounds.EncounterAct(
+                    kind="say",
+                    text=said["words"].strip(),
+                    target_id=to["id"],
+                    selected_ids=[],
+                    expected_version=reply["state"]["event_seq"],
+                    request_id=f"{request.request_id}:say",
+                ),
+                background,
+            )
+            heard = {"kind": "say", "how": "judge"}
     return {**reply, "intent": heard}
 
 

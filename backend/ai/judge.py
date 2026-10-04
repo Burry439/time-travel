@@ -19,9 +19,9 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = (
-    "judge_v21"  # D-64: reachable work, existing bindings and already held prerequisites (v20 was discarded).
-)
+# v21 (D-64): reachable work, existing bindings and already held prerequisites (v20 was discarded).
+# v22 (D-65): the world's building blocks (effects on any step), seen_as, and words typed as a deed.
+PROMPT_VERSION = "judge_v22"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -71,11 +71,41 @@ class PhysicalAttribute(BaseModel):
     basis_ids: list[str]
 
 
+# The world's building blocks (backend/effects.py, D-65): each has a law in code, a reducer and a consumer.
+EffectKind = Literal[
+    "attribute",
+    "connect",
+    "disconnect",
+    "condition",
+    "end_condition",
+    "consume",
+    "write",
+    "mark",
+    "touch",
+    "gesture",
+]
+
+
 class PhysicalEffect(BaseModel):
-    kind: Literal["attribute", "connect", "disconnect"]
-    target_id: str
-    other_id: str | None
-    attribute: PhysicalAttribute | None
+    """One change a deed makes, of one kind; only the fields that kind uses are set."""
+
+    kind: EffectKind
+    target_id: str | None = None  # A thing, a water source, a person, or "player" for the stranger.
+    other_id: str | None = None  # The second thing (connect), or who eats or drinks it (consume).
+    attribute: PhysicalAttribute | None = None
+    name: str | None = None  # A condition's name: soaked, tied up, asleep, blindfolded...
+    value: str | None = None  # A condition's description.
+    minutes: int | None = None  # How long a condition lasts; 0 or none: until something ends it.
+    limits: list[Literal["move", "see", "speak", "hands"]] = []  # What a condition stops them doing.
+    text: str | None = None  # What is written, or what a mark shows.
+    as_if_from: str | None = None  # Whom a piece of writing claims to come from.
+
+
+class SayInstead(BaseModel):
+    """Words typed as a deed ("ask Hessa what's up"): they go to talk."""
+
+    to_id: str | None
+    words: str
 
 
 class NewObject(BaseModel):
@@ -210,6 +240,8 @@ class Gather(BaseModel):
 
 class Step(BaseModel):
     effects: list[PhysicalEffect] = []
+    seen_as: str | None = None  # What an onlooker sees, in the third person ("The stranger tips water over Bren.").
+    say_instead: SayInstead | None = None
     resource_ids: list[str] = []
     helper_ids: list[str] = []
     preconditions: list[str] = []

@@ -10,9 +10,11 @@ import math
 import cast
 import content
 import conversation
+import effects
 import evidence
 import gatekeeping
 import minds
+import paths
 import persona
 import reputation
 import stories
@@ -329,6 +331,7 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
             f"or trickery."
             for w in feared
         ]
+    context.update(world_as_seen(state, npc))  # Their own body, and what's plain to see around them (D-65).
     if told := stories.told_you(npc):  # Others' secrets the stranger passed on to them: theirs now (D-61).
         context["the_stranger_told_you"] = told
     if settled := stories.how_things_stand(state, npc):
@@ -452,3 +455,40 @@ def fallback_line(state: State, npc: Npc, key: str) -> str:
     if act == "story" and target in stories.MOVES:
         return "All right. I'll do it."
     return FALLBACK.get(act, FALLBACK["answer"])
+
+
+def world_as_seen(state: State, npc: Npc) -> dict:
+    """What this person knows of the world by being in it (D-65): how they themselves are (soaked, tied up, fed),
+    and what's plain to see near them: the stranger's and others' states, writing and marks on things close by
+    (they can read a forged permit and judge it themselves). Only what's there to see; empty parts are left out."""
+    seen: dict = {}
+    if mine := effects.how_they_are(npc):
+        seen["how_you_are"] = mine
+    if effects.limited(npc, "see"):
+        return seen
+    lines = []
+    here = cast.cell(npc)
+    for other, label in [(state["player"], "The stranger"), *[(n, n["name"]) for n in state["npcs"] if n is not npc]]:
+        if not other.get("alive", True) or cast.distance(npc, other) > tuning.SIGHT_CELLS:
+            continue
+        if not paths.line_of_sight(state, here, cast.cell(other)):
+            continue
+        lines += [f"{label}: {line}" for line in effects.how_they_are(other)]
+    for obj in state["objects"].values():
+        if (
+            not obj.get("attributes")
+            or obj.get("holder_id") in ("used",)
+            or str(obj.get("holder_id", "")).startswith("in:")
+        ):
+            continue
+        where = (
+            state["player"]
+            if obj.get("holder_id") == "player"
+            else cast.find(state["npcs"], obj.get("holder_id") or "")
+        )
+        spot = where if where is not None else obj
+        if "x" in spot and cast.distance(npc, spot) <= tuning.READ_CELLS:
+            lines += effects.readable(obj)
+    if lines:
+        seen["what_you_can_see"] = lines[:10]
+    return seen
