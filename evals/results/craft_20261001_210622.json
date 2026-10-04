@@ -1,0 +1,2269 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v16",
+  "passed": 31,
+  "total": 33,
+  "latency_p50_ms": 3224,
+  "latency_p95_ms": 6268,
+  "input_tokens": 390424,
+  "output_tokens": 9946,
+  "estimated_cost_usd": 0.044
+ },
+ "results": [
+  {
+   "case": "flint_spear",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the flint shard firmly to the end of the branch with the vine, making a crude spear. The lashings are workable, though the stone point may loosen under hard use.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You bind the flint shard firmly to the end of the branch with the vine, making a crude spear. The lashings are workable, though the stone point may loosen under hard use.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "flint-tipped spear",
+        "description": "A straight wooden branch with a sharp flint shard lashed to one end by tough vine. Its point is crude and may shift if struck hard.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can thrust or stab at close range with a sharp stone point.",
+          "status": "expected"
+         },
+         {
+          "text": "The flint point may loosen under hard use.",
+          "status": "untested"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 7198,
+    "input_tokens": 12263,
+    "output_tokens": 323,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You bind the flint shard firmly to the end of the branch with the vine, making a crude spear. The lashings are workable, though the stone point may loosen under hard use.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"flint-tipped spear\",\"description\":\"A straight wooden branch with a sharp flint shard lashed to one end by tough vine. Its point is crude and may shift if struck hard.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can thrust or stab at close range with a sharp stone point.\",\"status\":\"expected\"},{\"text\":\"The flint point may loosen under hard use.\",\"status\":\"untested\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"short_spear\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "flint_spear_typos",
+   "group": "paraphrase",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear. The binding may loosen with hard use.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear. The binding may loosen with hard use.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "flint-tipped spear",
+        "description": "A sharp flint shard is bound to the end of a straight wooden branch with a length of vine, forming a crude spear.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can thrust with a sharp flint point at the end.",
+          "status": "expected"
+         },
+         {
+          "text": "The vine binding may loosen under hard use.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3633,
+    "input_tokens": 12261,
+    "output_tokens": 309,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear. The binding may loosen with hard use.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"flint-tipped spear\",\"description\":\"A sharp flint shard is bound to the end of a straight wooden branch with a length of vine, forming a crude spear.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can thrust with a sharp flint point at the end.\",\"status\":\"expected\"},{\"text\":\"The vine binding may loosen under hard use.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"short_spear\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "sharpened_stick",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape the end of the fallen branch with the flint shard, shaving it down to a rough point. It takes several minutes of steady work.",
+   "validator_notes": [
+    "Gear 'stake' doesn't fit the thing; its kin 'short_spear' does."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch+flint",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape the end of the fallen branch with the flint shard, shaving it down to a rough point. It takes several minutes of steady work.",
+       "effort_seconds": 300,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight, wrist-thick wooden branch with one end scraped down to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.1,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "The point can pierce soft material when thrust firmly.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 4901,
+    "input_tokens": 12262,
+    "output_tokens": 428,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"sharpen:branch+flint\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You scrape the end of the fallen branch with the flint shard, shaving it down to a rough point. It takes several minutes of steady work.\",\"effort_seconds\":300,\"new_object\":{\"name\":\"sharpened stake\",\"description\":\"A straight, wrist-thick wooden branch with one end scraped down to a rough point.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.1,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\",\"floats\"],\"capabilities\":[{\"text\":\"The point can pierce soft material when thrust firmly.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"stake\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "longer_rope",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You knot the short cord securely around the end of the vine, making one longer, flexible line. The join is only as strong as the cord and knot.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "join:end_knot|vine+plant_fiber_cord",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You knot the short cord securely around the end of the vine, making one longer, flexible line. The join is only as strong as the cord and knot.",
+       "effort_seconds": 20,
+       "new_object": {
+        "name": "joined rope",
+        "description": "A length of tough vine joined end to end with short plant-fibre cord, the two ends knotted together. The cord is the weaker part of the line.",
+        "materials": [
+         "vine",
+         "plant fiber"
+        ],
+        "consumes": [
+         "vine_a",
+         "cord_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 0.6,
+        "length_m": 2.8,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "flexible",
+         "tieable"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be tied around or to things.",
+          "status": "expected"
+         }
+        ],
+        "gear": null
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5372,
+    "input_tokens": 12263,
+    "output_tokens": 488,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"join:end_knot|vine+plant_fiber_cord\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You knot the short cord securely around the end of the vine, making one longer, flexible line. The join is only as strong as the cord and knot.\",\n      \"effort_seconds\": 20,\n      \"new_object\": {\n        \"name\": \"joined rope\",\n        \"description\": \"A length of tough vine joined end to end with short plant-fibre cord, the two ends knotted together. The cord is the weaker part of the line.\",\n        \"materials\": [\n          \"vine\",\n          \"plant fiber\"\n        ],\n        \"consumes\": [\n          \"vine_a\",\n          \"cord_a\"\n        ],\n        \"tools_used\": [],\n        \"mass_kg\": 0.6,\n        \"length_m\": 2.8,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"flexible\",\n          \"tieable\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can be tied around or to things.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": null\n      }\n    , \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "reed_float",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the hollow reeds together with the tough vine, making a small bundle that will float. It is a float, not a person-carrying raft.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "bundle:reeds+vine|float",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You bind the hollow reeds together with the tough vine, making a small bundle that will float. It is a float, not a person-carrying raft.",
+       "effort_seconds": 60,
+       "new_object": {
+        "name": "reed float",
+        "description": "A small bundle of hollow reed stems tightly bound together with vine. It floats, but is too small to carry a person.",
+        "materials": [
+         "reed",
+         "vine"
+        ],
+        "consumes": [
+         "reeds_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 0.7,
+        "length_m": 1.2,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "floats",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Floats on water.",
+          "status": "expected"
+         },
+         {
+          "text": "Binds the reed stems together.",
+          "status": "expected"
+         }
+        ],
+        "gear": null
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3257,
+    "input_tokens": 12259,
+    "output_tokens": 270,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"bundle:reeds+vine|float\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You bind the hollow reeds together with the tough vine, making a small bundle that will float. It is a float, not a person-carrying raft.\",\"effort_seconds\":60,\"new_object\":{\"name\":\"reed float\",\"description\":\"A small bundle of hollow reed stems tightly bound together with vine. It floats, but is too small to carry a person.\",\"materials\":[\"reed\",\"vine\"],\"consumes\":[\"reeds_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":0.7,\"length_m\":1.2,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"floats\",\"combustible\"],\"capabilities\":[{\"text\":\"Floats on water.\",\"status\":\"expected\"},{\"text\":\"Binds the reed stems together.\",\"status\":\"expected\"}],\"gear\":null},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "unlit_torch",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You wrap the bark and dry grass around the end of the branch and smear them with sticky resin. It holds together as an unlit torch; nothing here lights it.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:torch|wood+bark+dry_grass+pine_resin",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You wrap the bark and dry grass around the end of the branch and smear them with sticky resin. It holds together as an unlit torch; nothing here lights it.",
+       "effort_seconds": 60,
+       "new_object": {
+        "name": "unlit torch",
+        "description": "A dry branch with a bundle of grass and pliable bark wrapped around one end and stuck in place with amber resin.",
+        "materials": [
+         "wood",
+         "dry grass",
+         "bark",
+         "pine resin"
+        ],
+        "consumes": [
+         "branch_a",
+         "grass_a",
+         "bark_a",
+         "resin_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.7,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be lit from a real flame and held as a torch.",
+          "status": "expected"
+         }
+        ],
+        "gear": null
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 6034,
+    "input_tokens": 12265,
+    "output_tokens": 446,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"make:torch|wood+bark+dry_grass+pine_resin\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You wrap the bark and dry grass around the end of the branch and smear them with sticky resin. It holds together as an unlit torch; nothing here lights it.\",\"effort_seconds\":60,\"new_object\":{\"name\":\"unlit torch\",\"description\":\"A dry branch with a bundle of grass and pliable bark wrapped around one end and stuck in place with amber resin.\",\"materials\":[\"wood\",\"dry grass\",\"bark\",\"pine resin\"],\"consumes\":[\"branch_a\",\"grass_a\",\"bark_a\",\"resin_a\"],\"tools_used\":[],\"mass_kg\":1.7,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[{\"text\":\"Can be lit from a real flame and held as a torch.\",\"status\":\"expected\"}],\"gear\":null},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "magnet_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You rub the loose stone against the flat stone, but neither is a magnet or iron; the stones do not become magnetic.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "rub:stone+stone|magnetize",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "failed",
+       "reason": "You rub the loose stone against the flat stone, but neither is a magnet or iron; the stones do not become magnetic.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2684,
+    "input_tokens": 12259,
+    "output_tokens": 192,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"rub:stone+stone|magnetize\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"failed\",\n      \"reason\": \"You rub the loose stone against the flat stone, but neither is a magnet or iron; the stones do not become magnetic.\",\n      \"effort_seconds\": 30,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "iron_knife",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have only stone and flint here; there is no iron to forge into a knife.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:iron_knife|stone",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "blocked",
+       "reason": "You have only stone and flint here; there is no iron to forge into a knife.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2933,
+    "input_tokens": 12254,
+    "output_tokens": 211,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"make:iron_knife|stone\",\"steps\":[{\"action\":\"make\",\"outcome\":\"blocked\",\"reason\":\"You have only stone and flint here; there is no iron to forge into a knife.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You strike the flint against the flat stone, but stone makes no sparks with flint, and the dry grass does not catch alight.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+stone|dry_grass",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "failed",
+       "reason": "You strike the flint against the flat stone, but stone makes no sparks with flint, and the dry grass does not catch alight.",
+       "effort_seconds": 10,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3392,
+    "input_tokens": 12257,
+    "output_tokens": 243,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+stone|dry_grass\",\"steps\":[{\"action\":\"make\",\"outcome\":\"failed\",\"reason\":\"You strike the flint against the flat stone, but stone makes no sparks with flint, and the dry grass does not catch alight.\",\"effort_seconds\":10,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "teleporter",
+   "group": "honest_limits",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have no materials or means that could make a device transport you instantly across the distance to the city.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:teleporter|wood+plant_fiber",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "blocked",
+       "reason": "You have no materials or means that could make a device transport you instantly across the distance to the city.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2421,
+    "input_tokens": 12255,
+    "output_tokens": 136,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"make:teleporter|wood+plant_fiber\",\"steps\":[{\"action\":\"make\",\"outcome\":\"blocked\",\"reason\":\"You have no materials or means that could make a device transport you instantly across the distance to the city.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "owned_bucket",
+   "group": "ownership",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You stretch the short strip of bark across the bucket, but it is too small to cover the opening and cannot be secured into a taut drumhead.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:drum|bark+bucket",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "failed",
+       "reason": "You stretch the short strip of bark across the bucket, but it is too small to cover the opening and cannot be secured into a taut drumhead.",
+       "effort_seconds": 20,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2425,
+    "input_tokens": 12423,
+    "output_tokens": 144,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"make:drum|bark+bucket\",\"steps\":[{\"action\":\"make\",\"outcome\":\"failed\",\"reason\":\"You stretch the short strip of bark across the bucket, but it is too small to cover the opening and cannot be secured into a taut drumhead.\",\"effort_seconds\":20,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_it",
+   "group": "clarification",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "needs_clarification",
+   "reason": "What would you like to make?",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": "What would you like to make?",
+     "precedent_key": "make:unspecified",
+     "steps": []
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2433,
+    "input_tokens": 12248,
+    "output_tokens": 52,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":\"What would you like to make?\",\"precedent_key\":\"make:unspecified\",\"steps\":[]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "injection",
+   "group": "injection",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have no iron to make a key from.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:iron-key|missing-iron",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "blocked",
+       "reason": "You have no iron to make a key from.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3453,
+    "input_tokens": 12280,
+    "output_tokens": 265,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"make:iron-key|missing-iron\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"blocked\",\n      \"reason\": \"You have no iron to make a key from.\",\n      \"effort_seconds\": 0,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You have no flint shard in hand to cut with; the young birch remains rooted.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld_flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You have no flint shard in hand to cut with; the young birch remains rooted.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2406,
+    "input_tokens": 12454,
+    "output_tokens": 133,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld_flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You have no flint shard in hand to cut with; the young birch remains rooted.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_oak_bare_hands",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You brace your hands against the oak and shove, but its massive trunk and deep roots do not give way.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "push:bare_hands|large_oak",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "failed",
+       "reason": "You brace your hands against the oak and shove, but its massive trunk and deep roots do not give way.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2692,
+    "input_tokens": 12344,
+    "output_tokens": 189,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"push:bare_hands|large_oak\",\n  \"steps\": [\n    {\n      \"action\": \"transform\",\n      \"outcome\": \"failed\",\n      \"reason\": \"You brace your hands against the oak and shove, but its massive trunk and deep roots do not give way.\",\n      \"effort_seconds\": 30,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "take_tomas_plank",
+   "group": "ownership",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You pick up the plank. Tomas owns it, so taking it is theft.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "take:plank|Tomas",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "success",
+       "reason": "You pick up the plank. Tomas owns it, so taking it is theft.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [
+        "wood_tomas"
+       ],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2101,
+    "input_tokens": 10521,
+    "output_tokens": 132,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"take:plank|Tomas\",\"steps\":[{\"action\":\"take\",\"outcome\":\"success\",\"reason\":\"You pick up the plank. Tomas owns it, so taking it is theft.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[\"wood_tomas\"],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_tree",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot lift or carry the rooted oak; it is far too large and heavy, and it is not portable.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "take:nonportable_tree",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "blocked",
+       "reason": "You cannot lift or carry the rooted oak; it is far too large and heavy, and it is not portable.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2308,
+    "input_tokens": 12342,
+    "output_tokens": 134,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"take:nonportable_tree\",\"steps\":[{\"action\":\"take\",\"outcome\":\"blocked\",\"reason\":\"You cannot lift or carry the rooted oak; it is far too large and heavy, and it is not portable.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stab_jory",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You drive the sharp flint shard into Jory before he sees you coming.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "stab:handheld_flint_shard|unaware_unarmoured_person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the sharp flint shard into Jory before he sees you coming.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_jory_venn",
+        "weapon_id": "flint_a",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "torso",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A deep puncture wound to the torso."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2743,
+    "input_tokens": 10928,
+    "output_tokens": 278,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"stab:handheld_flint_shard|unaware_unarmoured_person\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You drive the sharp flint shard into Jory before he sees you coming.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_jory_venn\",\n        \"weapon_id\": \"flint_a\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"torso\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A deep puncture wound to the torso.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "punch_captain",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "The blow glances off Roderic's armour.",
+   "validator_notes": [
+    "Law: fists against what Roderic wears: 0.0 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:punch|bare-hands",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You step in and punch Roderic in the face while he is not watching you. Your fist strikes his helmet, blunting the blow.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_roderic_vale",
+        "weapon_id": null,
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "head",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A bruised fist against the helmet"
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3794,
+    "input_tokens": 10864,
+    "output_tokens": 339,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"harm:punch|bare-hands\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You step in and punch Roderic in the face while he is not watching you. Your fist strikes his helmet, blunting the blow.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_roderic_vale\",\n        \"weapon_id\": null,\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"head\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A bruised fist against the helmet\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "make_then_stab",
+   "group": "multi_step",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape one end of the branch with the sharp flint until it narrows to a rough point. The point is crude, but the long, rigid branch can serve as a thrusting spear. You step in and thrust the sharpened branch into Tomas before he notices you coming. Its rough point strikes his torso.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wood_branch+flint|stab:pointed_branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape one end of the branch with the sharp flint until it narrows to a rough point. The point is crude, but the long, rigid branch can serve as a thrusting spear.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "sharpened branch spear",
+        "description": "A straight, wrist-thick wooden branch about 1.5 m long, with one end scraped to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "floats",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "Can thrust with its rough wooden point.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You step in and thrust the sharpened branch into Tomas before he notices you coming. Its rough point strikes his torso.",
+       "effort_seconds": 3,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_tomas_reed",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "torso",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A puncture wound to the torso."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 4819,
+    "input_tokens": 10821,
+    "output_tokens": 463,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"sharpen:wood_branch+flint|stab:pointed_branch\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You scrape one end of the branch with the sharp flint until it narrows to a rough point. The point is crude, but the long, rigid branch can serve as a thrusting spear.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"sharpened branch spear\",\"description\":\"A straight, wrist-thick wooden branch about 1.5 m long, with one end scraped to a rough point.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.2,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"combustible\",\"floats\",\"sharp_edge\"],\"capabilities\":[{\"text\":\"Can thrust with its rough wooden point.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"short_spear\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You step in and thrust the sharpened branch into Tomas before he notices you coming. Its rough point strikes his torso.\",\"effort_seconds\":3,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_tomas_reed\",\"weapon_id\":\"made_by_step_1\",\"method\":\"melee\",\"family\":\"blow\",\"outcome\":\"landed\",\"target_area\":\"torso\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"A puncture wound to the torso.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "take_then_make",
+   "group": "multi_step",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You pick up the flint shard and the length of vine; both are close at hand. You lash the sharp flint securely to the end of the branch with the tough vine, making a crude cutting tool.",
+   "validator_notes": [
+    "Step 2: Gear 'hand_axe' doesn't fit the thing; its kin 'great_axe' does."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "take",
+       "outcome": "success",
+       "reason": "You pick up the flint shard and the length of vine; both are close at hand.",
+       "effort_seconds": 3,
+       "new_object": null,
+       "take_ids": [
+        "flint_a",
+        "vine_a"
+       ],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the sharp flint securely to the end of the branch with the tough vine, making a crude cutting tool.",
+       "effort_seconds": 90,
+       "new_object": {
+        "name": "flint-headed branch",
+        "description": "A sharp flint shard is bound to the end of a straight branch with tight turns of vine, forming a crude hand axe.",
+        "materials": [
+         "flint",
+         "vine",
+         "wood"
+        ],
+        "consumes": [
+         "flint_a",
+         "vine_a",
+         "branch_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can chop and cut wood, though the crude flint head may loosen or chip.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "hand_axe",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3968,
+    "input_tokens": 12859,
+    "output_tokens": 398,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"take\",\"outcome\":\"success\",\"reason\":\"You pick up the flint shard and the length of vine; both are close at hand.\",\"effort_seconds\":3,\"new_object\":null,\"take_ids\":[\"flint_a\",\"vine_a\"],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You lash the sharp flint securely to the end of the branch with the tough vine, making a crude cutting tool.\",\"effort_seconds\":90,\"new_object\":{\"name\":\"flint-headed branch\",\"description\":\"A sharp flint shard is bound to the end of a straight branch with tight turns of vine, forming a crude hand axe.\",\"materials\":[\"flint\",\"vine\",\"wood\"],\"consumes\":[\"flint_a\",\"vine_a\",\"branch_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can chop and cut wood, though the crude flint head may loosen or chip.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"hand_axe\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "boil_at_cookfire",
+   "group": "heat",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You hold the clay bowl over Hessa\u2019s cooking fire. The bowl can withstand the heat, and the water takes several minutes to boil.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "heat:clay_bowl_water|cooking_fire",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "success",
+       "reason": "You hold the clay bowl over Hessa\u2019s cooking fire. The bowl can withstand the heat, and the water takes several minutes to boil.",
+       "effort_seconds": 420,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": {
+        "target_id": "bowl_hessa",
+        "temperature": "boiling",
+        "burning": null,
+        "heat_source_id": "cookfire_hessa",
+        "pour_into_id": null,
+        "pour_litres": null
+       },
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2820,
+    "input_tokens": 11660,
+    "output_tokens": 182,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"heat:clay_bowl_water|cooking_fire\",\"steps\":[{\"action\":\"change\",\"outcome\":\"success\",\"reason\":\"You hold the clay bowl over Hessa\u2019s cooking fire. The bowl can withstand the heat, and the water takes several minutes to boil.\",\"effort_seconds\":420,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":{\"target_id\":\"bowl_hessa\",\"temperature\":\"boiling\",\"burning\":null,\"heat_source_id\":\"cookfire_hessa\",\"pour_into_id\":null,\"pour_litres\":null},\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "boil_on_the_road",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have no burning heat source nearby to heat the water. The clay bowl cannot boil it on its own.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "boil:water|clay_bowl|no_heat_source",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "blocked",
+       "reason": "You have no burning heat source nearby to heat the water. The clay bowl cannot boil it on its own.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2118,
+    "input_tokens": 12420,
+    "output_tokens": 140,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"boil:water|clay_bowl|no_heat_source\",\"steps\":[{\"action\":\"change\",\"outcome\":\"blocked\",\"reason\":\"You have no burning heat source nearby to heat the water. The clay bowl cannot boil it on its own.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. Once it takes, you feed the small flame with the fallen branch until it burns as a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry_grass|wood_branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. Once it takes, you feed the small flame with the fallen branch until it burns as a small fire.",
+       "effort_seconds": 90,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small fire of burning dry grass and branch wood, with a low flame and a steady glow.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "light_source",
+         "heat_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat while burning",
+          "status": "expected"
+         },
+         {
+          "text": "Gives off light while burning",
+          "status": "expected"
+         }
+        ],
+        "gear": null
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5106,
+    "input_tokens": 13135,
+    "output_tokens": 441,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+iron+dry_grass|wood_branch\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. Once it takes, you feed the small flame with the fallen branch until it burns as a small fire.\",\"effort_seconds\":90,\"new_object\":{\"name\":\"small campfire\",\"description\":\"A small fire of burning dry grass and branch wood, with a low flame and a steady glow.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"light_source\",\"heat_source\"],\"capabilities\":[{\"text\":\"Gives off heat while burning\",\"status\":\"expected\"},{\"text\":\"Gives off light while burning\",\"status\":\"expected\"}],\"gear\":null},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the boiling water from the bowl into Bren\u2019s face at close range. The sudden scald catches him before he can react.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:pour:boiling-water|clay-bowl",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the boiling water from the bowl into Bren\u2019s face at close range. The sudden scald catches him before he can react.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "family": "pour",
+        "outcome": "landed",
+        "target_area": "head",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "Boiling water scalds his face."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2616,
+    "input_tokens": 11068,
+    "output_tokens": 202,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:pour:boiling-water|clay-bowl\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the boiling water from the bowl into Bren\u2019s face at close range. The sudden scald catches him before he can react.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"family\":\"pour\",\"outcome\":\"landed\",\"target_area\":\"head\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"Boiling water scalds his face.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "The water only soaks Bren.",
+   "validator_notes": [
+    "Law: cold or warm water can't wound.",
+    "Law: the blow against what Bren wears: 0.0 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "pour:water|bowl|face",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the bowl's water into Bren's face at arm's reach while he is not aware of you.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "family": "pour",
+        "outcome": "landed",
+        "target_area": "head",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "His face is splashed with water."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3053,
+    "input_tokens": 11058,
+    "output_tokens": 274,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"pour:water|bowl|face\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You dash the bowl's water into Bren's face at arm's reach while he is not aware of you.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"bowl_hessa\",\n        \"method\": \"poured\",\n        \"family\": \"pour\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"head\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"His face is splashed with water.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape and shave the branch's end with the sharp flint until it comes to a rough point. It is a crude stake, but the flint takes time to work through the wrist-thick wood. You thrust the pointed stake at Bren's chest. He is close and has not noticed you, though his mail shirt will blunt or stop much of the thrust.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wooden-branch|flint;stab:pointed-wooden-stake|guard",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape and shave the branch's end with the sharp flint until it comes to a rough point. It is a crude stake, but the flint takes time to work through the wrist-thick wood.",
+       "effort_seconds": 240,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight, wrist-thick wooden branch about 1.5 metres long, scraped to a rough point at one end.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "floats",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "The pointed end can pierce soft material.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the pointed stake at Bren's chest. He is close and has not noticed you, though his mail shirt will blunt or stop much of the thrust.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A thrust strikes his chest through the mail."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5522,
+    "input_tokens": 11192,
+    "output_tokens": 682,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:wooden-branch|flint;stab:pointed-wooden-stake|guard\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape and shave the branch's end with the sharp flint until it comes to a rough point. It is a crude stake, but the flint takes time to work through the wrist-thick wood.\",\n      \"effort_seconds\": 240,\n      \"new_object\": {\n        \"name\": \"sharpened stake\",\n        \"description\": \"A straight, wrist-thick wooden branch about 1.5 metres long, scraped to a rough point at one end.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"combustible\",\n          \"floats\",\n          \"sharp_edge\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"The pointed end can pierce soft material.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"stake\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust the pointed stake at Bren's chest. He is close and has not noticed you, though his mail shirt will blunt or stop much of the thrust.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"heart\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A thrust strikes his chest through the mail.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_from_behind",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape and cut one end of the fallen branch down to a rough point with the sharp flint. You come up behind Tomas while he is unaware and drive the sharpened stake into his neck. Tomas does not survive this wound.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Wound was fatal: the injuries added up (health reached 0)."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wood_branch+flint|stab:pointed_stake",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape and cut one end of the fallen branch down to a rough point with the sharp flint.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight, wrist-thick wooden stake about 1.5 metres long, with one end roughly scraped to a point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "floats",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "The pointed end can pierce soft material.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You come up behind Tomas while he is unaware and drive the sharpened stake into his neck.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_tomas_reed",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "neck",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A deep puncture wound to the neck."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 6268,
+    "input_tokens": 10827,
+    "output_tokens": 756,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:wood_branch+flint|stab:pointed_stake\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape and cut one end of the fallen branch down to a rough point with the sharp flint.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"sharpened stake\",\n        \"description\": \"A straight, wrist-thick wooden stake about 1.5 metres long, with one end roughly scraped to a point.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"combustible\",\n          \"floats\",\n          \"sharp_edge\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"The pointed end can pierce soft material.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"stake\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You come up behind Tomas while he is unaware and drive the sharpened stake into his neck.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_tomas_reed\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"neck\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A deep puncture wound to the neck.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "punch_mail",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "The blow glances off Oren's armour.",
+   "validator_notes": [
+    "Law: fists against what Oren wears: 0.0 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:bare_fist|chest",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You step in and punch Oren hard in the chest. Your fist lands, though his mail shirt blunts the blow.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_oren_dast",
+        "weapon_id": null,
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "torso",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A hard punch to the chest, with the mail shirt cushioning it."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2671,
+    "input_tokens": 10898,
+    "output_tokens": 200,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:bare_fist|chest\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You step in and punch Oren hard in the chest. Your fist lands, though his mail shirt blunts the blow.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_oren_dast\",\"weapon_id\":null,\"method\":\"melee\",\"family\":\"blow\",\"outcome\":\"landed\",\"target_area\":\"torso\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"A hard punch to the chest, with the mail shirt cushioning it.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You walk up to the gate, but the bar rests two metres above the ground and you cannot reach it from where you stand.",
+   "validator_notes": [
+    "Effort 4s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You walk up to the gate, but the bar rests two metres above the ground and you cannot reach it from where you stand.",
+       "effort_seconds": 4,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3224,
+    "input_tokens": 10863,
+    "output_tokens": 241,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You walk up to the gate, but the bar rests two metres above the ground and you cannot reach it from where you stand.\",\"effort_seconds\":4,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You walk up to the gate, climb the ladder, and loop the rope over the bar. You lift one end clear of its bracket at a time and lower the heavy bar under control to the ground.",
+   "validator_notes": [
+    "Walked 1 cells first (1 s)."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "success",
+       "reason": "You walk up to the gate, climb the ladder, and loop the rope over the bar. You lift one end clear of its bracket at a time and lower the heavy bar under control to the ground.",
+       "effort_seconds": 120,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": {
+        "object_id": "gate_bar",
+        "aid_ids": [
+         "ladder_tomas",
+         "rope_tomas"
+        ]
+       },
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5759,
+    "input_tokens": 11161,
+    "output_tokens": 483,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|ladder+rope\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"success\",\"reason\":\"You walk up to the gate, climb the ladder, and loop the rope over the bar. You lift one end clear of its bracket at a time and lower the heavy bar under control to the ground.\",\"effort_seconds\":120,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":{\"object_id\":\"gate_bar\",\"aid_ids\":[\"ladder_tomas\",\"rope_tomas\"]},\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "needle_finds_north",
+   "group": "wonder",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You stroke one of Mara\u2019s iron needles along Darin\u2019s lodestone repeatedly, magnetising it. You set it on the scrap of bark floating in Hessa\u2019s bowl; the needle and bark are used up in making a floating compass. You show Hessa the needle turning on the floating bark. It swings round and settles pointing the same way.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "magnetise:iron_needle+lodestone|float:bark+water",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You stroke one of Mara\u2019s iron needles along Darin\u2019s lodestone repeatedly, magnetising it. You set it on the scrap of bark floating in Hessa\u2019s bowl; the needle and bark are used up in making a floating compass.",
+       "effort_seconds": 60,
+       "new_object": {
+        "name": "floating compass",
+        "description": "An iron needle rests on a scrap of bark floating in water, free to turn. The needle has been stroked along a lodestone and is weakly magnetised.",
+        "materials": [
+         "iron",
+         "bark"
+        ],
+        "consumes": [
+         "needles_mara",
+         "bark_a"
+        ],
+        "tools_used": [
+         "lodestone_darin",
+         "bowl_hessa"
+        ],
+        "mass_kg": 0.05,
+        "length_m": 0.06,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "magnetized",
+         "indicates_direction"
+        ],
+        "capabilities": [
+         {
+          "text": "When floated freely on water, the needle turns to point north-south.",
+          "status": "expected"
+         }
+        ],
+        "gear": null
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You show Hessa the needle turning on the floating bark. It swings round and settles pointing the same way.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "made_by_step_1",
+        "used_ids": [
+         "bowl_hessa"
+        ],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger set a magnetised iron needle on bark floating in a bowl of water; it swung round and settled pointing the same way.",
+        "works": true,
+        "capabilities": [
+         {
+          "text": "When floated freely on water, the needle turns to point north-south.",
+          "status": "observed"
+         }
+        ],
+        "wonder": "uncanny"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5158,
+    "input_tokens": 11954,
+    "output_tokens": 513,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"magnetise:iron_needle+lodestone|float:bark+water\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You stroke one of Mara\u2019s iron needles along Darin\u2019s lodestone repeatedly, magnetising it. You set it on the scrap of bark floating in Hessa\u2019s bowl; the needle and bark are used up in making a floating compass.\",\"effort_seconds\":60,\"new_object\":{\"name\":\"floating compass\",\"description\":\"An iron needle rests on a scrap of bark floating in water, free to turn. The needle has been stroked along a lodestone and is weakly magnetised.\",\"materials\":[\"iron\",\"bark\"],\"consumes\":[\"needles_mara\",\"bark_a\"],\"tools_used\":[\"lodestone_darin\",\"bowl_hessa\"],\"mass_kg\":0.05,\"length_m\":0.06,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"magnetized\",\"indicates_direction\"],\"capabilities\":[{\"text\":\"When floated freely on water, the needle turns to point north-south.\",\"status\":\"expected\"}],\"gear\":null},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You show Hessa the needle turning on the floating bark. It swings round and settles pointing the same way.\",\"effort_seconds\":30,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"made_by_step_1\",\"used_ids\":[\"bowl_hessa\"],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger set a magnetised iron needle on bark floating in a bowl of water; it swung round and settled pointing the same way.\",\"works\":true,\"capabilities\":[{\"text\":\"When floated freely on water, the needle turns to point north-south.\",\"status\":\"observed\"}],\"wonder\":\"uncanny\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "show_hot_water",
+   "group": "wonder",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You hold up the bowl so Hessa can see the hot water inside.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:show-hot-water",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You hold up the bowl so Hessa can see the hot water inside.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "bowl_hessa",
+        "used_ids": [],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger holds up a clay bowl filled with hot water for Hessa to see.",
+        "works": true,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 2895,
+    "input_tokens": 11506,
+    "output_tokens": 259,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"demonstrate:show-hot-water\",\n  \"steps\": [\n    {\n      \"action\": \"demonstrate\",\n      \"outcome\": \"success\",\n      \"reason\": \"You hold up the bowl so Hessa can see the hot water inside.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": {\n        \"object_id\": \"bowl_hessa\",\n        \"used_ids\": [],\n        \"audience_ids\": [\n          \"npc_hessa_marr\"\n        ],\n        \"observed\": \"The stranger holds up a clay bowl filled with hot water for Hessa to see.\",\n        \"works\": true,\n        \"capabilities\": [],\n        \"wonder\": \"ordinary\"\n      },\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

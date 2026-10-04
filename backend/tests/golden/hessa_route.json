@@ -1294,6 +1294,14 @@
   },
   {
    "alive": true,
+   "conditions": [
+    {
+     "area": "leg",
+     "kind": "ache",
+     "since": 0,
+     "treated": 0
+    }
+   ],
    "controller": {
     "activity": "walk",
     "anchor_index": 3,
@@ -2249,6 +2257,7 @@
     "kind": "weapon",
     "quality": "crude"
    },
+   "given_by": "player",
    "holder_id": "npc_hessa_marr",
    "id": "gourd_a",
    "length_m": null,

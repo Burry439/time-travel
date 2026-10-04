@@ -1,0 +1,82 @@
+[
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction again and again. It takes on a weak magnetism. You walk over to the dry oak leaf and pick it up. You fill the wooden bowl from the brook, leaving room for the leaf and needle. You set the magnetized needle on the leaf in the bowl. It turns and settles pointing along the same line when you gently disturb it."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the magnetized needle on the oak leaf floating in the bowl. It turns and settles along the same line."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "fill the wooden bowl with water from the brook",
+  "ok": false,
+  "category": "success",
+  "reason": "You dip the wooden bowl into the brook and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You rub the iron needle along the lodestone, but this rubbing does not reliably magnetise it."
+ },
+ {
+  "run": 1,
+  "step": "show",
+  "text": "“Watch the needle: it turns the same way every time. That way is north.” show Mey the needle floating on the water",
+  "ok": false,
+  "category": "success",
+  "reason": "You set the iron needle on the floating bark in the bowl of water for Mey to watch. The needle is not magnetised, so it does not reliably point north."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction, repeating the motion until the needle is weakly magnetised. You walk over and pick up the dry oak leaf. You fill the wooden bowl from the brook; the water settles inside without leaking. You lay the magnetised needle on the oak leaf and set it afloat in the bowl. It turns and settles pointing the same way, showing north and south."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the magnetised needle on the oak leaf and set it afloat in the bowl. It turns and settles pointing the same way."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "fill the wooden bowl with water from the brook",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden bowl into the brook and fill it with water."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone repeatedly in the same direction, giving the needle a weak magnetism. You lay the magnetised needle on the sliver of bark and set it floating in the bowl. The needle turns and settles pointing north-south."
+ },
+ {
+  "run": 2,
+  "step": "show",
+  "text": "“Watch the needle: it turns the same way every time. That way is north.” show Mey the needle floating on the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You carefully set the magnetised needle floating on the water. It turns and settles pointing north-south while Mey watches."
+ }
+]

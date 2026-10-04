@@ -1,0 +1,98 @@
+[
+ {
+  "run": 1,
+  "step": "bandage",
+  "text": "make a bandage out of the linen cloth",
+  "ok": true,
+  "category": "success",
+  "reason": "You tear a strip from the clean linen cloth and fold it into a bandage. Brea’s lent cloth is used up in the making."
+ },
+ {
+  "run": 1,
+  "step": "bandage",
+  "text": "tear the clean linen into a strip to make a bandage",
+  "ok": true,
+  "category": "success",
+  "reason": "You tear the clean linen into a long strip suitable for wrapping a wound. Brea's lent cloth is used up in making it."
+ },
+ {
+  "run": 1,
+  "step": "poultice",
+  "text": "mash the plantain into a poultice",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the fresh plantain leaves into a soft, damp mash suitable for a poultice. Brea's lent leaves are used up in making it."
+ },
+ {
+  "run": 1,
+  "step": "poultice",
+  "text": "crush the plantain leaves in the bowl into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You pick up the wooden bowl and stone pestle. Both are within easy reach. You crush the fresh plantain leaves in the bowl with the pestle until they form a soft, green mash. Brea's lent leaves are used up in making it."
+ },
+ {
+  "run": 1,
+  "step": "treat",
+  "text": "put the plantain poultice on Tam's hand",
+  "ok": true,
+  "category": "blocked",
+  "reason": "You cannot treat Tam's hand with the poultice; he has no wound or burn there."
+ },
+ {
+  "run": 1,
+  "step": "treat",
+  "text": "lay the poultice on Tam's burned hand",
+  "ok": true,
+  "category": "blocked",
+  "reason": "Tam has no burn to treat."
+ },
+ {
+  "run": 2,
+  "step": "bandage",
+  "text": "make a bandage out of the linen cloth",
+  "ok": true,
+  "category": "success",
+  "reason": "You tear a strip from the clean linen cloth and fold it into a simple bandage. Brea lent you the cloth, and the bandage is ready to wrap around a wound."
+ },
+ {
+  "run": 2,
+  "step": "bandage",
+  "text": "tear the clean linen into a strip to make a bandage",
+  "ok": true,
+  "category": "success",
+  "reason": "You tear a long strip from the clean linen, making a soft bandage. Brea lent you the cloth."
+ },
+ {
+  "run": 2,
+  "step": "poultice",
+  "text": "mash the plantain into a poultice",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the fresh plantain leaves between your fingers into a soft, damp poultice. Brea lent you the leaves."
+ },
+ {
+  "run": 2,
+  "step": "poultice",
+  "text": "crush the plantain leaves in the bowl into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk over and pick up the stone pestle. Brea lent it to you. You crush the plantain leaves in the wooden bowl with the stone pestle, making a moist poultice. Brea lent you the bowl and pestle."
+ },
+ {
+  "run": 2,
+  "step": "treat",
+  "text": "put the plantain poultice on Tam's hand",
+  "ok": true,
+  "category": "unsupported",
+  "reason": "You cannot apply it as treatment: Tam is unhurt, with no hand wound or burn to treat."
+ },
+ {
+  "run": 2,
+  "step": "treat",
+  "text": "lay the poultice on Tam's burned hand",
+  "ok": true,
+  "category": "blocked",
+  "reason": "Tam has no burn to treat."
+ }
+]

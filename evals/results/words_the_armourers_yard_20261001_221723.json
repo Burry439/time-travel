@@ -1,0 +1,124 @@
+[
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "grind the broken end of the sword blade to a sharp spear point on the grindstone",
+  "ok": true,
+  "category": "success",
+  "reason": "You work the broken end of the iron blade against the grindstone, shaping it into a crude point. The shortened blade is now a pointed weapon, though grinding it by hand takes time.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "pointed sword blade",
+    "consumes": [
+     "blade_broken"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "sharpen the broken blade into a spearhead on the grindstone",
+  "ok": true,
+  "category": "success",
+  "reason": "You grind the pointed iron blade against the stone, refining its point into a spearhead. The blade is used up in the work.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "sharpened spearhead",
+    "consumes": [
+     "made_3"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "grind the broken end of the sword blade to a sharp spear point on the grindstone",
+  "ok": true,
+  "category": "success",
+  "reason": "You work the broken blade against the grindstone, grinding its snapped end into a point. The short, heavy blade is now usable as a spearhead, though it has no haft.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "pointed sword blade",
+    "consumes": [
+     "blade_broken"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "seat the spearhead in the split end of the ash pole and bind it tight with the rawhide strips",
+  "ok": true,
+  "category": "success",
+  "reason": "You work the blade into the pole’s end to open a split, seat it there, and bind it fast with the rawhide strips strips, wetting them at the quenching trough so they tighten as they dry.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "ash-hafted spear",
+    "consumes": [
+     "made_3",
+     "pole_ash",
+     "rawhide"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "guard",
+  "text": "cut the linen into two layers, stuff the wool between them and quilt it into a padded jack with the needle and thread",
+  "ok": true,
+  "category": "success",
+  "reason": "You cut the linen into two broad layers, pack greasy wool between them, and quilt the layers together with the needle and thread. The padded jack is crude but wearable.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "padded jack",
+    "consumes": [
+     "linen_bolt",
+     "wool_sack",
+     "needle_holt"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "stab the dummy with the spear",
+  "ok": true,
+  "category": "success",
+  "reason": "You thrust the spear into the straw the straw dummy, piercing its sacking and compressing the straw. The the straw dummy remains standing, but its covering is punctured.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "thrust my spear hard into the straw dummy to show Holt it holds and bites",
+  "ok": true,
+  "category": "success",
+  "reason": "You thrust the ash-hafted spear into the straw the straw dummy. The point bites into the stuffed sacking, and the binding holds under the thrust.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

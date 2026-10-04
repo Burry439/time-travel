@@ -1,0 +1,58 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "focus the sun through the flask of water onto the reed fluff to light it, and show them",
+  "ok": false,
+  "category": "success",
+  "reason": "You hold the round glass flask over the dry reed fluff and try to focus sunlight through it. The flask is empty, so no water-filled lens forms and the fluff does not catch; Brann sees no flame.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "focus the sun through the flask of water onto the reed fluff to light it, and show them",
+  "ok": false,
+  "category": "success",
+  "reason": "You hold the round glass flask over the dry reed fluff and try to focus sunlight through it. The flask is empty, so no water-filled lens forms and the fluff does not catch; Brann sees no flame.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill Sefa’s round glass flask with clear lake water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens",
+  "ok": true,
+  "category": "success",
+  "reason": "You hold the round glass flask in the sunlight and focus a bright spot onto the dry reed fluff. It begins to smoulder and catches, while Brann watches.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

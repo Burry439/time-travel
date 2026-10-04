@@ -1,0 +1,424 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v9",
+  "passed": 8,
+  "total": 8,
+  "latency_p50_ms": 3006.5,
+  "latency_p95_ms": 6390,
+  "input_tokens": 61056,
+  "output_tokens": 1518,
+  "estimated_cost_usd": 0.0069
+ },
+ "results": [
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly and blinds him with pain despite his armour.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|boiling-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly and blinds him with pain despite his armour.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "disabled",
+        "injury": "Severe facial scalds leave him unable to fight."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 6390,
+    "input_tokens": 7637,
+    "output_tokens": 224,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"harm:poured|boiling-water\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly and blinds him with pain despite his armour.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"bowl_hessa\",\n        \"method\": \"poured\",\n        \"result\": \"disabled\",\n        \"injury\": \"Severe facial scalds leave him unable to fight.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly, blinding and disabling him despite his armour.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|boiling-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly, blinding and disabling him despite his armour.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "disabled",
+        "injury": "Severe scalds to the face and eyes leave him blinded and unable to fight."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 3191,
+    "input_tokens": 7637,
+    "output_tokens": 231,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"harm:poured|boiling-water\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You dash the boiling water from the clay bowl into Bren\u2019s face. It scalds him badly, blinding and disabling him despite his armour.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"bowl_hessa\",\n        \"method\": \"poured\",\n        \"result\": \"disabled\",\n        \"injury\": \"Severe scalds to the face and eyes leave him blinded and unable to fight.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the boiling water into Bren\u2019s face. It scalds him badly and blinds him with pain, leaving him unable to fight; his armour does not protect his face.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|boiling-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the boiling water into Bren\u2019s face. It scalds him badly and blinds him with pain, leaving him unable to fight; his armour does not protect his face.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "disabled",
+        "injury": "Severe scalds to the face; he is blinded by pain and unable to fight."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 3087,
+    "input_tokens": 7637,
+    "output_tokens": 176,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|boiling-water\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the boiling water into Bren\u2019s face. It scalds him badly and blinds him with pain, leaving him unable to fight; his armour does not protect his face.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"disabled\",\"injury\":\"Severe scalds to the face; he is blinded by pain and unable to fight.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the boiling water from Hessa\u2019s bowl into Bren\u2019s face. He is badly scalded and blinded, though his mail and helmet do not protect his face.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|boiling-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the boiling water from Hessa\u2019s bowl into Bren\u2019s face. He is badly scalded and blinded, though his mail and helmet do not protect his face.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "disabled",
+        "injury": "Severe scalds to the face leave him blinded and unable to fight."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 2884,
+    "input_tokens": 7637,
+    "output_tokens": 172,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|boiling-water\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the boiling water from Hessa\u2019s bowl into Bren\u2019s face. He is badly scalded and blinded, though his mail and helmet do not protect his face.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"disabled\",\"injury\":\"Severe scalds to the face leave him blinded and unable to fight.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the bowl\u2019s cold water into Bren\u2019s face. He is soaked, but the water does him no harm.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|water_cold|bowl",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the bowl\u2019s cold water into Bren\u2019s face. He is soaked, but the water does him no harm.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "missed",
+        "injury": "Cold water splashes over his face; he is soaked but unhurt."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 2926,
+    "input_tokens": 7627,
+    "output_tokens": 164,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|water_cold|bowl\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the bowl\u2019s cold water into Bren\u2019s face. He is soaked, but the water does him no harm.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"missed\",\"injury\":\"Cold water splashes over his face; he is soaked but unhurt.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the cold water from the clay bowl into Bren\u2019s face. It soaks him but does not injure him.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|cold-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the cold water from the clay bowl into Bren\u2019s face. It soaks him but does not injure him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "missed",
+        "injury": "Cold water splashes over his face and mail; he is soaked but unharmed."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 2909,
+    "input_tokens": 7627,
+    "output_tokens": 163,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|cold-water\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the cold water from the clay bowl into Bren\u2019s face. It soaks him but does not injure him.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"missed\",\"injury\":\"Cold water splashes over his face and mail; he is soaked but unharmed.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You dash the cold water from the bowl into Bren\u2019s face. It soaks him but does not injure him.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|water_cold|bowl",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the cold water from the bowl into Bren\u2019s face. It soaks him but does not injure him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "missed",
+        "injury": "Cold water splashes over his face and soaks him without harm."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 2500,
+    "input_tokens": 7627,
+    "output_tokens": 163,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|water_cold|bowl\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the cold water from the bowl into Bren\u2019s face. It soaks him but does not injure him.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"missed\",\"injury\":\"Cold water splashes over his face and soaks him without harm.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You fling the cold water from the clay bowl into Bren\u2019s face; it splashes over him but does no more than soak him.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|cold-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You fling the cold water from the clay bowl into Bren\u2019s face; it splashes over him but does no more than soak him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "missed",
+        "injury": "Cold water splashes over his face and mail, soaking him without injury."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v9",
+    "reasoning": "low",
+    "latency_ms": 3282,
+    "input_tokens": 7627,
+    "output_tokens": 225,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"harm:poured|cold-water\",\n  \"steps\": [\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You fling the cold water from the clay bowl into Bren\u2019s face; it splashes over him but does no more than soak him.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"bowl_hessa\",\n        \"method\": \"poured\",\n        \"result\": \"missed\",\n        \"injury\": \"Cold water splashes over his face and mail, soaking him without injury.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

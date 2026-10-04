@@ -12,11 +12,7 @@ import gear
 import paths
 import rules
 import scenario
-
-try:  # The parked storylines (D-56) register their own kinds when they're present.
-    import stories
-except ImportError:  # pragma: no cover - not in every checkout
-    stories = None
+import stories
 
 CARDS, LEVELS, MAPS = content.CARDS, content.LEVELS, content.MAPS
 GUIDED = {level_id: level for level_id, level in LEVELS.items() if level.get("steps")}
@@ -78,8 +74,7 @@ def card_conditions():
 
 
 def story_rules():
-    if stories is None:
-        return [], []
+    """The storylines' rules (D-61). Their effects are their own kinds (stories.EFFECTS), checked separately."""
     conditions, effects = [], []
     for story in stories.STORIES.values():
         for part in story.get("stages", []) + story.get("outcomes", []):
@@ -96,8 +91,8 @@ def all_rules():
         level_conditions, level_effects = level_rules(level)
         conditions += [(c, f"{level_id}: {where}") for c, where in level_conditions]
         effects += [(e, f"{level_id}: {where}") for e, where in level_effects]
-    story_conditions, story_effects = story_rules()
-    return conditions + story_conditions, effects + story_effects
+    story_conditions, _ = story_rules()
+    return conditions + story_conditions, effects
 
 
 def test_every_rule_is_a_known_kind_with_what_it_needs():
@@ -119,6 +114,12 @@ def test_every_rule_is_a_known_kind_with_what_it_needs():
             problems.append(f"{at}: unknown effect {kind!r}")
         else:
             problems += [f"{at}: {kind} needs {field}" for field in scenario.NEEDS[kind] if field not in spec]
+    for spec, at in story_rules()[1]:
+        kind = spec.get("kind")
+        if kind not in stories.EFFECTS:
+            problems.append(f"{at}: unknown story effect {kind!r}")
+        else:
+            problems += [f"{at}: {kind} needs {field}" for field in stories.NEEDS[kind] if field not in spec]
     assert not problems, "\n".join(problems)
 
 

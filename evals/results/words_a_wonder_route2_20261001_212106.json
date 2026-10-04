@@ -1,0 +1,48 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "stroke the iron nail along the black lodestone many times in one direction to magnetise it",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the rusty iron nail along the black lodestone again and again in one direction. It becomes a weak magnet; you use Sefa’s lodestone for the work.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "magnetized nail",
+    "consumes": [
+     "nail_boat"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the offering bowl with lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk to the lake and fill the offering bowl with water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Sefa and Brann: lay the magnetised nail on a thin sliver of the driftwood floating in the bowl of water and let it swing to point north, then turn the bowl to show it always comes back north",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk over to Sefa and Brann and set the magnetised nail on a thin sliver of driftwood floating in the bowl. The nail turns and settles pointing north; when you turn the bowl, it swings back to the same direction.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

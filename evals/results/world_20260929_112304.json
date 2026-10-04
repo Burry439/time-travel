@@ -1,0 +1,429 @@
+{
+ "agendas": {
+  "stranger": 1,
+  "task": 2,
+  "carry_on": 6,
+  "visit": 1
+ },
+ "meetings": [
+  {
+   "npc_id": "npc_elin_west",
+   "kind": "meet",
+   "why": "npc_kade_east",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_kade_east",
+   "topic": "small_talk",
+   "about": "Elin passes the time of day with Kade.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_darin_ko",
+   "kind": "meet",
+   "why": "npc_jory_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_jory_venn",
+   "topic": "small_talk",
+   "about": "Darin passes the time of day with Jory.",
+   "told_back": "Jory tells Darin: Hessa called out “Guards! Stop that one!” — Hessa says: The stranger took Hessa's wooden bucket without asking.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_oren_dast",
+   "kind": "meet",
+   "why": "npc_roderic_vale",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_roderic_vale",
+   "topic": "worry",
+   "about": "Oren talks about what's on their mind: look decisive in front of the captain.",
+   "told_back": null,
+   "believed": false,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  }
+ ],
+ "who_knows": [
+  "Roderic",
+  "Bren",
+  "Oren",
+  "Hessa",
+  "Mara",
+  "Jory",
+  "Darin",
+  "Elin",
+  "Kade"
+ ],
+ "decider_calls_last_page": 18,
+ "thinks": 22,
+ "decisions": [
+  {
+   "npc_id": "npc_hessa_marr",
+   "kind": "decide",
+   "why": "victim",
+   "skipped": null,
+   "shared_request": true,
+   "action": "demand_payment|demand_payment.angry.0",
+   "feelings": {
+    "anger": 0.67,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "decide",
+   "why": "heard Hessa",
+   "skipped": null,
+   "shared_request": true,
+   "action": "report:npc_mara_venn|report.frightened.0",
+   "feelings": {
+    "anger": 0.0,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_elin_west",
+   "kind": "decide",
+   "why": "heard Hessa",
+   "skipped": null,
+   "shared_request": true,
+   "action": "confront|confront.official.0",
+   "feelings": {
+    "anger": 0.0,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_kade_east",
+   "kind": "decide",
+   "why": "heard Hessa",
+   "skipped": null,
+   "shared_request": true,
+   "action": "threaten|threaten.angry.0",
+   "feelings": {
+    "anger": 0.67,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_mara_venn",
+   "kind": "decide",
+   "why": "told by Jory",
+   "skipped": null,
+   "shared_request": true,
+   "action": "shout_for_help|shout_for_help.theft.0",
+   "feelings": {
+    "anger": 0.33,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "decide",
+   "why": "heard Mara",
+   "skipped": null,
+   "shared_request": true,
+   "action": "confront|confront.official.0",
+   "feelings": {
+    "anger": 0.33,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_hessa_marr",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "stranger",
+   "mood": "irritable",
+   "doing": "going to see what the stranger is up to"
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "task:gawk",
+   "mood": "excited",
+   "doing": "gawking at Darin's goods"
+  },
+  {
+   "npc_id": "npc_mara_venn",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "irritable",
+   "doing": "work at the smithy"
+  },
+  {
+   "npc_id": "npc_roderic_vale",
+   "kind": "agenda",
+   "why": "was arrested by the guards",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "weary",
+   "doing": "watch the gate"
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "task:approach",
+   "mood": "content",
+   "doing": "walking the gate approach"
+  },
+  {
+   "npc_id": "npc_elin_west",
+   "kind": "meet",
+   "why": "npc_kade_east",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_kade_east",
+   "topic": "small_talk",
+   "about": "Elin passes the time of day with Kade.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_elin_west",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "content",
+   "doing": "watch the south road"
+  },
+  {
+   "npc_id": "npc_kade_east",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "irritable",
+   "doing": "patrol the village approach"
+  },
+  {
+   "npc_id": "npc_darin_ko",
+   "kind": "meet",
+   "why": "npc_jory_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_jory_venn",
+   "topic": "small_talk",
+   "about": "Darin passes the time of day with Jory.",
+   "told_back": "Jory tells Darin: Hessa called out “Guards! Stop that one!” — Hessa says: The stranger took Hessa's wooden bucket without asking.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_darin_ko",
+   "kind": "decide",
+   "why": "told by Jory",
+   "skipped": null,
+   "shared_request": true,
+   "action": "report:npc_oren_dast|report.shrewd.0",
+   "feelings": {
+    "anger": 0.33,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_oren_dast",
+   "kind": "decide",
+   "why": "told by Darin",
+   "skipped": null,
+   "shared_request": true,
+   "action": "report:npc_roderic_vale|report.official.0",
+   "feelings": {
+    "anger": 0.33,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_roderic_vale",
+   "kind": "decide",
+   "why": "told by Oren",
+   "skipped": null,
+   "shared_request": true,
+   "action": "carry_on",
+   "feelings": {
+    "anger": 0.33,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_roderic_vale",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "weary",
+   "doing": "watch the gate"
+  },
+  {
+   "npc_id": "npc_darin_ko",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "content",
+   "doing": "tend the merchant wagon"
+  },
+  {
+   "npc_id": "npc_oren_dast",
+   "kind": "agenda",
+   "why": "stole my wooden bucket",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "visit:npc_roderic_vale",
+   "mood": "anxious",
+   "doing": "on the way to see Roderic"
+  },
+  {
+   "npc_id": "npc_oren_dast",
+   "kind": "meet",
+   "why": "npc_roderic_vale",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_roderic_vale",
+   "topic": "worry",
+   "about": "Oren talks about what's on their mind: look decisive in front of the captain.",
+   "told_back": null,
+   "believed": false,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "small_talk",
+   "about": "Jory passes the time of day with Mara.",
+   "told_back": null,
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  }
+ ]
+}

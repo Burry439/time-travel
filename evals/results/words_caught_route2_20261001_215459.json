@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "supper",
+  "text": "offer Osk my carved wooden whistle in trade for one of his meat pies",
+  "ok": true,
+  "category": "success",
+  "reason": "You offer Osk your carved wooden whistle in exchange for one of his meat pies. Whether he accepts is up to him.",
+  "steps": [
+   {
+    "action": "offer_trade",
+    "outcome": "success"
+   }
+  ]
+ }
+]

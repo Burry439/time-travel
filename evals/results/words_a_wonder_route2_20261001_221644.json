@@ -1,0 +1,70 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "stroke the iron nail along the black lodestone many times in one direction to magnetise it",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the rusty iron nail along the black lodestone repeatedly in one direction. The nail becomes weakly magnetised.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "magnetized iron nail",
+    "consumes": [
+     "nail_boat"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the offering bowl with lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill the offering bowl with lake water. The wooden bowl is watertight and has room for the water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Sefa and Brann: float one of the dry driftwood sticks in the bowl of water, lay the magnetised nail on it and let it swing to point north, then turn the bowl to show it always comes back north",
+  "ok": true,
+  "category": "success",
+  "reason": "You set a dry driftwood stick afloat in the water and balance the magnetized nail on it. As you turn the bowl, the nail swings back to its north–south alignment, and Sefa and Brann can see it.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "friends",
+  "text": "show Brann slowly how it's done: stroke the nail along the black stone one way only, then float it on the stick in the bowl and watch it swing north. Plain iron and stone, nothing hidden",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the magnetized iron nail along the black lodestone repeatedly in one direction. The nail remains weakly magnetized. You set a dry driftwood stick afloat in the bowl and balance the nail on it. The nail swings around and settles along a north–south line, where Brann can see it.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "magnetized iron nail",
+    "consumes": [
+     "made_5"
+    ]
+   },
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

@@ -1,0 +1,308 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v8",
+  "passed": 2,
+  "total": 4,
+  "latency_p50_ms": 3692.5,
+  "latency_p95_ms": 5128,
+  "input_tokens": 34504,
+  "output_tokens": 928,
+  "estimated_cost_usd": 0.0039
+ },
+ "results": [
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You have only a loose flint shard, not a blade you can hold firmly for felling. The young birch remains rooted.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint_shard",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You have only a loose flint shard, not a blade you can hold firmly for felling. The young birch remains rooted.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 5128,
+    "input_tokens": 8626,
+    "output_tokens": 122,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint_shard\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You have only a loose flint shard, not a blade you can hold firmly for felling. The young birch remains rooted.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You have only a loose flint shard, not a blade hafted or held firmly enough to fell the young birch. The sapling remains rooted.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint_shard",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You have only a loose flint shard, not a blade hafted or held firmly enough to fell the young birch. The sapling remains rooted.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2287,
+    "input_tokens": 8626,
+    "output_tokens": 126,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint_shard\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You have only a loose flint shard, not a blade hafted or held firmly enough to fell the young birch. The sapling remains rooted.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You spend several minutes cutting through the wrist-thick birch with the sharp flint edge. It comes down, leaving a stump and a light crown of branches beside the trunk.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|hand-held-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You spend several minutes cutting through the wrist-thick birch with the sharp flint edge. It comes down, leaving a stump and a light crown of branches beside the trunk.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The slender felled trunk, still several metres long and light enough for one person to handle.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch branches",
+          "description": "The sapling's light crown of thin branches and leaves.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 3.0,
+          "length_m": 1.5,
+          "flags": [
+           "flexible",
+           "combustible"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch stump",
+          "description": "The short rooted stump left in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 1.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3854,
+    "input_tokens": 8626,
+    "output_tokens": 336,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|hand-held-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You spend several minutes cutting through the wrist-thick birch with the sharp flint edge. It comes down, leaving a stump and a light crown of branches beside the trunk.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The slender felled trunk, still several metres long and light enough for one person to handle.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch branches\",\"description\":\"The sapling's light crown of thin branches and leaves.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":3.0,\"length_m\":1.5,\"flags\":[\"flexible\",\"combustible\"],\"capabilities\":[]},{\"name\":\"birch stump\",\"description\":\"The short rooted stump left in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":1.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You cut through the wrist-thick birch with the sharp flint shard after several minutes of steady work. It falls into manageable branches and a trunk, leaving the stump rooted in the verge.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You cut through the wrist-thick birch with the sharp flint shard after several minutes of steady work. It falls into manageable branches and a trunk, leaving the stump rooted in the verge.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "trunk",
+          "description": "The felled birch's slender trunk, about three metres long and too heavy to carry as one piece.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "branches",
+          "description": "A small bundle of leafy birch branches cut from the trunk.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 1.5,
+          "flags": [
+           "rigid",
+           "flexible",
+           "combustible"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "stump",
+          "description": "The rooted base of the birch, left standing in the ground.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3531,
+    "input_tokens": 8626,
+    "output_tokens": 344,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You cut through the wrist-thick birch with the sharp flint shard after several minutes of steady work. It falls into manageable branches and a trunk, leaving the stump rooted in the verge.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"trunk\",\"description\":\"The felled birch's slender trunk, about three metres long and too heavy to carry as one piece.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]},{\"name\":\"branches\",\"description\":\"A small bundle of leafy birch branches cut from the trunk.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":1.5,\"flags\":[\"rigid\",\"flexible\",\"combustible\"],\"capabilities\":[]},{\"name\":\"stump\",\"description\":\"The rooted base of the birch, left standing in the ground.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

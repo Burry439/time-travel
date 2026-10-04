@@ -1,0 +1,30 @@
+[
+ {
+  "run": 1,
+  "step": "supper",
+  "text": "chop the oven logs into kindling",
+  "ok": true,
+  "category": "success",
+  "reason": "You split Osk's oven logs into smaller pieces with the hatchet, making kindling.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "supper",
+  "text": "split the logs by the oven into kindling with the hatchet",
+  "ok": true,
+  "category": "success",
+  "reason": "You split Osk’s logs with his hatchet into smaller pieces suitable for kindling. The hatchet bites through the wood with several hard blows.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   }
+  ]
+ }
+]

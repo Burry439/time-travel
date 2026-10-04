@@ -1,0 +1,475 @@
+{
+ "counts": {
+  "carried": 10,
+  "follow-on": 21,
+  "whole line": 6
+ },
+ "results": [
+  {
+   "level": "common_room",
+   "step": "ask",
+   "opener": "What's the news from the city? Can a stranger get in?",
+   "replies": [
+    "doran_inn: News enough, friend: the city's gate is shut to strangers since the fever. The captain lets you in only if someone inside will speak for you."
+   ],
+   "then": [
+    "Ivo: “Oi, you. Pass me my tankard, would you? Knocked it off and my back's gone.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "common_room",
+   "step": "group",
+   "opener": "Hello.",
+   "replies": [
+    "wynn_pilgrim: Ah, hello, traveller. Ada at the mill pays fairly, and she's always short a pair of hands. Where have you come from?"
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "common_room",
+   "step": "group",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "wynn_pilgrim: It is, and the fire makes it all the pleasanter. If you're looking for work, Ada at the mill pays fair, and she's always short a pair of hands."
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "common_room",
+   "step": "group",
+   "opener": "Who are you?",
+   "replies": [
+    "wynn_pilgrim: I’m Wynn, a pilgrim on my way to the shrine by the brook. Ada at the mill pays fair, and she’s always short a pair of hands. Where are you from, traveller?"
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "common_room",
+   "step": "group",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "wynn_pilgrim: That’s kind of you to ask. Ada at the mill pays fair, and she’s always short a pair of hands—perhaps she could use yours. Where have you come from?"
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "common_room",
+   "step": "group",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "wynn_pilgrim: You’re at the inn, just outside the walled city. If you’re looking for work, Ada at the mill pays fair and is always short a pair of hands. Where were you hoping to go?"
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "cup_of_water",
+   "step": "talk",
+   "opener": "Hello.",
+   "replies": [
+    "wenna_ash: Hello to you, too. Water's what's wrong, child—my leg won't get me to the well, and that boy's off after the hens. My cup's by the well."
+   ],
+   "then": [
+    "Wenna: “Fill it for me, would you?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "cup_of_water",
+   "step": "talk",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "wenna_ash: Aye, lovely enough if you’ve got a drink. My leg won’t take me to the well today, and the boy’s off after the hens. My cup’s by the well—fill it for me, would you?"
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "cup_of_water",
+   "step": "talk",
+   "opener": "Who are you?",
+   "replies": [
+    "wenna_ash: Wenna Ash. And since you ask, I'm parched—my leg won't get me to the well, and the boy's off after the hens. My cup's by the well."
+   ],
+   "then": [
+    "Wenna: “Fill it for me, would you?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "cup_of_water",
+   "step": "talk",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "wenna_ash: Water, that's what's wrong. My leg won't take me to the well, and the boy's off after the hens. My cup's by the well."
+   ],
+   "then": [
+    "Wenna: “Fill it for me, would you?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "cup_of_water",
+   "step": "talk",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "wenna_ash: You’re at my farm, just outside the town. Water’s what’s wrong with me—my leg won’t take me to the well, and the boy’s off after the hens. My cup’s by the well."
+   ],
+   "then": [
+    "Wenna: “Fill it for me, would you?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fair_trade",
+   "step": "hello",
+   "opener": "Hello.",
+   "replies": [
+    "ada_miller: Buying, selling, or working? The mule’s trough is dry and Jem’s asleep. Fill it from the race and you’ll have a sack of flour."
+   ],
+   "then": [
+    "Ada: “Use my pail. Deal?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fair_trade",
+   "step": "hello",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "ada_miller: Fair enough. Work, or are you just passing the time? The mule's trough is dry and Jem's asleep; fill it from the race and you'll have a sack of flour."
+   ],
+   "then": [
+    "Ada: “Use my pail. Deal?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fair_trade",
+   "step": "hello",
+   "opener": "Who are you?",
+   "replies": [
+    "ada_miller: Ada. Work? The mule's trough is dry and Jem's asleep."
+   ],
+   "then": [
+    "Ada: “Fill it from the race and you'll have a sack of flour. Use my pail. Deal?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fair_trade",
+   "step": "hello",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "ada_miller: Work? The mule's trough is dry and Jem's asleep. Fill it from the race and you'll have a sack of flour."
+   ],
+   "then": [
+    "Ada: “Use my pail. Deal?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fair_trade",
+   "step": "hello",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "ada_miller: This is Ada’s mill, just outside the city. Work? The mule’s trough is dry and Jem’s asleep."
+   ],
+   "then": [
+    "Ada: “Fill it from the race and you'll have a sack of flour. Use my pail. Deal?”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fire_and_water",
+   "step": "hello",
+   "opener": "Hello.",
+   "replies": [
+    "ulf_charcoal: Hello. Mind your feet; she's hot. Help me, will you?"
+   ],
+   "then": [
+    "Ulf: “Hands shake today. Fill my pot at the river, make a fire in the pit, and boil me some water for tea. Use my things.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fire_and_water",
+   "step": "hello",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "ulf_charcoal: Aye, mild enough. Help me, will you? My hands shake today."
+   ],
+   "then": [
+    "Ulf: “Fill my pot at the river, make a fire in the pit, and boil me some water for tea. Use my things.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fire_and_water",
+   "step": "hello",
+   "opener": "Who are you?",
+   "replies": [
+    "ulf_charcoal: Ulf. Charcoal burner. Hm—could you help me?"
+   ],
+   "then": [
+    "Ulf: “Hands shake today. Fill my pot at the river, make a fire in the pit, and boil me some water for tea. Use my things.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fire_and_water",
+   "step": "hello",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "ulf_charcoal: Help? My hands shake today. Take my pot, fill it at the river, then make a fire in the pit and boil me water for tea."
+   ],
+   "then": [
+    "Ulf: “Use my things.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "fire_and_water",
+   "step": "hello",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "ulf_charcoal: This is the valley, by my clamp. Help? Hands shake today."
+   ],
+   "then": [
+    "Ulf: “Fill my pot at the river, make a fire in the pit, and boil me some water for tea. Use my things.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "patched_up",
+   "step": "ask",
+   "opener": "Hello.",
+   "replies": [
+    "brea_healer: Hurt, or hungry, dearie? There’s clean linen and plantain on the table if you need them; tear a strip and bind it tight."
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "patched_up",
+   "step": "ask",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "brea_healer: Aye, it is, dearie. Use what's on the table if you need it: clean linen, and my plantain. Tear a strip and bind it tight."
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "patched_up",
+   "step": "ask",
+   "opener": "Who are you?",
+   "replies": [
+    "brea_healer: Brea, dearie. And you’ve cut yourself—don’t stand there asking questions over it. Use what’s on the table: clean linen, and my plantain if you need it."
+   ],
+   "then": [
+    "Brea: “Tear a strip, bind it tight.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "patched_up",
+   "step": "ask",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "brea_healer: Use what's on the table, dearie: clean linen, and my plantain if you need it. Tear a strip, bind it tight."
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "patched_up",
+   "step": "ask",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "brea_healer: You're at the Ford Inn, dearie. The door's about ten steps south; mind the nail on your way out."
+   ],
+   "then": [
+    "Brea: “Use what's on the table, dearie: clean linen, and my plantain if you need it. Tear a strip, bind it tight.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "something_new",
+   "step": "hello",
+   "opener": "Hello.",
+   "replies": [
+    "mey_shepherd: Hello. Are you from beyond the valley? Why?"
+   ],
+   "then": [
+    "Mey: “It's the fog. When it comes down you can't tell one way from another. Father was lost all night last spring. You can use my needle if it helps. Father's got a magic stone too.”",
+    "Orrin: “Not magic. Lucky. Pulls iron. Use it if you must, and the bowl.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "something_new",
+   "step": "hello",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "mey_shepherd: It is, but why does the fog come down so suddenly? You can't tell one way from another when it does. Father was lost all night in it last spring."
+   ],
+   "then": [
+    "Mey: “You can use my needle if it helps. Father's got a magic stone too.”",
+    "Orrin: “Not magic. Lucky. Pulls iron. Use it if you must, and the bowl.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "something_new",
+   "step": "hello",
+   "opener": "Who are you?",
+   "replies": [
+    "mey_shepherd: Mey. Are you from somewhere beyond the valley? The fog comes down and you can't tell one way from another; Father was lost all night in it last spring."
+   ],
+   "then": [
+    "Mey: “You can use my needle if it helps. Father's got a magic stone too.”",
+    "Orrin: “Not magic. Lucky. Pulls iron. Use it if you must, and the bowl.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "something_new",
+   "step": "hello",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "mey_shepherd: Maybe. It's the fog—when it comes down, you can't tell one way from another. Father was lost all night last spring."
+   ],
+   "then": [
+    "Mey: “You can use my needle if it helps. Father's got a magic stone too.”",
+    "Orrin: “Not magic. Lucky. Pulls iron. Use it if you must, and the bowl.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "something_new",
+   "step": "hello",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "mey_shepherd: You're by the sheepfold, just outside the town. It's the fog—when it comes down, you can't tell one way from another; Father was lost all night in it last spring. You can use my needle if it helps."
+   ],
+   "then": [
+    "Mey: “Father's got a magic stone too.”",
+    "Orrin: “Not magic. Lucky. Pulls iron. Use it if you must, and the bowl.”"
+   ],
+   "verdict": "whole line",
+   "moved_on": true
+  },
+  {
+   "level": "tinkers_book",
+   "step": "hello",
+   "opener": "Hello.",
+   "replies": [
+    "odo_tinker: Hm. Help? Rope, torch, sling—for my round tomorrow."
+   ],
+   "then": [
+    "Odo: “Book's on the table, says how. Use what's on the bench.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "tinkers_book",
+   "step": "hello",
+   "opener": "Lovely day, isn't it?",
+   "replies": [
+    "odo_tinker: Hm. Customer or help? Rope, torch, sling for my round tomorrow."
+   ],
+   "then": [
+    "Odo: “Book's on the table, says how. Use what's on the bench.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "tinkers_book",
+   "step": "hello",
+   "opener": "Who are you?",
+   "replies": [
+    "odo_tinker: Odo. Tinker. Help?"
+   ],
+   "then": [
+    "Odo: “Rope, torch, sling, for my round tomorrow. Book's on the table, says how. Use what's on the bench.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "tinkers_book",
+   "step": "hello",
+   "opener": "Can I help with anything?",
+   "replies": [
+    "odo_tinker: Hm. Rope, torch, sling for my round tomorrow. Book's on the table; use what's on the bench."
+   ],
+   "then": [],
+   "verdict": "carried",
+   "moved_on": true
+  },
+  {
+   "level": "tinkers_book",
+   "step": "hello",
+   "opener": "I'm lost. Where am I?",
+   "replies": [
+    "odo_tinker: Lost? Hm. Need help?"
+   ],
+   "then": [
+    "Odo: “Rope, torch, sling, for my round tomorrow. Book's on the table, says how. Use what's on the bench.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  },
+  {
+   "level": "training_yard",
+   "step": "hello",
+   "opener": "I'd like to learn how to fight.",
+   "replies": [
+    "hal_brand: Learn? Good. Sword in your right hand, shield in your left."
+   ],
+   "then": [
+    "Hal: “Here: practice ones. Nobody bleeds in my yard.”"
+   ],
+   "verdict": "follow-on",
+   "moved_on": true
+  }
+ ]
+}

@@ -63,10 +63,35 @@
  ],
  "secrets": [
   {
+   "id": "elin_bog",
    "text": "She was the scout whose horse went into the bog, and she hasn't forgiven herself.",
-   "reveal": "someone who offers a real way to find direction in fog"
+   "reveal": "someone who offers a real way to find direction in fog",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "respect",
+      "at_least": 0.4
+     },
+     {
+      "kind": "regard",
+      "axis": "awe",
+      "at_least": 0.4
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.6
+     }
+    ]
+   },
+   "lead": "Elin was the scout whose horse went into the bog, and she hasn't forgiven herself."
   }
  ],
+ "history": {
+  "npc_roderic_vale": "He sent her patrol out the night of the fog, when her horse went into the bog."
+ },
  "likes": "accuracy, quiet, clear skies",
  "dislikes": "rumour, fog, people who guess",
  "opinions": {

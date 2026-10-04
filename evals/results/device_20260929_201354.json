@@ -1,0 +1,92 @@
+[
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "Pick up the plantain leaves, then press T and type: “crush the plantain leaves into a poultice for a burn.”",
+  "latency_ms": 5255
+ },
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "Pick up the plantain leaves by clicking them. Then press T and type: “crush the plantain leaves into a poultice for a burn.”",
+  "latency_ms": 1489
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F to raise your shield, and face Kade as he swings. Let go when his blow passes, then strike with Space.",
+  "latency_ms": 2290
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F with your shield facing Kade to raise it and take his blows. Let go of F when he recovers, then strike with Space.",
+  "latency_ms": 2229
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "Dry grass bends and stays bent, so it can’t store enough spring to launch anything. Try making something simple from what’s nearby—describe it with T, then use T again to show Jory how it works.",
+  "latency_ms": 1869
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "Dry grass can make kindling, but it bends instead of storing spring, so it won’t work as a bow. Try making something simpler with the materials nearby, like sparks into dry grass or a lever using the branch and stone; describe it with T, then show Jory how it works.",
+  "latency_ms": 2083
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "The north gate is shut to strangers, so you’ll need to learn what might earn you entry. Look for someone who knows the city’s customs, and pay attention to useful skills or tools nearby.",
+  "latency_ms": 1948
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "I can’t tell you a way in, and I don’t know what the city’s gatekeepers will accept. Look for someone who knows the local customs, or notice what kinds of goods, skills, or help might make a stranger welcome.",
+  "latency_ms": 2290
+ },
+ {
+  "case": "no_secrets",
+  "ok": false,
+  "problems": [
+   "said none of [\"don't know\", 'do not know', \"can't know\", 'cannot know', 'no way of knowing', 'not something I', \"I can't tell\", \"haven't\"]"
+  ],
+  "answer": "I don’t know what Oren is hiding; I haven’t seen or been told anything about him. Ask him, or watch what he does around the people and things you’ve encountered.",
+  "latency_ms": 1478
+ },
+ {
+  "case": "no_secrets",
+  "ok": false,
+  "problems": [
+   "said none of [\"don't know\", 'do not know', \"can't know\", 'cannot know', 'no way of knowing', 'not something I', \"I can't tell\", \"haven't\"]"
+  ],
+  "answer": "I don’t know what Oren is hiding; I haven’t seen him or been told anything about him. If you can find him, watch what he does or ask him directly.",
+  "latency_ms": 1817
+ },
+ {
+  "case": "in_character",
+  "ok": false,
+  "problems": [
+   "said 'AI'"
+  ],
+  "answer": "I’m a time machine—or what’s left of one—carrying you back from your own time. “Exactly” may have to wait until I’ve had repairs.",
+  "latency_ms": 1993
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a small time machine—the machine that brought you here. I’m damaged, but still able to talk; you can ask me for help while you get your bearings.",
+  "latency_ms": 1626
+ }
+]

@@ -6,8 +6,8 @@ extends VBoxContainer
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const Deeds := preload("res://scripts/ui/deeds.gd")
-const TABS := [["goals", "Goals"], ["people", "People"], ["deeds", "Deeds"], ["made", "Things made"],
-	["device", "Device"], ["log", "Log"], ["map", "Map"]]
+const TABS := [["goals", "Goals"], ["stories", "Stories"], ["people", "People"], ["deeds", "Deeds"],
+	["made", "Things made"], ["device", "Device"], ["log", "Log"], ["map", "Map"]]
 
 var ui: Control
 var game: Node2D
@@ -27,6 +27,8 @@ func build(owner_ui: Control, owner_game: Node2D, first_tab: String) -> void:
 	add_child(tab_row)
 	var group := ButtonGroup.new()
 	for pair in TABS:
+		if pair[0] == "stories" and _stories() == null:
+			continue # A level that runs no storylines (the training levels).
 		var button: Button = ui.button(pair[1], show_tab.bind(pair[0]), "Chip")
 		button.toggle_mode = true
 		button.button_group = group
@@ -59,6 +61,7 @@ func show_tab(name: String) -> void:
 	add_child(page)
 	match name:
 		"goals": _goals(body)
+		"stories": _stories_page(body)
 		"people": _people(body)
 		"deeds": _deeds(body)
 		"made": _made(body)
@@ -183,6 +186,34 @@ func _lead_card(body: VBoxContainer, claim: Dictionary) -> void:
 		show_tab("goals"))
 
 
+# --- Stories (D-61) -----------------------------------------------------------------------------------------
+
+## The storylines this level runs, as the backend worked them out (state.view.stories), or null if it runs none.
+func _stories() -> Variant:
+	var view = game.run_state.get("view")
+	return view.get("stories") if typeof(view) == TYPE_DICTIONARY else null
+
+
+## What's going on in town that you've come into: what you've learned or seen of each, and how it ended.
+func _stories_page(body: VBoxContainer) -> void:
+	var known = _stories()
+	if typeof(known) != TYPE_ARRAY or (known as Array).is_empty():
+		ui.paragraph(body, "Nothing yet. People here have troubles of their own; listen, and you'll come into them.")
+		return
+	ui.paragraph(body, "What's going on in town that you've come into. How it ends is up to you.").add_theme_color_override(
+		"font_color", UITheme.INK_SOFT)
+	for story in known:
+		var ended := str(story.get("ended", "")) if story.get("ended") != null else ""
+		var parts := PackedStringArray()
+		for part in story.get("parts", []):
+			parts.append("• " + str(part))
+		if not ended.is_empty():
+			parts.append("✓ " + ended)
+		var whose := str(story.get("whose", ""))
+		_card(body, ui.bar.portrait_for(whose) if not whose.is_empty() else null, str(story.title), "\n".join(parts),
+			UITheme.INK_SOFT if not ended.is_empty() else UITheme.INK)
+
+
 # --- People -------------------------------------------------------------------------------------------------
 
 func _people(body: VBoxContainer) -> void:
@@ -248,6 +279,8 @@ func _transcript(id: String) -> Array:
 					lines.append({"text": "%s: “%s”" % [name, entry.reply], "theirs": true})
 			"npc":
 				lines.append({"text": str(entry.get("reason", "")), "theirs": true})
+			"told":
+				lines.append({"text": "(%s)" % str(entry.get("reason", "")), "theirs": false})
 	return lines
 
 
@@ -315,8 +348,8 @@ func _log(body: VBoxContainer) -> void:
 		var entry: Dictionary = history[index]
 		if shown >= 40:
 			break
-		if str(entry.get("kind", "")) in ["device", "talk", "npc"]:
-			continue # The device and conversations have their own pages.
+		if str(entry.get("kind", "")) in ["device", "talk", "npc", "told", "story"]:
+			continue # The device, conversations and stories have their own pages.
 		shown += 1
 		var line: String = str(entry.get("reason", ""))
 		if entry.has("text") and entry.has("category"):

@@ -1,0 +1,116 @@
+[
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "fix Ilse's net with the twine",
+  "ok": true,
+  "category": "success",
+  "reason": "You use the tarred twine to knot the tear closed, mending Ilse's fishing net.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "mend the tear in the fishing net with the tarred twine, knotting new meshes",
+  "ok": true,
+  "category": "success",
+  "reason": "You knot the tarred twine across the tear, joining the broken meshes and mending the fishing net. The net and twine belong to Ilse.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 2,
+  "step": "cross",
+  "text": "fix Ilse's net with the twine",
+  "ok": true,
+  "category": "success",
+  "reason": "You use the tarred twine to knot the torn mesh back together, closing the long tear. The mended net is rough but usable.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 2,
+  "step": "cross",
+  "text": "mend the tear in the fishing net with the tarred twine, knotting new meshes",
+  "ok": true,
+  "category": "success",
+  "reason": "You knot the tarred twine across the tear, joining the broken meshes and closing the gap. The mended net is still rough but usable.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 3,
+  "step": "cross",
+  "text": "fix Ilse's net with the twine",
+  "ok": true,
+  "category": "success",
+  "reason": "You draw the torn mesh together and knot tarred twine across the tear, leaving the net mended though the repair is rough.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 3,
+  "step": "cross",
+  "text": "mend the tear in the fishing net with the tarred twine, knotting new meshes",
+  "ok": true,
+  "category": "success",
+  "reason": "You knot the tarred twine across the tear, forming new meshes that close the gap. The net is mended, though the repair is rough.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended fishing net",
+    "consumes": [
+     "net_ilse",
+     "twine_ilse"
+    ]
+   }
+  ]
+ }
+]

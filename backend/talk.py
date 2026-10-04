@@ -33,6 +33,7 @@ import gatekeeping
 import gear
 import persona
 import reputation
+import stories
 import tuning
 from shapes import Npc, State
 
@@ -312,6 +313,13 @@ def _hand_over(
         cast.mind(npc).setdefault("shared", []).append(target)
         fact = conversation.knowledge(npc)[target]
         learned.append(_lead(npc, line, event_id, "fact", target, fact.get("lead") or fact["text"]))
+    elif act == "confide":  # A secret of theirs, told in confidence (D-61).
+        cast.mind(npc).setdefault("confided", []).append(target)
+        secret = next(s for s in cast.card(npc)["secrets"] if s.get("id") == target)
+        learned.append(_lead(npc, line, event_id, "secret", target, secret.get("lead") or secret["text"]))
+    elif act == "story":  # They agreed to something a story asked of them (Darin letting a debt go, D-61).
+        move = stories.make_move(state, target, event_id)
+        learned.append(_lead(npc, line, event_id, "story", target, f"{name} agreed: {move['description']}"))
     elif act == "lend":
         thing = objects[target]
         thing["lent_to"] = "player"

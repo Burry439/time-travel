@@ -1,0 +1,217 @@
+[
+ {
+  "case": "group_compass_at_gate",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Captain, watch this.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_roderic_vale",
+      "key": "answer",
+      "line": "It points north. What use is that to the gate or the garrison, stranger?",
+      "joined": false
+     },
+     {
+      "who": "npc_bren_marr",
+      "key": "answer",
+      "line": "Three times is hard to blame on a twitchy hand. Could it help the patrols in fog, Captain?",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "answer",
+     "answer"
+    ],
+    "line": "It points north. What use is that to the gate or the garrison, stranger? Three times is hard to blame on a twitchy hand. Could it help the patrols in fog, Captain?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 8486,
+    "voice_usd": 0.0009581
+   },
+   {
+    "said": "It always points north, even at night or in fog.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_roderic_vale",
+      "key": "answer",
+      "line": "Then we test it against a known bearing in the fog. If it holds, the patrols may have use for it.",
+      "joined": false
+     },
+     {
+      "who": "npc_bren_marr",
+      "key": "ask_back",
+      "line": "A fair test, Captain. Stranger, can you show it holds when the fog comes down?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer",
+     "ask_back"
+    ],
+    "line": "Then we test it against a known bearing in the fog. If it holds, the patrols may have use for it. A fair test, Captain. Stranger, can you show it holds when the fog comes down?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3407,
+    "voice_usd": 0.0008771
+   },
+   {
+    "said": "Your men could find their way with it on patrol.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_roderic_vale",
+      "key": "answer",
+      "line": "That is what we are testing, stranger. When the fog comes, you will show it against a known bearing; until then, it proves nothing.",
+      "joined": false
+     },
+     {
+      "who": "npc_bren_marr",
+      "key": "answer",
+      "line": "Fair enough, but a straight north reading won't tell us how it fares on the moor. We wait for fog, then put it to the test.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer",
+     "answer"
+    ],
+    "line": "That is what we are testing, stranger. When the fog comes, you will show it against a known bearing; until then, it proves nothing. Fair enough, but a straight north reading won't tell us how it fares on the moor. We wait for fog, then put it to the test.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 3386,
+    "voice_usd": 0.00092
+   }
+  ]
+ },
+ {
+  "case": "group_bren_joins_hessa",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "none of ['npc_bren_marr'] spoke (only ['npc_hessa_marr'])"
+  ],
+  "turns": [
+   {
+    "said": "Good evening! Is this your inn?",
+    "reply": "ask_back",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "ask_back",
+      "line": "Oh, love, it is. Come in out of the road—are you looking for a bed, or just a bite to eat?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "ask_back"
+    ],
+    "line": "Oh, love, it is. Come in out of the road—are you looking for a bed, or just a bite to eat?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2383,
+    "voice_usd": 0.0006088
+   },
+   {
+    "said": "I'm looking for somewhere to sleep tonight.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "A bed, then, love. I’ve room tonight; come inside and we’ll settle what it costs before you turn in.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "A bed, then, love. I’ve room tonight; come inside and we’ll settle what it costs before you turn in.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2303,
+    "voice_usd": 0.0006255
+   },
+   {
+    "said": "And who's this? A friend of yours?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "That’s Bren, my brother. He’s keeping an eye on the road, love—no need to look so wary of him.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "That’s Bren, my brother. He’s keeping an eye on the road, love—no need to look so wary of him.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 1745,
+    "voice_usd": 0.0006396
+   }
+  ]
+ },
+ {
+  "case": "kade_knows_hessa",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Do you know Hessa?",
+    "reply": "ask_back",
+    "lines": [
+     {
+      "who": "npc_kade_east",
+      "key": "ask_back",
+      "line": "Hessa? Innkeeper. What of her?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "ask_back"
+    ],
+    "line": "Hessa? Innkeeper. What of her?",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 1892,
+    "voice_usd": 0.0004065
+   },
+   {
+    "said": "Where would I find her?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_kade_east",
+      "key": "answer",
+      "line": "Inn door. Twenty-four steps south-west.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Inn door. Twenty-four steps south-west.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 2033,
+    "voice_usd": 0.0004098
+   }
+  ]
+ }
+]

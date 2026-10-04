@@ -1,0 +1,113 @@
+[
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "grind the broken sword blade to a sharp spear point on the grindstone, keeping it wet",
+  "ok": true,
+  "category": "unresolved",
+  "reason": "The attempt could not be resolved. Nothing changed.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "pointed broken blade",
+    "consumes": [
+     "blade_broken"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "sharpen the broken blade into a spearhead on the grindstone",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk to the grindstone and work the broken blade against its turning stone, grinding its broken end into a point. The blade is now a crude spearhead, though it has no haft.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "crude spearhead",
+    "consumes": [
+     "blade_broken"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "grind the broken sword blade to a sharp spear point on the grindstone, keeping it wet",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot keep the blade wet while grinding it: no water is within reach.",
+  "steps": [
+   {
+    "action": "other",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "soak the rawhide in the trough, seat the spearhead in the split end of the ash pole and bind it tight with the soaked rawhide",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot soak the rawhide strips strips in the trough: the trough is not a container you can fill or use to soak them.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "guard",
+  "text": "cut the linen into two layers, stuff the wool between them and quilt it into a padded jack with the needle and thread",
+  "ok": true,
+  "category": "success",
+  "reason": "You cut and layer the linen, pack the wool between it, then stitch the layers into a rough padded jack. It takes hours of careful work.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "padded jack",
+    "consumes": [
+     "linen_bolt",
+     "wool_sack"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "stab the dummy with the spear",
+  "ok": true,
+  "category": "unresolved",
+  "reason": "The attempt could not be resolved. Nothing changed.",
+  "steps": [
+   {
+    "action": "harm",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "thrust my spear hard into the straw dummy to show Holt it holds and bites",
+  "ok": true,
+  "category": "unresolved",
+  "reason": "The attempt could not be resolved. Nothing changed.",
+  "steps": [
+   {
+    "action": "harm",
+    "outcome": "success"
+   }
+  ]
+ }
+]

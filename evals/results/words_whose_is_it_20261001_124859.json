@@ -1,0 +1,18 @@
+[
+ {
+  "run": 1,
+  "step": "back",
+  "text": "“I'm sorry, that was wrong of me.” give the jug back to Sela",
+  "ok": false,
+  "category": "success",
+  "reason": "You hand the glazed clay jug back to Sela."
+ },
+ {
+  "run": 2,
+  "step": "back",
+  "text": "“I'm sorry, that was wrong of me.” give the jug back to Sela",
+  "ok": false,
+  "category": "success",
+  "reason": "You hand the glazed clay jug back to Sela."
+ }
+]

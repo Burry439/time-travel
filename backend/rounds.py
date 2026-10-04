@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -30,6 +31,7 @@ import judge_view
 import persona
 import routes_tutorial
 import store
+import stories
 import talk
 import tuning
 import views
@@ -156,9 +158,18 @@ def scene(
     ]
     due = beats.due(draft, addressed_id, text, happened, draft.get("sim_time_ms", 0))
     context = briefing.scene_context(draft, addressed, inside, nearby, text, happened, due)
-    call = voice.scene(context, briefing.fallback_line(draft, addressed, "answer"), allowed=allowed)
+    # Beside the conversation (D-61): did the stranger's words pass on a secret they were told? Its own reading, at
+    # the same time, so nobody's own call holds anyone else's secrets.
+    could = stories.tellable(draft, inside + nearby) if text.strip() else []
+    reading = {"stranger_says": conversation.clean(text), "told_to": [n["name"] for n in inside + nearby]}
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        told = pool.submit(voice.told, reading | {"could_pass_on": could}, allowed) if could else None
+        call = voice.scene(context, briefing.fallback_line(draft, addressed, "answer"), allowed=allowed)
+        told_call, told_ids = told.result() if told else (None, [])
     return {
         "call": call,
+        "told_call": told_call,
+        "told": told_ids,
         "context": context,
         "beats": due,
         "addressed": addressed_id,
@@ -292,7 +303,28 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
                 },
             }
         )
+    _passed_on(draft, moment, said, now)
     return said
+
+
+def _passed_on(draft: State, moment: dict, said: list[dict], now: int) -> None:
+    """What the stranger told the people there about someone else (D-61): everyone who heard it now knows it (code
+    checks the stranger really knew it). Stories react on their next check."""
+    listeners = [n for i in moment["inside"] + moment["nearby"] if (n := cast.find(draft["npcs"], i))]
+    told = stories.tell(draft, moment.get("told") or [], listeners, draft["event_seq"] + 1, now)
+    for each in told:
+        secret = next(s for s in stories.known_secrets(draft) if s["id"] == each["secret"])
+        draft["journal"].append(
+            {
+                "kind": "told",
+                "category": "talk",
+                "npc_id": each["to"],
+                "secret": each["secret"],
+                "reason": f"You told {each['to_name']} about {each['about']}: {secret['text']}",
+            }
+        )
+    if told and said:
+        said[0]["trace"]["passed_on"] = told
 
 
 def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) -> dict:
@@ -337,6 +369,9 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 telemetry.log(connection, run_id, "judge", judged)
             if spoken and spoken.model and spoken.model != "stub":
                 telemetry.log(connection, run_id, "voice", spoken)
+            told_call = moment.get("told_call") if moment else None
+            if told_call and told_call.model and told_call.model != "stub":
+                telemetry.log(connection, run_id, "voice", told_call)
         # Only a real failure changes nothing; stub mode or a spent allowance answers with the authored line.
         broken = (
             spoken is not None
@@ -415,6 +450,8 @@ def _adopt_round(state: State, draft: State, record: dict, safe_seq: int) -> Non
     state["trades"] = draft.get("trades") or {}
     state["journal"].extend(draft["journal"][journal_before:])
     state.setdefault("learned", []).extend(draft.get("learned", [])[learned_before:])
+    if draft.get("stories"):  # A story move someone agreed to (D-61).
+        state["stories"] = draft["stories"]
     if admitted_now:
         state["admitted"] = draft["admitted"]
     state["safe_seq"] = safe_seq

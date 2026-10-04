@@ -1,0 +1,50 @@
+[
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "lash the broken sword blade crosswise to the end of the ash pole with soaked rawhide to make a heavy bill-hook polearm",
+  "ok": true,
+  "category": "success",
+  "reason": "You bind the broken sword blade crosswise to the end of the ash pole with the soaked the rawhide strips, making a heavy polearm. The binding is crude, but the stiffening the rawhide strips holds the blade in place.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "crude billhook polearm",
+    "consumes": [
+     "blade_broken",
+     "pole_ash",
+     "rawhide"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "guard",
+  "text": "cut a round buckler from the oak boards and bind its rim with soaked rawhide",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You have no cutting tool to shape the oak boards, and no the rawhide strips remains to bind the rim.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "hack at the straw dummy with my polearm to show Holt it holds and bites",
+  "ok": true,
+  "category": "success",
+  "reason": "You hack at Holt’s straw the straw dummy with the polearm. Its iron blade bites into the sacking and straw, and the rawhide strips binding holds through the blow.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

@@ -1,0 +1,72 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": false,
+  "category": "success",
+  "reason": "You fill the round glass flask with clear water from the lake. Sefa’s holy water is displaced by the lake water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "focus the sun through the flask of water onto the reed fluff to light it, and show them",
+  "ok": false,
+  "category": "failed",
+  "reason": "You focus the sunlight through the water-filled flask onto the dry reed fluff, but the flask's curved surface does not concentrate the sunlight into a hot enough point to make it catch.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "failed"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill Sefa's round glass flask with clear lake water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens",
+  "ok": true,
+  "category": "success",
+  "reason": "You hold the round glass flask over the dry reed fluff and turn it until a bright point of sunlight gathers on it. After a short while the fluff smoulders and catches, and Brann and Sefa see the flask focus the light.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "friends",
+  "text": "show Brann, slowly and plainly, how a single round drop of lake water on a dry leaf also gathers the sunlight into a tiny bright spot: the same trick, small and ordinary, that any dewdrop does",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot show the trick as described: there is no dry leaf here to hold the drop.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

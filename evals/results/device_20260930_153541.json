@@ -1,0 +1,72 @@
+[
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know what will get you through yet; the north gate is shut to strangers. Ask around the inn yard about work, supplies, or someone who can vouch for you—and keep an ear out for another route.",
+  "latency_ms": 5028
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "The gate is shut to strangers, so you’ll need a reason to be admitted. Ask around the inn yard for work or someone who can vouch for you, and keep an eye out for anything that might help.",
+  "latency_ms": 2042
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a small time machine, damaged enough that “small” is doing most of the work. For now, walk north with W or the up arrow and step into the glowing ring.",
+  "latency_ms": 2223
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a small, damaged machine from your own time, and apparently your only companion with a working voice. First, press W or the up arrow to walk north into the glowing ring.",
+  "latency_ms": 1785
+ },
+ {
+  "case": "coach_water_deal",
+  "ok": true,
+  "problems": [],
+  "answer": "Hessa’s offer is your clearest lead: find a container, then bring it to the trough and fill it with water. The dried gourd might work as a vessel.",
+  "latency_ms": 2204
+ },
+ {
+  "case": "coach_water_deal",
+  "ok": true,
+  "problems": [],
+  "answer": "Bring a container to the trough and fill it with water for Hessa; she said she’ll put in a good word with the captain. You don’t have one yet, so look over the nearby things for something that can hold water.",
+  "latency_ms": 2577
+ },
+ {
+  "case": "coach_remembers",
+  "ok": true,
+  "problems": [],
+  "answer": "A long, stiff pole resting on a stone near the load acts as a lever, multiplying your strength. There are fallen branches in the yard; one might serve if it’s sturdy enough.",
+  "latency_ms": 1952
+ },
+ {
+  "case": "coach_remembers",
+  "ok": true,
+  "problems": [],
+  "answer": "A long, stiff pole resting on a stone near a heavy load can act as a lever, letting you lift it with less force.",
+  "latency_ms": 1589
+ },
+ {
+  "case": "coach_why_failed",
+  "ok": true,
+  "problems": [],
+  "answer": "The reeds are too weak and light to hold a point or survive a thrust. Try a fallen branch or the hazel rod instead.",
+  "latency_ms": 1854
+ },
+ {
+  "case": "coach_why_failed",
+  "ok": true,
+  "problems": [],
+  "answer": "The reeds are hollow, weak, and too light to hold a point through a thrust. Try the hazel rod for a sturdier shaft, or use the reeds for something that doesn’t need to take force.",
+  "latency_ms": 1923
+ }
+]

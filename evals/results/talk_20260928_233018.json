@@ -1,0 +1,180 @@
+[
+ {
+  "case": "grand_claim",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "ask_back",
+    "line": "The king’s envoy? Says who? Show me your papers, or I’ll have the captain judge your claim.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 2420,
+    "jev_usd": 0.000111804,
+    "provider": "jev/defapi",
+    "voice_ms": 4875,
+    "voice_usd": 0.0002908
+   }
+  ]
+ },
+ {
+  "case": "grand_claim",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "ask_back",
+    "line": "The king’s envoy? Says who? Show me your papers, or tell me who’s sponsoring you.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 1592,
+    "jev_usd": 0.000111804,
+    "provider": "jev/defapi",
+    "voice_ms": 1753,
+    "voice_usd": 0.0002923
+   }
+  ]
+ },
+ {
+  "case": "grand_claim",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "refer:npc_roderic_vale",
+    "line": "The king’s envoy? Where are your papers, then? Don’t demand entry of me—go speak to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 1221,
+    "jev_usd": 0.000111804,
+    "provider": "jev/defapi",
+    "voice_ms": 2167,
+    "voice_usd": 0.00029580000000000003
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'share:captain_decides'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened on the strength of a trick? I saw it, and I don't know what it means. Go speak to the captain; he's five steps that way.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1325,
+    "jev_usd": 0.00011508,
+    "provider": "jev/defapi",
+    "voice_ms": 2013,
+    "voice_usd": 0.0003075
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "share:captain_decides",
+    "line": "You want me to open it? No. I saw a needle turn, not a sign from the gods.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1188,
+    "jev_usd": 0.000123144,
+    "provider": "jev/defapi",
+    "voice_ms": 1768,
+    "voice_usd": 0.0003146
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 2,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened on that trick? I saw it turn, yes. I’m not taking that choice on myself—go speak to Captain Roderic, five steps north-west.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1204,
+    "jev_usd": 0.00011508,
+    "provider": "jev/defapi",
+    "voice_ms": 2251,
+    "voice_usd": 0.000309
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "line": "You want me to open it? I saw the needle turn, but that proves nothing about you. Go to Roderic, five steps north-west; I’ve told you where he is.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 1238,
+    "jev_usd": 0.000123144,
+    "provider": "jev/defapi",
+    "voice_ms": 1778,
+    "voice_usd": 0.00032
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened because a needle turned in water? I saw it, and I won't pretend I understand it. Go to the captain; let him decide what it means.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1214,
+    "jev_usd": 0.00011508,
+    "provider": "jev/defapi",
+    "voice_ms": 2055,
+    "voice_usd": 0.000308
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "admit",
+    "line": "You want it opened? I saw what that needle did. I won't stand in its way—go through, and don't make me answer for what follows.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1584,
+    "jev_usd": 0.00012306,
+    "provider": "jev/defapi",
+    "voice_ms": 1881,
+    "voice_usd": 0.00031560000000000003
+   }
+  ]
+ }
+]

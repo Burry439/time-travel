@@ -193,6 +193,8 @@ func condition_words(condition: Dictionary) -> String:
 			return "Your %s is broken%s." % [area, ", splinted" if treated >= 2 else ": it can't take any weight or grip"]
 		"infection":
 			return "The wound on your %s is festering%s." % [area, ", poulticed" if treated > 0 else ": it's making you ill"]
+		"ache":
+			return "Your %s aches%s." % ["knees" if area == "leg" else area, ", eased" if treated > 0 else ""]
 	return str(condition.kind)
 
 

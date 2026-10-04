@@ -1,0 +1,147 @@
+{
+ "agendas": {
+  "task": 1,
+  "visit": 1,
+  "carry_on": 1,
+  "confront": 1
+ },
+ "meetings": [
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "meet",
+   "why": "npc_oren_dast",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_oren_dast",
+   "topic": "worry",
+   "about": "Bren talks about what's on their mind: do the job properly and fairly.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "worry",
+   "about": "Jory talks about what's on their mind: learn something nobody else knows.",
+   "believed": true,
+   "reaction": "A little cooler",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "meet",
+   "why": "npc_oren_dast",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_oren_dast",
+   "topic": "worry",
+   "about": "Bren talks about what's on their mind: keep the captain off his back.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  }
+ ],
+ "who_knows": [
+  "Hessa"
+ ],
+ "decider_calls_last_page": 6,
+ "thinks": 6,
+ "decisions": [
+  {
+   "npc_id": "npc_hessa_marr",
+   "kind": "decide",
+   "why": "victim",
+   "skipped": null,
+   "shared_request": true,
+   "action": "carry_on",
+   "feelings": {
+    "anger": 0.02,
+    "fear": 0.0
+   }
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "meet",
+   "why": "npc_oren_dast",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_oren_dast",
+   "topic": "worry",
+   "about": "Bren talks about what's on their mind: do the job properly and fairly.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_roderic_vale",
+   "kind": "agenda",
+   "why": "time to decide what next",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "task:inspect_gate",
+   "mood": "weary",
+   "doing": "inspecting the gate and its brackets"
+  },
+  {
+   "npc_id": "npc_jory_venn",
+   "kind": "meet",
+   "why": "npc_mara_venn",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_mara_venn",
+   "topic": "worry",
+   "about": "Jory talks about what's on their mind: learn something nobody else knows.",
+   "believed": true,
+   "reaction": "A little cooler",
+   "voiced": false
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "agenda",
+   "why": "time to decide what next",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "visit:npc_oren_dast",
+   "mood": "content",
+   "doing": "on the way to see Oren"
+  },
+  {
+   "npc_id": "npc_oren_dast",
+   "kind": "agenda",
+   "why": "time to decide what next",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "carry_on",
+   "mood": "anxious",
+   "doing": "patrol the east approach"
+  },
+  {
+   "npc_id": "npc_hessa_marr",
+   "kind": "agenda",
+   "why": "time to decide what next",
+   "skipped": null,
+   "shared_request": true,
+   "agenda": "confront",
+   "mood": "cheerful",
+   "doing": "going to have it out with the stranger"
+  },
+  {
+   "npc_id": "npc_bren_marr",
+   "kind": "meet",
+   "why": "npc_oren_dast",
+   "skipped": null,
+   "shared_request": true,
+   "with": "npc_oren_dast",
+   "topic": "worry",
+   "about": "Bren talks about what's on their mind: keep the captain off his back.",
+   "believed": true,
+   "reaction": "Unmoved",
+   "voiced": false
+  }
+ ]
+}

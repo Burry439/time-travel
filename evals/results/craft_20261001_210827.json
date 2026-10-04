@@ -1,0 +1,366 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v15",
+  "passed": 1,
+  "total": 3,
+  "latency_p50_ms": 8033,
+  "latency_p95_ms": 11102,
+  "input_tokens": 33255,
+  "output_tokens": 1711,
+  "estimated_cost_usd": 0.0042
+ },
+ "results": [
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You scrape and pare one end of the fallen branch with the flint until it forms a rough point. It takes a few minutes of careful work. The blow glances off Bren's armour.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 4.6 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch+flint|stab:wooden_stake",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape and pare one end of the fallen branch with the flint until it forms a rough point. It takes a few minutes of careful work.",
+       "effort_seconds": 240,
+       "new_object": {
+        "name": "wooden stake",
+        "description": "A 1.5-metre branch with one end pared to a rough point; the tip is usable but not especially sharp or durable.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "The pointed end can pierce soft material.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You are already within reach and Bren does not see the attack coming. You drive the crude wooden point into his chest through the mail shirt; the mail is likely to blunt or stop it, but the thrust lands against his torso.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "torso",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "The wooden point strikes Bren's mail-covered chest; the mail turns aside most of its force."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 11102,
+    "input_tokens": 11085,
+    "output_tokens": 485,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"sharpen:branch+flint|stab:wooden_stake\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You scrape and pare one end of the fallen branch with the flint until it forms a rough point. It takes a few minutes of careful work.\",\"effort_seconds\":240,\"new_object\":{\"name\":\"wooden stake\",\"description\":\"A 1.5-metre branch with one end pared to a rough point; the tip is usable but not especially sharp or durable.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.2,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\",\"floats\"],\"capabilities\":[{\"text\":\"The pointed end can pierce soft material.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"stake\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You are already within reach and Bren does not see the attack coming. You drive the crude wooden point into his chest through the mail shirt; the mail is likely to blunt or stop it, but the thrust lands against his torso.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"made_by_step_1\",\"method\":\"melee\",\"family\":\"blow\",\"outcome\":\"landed\",\"target_area\":\"torso\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"The wooden point strikes Bren's mail-covered chest; the mail turns aside most of its force.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape the branch's end against the flint until it narrows to a rough point. You drive the pointed stake at Bren's chest before he sees the blow coming. His mail may blunt the point; the thrust lands against his torso.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch+flint|attack:stake",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape the branch's end against the flint until it narrows to a rough point.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "pointed stake",
+        "description": "A straight wooden branch with one end scraped to a rough point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "The pointed end can pierce soft materials.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You drive the pointed stake at Bren's chest before he sees the blow coming. His mail may blunt the point; the thrust lands against his torso.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A forceful thrust strikes his chest through his mail."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 8033,
+    "input_tokens": 11085,
+    "output_tokens": 766,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:branch+flint|attack:stake\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape the branch's end against the flint until it narrows to a rough point.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"pointed stake\",\n        \"description\": \"A straight wooden branch with one end scraped to a rough point.\",\n        \"materials\": [\"wood\"],\n        \"consumes\": [\"branch_a\"],\n        \"tools_used\": [\"flint_a\"],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\"rigid\", \"sharp_edge\", \"combustible\"],\n        \"capabilities\": [\n          {\n            \"text\": \"The pointed end can pierce soft materials.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"stake\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You drive the pointed stake at Bren's chest before he sees the blow coming. His mail may blunt the point; the thrust lands against his torso.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"heart\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A forceful thrust strikes his chest through his mail.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 2,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape and shave one end of the dry branch with the sharp flint until it forms a rough point. You thrust the pointed stake at Bren's chest while he is unaware of you. The point strikes his mail shirt, which is likely to blunt or deflect the thrust.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:branch+flint|stake;melee:stake|chest",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape and shave one end of the dry branch with the sharp flint until it forms a rough point.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "pointed stake",
+        "description": "A rough, straight wooden stake about 1.5 metres long, sharpened to a point at one end.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust as a pointed weapon",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the pointed stake at Bren's chest while he is unaware of you. The point strikes his mail shirt, which is likely to blunt or deflect the thrust.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "The stake strikes his mail-covered chest; the mail may turn the point aside or leave him bruised."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5006,
+    "input_tokens": 11085,
+    "output_tokens": 460,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"sharpen:branch+flint|stake;melee:stake|chest\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You scrape and shave one end of the dry branch with the sharp flint until it forms a rough point.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"pointed stake\",\"description\":\"A rough, straight wooden stake about 1.5 metres long, sharpened to a point at one end.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.2,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"combustible\",\"sharp_edge\"],\"capabilities\":[{\"text\":\"Can be thrust as a pointed weapon\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"stake\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You thrust the pointed stake at Bren's chest while he is unaware of you. The point strikes his mail shirt, which is likely to blunt or deflect the thrust.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"made_by_step_1\",\"method\":\"melee\",\"family\":\"blow\",\"outcome\":\"landed\",\"target_area\":\"heart\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"The stake strikes his mail-covered chest; the mail may turn the point aside or leave him bruised.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

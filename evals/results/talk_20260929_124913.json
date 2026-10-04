@@ -1,0 +1,158 @@
+[
+ {
+  "case": "group_bren_joins_hessa",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Good evening! Is this your inn?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "Good evening, love. It is—come in out of the road if you’re looking for a bed or a meal.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Good evening, love. It is—come in out of the road if you’re looking for a bed or a meal.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 6255,
+    "voice_usd": 0.0006083999999999999
+   },
+   {
+    "said": "I'm looking for somewhere to sleep tonight.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "A bed, then, love. There’s room here tonight; come in and I’ll tell you what it costs.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "A bed, then, love. There’s room here tonight; come in and I’ll tell you what it costs.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2381,
+    "voice_usd": 0.0006317
+   },
+   {
+    "said": "And you, sir, the one in the mail shirt: are you one of the gate guards?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "That’s my brother Bren, love. He’s one of the guards at the gate, though he’s here by the inn just now.",
+      "joined": false
+     },
+     {
+      "who": "npc_bren_marr",
+      "key": "answer",
+      "line": "That’s me, yes. Though you’ll find me here, not at the gate; what made you ask?",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "answer",
+     "answer"
+    ],
+    "line": "That’s my brother Bren, love. He’s one of the guards at the gate, though he’s here by the inn just now. That’s me, yes. Though you’ll find me here, not at the gate; what made you ask?",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 3309,
+    "voice_usd": 0.0007119
+   }
+  ]
+ },
+ {
+  "case": "group_bren_joins_hessa",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Good evening! Is this your inn?",
+    "reply": "ask_back",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "ask_back",
+      "line": "Good evening, love. It is, yes—come in out of the road. Looking for a bed, or just a meal?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "ask_back"
+    ],
+    "line": "Good evening, love. It is, yes—come in out of the road. Looking for a bed, or just a meal?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 1976,
+    "voice_usd": 0.0006114
+   },
+   {
+    "said": "I'm looking for somewhere to sleep tonight.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "A bed, then, love. I’ve a room for you if you’ve the coin; come in and I’ll see you settled.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "A bed, then, love. I’ve a room for you if you’ve the coin; come in and I’ll see you settled.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2033,
+    "voice_usd": 0.0006313000000000001
+   },
+   {
+    "said": "And you, sir, the one in the mail shirt: are you one of the gate guards?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "That’s my brother Bren, love. He’s one of the gate guards, though he’s off the west approach just now.",
+      "joined": false
+     },
+     {
+      "who": "npc_bren_marr",
+      "key": "answer",
+      "line": "That I am. Though you’ve found me at my sister’s inn, not at the gate—what is it you need from the guards?",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "answer",
+     "answer"
+    ],
+    "line": "That’s my brother Bren, love. He’s one of the gate guards, though he’s off the west approach just now. That I am. Though you’ve found me at my sister’s inn, not at the gate—what is it you need from the guards?",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 3342,
+    "voice_usd": 0.0007187000000000001
+   }
+  ]
+ }
+]

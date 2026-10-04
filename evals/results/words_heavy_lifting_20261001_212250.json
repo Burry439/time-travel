@@ -1,0 +1,46 @@
+[
+ {
+  "run": 1,
+  "step": "free",
+  "text": "lever the cart out of the mud with the fence rail on the flat stone, and put boards under the wheels",
+  "ok": false,
+  "category": "blocked",
+  "reason": "That would be more than you can carry (27.0 of 20 kg).",
+  "steps": [
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "lift_out",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "free",
+  "text": "push the long fence rail under the cart's axle over the big flat stone as a fulcrum, lever the wheels up out of the mud, and shove the old boards under them, then roll the cart forward onto the boards",
+  "ok": false,
+  "category": "blocked",
+  "reason": "That would be more than you can carry (27.0 of 20 kg).",
+  "steps": [
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "lift_out",
+    "outcome": "failed"
+   }
+  ]
+ }
+]

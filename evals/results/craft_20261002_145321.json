@@ -1,0 +1,496 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v17",
+  "passed": 9,
+  "total": 9,
+  "latency_p50_ms": 2795,
+  "latency_p95_ms": 5932,
+  "input_tokens": 113808,
+  "output_tokens": 1780,
+  "estimated_cost_usd": 0.0123
+ },
+ "results": [
+  {
+   "case": "hand_in_fire",
+   "group": "self",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You put your hand into the cooking fire and burn it badly.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "other:hand_into_cooking_fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You put your hand into the cooking fire and burn it badly.",
+       "effort_seconds": 1,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 5932,
+    "input_tokens": 12363,
+    "output_tokens": 150,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"other:hand_into_cooking_fire\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You put your hand into the cooking fire and burn it badly.\",\"effort_seconds\":1,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":{\"condition\":\"burn\",\"area\":\"arm\",\"severity\":\"serious\",\"cause_id\":\"cookfire_hessa\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_fire",
+   "group": "self",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You thrust your hand into the cooking fire and suffer a serious burn.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "put_hand:burning_cooking_fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You thrust your hand into the cooking fire and suffer a serious burn.",
+       "effort_seconds": 1,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2821,
+    "input_tokens": 12363,
+    "output_tokens": 216,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"put_hand:burning_cooking_fire\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You thrust your hand into the cooking fire and suffer a serious burn.\",\"effort_seconds\":1,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":{\"condition\":\"burn\",\"area\":\"arm\",\"severity\":\"serious\",\"cause_id\":\"cookfire_hessa\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_fire",
+   "group": "self",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You thrust your hand into the cooking fire and burn it badly.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "other:hand-into-burning-cooking-fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You thrust your hand into the cooking fire and burn it badly.",
+       "effort_seconds": 1,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2977,
+    "input_tokens": 12363,
+    "output_tokens": 279,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"other:hand-into-burning-cooking-fire\",\n  \"steps\": [\n    {\n      \"action\": \"other\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust your hand into the cooking fire and burn it badly.\",\n      \"effort_seconds\": 1,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null,\n      \"hurts_you\": {\n        \"condition\": \"burn\",\n        \"area\": \"arm\",\n        \"severity\": \"serious\",\n        \"cause_id\": \"cookfire_hessa\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_fire_walk",
+   "group": "self",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You walk to the cooking fire and thrust your hand into the flames; the heat sears your hand.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "put-hand-in:burning-cooking-fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You walk to the cooking fire and thrust your hand into the flames; the heat sears your hand.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2795,
+    "input_tokens": 13208,
+    "output_tokens": 230,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"put-hand-in:burning-cooking-fire\",\n  \"steps\": [\n    {\n      \"action\": \"other\",\n      \"outcome\": \"success\",\n      \"reason\": \"You walk to the cooking fire and thrust your hand into the flames; the heat sears your hand.\",\n      \"effort_seconds\": 5,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null,\n      \"hurts_you\": {\n        \"condition\": \"burn\",\n        \"area\": \"arm\",\n        \"severity\": \"serious\",\n        \"cause_id\": \"cookfire_hessa\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_fire_walk",
+   "group": "self",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You walk to Hessa\u2019s cooking fire and thrust your hand into the flames. The fire badly burns your hand.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "self-harm:hand-into-burning-fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You walk to Hessa\u2019s cooking fire and thrust your hand into the flames. The fire badly burns your hand.",
+       "effort_seconds": 8,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2537,
+    "input_tokens": 13208,
+    "output_tokens": 162,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"self-harm:hand-into-burning-fire\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You walk to Hessa\u2019s cooking fire and thrust your hand into the flames. The fire badly burns your hand.\",\"effort_seconds\":8,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":{\"condition\":\"burn\",\"area\":\"arm\",\"severity\":\"serious\",\"cause_id\":\"cookfire_hessa\"}}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_fire_walk",
+   "group": "self",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You walk to the cooking fire and put your hand into the flames. The fire burns your hand badly.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "put-hand-in:burning-fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You walk to the cooking fire and put your hand into the flames. The fire burns your hand badly.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": {
+        "condition": "burn",
+        "area": "arm",
+        "severity": "serious",
+        "cause_id": "cookfire_hessa"
+       }
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 3195,
+    "input_tokens": 13208,
+    "output_tokens": 299,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"put-hand-in:burning-fire\",\n  \"steps\": [\n    {\n      \"action\": \"other\",\n      \"outcome\": \"success\",\n      \"reason\": \"You walk to the cooking fire and put your hand into the flames. The fire burns your hand badly.\",\n      \"effort_seconds\": 5,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null,\n      \"hurts_you\": {\n        \"condition\": \"burn\",\n        \"area\": \"arm\",\n        \"severity\": \"serious\",\n        \"cause_id\": \"cookfire_hessa\"\n      }\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_doused_fire",
+   "group": "self",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You put your hand among the wet, blackened wood and ash. The fire is out, but the remnants are still warm to the touch.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "touch:warm-ashes|hand",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You put your hand among the wet, blackened wood and ash. The fire is out, but the remnants are still warm to the touch.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2080,
+    "input_tokens": 12365,
+    "output_tokens": 147,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"touch:warm-ashes|hand\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You put your hand among the wet, blackened wood and ash. The fire is out, but the remnants are still warm to the touch.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_doused_fire",
+   "group": "self",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You put your hand into the fire\u2019s damp ash and blackened wood. It is out and only warm, so it does not burn you.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "test:hand_into:extinguished_warm_fire",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You put your hand into the fire\u2019s damp ash and blackened wood. It is out and only warm, so it does not burn you.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2287,
+    "input_tokens": 12365,
+    "output_tokens": 150,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"test:hand_into:extinguished_warm_fire\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You put your hand into the fire\u2019s damp ash and blackened wood. It is out and only warm, so it does not burn you.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "hand_in_doused_fire",
+   "group": "self",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You put your hand into the warm, extinguished fire. The ash and damp wood are warm, not burning, and do not burn you.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "touch:hand|warm_ashes",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "success",
+       "reason": "You put your hand into the warm, extinguished fire. The ash and damp wood are warm, not burning, and do not burn you.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null,
+       "hurts_you": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v17",
+    "reasoning": "low",
+    "latency_ms": 2270,
+    "input_tokens": 12365,
+    "output_tokens": 147,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"touch:hand|warm_ashes\",\"steps\":[{\"action\":\"other\",\"outcome\":\"success\",\"reason\":\"You put your hand into the warm, extinguished fire. The ash and damp wood are warm, not burning, and do not burn you.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null,\"hurts_you\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

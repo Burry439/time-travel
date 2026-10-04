@@ -1,0 +1,82 @@
+[
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "fill the cup at the well",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach the water at the bottom of the well with the cup."
+ },
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "I dip the cup into the well",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach the water at the bottom of the well with the cup."
+ },
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "draw water from the well into the wooden cup",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach the water at the bottom of the well with the cup."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "give the cup of water to Wenna",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot put water in the cup; there is no water source nearby."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "hand Wenna the cup",
+  "ok": false,
+  "category": "success",
+  "reason": "You hand Wenna the wooden cup."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "fill the cup at the well",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach down into the well from where you stand; there is no bucket or other means here to bring its water up."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "I dip the cup into the well",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach down into the well from where you stand; there is no bucket or other means here to bring its water up."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "draw water from the well into the wooden cup",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot reach down into the well from where you stand; there is no bucket or other means here to bring its water up."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "give the cup of water to Wenna",
+  "ok": false,
+  "category": "success",
+  "reason": "You hand Wenna the wooden cup. It is empty; there is no water in it."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "hand Wenna the cup",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You have no cup to hand Wenna."
+ }
+]

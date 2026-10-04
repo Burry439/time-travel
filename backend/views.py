@@ -1,5 +1,5 @@
 """What the client shows that's worked out from the world, worked out once, here (D-58): whether each lead is done,
-the journey's deeds, and the words for where people stand. Every state a route returns carries it as
+the journey's deeds, the storylines the stranger has come into (D-61), and the words for where people stand. Every state a route returns carries it as
 state["view"], added at the last moment and never saved, so the client renders and never re-derives game rules.
 """
 
@@ -16,6 +16,7 @@ import cast
 import gatekeeping
 import reputation
 import rules
+import stories
 from shapes import State
 
 
@@ -23,6 +24,7 @@ def of(state: State) -> dict:
     return {
         "lead_done": [lead_done(state, claim) for claim in state.get("learned", [])],  # One for each learned.
         "deeds": deeds(state),
+        "stories": stories.page(state),
         "standing_words": reputation.STANDING_WORDS,
     }
 
@@ -33,7 +35,7 @@ def of(state: State) -> dict:
 def lead_done(state: State, claim: dict) -> bool:
     """Whether what something the stranger learned points to has happened: a deal done, a loan returned, a person
     met (a gift or a trade is done when it's learned)."""
-    if "fulfilled" in claim or "gift" in claim or "trade" in claim:
+    if "fulfilled" in claim or "gift" in claim or "trade" in claim or "story" in claim:
         return True
     if claim.get("done_when"):  # Something a story asked of the stranger (D-59): done when its condition holds.
         return rules.holds(state, claim["done_when"])

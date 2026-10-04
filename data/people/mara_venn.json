@@ -83,10 +83,39 @@
  ],
  "secrets": [
   {
+   "id": "mara_horseshoes",
    "text": "She's short of good iron and has been reworking old horseshoes to fill the guards' order.",
-   "reveal": "someone who proves useful at the forge"
+   "reveal": "someone who proves useful at the forge",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "helped"
+     },
+     {
+      "kind": "regard",
+      "axis": "respect",
+      "at_least": 0.4
+     }
+    ]
+   },
+   "lead": "Mara is short of good iron and has been reworking old horseshoes for the guards' order."
+  },
+  {
+   "id": "mara_tomas",
+   "text": "She and Tomas were to marry once, before the fever year; neither speaks of it.",
+   "reveal": "only someone she trusts",
+   "unlock": {
+    "kind": "regard",
+    "axis": "trust",
+    "at_least": 0.65
+   },
+   "lead": "Mara and Tomas were once to marry."
   }
  ],
+ "history": {
+  "npc_jory_venn": "She raised Jory after the fever took his parents."
+ },
  "likes": "good tools, clever solutions, fuel",
  "dislikes": "waste, flatterers, people touching her stock",
  "opinions": {

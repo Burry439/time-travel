@@ -1,0 +1,30 @@
+[
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "twist the hemp fibre into a long, strong three-strand rope and tar it with the pitch",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You have the hemp fibre and pitch, but no tool or setup to twist them into a long, even three-strand rope and coat it with pitch.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "give the new tarred rope to Gorm for his ferry",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You have no new tarred rope to hand to Gorm; the hemp and pitch remain separate.",
+  "steps": [
+   {
+    "action": "give",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

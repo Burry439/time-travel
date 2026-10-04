@@ -1,0 +1,157 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v8",
+  "passed": 0,
+  "total": 3,
+  "latency_p50_ms": 2606,
+  "latency_p95_ms": 5248,
+  "input_tokens": 25878,
+  "output_tokens": 370,
+  "estimated_cost_usd": 0.0028
+ },
+ "results": [
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You have only a loose flint shard, not a blade held firmly enough to cut through the rooted birch. You cannot fell it with this tool.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint_shard",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You have only a loose flint shard, not a blade held firmly enough to cut through the rooted birch. You cannot fell it with this tool.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 5248,
+    "input_tokens": 8626,
+    "output_tokens": 126,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint_shard\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You have only a loose flint shard, not a blade held firmly enough to cut through the rooted birch. You cannot fell it with this tool.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You have only a loose flint shard, not a cutting tool you can hold firmly enough to fell the birch. The sapling remains rooted.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|hand-held-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You have only a loose flint shard, not a cutting tool you can hold firmly enough to fell the birch. The sapling remains rooted.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 1996,
+    "input_tokens": 8626,
+    "output_tokens": 125,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|hand-held-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You have only a loose flint shard, not a cutting tool you can hold firmly enough to fell the birch. The sapling remains rooted.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 2,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You cannot fell the young birch with a loose flint shard; it is not hafted or held as a cutting tool.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You cannot fell the young birch with a loose flint shard; it is not hafted or held as a cutting tool.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2606,
+    "input_tokens": 8626,
+    "output_tokens": 119,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You cannot fell the young birch with a loose flint shard; it is not hafted or held as a cutting tool.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

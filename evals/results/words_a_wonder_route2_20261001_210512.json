@@ -1,0 +1,48 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "stroke an iron fish hook along the black lodestone many times in one direction to magnetise it",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke an iron fish hook along the black lodestone repeatedly in one direction, leaving the hook weakly magnetised.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "magnetised iron fish hook",
+    "consumes": [
+     "hooks_brann"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the offering bowl with lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the offering bowl into the lake and fill it with water. The bowl belongs to Sefa.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Sefa and Brann: float the magnetised hook on a cork float in the bowl of water and let it swing to point north, then turn the bowl to show it always comes back north",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the magnetised hook on a cork float in the bowl. It swings around and settles pointing north; when you turn the bowl, it swings back that way. Sefa watches.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

@@ -1,0 +1,50 @@
+[
+ {
+  "case": "sling",
+  "ok": true,
+  "problems": [],
+  "seconds": 8.8,
+  "category": "success",
+  "reason": "You tie the leather scrap between the short cord and the longer vine to make a crude sling. Its unequal cords will make it awkward to use, but the pouch can hold a stone.",
+  "made": {
+   "kind": "weapon",
+   "class": "sling",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "sling",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.6,
+  "category": "success",
+  "reason": "You tie the leather scrap between the short cord and the tough vine, making a crude sling. The two unequal cords make it awkward to handle, but it can still cast a small stone.",
+  "made": {
+   "kind": "weapon",
+   "class": "sling",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "sling",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.2,
+  "category": "success",
+  "reason": "You tie the leather scrap between the short cord and the vine, making a simple sling. The uneven cords are awkward to handle, but they can hold and release a small stone.",
+  "made": {
+   "kind": "weapon",
+   "class": "sling",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ }
+]

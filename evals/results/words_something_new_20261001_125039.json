@@ -1,0 +1,122 @@
+[
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction, again and again. It becomes weakly magnetised. You fill the wooden bowl with water from the brook. You walk over and pick up the dry oak leaf. You set the magnetised needle on the floating leaf in the bowl. It turns and settles pointing the same way each time."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction again and again. Then you set it on the floating oak leaf in the bowl; it turns and settles pointing the same way."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "fill the wooden bowl with water from the brook",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden bowl into the brook and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "invent",
+  "text": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone repeatedly in one direction, magnetising it. You lay the magnetised needle on the sliver of bark and float it in the bowl. It turns and settles pointing north-south."
+ },
+ {
+  "run": 1,
+  "step": "show",
+  "text": "“Watch the needle: it turns the same way every time. That way is north.” show Mey the needle floating on the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the magnetised needle on the sliver of bark and float it in the wooden bowl. It turns and settles pointing north-south as Mey watches."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction again and again, leaving it weakly magnetised. The needle belongs to Mey, and the lodestone belongs to Orrin. You walk to the dry oak leaf and pick it up. You fill the wooden bowl with brook water. You lay the magnetised needle on the floating leaf in the bowl. It swings around and settles pointing north-south."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the already magnetised needle on the floating oak leaf in the wooden bowl. It turns and settles pointing north-south."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "fill the wooden bowl with water from the brook",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill Orrin's wooden bowl with a litre of water from the brook."
+ },
+ {
+  "run": 2,
+  "step": "invent",
+  "text": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone in one direction many times. Orrin's lodestone magnetises Mey's needle. You lay the magnetised needle on the sliver of bark and set it floating in the bowl. It swings round and settles pointing the same way."
+ },
+ {
+  "run": 2,
+  "step": "show",
+  "text": "“Watch the needle: it turns the same way every time. That way is north.” show Mey the needle floating on the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the magnetised needle on the sliver of bark and float it in the water. It turns and settles pointing the same way as before."
+ },
+ {
+  "run": 3,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke Mey's iron needle along Orrin's lodestone again and again in the same direction. The needle becomes weakly magnetized. You fill Orrin's wooden bowl with water from the brook. You set the magnetized needle on the dry oak leaf in the bowl. It swings around and settles pointing the same way."
+ },
+ {
+  "run": 3,
+  "step": "invent",
+  "text": "stroke the needle with the lodestone fifty times one way, then float the needle on the oak leaf in the bowl of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You pick up the dry oak leaf. You stroke the iron needle along the lodestone in the same direction, then set it on the leaf floating in the bowl. The needle turns and settles pointing the same way."
+ },
+ {
+  "run": 3,
+  "step": "invent",
+  "text": "fill the wooden bowl with water from the brook",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden bowl into the brook and fill it to the brim."
+ },
+ {
+  "run": 3,
+  "step": "invent",
+  "text": "rub the iron needle along the lodestone many times in the same direction to magnetise it, then lay it on the sliver of bark and float it on the water in the bowl",
+  "ok": true,
+  "category": "success",
+  "reason": "You stroke the iron needle along the lodestone repeatedly in one direction. The needle becomes weakly magnetised. You lay the magnetised needle on the sliver of bark and float it in the bowl. It swings around and settles pointing north-south."
+ },
+ {
+  "run": 3,
+  "step": "show",
+  "text": "“Watch the needle: it turns the same way every time. That way is north.” show Mey the needle floating on the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You float the magnetised needle on the bark in the bowl of water. It swings around and settles pointing north-south as Mey watches."
+ }
+]

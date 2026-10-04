@@ -1,0 +1,46 @@
+[
+ {
+  "id": "beam_cribbing",
+  "run": 0,
+  "category": "failed",
+  "steps": [
+   "install:failed"
+  ],
+  "made": [],
+  "wonder": [],
+  "reason": "You lever the beam up in stages, but the trestles and stacked crates cannot raise it to the brackets two metres above the ground. The ladder and rope help you reach and guide it, but do not lift it high enough."
+ },
+ {
+  "id": "beam_cribbing",
+  "run": 1,
+  "category": "success",
+  "steps": [
+   "install:success"
+  ],
+  "made": [],
+  "wonder": [],
+  "reason": "You walk to the replacement beam and gate, then use the plank over the stone to raise each end in stages, supporting it on the trestles and stacked crates. With the ladder and rope to guide the final lift and slide, you ease the beam into the brackets; the plank and rope belong to Tomas."
+ },
+ {
+  "id": "beam_two_men",
+  "run": 0,
+  "category": "success",
+  "steps": [
+   "install:success"
+  ],
+  "made": [],
+  "wonder": [],
+  "reason": "You and Tomas use the trestles to support the beam while you raise each end in turn, standing on the crates. The rope keeps the other end from slipping as you guide the beam into the brackets."
+ },
+ {
+  "id": "beam_two_men",
+  "run": 1,
+  "category": "success",
+  "steps": [
+   "install:success"
+  ],
+  "made": [],
+  "wonder": [],
+  "reason": "You and Tomas walk the beam over, rest it on the trestles, then use the crates to reach the brackets. Working one end at a time, you raise and guide the heavy beam into place while Tomas controls the other end with the rope."
+ }
+]

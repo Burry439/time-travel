@@ -1,0 +1,86 @@
+[
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "A burn should be cooled with clean water first, then kept clean and covered. Pick up the plantain leaves nearby, then press T and type: “crush the plantain leaves into a poultice for a burn.”",
+  "latency_ms": 6258
+ },
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "Pick up the plantain leaves nearby, then press T and type: “crush the plantain leaves into a poultice for a burn.”",
+  "latency_ms": 1254
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F to raise your shield, and face Kade as he swings. Let go when his blow is done, then strike with Space.",
+  "latency_ms": 1386
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F to raise your shield; keep it facing Kade as he strikes. Let go when he’s recovering, then strike with Space.",
+  "latency_ms": 1608
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "Dry grass bends but has no spring, so it can’t launch anything. Try a small useful trick with what you have—perhaps use the branch and stone as a lever—then tell Jory how it works.",
+  "latency_ms": 3068
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "Dry grass has no spring, so it can’t store enough energy to launch anything. Try a simpler working idea with what’s nearby—a lever using the hazel rod and loose stone, for instance—then make it before showing anyone.",
+  "latency_ms": 1878
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "The north gate is shut to strangers, so a direct approach may not be enough. Look for someone who knows the city’s customs, or notice what might make you seem less like a stranger.",
+  "latency_ms": 1534
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "I can’t tell you a way in, and the north gate is shut to strangers. Look for someone who might know the city’s rules, or notice what useful work and materials are around you.",
+  "latency_ms": 1497
+ },
+ {
+  "case": "no_secrets",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know what Oren is hiding; I can’t see into his thoughts. Ask him plainly, or pay attention to what he says and does.",
+  "latency_ms": 1606
+ },
+ {
+  "case": "no_secrets",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know what Oren is hiding; I haven’t seen him or been told anything about him. Ask him, or watch for something that seems worth following up.",
+  "latency_ms": 1412
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a small machine that carried you here through time, though the trip left me a little damaged. For now, walk north up the road toward the plants at its edge; hover over things to identify them, or right-click to look closer.",
+  "latency_ms": 1631
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a damaged time-travel device—the reason you’re here, though not in especially good repair. For now, walk north up the road toward the plants at its edge; use WASD or the arrow keys.",
+  "latency_ms": 2016
+ }
+]

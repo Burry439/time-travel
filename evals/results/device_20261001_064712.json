@@ -1,0 +1,67 @@
+[
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "Press T, type “crush the plantain leaves into a poultice for a burn,” then press Enter. The wording matters here; the plantain leaves are the ingredient.",
+  "latency_ms": 5287
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F to raise the shield in your left hand, keeping it facing Kade. When the red mark appears over his head, block with F or step back.",
+  "latency_ms": 1643
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": false,
+  "problems": [
+   "said none of ['spring', 'stiff', 'wood', 'springy', 'rod', 'flex']"
+  ],
+  "answer": "You don’t have a fire-making tool in hand yet. Pick up the flint shard and a suitable piece of metal—if you can find one—then hold them low over the dry grass and strike; your hands alone can’t make the sparks.",
+  "latency_ms": 2235
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know the way in yet; the north gate is shut to strangers, and we haven’t learned what might change that. Look around the inn yard and speak with anyone you meet—an errand, a useful skill, or a local willing to vouch for you could give us a lead.",
+  "latency_ms": 1920
+ },
+ {
+  "case": "no_secrets",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know that Oren is hiding anything; I haven’t even met him yet. Find him and ask what he knows—quietly, if you’d rather not make a spectacle.",
+  "latency_ms": 1853
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m the small, rather battered machine that brought you here from your own time. For now, press W—or the up arrow—to walk into the glowing ring just up the road.",
+  "latency_ms": 2774
+ },
+ {
+  "case": "coach_water_deal",
+  "ok": true,
+  "problems": [],
+  "answer": "Hessa’s offer is your clearest lead: find a container, then bring her water from the trough. There’s a dried gourd in the yard; pick it up and see if it can hold water.",
+  "latency_ms": 2551
+ },
+ {
+  "case": "coach_remembers",
+  "ok": true,
+  "problems": [],
+  "answer": "A long, stiff pole resting on a stone near the load can act as a lever, multiplying your strength.",
+  "latency_ms": 1871
+ },
+ {
+  "case": "coach_why_failed",
+  "ok": true,
+  "problems": [],
+  "answer": "The reeds are too flimsy to take a point or withstand a thrust. Try the hazel rod or a fallen branch for a sturdier shaft.",
+  "latency_ms": 1901
+ }
+]

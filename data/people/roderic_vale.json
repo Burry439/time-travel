@@ -76,10 +76,53 @@
  ],
  "secrets": [
   {
+   "id": "roderic_fog",
    "text": "He sent the scout out into the fog the night her horse went into the bog, and blames himself for it.",
-   "reveal": "only to someone he has come to trust"
+   "reveal": "only to someone he has come to trust or respect",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.6
+     },
+     {
+      "kind": "regard",
+      "axis": "respect",
+      "at_least": 0.5
+     }
+    ]
+   },
+   "lead": "Roderic blames himself for sending Elin out into the fog the night her horse was lost."
+  },
+  {
+   "id": "roderic_sabotage",
+   "text": "He half-suspects the first gate beam was cracked on purpose, and watches Tomas for it.",
+   "reveal": "only to someone he respects",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "respect",
+      "at_least": 0.6
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.75
+     }
+    ]
+   },
+   "lead": "Roderic half-suspects someone cracked the first gate beam on purpose."
   }
  ],
+ "history": {
+  "npc_kade_east": "Kade has served under him for twenty years.",
+  "npc_elin_west": "He sent her patrol out the night of the fog, when her horse went into the bog.",
+  "npc_tomas_reed": "He hired Tomas to replace the gate beam after the first one cracked."
+ },
  "likes": "discipline, plain facts, well-made things",
  "dislikes": "rambling, flattery, surprises at his gate",
  "opinions": {

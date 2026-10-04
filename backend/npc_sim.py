@@ -46,6 +46,11 @@ def seed_npcs(state: State) -> list[Npc]:
             "step_ms": spec["step_ms"],
             "next_at_ms": stops[0][3] + index * 170,
         }
+        if spec.get("conditions"):  # What ails them from the start (Kade's knees, D-61).
+            npc["conditions"] = [
+                {"kind": c["kind"], "area": c.get("area", "torso"), "since": 0, "treated": 0}
+                for c in spec["conditions"]
+            ]
         seeded.append(npc)
     return seeded
 

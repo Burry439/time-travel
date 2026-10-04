@@ -1,0 +1,30 @@
+[
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "make Cob a new axe handle from the stave",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot shape the ash stave to fit the axe head's eye with your bare hands.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "shave the ash stave into an axe handle with Cob's drawknife and fit the axe head on it",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot shave the ash stave into a handle; Cob's drawknife is not among the things at hand.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

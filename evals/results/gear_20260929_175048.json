@@ -1,0 +1,98 @@
+[
+ {
+  "case": "bow",
+  "ok": true,
+  "problems": [],
+  "seconds": 7.0,
+  "category": "success",
+  "reason": "You bend the springy hazel rod and knot the cord and vine together into a bowstring. The joined string is short and bulky, so the bow is crude and its draw may be weak.",
+  "made": {
+   "kind": "weapon",
+   "class": "bow",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "bow",
+  "ok": true,
+  "problems": [],
+  "seconds": 5.2,
+  "category": "success",
+  "reason": "You bend the springy hazel rod and knot the short cord to the vine to make a crude bowstring. It is strung, though the joined string and simple construction make it a rough weapon.",
+  "made": {
+   "kind": "weapon",
+   "class": "bow",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "bow",
+  "ok": true,
+  "problems": [],
+  "seconds": 11.6,
+  "category": "success",
+  "reason": "You bend the springy hazel rod and knot the short cord to the vine to make a string long enough to brace it. The bow is crude, but it holds its bend and string.",
+  "made": {
+   "kind": "weapon",
+   "class": "bow",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "stitches",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.4,
+  "category": "success",
+  "reason": "You draw a strand of flax through the eye of an iron needle, ready for stitching. The needle is Mara’s, and the thread is Hessa’s.",
+  "made": {
+   "kind": "remedy",
+   "class": "stitches",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "stitches",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.3,
+  "category": "success",
+  "reason": "You draw a length of flax thread from the skein and pass it through the eye of an iron needle, ready for stitching.",
+  "made": {
+   "kind": "remedy",
+   "class": "stitches",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "stitches",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.7,
+  "category": "success",
+  "reason": "You draw a length of flax thread through the eye of one of the fine iron needles, ready for stitching.",
+  "made": {
+   "kind": "remedy",
+   "class": "stitches",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ }
+]

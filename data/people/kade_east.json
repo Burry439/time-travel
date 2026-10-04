@@ -58,10 +58,30 @@
  ],
  "secrets": [
   {
+   "id": "kade_knees",
    "text": "His knees are going, and he dreads being put out to pasture.",
-   "reveal": "never, unless someone notices and is kind"
+   "reveal": "never, unless someone notices and is kind",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "treated",
+      "condition": "ache"
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.8
+     }
+    ]
+   },
+   "lead": "Kade's knees are failing, and he dreads being pensioned off."
   }
  ],
+ "history": {
+  "npc_hessa_marr": "He came back from the fog patrol that Hessa's husband Aldo didn't, three winters ago.",
+  "npc_roderic_vale": "He has served under Roderic for twenty years."
+ },
  "likes": "routine, quiet shifts, the old ways",
  "dislikes": "novelty, cleverness, young guards' mistakes",
  "opinions": {

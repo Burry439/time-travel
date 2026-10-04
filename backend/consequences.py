@@ -452,7 +452,7 @@ def apply_step(state: State, deltas: dict) -> None:
         state.setdefault("trades", {})[deltas["trade"]["id"]] = dict(deltas["trade"])
     given = deltas.get("given")
     for item_id in (given or {}).get("ids", []):
-        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id])
+        state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id], given_by="player")
         if given["owners"][item_id] == given["to"]:
             state["objects"][item_id].pop("lent_to", None)  # Back in its owner's hands: the loan is over.
     transformed = deltas.get("transformed")

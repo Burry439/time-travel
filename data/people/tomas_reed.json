@@ -91,10 +91,32 @@
  ],
  "secrets": [
   {
+   "id": "tomas_cracked",
    "text": "He cracked the first beam by rushing it, which is why there's a replacement at all.",
-   "reveal": "someone who helps with the beam"
+   "reveal": "someone who helps with the beam",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "installed",
+      "thing": "gate_beam"
+     },
+     {
+      "kind": "helped"
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.65
+     }
+    ]
+   },
+   "lead": "Tomas cracked the first gate beam himself, by rushing it."
   }
  ],
+ "history": {
+  "npc_roderic_vale": "The captain hired him to replace the gate beam after the first one cracked."
+ },
  "likes": "good timber, careful work, clear plans",
  "dislikes": "thieves, sloppy work, being rushed",
  "opinions": {

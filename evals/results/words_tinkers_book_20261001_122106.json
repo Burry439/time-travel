@@ -1,0 +1,146 @@
+[
+ {
+  "run": 1,
+  "step": "rope",
+  "text": "braid the flax into a cord",
+  "ok": true,
+  "category": "success",
+  "reason": "You twist and braid the long flax fibres together by hand into a short cord. It is uneven, but holds together as a tie."
+ },
+ {
+  "run": 1,
+  "step": "rope",
+  "text": "make a rope out of the flax",
+  "ok": true,
+  "category": "success",
+  "reason": "You twist the combed flax fibres together by hand into a short, coarse cord. It is rope-like, but too thin to call a substantial rope."
+ },
+ {
+  "run": 1,
+  "step": "rope",
+  "text": "twist the flax fibres into a rope",
+  "ok": true,
+  "category": "success",
+  "reason": "You pick up the bundle of flax fibres from within reach. You twist the long flax fibres together by hand into a short, coarse cord."
+ },
+ {
+  "run": 1,
+  "step": "fail",
+  "text": "twist the sawdust into a rope",
+  "ok": true,
+  "category": "blocked",
+  "reason": "You try to twist the sawdust together, but the loose grains will not bind into a rope."
+ },
+ {
+  "run": 1,
+  "step": "torch",
+  "text": "wrap the rag around the stick and dip it in the pitch",
+  "ok": true,
+  "category": "success",
+  "reason": "You wrap the linen rag around one end of the ash stick, then dip it into the warm pine pitch. The sticky pitch coats the cloth and holds it in place as a crude torch head."
+ },
+ {
+  "run": 1,
+  "step": "torch",
+  "text": "wind the linen rag round the end of the ash stick and soak it in the pine pitch to make a torch",
+  "ok": true,
+  "category": "success",
+  "reason": "You wind the linen rag around one end of the ash stick and work warm pine pitch into the cloth. It makes a sticky, unlit torch, though the clay pot goes with the pitch."
+ },
+ {
+  "run": 1,
+  "step": "sling",
+  "text": "tie the twine to both ends of the leather strip to make a sling",
+  "ok": true,
+  "category": "success",
+  "reason": "You tie the hemp twine to both ends of the leather strip, making a simple sling."
+ },
+ {
+  "run": 1,
+  "step": "sling",
+  "text": "make a sling from the strip of leather and the hemp twine",
+  "ok": true,
+  "category": "success",
+  "reason": "You tie the hemp twine to either end of the leather strip, making a simple sling for hurling stones."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "give Odo the rope, the torch and the sling",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Odo the flax cord, the unlit pitch torch, and the sling."
+ },
+ {
+  "run": 2,
+  "step": "rope",
+  "text": "braid the flax into a cord",
+  "ok": true,
+  "category": "success",
+  "reason": "You braid and twist the long flax fibres together into a short, pale cord. It is uneven but holds together when pulled gently."
+ },
+ {
+  "run": 2,
+  "step": "rope",
+  "text": "make a rope out of the flax",
+  "ok": true,
+  "category": "success",
+  "reason": "You twist the long flax fibres together by hand into a short, rough cord. It is suitable for light ties, not a heavy rope."
+ },
+ {
+  "run": 2,
+  "step": "rope",
+  "text": "twist the flax fibres into a rope",
+  "ok": true,
+  "category": "success",
+  "reason": "You pick up the bundle of flax fibres from within reach. You twist the long flax fibres together by hand into a coarse, short rope."
+ },
+ {
+  "run": 2,
+  "step": "fail",
+  "text": "twist the sawdust into a rope",
+  "ok": true,
+  "category": "blocked",
+  "reason": "You try to twist the sawdust together, but the loose particles have no long fibres to bind into a rope."
+ },
+ {
+  "run": 2,
+  "step": "torch",
+  "text": "wrap the rag around the stick and dip it in the pitch",
+  "ok": true,
+  "category": "success",
+  "reason": "You wrap the linen rag around the end of the ash stick and dip it into the warm pine pitch. The sticky pitch coats the cloth, binding it to the stick; it is not alight."
+ },
+ {
+  "run": 2,
+  "step": "torch",
+  "text": "wind the linen rag round the end of the ash stick and soak it in the pine pitch to make a torch",
+  "ok": true,
+  "category": "success",
+  "reason": "You wind the linen rag around the end of the ash stick and work it through the warm pine pitch. The rag clings to the stick, coated in pitch and ready to be lit."
+ },
+ {
+  "run": 2,
+  "step": "sling",
+  "text": "tie the twine to both ends of the leather strip to make a sling",
+  "ok": true,
+  "category": "success",
+  "reason": "You tie the hemp twine to both ends of Odo's leather strip, leaving a broad pouch between the cords. The rough sling is ready to hold and swing a small stone."
+ },
+ {
+  "run": 2,
+  "step": "sling",
+  "text": "make a sling from the strip of leather and the hemp twine",
+  "ok": true,
+  "category": "success",
+  "reason": "You tie the hemp twine to the ends of the leather strip, making a simple sling with a leather pouch and two cords."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "give Odo the rope, the torch and the sling",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Odo the flax rope, the pitch-soaked torch, and the sling."
+ }
+]

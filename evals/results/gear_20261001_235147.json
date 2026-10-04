@@ -1,0 +1,51 @@
+[
+ {
+  "case": "flint_axe",
+  "ok": true,
+  "problems": [],
+  "seconds": 7.7,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the hazel rod with several tight turns of vine. The springy rod and vine give way under hard chopping, so it is a crude, light hand axe rather than a sturdy tool.",
+  "made": {
+   "kind": "weapon",
+   "class": "great_axe",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Gear 'hand_axe' doesn't fit the thing; its kin 'great_axe' does."
+  ]
+ },
+ {
+  "case": "flint_axe",
+  "ok": false,
+  "problems": [
+   "made None (judge proposed [None]), wanted one of ['hand_axe', 'great_axe', 'sickle', 'knife']"
+  ],
+  "seconds": 5.2,
+  "category": "failed",
+  "reason": "You bind the flint crosswise to the smooth, springy hazel rod, but the vine cannot keep the small shard from shifting under a chopping blow. The axe head is not secure enough to make a usable axe.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "flint_axe",
+  "ok": false,
+  "problems": [
+   "made {'kind': 'weapon', 'class': 'short_spear', 'covers': [], 'quality': 'crude'} (judge proposed [None]), wanted one of ['hand_axe', 'great_axe', 'sickle', 'knife']"
+  ],
+  "seconds": 6.5,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the end of the hazel rod with the vine. It holds together as a crude tool, though the springy rod and lack of a firm seat make it liable to shift under a hard blow.",
+  "made": {
+   "kind": "weapon",
+   "class": "short_spear",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ }
+]

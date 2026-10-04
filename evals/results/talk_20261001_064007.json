@@ -1,0 +1,120 @@
+[
+ {
+  "case": "jory_given_a_poultice",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh, for me? Thanks! I can put it on myself, but what is plantain good for—does it really draw the heat out?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh, for me? Thanks! I can put it on myself, but what is plantain good for—does it really draw the heat out?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 5234,
+    "voice_usd": 0.0006883000000000001
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh! For me? Thank you—I've got it, and I'll put it on.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh! For me? Thank you—I've got it, and I'll put it on.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2430,
+    "voice_usd": 0.0006888
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 3,
+  "ok": false,
+  "problems": [
+   "never chose any of ['treat_self'] (chose ['answer'])"
+  ],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Oh! Thanks—I've got the poultice now. Does it go straight on the burn?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh! Thanks—I've got the poultice now. Does it go straight on the burn?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2236,
+    "voice_usd": 0.0006868000000000001
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 4,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh, for me? Thanks! I can put this on now, and—does it really help burns?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh, for me? Thanks! I can put this on now, and—does it really help burns?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2119,
+    "voice_usd": 0.0006908000000000001
+   }
+  ]
+ }
+]

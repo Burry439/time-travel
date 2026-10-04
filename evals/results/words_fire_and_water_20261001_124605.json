@@ -1,0 +1,146 @@
+[
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "scoop river water into the pot",
+  "ok": true,
+  "category": "success",
+  "reason": "You scoop river water into the clay cooking pot, filling it to its two-litre capacity."
+ },
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "fill the clay pot with water from the river",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the clay pot into the river and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "kindle",
+  "text": "light a campfire in the pit with the flint and steel, the tinder, the kindling and the logs",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel until sparks catch in the dry grass. You nurse the tinder into a flame, then feed it with the kindling and logs in the pit."
+ },
+ {
+  "run": 1,
+  "step": "kindle",
+  "text": "strike the flint on the fire steel over the dry grass in the fire pit, then feed it the kindling and the logs",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the fire steel over the dry grass. Sparks catch, and you feed the small flame with kindling and then the split logs until they burn steadily."
+ },
+ {
+  "run": 1,
+  "step": "boil",
+  "text": "put the pot on the fire to boil the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the clay pot over the burning campfire. After several minutes, the water inside boils."
+ },
+ {
+  "run": 1,
+  "step": "boil",
+  "text": "set the pot of water on the fire until it boils",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the clay pot over the campfire and leave it there for several minutes. The water heats through and reaches a rolling boil."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "give Ulf the pot of hot water",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Ulf the pot of boiling water. The pot is hot to handle, but its twisted wire handle lets you pass it across."
+ },
+ {
+  "run": 1,
+  "step": "out",
+  "text": "fill the leather bucket with water from the river",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the leather bucket into the river and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "out",
+  "text": "pour the bucket of water over the fire to put it out",
+  "ok": true,
+  "category": "success",
+  "reason": "You pour the bucket’s water over the campfire. The flames hiss and go out beneath the soaking water."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "scoop river water into the pot",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the clay cooking pot into the river and scoop in water, filling it to its two-litre capacity."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "fill the clay pot with water from the river",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the clay pot into the river and fill it with water."
+ },
+ {
+  "run": 2,
+  "step": "kindle",
+  "text": "light a campfire in the pit with the flint and steel, the tinder, the kindling and the logs",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel until a spark catches in the dry grass, then carefully feed the flame with kindling and logs in the pit."
+ },
+ {
+  "run": 2,
+  "step": "kindle",
+  "text": "strike the flint on the fire steel over the dry grass in the fire pit, then feed it the kindling and the logs",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the fire steel over the dry grass until a spark catches. You feed the glowing tinder with kindling and then logs, building a steady fire in the pit."
+ },
+ {
+  "run": 2,
+  "step": "boil",
+  "text": "put the pot on the fire to boil the water",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the clay pot over the campfire and leave it there for several minutes. The water heats until it boils."
+ },
+ {
+  "run": 2,
+  "step": "boil",
+  "text": "set the pot of water on the fire until it boils",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the clay pot among the campfire's flames. After several minutes, the water comes to a rolling boil."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "give Ulf the pot of hot water",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Ulf the clay pot of boiling water, taking care to keep hold of its wire handle."
+ },
+ {
+  "run": 2,
+  "step": "out",
+  "text": "fill the leather bucket with water from the river",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the leather bucket into the river and fill it with water."
+ },
+ {
+  "run": 2,
+  "step": "out",
+  "text": "pour the bucket of water over the fire to put it out",
+  "ok": true,
+  "category": "success",
+  "reason": "You pour the bucket of water over the campfire. The flames go out beneath the water, leaving wet, smoking fuel."
+ }
+]

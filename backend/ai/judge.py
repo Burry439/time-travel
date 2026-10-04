@@ -19,7 +19,7 @@ import gear
 
 from . import config
 
-PROMPT_VERSION = "judge_v17"
+PROMPT_VERSION = "judge_v18"  # v18 (D-61): an ache can be treated (Kade's knees).
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -118,7 +118,7 @@ class HurtsYou(BaseModel):
 class Treat(BaseModel):
     patient_id: str  # "player" for the stranger, or a person's id.
     remedy_id: str  # The carried thing used to treat it.
-    condition: Literal["bleeding", "burn", "broken", "infection"]
+    condition: Literal["bleeding", "burn", "broken", "infection", "ache"]
 
 
 class Equip(BaseModel):

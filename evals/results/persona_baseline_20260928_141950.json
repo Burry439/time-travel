@@ -1,0 +1,428 @@
+{
+ "label": "baseline (voice_v2, style only)",
+ "identified": 39,
+ "total": 60,
+ "shared_openings": 22,
+ "rows": [
+  {
+   "npc": "Roderic",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day, stranger. I have nothing to add.",
+   "guess": "Roderic",
+   "right": true
+  },
+  {
+   "npc": "Roderic",
+   "stranger": "Could you use a hand with anything?",
+   "line": "No, stranger. I have no need of your hand.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Roderic",
+   "stranger": "What do you make of the captain?",
+   "line": "I make nothing of him, stranger.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Roderic",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "I have no advice for you, stranger.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Roderic",
+   "stranger": "Fine weather, isn't it?",
+   "line": "It is fair enough, stranger.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Roderic",
+   "stranger": "Why should I trust you?",
+   "line": "Trust is not required, stranger.",
+   "guess": "Roderic",
+   "right": true
+  },
+  {
+   "npc": "Bren",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day. New here, are you? What do you take this place for?",
+   "guess": "Bren",
+   "right": true
+  },
+  {
+   "npc": "Bren",
+   "stranger": "Could you use a hand with anything?",
+   "line": "A hand? Mine are occupied keeping the gate honest. What sort of help did you have in mind?",
+   "guess": "Bren",
+   "right": true
+  },
+  {
+   "npc": "Bren",
+   "stranger": "What do you make of the captain?",
+   "line": "The captain? What do you make of him?",
+   "guess": "Bren",
+   "right": true
+  },
+  {
+   "npc": "Bren",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Advice? Best not to mistake a gate for an open door.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Bren",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Fine enough. Is the weather all you came to talk about?",
+   "guess": "Mara",
+   "right": false
+  },
+  {
+   "npc": "Bren",
+   "stranger": "Why should I trust you?",
+   "line": "You needn’t trust me. What have I done to earn it?",
+   "guess": "Bren",
+   "right": true
+  },
+  {
+   "npc": "Oren",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "New here, are you? And you expect me to believe that?",
+   "guess": "Oren",
+   "right": true
+  },
+  {
+   "npc": "Oren",
+   "stranger": "Could you use a hand with anything?",
+   "line": "A hand? For what, exactly? You haven't given me a reason to trust you.",
+   "guess": "Oren",
+   "right": true
+  },
+  {
+   "npc": "Oren",
+   "stranger": "What do you make of the captain?",
+   "line": "Why ask me? What are you really after?",
+   "guess": "Oren",
+   "right": true
+  },
+  {
+   "npc": "Oren",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Advice? You haven't said what you're doing here.",
+   "guess": "Oren",
+   "right": true
+  },
+  {
+   "npc": "Oren",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Weather's weather. What are you after?",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Oren",
+   "stranger": "Why should I trust you?",
+   "line": "Trust me? You have no reason to.",
+   "guess": "Elin",
+   "right": false
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day, love. New, are you? I can see you’re taking the place in.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "Could you use a hand with anything?",
+   "line": "That’s kind of you, love, but I’ve nothing to ask of you just now.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "What do you make of the captain?",
+   "line": "What do I make of him, love? I hardly know the captain.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Oh, love, I’ve no advice for you there. I’d only be guessing.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "Fine weather, isn't it?",
+   "line": "It is, love. Fine enough to put a little spring in a person’s step, I’d say.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Hessa",
+   "stranger": "Why should I trust you?",
+   "line": "Trust doesn’t come just because I ask, love. You’ll have to read me for yourself.",
+   "guess": "Hessa",
+   "right": true
+  },
+  {
+   "npc": "Mara",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day. It’s a smithy.",
+   "guess": "Mara",
+   "right": true
+  },
+  {
+   "npc": "Mara",
+   "stranger": "Could you use a hand with anything?",
+   "line": "Not unless you’ve got a useful skill to offer.",
+   "guess": "Tomas",
+   "right": false
+  },
+  {
+   "npc": "Mara",
+   "stranger": "What do you make of the captain?",
+   "line": "What captain? I’ve no idea what you mean.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Mara",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Advice? I’ve none worth giving.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Mara",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Weather's weather. Doesn't change the work.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Mara",
+   "stranger": "Why should I trust you?",
+   "line": "You needn't trust me. Judge me by what I do.",
+   "guess": "Mara",
+   "right": true
+  },
+  {
+   "npc": "Jory",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day! New, are you? Well, welcome—what brings you here, and what are you hoping to find?",
+   "guess": "Hessa",
+   "right": false
+  },
+  {
+   "npc": "Jory",
+   "stranger": "Could you use a hand with anything?",
+   "line": "Oh, could you? What sort of work have you done? I mean, a hand can be useful, but I don't know what you'd be good at!",
+   "guess": "Tomas",
+   "right": false
+  },
+  {
+   "npc": "Jory",
+   "stranger": "What do you make of the captain?",
+   "line": "The captain? What am I meant to make of him, then?",
+   "guess": "Bren",
+   "right": false
+  },
+  {
+   "npc": "Jory",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Into the city, you say—how will you manage that, then? I’ve no advice to give you, though I’d dearly like to know what you’re after in there.",
+   "guess": "Hessa",
+   "right": false
+  },
+  {
+   "npc": "Jory",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Is it? I was watching the forge smoke and missed the sky—what makes it fine, do you think?",
+   "guess": "Jory",
+   "right": true
+  },
+  {
+   "npc": "Jory",
+   "stranger": "Why should I trust you?",
+   "line": "Trust me? Well, why should you? I’m only Jory, and you’ve hardly had a chance to see what I’m like, have you?",
+   "guess": "Jory",
+   "right": true
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day. A place is known by what it is built of, I suppose.",
+   "guess": "Tomas",
+   "right": true
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "Could you use a hand with anything?",
+   "line": "Not at present. I have the work in hand.",
+   "guess": "Roderic",
+   "right": false
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "What do you make of the captain?",
+   "line": "That’s not a measurement I can work with. Ask me about the work.",
+   "guess": "Tomas",
+   "right": true
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Advice about getting into the city? I’ve none to give you.",
+   "guess": "Kade",
+   "right": false
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Aye, fair weather. Makes for easier work.",
+   "guess": "Tomas",
+   "right": true
+  },
+  {
+   "npc": "Tomas",
+   "stranger": "Why should I trust you?",
+   "line": "You needn't trust me. Judge my work by what holds.",
+   "guess": "Tomas",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "A new face, friend. What would you pay to learn?",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "Could you use a hand with anything?",
+   "line": "A hand is worth something, friend—but first I’d need to know what you expect in return.",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "What do you make of the captain?",
+   "line": "A captain? I’ve no measure of him, friend. A bargain needs better information than that.",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Advice is a commodity, friend. What have you to trade for it?",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "Fine weather, isn't it?",
+   "line": "A fair day, friend. Though fine weather alone makes no bargain.",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Darin",
+   "stranger": "Why should I trust you?",
+   "line": "Trust is a bargain, friend. Keep your risk small, and mine small too.",
+   "guess": "Darin",
+   "right": true
+  },
+  {
+   "npc": "Elin",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day. I’ve nothing to report.",
+   "guess": "Elin",
+   "right": true
+  },
+  {
+   "npc": "Elin",
+   "stranger": "Could you use a hand with anything?",
+   "line": "Nothing I can name.",
+   "guess": "Roderic",
+   "right": false
+  },
+  {
+   "npc": "Elin",
+   "stranger": "What do you make of the captain?",
+   "line": "I’ve nothing to report about him.",
+   "guess": "Elin",
+   "right": true
+  },
+  {
+   "npc": "Elin",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "I have no advice.",
+   "guess": "Roderic",
+   "right": false
+  },
+  {
+   "npc": "Elin",
+   "stranger": "Fine weather, isn't it?",
+   "line": "You asked me? I have nothing to report.",
+   "guess": "Elin",
+   "right": true
+  },
+  {
+   "npc": "Elin",
+   "stranger": "Why should I trust you?",
+   "line": "You needn’t. I’ve told you nothing to take on trust.",
+   "guess": "Roderic",
+   "right": false
+  },
+  {
+   "npc": "Kade",
+   "stranger": "Good day. I'm new here; what is this place?",
+   "line": "Good day.",
+   "guess": "Kade",
+   "right": true
+  },
+  {
+   "npc": "Kade",
+   "stranger": "Could you use a hand with anything?",
+   "line": "No. Move along.",
+   "guess": "Kade",
+   "right": true
+  },
+  {
+   "npc": "Kade",
+   "stranger": "What do you make of the captain?",
+   "line": "None of your business.",
+   "guess": "Kade",
+   "right": true
+  },
+  {
+   "npc": "Kade",
+   "stranger": "I need to get into the city. Any advice?",
+   "line": "Not my concern.",
+   "guess": "Kade",
+   "right": true
+  },
+  {
+   "npc": "Kade",
+   "stranger": "Fine weather, isn't it?",
+   "line": "Weather's weather.",
+   "guess": "Kade",
+   "right": true
+  },
+  {
+   "npc": "Kade",
+   "stranger": "Why should I trust you?",
+   "line": "You shouldn't.",
+   "guess": "Kade",
+   "right": true
+  }
+ ]
+}

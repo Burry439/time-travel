@@ -1,0 +1,550 @@
+[
+ {
+  "case": "jory_healed_speaks_up",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "How's the arm?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Better, thanks! That poultice did the trick—the burn's stopped stinging. What was in it?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Better, thanks! That poultice did the trick—the burn's stopped stinging. What was in it?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 10095,
+    "voice_usd": 0.0
+   },
+   {
+    "said": "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "reply": "vouch",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "vouch",
+      "line": "The captain? I can go speak for you, yes! You helped my arm, after all.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "vouch"
+    ],
+    "line": "The captain? I can go speak for you, yes! You helped my arm, after all.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2979,
+    "voice_usd": 0.0006916
+   },
+   {
+    "said": "Could you go and tell him now?",
+    "reply": "go_tell",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "go_tell",
+      "line": "Yes, now! The captain's at the gate, isn't he? I'll tell him you treated my arm and ask him to hear you out.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "go_tell"
+    ],
+    "line": "Yes, now! The captain's at the gate, isn't he? I'll tell him you treated my arm and ask him to hear you out.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2314,
+    "voice_usd": 0.0007095
+   }
+  ]
+ },
+ {
+  "case": "jory_healed_speaks_up",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "How's the arm?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Much better, thanks! The poultice took the sting out, and it’s healing up nicely. Did you make it yourself?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Much better, thanks! The poultice took the sting out, and it’s healing up nicely. Did you make it yourself?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3181,
+    "voice_usd": 0.0006719
+   },
+   {
+    "said": "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "reply": "vouch",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "vouch",
+      "line": "The captain? That's Roderic at the gate. I could go put in a word for you—after that poultice, I owe you one, don't I?",
+      "joined": false
+     },
+     {
+      "who": "npc_mara_venn",
+      "key": "offer:forge_fuel",
+      "line": "Jory, don't go making promises on my account. If you want the captain's ear, bring me fuel for the forge; I'll put in a word then.",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "vouch",
+     "offer:forge_fuel"
+    ],
+    "line": "The captain? That's Roderic at the gate. I could go put in a word for you—after that poultice, I owe you one, don't I? Jory, don't go making promises on my account. If you want the captain's ear, bring me fuel for the forge; I'll put in a word then.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 7363,
+    "voice_usd": 0.0
+   },
+   {
+    "said": "Could you go and tell him now?",
+    "reply": "go_tell",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "go_tell",
+      "line": "I said I’d put in a word, and I will. I’ll find Roderic now and tell him you treated my arm and asked to enter the city.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "go_tell"
+    ],
+    "line": "I said I’d put in a word, and I will. I’ll find Roderic now and tell him you treated my arm and asked to enter the city.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2972,
+    "voice_usd": 0.0007658000000000001
+   }
+  ]
+ },
+ {
+  "case": "jory_healed_speaks_up",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "How's the arm?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Better, thanks! That poultice you made eased the burn a lot. It’s still a bit sore, but look—can you tell how well it’s healing?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Better, thanks! That poultice you made eased the burn a lot. It’s still a bit sore, but look—can you tell how well it’s healing?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2339,
+    "voice_usd": 0.0006734
+   },
+   {
+    "said": "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "reply": "vouch",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "vouch",
+      "line": "Oh! The captain? I can go put in a word for you now—your poultice really helped my arm, and you were kind to me.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "vouch"
+    ],
+    "line": "Oh! The captain? I can go put in a word for you now—your poultice really helped my arm, and you were kind to me.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2170,
+    "voice_usd": 0.0006962
+   },
+   {
+    "said": "Could you go and tell him now?",
+    "reply": "go_tell",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "go_tell",
+      "line": "Yes! I’ll find Captain Roderic at the gate and tell him you helped my arm. I’ll be right back—oh, I hope he’s there.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "go_tell"
+    ],
+    "line": "Yes! I’ll find Captain Roderic at the gate and tell him you helped my arm. I’ll be right back—oh, I hope he’s there.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2870,
+    "voice_usd": 0.0007267
+   }
+  ]
+ },
+ {
+  "case": "talked_down_mid_fight",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    "reply": "stop_fighting",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "stop_fighting",
+      "line": "All right, love—hand it back, then. I’ll stop; just don’t make me chase you round my yard again.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "stop_fighting"
+    ],
+    "line": "All right, love—hand it back, then. I’ll stop; just don’t make me chase you round my yard again.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2614,
+    "voice_usd": 0.0005519000000000001
+   },
+   {
+    "said": "Here, it's yours. I'm sorry.",
+    "reply": "forgive",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "forgive",
+      "line": "There now, love. Thank you for giving it back—and for saying so. Let's leave it at that; I've water to haul before evening.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "forgive"
+    ],
+    "line": "There now, love. Thank you for giving it back—and for saying so. Let's leave it at that; I've water to haul before evening.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2625,
+    "voice_usd": 0.0005605
+   }
+  ]
+ },
+ {
+  "case": "talked_down_mid_fight",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    "reply": "forgive",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "forgive",
+      "line": "All right, love. Put it back where you took it, then step away from me. I’ll let this go, but don’t take things from my yard again.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "forgive"
+    ],
+    "line": "All right, love. Put it back where you took it, then step away from me. I’ll let this go, but don’t take things from my yard again.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2495,
+    "voice_usd": 0.0005559000000000001
+   },
+   {
+    "said": "Here, it's yours. I'm sorry.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "There, that's better, love. Thank you for bringing it back—and for saying so. Now leave it by the place you took it from, just as I asked.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "There, that's better, love. Thank you for bringing it back—and for saying so. Now leave it by the place you took it from, just as I asked.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2627,
+    "voice_usd": 0.0005641
+   }
+  ]
+ },
+ {
+  "case": "talked_down_mid_fight",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    "reply": "stop_fighting",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "stop_fighting",
+      "line": "All right, love—give it back, and I’ll stop. Don’t make me chase you for it.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "stop_fighting"
+    ],
+    "line": "All right, love—give it back, and I’ll stop. Don’t make me chase you for it.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2271,
+    "voice_usd": 0.0005519000000000001
+   },
+   {
+    "said": "Here, it's yours. I'm sorry.",
+    "reply": "forgive",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "forgive",
+      "line": "There we are, love. Thank you for giving it back—and for saying sorry. Let's leave it there; I've water to haul before the kitchen's in a muddle.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "forgive"
+    ],
+    "line": "There we are, love. Thank you for giving it back—and for saying sorry. Let's leave it there; I've water to haul before the kitchen's in a muddle.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2456,
+    "voice_usd": 0.0005627000000000001
+   }
+  ]
+ },
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Oh, you made it for me? That's clever! Do I just press it on, then—does it sting?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh, you made it for me? That's clever! Do I just press it on, then—does it sting?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2105,
+    "voice_usd": 0.0006714
+   }
+  ]
+ },
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 2,
+  "ok": false,
+  "problems": [
+   "said 'holding it': You made that for me? Oh, that's clever—plantain, is it? I can't put it on while you're still holding it, can I?"
+  ],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "You made that for me? Oh, that's clever—plantain, is it? I can't put it on while you're still holding it, can I?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "You made that for me? Oh, that's clever—plantain, is it? I can't put it on while you're still holding it, can I?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2142,
+    "voice_usd": 0.0006753999999999999
+   }
+  ]
+ },
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 3,
+  "ok": false,
+  "problems": [
+   "said 'holding it': Oh, you made that for me? I can't put it on while you're still holding it—hand it over, and I'll try it. What did you make it from?"
+  ],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Oh, you made that for me? I can't put it on while you're still holding it—hand it over, and I'll try it. What did you make it from?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh, you made that for me? I can't put it on while you're still holding it—hand it over, and I'll try it. What did you make it from?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3085,
+    "voice_usd": 0.0006774
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh! Thank you—I'll put it on now. How did you know plantain helps burns?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh! Thank you—I'll put it on now. How did you know plantain helps burns?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2979,
+    "voice_usd": 0.0006793000000000001
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh! Thank you—I've got a burn right here. I can put it on myself, and—does plantain really draw the heat out?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh! Thank you—I've got a burn right here. I can put it on myself, and—does plantain really draw the heat out?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2302,
+    "voice_usd": 0.0006773
+   }
+  ]
+ },
+ {
+  "case": "jory_given_a_poultice",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Here, it's yours. Put it on your burn.",
+    "reply": "treat_self:plantain_a",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "treat_self:plantain_a",
+      "line": "Oh, thank you! I can put it on myself, then? Does it really help burns?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "treat_self:plantain_a"
+    ],
+    "line": "Oh, thank you! I can put it on myself, then? Does it really help burns?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 1990,
+    "voice_usd": 0.0006723
+   }
+  ]
+ }
+]

@@ -699,6 +699,14 @@
   },
   {
    "alive": true,
+   "conditions": [
+    {
+     "area": "leg",
+     "kind": "ache",
+     "since": 0,
+     "treated": 0
+    }
+   ],
    "controller": {
     "activity": "walk",
     "anchor_index": 1,

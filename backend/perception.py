@@ -123,6 +123,7 @@ def _demonstration(shown: dict) -> dict:
         think=False,
         works=shown["works"],
         wonder=shown.get("wonder", "ordinary"),
+        object_id=shown["object_id"],  # What was shown, for stories that ask what it was (D-61).
     )
 
 
@@ -139,6 +140,7 @@ def _making(entry: dict) -> dict | None:
         ("The stranger was making something; it was hard to see what.", "was making something", 0),
         **SHOWN,
         wonder="ordinary",
+        object_id=entry["made_ids"][0],
     )
 
 
@@ -290,6 +292,8 @@ def perceive(state: State, entry: dict) -> list[dict]:
                 memory["works"] = seen["works"]
             if seen.get("wonder") and clarity == "clear":
                 memory["wonder"] = seen["wonder"]
+            if seen.get("object_id") and clarity == "clear":
+                memory["object_id"] = seen["object_id"]
             if npc["id"] == seen["victim"]:  # They tell it in the first person: "attacked me", "stole my plank".
                 memory["short"] = memory["short"].replace(f"{npc['name']}'s", "my").replace(npc["name"], "me")
             perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})

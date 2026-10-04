@@ -1,0 +1,55 @@
+[
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "lash the broken sword blade crosswise to the end of the ash pole with soaked rawhide to make a heavy bill-hook polearm",
+  "ok": true,
+  "category": "success",
+  "reason": "You soak the rawhide strips strips in the quenching trough and bind the broken blade crosswise to the end of the ash pole. The lashing holds, though the heavy head makes the polearm awkward to handle.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "crude billhook polearm",
+    "consumes": [
+     "blade_broken",
+     "pole_ash",
+     "rawhide"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "guard",
+  "text": "cut a round buckler from the oak boards and bind its rim with soaked rawhide",
+  "ok": true,
+  "category": "success",
+  "reason": "You chop the oak boards into a rough round shield shape, bind their edges with the rawhide strips strips, and soak the lashing in the quenching trough. The boards hold together, though the buckler is crude and uneven.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "crude wooden buckler",
+    "consumes": [
+     "boards_oak",
+     "rawhide2"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "hack at the straw dummy with my polearm to show Holt it holds and bites",
+  "ok": true,
+  "category": "success",
+  "reason": "You hack the straw the straw dummy with the crude billhook polearm. Its blade bites into the stuffing, and the lashing holds as Holt watches.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

@@ -1,0 +1,82 @@
+[
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "fill the cup at the well",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden cup into the well and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "dip the cup in the bucket of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden cup into the well bucket and scoop up water, filling the cup."
+ },
+ {
+  "run": 1,
+  "step": "fill",
+  "text": "fill the cup from the well bucket",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden cup into the well bucket and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "hand Wenna the cup",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand the cup to Wenna, water and all."
+ },
+ {
+  "run": 1,
+  "step": "give",
+  "text": "give the cup of water to Wenna",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Wenna the wooden cup of water."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "fill the cup at the well",
+  "ok": true,
+  "category": "success",
+  "reason": "You lower the wooden cup into the well and scoop up water, filling it to its 0.3-litre capacity."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "dip the cup in the bucket of water",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden cup into the bucket and scoop up water."
+ },
+ {
+  "run": 2,
+  "step": "fill",
+  "text": "fill the cup from the well bucket",
+  "ok": true,
+  "category": "success",
+  "reason": "You scoop water from the well bucket into the wooden cup, filling it to the brim."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "hand Wenna the cup",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Wenna the wooden cup of water."
+ },
+ {
+  "run": 2,
+  "step": "give",
+  "text": "give the cup of water to Wenna",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Wenna the wooden cup of water."
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "bind Liss's cut hand tightly with the clean linen strips",
+  "ok": true,
+  "category": "success",
+  "reason": "You tear and fold the clean linen strips into a bandage. You wrap the bandage firmly around Liss's cut arm.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "linen bandage",
+    "consumes": [
+     "linen_liss"
+    ]
+   },
+   {
+    "action": "treat",
+    "outcome": "success"
+   }
+  ]
+ }
+]

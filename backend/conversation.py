@@ -12,6 +12,7 @@ import gear
 import paths
 import reputation
 import rules
+import stories
 import tuning
 from shapes import Deal, Npc, State
 
@@ -223,6 +224,10 @@ def _talking(state: State, npc: Npc, options: dict) -> None:
         if fact_id in my_mind.get("shared", []) or (fact.get("trusted") and trust < tuning.SHARE_TRUST):
             continue
         options[f"share:{fact_id}"] = _option("share", f"{name} tells the stranger: {fact['text']}", fact_id)
+    for secret in stories.confidable(state, npc):  # Code says they could; whether they do is theirs (D-61).
+        options[f"confide:{secret['id']}"] = _option(
+            "confide", f"{name} confides in the stranger, privately: {secret['text']}", secret["id"]
+        )
     for other_id in me.get("refers", []):
         other = cast.find(state["npcs"], other_id)
         if other is None or not other.get("alive", True) or other_id in my_mind.get("referred", []):
@@ -255,6 +260,10 @@ def _offering(state: State, npc: Npc, options: dict) -> None:
             options[f"give:{obj['id']}"] = _option(
                 "give", f"{name} gives the stranger their {obj['name']} to keep.", obj["id"]
             )
+    for move in stories.moves_for(state, npc):  # Something they could now agree to (D-61): theirs to decide.
+        options[f"story:{move['id']}"] = _option(
+            "story", f"{move['description']} (You'd agree {move['would_agree_if']}.)", move["id"]
+        )
     for trade in open_trades(state, npc):
         options[f"accept_trade:{trade['id']}"] = _option(
             "accept_trade",

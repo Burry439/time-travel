@@ -1,0 +1,222 @@
+[
+ {
+  "case": "bren_on_hessas_word",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "admit",
+    "line": "Hessa sent you, did she? That carries some weight. Go on through, then—and try not to make me explain it to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "jev_ms": 2358,
+    "jev_usd": 0.000110544,
+    "provider": "jev/defapi",
+    "voice_ms": 5223,
+    "voice_usd": 0.000315
+   },
+   {
+    "said": "I'm Ash. Hessa knows me well. Please, let me through.",
+    "reply": "answer",
+    "line": "Ash, then. Hessa speaks well of you, and I’ve no cause to keep you waiting—just don’t make me explain it to the captain twice.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 1200,
+    "jev_usd": 0.000105168,
+    "provider": "jev/defapi",
+    "voice_ms": 4783,
+    "voice_usd": 0.0003225
+   }
+  ]
+ },
+ {
+  "case": "bren_on_hessas_word",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "admit",
+    "line": "Well, Hessa sending you is a better reference than most. Go on through, and try not to make me explain it to the captain—what business have you inside?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "jev_ms": 1226,
+    "jev_usd": 0.000110544,
+    "provider": "jev/defapi",
+    "voice_ms": 1960,
+    "voice_usd": 0.000315
+   },
+   {
+    "said": "I'm Ash. Hessa knows me well. Please, let me through.",
+    "reply": "answer",
+    "line": "Ash, then. Hessa speaks well of you, and I’ve already opened the way—go on through. What business have you inside?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 2229,
+    "jev_usd": 0.000105672,
+    "provider": "jev/defapi",
+    "voice_ms": 1996,
+    "voice_usd": 0.000322
+   }
+  ]
+ },
+ {
+  "case": "bren_on_hessas_word",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "admit",
+    "line": "Hessa sent you, and I’ve no reason to doubt her. Through you go; try not to make me explain it to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "jev_ms": 1571,
+    "jev_usd": 0.000110544,
+    "provider": "jev/defapi",
+    "voice_ms": 1963,
+    "voice_usd": 0.0003115
+   },
+   {
+    "said": "I'm Ash. Hessa knows me well. Please, let me through.",
+    "reply": "answer",
+    "line": "Well, Ash, Hessa’s word carries weight with me. Through you go—try not to make me explain it to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 1196,
+    "jev_usd": 0.000105084,
+    "provider": "jev/defapi",
+    "voice_ms": 1787,
+    "voice_usd": 0.0003188
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened? That needle trick proves nothing about what you can do. The captain decides who passes; go speak with him.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1278,
+    "jev_usd": 0.000113064,
+    "provider": "jev/defapi",
+    "voice_ms": 1774,
+    "voice_usd": 0.00030240000000000003
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "line": "You know what I saw? A needle turning in water. That is not leave to pass.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1214,
+    "jev_usd": 0.000120288,
+    "provider": "jev/defapi",
+    "voice_ms": 2603,
+    "voice_usd": 0.00030340000000000006
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 2,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'answer'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened? I saw the needle turn, yes. I’m not deciding this on my own—go speak to Captain Roderic, five steps that way.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1166,
+    "jev_usd": 0.000113064,
+    "provider": "jev/defapi",
+    "voice_ms": 2226,
+    "voice_usd": 0.00030490000000000004
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "answer",
+    "line": "You think I didn’t see it? I saw the needle turn. That still doesn’t make this my decision—Captain Roderic is five steps that way.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 1214,
+    "jev_usd": 0.00012096,
+    "provider": "jev/defapi",
+    "voice_ms": 2063,
+    "voice_usd": 0.0003155
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "admit",
+    "line": "You made that needle turn north every time. I won't stand in your way—through the gate, then. Don't make me regret it.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1186,
+    "jev_usd": 0.000113064,
+    "provider": "jev/defapi",
+    "voice_ms": 2529,
+    "voice_usd": 0.0003014
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "answer",
+    "line": "You know what I saw. I said through, and through you go. Don’t make me answer for it twice.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 1513,
+    "jev_usd": 0.000107268,
+    "provider": "jev/defapi",
+    "voice_ms": 1730,
+    "voice_usd": 0.000307
+   }
+  ]
+ }
+]

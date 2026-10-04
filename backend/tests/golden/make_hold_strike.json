@@ -693,6 +693,14 @@
   },
   {
    "alive": true,
+   "conditions": [
+    {
+     "area": "leg",
+     "kind": "ache",
+     "since": 0,
+     "treated": 0
+    }
+   ],
    "controller": {
     "activity": "look",
     "anchor_index": 2,
@@ -711,7 +719,7 @@
     "body": "jerkin_kade",
     "right": "spear_kade"
    },
-   "health": 100,
+   "health": 100.0,
    "id": "npc_kade_east",
    "injuries": [],
    "mind": {

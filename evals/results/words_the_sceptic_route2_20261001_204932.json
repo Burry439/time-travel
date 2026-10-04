@@ -1,0 +1,18 @@
+[
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "twist the hemp fibre into a long, strong three-strand rope and tar it with the pitch",
+  "ok": true,
+  "category": "success",
+  "reason": "You tease the hemp into strands, twist them together by hand, and work pine pitch from the pot over the rope. It is a crude, tarred rope; the hank gives you no basis for making it especially long or strong."
+ },
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "give the new tarred rope to Gorm for his ferry",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand the tarred hemp rope to Gorm."
+ }
+]

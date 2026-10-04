@@ -76,10 +76,42 @@
  ],
  "secrets": [
   {
+   "id": "bren_covers_oren",
    "text": "He has been covering Oren's late shifts and hasn't told the captain.",
-   "reveal": "someone he trusts, or if Oren's debt comes out"
+   "reveal": "someone he trusts, or if Oren's debt comes out",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.5
+     },
+     {
+      "kind": "learned",
+      "any": [
+       "secret:oren_debt"
+      ]
+     }
+    ]
+   },
+   "lead": "Bren has been covering Oren's missed shifts without telling the captain."
+  },
+  {
+   "id": "bren_elin",
+   "text": "He's quietly sweet on Elin, and would die before saying so.",
+   "reveal": "only someone he trusts a great deal",
+   "unlock": {
+    "kind": "regard",
+    "axis": "trust",
+    "at_least": 0.7
+   },
+   "lead": "Bren is sweet on Elin the scout."
   }
  ],
+ "history": {
+  "npc_oren_dast": "They stand the gate watch together."
+ },
  "likes": "a good joke, his sister's stew, straight answers",
  "dislikes": "being made a fool of, liars, the captain's lectures",
  "opinions": {

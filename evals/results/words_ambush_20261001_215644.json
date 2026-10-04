@@ -1,0 +1,30 @@
+[
+ {
+  "run": 1,
+  "step": "ford",
+  "text": "give Sken my purse",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk over to Sken and hand him your purse.",
+  "steps": [
+   {
+    "action": "give",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "ford",
+  "text": "hold out my purse of coins and give it to Sken",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk up to Sken and place your purse in his hands.",
+  "steps": [
+   {
+    "action": "give",
+    "outcome": "success"
+   }
+  ]
+ }
+]

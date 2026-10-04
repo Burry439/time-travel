@@ -1,0 +1,148 @@
+[
+ {
+  "case": "group_bren_joins_hessa",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "none of ['npc_bren_marr'] spoke (only ['npc_hessa_marr'])"
+  ],
+  "turns": [
+   {
+    "said": "Good evening! Is this your inn?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "Good evening, love. It is—come in out of the road if you’re looking for a bed or a bite to eat.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Good evening, love. It is—come in out of the road if you’re looking for a bed or a bite to eat.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 5449,
+    "voice_usd": 0.0006108999999999999
+   },
+   {
+    "said": "I'm looking for somewhere to sleep tonight.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "A bed, then, love. Come in and we’ll see what’s free; there’s food too if you’ve not eaten.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "A bed, then, love. Come in and we’ll see what’s free; there’s food too if you’ve not eaten.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2457,
+    "voice_usd": 0.0006338000000000001
+   },
+   {
+    "said": "And who's this? A friend of yours?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "Oh, Bren? He’s my brother, love. He’s just keeping an eye on the yard while he’s here.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh, Bren? He’s my brother, love. He’s just keeping an eye on the yard while he’s here.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 1845,
+    "voice_usd": 0.0006447
+   }
+  ]
+ },
+ {
+  "case": "group_bren_joins_hessa",
+  "run": 2,
+  "ok": false,
+  "problems": [
+   "none of ['npc_bren_marr'] spoke (only ['npc_hessa_marr'])"
+  ],
+  "turns": [
+   {
+    "said": "Good evening! Is this your inn?",
+    "reply": "ask_back",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "ask_back",
+      "line": "Good evening, love. It is indeed—Hessa’s the name. Looking for a bed, or just finding your way?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "ask_back"
+    ],
+    "line": "Good evening, love. It is indeed—Hessa’s the name. Looking for a bed, or just finding your way?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2045,
+    "voice_usd": 0.0006108999999999999
+   },
+   {
+    "said": "I'm looking for somewhere to sleep tonight.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "A bed, then, love. I've a room for the night; come in and we'll see you fed as well.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "A bed, then, love. I've a room for the night; come in and we'll see you fed as well.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 1987,
+    "voice_usd": 0.000628
+   },
+   {
+    "said": "And who's this? A friend of yours?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "answer",
+      "line": "That’s Bren, my brother. He’s keeping an eye on the yard while he’s here, love.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "That’s Bren, my brother. He’s keeping an eye on the yard while he’s here, love.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 2339,
+    "voice_usd": 0.000638
+   }
+  ]
+ }
+]

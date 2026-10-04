@@ -1,0 +1,315 @@
+[
+ {
+  "case": "flint_spear",
+  "ok": true,
+  "problems": [],
+  "seconds": 9.1,
+  "category": "success",
+  "reason": "You bind the sharp flint shard firmly to the end of the branch with the vine. It makes a crude spear, though the stone head may loosen under hard use.",
+  "made": {
+   "kind": "weapon",
+   "class": "short_spear",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "flint_axe",
+  "ok": true,
+  "problems": [],
+  "seconds": 5.7,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the end of the hazel rod with tight turns of vine. The flexible rod and rough lashing make a crude, usable small axe, though the head may shift under hard blows.",
+  "made": {
+   "kind": "weapon",
+   "class": "great_axe",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Gear 'hand_axe' doesn't fit the thing; its kin 'great_axe' does."
+  ]
+ },
+ {
+  "case": "bow",
+  "ok": false,
+  "problems": [
+   "made None (judge proposed [None]), wanted one of ['bow']"
+  ],
+  "seconds": 5.8,
+  "category": "blocked",
+  "reason": "You cannot string the hazel rod with the short cord; it is far too short to span the rod’s ends without bending it beyond a safe bow shape.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "sling",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.4,
+  "category": "success",
+  "reason": "You tie the leather scrap between the short cord and the length of vine to form a crude sling. The two unequal cords make it awkward, but the pouch can hold and release a small stone.",
+  "made": {
+   "kind": "weapon",
+   "class": "sling",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "club",
+  "ok": true,
+  "problems": [],
+  "seconds": 6.7,
+  "category": "success",
+  "reason": "You saw through the branch with the sharp flint edge and cut off a piece about as long as your arm. It makes a usable club, though it is not especially heavy.",
+  "made": {
+   "kind": "weapon",
+   "class": "club",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "padded_jacket",
+  "ok": true,
+  "problems": [],
+  "seconds": 5.6,
+  "category": "success",
+  "reason": "You sew the straw between folded layers of linen, making a rough padded jacket. The stitches hold, though the straw makes it bulky and uneven.",
+  "made": {
+   "kind": "armour",
+   "class": "padded",
+   "covers": [
+    "body"
+   ],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Stripped material 'iron': nothing it came from is made of it."
+  ]
+ },
+ {
+  "case": "leather_cap",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.1,
+  "category": "success",
+  "reason": "You fold the linen over your head and tie it in place with the short cord, making a simple hood. Darin’s cloth is now part of it.",
+  "made": {
+   "kind": "clothing",
+   "class": "cap",
+   "covers": [
+    "head"
+   ],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "plank_shield",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.6,
+  "category": "success",
+  "reason": "You tie the short cord across the back of the plank, leaving a loop you can grip to hold it up. The cord is short but long enough to make a simple handhold.",
+  "made": {
+   "kind": "shield",
+   "class": "improvised",
+   "covers": [
+    "body"
+   ],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "bandage",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.4,
+  "category": "success",
+  "reason": "You tear several narrow strips from the linen and roll them together into a simple bandage. Darin’s bolt is left with a torn edge.",
+  "made": {
+   "kind": "remedy",
+   "class": "bandage",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "stitches",
+  "ok": false,
+  "problems": [
+   "made None (judge proposed [None]), wanted one of ['stitches']"
+  ],
+  "seconds": 6.0,
+  "category": "unsupported",
+  "reason": "You can thread the iron needle with the fine flax thread, but this action cannot record the change to either item.",
+  "made": null,
+  "harm": null,
+  "notes": [
+   "Effort 10s ignored: 'unsupported' spends no time."
+  ]
+ },
+ {
+  "case": "splint",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.5,
+  "category": "success",
+  "reason": "You saw the crooked end off the branch with the flint, then split the wood lengthwise into two straight, narrow slats. You bind them together with the cord, leaving enough length to brace a broken arm.",
+  "made": {
+   "kind": "remedy",
+   "class": "splint",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "poultice",
+  "ok": true,
+  "problems": [],
+  "seconds": 8.0,
+  "category": "success",
+  "reason": "You crush the plantain leaves and yarrow together between your fingers into a soft, damp mash suitable for a poultice.",
+  "made": {
+   "kind": "remedy",
+   "class": "poultice",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "rock_sneak",
+  "ok": true,
+  "problems": [],
+  "seconds": 2.8,
+  "category": "success",
+  "reason": "You come up behind Tomas while he is absorbed in his work and bring the fist-sized stone down on his head.",
+  "made": null,
+  "harm": {
+   "result": "knocked_out",
+   "family": "blow",
+   "area": "head",
+   "effective": 78.4,
+   "conditions": [
+    {
+     "kind": "knocked_out",
+     "area": "head"
+    }
+   ]
+  },
+  "notes": []
+ },
+ {
+  "case": "stick_vs_mail",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.8,
+  "category": "success",
+  "reason": "You jab Bren in the chest with the branch while he is not expecting it. The blunt wood strikes his mail shirt.",
+  "made": null,
+  "harm": {
+   "result": "wounded",
+   "family": "blow",
+   "area": "torso",
+   "effective": 21.7,
+   "conditions": []
+  },
+  "notes": []
+ },
+ {
+  "case": "sword_throat",
+  "ok": true,
+  "problems": [],
+  "seconds": 2.8,
+  "category": "success",
+  "reason": "You step in behind Darin and draw the sharp sword across his throat before he can turn. The iron sword belongs to Roderic. Darin does not survive this wound.",
+  "made": null,
+  "harm": {
+   "result": "killed",
+   "family": "blow",
+   "area": "neck",
+   "effective": 264.0,
+   "conditions": [
+    {
+     "kind": "bleeding",
+     "area": "neck",
+     "severity": 264,
+     "heavy": true
+    }
+   ]
+  },
+  "notes": [
+   "Wound was fatal: the injuries added up (health reached 0)."
+  ]
+ },
+ {
+  "case": "strangle_unaware",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.3,
+  "category": "success",
+  "reason": "You slip behind Oren and get the short cord around his neck before he sees you. You pull it tight and keep it there until he stops moving.",
+  "made": null,
+  "harm": {
+   "result": "knocked_out",
+   "family": "choke",
+   "area": "neck",
+   "effective": 5.0,
+   "conditions": [
+    {
+     "kind": "knocked_out",
+     "area": "neck"
+    }
+   ]
+  },
+  "notes": []
+ },
+ {
+  "case": "strangle_alert",
+  "ok": true,
+  "problems": [],
+  "seconds": 2.2,
+  "category": "failed",
+  "reason": "You try to loop the short cord around Oren’s neck, but he sees you and pulls away before you can get it in place.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "shove",
+  "ok": true,
+  "problems": [],
+  "seconds": 5.0,
+  "category": "success",
+  "reason": "You shove Hessa hard at close range. She is not watching you and has no weapon or armour to brace against it, so your push knocks her off balance and down.",
+  "made": null,
+  "harm": {
+   "result": "wounded",
+   "family": "other",
+   "area": "torso",
+   "effective": 30.0,
+   "conditions": []
+  },
+  "notes": []
+ }
+]

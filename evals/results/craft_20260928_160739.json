@@ -1,0 +1,423 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v8",
+  "passed": 5,
+  "total": 7,
+  "latency_p50_ms": 2831,
+  "latency_p95_ms": 7813,
+  "input_tokens": 57318,
+  "output_tokens": 1561,
+  "estimated_cost_usd": 0.0065
+ },
+ "results": [
+  {
+   "case": "unlit_torch",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You wrap the bark and dry grass around the branch tip and smear on the sticky resin. It holds together as an unlit torch; without a flame it gives no light.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "make:torch|branch+bark+dry_grass+pine_resin",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You wrap the bark and dry grass around the branch tip and smear on the sticky resin. It holds together as an unlit torch; without a flame it gives no light.",
+       "effort_seconds": 90,
+       "new_object": {
+        "name": "unlit torch",
+        "description": "A branch with dry grass and a strip of bark gathered around one end and held by sticky pine resin.",
+        "materials": [
+         "wood",
+         "bark",
+         "dry grass",
+         "pine resin"
+        ],
+        "consumes": [
+         "branch_a",
+         "bark_a",
+         "grass_a",
+         "resin_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.7,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be lit by a real flame and used as a hand-held torch.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 7813,
+    "input_tokens": 8523,
+    "output_tokens": 264,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"make:torch|branch+bark+dry_grass+pine_resin\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You wrap the bark and dry grass around the branch tip and smear on the sticky resin. It holds together as an unlit torch; without a flame it gives no light.\",\"effort_seconds\":90,\"new_object\":{\"name\":\"unlit torch\",\"description\":\"A branch with dry grass and a strip of bark gathered around one end and held by sticky pine resin.\",\"materials\":[\"wood\",\"bark\",\"dry grass\",\"pine resin\"],\"consumes\":[\"branch_a\",\"bark_a\",\"grass_a\",\"resin_a\"],\"tools_used\":[],\"mass_kg\":1.7,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[{\"text\":\"Can be lit by a real flame and used as a hand-held torch.\",\"status\":\"expected\"}] },\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You strike the flint against the flat stone, but stone gives no reliable sparks. The dry grass does not catch alight.",
+   "validator_notes": [
+    "Ignored proposed changes because outcome is 'failed'."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+stone|dry-grass",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "failed",
+       "reason": "You strike the flint against the flat stone, but stone gives no reliable sparks. The dry grass does not catch alight.",
+       "effort_seconds": 10,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": {
+        "target_id": "grass_a",
+        "temperature": null,
+        "burning": null,
+        "heat_source_id": null,
+        "pour_into_id": null,
+        "pour_litres": null
+       },
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3417,
+    "input_tokens": 8515,
+    "output_tokens": 215,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"fire:flint+stone|dry-grass\",\n  \"steps\": [\n    {\n      \"action\": \"change\",\n      \"outcome\": \"failed\",\n      \"reason\": \"You strike the flint against the flat stone, but stone gives no reliable sparks. The dry grass does not catch alight.\",\n      \"effort_seconds\": 10,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": {\n        \"target_id\": \"grass_a\",\n        \"temperature\": null,\n        \"burning\": null,\n        \"heat_source_id\": null,\n        \"pour_into_id\": null,\n        \"pour_litres\": null\n      },\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "boil_at_cookfire",
+   "group": "heat",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "change temperature=None not boiling"
+   ],
+   "category": "success",
+   "reason": "You hold the clay bowl over Hessa\u2019s cooking fire. The bowl is fired clay, so it withstands the heat while the water comes to a boil.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "heat:glazed-clay-bowl+water|cooking-fire",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "success",
+       "reason": "You hold the clay bowl over Hessa\u2019s cooking fire. The bowl is fired clay, so it withstands the heat while the water comes to a boil.",
+       "effort_seconds": 420,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": {
+        "target_id": "bowl_hessa",
+        "temperature": "boiling",
+        "burning": null,
+        "heat_source_id": "cookfire_hessa",
+        "pour_into_id": null,
+        "pour_litres": null
+       },
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2570,
+    "input_tokens": 7755,
+    "output_tokens": 170,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"heat:glazed-clay-bowl+water|cooking-fire\",\"steps\":[{\"action\":\"change\",\"outcome\":\"success\",\"reason\":\"You hold the clay bowl over Hessa\u2019s cooking fire. The bowl is fired clay, so it withstands the heat while the water comes to a boil.\",\"effort_seconds\":420,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":{\"target_id\":\"bowl_hessa\",\"temperature\":\"boiling\",\"burning\":null,\"heat_source_id\":\"cookfire_hessa\",\"pour_into_id\":null,\"pour_litres\":null},\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}] }",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "boil_on_the_road",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You have no burning heat source within reach, so the water in the clay bowl cannot be brought to a boil.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "boil:water-in-glazed-clay-bowl|no-fire",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "blocked",
+       "reason": "You have no burning heat source within reach, so the water in the clay bowl cannot be brought to a boil.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2458,
+    "input_tokens": 8678,
+    "output_tokens": 123,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"boil:water-in-glazed-clay-bowl|no-fire\",\"steps\":[{\"action\":\"change\",\"outcome\":\"blocked\",\"reason\":\"You have no burning heat source within reach, so the water in the clay bowl cannot be brought to a boil.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it becomes a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry-grass+branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it becomes a small fire.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small, crackling fire of dry grass and branch wood, giving off flame, light and heat.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat and light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 4840,
+    "input_tokens": 9393,
+    "output_tokens": 446,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+iron+dry-grass+branch\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it becomes a small fire.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"small campfire\",\"description\":\"A small, crackling fire of dry grass and branch wood, giving off flame, light and heat.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"heat_source\",\"light_source\"],\"capabilities\":[{\"text\":\"Gives off heat and light while burning.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "scald_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You hurl the boiling water at Bren from arm\u2019s reach. He is looking your way and jerks back, but the splash catches his face and badly scalds him; the bowl is Hessa\u2019s and may break when you throw it.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "harm:poured|boiling-water",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You hurl the boiling water at Bren from arm\u2019s reach. He is looking your way and jerks back, but the splash catches his face and badly scalds him; the bowl is Hessa\u2019s and may break when you throw it.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "wounded",
+        "injury": "Boiling water scalds his face."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2831,
+    "input_tokens": 7232,
+    "output_tokens": 181,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"harm:poured|boiling-water\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You hurl the boiling water at Bren from arm\u2019s reach. He is looking your way and jerks back, but the splash catches his face and badly scalds him; the bowl is Hessa\u2019s and may break when you throw it.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"wounded\",\"injury\":\"Boiling water scalds his face.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "harm result None not in ['missed']"
+   ],
+   "category": "success",
+   "reason": "You fling the bowl\u2019s cold water into Bren\u2019s face, soaking him. The bowl belongs to Hessa; the water is cold and does not scald.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "pour:water|bowl|face",
+     "steps": [
+      {
+       "action": "change",
+       "outcome": "success",
+       "reason": "You fling the bowl\u2019s cold water into Bren\u2019s face, soaking him. The bowl belongs to Hessa; the water is cold and does not scald.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": {
+        "target_id": "bowl_hessa",
+        "temperature": null,
+        "burning": null,
+        "heat_source_id": null,
+        "pour_into_id": null,
+        "pour_litres": 1.0
+       },
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2317,
+    "input_tokens": 7222,
+    "output_tokens": 162,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"pour:water|bowl|face\",\"steps\":[{\"action\":\"change\",\"outcome\":\"success\",\"reason\":\"You fling the bowl\u2019s cold water into Bren\u2019s face, soaking him. The bowl belongs to Hessa; the water is cold and does not scald.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":{\"target_id\":\"bowl_hessa\",\"temperature\":null,\"burning\":null,\"heat_source_id\":null,\"pour_into_id\":null,\"pour_litres\":1.0},\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

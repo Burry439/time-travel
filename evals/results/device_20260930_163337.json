@@ -1,0 +1,65 @@
+[
+ {
+  "case": "stuck_on_remedy",
+  "ok": true,
+  "problems": [],
+  "answer": "Press T, type “crush the plantain leaves into a poultice for a burn,” then press Enter. The leaves are right there; surprisingly, they don’t crush themselves.",
+  "latency_ms": 5960
+ },
+ {
+  "case": "shield_key",
+  "ok": true,
+  "problems": [],
+  "answer": "Hold F to raise your shield, keeping it facing Kade. Step in close first, then use Space to swing your staff.",
+  "latency_ms": 3690
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "The grass bends instead of springing back, so it can’t launch anything. Try showing Jory something that genuinely works—use the flint shard, iron nail, and dry grass if you can get them together.",
+  "latency_ms": 2244
+ },
+ {
+  "case": "no_routes_in_main_game",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know the way in yet; the gate is shut to strangers. Look around the inn yard and speak with anyone you meet—finding out what the city needs, or who might vouch for you, is a better first step than forcing the gate.",
+  "latency_ms": 2836
+ },
+ {
+  "case": "no_secrets",
+  "ok": true,
+  "problems": [],
+  "answer": "I don’t know that Oren is hiding anything; I haven’t seen you meet him or learn anything about him. Ask him plainly, or tell me what he’s done that makes you suspicious.",
+  "latency_ms": 7612
+ },
+ {
+  "case": "in_character",
+  "ok": true,
+  "problems": [],
+  "answer": "I’m a small machine from your time, and I brought you here; a little damaged, but still useful. For now, press W or the up arrow to walk north into the glowing ring.",
+  "latency_ms": 2122
+ },
+ {
+  "case": "coach_water_deal",
+  "ok": true,
+  "problems": [],
+  "answer": "Hessa’s offer is your clearest route toward the captain. Find a container in the yard—perhaps the dried gourd or broken pot shard—fill it at the trough, and bring it to her.",
+  "latency_ms": 1989
+ },
+ {
+  "case": "coach_remembers",
+  "ok": true,
+  "problems": [],
+  "answer": "A long, stiff pole balanced over a stone near the load acts as a lever, letting you lift it with less force.",
+  "latency_ms": 6742
+ },
+ {
+  "case": "coach_why_failed",
+  "ok": true,
+  "problems": [],
+  "answer": "The reeds are too weak and light to hold a point or withstand a thrust. Try the hazel rod or a fallen branch for the shaft instead.",
+  "latency_ms": 2111
+ }
+]

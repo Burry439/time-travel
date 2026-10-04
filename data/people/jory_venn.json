@@ -74,10 +74,33 @@
  ],
  "secrets": [
   {
+   "id": "jory_tongs",
    "text": "He broke Mara's second-best tongs last week and hid them under the scrap.",
-   "reveal": "anyone kind to him"
+   "reveal": "anyone kind to him",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.45
+     },
+     {
+      "kind": "helped"
+     },
+     {
+      "kind": "regard",
+      "axis": "awe",
+      "at_least": 0.3
+     }
+    ]
+   },
+   "lead": "Jory broke Mara's second-best tongs and hid them under the scrap."
   }
  ],
+ "history": {
+  "npc_mara_venn": "Aunt Mara raised him after the fever took his parents."
+ },
  "likes": "new things, stories from far away, Darin's curiosities",
  "dislikes": "being bored, being scolded, sweeping",
  "opinions": {

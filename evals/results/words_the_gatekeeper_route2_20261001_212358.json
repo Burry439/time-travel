@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "cut a way through the brambles in the gap of the old wall with the billhook",
+  "ok": false,
+  "category": "success",
+  "reason": "You hack through the brambles in the old wall with the billhook, cutting a passage through the tangle. Ned’s billhook is used, and the cut the brambles in the old wall remain in the gap.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   }
+  ]
+ }
+]

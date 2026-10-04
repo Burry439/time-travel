@@ -1,0 +1,46 @@
+[
+ {
+  "case": "grand_claim",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "ask_back",
+    "line": "The king’s envoy? Who are you, exactly—and what business brings you here?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 2020,
+    "jev_usd": 0.000135156,
+    "provider": "jev/defapi",
+    "voice_ms": 4801,
+    "voice_usd": 0.000202
+   }
+  ]
+ },
+ {
+  "case": "grand_claim",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "ask_back",
+    "line": "The king’s envoy? Who sent you, and what business brings you here?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 1207,
+    "jev_usd": 0.000135156,
+    "provider": "jev/defapi",
+    "voice_ms": 1631,
+    "voice_usd": 0.0001985
+   }
+  ]
+ }
+]

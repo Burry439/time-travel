@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "free",
+  "text": "with Wat, Dunna and Rook all heaving at the wheels and the tailboard together on three, rock the cart and push it up out of the mire",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot free the loaded cart alone; Wat, Dunna, and Rook are not willing to help.",
+  "steps": [
+   {
+    "action": "lift_out",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

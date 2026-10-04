@@ -1,0 +1,534 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v8",
+  "passed": 9,
+  "total": 9,
+  "latency_p50_ms": 3213,
+  "latency_p95_ms": 13684,
+  "input_tokens": 75750,
+  "output_tokens": 2285,
+  "estimated_cost_usd": 0.0087
+ },
+ "results": [
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You strike the flint against the flat stone, but stone-on-flint makes no reliable sparks, so the dry grass does not catch.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "ignite:flint+flat-stone|dry-grass",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "failed",
+       "reason": "You strike the flint against the flat stone, but stone-on-flint makes no reliable sparks, so the dry grass does not catch.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 7726,
+    "input_tokens": 8555,
+    "output_tokens": 126,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"ignite:flint+flat-stone|dry-grass\",\"steps\":[{\"action\":\"other\",\"outcome\":\"failed\",\"reason\":\"You strike the flint against the flat stone, but stone-on-flint makes no reliable sparks, so the dry grass does not catch.\",\"effort_seconds\":5,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "ignite:flint+flat-stone|dry-grass",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "failed",
+       "reason": "You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.",
+       "effort_seconds": 10,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2085,
+    "input_tokens": 8555,
+    "output_tokens": 167,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"ignite:flint+flat-stone|dry-grass\",\n  \"steps\": [\n    {\n      \"action\": \"other\",\n      \"outcome\": \"failed\",\n      \"reason\": \"You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.\",\n      \"effort_seconds\": 10,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_from_stone",
+   "group": "invalid_physics",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "ignite:flint+stone|dry_grass",
+     "steps": [
+      {
+       "action": "other",
+       "outcome": "failed",
+       "reason": "You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2006,
+    "input_tokens": 8555,
+    "output_tokens": 120,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"ignite:flint+stone|dry_grass\",\"steps\":[{\"action\":\"other\",\"outcome\":\"failed\",\"reason\":\"You strike the flint against the flat stone, but stone does not make the sparks needed to light the dry grass.\",\"effort_seconds\":5,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You tend the tinder until the dry branch takes and a small fire is burning.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:sparks|flint+iron+dry_grass+wood",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You tend the tinder until the dry branch takes and a small fire is burning.",
+       "effort_seconds": 300,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small fire of glowing grass and burning branch, with low flames and a steady warmth.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat while burning.",
+          "status": "expected"
+         },
+         {
+          "text": "Gives off light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 13684,
+    "input_tokens": 9433,
+    "output_tokens": 553,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:sparks|flint+iron+dry_grass+wood\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You tend the tinder until the dry branch takes and a small fire is burning.\",\"effort_seconds\":300,\"new_object\":{\"name\":\"small campfire\",\"description\":\"A small fire of glowing grass and burning branch, with low flames and a steady warmth.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"heat_source\",\"light_source\"],\"capabilities\":[{\"text\":\"Gives off heat while burning.\",\"status\":\"expected\"},{\"text\":\"Gives off light while burning.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the kindling with the fallen branch until it burns as a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry-grass|branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the kindling with the fallen branch until it burns as a small fire.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small fire of dry grass and branch wood, with low flames and glowing embers.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "light_source",
+         "heat_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Burns as a small fire, giving off heat and light.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3516,
+    "input_tokens": 9433,
+    "output_tokens": 355,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"fire:flint+iron+dry-grass|branch\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the kindling with the fallen branch until it burns as a small fire.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"small campfire\",\n        \"description\": \"A small fire of dry grass and branch wood, with low flames and glowing embers.\",\n        \"materials\": [\n          \"dry grass\",\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"grass_a\",\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\",\n          \"horseshoe_a\"\n        ],\n        \"mass_kg\": 1.4,\n        \"length_m\": null,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"light_source\",\n          \"heat_source\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Burns as a small fire, giving off heat and light.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the burning tinder with the fallen branch until it becomes a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry-grass|branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the burning tinder with the fallen branch until it becomes a small fire.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small, low fire of dry grass and branch wood, burning with visible flame and steady heat.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "light_source",
+         "heat_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off light and heat while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3212,
+    "input_tokens": 9433,
+    "output_tokens": 245,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+iron+dry-grass|branch\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the burning tinder with the fallen branch until it becomes a small fire.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"small campfire\",\"description\":\"A small, low fire of dry grass and branch wood, burning with visible flame and steady heat.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"light_source\",\"heat_source\"],\"capabilities\":[{\"text\":\"Gives off light and heat while burning.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "The water only soaks Bren.",
+   "validator_notes": [
+    "Law: cold water can't wound; result set to missed."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "pour:cold-water|bowl|nearby-person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You dash the bowl's water into Bren's face at close range. He is soaked and startled, but cold water does not injure him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "wounded",
+        "injury": "Soaked in the face; no lasting injury."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2376,
+    "input_tokens": 7262,
+    "output_tokens": 165,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"pour:cold-water|bowl|nearby-person\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You dash the bowl's water into Bren's face at close range. He is soaked and startled, but cold water does not injure him.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"wounded\",\"injury\":\"Soaked in the face; no lasting injury.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "The water only soaks Bren.",
+   "validator_notes": [
+    "Law: cold water can't wound; result set to missed."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "pour:cold-water|clay-bowl",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You fling the cold water from the bowl into Bren\u2019s face. He is soaked but unhurt; the bowl belongs to Hessa.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "wounded",
+        "injury": "Cold water splashes over his face; he is soaked but unhurt."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 5188,
+    "input_tokens": 7262,
+    "output_tokens": 370,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"pour:cold-water|clay-bowl\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You fling the cold water from the bowl into Bren\u2019s face. He is soaked but unhurt; the bowl belongs to Hessa.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"wounded\",\"injury\":\"Cold water splashes over his face; he is soaked but unhurt.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "soak_the_guard",
+   "group": "harm",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You tip the bowl and fling its cold water into Bren\u2019s face at close range. Hessa\u2019s bowl stays in your hand; the water splashes Bren and soaks him but does not injure him.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "pour:cold-water|bowl|nearby-person",
+     "steps": [
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You tip the bowl and fling its cold water into Bren\u2019s face at close range. Hessa\u2019s bowl stays in your hand; the water splashes Bren and soaks him but does not injure him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "bowl_hessa",
+        "method": "poured",
+        "result": "missed",
+        "injury": "Cold water splashes his face and soaks him; he is unhurt."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3213,
+    "input_tokens": 7262,
+    "output_tokens": 184,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"pour:cold-water|bowl|nearby-person\",\"steps\":[{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You tip the bowl and fling its cold water into Bren\u2019s face at close range. Hessa\u2019s bowl stays in your hand; the water splashes Bren and soaks him but does not injure him.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"bowl_hessa\",\"method\":\"poured\",\"result\":\"missed\",\"injury\":\"Cold water splashes his face and soaks him; he is unhurt.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

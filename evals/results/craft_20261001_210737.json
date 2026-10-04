@@ -1,0 +1,691 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v16",
+  "passed": 3,
+  "total": 6,
+  "latency_p50_ms": 5553.5,
+  "latency_p95_ms": 8074,
+  "input_tokens": 70938,
+  "output_tokens": 3158,
+  "estimated_cost_usd": 0.0087
+ },
+ "results": [
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. It comes down as a light trunk, branches, and a stump.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld_flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. It comes down as a light trunk, branches, and a stump.",
+       "effort_seconds": 300,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The slender trunk of the young birch, cut through near its base.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch branches",
+          "description": "A small scatter of leafy branches from the fallen young birch.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 3.0,
+          "length_m": 1.0,
+          "flags": [
+           "flexible",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch stump",
+          "description": "The short rooted stump left standing in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 1.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 8074,
+    "input_tokens": 12454,
+    "output_tokens": 368,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld_flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. It comes down as a light trunk, branches, and a stump.\",\"effort_seconds\":300,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The slender trunk of the young birch, cut through near its base.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch branches\",\"description\":\"A small scatter of leafy branches from the fallen young birch.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":3.0,\"length_m\":1.0,\"flags\":[\"flexible\",\"combustible\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch stump\",\"description\":\"The short rooted stump left standing in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":1.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[],\"gear\":null}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled. It leaves a long trunk, smaller branches, and a stump rooted in the verge.",
+   "validator_notes": [
+    "Piece masses scaled by 0.86: they weighed 14.0 kg, more than the 12.0 kg young birch sapling."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled. It leaves a long trunk, smaller branches, and a stump rooted in the verge.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The long, slender trunk of the felled birch, with pale bark and a fresh cut at its base.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch branches",
+          "description": "A few leafy branches broken from the slender birch crown.",
+          "materials": [
+           "wood"
+          ],
+          "count": 3,
+          "mass_kg": 1.0,
+          "length_m": 1.5,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch stump",
+          "description": "The short cut stump left rooted in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 3.0,
+          "length_m": 0.4,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3832,
+    "input_tokens": 12454,
+    "output_tokens": 382,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled. It leaves a long trunk, smaller branches, and a stump rooted in the verge.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The long, slender trunk of the felled birch, with pale bark and a fresh cut at its base.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch branches\",\"description\":\"A few leafy branches broken from the slender birch crown.\",\"materials\":[\"wood\"],\"count\":3,\"mass_kg\":1.0,\"length_m\":1.5,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch stump\",\"description\":\"The short cut stump left rooted in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":3.0,\"length_m\":0.4,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[],\"gear\":null}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}] }",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The slender trunk of the young birch, felled and lying on the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch branches",
+          "description": "The smaller branches and leafy crown broken from the fallen young birch.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 3.0,
+          "length_m": 1.5,
+          "flags": [
+           "rigid",
+           "flexible",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         },
+         {
+          "name": "birch stump",
+          "description": "The short rooted stump left in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 1.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": [],
+          "gear": null
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3618,
+    "input_tokens": 12454,
+    "output_tokens": 357,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it toppled.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The slender trunk of the young birch, felled and lying on the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch branches\",\"description\":\"The smaller branches and leafy crown broken from the fallen young birch.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":3.0,\"length_m\":1.5,\"flags\":[\"rigid\",\"flexible\",\"combustible\"],\"capabilities\":[],\"gear\":null},{\"name\":\"birch stump\",\"description\":\"The short rooted stump left in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":1.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[],\"gear\":null}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape the branch's end against the sharp flint, laboriously shaping it into a rough point. You thrust the crude stake at Bren's chest while he is not aware of you. His mail shirt is likely to blunt the point, but the thrust reaches him.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wood_branch|flint_then_stab:wood_stake",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape the branch's end against the sharp flint, laboriously shaping it into a rough point.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight, wrist-thick wooden branch with one end scraped to a crude point.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "floats",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust as a crude pointed stake.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the crude stake at Bren's chest while he is not aware of you. His mail shirt is likely to blunt the point, but the thrust reaches him.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A hard thrust strikes his chest, likely checked by his mail."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5362,
+    "input_tokens": 11192,
+    "output_tokens": 653,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:wood_branch|flint_then_stab:wood_stake\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape the branch's end against the sharp flint, laboriously shaping it into a rough point.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"sharpened stake\",\n        \"description\": \"A straight, wrist-thick wooden branch with one end scraped to a crude point.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"combustible\",\n          \"floats\",\n          \"sharp_edge\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can be thrust as a crude pointed stake.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"stake\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      }\n    ,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust the crude stake at Bren's chest while he is not aware of you. His mail shirt is likely to blunt the point, but the thrust reaches him.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"heart\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A hard thrust strikes his chest, likely checked by his mail.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape the branch's end against the sharp flint, working it down to a crude point. You thrust the sharpened stake into Bren's chest while he is not watching you. His mail shirt is likely to blunt or turn the point.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wood_branch|flint_then_thrust:wooden_stake",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape the branch's end against the sharp flint, working it down to a crude point.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight wooden branch about 1.5 m long, tapered to a rough point at one end.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "combustible",
+         "floats",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust as a crude pointed weapon.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the sharpened stake into Bren's chest while he is not watching you. His mail shirt is likely to blunt or turn the point.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A thrust at the chest, likely checked by his mail."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 6926,
+    "input_tokens": 11192,
+    "output_tokens": 796,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"sharpen:wood_branch|flint_then_thrust:wooden_stake\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You scrape the branch's end against the sharp flint, working it down to a crude point.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"sharpened stake\",\n        \"description\": \"A straight wooden branch about 1.5 m long, tapered to a rough point at one end.\",\n        \"materials\": [\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\"\n        ],\n        \"mass_kg\": 1.2,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"combustible\",\n          \"floats\",\n          \"sharp_edge\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can be thrust as a crude pointed weapon.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"stake\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    },\n    {\n      \"action\": \"harm\",\n      \"outcome\": \"success\",\n      \"reason\": \"You thrust the sharpened stake into Bren's chest while he is not watching you. His mail shirt is likely to blunt or turn the point.\",\n      \"effort_seconds\": 2,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": {\n        \"target_id\": \"npc_bren_marr\",\n        \"weapon_id\": \"made_by_step_1\",\n        \"method\": \"melee\",\n        \"family\": \"blow\",\n        \"outcome\": \"landed\",\n        \"target_area\": \"heart\",\n        \"held_seconds\": 0,\n        \"result\": \"wounded\",\n        \"injury\": \"A thrust at the chest, likely checked by his mail.\"\n      },\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "stake_against_mail",
+   "group": "harm",
+   "run": 2,
+   "pass": false,
+   "problems": [
+    "wounded: wounded"
+   ],
+   "category": "success",
+   "reason": "You scrape one end of the fallen branch down to a rough point with the flint shard. The sharpened stake is ready in your hands. You thrust the sharpened stake into Bren's chest before he sees the attack coming. His mail shirt may turn or blunt the point.",
+   "validator_notes": [
+    "Step 1: Gear 'stake' doesn't fit the thing; its kin 'short_spear' does.",
+    "Step 2: Law: short spear against what Bren wears: 5 gets through."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "sharpen:wood_branch|flint; melee:pointed_stake|unaware_guard",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You scrape one end of the fallen branch down to a rough point with the flint shard. The sharpened stake is ready in your hands.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "sharpened stake",
+        "description": "A straight, wrist-thick wooden branch about 1.5 metres long, scraped to a rough point at one end.",
+        "materials": [
+         "wood"
+        ],
+        "consumes": [
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a"
+        ],
+        "mass_kg": 1.2,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible",
+         "floats"
+        ],
+        "capabilities": [
+         {
+          "text": "The pointed end can pierce soft material.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "stake",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      },
+      {
+       "action": "harm",
+       "outcome": "success",
+       "reason": "You thrust the sharpened stake into Bren's chest before he sees the attack coming. His mail shirt may turn or blunt the point.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": {
+        "target_id": "npc_bren_marr",
+        "weapon_id": "made_by_step_1",
+        "method": "melee",
+        "family": "blow",
+        "outcome": "landed",
+        "target_area": "heart",
+        "held_seconds": 0,
+        "result": "wounded",
+        "injury": "A thrust to the chest; his mail shirt may blunt the point."
+       },
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 5745,
+    "input_tokens": 11192,
+    "output_tokens": 602,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"sharpen:wood_branch|flint; melee:pointed_stake|unaware_guard\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You scrape one end of the fallen branch down to a rough point with the flint shard. The sharpened stake is ready in your hands.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"sharpened stake\",\"description\":\"A straight, wrist-thick wooden branch about 1.5 metres long, scraped to a rough point at one end.\",\"materials\":[\"wood\"],\"consumes\":[\"branch_a\"],\"tools_used\":[\"flint_a\"],\"mass_kg\":1.2,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"combustible\",\"floats\"],\"capabilities\":[{\"text\":\"The pointed end can pierce soft material.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"stake\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null},{\"action\":\"harm\",\"outcome\":\"success\",\"reason\":\"You thrust the sharpened stake into Bren's chest before he sees the attack coming. His mail shirt may turn or blunt the point.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":{\"target_id\":\"npc_bren_marr\",\"weapon_id\":\"made_by_step_1\",\"method\":\"melee\",\"family\":\"blow\",\"outcome\":\"landed\",\"target_area\":\"heart\",\"held_seconds\":0,\"result\":\"wounded\",\"injury\":\"A thrust to the chest; his mail shirt may blunt the point.\"},\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

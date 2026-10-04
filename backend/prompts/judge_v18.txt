@@ -87,7 +87,7 @@ JUDGING
 18. offer_trade: offer_trade
    - give_ids: things the player carries and offers. want_ids: things belonging to the recipient that the player asks for. recipient_id: that person.
 18a. treat: treat
-   - patient_id: "player" for the stranger's own wound, or the id of a person within reach. remedy_id: the carried thing used. condition: bleeding, burn, broken or infection (what it treats, from the person's conditions).
+   - patient_id: "player" for the stranger's own wound, or the id of a person within reach. remedy_id: the carried thing used. condition: bleeding, burn, broken, infection or ache (what it treats, from the person's conditions; an ache is an old complaint, like stiff, aching knees).
    - Judge honestly whether this thing can treat it at all; the engine decides how well (a leaf bandage slows a deep cut, stitches close it).
 18c. equip: equip
    - object_id: a carried thing. slot: right (hand), left (hand), head, body, arms, legs, hands, feet or ammo; null to take it off or put it away.

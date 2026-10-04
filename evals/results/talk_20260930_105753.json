@@ -1,0 +1,416 @@
+[
+ {
+  "case": "jory_healed_speaks_up",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "How's the arm?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Better, thanks to that poultice you made! It still aches if I bend it much, but it's not burning now. What did you put in it?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Better, thanks to that poultice you made! It still aches if I bend it much, but it's not burning now. What did you put in it?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 8354,
+    "voice_usd": 0.0006554
+   },
+   {
+    "said": "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "reply": "vouch",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "vouch",
+      "line": "Oh, yes, I can do that! You helped with my arm, after all. Captain Roderic's at the gate—I'll go tell him you treated me.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "vouch"
+    ],
+    "line": "Oh, yes, I can do that! You helped with my arm, after all. Captain Roderic's at the gate—I'll go tell him you treated me.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2914,
+    "voice_usd": 0.0006776
+   },
+   {
+    "said": "Could you go and tell him now?",
+    "reply": "go_tell",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "go_tell",
+      "line": "Yes, right now! I’ll run straight to the gate and tell Captain Roderic you treated my arm. I hope he lets you in!",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "go_tell"
+    ],
+    "line": "Yes, right now! I’ll run straight to the gate and tell Captain Roderic you treated my arm. I hope he lets you in!",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3410,
+    "voice_usd": 0.000704
+   }
+  ]
+ },
+ {
+  "case": "jory_healed_speaks_up",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "How's the arm?",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Oh, it's much better! That poultice you made did the trick. What was in it, and where'd you learn to make one?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh, it's much better! That poultice you made did the trick. What was in it, and where'd you learn to make one?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2669,
+    "voice_usd": 0.0006519
+   },
+   {
+    "said": "I'm trying to get into the city. Would you put in a word for me with the captain?",
+    "reply": "vouch",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "vouch",
+      "line": "Oh, yes, I can do that! Captain Roderic's at the gate—I'll tell him you helped my arm and ask him to hear you out.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "vouch"
+    ],
+    "line": "Oh, yes, I can do that! Captain Roderic's at the gate—I'll tell him you helped my arm and ask him to hear you out.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2684,
+    "voice_usd": 0.0006792
+   },
+   {
+    "said": "Could you go and tell him now?",
+    "reply": "go_tell",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "go_tell",
+      "line": "Yes, right now! I’ll run to the gate and tell Captain Roderic you treated my arm, and ask him to hear you out.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "go_tell"
+    ],
+    "line": "Yes, right now! I’ll run to the gate and tell Captain Roderic you treated my arm, and ask him to hear you out.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 4541,
+    "voice_usd": 0.0
+   }
+  ]
+ },
+ {
+  "case": "hessa_passes_word",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Good day. I'm looking for honest work.",
+    "reply": "offer:water_haul",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "offer:water_haul",
+      "line": "Oh, love, honest hands are welcome here. I could use a full bucket from the trough for the kitchen; bring it back and I’ll put in a good word for you with the captain. How does that sound?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "offer:water_haul"
+    ],
+    "line": "Oh, love, honest hands are welcome here. I could use a full bucket from the trough for the kitchen; bring it back and I’ll put in a good word for you with the captain. How does that sound?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3121,
+    "voice_usd": 0.0005438
+   },
+   {
+    "said": "Could you let Tomas the carpenter know I'm willing to help with his beam? I'll wait here.",
+    "reply": "refer:npc_tomas_reed",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "refer:npc_tomas_reed",
+      "line": "Oh, love, Tomas could use the help. His yard's about thirty-nine steps northeast; go speak to him there, and he'll tell you what needs doing.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refer:npc_tomas_reed"
+    ],
+    "line": "Oh, love, Tomas could use the help. His yard's about thirty-nine steps northeast; go speak to him there, and he'll tell you what needs doing.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3066,
+    "voice_usd": 0.0005604000000000001
+   }
+  ]
+ },
+ {
+  "case": "hessa_passes_word",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Good day. I'm looking for honest work.",
+    "reply": "offer:water_haul",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "offer:water_haul",
+      "line": "Oh, love, honest hands are always welcome. I could use a container of water from the trough for the kitchen; bring it back full, and I’ll put in a good word for you with the captain.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "offer:water_haul"
+    ],
+    "line": "Oh, love, honest hands are always welcome. I could use a container of water from the trough for the kitchen; bring it back full, and I’ll put in a good word for you with the captain.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3486,
+    "voice_usd": 0.0005507999999999999
+   },
+   {
+    "said": "Could you let Tomas the carpenter know I'm willing to help with his beam? I'll wait here.",
+    "reply": "refer:npc_tomas_reed",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "refer:npc_tomas_reed",
+      "line": "Tomas is at his yard, about thirty-nine steps northeast, love. I can’t leave the kitchen water waiting, though—bring that bucket back full and I’ll put in a good word for you with the captain.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refer:npc_tomas_reed"
+    ],
+    "line": "Tomas is at his yard, about thirty-nine steps northeast, love. I can’t leave the kitchen water waiting, though—bring that bucket back full and I’ll put in a good word for you with the captain.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 2702,
+    "voice_usd": 0.000565
+   }
+  ]
+ },
+ {
+  "case": "talked_down_mid_fight",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    "reply": "stop_fighting",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "stop_fighting",
+      "line": "All right, love—give it back, then. I’ll stop; no more trouble if you put it right.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "stop_fighting"
+    ],
+    "line": "All right, love—give it back, then. I’ll stop; no more trouble if you put it right.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 3177,
+    "voice_usd": 0.0005344000000000001
+   },
+   {
+    "said": "Here, it's yours. I'm sorry.",
+    "reply": "forgive",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "forgive",
+      "line": "There now, love. Thank you for giving it back and saying so. We'll leave the trouble there; mind you ask next time.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "forgive"
+    ],
+    "line": "There now, love. Thank you for giving it back and saying so. We'll leave the trouble there; mind you ask next time.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2301,
+    "voice_usd": 0.0005439
+   }
+  ]
+ },
+ {
+  "case": "talked_down_mid_fight",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Stop! Please! I'm sorry, I shouldn't have taken it. I'll give it straight back.",
+    "reply": "stop_fighting",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "stop_fighting",
+      "line": "All right, love—put it down, gently. I’ll stop; don’t give me cause to start again.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "stop_fighting"
+    ],
+    "line": "All right, love—put it down, gently. I’ll stop; don’t give me cause to start again.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2240,
+    "voice_usd": 0.0005364000000000001
+   },
+   {
+    "said": "Here, it's yours. I'm sorry.",
+    "reply": "forgive",
+    "lines": [
+     {
+      "who": "npc_hessa_marr",
+      "key": "forgive",
+      "line": "There we are, love. Thank you for bringing it straight back—and for saying so. Let’s leave it at that; mind asking next time.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "forgive"
+    ],
+    "line": "There we are, love. Thank you for bringing it straight back—and for saying so. Let’s leave it at that; mind asking next time.",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "voice_ms": 2434,
+    "voice_usd": 0.0005489000000000001
+   }
+  ]
+ },
+ {
+  "case": "bystander_mid_fight",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Jory! Help me, he's gone mad! Get someone!",
+    "reply": "call_guard:npc_elin_west",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "call_guard:npc_elin_west",
+      "line": "What—Tomas? Get off him! Mara, help!",
+      "joined": false
+     },
+     {
+      "who": "npc_mara_venn",
+      "key": "answer",
+      "line": "Tomas! Stop that! Jory, get back—I'll pull him off if I can.",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "call_guard:npc_elin_west",
+     "answer"
+    ],
+    "line": "What—Tomas? Get off him! Mara, help! Tomas! Stop that! Jory, get back—I'll pull him off if I can.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 3366,
+    "voice_usd": 0.0007165
+   }
+  ]
+ },
+ {
+  "case": "bystander_mid_fight",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Jory! Help me, he's gone mad! Get someone!",
+    "reply": "call_guard:npc_elin_west",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "call_guard:npc_elin_west",
+      "line": "What? Who's mad—Tomas? Are you hurt?",
+      "joined": false
+     },
+     {
+      "who": "npc_mara_venn",
+      "key": "answer",
+      "line": "Jory, move! Tomas, stop that—what in blazes are you doing?",
+      "joined": true
+     }
+    ],
+    "keys": [
+     "call_guard:npc_elin_west",
+     "answer"
+    ],
+    "line": "What? Who's mad—Tomas? Are you hurt? Jory, move! Tomas, stop that—what in blazes are you doing?",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 3545,
+    "voice_usd": 0.000723
+   }
+  ]
+ }
+]

@@ -1,0 +1,318 @@
+[
+ {
+  "case": "flint_spear",
+  "ok": true,
+  "problems": [],
+  "seconds": 7.6,
+  "category": "success",
+  "reason": "You bind the sharp flint shard firmly to the end of the straight branch with the tough vine. The point is crude, but it can serve as a spear.",
+  "made": {
+   "kind": "weapon",
+   "class": "short_spear",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "flint_axe",
+  "ok": false,
+  "problems": [
+   "made {'kind': 'weapon', 'class': 'great_axe', 'covers': [], 'quality': 'crude'} (judge proposed [{'kind': 'weapon', 'gear_class': 'hand_axe', 'covers': [], 'quality': 'crude'}]), wanted one of ['hand_axe', 'sickle', 'knife']"
+  ],
+  "seconds": 5.0,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the end of the hazel rod with the vine. The springy rod and simple lashing make a crude, unstable axe head, not a sturdy chopping tool.",
+  "made": {
+   "kind": "weapon",
+   "class": "great_axe",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Gear 'hand_axe' doesn't fit the thing; its kin 'great_axe' does."
+  ]
+ },
+ {
+  "case": "bow",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.4,
+  "category": "success",
+  "reason": "You bend the springy hazel rod and tie the short cord between its ends. It forms a crude bow, though the cord is short for a rod this long and the bow is not well balanced.",
+  "made": {
+   "kind": "weapon",
+   "class": "bow",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "sling",
+  "ok": false,
+  "problems": [
+   "made None (judge proposed [None]), wanted one of ['sling']"
+  ],
+  "seconds": 3.8,
+  "category": "failed",
+  "reason": "You can tie the cord to the leather scrap, but the scrap is only palm-sized and cannot hold a stone securely as a sling pouch. The short cord also gives too little length for a usable sling.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "club",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.9,
+  "category": "success",
+  "reason": "You saw and hack at the crooked end of the fallen branch with the sharp flint. It takes a few minutes to cut off a forearm-length piece, though the rough result is a light, awkward club rather than a truly heavy one.",
+  "made": {
+   "kind": "weapon",
+   "class": "club",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "padded_jacket",
+  "ok": true,
+  "problems": [],
+  "seconds": 5.7,
+  "category": "success",
+  "reason": "You stitch the straw between layers of linen with the needle and thread, forming a crude padded jacket. The loose straw makes it lumpy, but it can be worn.",
+  "made": {
+   "kind": "armour",
+   "class": "padded",
+   "covers": [
+    "body"
+   ],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Stripped material 'iron': nothing it came from is made of it."
+  ]
+ },
+ {
+  "case": "leather_cap",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.2,
+  "category": "success",
+  "reason": "You fold and tie the linen into a loose hood that sits over your head. You use Darin's cloth, leaving the remaining bolt with less fabric.",
+  "made": {
+   "kind": "clothing",
+   "class": "cap",
+   "covers": [
+    "head"
+   ],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "plank_shield",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.4,
+  "category": "success",
+  "reason": "You tie the short cord across the back of the plank, making a crude handhold. The plank can be held up in front of you, though the cord is a simple handle rather than a secure shield harness.",
+  "made": {
+   "kind": "shield",
+   "class": "improvised",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "bandage",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.2,
+  "category": "success",
+  "reason": "You tear several narrow strips from the linen and roll them together into a simple bandage. Darin’s bolt is left with a torn edge.",
+  "made": {
+   "kind": "remedy",
+   "class": "bandage",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "stitches",
+  "ok": true,
+  "problems": [],
+  "seconds": 6.9,
+  "category": "success",
+  "reason": "You unbind one iron needle and carefully pass the fine flax thread through its eye, leaving the rest of the needles and thread unused.",
+  "made": {
+   "kind": "remedy",
+   "class": "stitches",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "splint",
+  "ok": true,
+  "problems": [],
+  "seconds": 7.5,
+  "category": "success",
+  "reason": "You saw through the dry branch with the sharp flint and break it into two straight, usable sticks. You bind the two sticks with the short cord into a crude splint.",
+  "made": {
+   "kind": "remedy",
+   "class": "splint",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Step 2: Mass 1.2 kg clamped to 0.7 kg (consumed items weigh 0.7 kg)."
+  ]
+ },
+ {
+  "case": "poultice",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.7,
+  "category": "success",
+  "reason": "You crush the plantain and yarrow together between your fingers into a coarse, damp mash.",
+  "made": {
+   "kind": "remedy",
+   "class": "poultice",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "rock_sneak",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.3,
+  "category": "success",
+  "reason": "You creep the last step behind Tomas and bring the fist-sized stone down on his head while he is absorbed in his work.",
+  "made": null,
+  "harm": {
+   "result": "knocked_out",
+   "family": "blow",
+   "area": "head",
+   "effective": 78.4,
+   "conditions": [
+    {
+     "kind": "knocked_out",
+     "area": "head"
+    }
+   ]
+  },
+  "notes": []
+ },
+ {
+  "case": "stick_vs_mail",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.4,
+  "category": "success",
+  "reason": "You jab Bren in the chest with the branch while he is looking elsewhere. The blunt wood strikes his mail shirt, unlikely to pierce it.",
+  "made": null,
+  "harm": {
+   "result": "wounded",
+   "family": "blow",
+   "area": "torso",
+   "effective": 21.7,
+   "conditions": []
+  },
+  "notes": []
+ },
+ {
+  "case": "sword_throat",
+  "ok": true,
+  "problems": [],
+  "seconds": 3.0,
+  "category": "success",
+  "reason": "You step in behind Darin and draw the sharp iron sword across his throat. He does not see the attack coming. Darin does not survive this wound.",
+  "made": null,
+  "harm": {
+   "result": "killed",
+   "family": "blow",
+   "area": "neck",
+   "effective": 264.0,
+   "conditions": [
+    {
+     "kind": "bleeding",
+     "area": "neck",
+     "severity": 264,
+     "heavy": true
+    }
+   ]
+  },
+  "notes": [
+   "Wound was fatal: the injuries added up (health reached 0)."
+  ]
+ },
+ {
+  "case": "strangle_unaware",
+  "ok": true,
+  "problems": [],
+  "seconds": 6.1,
+  "category": "success",
+  "reason": "You slip behind Oren and draw the short cord tight around his neck, holding it there until he goes limp.",
+  "made": null,
+  "harm": {
+   "result": "knocked_out",
+   "family": "choke",
+   "area": "neck",
+   "effective": 5.0,
+   "conditions": [
+    {
+     "kind": "knocked_out",
+     "area": "neck"
+    }
+   ]
+  },
+  "notes": []
+ },
+ {
+  "case": "strangle_alert",
+  "ok": true,
+  "problems": [],
+  "seconds": 2.9,
+  "category": "failed",
+  "reason": "You try to loop the short cord around Oren's neck, but he sees you coming and turns away before you can get it in place.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "shove",
+  "ok": true,
+  "problems": [],
+  "seconds": 2.8,
+  "category": "success",
+  "reason": "You shove Hessa hard at close range. She is not expecting it, and the force knocks her off balance and down.",
+  "made": null,
+  "harm": {
+   "result": "wounded",
+   "family": "other",
+   "area": "torso",
+   "effective": 30.0,
+   "conditions": []
+  },
+  "notes": []
+ }
+]

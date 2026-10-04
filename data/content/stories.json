@@ -1,0 +1,760 @@
+{
+ "version": 1,
+ "notes": "The village's storylines (GDD D-56): fixed goals, many ways, real conflicts. Each story has people (owner, helps, opposes), stages (what the stranger comes to know or see happen: the Stories tab shows only these), and outcomes that exclude each other (the first reached closes the story) with effects on people's regard and on how they feel about each other. There are no methods anywhere: every condition is a result in the world, checked by code. moves are things a person may choose to do in conversation (the voice picks them, like any move) once code says they're possible; would_agree_if is their own price for it (their motive, like a guard's reasons to let someone through), which they weigh, and name when it isn't met. Conditions are the rule language (backend/rules.py, D-58): {\"kind\": ...} with all / any / not; learned (any of: fact:id or secret:id the stranger has been told); installed (thing); told (the stranger told npc one of these secrets); move (id: a story move was made); seen_demonstration (a working demonstration seen by one of npcs, optionally of something with these flags, optionally this wonder); given (the stranger gave one of npc something of this material or name); treated (npc's condition was treated); regard (npc's axis at_least); knows_story (story has reached stage). Effects (backend/scenario.py): shift_regard (npc: trust, suspicion, respect, awe), shift_opinion (npc of another: warmth).",
+ "stories": [
+  {
+   "id": "gate_beam",
+   "title": "The gate beam",
+   "people": {
+    "owner": "npc_tomas_reed",
+    "helps": [
+     "npc_roderic_vale"
+    ],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "problem",
+     "summary": "The cracked bar across the gate must come down and a 60 kg beam go up into its brackets. Tomas can't manage it, and the captain is losing patience.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:beam_problem",
+       "fact:gate_beam",
+       "fact:tomas_beam"
+      ]
+     }
+    },
+    {
+     "id": "raised",
+     "summary": "The new beam is up in its brackets.",
+     "when": {
+      "kind": "installed",
+      "thing": "gate_beam"
+     }
+    },
+    {
+     "id": "cracked",
+     "summary": "Tomas cracked the first beam himself, by rushing it.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:tomas_cracked"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "told_roderic",
+     "summary": "You told Roderic that Tomas cracked the first beam. The captain thinks better of your honesty; Tomas won't forgive it.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "tomas_cracked"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_tomas_reed",
+       "trust": -0.4,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_tomas_reed",
+       "warmth": -0.3
+      }
+     ]
+    },
+    {
+     "id": "kept_quiet",
+     "summary": "The beam is up, and Tomas's secret is safe with you. He knows it.",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "installed",
+        "thing": "gate_beam"
+       },
+       {
+        "kind": "learned",
+        "any": [
+         "secret:tomas_cracked"
+        ]
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_tomas_reed",
+       "trust": 0.25
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fog",
+   "title": "Lost in the fog",
+   "people": {
+    "owner": "npc_elin_west",
+    "helps": [
+     "npc_roderic_vale"
+    ],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "problem",
+     "summary": "The night patrols lose their way on the moor when the fog comes down. Last month a scout's horse went into the bog.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:fog_patrols",
+       "fact:fog"
+      ]
+     }
+    },
+    {
+     "id": "shown",
+     "summary": "You showed the watch something that holds a heading without stars.",
+     "when": {
+      "kind": "seen_demonstration",
+      "npcs": [
+       "npc_elin_west",
+       "npc_roderic_vale",
+       "npc_kade_east"
+      ],
+      "flags": [
+       "indicates_direction",
+       "magnetized"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "in_the_watchs_hands",
+     "summary": "The watch has a way to find north in the fog now, and they know whom to thank.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_elin_west",
+       "npc_roderic_vale"
+      ],
+      "flags": [
+       "indicates_direction",
+       "magnetized"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.2,
+       "trust": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_elin_west",
+       "trust": 0.3,
+       "respect": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "respect": 0.1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "oren_debt",
+   "title": "Oren's debt",
+   "people": {
+    "owner": "npc_oren_dast",
+    "helps": [
+     "npc_bren_marr"
+    ],
+    "opposes": [
+     "npc_darin_ko"
+    ]
+   },
+   "stages": [
+    {
+     "id": "noticed",
+     "summary": "Oren is jumpy, and owes someone money.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:oren_debt",
+       "secret:bren_covers_oren"
+      ]
+     }
+    },
+    {
+     "id": "known",
+     "summary": "Oren owes Darin eleven silver from dice, and Darin means to squeeze him for it.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:oren_debt",
+       "secret:darin_collect"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "cleared",
+     "summary": "Darin has let Oren's debt go. Oren owes you now, and Darin is cooler towards you.",
+     "when": {
+      "kind": "move",
+      "id": "forgive_oren_debt"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": 0.4,
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": 0.15
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": -0.1
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_oren_dast",
+       "of": "npc_darin_ko",
+       "warmth": 0.3
+      }
+     ]
+    },
+    {
+     "id": "exposed",
+     "summary": "You told the captain about Oren's debt. Oren and Bren won't forget it; Darin is pleased.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "oren_debt",
+       "bren_covers_oren",
+       "darin_collect"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": -0.5,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": -0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": 0.1
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_oren_dast",
+       "warmth": -0.3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lodging",
+   "title": "The lodging money",
+   "people": {
+    "owner": "npc_hessa_marr",
+    "helps": [],
+    "opposes": [
+     "npc_darin_ko"
+    ]
+   },
+   "stages": [
+    {
+     "id": "known",
+     "summary": "Darin is three weeks behind on his lodging at Hessa's, and she hasn't pressed him.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:hessa_darin_lodging"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "settled",
+     "summary": "Darin has paid Hessa what he owed. She knows who nudged him.",
+     "when": {
+      "kind": "move",
+      "id": "settle_lodging"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_hessa_marr",
+       "trust": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": -0.1
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_hessa_marr",
+       "of": "npc_darin_ko",
+       "warmth": 0.2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "trough_water",
+   "title": "The trough water",
+   "people": {
+    "owner": "npc_hessa_marr",
+    "helps": [
+     "npc_bren_marr"
+    ],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "problem",
+     "summary": "Hessa's guests keep falling sick after drinking from the trough.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:sick_guests"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "clean_water",
+     "summary": "Hessa makes her water safe now, the way you showed her, and her guests are well.",
+     "when": {
+      "kind": "move",
+      "id": "trust_clean_water"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_hessa_marr",
+       "trust": 0.3,
+       "respect": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": 0.1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "forge_iron",
+   "title": "Mara's iron",
+   "people": {
+    "owner": "npc_mara_venn",
+    "helps": [
+     "npc_jory_venn"
+    ],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "known",
+     "summary": "Mara is short of good iron and has been reworking old horseshoes for the guards' order.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:mara_horseshoes"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "found_iron",
+     "summary": "You found Mara some iron for the guards' order.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_mara_venn"
+      ],
+      "material": "iron"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": 0.3,
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.1
+      }
+     ]
+    },
+    {
+     "id": "reported",
+     "summary": "You told the captain that Mara has been reworking old horseshoes. He thinks better of you; Mara doesn't.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "mara_horseshoes"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": -0.5,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": -0.2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "jory_tongs",
+   "title": "Jory's tongs",
+   "people": {
+    "owner": "npc_jory_venn",
+    "helps": [],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "known",
+     "summary": "Jory broke Mara's second-best tongs and hid them under the scrap.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:jory_tongs"
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "replaced",
+     "summary": "You got Jory a pair of tongs before Mara missed hers.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_jory_venn",
+       "npc_mara_venn"
+      ],
+      "name_has": "tong"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.4
+      }
+     ]
+    },
+    {
+     "id": "told_mara",
+     "summary": "You told Mara about her tongs. She respects your honesty; Jory feels betrayed.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_mara_venn",
+      "secrets": [
+       "jory_tongs"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": -0.4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "kade_knees",
+   "title": "Kade's knees",
+   "people": {
+    "owner": "npc_kade_east",
+    "helps": [],
+    "opposes": []
+   },
+   "stages": [
+    {
+     "id": "known",
+     "summary": "Kade's knees are failing, and he dreads being pensioned off.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "learned",
+        "any": [
+         "secret:kade_knees"
+        ]
+       },
+       {
+        "kind": "treated",
+        "npc": "npc_kade_east",
+        "condition": "ache"
+       }
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "eased",
+     "summary": "You eased Kade's knees. The one guard who can't stand cleverness respects you for it.",
+     "when": {
+      "kind": "treated",
+      "npc": "npc_kade_east",
+      "condition": "ache"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": 0.3,
+       "respect": 0.25
+      }
+     ]
+    },
+    {
+     "id": "told_roderic",
+     "summary": "You told the captain about Kade's knees. Kade won't forget it.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "kade_knees"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": -0.5,
+       "suspicion": 0.2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "jory_wonder",
+   "title": "Something nobody knows",
+   "people": {
+    "owner": "npc_jory_venn",
+    "helps": [],
+    "opposes": [
+     "npc_mara_venn"
+    ]
+   },
+   "stages": [],
+   "outcomes": [
+    {
+     "id": "amazed",
+     "summary": "Jory saw you do something nobody here knows how to do. He'll tell everyone, and Mara isn't sure she likes it.",
+     "when": {
+      "kind": "seen_demonstration",
+      "npcs": [
+       "npc_jory_venn"
+      ],
+      "wonder": [
+       "clever",
+       "uncanny"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "suspicion": 0.1
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "moves": [
+  {
+   "id": "forgive_oren_debt",
+   "npc": "npc_darin_ko",
+   "story": "oren_debt",
+   "description": "Darin agrees to let Oren's debt go: he'll stop pressing him and won't go to the captain.",
+   "when": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "fact:oren_debt",
+       "secret:oren_debt",
+       "secret:darin_collect"
+      ]
+     },
+     {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "regard",
+        "npc": "npc_darin_ko",
+        "axis": "trust",
+        "at_least": 0.5
+       },
+       {
+        "kind": "learned",
+        "any": [
+         "secret:darin_permit"
+        ]
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_darin_ko"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "would_agree_if": "for a friend he trusts who asks it of him, to square his account after a real gift or good turn from the stranger, or to keep someone who knows his permit is running out on his side. He haggles first, as he always does, but he knows a good bargain when he's offered one"
+  },
+  {
+   "id": "settle_lodging",
+   "npc": "npc_darin_ko",
+   "story": "lodging",
+   "description": "Darin agrees to pay Hessa the three weeks' lodging he owes her.",
+   "when": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "secret:hessa_darin_lodging"
+      ]
+     },
+     {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "regard",
+        "npc": "npc_darin_ko",
+        "axis": "trust",
+        "at_least": 0.4
+       },
+       {
+        "kind": "learned",
+        "any": [
+         "secret:darin_permit"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "would_agree_if": "for a friend he trusts who asks it of him, or to keep someone who knows how things stand with him on his side: he can't afford a sour name in town before he trades inside the walls"
+  },
+  {
+   "id": "trust_clean_water",
+   "npc": "npc_hessa_marr",
+   "story": "trough_water",
+   "description": "Hessa takes up the stranger's way of making the water safe for her guests.",
+   "when": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "fact:sick_guests"
+      ]
+     },
+     {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "seen_demonstration",
+        "npcs": [
+         "npc_hessa_marr"
+        ]
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_hessa_marr"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "would_agree_if": "once she has seen the stranger's way keep people well, or been given the means and shown how"
+  }
+ ]
+}

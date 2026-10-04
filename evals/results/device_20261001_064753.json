@@ -1,0 +1,25 @@
+[
+ {
+  "case": "why_did_it_fail",
+  "ok": false,
+  "problems": [
+   "said none of ['spring', 'stiff', 'wood', 'springy', 'rod', 'flex']"
+  ],
+  "answer": "You may have used the right idea in the wrong mode: press T, make sure DO is lit red, then enter the fire-making words. Keep the flint and steel file low over the dry grass, and blow on the sparks; the bar should tell us if something else is wrong.",
+  "latency_ms": 4790
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "You may have tried to make a bow, but the grass has no spring—so it can’t launch anything. For the fire, pick up the flint shard and use the dry grass as tinder; hold the flint low over it and strike it against the steel file, then blow on the sparks.",
+  "latency_ms": 1859
+ },
+ {
+  "case": "why_did_it_fail",
+  "ok": true,
+  "problems": [],
+  "answer": "The dry grass has no spring—it bends and stays bent, so it can’t make a bow. Try the flint and file low over the grass, then blow on the sparks; make sure DO is lit when you enter the action.",
+  "latency_ms": 1567
+ }
+]

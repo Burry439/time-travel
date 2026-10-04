@@ -1,0 +1,40 @@
+[
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "sew the broken halter strap back together with the thong",
+  "ok": true,
+  "category": "success",
+  "reason": "You use Ned’s stitching awl to punch and sew the snapped cheek strap back together with the waxed leather thong. The join is rough but holds as a halter strap.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended leather halter",
+    "consumes": [
+     "halter_ned",
+     "thong_ned"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "stitch the snapped cheek strap of the halter back to its buckle with the waxed leather thong",
+  "ok": true,
+  "category": "success",
+  "reason": "You use the stitching awl and waxed leather thong to stitch the snapped cheek strap back to the buckle. The repaired halter is ready to use.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended leather halter",
+    "consumes": [
+     "halter_ned",
+     "thong_ned"
+    ]
+   }
+  ]
+ }
+]

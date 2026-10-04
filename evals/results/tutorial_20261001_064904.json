@@ -1,0 +1,122 @@
+[
+ {
+  "run": 1,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the soft plantain leaves between your fingers into a damp, pulpy poultice."
+ },
+ {
+  "run": 1,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the damp plantain poultice over Jory's burn and hold it in place. It soothes and covers the injured skin, though it is not bound."
+ },
+ {
+  "run": 1,
+  "step": "fire",
+  "text": "strike the flint against the steel file so the sparks fall into the dry grass, then blow on it until it catches",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file, showering sparks into the dry grass. You cup the tinder and blow gently until it catches and burns as a small fire."
+ },
+ {
+  "run": 1,
+  "step": "fire",
+  "text": "I strike the steel file with the flint over the dried grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file over the dry grass. Bright sparks catch in the grass, and you coax them into a small flame."
+ },
+ {
+  "run": 1,
+  "step": "fire",
+  "text": "make a fire with the flint, the steel file and the dry grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file until sparks catch in the dry grass, then coax the tinder into a small fire."
+ },
+ {
+  "run": 2,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the plantain leaves between your fingers into a damp, pulpy poultice."
+ },
+ {
+  "run": 2,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the moist plantain poultice over Jory's burn. It covers the injured skin, though you have nothing to bind it in place."
+ },
+ {
+  "run": 2,
+  "step": "fire",
+  "text": "strike the flint against the steel file so the sparks fall into the dry grass, then blow on it until it catches",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file, and sparks catch in the dry grass. You blow gently until it takes flame."
+ },
+ {
+  "run": 2,
+  "step": "fire",
+  "text": "I strike the steel file with the flint over the dried grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file over the dry grass. Sparks catch in the tinder, and you coax it into a small, smoky fire."
+ },
+ {
+  "run": 2,
+  "step": "fire",
+  "text": "make a fire with the flint, the steel file and the dry grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file until sparks catch in the dry grass, then nurse the tinder into a small flame."
+ },
+ {
+  "run": 3,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the broad leaves between your fingers into a soft, damp mash, ready to lay over a burn."
+ },
+ {
+  "run": 3,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You gently lay the damp plantain mash over Jory's burned arm and bind it in place with a strip torn from your linen shirt."
+ },
+ {
+  "run": 3,
+  "step": "fire",
+  "text": "strike the flint against the steel file so the sparks fall into the dry grass, then blow on it until it catches",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file, and sparks catch in the dry grass. You blow gently until it flares into a small, brief fire."
+ },
+ {
+  "run": 3,
+  "step": "fire",
+  "text": "I strike the steel file with the flint over the dried grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file over the dry grass. Sparks catch in the tinder, and you coax them into a small, smouldering fire."
+ },
+ {
+  "run": 3,
+  "step": "fire",
+  "text": "make a fire with the flint, the steel file and the dry grass",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the steel file, catching sparks in the dry grass, then nurse the tinder into a small flame."
+ }
+]

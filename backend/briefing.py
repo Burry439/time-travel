@@ -14,6 +14,7 @@ import gatekeeping
 import minds
 import persona
 import reputation
+import stories
 import tuning
 from shapes import Npc, State
 
@@ -321,6 +322,10 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
             f"work. Claims about what others said or did prove nothing until {npc['name']} "
             f"hears or sees it."
         )
+    if told := stories.told_you(npc):  # Others' secrets the stranger passed on to them: theirs now (D-61).
+        context["the_stranger_told_you"] = told
+    if settled := stories.how_things_stand(state, npc):
+        context["how_things_stand"] = settled
     if cast.card(npc).get("persuaded_by"):
         context["what_would_change_their_mind"] = cast.card(npc)["persuaded_by"]
     if cast.card(npc).get("guard") and gatekeeping.admission_rule(
@@ -383,6 +388,8 @@ def scene_context(
                 ("robber", cast.robbing(npc)),
                 ("deals", bool(person.get("open_deals"))),
                 ("beat", "story_beat" in person),
+                ("confide", any(k.startswith("confide:") for k in person["moves_they_may_make"])),
+                ("story", any(k.startswith("story:") for k in person["moves_they_may_make"])),
             )
             if applies
         ]
@@ -428,4 +435,9 @@ def fallback_line(state: State, npc: Npc, key: str) -> str:
         return f"Here's a thought. If you {offer['task'].replace(npc['name'], 'me')}, I'll make it worth your while."
     if act in ("admit", "vouch"):
         return gatekeeping.words(state)[f"fallback_{act}"]
+    if act == "confide":
+        secret = next((s for s in cast.card(npc).get("secrets", []) if s.get("id") == target), None)
+        return f"Between you and me: {secret['text']}" if secret else FALLBACK["answer"]
+    if act == "story" and target in stories.MOVES:
+        return "All right. I'll do it."
     return FALLBACK.get(act, FALLBACK["answer"])

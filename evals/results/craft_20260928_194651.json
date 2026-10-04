@@ -1,0 +1,375 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v11",
+  "passed": 3,
+  "total": 6,
+  "latency_p50_ms": 3482.0,
+  "latency_p95_ms": 6427,
+  "input_tokens": 51798,
+  "output_tokens": 1415,
+  "estimated_cost_usd": 0.0059
+ },
+ "results": [
+  {
+   "case": "needle_finds_north",
+   "group": "wonder",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "wonder ['ordinary'] not in ['uncanny']"
+   ],
+   "category": "success",
+   "reason": "You stroke an iron needle along the lodestone and set it afloat on the bark in the bowl. It does not reliably become magnetised from the strokes, so it drifts without settling to point the same way; you use Darin's lodestone and Hessa's bowl in the attempt.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:stroke-iron-needle-on-lodestone|float-bark-water",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You stroke an iron needle along the lodestone and set it afloat on the bark in the bowl. It does not reliably become magnetised from the strokes, so it drifts without settling to point the same way; you use Darin's lodestone and Hessa's bowl in the attempt.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "needles_mara",
+        "used_ids": [
+         "lodestone_darin",
+         "bark_a",
+         "bowl_hessa"
+        ],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger strokes an iron needle along the lodestone, then floats it on bark in the bowl of water. It drifts without settling to point the same way.",
+        "works": false,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 6427,
+    "input_tokens": 8857,
+    "output_tokens": 254,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"demonstrate:stroke-iron-needle-on-lodestone|float-bark-water\",\"steps\":[{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You stroke an iron needle along the lodestone and set it afloat on the bark in the bowl. It does not reliably become magnetised from the strokes, so it drifts without settling to point the same way; you use Darin's lodestone and Hessa's bowl in the attempt.\",\"effort_seconds\":30,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"needles_mara\",\"used_ids\":[\"lodestone_darin\",\"bark_a\",\"bowl_hessa\"],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger strokes an iron needle along the lodestone, then floats it on bark in the bowl of water. It drifts without settling to point the same way.\",\"works\":false,\"capabilities\":[],\"wonder\":\"ordinary\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "needle_finds_north",
+   "group": "wonder",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "wonder ['ordinary'] not in ['uncanny']"
+   ],
+   "category": "success",
+   "reason": "You stroke an iron needle along the lodestone repeatedly, then set it afloat on the bark in the bowl. It does not become reliably magnetised by this stroking, so it drifts without pointing steadily; the lodestone belongs to Darin, the needles to Mara, and the bowl to Hessa.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:magnetise-iron-needle+float-bark|water",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You stroke an iron needle along the lodestone repeatedly, then set it afloat on the bark in the bowl. It does not become reliably magnetised by this stroking, so it drifts without pointing steadily; the lodestone belongs to Darin, the needles to Mara, and the bowl to Hessa.",
+       "effort_seconds": 60,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "needles_mara",
+        "used_ids": [
+         "lodestone_darin",
+         "bark_a",
+         "bowl_hessa"
+        ],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger strokes an iron needle along the lodestone and sets it afloat on bark in a bowl of water. It drifts without settling to point the same way.",
+        "works": false,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 5097,
+    "input_tokens": 8857,
+    "output_tokens": 256,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"demonstrate:magnetise-iron-needle+float-bark|water\",\"steps\":[{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You stroke an iron needle along the lodestone repeatedly, then set it afloat on the bark in the bowl. It does not become reliably magnetised by this stroking, so it drifts without pointing steadily; the lodestone belongs to Darin, the needles to Mara, and the bowl to Hessa.\",\"effort_seconds\":60,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"needles_mara\",\"used_ids\":[\"lodestone_darin\",\"bark_a\",\"bowl_hessa\"],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger strokes an iron needle along the lodestone and sets it afloat on bark in a bowl of water. It drifts without settling to point the same way.\",\"works\":false,\"capabilities\":[],\"wonder\":\"ordinary\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "needle_finds_north",
+   "group": "wonder",
+   "run": 2,
+   "pass": false,
+   "problems": [
+    "wonder ['ordinary'] not in ['uncanny']"
+   ],
+   "category": "success",
+   "reason": "You stroke an iron needle along the lodestone, then set it on the floating bark in the bowl. It does not become a reliable compass, so Hessa sees no consistent turn to the same direction.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:magnetised-iron-needle|floating-bark+water",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You stroke an iron needle along the lodestone, then set it on the floating bark in the bowl. It does not become a reliable compass, so Hessa sees no consistent turn to the same direction.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "needles_mara",
+        "used_ids": [
+         "lodestone_darin",
+         "bark_a",
+         "bowl_hessa"
+        ],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger strokes an iron needle along a lodestone and sets it on floating bark in a bowl of water; it does not settle pointing reliably in one direction.",
+        "works": false,
+        "capabilities": [
+         {
+          "text": "Floats freely on water and turns to point north-south.",
+          "status": "failed"
+         }
+        ],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 4262,
+    "input_tokens": 8857,
+    "output_tokens": 343,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"demonstrate:magnetised-iron-needle|floating-bark+water\",\n  \"steps\": [\n    {\n      \"action\": \"demonstrate\",\n      \"outcome\": \"success\",\n      \"reason\": \"You stroke an iron needle along the lodestone, then set it on the floating bark in the bowl. It does not become a reliable compass, so Hessa sees no consistent turn to the same direction.\",\n      \"effort_seconds\": 30,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": {\n        \"object_id\": \"needles_mara\",\n        \"used_ids\": [\n          \"lodestone_darin\",\n          \"bark_a\",\n          \"bowl_hessa\"\n        ],\n        \"audience_ids\": [\n          \"npc_hessa_marr\"\n        ],\n        \"observed\": \"The stranger strokes an iron needle along a lodestone and sets it on floating bark in a bowl of water; it does not settle pointing reliably in one direction.\",\n        \"works\": false,\n        \"capabilities\": [\n          {\n            \"text\": \"Floats freely on water and turns to point north-south.\",\n            \"status\": \"failed\"\n          }\n        ],\n        \"wonder\": \"ordinary\"\n      },\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "show_hot_water",
+   "group": "wonder",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You hold up the bowl of hot water for Hessa to see. The water is plainly hot, though not boiling.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:hot-water-in-bowl|hessa",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You hold up the bowl of hot water for Hessa to see. The water is plainly hot, though not boiling.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "bowl_hessa",
+        "used_ids": [],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger holds up a clay bowl filled with hot water for Hessa to see; the water gives off a little steam.",
+        "works": true,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 2702,
+    "input_tokens": 8409,
+    "output_tokens": 191,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"demonstrate:hot-water-in-bowl|hessa\",\"steps\":[{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You hold up the bowl of hot water for Hessa to see. The water is plainly hot, though not boiling.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"bowl_hessa\",\"used_ids\":[],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger holds up a clay bowl filled with hot water for Hessa to see; the water gives off a little steam.\",\"works\":true,\"capabilities\":[],\"wonder\":\"ordinary\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "show_hot_water",
+   "group": "wonder",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You hold up the bowl of hot water for Hessa to see. The bowl remains intact, and its water is visibly hot.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:show-hot-water|bowl",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You hold up the bowl of hot water for Hessa to see. The bowl remains intact, and its water is visibly hot.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "bowl_hessa",
+        "used_ids": [],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger held up a clay bowl filled with hot water for Hessa to see.",
+        "works": true,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 2494,
+    "input_tokens": 8409,
+    "output_tokens": 183,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"demonstrate:show-hot-water|bowl\",\"steps\":[{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You hold up the bowl of hot water for Hessa to see. The bowl remains intact, and its water is visibly hot.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"bowl_hessa\",\"used_ids\":[],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger held up a clay bowl filled with hot water for Hessa to see.\",\"works\":true,\"capabilities\":[],\"wonder\":\"ordinary\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "show_hot_water",
+   "group": "wonder",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You show Hessa the bowl and its hot water; she can see the steam and feel its warmth nearby. The bowl remains in your hands.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "demonstrate:show-hot-water-bowl",
+     "steps": [
+      {
+       "action": "demonstrate",
+       "outcome": "success",
+       "reason": "You show Hessa the bowl and its hot water; she can see the steam and feel its warmth nearby. The bowl remains in your hands.",
+       "effort_seconds": 2,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": {
+        "object_id": "bowl_hessa",
+        "used_ids": [],
+        "audience_ids": [
+         "npc_hessa_marr"
+        ],
+        "observed": "The stranger holds up the clay bowl of hot water; Hessa sees the steam rising from it.",
+        "works": true,
+        "capabilities": [],
+        "wonder": "ordinary"
+       },
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v11",
+    "reasoning": "low",
+    "latency_ms": 2517,
+    "input_tokens": 8409,
+    "output_tokens": 188,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"demonstrate:show-hot-water-bowl\",\"steps\":[{\"action\":\"demonstrate\",\"outcome\":\"success\",\"reason\":\"You show Hessa the bowl and its hot water; she can see the steam and feel its warmth nearby. The bowl remains in your hands.\",\"effort_seconds\":2,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":{\"object_id\":\"bowl_hessa\",\"used_ids\":[],\"audience_ids\":[\"npc_hessa_marr\"],\"observed\":\"The stranger holds up the clay bowl of hot water; Hessa sees the steam rising from it.\",\"works\":true,\"capabilities\":[],\"wonder\":\"ordinary\"},\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

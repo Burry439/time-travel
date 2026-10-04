@@ -1,0 +1,18 @@
+[
+ {
+  "run": 1,
+  "step": "both",
+  "text": "“You dropped this.” hand Ivo the pewter tankard",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Ivo the pewter tankard and tell him he dropped it."
+ },
+ {
+  "run": 2,
+  "step": "both",
+  "text": "“You dropped this.” hand Ivo the pewter tankard",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand Ivo the dented pewter tankard."
+ }
+]

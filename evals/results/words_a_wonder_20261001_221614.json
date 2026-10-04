@@ -1,0 +1,80 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill the round glass flask with clear water from the lake.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "focus the sun through the flask of water onto the reed fluff to light it, and show them",
+  "ok": true,
+  "category": "success",
+  "reason": "You focus the sun through the round glass flask onto the dry reed fluff. After a little while it smoulders and catches in a brief flame; Sefa owns the flask you use. You hold up the burning reed fluff so Sefa and Brann can see its small flame.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "burning reed fluff",
+    "consumes": [
+     "reedfluff"
+    ]
+   },
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You fill the round glass flask with clear water from the lake.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens",
+  "ok": true,
+  "category": "success",
+  "reason": "You hold the round glass flask in strong sunlight and focus its light onto the dry reed fluff. Sefa and Brann watch the fluff smoulder and catch.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "friends",
+  "text": "show Brann, slowly and plainly, how a single round drop of lake water on the dry driftwood also gathers the sunlight into a tiny bright spot: the same trick, small and ordinary, that any dewdrop does",
+  "ok": true,
+  "category": "unresolved",
+  "reason": "The attempt could not be resolved. Nothing changed.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

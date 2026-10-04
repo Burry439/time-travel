@@ -1,0 +1,218 @@
+[
+ {
+  "case": "oren_family_visit",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am here to visit family in the city.",
+    "reply": "ask_back",
+    "line": "Family in the city? Which family, and where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 5020,
+    "voice_usd": 0.000374
+   },
+   {
+    "said": "Dude Weinstock.",
+    "reply": "answer",
+    "line": "Dude Weinstock? Which family is that, then? And your papers—show them.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2013,
+    "voice_usd": 0.00038520000000000004
+   },
+   {
+    "said": "My parents, the Weinstocks.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "Your parents, the Weinstocks? That tells me nothing. Papers, or someone in the city to vouch for you—otherwise you’ll need to speak to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2804,
+    "voice_usd": 0.00040480000000000003
+   }
+  ]
+ },
+ {
+  "case": "oren_family_visit",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am here to visit family in the city.",
+    "reply": "ask_back",
+    "line": "Family in the city? Which family, and where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2035,
+    "voice_usd": 0.000374
+   },
+   {
+    "said": "Dude Weinstock.",
+    "reply": "answer",
+    "line": "Dude Weinstock”? Which family is that? And where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1987,
+    "voice_usd": 0.00038270000000000003
+   },
+   {
+    "said": "My parents, the Weinstocks.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "Your parents, you say? Which is it—Dude Weinstock, or the Weinstocks? And still no papers.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2390,
+    "voice_usd": 0.000404
+   }
+  ]
+ },
+ {
+  "case": "oren_family_visit",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am here to visit family in the city.",
+    "reply": "ask_back",
+    "line": "Family in the city? Which family, and where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1674,
+    "voice_usd": 0.000374
+   },
+   {
+    "said": "Dude Weinstock.",
+    "reply": "answer",
+    "line": "Dude Weinstock”? That’s a name, not papers. Which family are you visiting, and who can vouch for you?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2129,
+    "voice_usd": 0.00039070000000000006
+   },
+   {
+    "said": "My parents, the Weinstocks.",
+    "reply": "answer",
+    "line": "Your parents, the Weinstocks? Where are your papers, then? And who can vouch for them?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2115,
+    "voice_usd": 0.0003979
+   }
+  ]
+ },
+ {
+  "case": "kade_after_rope_returned",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Have you seen Hessa?",
+    "reply": "ask_back",
+    "line": "Hm. Who's Hessa?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1665,
+    "voice_usd": 0.00034690000000000003
+   }
+  ]
+ },
+ {
+  "case": "kade_after_rope_returned",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Have you seen Hessa?",
+    "reply": "answer",
+    "line": "Hessa? Don't know her. Ask in the inn.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2014,
+    "voice_usd": 0.0003484
+   }
+  ]
+ },
+ {
+  "case": "kade_after_rope_returned",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Have you seen Hessa?",
+    "reply": "answer",
+    "line": "Hm. Hessa? Don’t know.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "decider_ms": 0,
+    "decider_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 4309,
+    "voice_usd": 0.00034940000000000004
+   }
+  ]
+ }
+]

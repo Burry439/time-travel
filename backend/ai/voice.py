@@ -1,14 +1,17 @@
 """Voice role: characters' words, and (in conversation) what they do.
 
-Each person is their own agent (D-59). In conversation the person addressed answers in a call of their own, which
+Each person is their own agent (D-60). In conversation the person addressed answers in a call of their own, which
 holds only their own sheet (persona.py), memory, knowledge and secrets, what anyone there could see and hear, and the
-rules that apply to them: a short core (person_v1) plus a module for each thing they are (a guard, a robber), have
-(an open deal, a story beat) or are in (a fight, a group). Then everyone else there decides, each in their own call
-and in parallel, whether to say something, having heard that answer. Each reads the moment themselves (D-46) and
-picks one move from those code offers them; code checks every line and applies it as that person's exchange. Free
-text never flows back into world state. The same role keeps memory prose (recollect, D-36), phrases two villagers
-talking (chatter, D-37: each side in its own call) and someone coming to tell someone something (hearing, D-54:
-each side in its own call). If the model is unavailable, the person addressed says an authored fallback line.
+rules that apply to them: a short core (person_v2) plus a module for each thing they are (a guard, a robber), have
+(an open deal, a story beat, a secret they could confide, something a story lets them agree to) or are in (a fight,
+a group). Then everyone else there decides, each in their own call and in parallel, whether to say something, having
+heard that answer. Each reads the moment themselves (D-46) and picks one move from those code offers them; code
+checks every line and applies it as that person's exchange. Free text never flows back into world state. Beside the
+conversation, a separate reading says whether the stranger's words passed on a secret they were told (told, D-61),
+so no one's own call ever holds anyone else's secrets. The same role keeps memory prose (recollect, D-36), phrases
+two villagers talking (chatter, D-37: each side in its own call) and someone coming to tell someone something
+(hearing, D-54: each side in its own call). If the model is unavailable, the person addressed says an authored
+fallback line.
 """
 
 from __future__ import annotations
@@ -35,8 +38,9 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-PERSON_VERSION = "person_v1"  # D-59: each person their own agent: a core and the rules that apply to them.
+PERSON_VERSION = "person_v2"  # D-60: each person their own agent: a core and the rules that apply to them. v2 (D-61): secrets confided and story moves.
 SCENE_LINES = 3
+WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 
 
 def _modules(text: str) -> dict[str, str]:
@@ -53,6 +57,8 @@ CHATTER_VERSION = "chatter_v2"  # D-59: each side of a chat in its own call.
 CHATTER = _modules((_PROMPTS / f"{CHATTER_VERSION}.txt").read_text(encoding="utf-8"))
 HEARING_VERSION = "hearing_v2"  # Someone comes to tell someone something; the listener decides (D-54). v2: each in their own call (D-59).
 HEARING = _modules((_PROMPTS / f"{HEARING_VERSION}.txt").read_text(encoding="utf-8"))
+TOLD_VERSION = "told_v1"  # Whether the stranger's words passed on a secret they were told (D-61).
+_TOLD = (_PROMPTS / f"{TOLD_VERSION}.txt").read_text(encoding="utf-8")
 MAX_CHARS = 360
 
 
@@ -102,6 +108,10 @@ class Episode(BaseModel):
     long_memory: str
 
 
+class Told(BaseModel):
+    passed_on: list[str]
+
+
 class Said(BaseModel):
     line: str
 
@@ -147,8 +157,11 @@ def tidy(text: str) -> str:
     return text if len(text) <= MAX_CHARS else text[:MAX_CHARS].rsplit(" ", 1)[0] + "…"
 
 
-def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) -> tuple[VoiceCall, BaseModel | None]:
-    """One structured call to the voice model; the call record says how it went."""
+def _parse(
+    prompt: str, context: dict, schema: type[BaseModel], version: str, reasoning: str | None = None
+) -> tuple[VoiceCall, BaseModel | None]:
+    """One structured call to the voice model; the call record says how it went. reasoning overrides the role's
+    (VOICE_REASONING) for a call that carries a weighty decision."""
     model = config.voice_model()
     call = VoiceCall(status="fallback", text="", model=model, prompt_version=version)
     started = time.perf_counter()
@@ -158,7 +171,7 @@ def _parse(prompt: str, context: dict, schema: type[BaseModel], version: str) ->
         try:
             response = config.client().responses.parse(
                 model=model,
-                reasoning={"effort": config.voice_reasoning()},
+                reasoning={"effort": reasoning or config.voice_reasoning()},
                 store=False,
                 text_format=schema,
                 input=[
@@ -293,7 +306,10 @@ def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> t
         "you": you,
     }
     prompt = "\n\n".join(MODULES[rule] for rule in rules)
-    call, parsed = _parse(prompt, payload, PersonLine, PERSON_VERSION)
+    # A secret they could confide or something a story lets them agree to is a decision to weigh, not just a line to
+    # phrase: those calls get a moment's thought (D-61: with none, a merchant handed his price still said no).
+    weighty = WEIGHTY_REASONING if {"confide", "story"} & set(rules) else None
+    call, parsed = _parse(prompt, payload, PersonLine, PERSON_VERSION, weighty)
     if parsed is None:
         return call, None
     call.status = "ok"
@@ -418,6 +434,21 @@ def hearing(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceC
         "pass_on_message": " ".join(heard.pass_on_message.split())[:240],
         "remember": " ".join(heard.remember.split())[:300],
     }
+
+
+def told(context: dict, allowed: bool = True) -> tuple[VoiceCall, list[str]]:
+    """Which of the secrets the stranger knows their words just passed on to the people there (D-61): a reading
+    beside the conversation, so nobody's own call holds anyone else's secrets. Only ids offered come back; none
+    when the model can't be used."""
+    skipped = _unavailable("", allowed, TOLD_VERSION)
+    if skipped:
+        return skipped, []
+    call, parsed = _parse(_TOLD, context, Told, TOLD_VERSION)
+    if parsed is None:
+        return call, []
+    call.status = "ok"
+    offered = {item["id"] for item in context["could_pass_on"]}
+    return call, [i for i in dict.fromkeys(parsed.passed_on) if i in offered]
 
 
 def _public(person: dict) -> dict:

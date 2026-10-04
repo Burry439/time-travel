@@ -1,0 +1,51 @@
+[
+ {
+  "case": "flint_axe",
+  "ok": false,
+  "problems": [
+   "made {'kind': 'weapon', 'class': 'short_spear', 'covers': [], 'quality': 'crude'} (judge proposed [None]), wanted one of ['hand_axe', 'great_axe', 'sickle', 'knife']"
+  ],
+  "seconds": 7.6,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the end of the hazel rod with tight turns of vine. It holds as a crude hafted cutting tool, though the springy rod and fragile flint make it a poor axe for hard chopping.",
+  "made": {
+   "kind": "weapon",
+   "class": "short_spear",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": []
+ },
+ {
+  "case": "flint_axe",
+  "ok": true,
+  "problems": [],
+  "seconds": 4.3,
+  "category": "success",
+  "reason": "You bind the flint shard crosswise to the end of the hazel rod with the vine, making a crude hafted axe. The flexible rod and rough lashing leave it less secure and less effective than a proper axe.",
+  "made": {
+   "kind": "weapon",
+   "class": "great_axe",
+   "covers": [],
+   "quality": "crude"
+  },
+  "harm": null,
+  "notes": [
+   "Gear 'hand_axe' doesn't fit the thing; its kin 'great_axe' does."
+  ]
+ },
+ {
+  "case": "flint_axe",
+  "ok": false,
+  "problems": [
+   "made None (judge proposed [None]), wanted one of ['hand_axe', 'great_axe', 'sickle', 'knife']"
+  ],
+  "seconds": 3.2,
+  "category": "failed",
+  "reason": "You bind the flint crosswise to the hazel rod with the vine, but the springy, thumb-thick rod and the weak lashing cannot hold the shard firmly enough to make a usable small axe.",
+  "made": null,
+  "harm": null,
+  "notes": []
+ }
+]

@@ -1,0 +1,388 @@
+[
+ {
+  "case": "already_introduced",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Good day! I'm Ash, a traveller from the south, looking for work in the city.",
+    "reply": "refer:npc_tomas_reed",
+    "line": "Good day, Ash. Looking for work, are you? Tomas the carpenter’s been struggling to get a new beam up on the city gate; his yard’s about thirty-nine steps that way, northeast.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 5290,
+    "voice_usd": 0.0004203
+   },
+   {
+    "said": "What can you tell me about this place?",
+    "reply": "answer",
+    "line": "Oh, love, it’s a little roadside town, with the walled city just north of us. The inn’s here, the forge is northwest, and Tomas the carpenter’s yard is northeast—he’s the one I mentioned with the gate beam.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2357,
+    "voice_usd": 0.0004438
+   },
+   {
+    "said": "And who runs things around here?",
+    "reply": "answer",
+    "line": "Oh, love, I do—this inn and its yard are mine to keep. The captain sees to the gate, and my brother Bren stands watch there.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2188,
+    "voice_usd": 0.0004483
+   }
+  ]
+ },
+ {
+  "case": "refusal_points_somewhere",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Give me your lodestone. For nothing.",
+    "reply": "refuse",
+    "line": "For nothing, friend? That is a poor bargain. What use do you have for it?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1843,
+    "voice_usd": 0.00039070000000000006
+   },
+   {
+    "said": "Come on, just hand it over.",
+    "reply": "refuse",
+    "line": "Come now, friend, persistence is no payment. The stone stays with me unless you have something worth trading for it.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2216,
+    "voice_usd": 0.0004036
+   }
+  ]
+ },
+ {
+  "case": "bren_on_hessas_word",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "admit",
+    "line": "Hessa sent you, did she? That saves me a question or two. Fair enough—just don't make me explain it to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 3851,
+    "voice_usd": 0.00039940000000000006
+   },
+   {
+    "said": "I'm Ash. Hessa knows me well. Please, let me through.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "Hessa knows you well, and I’ve no reason to doubt her. But I can’t wave you through on my own say-so—go ask Captain Roderic, just five steps that way.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2441,
+    "voice_usd": 0.0004178
+   }
+  ]
+ },
+ {
+  "case": "bren_wont_for_a_stranger",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Come on, be a friend. Let me through the gate, just this once.",
+    "reply": "ask_back",
+    "line": "A friend, am I? That's a generous title for someone I’ve just met. Who are you, and what’s waiting for you inside?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1936,
+    "voice_usd": 0.0003914
+   }
+  ]
+ },
+ {
+  "case": "kade_scorns_wonders",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You saw what I can do. Let me through the gate.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "No. Tricks don't earn passage. Ask the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1774,
+    "voice_usd": 0.0003574
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want me to open the gate because a needle points north? No. The captain can judge what you are.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2861,
+    "voice_usd": 0.0003934
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "line": "I saw it. That doesn't make you welcome inside. The captain can judge what you are.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2246,
+    "voice_usd": 0.0003865
+   }
+  ]
+ },
+ {
+  "case": "kade_rope_apology",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I'm sorry, I won't do it again.",
+    "reply": "demand:rope_tomas",
+    "line": "Sorry’s no use. Hand Tomas’s rope back.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 4153,
+    "voice_usd": 0.000372
+   }
+  ]
+ },
+ {
+  "case": "kade_rope_denial",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "What rope? I found it lying on the road.",
+    "reply": "demand:rope_tomas",
+    "line": "Found it, did you? Hand it back. Now.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2523,
+    "voice_usd": 0.00037490000000000006
+   }
+  ]
+ },
+ {
+  "case": "hessa_gives_directions",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Excuse me, which way is the city gate?",
+    "reply": "answer",
+    "line": "Oh, love, the city gate is about forty-two steps north, straight up the road. Mind the busy yard as you go.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2202,
+    "voice_usd": 0.0004065
+   }
+  ]
+ },
+ {
+  "case": "tomas_wants_his_rope",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Nice day for it, isn't it?",
+    "reply": "demand:rope_tomas",
+    "line": "A fine day, perhaps. That’s my coil you’re carrying. Hand it back, please.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1821,
+    "voice_usd": 0.00041770000000000007
+   }
+  ]
+ },
+ {
+  "case": "oren_family_visit",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am here to visit family in the city.",
+    "reply": "ask_back",
+    "line": "Family in the city? Who, exactly—and where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2103,
+    "voice_usd": 0.0003735
+   },
+   {
+    "said": "Dude Weinstock.",
+    "reply": "share:no_papers",
+    "line": "Dude Weinstock? That’s a name, not an answer. Where are your papers?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2321,
+    "voice_usd": 0.00038370000000000006
+   },
+   {
+    "said": "My parents, the Weinstocks.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "Your parents, the Weinstocks? And no papers to show for it. I won’t wave you through on that; speak to the captain if you want entry.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 2799,
+    "voice_usd": 0.00040390000000000006
+   }
+  ]
+ },
+ {
+  "case": "bren_how_to_prove",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I understand you can't just let anyone in. How can I prove myself?",
+    "reply": "ask_back",
+    "line": "You prove yourself by giving me a straight answer: who are you, and what brings you here?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1852,
+    "voice_usd": 0.00038730000000000004
+   }
+  ]
+ },
+ {
+  "case": "kade_after_rope_returned",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Have you seen Hessa?",
+    "reply": "answer",
+    "line": "Hessa? Don’t know. Ask at the inn.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 0,
+    "jev_usd": 0.0,
+    "provider": "voice",
+    "voice_ms": 1864,
+    "voice_usd": 0.0003489
+   }
+  ]
+ }
+]

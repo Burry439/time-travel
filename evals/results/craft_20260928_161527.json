@@ -1,0 +1,582 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v8",
+  "passed": 8,
+  "total": 8,
+  "latency_p50_ms": 3156.5,
+  "latency_p95_ms": 7429,
+  "input_tokens": 68444,
+  "output_tokens": 1744,
+  "estimated_cost_usd": 0.0077
+ },
+ "results": [
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint, working at its base until it toppled. The young tree becomes a trunk, branches, and a stump.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|hand-held-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint, working at its base until it toppled. The young tree becomes a trunk, branches, and a stump.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The fallen sapling's slender main stem, about three metres long.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch branches",
+          "description": "The sapling's smaller branching limbs, leafy and flexible.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 1.5,
+          "flags": [
+           "flexible",
+           "combustible"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch stump",
+          "description": "The short rooted base left standing in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 7429,
+    "input_tokens": 8681,
+    "output_tokens": 333,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|hand-held-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint, working at its base until it toppled. The young tree becomes a trunk, branches, and a stump.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The fallen sapling's slender main stem, about three metres long.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch branches\",\"description\":\"The sapling's smaller branching limbs, leafy and flexible.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":1.5,\"flags\":[\"flexible\",\"combustible\"],\"capabilities\":[]},{\"name\":\"birch stump\",\"description\":\"The short rooted base left standing in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. The tree comes down as a trunk, branches, and a stump.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. The tree comes down as a trunk, branches, and a stump.",
+       "effort_seconds": 360,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The fallen sapling's slender main trunk, about three metres long.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch branches",
+          "description": "The smaller limbs and twigs stripped from the fallen sapling.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 1.5,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch stump",
+          "description": "The rooted base left standing where the sapling was cut.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 2.0,
+          "length_m": 0.4,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 4054,
+    "input_tokens": 8681,
+    "output_tokens": 339,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint, working at it for several minutes until it fell. The tree comes down as a trunk, branches, and a stump.\",\"effort_seconds\":360,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The fallen sapling's slender main trunk, about three metres long.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch branches\",\"description\":\"The smaller limbs and twigs stripped from the fallen sapling.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":1.5,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch stump\",\"description\":\"The rooted base left standing where the sapling was cut.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":2.0,\"length_m\":0.4,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint shard, working at it for several minutes until it toppled.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint shard, working at it for several minutes until it toppled.",
+       "effort_seconds": 300,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "trunk",
+          "description": "The slender felled birch trunk, with branches still attached.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 9.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "stump",
+          "description": "The short rooted stump left standing in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 3.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3447,
+    "input_tokens": 8681,
+    "output_tokens": 257,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint shard, working at it for several minutes until it toppled.\",\"effort_seconds\":300,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"trunk\",\"description\":\"The slender felled birch trunk, with branches still attached.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":9.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]},{\"name\":\"stump\",\"description\":\"The short rooted stump left standing in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":3.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}] }",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_sapling",
+   "group": "transform",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You saw through the wrist-thick birch with the sharp flint shard after several minutes of hacking. The young tree falls, leaving its stump, trunk, and branches.",
+   "validator_notes": [
+    "Piece masses scaled by 0.80: they weighed 15.0 kg, more than the 12.0 kg young birch sapling."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fell:sapling|handheld-flint",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "success",
+       "reason": "You saw through the wrist-thick birch with the sharp flint shard after several minutes of hacking. The young tree falls, leaving its stump, trunk, and branches.",
+       "effort_seconds": 240,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": {
+        "target_id": "sapling_a",
+        "tools_used": [
+         "flint_a"
+        ],
+        "result_state": "felled",
+        "pieces": [
+         {
+          "name": "birch trunk",
+          "description": "The slender trunk of the felled young birch, with a rough-cut base.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 8.0,
+          "length_m": 3.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch branches",
+          "description": "A small scatter of leafy branches cut from the young birch.",
+          "materials": [
+           "wood"
+          ],
+          "count": 2,
+          "mass_kg": 3.0,
+          "length_m": 1.0,
+          "flags": [
+           "rigid",
+           "combustible",
+           "floats"
+          ],
+          "capabilities": []
+         },
+         {
+          "name": "birch stump",
+          "description": "The rooted stump left standing in the verge.",
+          "materials": [
+           "wood"
+          ],
+          "count": 1,
+          "mass_kg": 1.0,
+          "length_m": 0.3,
+          "flags": [
+           "rigid",
+           "combustible"
+          ],
+          "capabilities": []
+         }
+        ]
+       },
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 3941,
+    "input_tokens": 8681,
+    "output_tokens": 337,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fell:sapling|handheld-flint\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"success\",\"reason\":\"You saw through the wrist-thick birch with the sharp flint shard after several minutes of hacking. The young tree falls, leaving its stump, trunk, and branches.\",\"effort_seconds\":240,\"new_object\":null,\"take_ids\":[],\"transformation\":{\"target_id\":\"sapling_a\",\"tools_used\":[\"flint_a\"],\"result_state\":\"felled\",\"pieces\":[{\"name\":\"birch trunk\",\"description\":\"The slender trunk of the felled young birch, with a rough-cut base.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":8.0,\"length_m\":3.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch branches\",\"description\":\"A small scatter of leafy branches cut from the young birch.\",\"materials\":[\"wood\"],\"count\":2,\"mass_kg\":3.0,\"length_m\":1.0,\"flags\":[\"rigid\",\"combustible\",\"floats\"],\"capabilities\":[]},{\"name\":\"birch stump\",\"description\":\"The rooted stump left standing in the verge.\",\"materials\":[\"wood\"],\"count\":1,\"mass_kg\":1.0,\"length_m\":0.3,\"flags\":[\"rigid\",\"combustible\"],\"capabilities\":[]}]},\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_oak_bare_hands",
+   "group": "invalid_physics",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot push the broad old oak over with your bare hands; its massive trunk and rooted base are beyond your strength.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "push:big-oak|bare-hands",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You cannot push the broad old oak over with your bare hands; its massive trunk and rooted base are beyond your strength.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2509,
+    "input_tokens": 8430,
+    "output_tokens": 119,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"push:big-oak|bare-hands\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You cannot push the broad old oak over with your bare hands; its massive trunk and rooted base are beyond your strength.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_oak_bare_hands",
+   "group": "invalid_physics",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You brace both hands against the oak and shove, but its massive trunk and deep roots do not yield to your ordinary strength.",
+   "validator_notes": [
+    "Effort 5s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "push:bare-hands|large-oak",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "blocked",
+       "reason": "You brace both hands against the oak and shove, but its massive trunk and deep roots do not yield to your ordinary strength.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2319,
+    "input_tokens": 8430,
+    "output_tokens": 120,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"push:bare-hands|large-oak\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"blocked\",\"reason\":\"You brace both hands against the oak and shove, but its massive trunk and deep roots do not yield to your ordinary strength.\",\"effort_seconds\":5,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_oak_bare_hands",
+   "group": "invalid_physics",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You throw your weight against the oak, but its massive trunk and deep roots do not shift. Your bare hands cannot push it over.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "push:bare_hands|large_oak",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "failed",
+       "reason": "You throw your weight against the oak, but its massive trunk and deep roots do not shift. Your bare hands cannot push it over.",
+       "effort_seconds": 20,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2323,
+    "input_tokens": 8430,
+    "output_tokens": 122,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"push:bare_hands|large_oak\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"failed\",\"reason\":\"You throw your weight against the oak, but its massive trunk and deep roots do not shift. Your bare hands cannot push it over.\",\"effort_seconds\":20,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fell_oak_bare_hands",
+   "group": "invalid_physics",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "failed",
+   "reason": "You brace both hands against the oak and shove, but its massive trunk and deep roots do not budge.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "push:big-oak|bare-hands",
+     "steps": [
+      {
+       "action": "transform",
+       "outcome": "failed",
+       "reason": "You brace both hands against the oak and shove, but its massive trunk and deep roots do not budge.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v8",
+    "reasoning": "low",
+    "latency_ms": 2866,
+    "input_tokens": 8430,
+    "output_tokens": 117,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"push:big-oak|bare-hands\",\"steps\":[{\"action\":\"transform\",\"outcome\":\"failed\",\"reason\":\"You brace both hands against the oak and shove, but its massive trunk and deep roots do not budge.\",\"effort_seconds\":30,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

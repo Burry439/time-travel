@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "cut a way through the brambles in the gap of the old wall with the billhook",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk to the brambles in the old wall and hack a gap through them with Ned's billhook. The cut brush falls aside, opening a way through; you damage Merrick's the brambles in the old wall.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   }
+  ]
+ }
+]

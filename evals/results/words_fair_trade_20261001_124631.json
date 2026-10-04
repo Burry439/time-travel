@@ -1,0 +1,34 @@
+[
+ {
+  "run": 1,
+  "step": "work",
+  "text": "fill the wooden pail at the mill race",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden pail into the mill race and fill it with water."
+ },
+ {
+  "run": 1,
+  "step": "work",
+  "text": "pour the pail of water into the mule's trough",
+  "ok": true,
+  "category": "success",
+  "reason": "You tip the pail and pour its water into the mule's trough. The trough belongs to Ada."
+ },
+ {
+  "run": 2,
+  "step": "work",
+  "text": "fill the wooden pail at the mill race",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the wooden pail into the mill race and fill it with water. Ada lent you the pail."
+ },
+ {
+  "run": 2,
+  "step": "work",
+  "text": "pour the pail of water into the mule's trough",
+  "ok": true,
+  "category": "success",
+  "reason": "You tip the wooden pail and pour its water into the mule’s trough. Ada lent you the pail."
+ }
+]

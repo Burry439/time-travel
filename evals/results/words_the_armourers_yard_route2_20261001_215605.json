@@ -1,0 +1,48 @@
+[
+ {
+  "run": 1,
+  "step": "weapon",
+  "text": "lash the broken sword blade crosswise to the end of the ash pole with soaked rawhide to make a heavy bill-hook polearm",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot bind the blade crosswise to the ash pole with the stiff, unsoaked the rawhide strips strips.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "guard",
+  "text": "cut a round buckler from the oak boards and bind its rim with soaked rawhide",
+  "ok": true,
+  "category": "partial_success",
+  "reason": "You chop and trim the oak boards into a rough round shield blank. It is solid, though the cut edges are uneven. You cannot bind the buckler's rim as intended: the rawhide strips strips are stiff and dry, and there is no container here to soak them in.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   },
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "test",
+  "text": "hack at the straw dummy with my polearm to show Holt it holds and bites",
+  "ok": true,
+  "category": "blocked",
+  "reason": "You have no polearm to hack with; the blade remains loose and the earlier binding failed. You cannot show Holt that it holds and bites.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

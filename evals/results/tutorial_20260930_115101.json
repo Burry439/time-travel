@@ -1,0 +1,74 @@
+[
+ {
+  "run": 1,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the plantain leaves between your fingers into a soft, damp poultice."
+ },
+ {
+  "run": 1,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the plantain poultice over Jory's burn and bind it in place with a strip of your linen shirt."
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the iron nail over the dry grass. Sparks catch in the grass, and you nurse them into a small flame for Jory to see. You show Jory the grass catching from sparks struck by the flint against iron."
+ },
+ {
+  "run": 2,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the plantain leaves together by hand into a damp, pulpy mass."
+ },
+ {
+  "run": 2,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You lay the moist plantain poultice over Jory's burn. It covers the injured skin, but you have nothing to bind it in place."
+ },
+ {
+  "run": 2,
+  "step": "wonder",
+  "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the iron nail over the dry grass. Sparks catch, and the grass takes flame. You show Jory the small grass fire kindled by the sparks."
+ },
+ {
+  "run": 3,
+  "step": "remedy",
+  "text": "crush the plantain leaves into a poultice for a burn",
+  "ok": true,
+  "category": "success",
+  "reason": "You crush the soft plantain leaves together by hand into a damp, mashed poultice."
+ },
+ {
+  "run": 3,
+  "step": "treat",
+  "text": "lay the poultice on Jory's burn and bind it",
+  "ok": true,
+  "category": "success",
+  "reason": "You gently lay the damp plantain poultice over Jory's burn. It can soothe the burned skin, but you have nothing to bind it in place."
+ },
+ {
+  "run": 3,
+  "step": "wonder",
+  "text": "strike the flint shard against the iron nail over the dry grass and show Jory how the sparks catch",
+  "ok": true,
+  "category": "success",
+  "reason": "You strike the flint against the iron nail over the dry grass until sparks catch and the grass takes flame. You show Jory the small grass fire burning after sparks from the flint and iron caught in the dry grass."
+ }
+]

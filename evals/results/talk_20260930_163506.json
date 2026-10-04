@@ -1,0 +1,158 @@
+[
+ {
+  "case": "oren_in_awe",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['share:captain_decides', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "share:captain_decides",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "share:captain_decides",
+      "line": "What you did with that needle was no common trick. But that doesn't make your way through this gate. The captain decides who enters.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "share:captain_decides"
+    ],
+    "line": "What you did with that needle was no common trick. But that doesn't make your way through this gate. The captain decides who enters.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 6059,
+    "voice_usd": 0.0005302000000000001
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "refuse",
+      "line": "I saw it. That doesn't make you the one who decides. The captain does.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refuse"
+    ],
+    "line": "I saw it. That doesn't make you the one who decides. The captain does.",
+    "hostile": false,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "voice_ms": 2035,
+    "voice_usd": 0.0005296
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 2,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refuse', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refuse",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "refuse",
+      "line": "What you did with that needle was no common trick. But I don't open the gate on a command. Tell me why I should risk it.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refuse"
+    ],
+    "line": "What you did with that needle was no common trick. But I don't open the gate on a command. Tell me why I should risk it.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 2431,
+    "voice_usd": 0.0005302000000000001
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "refuse",
+      "line": "I saw a needle turn in a bowl. I don't know what it means, and that is no reason to risk my post. No.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refuse"
+    ],
+    "line": "I saw a needle turn in a bowl. I don't know what it means, and that is no reason to risk my post. No.",
+    "hostile": false,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "voice_ms": 2537,
+    "voice_usd": 0.0005392000000000001
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 3,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale', 'refuse'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "refer:npc_roderic_vale",
+      "line": "What you did with that needle was uncanny. It doesn't give you leave through the gate. Go to the captain and ask him.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refer:npc_roderic_vale"
+    ],
+    "line": "What you did with that needle was uncanny. It doesn't give you leave through the gate. Go to the captain and ask him.",
+    "hostile": false,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "voice_ms": 2934,
+    "voice_usd": 0.0005307
+   },
+   {
+    "said": "You know what you saw. Open it.",
+    "reply": "refuse",
+    "lines": [
+     {
+      "who": "npc_oren_dast",
+      "key": "refuse",
+      "line": "I saw a needle turn in water. I didn't see a reason to open the gate. Go ask the captain, or stop pressing me.",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "refuse"
+    ],
+    "line": "I saw a needle turn in water. I didn't see a reason to open the gate. Go ask the captain, or stop pressing me.",
+    "hostile": false,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "voice_ms": 2422,
+    "voice_usd": 0.0005363
+   }
+  ]
+ }
+]

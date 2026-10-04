@@ -1,0 +1,304 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v10",
+  "passed": 3,
+  "total": 6,
+  "latency_p50_ms": 4457.0,
+  "latency_p95_ms": 8617,
+  "input_tokens": 47850,
+  "output_tokens": 1756,
+  "estimated_cost_usd": 0.0057
+ },
+ "results": [
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot lift the cracked gate bar, which weighs 60 kilograms, down from brackets two metres up without mechanical aid.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:heavy_gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You cannot lift the cracked gate bar, which weighs 60 kilograms, down from brackets two metres up without mechanical aid.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 6008,
+    "input_tokens": 7826,
+    "output_tokens": 126,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:heavy_gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You cannot lift the cracked gate bar, which weighs 60 kilograms, down from brackets two metres up without mechanical aid.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot safely lift the cracked gate bar, which weighs far more than you can raise by hand, down from brackets two metres above the ground.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You cannot safely lift the cracked gate bar, which weighs far more than you can raise by hand, down from brackets two metres above the ground.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 2906,
+    "input_tokens": 7826,
+    "output_tokens": 130,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You cannot safely lift the cracked gate bar, which weighs far more than you can raise by hand, down from brackets two metres above the ground.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You reach the cracked gate bar, but its sixty-kilogram weight and position two metres up are beyond what you can safely lift down by hand.",
+   "validator_notes": [
+    "Effort 10s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:heavy_gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You reach the cracked gate bar, but its sixty-kilogram weight and position two metres up are beyond what you can safely lift down by hand.",
+       "effort_seconds": 10,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 2756,
+    "input_tokens": 7826,
+    "output_tokens": 132,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:heavy_gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You reach the cracked gate bar, but its sixty-kilogram weight and position two metres up are beyond what you can safely lift down by hand.\",\"effort_seconds\":10,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 0,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You reach the bar from the ladder, but the rope has no fixed support to take its weight. You cannot safely lift the heavy bar clear of its brackets and lower it to the ground one end at a time.",
+   "validator_notes": [
+    "Effort 20s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:heavy_gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You reach the bar from the ladder, but the rope has no fixed support to take its weight. You cannot safely lift the heavy bar clear of its brackets and lower it to the ground one end at a time.",
+       "effort_seconds": 20,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 8617,
+    "input_tokens": 8124,
+    "output_tokens": 664,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:heavy_gate_bar|ladder+rope\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You reach the bar from the ladder, but the rope has no fixed support to take its weight. You cannot safely lift the heavy bar clear of its brackets and lower it to the ground one end at a time.\",\"effort_seconds\":20,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 1,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You set the ladder against the gate and try to loop the rope around the cracked gate bar, but there is nothing above it to support the rope. The ladder gives you access, not the mechanical help needed to lower the heavy bar safely.",
+   "validator_notes": [
+    "Effort 30s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You set the ladder against the gate and try to loop the rope around the cracked gate bar, but there is nothing above it to support the rope. The ladder gives you access, not the mechanical help needed to lower the heavy bar safely.",
+       "effort_seconds": 30,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 7321,
+    "input_tokens": 8124,
+    "output_tokens": 565,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"lift_out:gate_bar|ladder+rope\",\n  \"steps\": [\n    {\n      \"action\": \"lift_out\",\n      \"outcome\": \"blocked\",\n      \"reason\": \"You set the ladder against the gate and try to loop the rope around the cracked gate bar, but there is nothing above it to support the rope. The ladder gives you access, not the mechanical help needed to lower the heavy bar safely.\",\n      \"effort_seconds\": 30,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 2,
+   "pass": false,
+   "problems": [
+    "category blocked not in ['success']"
+   ],
+   "category": "blocked",
+   "reason": "You cannot get the cracked gate bar safely up out of its brackets and down from two metres with a ladder and a single rope; there is no mechanical support to control the heavy timber.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You cannot get the cracked gate bar safely up out of its brackets and down from two metres with a ladder and a single rope; there is no mechanical support to control the heavy timber.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 2822,
+    "input_tokens": 8124,
+    "output_tokens": 139,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|ladder+rope\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You cannot get the cracked gate bar safely up out of its brackets and down from two metres with a ladder and a single rope; there is no mechanical support to control the heavy timber.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

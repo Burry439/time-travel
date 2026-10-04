@@ -1,0 +1,20 @@
+[
+ {
+  "run": 1,
+  "step": "ford",
+  "text": "break my loaf in two and give half to Dobbs",
+  "ok": false,
+  "category": "success",
+  "reason": "You break the loaf cleanly into two pieces by hand. You walk up to Dobbs and hand him one half of the loaf.",
+  "steps": [
+   {
+    "action": "transform",
+    "outcome": "success"
+   },
+   {
+    "action": "give",
+    "outcome": "success"
+   }
+  ]
+ }
+]

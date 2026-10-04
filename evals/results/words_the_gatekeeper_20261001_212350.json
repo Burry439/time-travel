@@ -1,0 +1,35 @@
+[
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "sew the broken halter strap back together with the thong",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You have no needle or other means to pierce the thick leather and sew the snapped strap back together.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "blocked"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "inside",
+  "text": "stitch the snapped cheek strap of the halter back to its buckle with the waxed leather thong",
+  "ok": true,
+  "category": "success",
+  "reason": "You stitch the snapped cheek strap back to the buckle with the waxed leather thong, restoring the halter.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "mended halter",
+    "consumes": [
+     "halter_ned",
+     "thong_ned"
+    ]
+   }
+  ]
+ }
+]

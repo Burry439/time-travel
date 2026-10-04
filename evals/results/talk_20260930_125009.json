@@ -1,0 +1,89 @@
+[
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "ask_back",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "ask_back",
+      "line": "You made that for me? Oh, that's clever—does it sting when I put it on, and how long should I leave it there?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "ask_back"
+    ],
+    "line": "You made that for me? Oh, that's clever—does it sting when I put it on, and how long should I leave it there?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 5500,
+    "voice_usd": 0.0006753999999999999
+   }
+  ]
+ },
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "You made that for me? Oh, that's clever—does it sting, or should I just press it on?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "You made that for me? Oh, that's clever—does it sting, or should I just press it on?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2054,
+    "voice_usd": 0.0006679
+   }
+  ]
+ },
+ {
+  "case": "jory_told_to_apply_what_stranger_holds",
+  "run": 3,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I made a poultice for your burn. Yes, apply it to the burn.",
+    "reply": "answer",
+    "lines": [
+     {
+      "who": "npc_jory_venn",
+      "key": "answer",
+      "line": "Oh, you made it for me? I can't take it from you while you've still got it in your hands. How am I meant to apply it?",
+      "joined": false
+     }
+    ],
+    "keys": [
+     "answer"
+    ],
+    "line": "Oh, you made it for me? I can't take it from you while you've still got it in your hands. How am I meant to apply it?",
+    "hostile": false,
+    "trust": 0.07,
+    "suspicion": 0.0,
+    "voice_ms": 2212,
+    "voice_usd": 0.0006744
+   }
+  ]
+ }
+]

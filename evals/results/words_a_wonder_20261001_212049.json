@@ -1,0 +1,66 @@
+[
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the round glass flask into the lake and fill it with clear water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "focus the sun through the flask of water onto the reed fluff to light it, and show them",
+  "ok": true,
+  "category": "success",
+  "reason": "You hold the round flask in the sun and adjust its distance over the dry reed fluff until a tiny bright spot concentrates on it. After several minutes, the fluff smoulders and catches; Sefa and Brann can see the flame. You hold up the small flame for Sefa and Brann to see. They watch it flicker and smoke.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "small tinder flame",
+    "consumes": [
+     "reedfluff"
+    ]
+   },
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "fill the round glass flask with clear lake water",
+  "ok": true,
+  "category": "success",
+  "reason": "You dip the round glass flask into the lake and fill it with clear water.",
+  "steps": [
+   {
+    "action": "fill",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "wonder",
+  "text": "show Brann and Sefa: hold the water-filled flask in the sun so it focuses a bright point of sunlight onto the reed fluff until it smoulders and catches, explaining that the round water bends the light like a lens",
+  "ok": true,
+  "category": "success",
+  "reason": "You hold the water-filled flask in the sunlight and focus it onto the dry reed fluff. The bright point smoulders the fluff and sets it alight as Brann and Sefa watch.",
+  "steps": [
+   {
+    "action": "demonstrate",
+    "outcome": "success"
+   }
+  ]
+ }
+]

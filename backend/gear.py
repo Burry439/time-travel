@@ -731,6 +731,8 @@ def describe(condition: dict) -> str:
         return f"the broken {area}"
     if kind == "infection":
         return f"the festering wound on the {area}"
+    if kind == "ache":  # An old complaint (Kade's knees, D-61): it doesn't drain or fester, and a poultice eases it.
+        return "the aching knees" if area == "leg" else f"the aching {area}"
     return "the blow to the head"
 
 

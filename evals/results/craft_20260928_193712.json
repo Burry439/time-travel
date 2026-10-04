@@ -1,0 +1,324 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v10",
+  "passed": 4,
+  "total": 4,
+  "latency_p50_ms": 5069.0,
+  "latency_p95_ms": 10493,
+  "input_tokens": 40128,
+  "output_tokens": 1752,
+  "estimated_cost_usd": 0.0049
+ },
+ "results": [
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it burns as a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:sparks|flint+iron+dry-grass+branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it burns as a small fire.",
+       "effort_seconds": 90,
+       "new_object": {
+        "name": "small fire",
+        "description": "A small, steady fire burns through dry grass and a fallen branch, giving off light and heat.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat and light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 10493,
+    "input_tokens": 10032,
+    "output_tokens": 480,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"fire:sparks|flint+iron+dry-grass+branch\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the flame with the fallen branch until it burns as a small fire.\",\n      \"effort_seconds\": 90,\n      \"new_object\": {\n        \"name\": \"small fire\",\n        \"description\": \"A small, steady fire burns through dry grass and a fallen branch, giving off light and heat.\",\n        \"materials\": [\n          \"dry grass\",\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"grass_a\",\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\",\n          \"horseshoe_a\"\n        ],\n        \"mass_kg\": 1.4,\n        \"length_m\": null,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"heat_source\",\n          \"light_source\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Gives off heat and light while burning.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe until sparks catch in the dry grass, then feed the flame with the fallen branch. A small fire takes hold.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry-grass|wood-branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe until sparks catch in the dry grass, then feed the flame with the fallen branch. A small fire takes hold.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small fire of dry grass and branch wood, with orange flames and a bed of glowing embers.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat while burning.",
+          "status": "expected"
+         },
+         {
+          "text": "Gives off light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 5156,
+    "input_tokens": 10032,
+    "output_tokens": 464,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"fire:flint+iron+dry-grass|wood-branch\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You strike the flint against the rusty horseshoe until sparks catch in the dry grass, then feed the flame with the fallen branch. A small fire takes hold.\",\n      \"effort_seconds\": 120,\n      \"new_object\": {\n        \"name\": \"small campfire\",\n        \"description\": \"A small fire of dry grass and branch wood, with orange flames and a bed of glowing embers.\",\n        \"materials\": [\n          \"dry grass\",\n          \"wood\"\n        ],\n        \"consumes\": [\n          \"grass_a\",\n          \"branch_a\"\n        ],\n        \"tools_used\": [\n          \"flint_a\",\n          \"horseshoe_a\"\n        ],\n        \"mass_kg\": 1.4,\n        \"length_m\": null,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"heat_source\",\n          \"light_source\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Gives off heat while burning.\",\n            \"status\": \"expected\"\n          },\n          {\n            \"text\": \"Gives off light while burning.\",\n            \"status\": \"expected\"\n          }\n        ]\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the fledgling flame with the fallen branch until it burns as a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron+dry_grass+wood",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the fledgling flame with the fallen branch until it burns as a small fire.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "small campfire",
+        "description": "A small fire of dry grass and branch wood, with a steady flame and a low bed of burning fuel.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat and light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 4893,
+    "input_tokens": 10032,
+    "output_tokens": 396,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+iron+dry_grass+wood\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the fledgling flame with the fallen branch until it burns as a small fire.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"small campfire\",\"description\":\"A small fire of dry grass and branch wood, with a steady flame and a low bed of burning fuel.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"heat_source\",\"light_source\"],\"capabilities\":[{\"text\":\"Gives off heat and light while burning.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "fire_flint_iron",
+   "group": "heat",
+   "run": 3,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the growing flame with the fallen branch until it burns as a small fire.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "fire:flint+iron|dry-grass+branch",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the growing flame with the fallen branch until it burns as a small fire.",
+       "effort_seconds": 120,
+       "new_object": {
+        "name": "small fire",
+        "description": "A low fire of burning dry grass and branch wood, with a flickering flame and a small bed of glowing embers.",
+        "materials": [
+         "dry grass",
+         "wood"
+        ],
+        "consumes": [
+         "grass_a",
+         "branch_a"
+        ],
+        "tools_used": [
+         "flint_a",
+         "horseshoe_a"
+        ],
+        "mass_kg": 1.4,
+        "length_m": null,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "heat_source",
+         "light_source"
+        ],
+        "capabilities": [
+         {
+          "text": "Gives off heat while burning.",
+          "status": "expected"
+         },
+         {
+          "text": "Gives off light while burning.",
+          "status": "expected"
+         }
+        ]
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 4982,
+    "input_tokens": 10032,
+    "output_tokens": 412,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"fire:flint+iron|dry-grass+branch\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You strike the flint against the rusty horseshoe, and sparks catch in the dry grass. You feed the growing flame with the fallen branch until it burns as a small fire.\",\"effort_seconds\":120,\"new_object\":{\"name\":\"small fire\",\"description\":\"A low fire of burning dry grass and branch wood, with a flickering flame and a small bed of glowing embers.\",\"materials\":[\"dry grass\",\"wood\"],\"consumes\":[\"grass_a\",\"branch_a\"],\"tools_used\":[\"flint_a\",\"horseshoe_a\"],\"mass_kg\":1.4,\"length_m\":null,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"heat_source\",\"light_source\"],\"capabilities\":[{\"text\":\"Gives off heat while burning.\",\"status\":\"expected\"},{\"text\":\"Gives off light while burning.\",\"status\":\"expected\"}]},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

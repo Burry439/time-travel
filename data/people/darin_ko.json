@@ -85,10 +85,52 @@
  ],
  "secrets": [
   {
+   "id": "darin_permit",
    "text": "His trade permit runs out at the month's end; without a big deal inside the walls he'll have to move on.",
-   "reveal": "a business partner"
+   "reveal": "a business partner",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.6
+     },
+     {
+      "kind": "regard",
+      "axis": "respect",
+      "at_least": 0.5
+     }
+    ]
+   },
+   "lead": "Darin's trade permit runs out at the month's end."
+  },
+  {
+   "id": "darin_collect",
+   "text": "He means to squeeze Oren for his debt: wave Darin's cart through unchecked, or the captain hears of it.",
+   "reveal": "someone who might help him collect",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.5
+     },
+     {
+      "kind": "learned",
+      "any": [
+       "secret:oren_debt"
+      ]
+     }
+    ]
+   },
+   "lead": "Darin wants Oren to wave his cart through the gate unchecked, or he'll tell the captain about the debt."
   }
  ],
+ "history": {
+  "npc_hessa_marr": "He has lodged at Hessa's inn for a month."
+ },
  "likes": "profit, novelties he can sell, leverage",
  "dislikes": "being cheated, guards poking at his wagon, haggling he loses",
  "opinions": {

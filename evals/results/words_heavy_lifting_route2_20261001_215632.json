@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "free",
+  "text": "with the old boards shoved under the wheels for grip, and Wat, Dunna, Rook and me all heaving at the wheels and the tailboard together on three, work the cart up out of the mire",
+  "ok": false,
+  "category": "blocked",
+  "reason": "You cannot get the cart moving: Wat, Dunna, and Rook are not willing to help, and the old boards under the wheels alone do not provide enough lift or pull to free a loaded cart sunk to its axles.",
+  "steps": [
+   {
+    "action": "lift_out",
+    "outcome": "blocked"
+   }
+  ]
+ }
+]

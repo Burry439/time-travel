@@ -1,0 +1,43 @@
+[
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "twist the hemp fibre by hand into a stout rope and coat it with the pine pitch",
+  "ok": true,
+  "category": "success",
+  "reason": "You twist the hemp fibres together by hand into a rope. It will hold light loads, but hand-twisted fibre alone is not stout rope. You work the pine pitch over the rope, coating its fibres in a sticky, water-resistant layer.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "hemp rope",
+    "consumes": [
+     "hemp_boat"
+    ]
+   },
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "pitched hemp rope",
+    "consumes": [
+     "made_by_step_1",
+     "pitch_pot"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "cross",
+  "text": "give the new tarred rope to Gorm for his ferry",
+  "ok": true,
+  "category": "success",
+  "reason": "You hand the pitched hemp rope to Gorm.",
+  "steps": [
+   {
+    "action": "give",
+    "outcome": "success"
+   }
+  ]
+ }
+]

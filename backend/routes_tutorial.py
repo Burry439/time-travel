@@ -1,8 +1,9 @@
-"""The tutorial's progress and the device (GDD D-50).
+"""A level's progress and the device (GDD D-50).
 
-Progress is code: after each change the story is checked (tutorial.tick), and anything that moved on (a step done,
-Kade lending his gear, the bout starting) is saved as one `tutorial` event. The clock beat checks it too, so nothing
-depends on the client asking. Asking the device is a `device` event.
+Progress is code: after each change the level's steps are checked (scenario.tick), and so are the storylines it
+runs (stories.tick, D-61: the village's). Anything that moved on (a step done, Hal lending his gear, a story's
+outcome reached) is saved as one `tutorial` event. The clock beat checks it too, so nothing depends on the client
+asking. Asking the device is a `device` event.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from pydantic import BaseModel, Field
 import commands
 import device
 import scenario
+import stories
 import views
 from ai import config as ai_config
 from ai import telemetry, voice
@@ -38,6 +40,7 @@ TUTORIAL_FIELDS = (
     "gate_open",
     "learned",
     "agreements",
+    "stories",
 )
 
 
@@ -62,13 +65,15 @@ def _moved_on(cmd: commands.Command, change) -> bool:
 
 
 def progress(cmd: commands.Command) -> bool:
-    """Check the story (inside a command that holds the lock) and save whatever moved on."""
-    return scenario.active(cmd.state) and _moved_on(cmd, scenario.tick)
+    """Check the level's steps and storylines (inside a command that holds the lock) and save whatever moved on."""
+    stepped = scenario.active(cmd.state) and _moved_on(cmd, scenario.tick)
+    storied = stories.pending(cmd.state) and _moved_on(cmd, stories.tick)
+    return stepped or storied
 
 
 def after_action(state: State) -> None:
     """Right after the stranger does something (not only on the next clock beat, which a panel may pause)."""
-    if scenario.active(state):
+    if scenario.active(state) or stories.pending(state):
         with commands.open(state["run_id"], playable=False) as cmd:
             if progress(cmd):
                 state.clear()

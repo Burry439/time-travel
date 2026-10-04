@@ -1,0 +1,276 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v16",
+  "passed": 3,
+  "total": 3,
+  "latency_p50_ms": 4550,
+  "latency_p95_ms": 7412,
+  "input_tokens": 37209,
+  "output_tokens": 1026,
+  "estimated_cost_usd": 0.0042
+ },
+ "results": [
+  {
+   "case": "flint_spear",
+   "group": "valid",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You bind the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You bind the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "flint-tipped spear",
+        "description": "A long wooden branch with a sharp flint shard lashed to one end by vine. The binding is crude but holds the point in place.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can thrust with a sharp point at close range.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 7412,
+    "input_tokens": 12403,
+    "output_tokens": 416,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"lash:flint+branch|vine\",\n  \"steps\": [\n    {\n      \"action\": \"make\",\n      \"outcome\": \"success\",\n      \"reason\": \"You bind the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.\",\n      \"effort_seconds\": 180,\n      \"new_object\": {\n        \"name\": \"flint-tipped spear\",\n        \"description\": \"A long wooden branch with a sharp flint shard lashed to one end by vine. The binding is crude but holds the point in place.\",\n        \"materials\": [\n          \"wood\",\n          \"flint\",\n          \"vine\"\n        ],\n        \"consumes\": [\n          \"branch_a\",\n          \"flint_a\",\n          \"vine_a\"\n        ],\n        \"tools_used\": [],\n        \"mass_kg\": 1.9,\n        \"length_m\": 1.5,\n        \"capacity_l\": null,\n        \"rated_load_kg\": null,\n        \"flags\": [\n          \"rigid\",\n          \"sharp_edge\",\n          \"combustible\"\n        ],\n        \"capabilities\": [\n          {\n            \"text\": \"Can thrust with a sharp point at close range.\",\n            \"status\": \"expected\"\n          }\n        ],\n        \"gear\": {\n          \"kind\": \"weapon\",\n          \"gear_class\": \"short_spear\",\n          \"covers\": [],\n          \"quality\": \"crude\"\n        }\n      },\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": null,\n      \"offer_trade\": null,\n      \"gather\": null,\n      \"treat\": null,\n      \"equip\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "flint_spear",
+   "group": "valid",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "flint-tipped spear",
+        "description": "A sharp flint shard is lashed to the end of a straight, wrist-thick branch with tough vine. The binding is crude but holds the point in place.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge",
+         "tieable",
+         "combustible"
+        ],
+        "capabilities": [
+         {
+          "text": "Can be thrust as a pointed weapon at close range.",
+          "status": "expected"
+         },
+         {
+          "text": "The flint point is secured to the shaft by vine lashing.",
+          "status": "expected"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 4550,
+    "input_tokens": 12403,
+    "output_tokens": 313,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You lash the sharp flint shard firmly to the end of the branch with the vine, making a crude spear.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"flint-tipped spear\",\"description\":\"A sharp flint shard is lashed to the end of a straight, wrist-thick branch with tough vine. The binding is crude but holds the point in place.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\",\"tieable\",\"combustible\"],\"capabilities\":[{\"text\":\"Can be thrust as a pointed weapon at close range.\",\"status\":\"expected\"},{\"text\":\"The flint point is secured to the shaft by vine lashing.\",\"status\":\"expected\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"short_spear\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "flint_spear",
+   "group": "valid",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You lash the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lash:flint+branch|vine",
+     "steps": [
+      {
+       "action": "make",
+       "outcome": "success",
+       "reason": "You lash the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.",
+       "effort_seconds": 180,
+       "new_object": {
+        "name": "flint-tipped spear",
+        "description": "A long branch with a sharp flint shard lashed to one end by vine. The binding is crude but holds the point in place.",
+        "materials": [
+         "wood",
+         "flint",
+         "vine"
+        ],
+        "consumes": [
+         "branch_a",
+         "flint_a",
+         "vine_a"
+        ],
+        "tools_used": [],
+        "mass_kg": 1.9,
+        "length_m": 1.5,
+        "capacity_l": null,
+        "rated_load_kg": null,
+        "flags": [
+         "rigid",
+         "sharp_edge"
+        ],
+        "capabilities": [
+         {
+          "text": "Can stab or thrust with its flint point.",
+          "status": "expected"
+         },
+         {
+          "text": "The vine binding holds the flint point in place.",
+          "status": "untested"
+         }
+        ],
+        "gear": {
+         "kind": "weapon",
+         "gear_class": "short_spear",
+         "covers": [],
+         "quality": "crude"
+        }
+       },
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null,
+       "gather": null,
+       "treat": null,
+       "equip": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v16",
+    "reasoning": "low",
+    "latency_ms": 3377,
+    "input_tokens": 12403,
+    "output_tokens": 297,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lash:flint+branch|vine\",\"steps\":[{\"action\":\"make\",\"outcome\":\"success\",\"reason\":\"You lash the sharp flint firmly to the end of the branch with the tough vine, making a crude spear.\",\"effort_seconds\":180,\"new_object\":{\"name\":\"flint-tipped spear\",\"description\":\"A long branch with a sharp flint shard lashed to one end by vine. The binding is crude but holds the point in place.\",\"materials\":[\"wood\",\"flint\",\"vine\"],\"consumes\":[\"branch_a\",\"flint_a\",\"vine_a\"],\"tools_used\":[],\"mass_kg\":1.9,\"length_m\":1.5,\"capacity_l\":null,\"rated_load_kg\":null,\"flags\":[\"rigid\",\"sharp_edge\"],\"capabilities\":[{\"text\":\"Can stab or thrust with its flint point.\",\"status\":\"expected\"},{\"text\":\"The vine binding holds the flint point in place.\",\"status\":\"untested\"}],\"gear\":{\"kind\":\"weapon\",\"gear_class\":\"short_spear\",\"covers\":[],\"quality\":\"crude\"}},\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null,\"gather\":null,\"treat\":null,\"equip\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

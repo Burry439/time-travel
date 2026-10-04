@@ -1,0 +1,270 @@
+[
+ {
+  "case": "grand_claim",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "share:no_papers",
+    "line": "The king’s envoy? Show me your papers. No papers, no passage; I’ll have the captain judge your claim.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 1784,
+    "jev_usd": 0.000109788,
+    "provider": "jev/defapi",
+    "voice_ms": 5136,
+    "voice_usd": 0.0002907
+   }
+  ]
+ },
+ {
+  "case": "grand_claim",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I am the king's own envoy, and I demand entry at once!",
+    "reply": "ask_back",
+    "line": "The king’s envoy? Prove it. Where are your papers, and who sent you?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.15,
+    "jev_ms": 1203,
+    "jev_usd": 0.000109788,
+    "provider": "jev/defapi",
+    "voice_ms": 1498,
+    "voice_usd": 0.00028770000000000005
+   }
+  ]
+ },
+ {
+  "case": "halted_traveller",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I'm a traveller looking for honest work in the city.",
+    "reply": "ask_back",
+    "line": "Honest work, is it? That's what every other traveller says before asking for a meal. Who can vouch for you?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 1223,
+    "jev_usd": 0.000108444,
+    "provider": "jev/defapi",
+    "voice_ms": 1911,
+    "voice_usd": 0.0003008
+   }
+  ]
+ },
+ {
+  "case": "halted_traveller",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "I'm a traveller looking for honest work in the city.",
+    "reply": "ask_back",
+    "line": "Honest work, is it? That's a fine thing to want, though it won't open the gate by itself. Who sent you here, if anyone?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.0,
+    "jev_ms": 1255,
+    "jev_usd": 0.000108444,
+    "provider": "jev/defapi",
+    "voice_ms": 1992,
+    "voice_usd": 0.0003033
+   }
+  ]
+ },
+ {
+  "case": "bren_on_hessas_word",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['ask_back'])"
+  ],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "ask_back",
+    "line": "Hessa sent you, did she? I trust her judgment, but the captain likes to know who's coming through. What name should I give him?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "jev_ms": 1183,
+    "jev_usd": 0.000110544,
+    "provider": "jev/defapi",
+    "voice_ms": 1858,
+    "voice_usd": 0.0003145
+   }
+  ]
+ },
+ {
+  "case": "bren_on_hessas_word",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Hessa sent me. Bren, will you let me through the gate?",
+    "reply": "admit",
+    "line": "Hessa sent you, did she? That saves me a question or two. Go on through, and try not to give the captain a reason to ask why I let you in.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.07,
+    "suspicion": -0.07,
+    "jev_ms": 1198,
+    "jev_usd": 0.000110544,
+    "provider": "jev/defapi",
+    "voice_ms": 1976,
+    "voice_usd": 0.0003155
+   }
+  ]
+ },
+ {
+  "case": "bren_wont_for_a_stranger",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Come on, be a friend. Let me through the gate, just this once.",
+    "reply": "ask_back",
+    "line": "Well now, friendship seems to be doing a lot of work there. I don't know you, so no; what's your business inside?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 1511,
+    "jev_usd": 0.000107688,
+    "provider": "jev/defapi",
+    "voice_ms": 1915,
+    "voice_usd": 0.00030030000000000004
+   }
+  ]
+ },
+ {
+  "case": "bren_wont_for_a_stranger",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "Come on, be a friend. Let me through the gate, just this once.",
+    "reply": "ask_back",
+    "line": "A friend? That's a fine title to claim from a stranger. What business have you inside?",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1173,
+    "jev_usd": 0.000107688,
+    "provider": "jev/defapi",
+    "voice_ms": 1753,
+    "voice_usd": 0.0002968
+   }
+  ]
+ },
+ {
+  "case": "kade_scorns_wonders",
+  "run": 1,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You saw what I can do. Let me through the gate.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "No. Tricks don’t open gates. Ask the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 1198,
+    "jev_usd": 0.000101808,
+    "provider": "jev/defapi",
+    "voice_ms": 1697,
+    "voice_usd": 0.0002678
+   }
+  ]
+ },
+ {
+  "case": "kade_scorns_wonders",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You saw what I can do. Let me through the gate.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "No. Tricks don’t get you through. Go ask the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": -0.07,
+    "suspicion": 0.07,
+    "jev_ms": 1214,
+    "jev_usd": 0.000101808,
+    "provider": "jev/defapi",
+    "voice_ms": 1840,
+    "voice_usd": 0.0002738
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 1,
+  "ok": false,
+  "problems": [
+   "never chose any of ['admit'] (chose ['refer:npc_roderic_vale'])"
+  ],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "refer:npc_roderic_vale",
+    "line": "You want the gate opened? I saw a needle turn on water; that proves nothing about what you are. No entry on my say-so—speak to the captain.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1215,
+    "jev_usd": 0.000113064,
+    "provider": "jev/defapi",
+    "voice_ms": 2051,
+    "voice_usd": 0.0003039
+   }
+  ]
+ },
+ {
+  "case": "oren_in_awe",
+  "run": 2,
+  "ok": true,
+  "problems": [],
+  "turns": [
+   {
+    "said": "You have seen what I can do. Open the gate for me.",
+    "reply": "admit",
+    "line": "You want the gate opened because a needle pointed north? I saw it. I won't be the one to bar the gods’ path—through, then.",
+    "voice": "ok",
+    "voice_error": null,
+    "trust": 0.0,
+    "suspicion": 0.07,
+    "jev_ms": 1227,
+    "jev_usd": 0.000113064,
+    "provider": "jev/defapi",
+    "voice_ms": 3025,
+    "voice_usd": 0.00030690000000000003
+   }
+  ]
+ }
+]

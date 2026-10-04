@@ -206,13 +206,15 @@ def test_an_exchange_is_one_event_that_replays_exactly(world):
     reply = say(world.http, state, "npc_hessa_marr", "Good day. I'm new here and looking for honest work.")
     assert reply.status_code == 200, reply.text
     state = reply.json()["state"]
-    assert state["event_seq"] == before + 1
+    assert state["event_seq"] == before + 2  # The exchange, then the gate beam's story moving on (D-61).
+    assert state["stories"]["stages"] == {"gate_beam": ["problem"]}
     hessa = npc(state, "npc_hessa_marr")
     assert [t["who"] for t in hessa["mind"]["talk"]] == ["stranger", "them"]
     assert hessa["mind"]["said"]["text"].startswith("(voiced) Hessa tells the stranger")
     assert hessa["mind"]["shared"] == ["tomas_beam"] and hessa["mind"]["job"]["kind"] == "watch"
     assert reputation.regard(hessa)["trust"] > 0.4
-    assert state["learned"][-1]["fact"] == "tomas_beam" and state["journal"][-1]["kind"] == "talk"
+    assert state["learned"][-1]["fact"] == "tomas_beam" and state["journal"][-2]["kind"] == "talk"
+    assert state["journal"][-1]["kind"] == "story"
     person = world.voiced[-1]["people"][0]
     assert "Tomas" in " ".join(person["what_they_know"] + person["keeps_to_themselves"])
     trace = reply.json()["trace"]

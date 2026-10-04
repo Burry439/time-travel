@@ -1,0 +1,320 @@
+{
+ "summary": {
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "prompt_version": "judge_v10",
+  "passed": 6,
+  "total": 6,
+  "latency_p50_ms": 5572.5,
+  "latency_p95_ms": 6622,
+  "input_tokens": 48222,
+  "output_tokens": 1737,
+  "estimated_cost_usd": 0.0057
+ },
+ "results": [
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You reach the gate, but the bar sits two metres up and is far too heavy to lift down from the ground.",
+   "validator_notes": [
+    "Effort 5s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You reach the gate, but the bar sits two metres up and is far too heavy to lift down from the ground.",
+       "effort_seconds": 5,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 5999,
+    "input_tokens": 7888,
+    "output_tokens": 125,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You reach the gate, but the bar sits two metres up and is far too heavy to lift down from the ground.\",\"effort_seconds\":5,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You walk up to the gate, but the bar rests two metres above the ground and is too heavy for you to lift down from there. You cannot reach it to take one end's weight.",
+   "validator_notes": [
+    "Effort 8s ignored: 'blocked' spends no time."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You walk up to the gate, but the bar rests two metres above the ground and is too heavy for you to lift down from there. You cannot reach it to take one end's weight.",
+       "effort_seconds": 8,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 2531,
+    "input_tokens": 7888,
+    "output_tokens": 140,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You walk up to the gate, but the bar rests two metres above the ground and is too heavy for you to lift down from there. You cannot reach it to take one end's weight.\",\"effort_seconds\":8,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_by_hand",
+   "group": "gate",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "blocked",
+   "reason": "You cannot reach the bar two metres above the ground, and you have no aid to lift it out of its brackets.",
+   "validator_notes": [],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|bare_hands",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "blocked",
+       "reason": "You cannot reach the bar two metres above the ground, and you have no aid to lift it out of its brackets.",
+       "effort_seconds": 0,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": null,
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 2644,
+    "input_tokens": 7888,
+    "output_tokens": 125,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|bare_hands\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"blocked\",\"reason\":\"You cannot reach the bar two metres above the ground, and you have no aid to lift it out of its brackets.\",\"effort_seconds\":0,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":null,\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 0,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You walk to the gate, climb Tomas\u2019s ladder, and use his rope to control the bar. You lift one end clear of its bracket at a time and lower the heavy bar to the ground.",
+   "validator_notes": [
+    "Walked 1 cells first (1 s)."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "success",
+       "reason": "You walk to the gate, climb Tomas\u2019s ladder, and use his rope to control the bar. You lift one end clear of its bracket at a time and lower the heavy bar to the ground.",
+       "effort_seconds": 90,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": {
+        "object_id": "gate_bar",
+        "aid_ids": [
+         "ladder_tomas",
+         "rope_tomas"
+        ]
+       },
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 5430,
+    "input_tokens": 8186,
+    "output_tokens": 383,
+    "attempts": 1,
+    "raw_output": "{\"clarifying_question\":null,\"precedent_key\":\"lift_out:gate_bar|ladder+rope\",\"steps\":[{\"action\":\"lift_out\",\"outcome\":\"success\",\"reason\":\"You walk to the gate, climb Tomas\u2019s ladder, and use his rope to control the bar. You lift one end clear of its bracket at a time and lower the heavy bar to the ground.\",\"effort_seconds\":90,\"new_object\":null,\"take_ids\":[],\"transformation\":null,\"harm\":null,\"fill\":null,\"change\":null,\"demonstration\":null,\"give\":null,\"install\":null,\"lift_out\":{\"object_id\":\"gate_bar\",\"aid_ids\":[\"ladder_tomas\",\"rope_tomas\"]},\"offer_trade\":null}]}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 1,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You set the ladder against the gate, climb to the bar, and loop Tomas's stout rope over it. You raise each end from its bracket in turn and lower it under control to the ground.",
+   "validator_notes": [
+    "Walked 1 cells first (1 s)."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "success",
+       "reason": "You set the ladder against the gate, climb to the bar, and loop Tomas's stout rope over it. You raise each end from its bracket in turn and lower it under control to the ground.",
+       "effort_seconds": 90,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": {
+        "object_id": "gate_bar",
+        "aid_ids": [
+         "ladder_tomas",
+         "rope_tomas"
+        ]
+       },
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 5715,
+    "input_tokens": 8186,
+    "output_tokens": 438,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"lift_out:gate_bar|ladder+rope\",\n  \"steps\": [\n    {\n      \"action\": \"lift_out\",\n      \"outcome\": \"success\",\n      \"reason\": \"You set the ladder against the gate, climb to the bar, and loop Tomas's stout rope over it. You raise each end from its bracket in turn and lower it under control to the ground.\",\n      \"effort_seconds\": 90,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": {\n        \"object_id\": \"gate_bar\",\n        \"aid_ids\": [\n          \"ladder_tomas\",\n          \"rope_tomas\"\n        ]\n      },\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  },
+  {
+   "case": "lift_bar_with_aids",
+   "group": "gate",
+   "run": 2,
+   "pass": true,
+   "problems": [],
+   "category": "success",
+   "reason": "You set the ladder against the gate and loop Tomas's rope over the bar. From the ladder you ease each end out of its bracket in turn and lower the heavy bar to the ground under control.",
+   "validator_notes": [
+    "Walked 1 cells first (1 s)."
+   ],
+   "judge": {
+    "status": "ok",
+    "result": {
+     "clarifying_question": null,
+     "precedent_key": "lift_out:gate_bar|ladder+rope",
+     "steps": [
+      {
+       "action": "lift_out",
+       "outcome": "success",
+       "reason": "You set the ladder against the gate and loop Tomas's rope over the bar. From the ladder you ease each end out of its bracket in turn and lower the heavy bar to the ground under control.",
+       "effort_seconds": 120,
+       "new_object": null,
+       "take_ids": [],
+       "transformation": null,
+       "harm": null,
+       "fill": null,
+       "change": null,
+       "demonstration": null,
+       "give": null,
+       "install": null,
+       "lift_out": {
+        "object_id": "gate_bar",
+        "aid_ids": [
+         "ladder_tomas",
+         "rope_tomas"
+        ]
+       },
+       "offer_trade": null
+      }
+     ]
+    },
+    "model": "gpt-6-luna",
+    "prompt_version": "judge_v10",
+    "reasoning": "low",
+    "latency_ms": 6622,
+    "input_tokens": 8186,
+    "output_tokens": 526,
+    "attempts": 1,
+    "raw_output": "{\n  \"clarifying_question\": null,\n  \"precedent_key\": \"lift_out:gate_bar|ladder+rope\",\n  \"steps\": [\n    {\n      \"action\": \"lift_out\",\n      \"outcome\": \"success\",\n      \"reason\": \"You set the ladder against the gate and loop Tomas's rope over the bar. From the ladder you ease each end out of its bracket in turn and lower the heavy bar to the ground under control.\",\n      \"effort_seconds\": 120,\n      \"new_object\": null,\n      \"take_ids\": [],\n      \"transformation\": null,\n      \"harm\": null,\n      \"fill\": null,\n      \"change\": null,\n      \"demonstration\": null,\n      \"give\": null,\n      \"install\": null,\n      \"lift_out\": {\n        \"object_id\": \"gate_bar\",\n        \"aid_ids\": [\n          \"ladder_tomas\",\n          \"rope_tomas\"\n        ]\n      },\n      \"offer_trade\": null\n    }\n  ]\n}",
+    "error": null,
+    "attempt_errors": []
+   }
+  }
+ ]
+}

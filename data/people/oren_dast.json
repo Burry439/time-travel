@@ -66,10 +66,37 @@
  ],
  "secrets": [
   {
+   "id": "oren_debt",
    "text": "He owes Darin eleven silver from dice, and Darin has started hinting he'll tell the captain.",
-   "reveal": "never willingly; only if cornered with proof"
+   "reveal": "never willingly; only if cornered with proof",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "secret:darin_collect"
+      ]
+     },
+     {
+      "kind": "learned",
+      "any": [
+       "secret:bren_covers_oren"
+      ]
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.8
+     }
+    ]
+   },
+   "lead": "Oren owes Darin eleven silver from dice, and Darin is threatening to tell the captain."
   }
  ],
+ "history": {
+  "npc_bren_marr": "They stand the gate watch together."
+ },
  "likes": "being right, order, a win at dice",
  "dislikes": "strangers with stories, Darin's smile, being laughed at",
  "opinions": {

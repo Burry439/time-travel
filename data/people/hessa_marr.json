@@ -59,6 +59,12 @@
    "line": "My brother Bren's a good man, but make a fool of him and you'll see his temper.",
    "trusted": true,
    "lead": "Bren hates being made a fool of."
+  },
+  "sick_guests": {
+   "text": "Two of Hessa's guests have been sick after drinking from the trough; she can't think why.",
+   "line": "Two of my guests took sick this week, and all they had was the trough water. I can't make sense of it.",
+   "trusted": false,
+   "lead": "Hessa's guests have been falling sick after drinking from the trough."
   }
  },
  "offers": [
@@ -90,14 +96,44 @@
  "goals": [
   "Keep the yard running and the travellers fed",
   "Keep her brother Bren out of trouble",
-  "Get the kitchen water hauled before evening"
+  "Get the kitchen water hauled before evening",
+  "Find out why her guests keep falling sick"
  ],
  "secrets": [
   {
+   "id": "hessa_darin_lodging",
    "text": "Darin is three weeks behind on his lodging, and she hasn't pressed him.",
-   "reveal": "someone who has helped at the inn"
+   "reveal": "someone who has helped at the inn",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "helped"
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.6
+     }
+    ]
+   },
+   "lead": "Darin is three weeks behind on his lodging at Hessa's inn."
+  },
+  {
+   "id": "hessa_kade",
+   "text": "She has never forgiven Kade for coming back from the fog patrol when her Aldo didn't.",
+   "reveal": "only someone she trusts deeply",
+   "unlock": {
+    "kind": "regard",
+    "axis": "trust",
+    "at_least": 0.75
+   },
+   "lead": "Hessa has never forgiven Kade for coming back from the patrol her husband died on."
   }
  ],
+ "history": {
+  "npc_kade_east": "Her husband Aldo died on the fog patrol that Kade came back from, three winters ago."
+ },
  "likes": "honest hands, news from the road, a full yard",
  "dislikes": "brawlers, wasted water, anyone who picks on Bren",
  "opinions": {

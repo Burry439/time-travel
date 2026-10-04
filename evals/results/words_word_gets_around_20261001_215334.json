@@ -1,0 +1,48 @@
+[
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "make Cob a new axe handle from the stave",
+  "ok": true,
+  "category": "success",
+  "reason": "You shave the ash stave to fit the axe head's eye, then seat the head firmly on it. You use Cob's drawknife to shape the handle.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "handled axe",
+    "consumes": [
+     "axehead_cob",
+     "stave_cob"
+    ]
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "shave the ash stave into an axe handle with Cob's drawknife and fit the axe head on it",
+  "ok": true,
+  "category": "success",
+  "reason": "You walk to the chopping block and shave the ash stave with Cob's drawknife, shaping a handle to fit the axe head's eye. Cob's tool is left on the block. You fit the axe head onto the shaped handle, seating its eye over the narrowed end. The axe head is Cob's; you use it in the work.",
+  "steps": [
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "shaped ash axe handle",
+    "consumes": [
+     "stave_cob"
+    ]
+   },
+   {
+    "action": "make",
+    "outcome": "success",
+    "made": "handled axe",
+    "consumes": [
+     "axehead_cob",
+     "made_by_step_1"
+    ]
+   }
+  ]
+ }
+]

@@ -1,0 +1,16 @@
+[
+ {
+  "run": 1,
+  "step": "stick",
+  "text": "bind Liss's cut hand tightly with the clean linen strips",
+  "ok": true,
+  "category": "success",
+  "reason": "You wrap the clean linen strips tightly around Liss's cut hand, binding the wound.",
+  "steps": [
+   {
+    "action": "treat",
+    "outcome": "success"
+   }
+  ]
+ }
+]

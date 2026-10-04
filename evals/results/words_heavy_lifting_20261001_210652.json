@@ -1,0 +1,38 @@
+[
+ {
+  "run": 1,
+  "step": "free",
+  "text": "lever the cart out of the mud with the fence rail on the flat stone, and put boards under the wheels",
+  "ok": true,
+  "category": "success",
+  "reason": "You set the flat stone as a pivot and use the stout fence rail to lever the cart up a little at a time, slipping the boards beneath its wheels. The wheels gain support and the cart comes free of the the mire.",
+  "steps": [
+   {
+    "action": "lift_out",
+    "outcome": "success"
+   }
+  ]
+ },
+ {
+  "run": 1,
+  "step": "free",
+  "text": "push the long fence rail under the cart's axle over the big flat stone as a fulcrum, lever the wheels up out of the mud, and shove the old boards under them, then roll the cart forward onto the boards",
+  "ok": false,
+  "category": "blocked",
+  "reason": "That would be more than you can carry (27.0 of 20 kg).",
+  "steps": [
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "take",
+    "outcome": "success"
+   },
+   {
+    "action": "lift_out",
+    "outcome": "success"
+   }
+  ]
+ }
+]
