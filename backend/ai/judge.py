@@ -100,6 +100,10 @@ class Piece(BaseModel):
     count: int
     mass_kg: float  # each
     length_m: float | None
+    capacity_l: float | None = (
+        None  # Litres it holds, if it's a container (a gourd cut into a bowl), D-63. The schema says
+    )
+    # so; a line in the prompt saying it too made the judge worse at spears and lifting (v20, 9/15 against 14/15).
     flags: list[Flag]
     capabilities: list[Capability]
     gear: Gear | None

@@ -23,7 +23,7 @@ from shapes import Npc, State
 TURNS_KEPT = 12  # Lines kept verbatim; whole conversations live on as episodes (D-36).
 
 
-ERRAND_JOBS = ("tell", "vouch", "report")  # Jobs that take someone somewhere to do something (D-54).
+ERRAND_JOBS = cast.ERRAND_JOBS
 
 
 def update_regard(npc: Npc, answers: dict) -> dict:
@@ -392,7 +392,7 @@ def _then(
                 "message": tells["message"],
                 "event": event_id,
             }
-            cast.set_job(npc, job, now)
+            cast.add_errand(npc, job, now)
         else:
             cast.watch(npc, now, tuning.TALK_WATCH_MS)
     elif act == "stop_fighting":

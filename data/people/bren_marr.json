@@ -79,6 +79,9 @@
    "id": "bren_covers_oren",
    "text": "He has been covering Oren's late shifts and hasn't told the captain.",
    "reveal": "someone he trusts, or if Oren's debt comes out",
+   "known_by": [
+    "npc_oren_dast"
+   ],
    "unlock": {
     "kind": "any",
     "of": [

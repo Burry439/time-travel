@@ -331,7 +331,11 @@ def _arrived(state: State, npcs: list[Npc], npc: Npc, job: Job, end: int, journa
         target = cast.find(npcs, job["target"])
         if target and (kind != "tell" or target.get("alive", True)):
             DELIVERIES[kind](state, npc, target, end, journal, job)
-        cast.watch(npc, end, tuning.WATCH_SHORT_MS)
+        if job.get("next_errands"):  # On to the next errand they took on (cast.add_errand).
+            following, *rest = job["next_errands"]
+            cast.set_job(npc, {**following, **({"next_errands": rest} if rest else {})}, end)
+        else:
+            cast.watch(npc, end, tuning.WATCH_SHORT_MS)
     elif kind == "approach" and then == "halt":
         _halt(state, npcs, npc, end, journal)
     elif kind == "approach" and then in ("confront", "threaten", "demand_payment"):

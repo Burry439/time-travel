@@ -312,6 +312,25 @@ def _water_at_hand(state: State, thing_id: str) -> bool:
     )
 
 
+def _water_draws(state, available, tools, sources, extra_kg) -> list[dict] | None:
+    """Water at hand that goes into what's made (a poultice wetted from the pot, clay worked wet): the mass beyond
+    the solid inputs, at most what's really there, drawn from containers first (D-63: a poultice crushed "with a
+    splash of water from the pot" was refused for weighing more than its leaves). [{id, litres}], [] if nothing is
+    needed, None if there isn't water enough."""
+    if extra_kg <= 0.001:
+        return []
+    draws, left = [], extra_kg
+    for thing_id in [i for i in tools if available[i].get("water_l", 0.0) > 0] + list(sources):
+        held = state["objects"][thing_id].get("water_l", 0.0)
+        litres = min(left, held if held > 0 else tuning.WATER_SCOOP_L)
+        if litres > 0:
+            draws.append({"id": thing_id, "litres": round(litres, 3)})
+            left -= litres
+        if left <= 0.001:
+            return draws
+    return None
+
+
 def _make(state, judged, available, notes, reason, effort, key) -> dict:
     spec = judged.get("new_object")
     if not spec:
@@ -340,7 +359,8 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     materials = _checked_materials(spec["materials"], input_materials, notes)
     input_mass = round(sum(available[i]["mass_kg"] for i in consumes), 3)
     mass = float(spec["mass_kg"])
-    if not math.isfinite(mass) or not 0 < mass <= input_mass + 0.001:
+    draws = _water_draws(state, available, tools, water, mass - input_mass) if math.isfinite(mass) else None
+    if not math.isfinite(mass) or mass <= 0 or (mass > input_mass + 0.001 and draws is None):
         return unresolved(notes, f"output mass {mass} kg contradicts the {input_mass} kg of available material")
     for field in ("length_m", "capacity_l", "rated_load_kg"):
         value = spec.get(field)
@@ -396,6 +416,7 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
         new_spec=new_spec,
         precedent_key=key,
         property=_property(state, consumes, "used up") + _property(state, tools_not_ours, "used"),
+        water_draws=draws or [],
     )
 
 
@@ -746,6 +767,24 @@ def _equip(state, judged, available, notes, reason, effort, key) -> dict:
     )
 
 
+def _piece_capacity(piece: dict, mass: float, notes: list[str]) -> float | None:
+    """What a piece holds, if it's a container: finite, and no more than a thin-walled vessel of its weight could."""
+    capacity = piece.get("capacity_l")
+    if not capacity:
+        return None
+    if "container" not in piece.get("flags", []):
+        notes.append(f"Dropped capacity_l of '{piece['name']}': it is not flagged as a container.")
+        return None
+    capacity = float(capacity)
+    if not math.isfinite(capacity) or capacity <= 0:
+        return None
+    most = round(tuning.CONTAINER_L_PER_KG * mass + 0.5, 2)
+    if capacity > most:
+        notes.append(f"Capacity of '{piece['name']}' cut from {capacity} to {most} L for its weight.")
+        capacity = most
+    return capacity
+
+
 def _transform(state, judged, available, notes, reason, effort, key) -> dict:
     plan = judged.get("transformation")
     if not plan:
@@ -786,6 +825,7 @@ def _transform(state, judged, available, notes, reason, effort, key) -> dict:
             "count": count,
             "mass_kg": mass,
             "length_m": _positive(piece.get("length_m")),
+            "capacity_l": _piece_capacity(piece, mass, notes),  # A gourd cut into a bowl holds water (D-63).
             "flags": _checked_flags(piece["flags"], materials, support, capabilities, notes),
             "known_capabilities": capabilities[:4],
             "attributes": attributes,

@@ -49,6 +49,19 @@ def card(npc: Npc) -> dict:
     )
 
 
+ERRAND_JOBS = ("tell", "vouch", "report")  # Jobs that take someone somewhere to do something (D-54).
+
+
+def add_errand(npc: Npc, job: dict, now: int) -> None:
+    """Send them on an errand; one already on an errand goes on this one after it (D-63: Darin, agreeing to pay
+    Hessa after agreeing to let Oren's debt go, set off for the inn and never told Oren)."""
+    current = mind(npc).get("job") or {}
+    if current.get("kind") in ERRAND_JOBS:
+        current.setdefault("next_errands", []).append(job)
+    else:
+        set_job(npc, job, now)
+
+
 def mind(npc: Npc) -> Mind:
     return npc.setdefault("mind", {"memories": [], "feelings": {"fear": 0.0, "anger": 0.0}, "job": None, "said": None})
 

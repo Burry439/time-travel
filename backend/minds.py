@@ -357,10 +357,15 @@ def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: lis
     option = options[choice]
     action, target, line, line_id = option["action"], option["target"], option["line"], option["line_id"]
     blocked = paths.grid(state)
+    # Carrying on, for someone on an errand, is carrying on with it (D-54; D-63: a reconsideration right after Darin
+    # agreed to go and pay Hessa sent him back to his stall). Any other choice may still replace the errand.
+    on_errand = (my_mind.get("job") or {}).get("kind") in cast.ERRAND_JOBS
     if action == "carry_on":
-        cast.set_job(npc, None, now)
+        if not on_errand:
+            cast.set_job(npc, None, now)
     elif action == "watch":
-        cast.watch(npc, now, tuning.WATCH_MS)
+        if not on_errand:
+            cast.watch(npc, now, tuning.WATCH_MS)
     elif action in ("flee", "hide"):
         if line:
             speech.say(npc, line, now, state, journal, line_id)

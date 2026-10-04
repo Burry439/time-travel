@@ -745,34 +745,12 @@
    "story": "trough_water",
    "description": "Hessa takes up the stranger's way of making the water safe for her guests.",
    "when": {
-    "kind": "all",
-    "of": [
-     {
-      "kind": "learned",
-      "any": [
-       "fact:sick_guests"
-      ]
-     },
-     {
-      "kind": "any",
-      "of": [
-       {
-        "kind": "seen_demonstration",
-        "npcs": [
-         "npc_hessa_marr"
-        ]
-       },
-       {
-        "kind": "given",
-        "npc": [
-         "npc_hessa_marr"
-        ]
-       }
-      ]
-     }
+    "kind": "learned",
+    "any": [
+     "fact:sick_guests"
     ]
    },
-   "would_agree_if": "once she has seen the stranger's way keep people well, or been given the means and shown how"
+   "would_agree_if": "once she understands why boiling makes the water safe and has seen it done, or been given the means and shown how: you can't see what boiling kills, so it's the stranger's explanation and her own good sense she goes on"
   }
  ]
 }

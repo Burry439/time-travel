@@ -15,6 +15,8 @@ import clock
 import content
 import conversation
 import gear
+import minds
+import paths
 import persona
 import reputation
 import rounds
@@ -305,3 +307,82 @@ def test_a_demonstration_remembers_what_was_shown_so_a_story_can_ask_what_it_was
         }
     )
     assert stories.tick(state) and state["stories"]["stages"]["fog"] == ["shown"]
+
+
+def test_an_errand_across_the_village_arrives():
+    """Live (D-63): Darin, sent from his stall to pay Hessa at the inn, stood still for good: a step was only looked
+    for within 60 steps, and the inn is farther by the village's paths."""
+    state = unit_state()
+    darin, hessa = npc(state, "npc_darin_ko"), npc(state, "npc_hessa_marr")
+    darin.update(x=80, y=30)
+    grid = paths.grid(state)
+    assert paths.next_step((80, 30), (hessa["x"], hessa["y"]), 1.5, grid) is not None
+
+
+def test_carrying_on_with_an_errand_keeps_it_and_says_so():
+    """Live (D-63): a reconsideration right after Darin agreed sent him back to his stall ("carry on")."""
+    state = unit_state()
+    darin = npc(state, "npc_darin_ko")
+    job = {"kind": "tell", "target": "npc_hessa_marr", "speed": "walk", "message": "Here's what I owe you.", "event": 4}
+    cast.set_job(darin, job, 0)
+    assert persona.doing(darin) == "on their way to tell Hessa: Here's what I owe you."
+    minds.apply_decision(state, darin, {"action": {"choice": "carry_on"}}, 1000, [])
+    assert cast.mind(darin)["job"]["kind"] == "tell"
+
+
+def test_a_secret_about_someone_is_no_news_to_them():
+    """Live (D-63): telling Darin that Hessa has carried his rent counted as passing on her confidence to him, and
+    he turned on the stranger for it. It's his own rent: he knows."""
+    state = unit_state()
+    darin, roderic = npc(state, "npc_darin_ko"), npc(state, "npc_roderic_vale")
+    learn(state, secret="hessa_darin_lodging", npc_id="npc_hessa_marr")
+    assert stories.tellable(state, [darin]) == []
+    assert stories.tell(state, ["hessa_darin_lodging"], [darin], 5, 0) == []
+    assert [s["id"] for s in stories.tellable(state, [roderic])] == ["hessa_darin_lodging"]
+
+
+def test_every_secret_names_real_people_who_already_know_it():
+    for secret_id, (whose, secret) in stories.all_secrets().items():
+        for person in secret.get("known_by", []):
+            assert person in cast.CARDS and person != whose, (secret_id, person)
+
+
+def test_hessa_decides_about_clean_water_once_she_knows_her_guests_are_sick():
+    """Live (D-63): the move needed a demonstration that visibly worked, and nobody can see what boiling kills."""
+    state = unit_state()
+    hessa = npc(state, "npc_hessa_marr")
+    assert "story:trust_clean_water" not in conversation.replies(state, hessa)
+    learn(state, fact="sick_guests")
+    assert "story:trust_clean_water" in conversation.replies(state, hessa)
+
+
+def test_a_second_errand_waits_for_the_first():
+    """Live (D-63): Darin agreed to let Oren's debt go, then to pay Hessa; the second errand replaced the first and
+    Oren never heard."""
+    state = unit_state()
+    darin = npc(state, "npc_darin_ko")
+    first = {"kind": "tell", "target": "npc_oren_dast", "speed": "walk", "message": "Your debt's gone.", "event": 3}
+    second = {"kind": "tell", "target": "npc_hessa_marr", "speed": "walk", "message": "Here's the rent.", "event": 4}
+    cast.add_errand(darin, first, 0)
+    cast.add_errand(darin, second, 0)
+    assert cast.mind(darin)["job"]["target"] == "npc_oren_dast"
+    oren = npc(state, "npc_oren_dast")
+    clock._arrived(state, state["npcs"], darin, cast.mind(darin)["job"], 1000, [])
+    assert any(m["kind"] == "told" and m["event"] == 3 for m in cast.mind(oren)["memories"])
+    assert cast.mind(darin)["job"]["target"] == "npc_hessa_marr"
+
+
+def test_a_story_reads_a_property_held_as_an_attribute():
+    """The quest play-through (D-63): the judge now records "magnetized" as an extensible attribute (D-62), so the fog
+    story, looking only at flags, could never see the stranger's compass."""
+    state = unit_state()
+    state["objects"]["nail_a"]["attributes"] = [
+        {"name": "magnetized", "value": "weakly", "status": "expected", "basis_ids": ["nail_a"]}
+    ]
+    state["objects"]["nail_a"].update(
+        given_by="player",
+        holder_id="npc_roderic_vale",
+        owner_id="npc_roderic_vale",
+        known_capabilities=[{"text": "points north", "status": "observed"}],
+    )
+    assert stories.tick(state) and "in_the_watchs_hands" in state["stories"]["milestones"]["fog"]

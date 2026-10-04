@@ -104,6 +104,9 @@
    "id": "hessa_darin_lodging",
    "text": "Darin is three weeks behind on his lodging, and she hasn't pressed him.",
    "reveal": "someone who has helped at the inn",
+   "known_by": [
+    "npc_darin_ko"
+   ],
    "unlock": {
     "kind": "any",
     "of": [

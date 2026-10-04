@@ -105,6 +105,9 @@
    "id": "mara_tomas",
    "text": "She and Tomas were to marry once, before the fever year; neither speaks of it.",
    "reveal": "only someone she trusts",
+   "known_by": [
+    "npc_tomas_reed"
+   ],
    "unlock": {
     "kind": "regard",
     "axis": "trust",

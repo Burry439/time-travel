@@ -109,6 +109,9 @@
    "id": "darin_collect",
    "text": "He means to squeeze Oren for his debt: wave Darin's cart through unchecked, or the captain hears of it.",
    "reveal": "someone who might help him collect",
+   "known_by": [
+    "npc_oren_dast"
+   ],
    "unlock": {
     "kind": "any",
     "of": [

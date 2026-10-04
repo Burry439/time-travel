@@ -80,7 +80,13 @@ def known_secrets(state: State) -> list[dict]:
         if f"secret:{secret_id}" in keys:
             owner = cast.find(state["npcs"], whose)
             out.append(
-                {"id": secret_id, "whose": owner["name"] if owner else whose, "owner_id": whose, "text": secret["text"]}
+                {
+                    "id": secret_id,
+                    "whose": owner["name"] if owner else whose,
+                    "owner_id": whose,
+                    "text": secret["text"],
+                    "known_by": [whose, *secret.get("known_by", [])],  # Whom it's no news to (D-63).
+                }
             )
     return out
 
@@ -120,7 +126,7 @@ def tellable(state: State, listeners: list[Npc]) -> list[dict]:
     whose it is. Only what at least one listener hasn't heard and doesn't own. [{id, about, what}]"""
     out = []
     for secret in known_secrets(state):
-        if any(n["id"] != secret["owner_id"] and secret["id"] not in heard(n) for n in listeners):
+        if any(n["id"] not in secret["known_by"] and secret["id"] not in heard(n) for n in listeners):
             out.append({"id": secret["id"], "about": secret["whose"], "what": secret["text"]})
     return out
 
@@ -134,7 +140,8 @@ def tell(state: State, secret_ids: list[str], listeners: list[dict], event_id: i
         if secret_id not in known:
             continue  # The stranger can only tell what they know.
         for npc in listeners:
-            if npc["id"] == known[secret_id]["owner_id"] or secret_id in heard(npc) or not npc.get("alive", True):
+            # Its owner, and whoever it's about (Darin's own rent), already know it: telling them passes nothing on.
+            if npc["id"] in known[secret_id]["known_by"] or secret_id in heard(npc) or not npc.get("alive", True):
                 continue
             cast.mind(npc).setdefault("heard_secrets", []).append(
                 {
@@ -181,7 +188,12 @@ def tell(state: State, secret_ids: list[str], listeners: list[dict], event_id: i
 
 
 def _flags_match(obj: Thing, spec: dict) -> bool:
-    if spec.get("flags") and not set(spec["flags"]) & set(obj.get("flags", [])):
+    """A thing answers a story's spec: any of its flags, as a registered flag or (D-62's extensible attributes) an
+    attribute of that name not found false (D-63: a nail stroked on the lodestone is "magnetized" as an attribute)."""
+    held = set(obj.get("flags", [])) | {
+        a["name"] for a in obj.get("attributes", []) if a.get("name") and a.get("status") != "failed"
+    }
+    if spec.get("flags") and not set(spec["flags"]) & held:
         return False
     if spec.get("material") and spec["material"] not in obj.get("materials", []):
         return False

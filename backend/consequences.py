@@ -210,7 +210,17 @@ def _made(state: State, verdict: dict, step: dict) -> dict:
     held = round(sum(state["objects"][i].get("water_l", 0.0) for i in consumed), 3)
     kept = min(held, spec.get("capacity_l") or 0.0) if "container" in spec["flags"] else 0.0
     made["water_l"] = kept
-    return {"consumed_ids": consumed, "new_objects": [made], "spilled_l": round(held - kept, 3)}
+    drawn = [  # Water that went into the thing made: out of its container (D-63).
+        {"id": d["id"], "water_l": round(max(0.0, state["objects"][d["id"]].get("water_l", 0.0) - d["litres"]), 3)}
+        for d in verdict.get("water_draws", [])
+        if state["objects"][d["id"]].get("water_l", 0.0) > 0
+    ]
+    return {
+        "consumed_ids": consumed,
+        "new_objects": [made],
+        "spilled_l": round(held - kept, 3),
+        **({"water": drawn} if drawn else {}),
+    }
 
 
 def _pieces(verdict: dict, step: dict, prefix: str, piece: dict, numbers: range, where, owner, keep, source_id):

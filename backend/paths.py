@@ -118,11 +118,19 @@ def route(start: tuple[int, int], goal: tuple[int, int], blocked: Grid) -> list[
     raise ValueError(f"No safe NPC route from {start} to {goal}")
 
 
+NEXT_STEP_FAR = 400  # Steps: more than any walk across a map.
+
+
 def next_step(start: tuple[int, int], goal: tuple[int, int], stop: float, blocked: Grid) -> tuple[int, int] | None:
-    """One step toward being within stop of goal (someone on a job, a step per beat); None if there's no way."""
-    previous, steps = bfs(start, blocked, 60)
-    goals = [c for c in steps if math.dist(c, goal) <= stop]
-    if not goals:
+    """One step toward being within stop of goal (someone on a job, a step per beat); None if there's no way. Near
+    goals are searched first; a goal across the village gets the whole map (D-63: Darin, sent from his stall to pay
+    Hessa at the inn, stood still for good, his errand longer than 60 steps)."""
+    for reach in (60, NEXT_STEP_FAR):
+        previous, steps = bfs(start, blocked, reach)
+        goals = [c for c in steps if math.dist(c, goal) <= stop]
+        if goals:
+            break
+    else:
         return None
     cell = min(goals, key=lambda c: (steps[c], math.dist(c, goal)))
     while previous.get(cell) not in (start, None):

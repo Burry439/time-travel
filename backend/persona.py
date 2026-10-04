@@ -67,6 +67,14 @@ def warmth_words(warmth: float) -> str:
 
 
 def doing(npc: Npc) -> str:
+    """What they're doing now, in words: an errand they're on first (D-63: Darin, on his way to pay Hessa, was only
+    told he was "going about his day", and his next thought dropped the errand)."""
+    job = (npc.get("mind") or {}).get("job") or {}
+    if job.get("kind") in cast.ERRAND_JOBS and job.get("target"):
+        whom = cast.CARDS.get(job["target"], {}).get("name", "someone")
+        errand = {"tell": f"on their way to tell {whom}", "vouch": f"on their way to speak to {whom} for the stranger"}
+        said = f": {job['message']}" if job.get("message") else ""
+        return errand.get(job["kind"], f"on their way to report to {whom}") + said
     return cast.mind(npc).get("doing") or (npc.get("controller") or {}).get("goal") or "going about their day"
 
 

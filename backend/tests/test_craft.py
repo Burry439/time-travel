@@ -721,3 +721,58 @@ def test_changed_physical_shape_queues_matching_new_art(world):
     assert row["status"] == "ready" and record["attributes"] == [feature]
     assert "shallow spiral groove" in illustrator.sprite_prompt(record)
     assert http.get(f"/runs/{state['run_id']}").json()["objects"]["branch_a"] == obj
+
+
+def test_water_at_hand_can_go_into_what_is_made_and_leaves_its_container():
+    """The quest play-through (D-63): a poultice crushed "with a splash of water from the pot" was refused for weighing
+    more than its leaves. Water at hand counts, up to what's there, and is taken out of the pot."""
+    state = fresh_state(46, 63)
+    state["objects"]["plantain_a"]["holder_id"] = "player"
+    state["objects"]["yard_iron_pot"].update(holder_id="player", water_l=2.0)
+    poultice = {
+        "name": "plantain poultice",
+        "description": "Crushed plantain, wet.",
+        "materials": ["plantain"],
+        "consumes": ["plantain_a"],
+        "tools_used": ["yard_iron_pot"],
+        "mass_kg": state["objects"]["plantain_a"]["mass_kg"] + 0.05,
+        "length_m": None,
+        "capacity_l": None,
+        "rated_load_kg": None,
+        "flags": [],
+        "capabilities": [],
+    }
+    commit(state, judged("make", new_object=poultice))
+    assert state["last_action"]["category"] == "success"
+    assert state["objects"]["yard_iron_pot"]["water_l"] == 1.95
+    dry = fresh_state(46, 63)
+    dry["objects"]["plantain_a"]["holder_id"] = "player"
+    dry["objects"]["yard_iron_pot"].update(holder_id="player", water_l=0.0)
+    commit(dry, judged("make", new_object=poultice))
+    assert dry["last_action"]["category"] == "unresolved"  # No water there: still no mass from nowhere.
+
+
+def test_a_gourd_cut_into_a_bowl_holds_water():
+    """The quest play-through (D-63): pieces had no capacity, so no vessel made by cutting could hold anything."""
+    state = fresh_state(45, 53)
+    bowl = {
+        "name": "gourd bowl",
+        "description": "The gourd with its top cut off.",
+        "materials": ["gourd"],
+        "count": 1,
+        "mass_kg": 0.2,
+        "length_m": None,
+        "capacity_l": 50.0,
+        "flags": ["container"],
+        "capabilities": [],
+        "gear": None,
+    }
+    commit(
+        state,
+        judged(
+            "transform",
+            transformation={"target_id": "gourd_a", "tools_used": [], "result_state": "cut_up", "pieces": [bowl]},
+        ),
+    )
+    made = next(o for o in state["objects"].values() if o["name"] == "gourd bowl")
+    assert made["capacity_l"] == round(tuning.CONTAINER_L_PER_KG * 0.2 + 0.5, 2)  # Cut down to what it could hold.
