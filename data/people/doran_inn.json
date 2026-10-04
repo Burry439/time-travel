@@ -1,0 +1,98 @@
+{
+ "id": "npc_doran_inn",
+ "first_met_in": "common_room",
+ "name": "Doran",
+ "age": 45,
+ "role": "innkeeper",
+ "look": "A big, bald innkeeper in his forties with a bushy brown beard, a stained leather apron over a blue linen shirt, a cloth over one shoulder and a ring of keys at his belt.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Genial, nosy and shrewd; hears everything that passes through his door and trades it like ale.",
+ "values": "a full house, a good story, paying guests",
+ "fears": "trouble in his common room, the guards closing the road",
+ "authority": "Owns the Ford Inn; Mother Brea is his mother.",
+ "tones": [
+  "shrewd",
+  "protective"
+ ],
+ "relations": {
+  "npc_ivo_carter": "Ivo the carter",
+  "npc_wynn_pilgrim": "the pilgrim Wynn"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "The city's gate has been shut to strangers since the spring fever, and trade on the road is thin.",
+ "refers": [],
+ "knowledge": {
+  "gate_shut": {
+   "text": "The city's gate is shut to strangers since the spring fever; the captain lets in only those someone inside will speak for.",
+   "line": "Gate's shut to strangers since the fever. Captain lets you in only if someone'll speak for you.",
+   "trusted": false,
+   "lead": "The city lets strangers in only if someone will speak for them."
+  },
+  "carters": {
+   "text": "Carters with a trade permit can still take goods into the city.",
+   "line": "Carters with a permit still get through. Ivo's got one, lucky dog.",
+   "trusted": false,
+   "lead": "Carters with a trade permit can still get goods into the city."
+  }
+ },
+ "persuaded_by": "a good story or a paying guest",
+ "style": "Warm and chatty; calls people 'friend'; trades news for news.",
+ "mood": "cheerful",
+ "voice": {
+  "samples": [
+   "Evening, friend! Sit, sit. What'll it be? Nothing? Well, news is free.",
+   "I hear everything, sooner or later. Usually sooner.",
+   "The city? Ha. Shut tight as a miser's purse.",
+   "Mind the floor, it's had a long night."
+  ],
+  "habits": "Calls people 'friend'; asks where you're from; passes on gossip with a wink.",
+  "never": "lets a fight start in his room",
+  "greeting": "Spreads his hands: 'Welcome to the Ford, friend! What news?'"
+ },
+ "goals": [
+  "Keep the house full",
+  "Hear news before anyone else"
+ ],
+ "secrets": [],
+ "likes": "stories, regulars, coin",
+ "dislikes": "brawls, tight-lipped guests",
+ "opinions": {
+  "npc_ivo_carter": {
+   "text": "a good regular",
+   "warmth": 0.6
+  },
+  "npc_wynn_pilgrim": {
+   "text": "odd but kind",
+   "warmth": 0.4
+  }
+ },
+ "tasks": [
+  {
+   "id": "bar",
+   "place": "bar",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "wiping down the bar"
+  },
+  {
+   "id": "tables",
+   "place": "table1",
+   "activity": "work",
+   "dwell_s": 25,
+   "doing": "clearing the long table"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Doran would want to know how it works."
+ }
+}

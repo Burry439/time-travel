@@ -23,12 +23,12 @@ def _each(folder: str) -> dict[str, dict]:
 
 
 def _people() -> dict[str, dict]:
-    """The village's cards, then each level's own people (data/content/people): one register, ids unique."""
-    cards = dict(read("content/npc_cards.json")["npcs"])
-    for name, extra in _each("content/people").items():
-        clash = set(cards) & set(extra["npcs"])
-        assert not clash, f"content/people/{name}.json repeats {sorted(clash)}"
-        cards.update(extra["npcs"])
+    """Everyone, one file each (data/people/<name>.json, D-59): who they are, how they talk, what they know and
+    want. A person is their own sheet, read on its own, whichever level they first appear in (first_met_in)."""
+    cards: dict[str, dict] = {}
+    for name, sheet in _each("people").items():
+        assert sheet["id"] not in cards, f"people/{name}.json repeats {sheet['id']}"
+        cards[sheet["id"]] = sheet
     return cards
 
 

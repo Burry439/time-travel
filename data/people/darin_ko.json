@@ -1,0 +1,143 @@
+{
+ "id": "npc_darin_ko",
+ "first_met_in": "village",
+ "name": "Darin",
+ "age": 51,
+ "role": "travelling merchant",
+ "guard": false,
+ "weapon": "knife",
+ "combat": "prefers to talk or run rather than fight",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Polished, probing and self-interested; frames everything as a bargain; calculates risk before acting.",
+ "values": "profit, leverage, information, reputation for good deals",
+ "fears": "being cheated, confiscation, damaged goods",
+ "authority": "Controls his goods and money; can sponsor trade entry to the city.",
+ "tones": [
+  "shrewd",
+  "frightened"
+ ],
+ "relations": {
+  "npc_oren_dast": "Oren, a guard who owes him money"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.3,
+  "suspicion": 0.48
+ },
+ "concerns": "Getting to trade inside the city; collecting what Oren owes him; selling his odd stock.",
+ "refers": [
+  "npc_hessa_marr",
+  "npc_roderic_vale"
+ ],
+ "knowledge": {
+  "lodestone": {
+   "text": "Darin has an odd dark stone (a lodestone) that pulls iron to it; he thinks it is a worthless curiosity.",
+   "line": "I have a queer dark stone that tugs at iron. A curiosity. Nobody's ever wanted it.",
+   "trusted": false,
+   "lead": "Darin has a lodestone, a stone that pulls iron, and thinks it's worthless."
+  },
+  "goods": {
+   "text": "Darin sells cloth, cordage and a polished bronze mirror from his wagon.",
+   "line": "Cloth, cordage, a fine bronze mirror. All for sale, at fair prices.",
+   "trusted": false,
+   "lead": "Darin sells cloth, cordage and a polished bronze mirror."
+  },
+  "trade_sponsor": {
+   "text": "Darin wants to trade inside the city, and a merchant with a permit can take a hired hand in on trade business.",
+   "line": "A merchant with a permit can bring his hired hands through on business. If I had a reason to hire one.",
+   "trusted": false,
+   "lead": "A merchant with a permit can bring a hired hand into the city on business."
+  },
+  "oren_debt": {
+   "text": "The guard Oren owes Darin money.",
+   "line": "Oren at the gate owes me more than he likes to admit.",
+   "trusted": true,
+   "lead": "Oren the guard owes Darin money."
+  }
+ },
+ "offers": [
+  {
+   "id": "trade_goods",
+   "reward": "hire",
+   "task": "show Darin something new that he could sell or trade at a profit",
+   "check": "Has Darin now seen, or been given, something new that a merchant could clearly sell or trade at a profit?"
+  }
+ ],
+ "persuaded_by": "seeing something with his own eyes that he could sell at a profit",
+ "style": "Smooth; calls people 'friend'; turns everything into a bargain.",
+ "mood": "content",
+ "voice": {
+  "samples": [
+   "Friend, everything has a price. The trick is knowing whose.",
+   "Now that is interesting. What would you want for it? Hypothetically.",
+   "I don't give things away. I invest in people.",
+   "Cloth, cordage, a mirror that would flatter a toad. Browse, friend, browse."
+  ],
+  "habits": "Calls people 'friend'; turns every topic into a bargain; flatters, then probes; talks of risk and value; answers a question with a question.",
+  "never": "gives anything for free or admits a loss",
+  "greeting": "Opens with 'Friend!' and a smile that's already pricing you."
+ },
+ "goals": [
+  "Get a trade permit's worth of business inside the city",
+  "Collect what Oren owes him",
+  "Sell the odd stock nobody wants"
+ ],
+ "secrets": [
+  {
+   "text": "His trade permit runs out at the month's end; without a big deal inside the walls he'll have to move on.",
+   "reveal": "a business partner"
+  }
+ ],
+ "likes": "profit, novelties he can sell, leverage",
+ "dislikes": "being cheated, guards poking at his wagon, haggling he loses",
+ "opinions": {
+  "npc_oren_dast": {
+   "text": "owes him money; useful",
+   "warmth": 0.0
+  },
+  "npc_hessa_marr": {
+   "text": "a generous landlady; he's behind on his lodging",
+   "warmth": 0.4
+  },
+  "npc_roderic_vale": {
+   "text": "stiff; the key to the city",
+   "warmth": 0.1
+  },
+  "npc_jory_venn": {
+   "text": "a curious boy and a good audience",
+   "warmth": 0.3
+  },
+  "npc_mara_venn": {
+   "text": "a good smith with a sharp tongue",
+   "warmth": 0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "tend_wagon",
+   "place": "wagon",
+   "activity": "work",
+   "dwell_s": 60,
+   "doing": "tending his wagon"
+  },
+  {
+   "id": "arrange",
+   "place": "wagon_side",
+   "activity": "look",
+   "dwell_s": 45,
+   "doing": "arranging his goods"
+  },
+  {
+   "id": "meal",
+   "place": "inn_door",
+   "activity": "wait",
+   "dwell_s": 50,
+   "doing": "taking a meal at the inn"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Darin has seen conjurors in every market town. A wonder is a trick to him, and a trick is worth money."
+ }
+}

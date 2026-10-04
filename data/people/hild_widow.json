@@ -1,0 +1,93 @@
+{
+ "id": "npc_hild_widow",
+ "first_met_in": "three_voices",
+ "name": "Hild",
+ "age": 61,
+ "role": "widow",
+ "look": "A small, upright woman in her sixties in black widow's wool with a white apron and cap, grey eyes red from crying, and a wooden spoon in her hand.",
+ "look_kind": "old",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gentle, worn out and stubborn in her own quiet way; loves both sons and can't bear to choose between them.",
+ "values": "her sons, her late husband's memory, peace at her table",
+ "fears": "her family breaking apart at her husband's grave",
+ "authority": "Edric's widow: the farm's mistress while she lives.",
+ "tones": [
+  "warm",
+  "frightened"
+ ],
+ "relations": {
+  "npc_aldo_elder": "Aldo, the elder son",
+  "npc_berin_younger": "Berin, the younger son"
+ },
+ "family": [
+  "npc_aldo_elder",
+  "npc_berin_younger"
+ ],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.1
+ },
+ "concerns": "Since Edric was buried a week ago her boys have done nothing but shout. Edric kept a carved box on the dresser that she's never had the heart to open.",
+ "refers": [],
+ "knowledge": {
+  "box": {
+   "text": "Edric kept letters and papers in the carved box on the dresser; she's never opened it.",
+   "line": "Edric's box, on the dresser. His papers. I can't bring myself to look.",
+   "trusted": false,
+   "lead": "Edric's carved box of papers sits unopened on the dresser."
+  },
+  "debts": {
+   "text": "Aldo has been paying off Edric's debts to the miller alone, all year, and won't tell Berin.",
+   "line": "Aldo's paid every penny of his father's debts this year. Alone. He won't have Berin know.",
+   "trusted": true,
+   "lead": "Aldo has secretly paid off his father's debts alone."
+  }
+ },
+ "persuaded_by": "anyone who brings her sons together",
+ "style": "Soft, pleading, with sudden firmness.",
+ "mood": "grieving",
+ "voice": {
+  "samples": [
+   "Boys, please. Not today.",
+   "Your father would weep to hear you.",
+   "Sit. Both of you. Eat.",
+   "There's more to this than either of you knows."
+  ],
+  "habits": "Wipes her hands on her apron; stands between them; feeds people.",
+  "never": "takes one son's side",
+  "greeting": "Looks up from the pot: 'Oh. Come in, come in. You'll forgive the shouting.'"
+ },
+ "goals": [
+  "See her sons make peace"
+ ],
+ "secrets": [],
+ "likes": "a full table, quiet, her sons laughing",
+ "dislikes": "shouting, the empty chair",
+ "opinions": {
+  "npc_aldo_elder": {
+   "text": "her steady one, too proud",
+   "warmth": 0.8
+  },
+  "npc_berin_younger": {
+   "text": "her wild one, come home",
+   "warmth": 0.8
+  }
+ },
+ "tasks": [
+  {
+   "id": "hearth",
+   "place": "hearth",
+   "activity": "work",
+   "dwell_s": 90,
+   "doing": "stirring the pot at the hearth"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Hild would want to know how it works."
+ }
+}

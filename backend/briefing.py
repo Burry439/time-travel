@@ -372,9 +372,20 @@ def scene_context(
         if npc in nearby:
             person.pop("the_way_around_town", None)
             person["why_they_are_here"] = f"{npc['name']} is nearby and can hear the conversation."
-        person["id"] = npc["id"]
+        person["id"], person["name"] = npc["id"], npc["name"]
         if beat := (beats or {}).get(npc["id"]):  # What the story has them get across now (beats.due).
             person["story_beat"] = {k: beat[k] for k in ("get_across", "only_if") if k in beat}
+        # Which rules this person's own call carries besides the core (D-59: each person is their own agent).
+        person["_rules"] = [
+            rule
+            for rule, applies in (
+                ("guard", bool(cast.card(npc).get("guard"))),
+                ("robber", cast.robbing(npc)),
+                ("deals", bool(person.get("open_deals"))),
+                ("beat", "story_beat" in person),
+            )
+            if applies
+        ]
         person["in_the_conversation"] = (
             "addressed" if npc is addressed else "nearby" if npc in nearby else "taking part"
         )

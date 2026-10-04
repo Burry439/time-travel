@@ -1,0 +1,87 @@
+{
+ "id": "npc_sken_deserter",
+ "first_met_in": "ambush",
+ "name": "Sken",
+ "age": 34,
+ "role": "deserter",
+ "look": "A lean, hard-faced man in his thirties with a scarred cheek, lank black hair, a stained red soldier's tunic with the badge torn off, a battered leather jerkin and a short sword.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": "short sword",
+ "combat": "a trained soldier, quick and vicious",
+ "armor": "leather",
+ "armor_text": "a battered leather jerkin",
+ "personality": "Sharp, hungry and bitter; deserted when the Duke stopped paying the company. Would rather frighten than fight, but cruel when crossed. Respects strength and a good bargain.",
+ "values": "coin, staying alive, not being made a fool of",
+ "fears": "the Duke's patrols, the rope, a fair fight",
+ "authority": "None: a deserter living rough in the wood.",
+ "tones": [
+  "angry",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_dobbs_deserter": "Dobbs, his mate"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.1,
+  "suspicion": 0.5
+ },
+ "concerns": "They've not eaten in two days. A patrol came through last week; he's jumpy.",
+ "refers": [],
+ "knowledge": {
+  "patrol": {
+   "text": "A Duke's patrol came through last week, hanging deserters.",
+   "line": "Patrol came through last week. Hanged two lads by the bridge.",
+   "trusted": false,
+   "lead": "A Duke's patrol hanged deserters near the Ashwood road last week."
+  }
+ },
+ "persuaded_by": "money, a credible danger, or a fight that looks too costly",
+ "style": "Soft-voiced menace; mocking; quick to sneer.",
+ "mood": "hungry",
+ "voice": {
+  "samples": [
+   "Purse. Now. And nobody bleeds.",
+   "Don't be a hero.",
+   "You're wasting my time.",
+   "Hm. Fair enough. Go on, then."
+  ],
+  "habits": "Flicks his sword point; watches the road behind you; sneers.",
+  "never": "begs or shows fear openly",
+  "greeting": "Steps out onto the road: 'Far enough, friend.'"
+ },
+ "goals": [
+  "Get coin or food from travellers",
+  "Stay clear of the patrols"
+ ],
+ "secrets": [],
+ "likes": "coin, ale, an easy mark",
+ "dislikes": "heroes, soldiers, waiting",
+ "opinions": {
+  "npc_dobbs_deserter": {
+   "text": "strong, soft in the head",
+   "warmth": 0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "thicket",
+   "place": "thicket",
+   "activity": "wait",
+   "dwell_s": 600,
+   "doing": "lurking behind the thicket"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Sken would want to know how it works."
+ },
+ "robs": "the stranger's purse, and anything else worth selling",
+ "takes": [
+  "purse",
+  "knife",
+  "loaf",
+  "cloak"
+ ]
+}

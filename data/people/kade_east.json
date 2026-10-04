@@ -1,0 +1,106 @@
+{
+ "id": "npc_kade_east",
+ "first_met_in": "village",
+ "name": "Kade",
+ "age": 43,
+ "role": "patrol guard",
+ "guard": true,
+ "weapon": "spear",
+ "combat": "a veteran guard",
+ "armor": "padded",
+ "armor_text": "an old padded jerkin (his mail no longer fits over his bad knees' brace)",
+ "personality": "Gruff, traditional and unimpressed by novelty; few words; distrusts strangers.",
+ "values": "routine, seniority, order",
+ "fears": "young guards making mistakes",
+ "authority": "Can warn, question, hold and escort people away from the gate. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
+ "tones": [
+  "official",
+  "angry"
+ ],
+ "relations": {
+  "npc_roderic_vale": "his captain"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.15,
+  "suspicion": 0.6
+ },
+ "concerns": "Keeping to routine; keeping strangers away from the gate.",
+ "refers": [
+  "npc_roderic_vale"
+ ],
+ "knowledge": {
+  "keep_away": {
+   "text": "Strangers are kept away from the gate unless the captain says otherwise.",
+   "line": "Strangers keep clear of the gate unless the captain says so.",
+   "trusted": false,
+   "lead": "Guards keep strangers away from the gate unless the captain says otherwise."
+  }
+ },
+ "persuaded_by": "the captain's orders",
+ "style": "Gruff; two or three words where he can.",
+ "mood": "irritable",
+ "voice": {
+  "samples": [
+   "No.",
+   "Move along.",
+   "Seen your kind. Road's that way.",
+   "Twenty years on this gate. Nothing new under the sun."
+  ],
+  "habits": "Two or three words where he can; grunts; compares everything to how it was done in his day; distrusts anything clever.",
+  "never": "explains himself or lets on that he's impressed",
+  "greeting": "Opens with a grunt or one word: 'Hm.' 'No.' 'Move along.'"
+ },
+ "goals": [
+  "Keep strangers away from the gate",
+  "Keep the young guards from making fools of themselves",
+  "Finish his patrol without trouble"
+ ],
+ "secrets": [
+  {
+   "text": "His knees are going, and he dreads being put out to pasture.",
+   "reveal": "never, unless someone notices and is kind"
+  }
+ ],
+ "likes": "routine, quiet shifts, the old ways",
+ "dislikes": "novelty, cleverness, young guards' mistakes",
+ "opinions": {
+  "npc_roderic_vale": {
+   "text": "a good captain, if young",
+   "warmth": 0.4
+  },
+  "npc_oren_dast": {
+   "text": "green and jumpy",
+   "warmth": -0.2
+  },
+  "npc_bren_marr": {
+   "text": "all right",
+   "warmth": 0.3
+  },
+  "npc_elin_west": {
+   "text": "good eyes",
+   "warmth": 0.4
+  }
+ },
+ "tasks": [
+  {
+   "id": "approach",
+   "place": "village_approach",
+   "activity": "look",
+   "dwell_s": 60,
+   "doing": "keeping watch on the village approach"
+  },
+  {
+   "id": "bend",
+   "place": "road_bend",
+   "activity": "patrol",
+   "dwell_s": 45,
+   "doing": "patrolling the bend in the road"
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Kade has no time for wonders. Tricks and clever talk are how men get killed; only honest work earns his respect."
+ },
+ "admits": "Kade lets through only someone whose real, practical work he has seen and respects with his own eyes. Talk, tricks and wonders count for nothing with him."
+}

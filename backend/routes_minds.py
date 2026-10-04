@@ -1,7 +1,8 @@
-"""People thinking: everyone with something on their mind decides, in one decider request.
+"""People thinking: everyone with something on their mind decides, each in a call of their own, in parallel
+(D-59: each person is their own agent; one shared request once carried up to six people's briefs side by side).
 
 Reactions to the stranger come first and go alone, so they're never slowed by
-the rest. Otherwise people plan their day and talk to each other (D-37) in the same shared request,
+the rest. Otherwise people plan their day and talk to each other (D-37),
 and anyone whose conversation with the stranger has ended turns it into a memory (D-36) alongside.
 Every result is committed by code in one "minds" event, so replay is exact.
 """
@@ -166,7 +167,6 @@ def _plan(cmd: commands.Command, lane: str) -> dict:
         "stale": stale,
         "snapshot": snapshot,
         "ask": ask,
-        "shared": batch_request(snapshot, ask) if ask else None,
         "memory_jobs": [(p, *_recollect_context(cast.find(snapshot["npcs"], p["npc_id"]))) for p in recollecting],
         "writing_allowed": writing_allowed,
     }
@@ -175,7 +175,7 @@ def _plan(cmd: commands.Command, lane: str) -> dict:
 def _ask(plan: dict) -> dict:
     """Every model call for this moment, in parallel: the decider (one shared request, then anyone it missed),
     recollections, villagers chatting where the stranger can see them, and people reacting to what they're told."""
-    snapshot, ask, shared, writing_allowed = plan["snapshot"], plan["ask"], plan["shared"], plan["writing_allowed"]
+    snapshot, ask, writing_allowed = plan["snapshot"], plan["ask"], plan["writing_allowed"]
     calls: dict[str, decider.DeciderCall] = {}
     answers: dict[str, dict] = {}
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -183,16 +183,7 @@ def _ask(plan: dict) -> dict:
             pool.submit(voice.recollect, context, fallback, writing_allowed)
             for _, context, fallback in plan["memory_jobs"]
         ]
-        if shared:
-            text, questions, prefixes = shared
-            batch_call = decider.decide(text, questions)
-            calls["batch"] = batch_call
-            for pending in ask:
-                mine = answers_for(batch_call.answers, prefixes[pending["npc_id"]])
-                if batch_call.ok and ANSWER_KEY[pending["kind"]] in mine:
-                    answers[pending["npc_id"]] = mine
-        missing = [p for p in ask if p["npc_id"] not in answers]
-        for pending, call in zip(missing, decider.decide_many([decision_request(snapshot, p) for p in missing])):
+        for pending, call in zip(ask, decider.decide_many([decision_request(snapshot, p) for p in ask])):
             calls[pending["npc_id"]] = call
             if call.ok:
                 answers[pending["npc_id"]] = call.answers
@@ -246,7 +237,7 @@ def _log_calls(cmd: commands.Command, heard: dict) -> None:
 def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
     """What everyone decided, on the latest world (worked out on a copy, then saved as one `minds` event)."""
     state, connection = cmd.state, cmd.connection
-    batch, snapshot, ask, shared = plan["batch"], plan["snapshot"], plan["ask"], plan["shared"]
+    batch, snapshot = plan["batch"], plan["snapshot"]
     calls, answers, spoken, heard_back = heard["calls"], heard["answers"], heard["spoken"], heard["heard_back"]
     records: list[dict] = []
     working = copy.deepcopy(state)
@@ -263,13 +254,12 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
     now, journal, learned = working["sim_time_ms"], [], []
     for pending in batch:
         npc = cast.find(working["npcs"], pending["npc_id"])
-        call = calls.get(pending["npc_id"]) or calls.get("batch")
+        call = calls.get(pending["npc_id"])
         record = {
             "npc_id": pending["npc_id"],
             "kind": pending["kind"],
             "why": pending["why"],
             "skipped": None,
-            "shared_request": pending["npc_id"] not in calls,
         }
         mine = answers.get(pending["npc_id"])
         if npc is None or not npc.get("alive", True):
@@ -306,11 +296,6 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
         records.append(record)
         if pending["kind"] == "told":  # A voice call, not the decider: its context is in record["voice"].
             situation, questions = str(pending.get("message", "")), {}
-        elif shared and pending in ask and record["shared_request"]:
-            situation, questions = (
-                shared[0],
-                {k: v for k, v in shared[1].items() if k.startswith(shared[2][pending["npc_id"]])},
-            )
         else:
             situation, questions = decision_request(snapshot, pending)
         trace = {
@@ -318,7 +303,7 @@ def _apply(cmd: commands.Command, plan: dict, heard: dict) -> list[dict]:
             "situation": situation,
             "questions": questions,
             "call": call.as_dict() if call else {},
-            "people_in_request": len(ask),
+            "people_in_request": 1,
         }
         if pending["kind"] == "meet" and spoken.get(pending["npc_id"]):
             trace["chatter"] = spoken[pending["npc_id"]][0].as_dict()
@@ -368,29 +353,5 @@ def _brief(state: State, npc: Npc, pending: dict, prefix: str = "") -> tuple[str
 
 
 def decision_request(state: State, pending: dict) -> tuple[str, dict]:
-    """One person's request (used when a batched answer is missing)."""
+    """One person's own request: only their brief, never anyone else's (D-59: each person is their own agent)."""
     return _brief(state, cast.find(state["npcs"], pending["npc_id"]), pending)
-
-
-def batch_request(state: State, batch: list[dict]) -> tuple[str, dict, dict[str, str]]:
-    """One request for everyone deciding now: a shared scene plus each person's brief and questions.
-
-    Returns (state text, questions, {npc_id: question prefix}).
-    """
-    prefixes, sections, questions = {}, [], {}
-    for pending in batch:
-        npc = cast.find(state["npcs"], pending["npc_id"])
-        prefix = npc["id"].split("_")[1] + "__"
-        prefixes[npc["id"]] = prefix
-        text, asked = _brief(state, npc, pending, prefix)
-        sections.append(f"=== {npc['name'].upper()} (questions starting '{prefix}') ===\n{text}")
-        questions.update(asked)
-    text = (
-        "Several people in a small premodern town are each deciding, independently, what they do. "
-        "Judge each person only from their own section.\n\n" + "\n\n".join(sections)
-    )
-    return text, questions, prefixes
-
-
-def answers_for(answers: dict, prefix: str) -> dict:
-    return {key[len(prefix) :]: value for key, value in answers.items() if key.startswith(prefix)}

@@ -1,0 +1,111 @@
+{
+ "id": "npc_ada_miller",
+ "first_met_in": "fair_trade",
+ "name": "Ada",
+ "age": 43,
+ "role": "miller",
+ "look": "A tall, strong woman in her forties with flour in her dark hair, a dusty brown dress with sleeves rolled to the elbow, a canvas apron, and forearms like a blacksmith's.",
+ "look_kind": "woman",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Sharp, fair and hard-working; drives a hard bargain and keeps every promise she makes.",
+ "values": "a fair deal, hard work, keeping her word",
+ "fears": "the wheel breaking, a dry summer",
+ "authority": "Owns the mill; grinds the valley's grain.",
+ "tones": [
+  "shrewd",
+  "angry"
+ ],
+ "relations": {
+  "npc_jem_hired": "Jem, her hired man"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "The mule's trough is dry, the mule won't work thirsty, and Jem is asleep behind the sacks again.",
+ "refers": [],
+ "knowledge": {
+  "market": {
+   "text": "Sela the potter sells at the village market, and the watchman there takes theft very seriously.",
+   "line": "Going to the market? Sela the potter's honest. And Corr the watchman hangs thieves. Nearly.",
+   "trusted": false,
+   "lead": "Corr the watchman at the village market takes theft very seriously."
+  },
+  "flour_price": {
+   "text": "A sack of flour is worth a day's work at the mill.",
+   "line": "A day's work, a sack of flour. That's the price.",
+   "trusted": false,
+   "lead": "A day's work at the mill is worth a sack of flour."
+  }
+ },
+ "persuaded_by": "work done well",
+ "style": "Brisk and plain; names her terms; never haggles twice.",
+ "mood": "busy",
+ "voice": {
+  "samples": [
+   "Here's my offer, and it's fair: you do this, I give you that.",
+   "Done? Let me see. Hm. Done. Here.",
+   "Jem! Wake up!",
+   "I don't pay for talk. I pay for work."
+  ],
+  "habits": "States terms plainly; checks work before paying; shouts at Jem.",
+  "never": "breaks a bargain or pays before the work's done",
+  "greeting": "Wipes her hands: 'Buying, selling, or working?'"
+ },
+ "goals": [
+  "Keep the mill turning",
+  "Get the mule watered"
+ ],
+ "secrets": [],
+ "likes": "honest work, a full race, dry flour",
+ "dislikes": "idlers, hagglers, wet sacks",
+ "opinions": {
+  "npc_jem_hired": {
+   "text": "lazy, but honest",
+   "warmth": 0.1
+  }
+ },
+ "tasks": [
+  {
+   "id": "door",
+   "place": "door",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "hauling sacks at the mill door"
+  },
+  {
+   "id": "sacks",
+   "place": "sacks",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "counting the sacks"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Ada would want to know how it works."
+ },
+ "offers": [
+  {
+   "id": "trough",
+   "reward": "pay",
+   "pays": [
+    "flour_ada"
+   ],
+   "task": "fill the mule's trough with water from the mill race",
+   "check": "Has the stranger filled the mule's trough with water?",
+   "lends": [
+    "pail_ada"
+   ],
+   "done_when": {
+    "kind": "filled",
+    "thing": "trough_ada"
+   }
+  }
+ ]
+}

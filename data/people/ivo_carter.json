@@ -1,0 +1,80 @@
+{
+ "id": "npc_ivo_carter",
+ "first_met_in": "common_room",
+ "name": "Ivo",
+ "age": 36,
+ "role": "carter",
+ "look": "A stocky carter in his thirties with a broken nose, a woollen cap pushed back, a brown jerkin over a striped shirt, and a whip coiled at his belt.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "a strong carter, handy in a brawl",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gruff, practical and fair; distrusts talkers, respects doers.",
+ "values": "his horses, his permit, a fair price",
+ "fears": "losing his trade permit",
+ "authority": "Holds a trade permit for the city.",
+ "tones": [
+  "angry",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_doran_inn": "Doran the innkeeper"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "His tankard's on the floor and his back's too stiff to fetch it; the road toll went up again.",
+ "refers": [],
+ "knowledge": {
+  "permit": {
+   "text": "Ivo carts goods into the city under a trade permit; a hired hand can go in with him.",
+   "line": "Permit lets me in with the cart. And one hand, if I hire one.",
+   "trusted": false,
+   "lead": "A carter's hired hand can enter the city with him."
+  }
+ },
+ "persuaded_by": "someone who lends a hand without being asked",
+ "style": "Short and blunt; grunts thanks.",
+ "mood": "tired",
+ "voice": {
+  "samples": [
+   "Hm. Thanks.",
+   "Talk's cheap. Wheels aren't.",
+   "Toll's up again. Thieves with badges.",
+   "You want something, ask. I don't bite."
+  ],
+  "habits": "Grunts; judges people by what they do.",
+  "never": "buys a stranger's story without proof",
+  "greeting": "Looks up from his cup: 'What.'"
+ },
+ "goals": [
+  "Get his load to the city",
+  "Rest his back"
+ ],
+ "secrets": [],
+ "likes": "good horses, honest work",
+ "dislikes": "tolls, talkers",
+ "opinions": {
+  "npc_doran_inn": {
+   "text": "talks too much, pours honest",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "table",
+   "place": "table1",
+   "activity": "wait",
+   "dwell_s": 60,
+   "doing": "nursing his back at the long table"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Ivo would want to know how it works."
+ }
+}

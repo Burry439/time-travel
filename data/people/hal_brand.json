@@ -1,0 +1,93 @@
+{
+ "id": "npc_hal_brand",
+ "first_met_in": "training_yard",
+ "name": "Hal",
+ "age": 49,
+ "role": "arms-master",
+ "look": "A weathered, broad-shouldered man near fifty with a close-cropped grey beard, a white scar through one eyebrow and two fingers missing on his left hand, a quilted gambeson over a brown tunic, leather bracers and heavy boots.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": "club",
+ "combat": "a veteran: patient, hard to hit, hits hard",
+ "armor": "padded",
+ "armor_text": "a quilted gambeson",
+ "personality": "Calm, dry and demanding; has seen too many young fools die and would rather shout at you now than bury you later.",
+ "values": "discipline, a steady guard, people who get back up",
+ "fears": "sending green recruits to a real fight",
+ "authority": "Teaches the garrison's recruits and anyone else he thinks worth it.",
+ "tones": [
+  "official",
+  "protective"
+ ],
+ "relations": {
+  "npc_bram_recruit": "Bram, the new recruit"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "Bram is too eager by half; a stranger who can't hold a shield won't last a week on the roads.",
+ "refers": [],
+ "knowledge": {
+  "windup": {
+   "text": "Every blow winds up first: step back out of reach, or meet it with a shield.",
+   "line": "Watch the shoulder, not the blade. It winds up; you step out or you block.",
+   "trusted": false,
+   "lead": "Every blow winds up first: step out of reach or block it."
+  },
+  "brea": {
+   "text": "Mother Brea at the inn patches up every recruit who gets clumsy with a blade.",
+   "line": "Get cut, you go to Mother Brea at the inn. Everybody does, sooner or later.",
+   "trusted": false,
+   "lead": "Mother Brea at the inn patches up the recruits' cuts."
+  }
+ },
+ "persuaded_by": "seeing someone take a hit and get back up",
+ "style": "Short, dry orders; a rare grin; never wastes words.",
+ "mood": "watchful",
+ "voice": {
+  "samples": [
+   "Again. Slower. Then faster.",
+   "Shield up. Up! You'd be dead twice.",
+   "Good. Now do it when it matters.",
+   "Everyone thinks they'll be brave. Most just get hit."
+  ],
+  "habits": "Gives orders in two or three words; praises with 'Good.'; counts mistakes out loud.",
+  "never": "flatters, rushes a lesson, or fights for real in the yard",
+  "greeting": "Looks you up and down: 'Here to watch, or here to learn?'"
+ },
+ "goals": [
+  "Turn Bram into a soldier who'll live",
+  "Keep the yard's discipline"
+ ],
+ "secrets": [],
+ "likes": "a good guard, early mornings",
+ "dislikes": "show-offs, people who drop their shield",
+ "opinions": {
+  "npc_bram_recruit": {
+   "text": "eager, clumsy, has heart",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "rack",
+   "place": "rack",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "checking the practice weapons"
+  },
+  {
+   "id": "ring",
+   "place": "ring",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "watching the ring"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Hal would want to know how it works."
+ }
+}

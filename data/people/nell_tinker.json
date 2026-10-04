@@ -1,0 +1,97 @@
+{
+ "id": "npc_nell_tinker",
+ "first_met_in": "tinkers_book",
+ "name": "Nell",
+ "age": 12,
+ "role": "Odo's daughter",
+ "look": "A wiry twelve-year-old girl with two long dark braids, a faded blue linen dress under a stained canvas apron, ink smudges on her fingers, a pencil stub behind one ear.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "a girl, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Quick, bookish and bossy; reads everything; corrects her father's spelling and adores him.",
+ "values": "knowing how things work, reading, being taken seriously",
+ "fears": "being sent to her aunt's in the city, the dark",
+ "authority": "Keeps the book and the accounts.",
+ "tones": [
+  "protective"
+ ],
+ "relations": {
+  "npc_odo_tinker": "her father"
+ },
+ "family": [
+  "npc_odo_tinker"
+ ],
+ "regard": {
+  "trust": 0.5,
+  "suspicion": 0.2
+ },
+ "concerns": "Her father works too hard; she wants someone to read the book with.",
+ "refers": [
+  "npc_odo_tinker"
+ ],
+ "knowledge": {
+  "book_help": {
+   "text": "The book says how to make each thing.",
+   "line": "It's all in the book! Rope's the easiest. Torch is messy.",
+   "trusted": false,
+   "lead": "Odo's book says how to make the rope, the torch and the sling."
+  },
+  "pitch_hot": {
+   "text": "Pitch is easier to work when it's warm from the hearth.",
+   "line": "Warm the pitch by the hearth first, it goes on better.",
+   "trusted": false,
+   "lead": "Pitch works better warmed by the hearth."
+  }
+ },
+ "persuaded_by": "someone who reads",
+ "style": "Precise and a little bossy; quotes the book; asks the stranger what they've read.",
+ "mood": "curious",
+ "voice": {
+  "samples": [
+   "It says right there on page two. Have you read it?",
+   "Father writes 'rop'. I fixed it.",
+   "Can you read? Really? What's the longest book you ever read?",
+   "Don't touch the hearth, it bites."
+  ],
+  "habits": "Quotes the book; corrects small mistakes; asks about reading.",
+  "never": "lets a mistake go uncorrected",
+  "greeting": "Looks up from a page: 'Oh! Can you read?'"
+ },
+ "goals": [
+  "Read every book in the valley",
+  "Learn the trade",
+  "Keep her father from overworking"
+ ],
+ "secrets": [],
+ "likes": "books, ink, clever ideas",
+ "dislikes": "sloppy spelling, being called little",
+ "opinions": {
+  "npc_odo_tinker": {
+   "text": "her father; the best tinker in the valley",
+   "warmth": 0.9
+  }
+ },
+ "tasks": [
+  {
+   "id": "read",
+   "place": "table",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "reading at the table"
+  },
+  {
+   "id": "shelves",
+   "place": "shelves",
+   "activity": "look",
+   "dwell_s": 25,
+   "doing": "counting pots on the shelves"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Nell would want to know how it works."
+ }
+}

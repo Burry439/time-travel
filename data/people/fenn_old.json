@@ -1,0 +1,101 @@
+{
+ "id": "npc_fenn_old",
+ "first_met_in": "word_gets_around",
+ "name": "Fenn",
+ "age": 77,
+ "role": "old cottar",
+ "look": "A stooped, very old man with wisps of white hair, a big nose, a patched brown smock, a blanket round his shoulders and a walking stick.",
+ "look_kind": "old",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Cheerful, deaf in one ear and endlessly grateful; tells the same three stories.",
+ "values": "a warm hearth, company, the old days",
+ "fears": "the cold, being a burden",
+ "authority": "None.",
+ "tones": [
+  "warm"
+ ],
+ "relations": {
+  "npc_agna_reeve": "Agna, the reeve",
+  "npc_cob_woodman": "Cob the woodcutter",
+  "npc_liss_weaver": "Liss the weaver",
+  "npc_tib_child": "Tib, Liss's little brother"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.1
+ },
+ "concerns": "His fire's nearly out and his knees won't take him to the wood. He won't ask.",
+ "refers": [],
+ "knowledge": {
+  "oak": {
+   "text": "There are fallen branches under the oak on the green, free for anyone.",
+   "line": "Branches under the old oak. Free. If a body could bend to pick them up.",
+   "trusted": false,
+   "lead": "Free fallen branches lie under the oak on Oakley green."
+  }
+ },
+ "persuaded_by": "a small kindness",
+ "style": "Rambling, loud, fond; repeats himself.",
+ "mood": "chilly",
+ "voice": {
+  "samples": [
+   "Eh? Speak up.",
+   "When I was a lad, the winters were proper winters.",
+   "Bless you. Bless you.",
+   "I'll tell everyone. Everyone!"
+  ],
+  "habits": "Cups his good ear; blesses people; tells everyone everything.",
+  "never": "complains outright",
+  "greeting": "Squints: 'Eh? A visitor! Come in, come in, mind the step.'"
+ },
+ "goals": [
+  "Get his fire going",
+  "Have someone to talk to"
+ ],
+ "secrets": [],
+ "likes": "fire, company, a pipe",
+ "dislikes": "damp, silence",
+ "opinions": {
+  "npc_agna_reeve": {
+   "text": "Agna",
+   "warmth": 0.6
+  },
+  "npc_cob_woodman": {
+   "text": "Cob the woodcutter",
+   "warmth": 0.5
+  },
+  "npc_liss_weaver": {
+   "text": "Liss the weaver",
+   "warmth": 0.5
+  },
+  "npc_tib_child": {
+   "text": "Tib",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "fenn",
+   "place": "fenn",
+   "activity": "wait",
+   "dwell_s": 120,
+   "doing": "sitting on his doorstep in a blanket"
+  },
+  {
+   "id": "well",
+   "place": "well",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "at the well"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Fenn would want to know how it works."
+ }
+}

@@ -87,7 +87,7 @@ class Mind(TypedDict, total=False):
 
 
 class Npc(Person, total=False):
-    """A villager: who they are comes from their card (data/content/npc_cards.json, cast.card)."""
+    """A villager: who they are comes from their own sheet (data/people/<name>.json, cast.card)."""
 
     id: str
     name: str

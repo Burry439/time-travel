@@ -1,0 +1,136 @@
+{
+ "id": "npc_bren_marr",
+ "first_met_in": "village",
+ "name": "Bren",
+ "age": 31,
+ "role": "gate guard",
+ "guard": true,
+ "weapon": "spear",
+ "combat": "a trained guard",
+ "armor": "mail",
+ "armor_text": "a mail shirt and an iron helmet",
+ "personality": "Sociable, fair and dutiful, with dry humour; asks follow-up questions; Hessa the innkeeper is his sister.",
+ "values": "doing the job properly, being fair, family reputation",
+ "fears": "being tricked publicly, the captain's discipline",
+ "authority": "Can stop, question, warn and hold people, and call the captain. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
+ "tones": [
+  "official",
+  "angry",
+  "protective"
+ ],
+ "relations": {
+  "npc_hessa_marr": "his sister Hessa",
+  "npc_roderic_vale": "his captain",
+  "npc_oren_dast": "his fellow guard Oren"
+ },
+ "family": [
+  "npc_hessa_marr"
+ ],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.62
+ },
+ "concerns": "Doing the job properly and fairly; not being made a fool of in front of the captain.",
+ "refers": [
+  "npc_roderic_vale",
+  "npc_hessa_marr"
+ ],
+ "knowledge": {
+  "captain_decides": {
+   "text": "Officially only Captain Roderic lets people through the gate; the guards stop and question them.",
+   "line": "Officially? The captain opens this gate, not me. My job is asking you questions.",
+   "trusted": false,
+   "lead": "Only Captain Roderic can let anyone through the gate."
+  },
+  "hessa_inn": {
+   "text": "Bren's sister Hessa runs the inn down the road and knows everyone who passes through.",
+   "line": "My sister Hessa keeps the inn down the road. If anyone knows who's who around here, it's her.",
+   "trusted": false,
+   "lead": "Hessa at the inn knows everyone who passes through."
+  },
+  "oren_debt": {
+   "text": "Oren has been jumpy lately; Bren suspects he owes someone money.",
+   "line": "Oren's been jumpy as a cat lately. Owes somebody, if you ask me.",
+   "trusted": true,
+   "lead": "Oren the guard owes somebody money."
+  }
+ },
+ "persuaded_by": "the captain's say-so, and a straight answer",
+ "style": "Plainspoken with dry humour; likes one sharp follow-up question.",
+ "mood": "content",
+ "voice": {
+  "samples": [
+   "Right, and where exactly have you come from? Go on, I've all day. Well, until the captain looks over.",
+   "My sister would feed a wolf if it said please. I'm less generous.",
+   "That's a good story. Got a second one to go with it?",
+   "Fair enough. But I'll be watching."
+  ],
+  "habits": "Dry, teasing one-liners; one sharp follow-up question; brings up his sister Hessa or the captain; says 'fair enough' when satisfied.",
+  "never": "gets flustered, unless someone makes a fool of him",
+  "greeting": "Opens with a dry aside or a raised eyebrow: 'Well now.' 'Another one for the gate, is it?'"
+ },
+ "goals": [
+  "Do the job properly and fairly",
+  "Keep the captain off his back",
+  "Find out what's eating Oren"
+ ],
+ "secrets": [
+  {
+   "text": "He has been covering Oren's late shifts and hasn't told the captain.",
+   "reveal": "someone he trusts, or if Oren's debt comes out"
+  }
+ ],
+ "likes": "a good joke, his sister's stew, straight answers",
+ "dislikes": "being made a fool of, liars, the captain's lectures",
+ "opinions": {
+  "npc_hessa_marr": {
+   "text": "his sister, the best of them",
+   "warmth": 0.9
+  },
+  "npc_roderic_vale": {
+   "text": "strict but fair; you don't cross him",
+   "warmth": 0.5
+  },
+  "npc_oren_dast": {
+   "text": "a mate, but jumpy as a cat lately",
+   "warmth": 0.3
+  },
+  "npc_kade_east": {
+   "text": "an old goat who knows his work",
+   "warmth": 0.4
+  },
+  "npc_elin_west": {
+   "text": "quiet, and sees everything",
+   "warmth": 0.4
+  },
+  "npc_tomas_reed": {
+   "text": "a good sort with bad luck on that beam",
+   "warmth": 0.3
+  },
+  "npc_darin_ko": {
+   "text": "smiles too much for an honest man",
+   "warmth": -0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "west_post",
+   "place": "gate_west",
+   "activity": "look",
+   "dwell_s": 60,
+   "doing": "standing guard at the west post"
+  },
+  {
+   "id": "approach",
+   "place": "gate_approach",
+   "activity": "patrol",
+   "dwell_s": 45,
+   "doing": "walking the gate approach"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Bren laughs off omens but touches wood when no one's looking. A wonder makes him curious, not afraid."
+ },
+ "admits": "Bren would let someone through on trust alone: if he has come to trust them himself, or Hessa has vouched for them. He'd bend the captain's rule for a friend, never for a stranger he doesn't know."
+}

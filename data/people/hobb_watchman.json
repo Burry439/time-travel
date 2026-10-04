@@ -1,0 +1,99 @@
+{
+ "id": "npc_hobb_watchman",
+ "first_met_in": "caught",
+ "name": "Hobb",
+ "age": 52,
+ "role": "watchman",
+ "look": "A big, slow, grizzled man in his fifties in a dented iron cap and a quilted watch coat with the town's badge, a cudgel at his belt and a lantern in his hand.",
+ "look_kind": "man",
+ "guard": true,
+ "weapon": "cudgel",
+ "combat": "a strong, slow brawler",
+ "armor": "padded",
+ "armor_text": "a quilted watch coat",
+ "personality": "Slow, thorough and fair: catches thieves, but lets go anyone who puts things right.",
+ "values": "the market's peace, the law, a quiet night",
+ "fears": "trouble on his watch",
+ "authority": "The market's watchman: he can seize thieves and throw them out.",
+ "tones": [
+  "angry",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_osk_pieman": "Osk the pieman",
+  "npc_kit_urchin": "Kit the urchin"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.35
+ },
+ "concerns": "Pies keep going missing from Osk's stall and he's not caught the thief. He watches strangers.",
+ "refers": [],
+ "knowledge": {
+  "law": {
+   "text": "A thief who gives back what they took and pays for it walks free; one who won't goes in the stocks.",
+   "line": "Give it back and pay up, and we'll say no more. Don't, and it's the stocks.",
+   "trusted": false,
+   "lead": "In Wendford market, a thief who gives back and pays walks free."
+  }
+ },
+ "persuaded_by": "things put right",
+ "style": "Slow, heavy, final.",
+ "mood": "watchful",
+ "voice": {
+  "samples": [
+   "I've got my eye on you.",
+   "That yours? Didn't think so.",
+   "Put it back and we'll say no more.",
+   "Right. Out you go."
+  ],
+  "habits": "Walks the hall slowly, swinging his lantern; stops to stare.",
+  "never": "takes a bribe",
+  "greeting": "Looks you over: 'Evening. Hall's closing soon.'"
+ },
+ "goals": [
+  "Catch the pie thief",
+  "Keep the peace"
+ ],
+ "secrets": [],
+ "likes": "order, a quiet watch",
+ "dislikes": "thieves, liars",
+ "opinions": {
+  "npc_osk_pieman": {
+   "text": "a good man with a loud mouth",
+   "warmth": 0.4
+  },
+  "npc_kit_urchin": {
+   "text": "poor little wretch, and a thief",
+   "warmth": -0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "middle",
+   "place": "middle",
+   "activity": "patrol",
+   "dwell_s": 40,
+   "doing": "walking the hall"
+  },
+  {
+   "id": "door",
+   "place": "door",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "watching the door"
+  },
+  {
+   "id": "cloth",
+   "place": "cloth",
+   "activity": "patrol",
+   "dwell_s": 30,
+   "doing": "walking the hall"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Hobb would want to know how it works."
+ }
+}

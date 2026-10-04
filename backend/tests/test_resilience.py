@@ -41,6 +41,9 @@ def test_talk_still_works_when_every_model_call_fails(world, monkeypatch):
     assert world.http.get(f"/runs/{state['run_id']}").json()["event_seq"] == state["event_seq"]
 
 
+KADE = {"id": "npc_kade_east", "name": "Kade", "in_the_conversation": "addressed"}  # One person, addressed.
+
+
 class _Flaky:
     """A model client whose first structured answer is malformed and whose second is good."""
 
@@ -56,7 +59,7 @@ class _Flaky:
 
     def parse(self, **kwargs):
         if self._next() == "bad":
-            voice.Scene.model_validate_json('{"text": "Hm."}\n{"trailing": true}')  # Raises ValidationError.
+            voice.PersonLine.model_validate_json('{"text": "Hm."}\n{"trailing": true}')  # Raises ValidationError.
         return SimpleNamespace(usage=None, output_parsed=self.good)
 
     def create(self, **kwargs):
@@ -65,8 +68,8 @@ class _Flaky:
 
 
 def test_one_malformed_answer_is_asked_again(monkeypatch):
-    line = voice.SceneLine(
-        speaker_id="npc_kade_east",
+    reply = voice.PersonLine(
+        speaks=True,
         text="Haven't seen her. Ask at the inn.",
         brought_up_story_beat=False,
         move="answer",
@@ -83,12 +86,12 @@ def test_one_malformed_answer_is_asked_again(monkeypatch):
         errand_message="",
         promised_later="",
         remember="",
+        stranger_name="",
     )
-    reply = voice.Scene(lines=[line], stranger_name="")
     flaky = _Flaky(reply)
     monkeypatch.setattr(config, "mode", lambda: "live")
     monkeypatch.setattr(config, "client", lambda: flaky)
-    call = REAL_SCENE({"stranger_says": "Have you seen Hessa?"}, "fallback")
+    call = REAL_SCENE({"stranger_says": "Have you seen Hessa?", "people": [KADE]}, "fallback")
     assert call.status == "ok" and call.text.startswith("Haven't seen her") and flaky.calls == 2
     flaky = _Flaky(None)
     monkeypatch.setattr(config, "client", lambda: flaky)
@@ -106,12 +109,12 @@ class _Trailing:
 
     def parse(self, **kwargs):
         self.calls += 1
-        voice.Scene.model_validate_json(self.whole + " in final JSON schema")  # Raises ValidationError.
+        voice.PersonLine.model_validate_json(self.whole + " in final JSON schema")  # Raises ValidationError.
 
 
 def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
     line = {
-        "speaker_id": "npc_kade_east",
+        "speaks": True,
         "text": "Inn door.",
         "brought_up_story_beat": False,
         "move": "answer",
@@ -128,9 +131,10 @@ def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
         "errand_message": "",
         "promised_later": "",
         "remember": "",
+        "stranger_name": "",
     }
-    trailing = _Trailing(json.dumps({"lines": [line], "stranger_name": ""}))
+    trailing = _Trailing(json.dumps(line))
     monkeypatch.setattr(config, "mode", lambda: "live")
     monkeypatch.setattr(config, "client", lambda: trailing)
-    call = REAL_SCENE({"stranger_says": "Where's Hessa?"}, "fallback")
+    call = REAL_SCENE({"stranger_says": "Where's Hessa?", "people": [KADE]}, "fallback")
     assert call.status == "ok" and call.text == "Inn door." and trailing.calls == 1

@@ -1,0 +1,92 @@
+{
+ "id": "npc_godwin_porter",
+ "first_met_in": "the_gatekeeper",
+ "name": "Godwin",
+ "age": 58,
+ "role": "porter",
+ "look": "A heavy, slow old porter in his late fifties with a broken nose, white stubble, a blue livery coat with the Ashby badge, a leather cap and a big ring of keys at his belt, leaning on a stout staff.",
+ "look_kind": "old",
+ "guard": true,
+ "weapon": "stout staff",
+ "combat": "slow and heavy, an old brawler",
+ "armor": "none",
+ "armor_text": "a livery coat",
+ "personality": "Lazy, sharp-eyed and fond of a grievance; does the least he can, but knows exactly who is worth letting in. Soft on anyone who makes his day easier.",
+ "values": "a quiet gate, his ale, his own judgement",
+ "fears": "the steward's temper, trouble on his watch",
+ "authority": "Keeps the manor gate and its keys.",
+ "tones": [
+  "shrewd",
+  "angry"
+ ],
+ "relations": {
+  "npc_merrick_steward": "Steward Merrick",
+  "npc_ned_groom": "Ned the groom"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.4
+ },
+ "concerns": "The gate bell's rope snapped last night and he can't reach to mend it, so he's had to walk out to every caller himself. The steward's been shouting about the kitchen's kindling all morning.",
+ "refers": [],
+ "knowledge": {
+  "steward": {
+   "text": "Steward Merrick decides who comes into the manor; he wants a reason and someone's word.",
+   "line": "The steward decides. He'll want a reason, and someone to vouch for you.",
+   "trusted": false,
+   "lead": "Steward Merrick admits people with a reason and someone's word for them."
+  },
+  "ned": {
+   "text": "Ned the groom is the steward's favourite; a word from Ned goes a long way.",
+   "line": "Young Ned in the stables? Steward thinks the sun shines out of him.",
+   "trusted": false,
+   "lead": "Ned the groom has Steward Merrick's ear."
+  }
+ },
+ "persuaded_by": "anything that makes his day easier",
+ "style": "Grumbling, slow, sardonic.",
+ "mood": "grumpy",
+ "voice": {
+  "samples": [
+   "Business? Everyone's got business.",
+   "Bell's broke. So I have to walk. Again.",
+   "That's a kindness. Hm. Go on through, then.",
+   "Ask the steward. Not my place."
+  ],
+  "habits": "Jingles his keys; leans on his staff; grumbles about the bell.",
+  "never": "hurries",
+  "greeting": "Squints through the gate: 'And who might you be?'"
+ },
+ "goals": [
+  "A quiet day",
+  "Someone to mend the bell rope"
+ ],
+ "secrets": [],
+ "likes": "ale, sitting down, people who help",
+ "dislikes": "callers, the steward's lists, beggars",
+ "opinions": {
+  "npc_merrick_steward": {
+   "text": "a hard master with his lists",
+   "warmth": 0.1
+  },
+  "npc_ned_groom": {
+   "text": "a good lad",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "gate",
+   "place": "gate",
+   "activity": "look",
+   "dwell_s": 120,
+   "doing": "keeping the gate"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Godwin would want to know how it works."
+ },
+ "admits": "Godwin lets through anyone the steward or Ned speaks for to his face, and anyone who does him or the house a real good turn he sees with his own eyes (like mending the gate bell). Never beggars or sweet talkers."
+}

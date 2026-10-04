@@ -1,0 +1,160 @@
+{
+ "id": "npc_hessa_marr",
+ "first_met_in": "village",
+ "name": "Hessa",
+ "age": 35,
+ "role": "innkeeper",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Warm, very sociable and quick to read people; protective of her inn and of her brother Bren the guard.",
+ "values": "reputation, paying customers, family, keeping the peace",
+ "fears": "violence at her inn, Bren getting into trouble",
+ "authority": "Controls the inn and its yard; respected enough to vouch for someone.",
+ "tones": [
+  "frightened",
+  "protective",
+  "angry"
+ ],
+ "relations": {
+  "npc_bren_marr": "her brother Bren"
+ },
+ "family": [
+  "npc_bren_marr"
+ ],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.35
+ },
+ "concerns": "A busy yard, water to haul, travellers to feed, and keeping her brother Bren out of trouble.",
+ "refers": [
+  "npc_tomas_reed",
+  "npc_darin_ko",
+  "npc_bren_marr",
+  "npc_mara_venn"
+ ],
+ "knowledge": {
+  "tomas_beam": {
+   "text": "Tomas the carpenter lives inside the city and has been struggling for days to get a new beam up on the gate.",
+   "line": "Tomas the carpenter's been fighting that new gate beam for days. He lives inside the walls, you know.",
+   "trusted": false,
+   "lead": "Tomas the carpenter is struggling to get a new beam up on the gate."
+  },
+  "darin_trade": {
+   "text": "Darin the merchant lodges at the inn; he wants to trade inside the city and is always after a profitable deal.",
+   "line": "Darin, the merchant who lodges with me, is desperate to trade inside those walls. He'll deal with anyone who can turn him a profit.",
+   "trusted": false,
+   "lead": "Darin the merchant wants to trade inside the city and is always after a profitable deal."
+  },
+  "vouching": {
+   "text": "Captain Roderic listens when a resident he respects speaks up for a newcomer.",
+   "line": "Roderic's stiff, but he listens when someone he respects speaks for you.",
+   "trusted": false,
+   "lead": "Roderic listens when a resident he respects speaks up for a newcomer."
+  },
+  "bren_temper": {
+   "text": "Hessa's brother Bren has a temper when he feels he has been made a fool of.",
+   "line": "My brother Bren's a good man, but make a fool of him and you'll see his temper.",
+   "trusted": true,
+   "lead": "Bren hates being made a fool of."
+  }
+ },
+ "offers": [
+  {
+   "id": "water_haul",
+   "reward": "vouch",
+   "task": "bring Hessa a container full of water from the trough for her kitchen",
+   "check": "Has the stranger now handed Hessa a container with water in it?",
+   "lends": [
+    "bucket_hessa",
+    "trough_hessa"
+   ]
+  }
+ ],
+ "persuaded_by": "someone pitching in around the inn, and honest manners",
+ "style": "Warm and chatty; calls people 'love'; reads people quickly and says so.",
+ "mood": "cheerful",
+ "voice": {
+  "samples": [
+   "Oh, love, you look like the road chewed you up and spat you out. Sit a moment.",
+   "I can tell a liar before he's done wiping his feet, so let's not start that.",
+   "Water doesn't carry itself, more's the pity.",
+   "Bren's my brother, so don't you go making trouble at his gate."
+  ],
+  "habits": "Calls people 'love'; reads people out loud ('you've an honest face', 'you're holding something back'); talks while she works; brings up food, the yard and her brother.",
+  "never": "stays cold for long, or gossips about her paying guests to strangers",
+  "greeting": "Opens warmly, often mid-task: 'Oh, love,' 'Come in out of the road,' 'Mind the bucket, pet.'"
+ },
+ "goals": [
+  "Keep the yard running and the travellers fed",
+  "Keep her brother Bren out of trouble",
+  "Get the kitchen water hauled before evening"
+ ],
+ "secrets": [
+  {
+   "text": "Darin is three weeks behind on his lodging, and she hasn't pressed him.",
+   "reveal": "someone who has helped at the inn"
+  }
+ ],
+ "likes": "honest hands, news from the road, a full yard",
+ "dislikes": "brawlers, wasted water, anyone who picks on Bren",
+ "opinions": {
+  "npc_bren_marr": {
+   "text": "her little brother; she worries about him",
+   "warmth": 0.9
+  },
+  "npc_darin_ko": {
+   "text": "a lodger who talks sweet and pays slow",
+   "warmth": 0.1
+  },
+  "npc_tomas_reed": {
+   "text": "a good man working himself grey over that beam",
+   "warmth": 0.5
+  },
+  "npc_mara_venn": {
+   "text": "a sharp tongue and a good heart",
+   "warmth": 0.4
+  },
+  "npc_jory_venn": {
+   "text": "a sweet lad who never stops talking",
+   "warmth": 0.6
+  },
+  "npc_roderic_vale": {
+   "text": "stiff as his own gate, but fair",
+   "warmth": 0.3
+  },
+  "npc_oren_dast": {
+   "text": "something's troubling that boy",
+   "warmth": 0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "haul_water",
+   "place": "inn_yard",
+   "activity": "work",
+   "dwell_s": 60,
+   "doing": "hauling water for the kitchen"
+  },
+  {
+   "id": "greet",
+   "place": "inn_door",
+   "activity": "wait",
+   "dwell_s": 45,
+   "doing": "waiting at the inn door for travellers"
+  },
+  {
+   "id": "sweep",
+   "place": "inn_side",
+   "activity": "work",
+   "dwell_s": 45,
+   "doing": "sweeping the side of the yard"
+  }
+ ],
+ "superstition": {
+  "kind": "reverent",
+  "text": "Hessa keeps a little shrine for her lost husband and believes in signs. A true wonder moves her, gently."
+ }
+}

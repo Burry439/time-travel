@@ -1,0 +1,94 @@
+{
+ "id": "npc_aldo_elder",
+ "first_met_in": "three_voices",
+ "name": "Aldo",
+ "age": 34,
+ "role": "farmer",
+ "look": "A tall, stiff, careful man in his thirties with short fair hair, a lined face older than his years, a plain brown farmer's tunic and big work-roughened hands.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Proud, dutiful and bitter; stayed and worked while his brother left. Hides hurt as anger.",
+ "values": "duty, the farm, his mother",
+ "fears": "losing the farm to debt, being taken for granted",
+ "authority": "Runs the farm.",
+ "tones": [
+  "angry",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_hild_widow": "Hild, their mother",
+  "npc_berin_younger": "Berin, the younger son"
+ },
+ "family": [
+  "npc_hild_widow",
+  "npc_berin_younger"
+ ],
+ "regard": {
+  "trust": 0.2,
+  "suspicion": 0.3
+ },
+ "concerns": "Berin came back after three years away and wants half the farm. Aldo has paid their father's debts to the miller alone all year and won't tell anyone, out of pride.",
+ "refers": [],
+ "knowledge": {
+  "debts": {
+   "text": "He has paid every penny of their father's debts to the miller this year, alone.",
+   "line": "You want to know? Father owed Gerd the miller forty pennies. I've paid it. Every one. Alone.",
+   "trusted": true,
+   "lead": "Aldo has paid off his father's debts to the miller alone."
+  },
+  "berin": {
+   "text": "Berin left three years ago, the week of the harvest, without a word.",
+   "line": "He walked out at harvest. Three years. Not a word.",
+   "trusted": false,
+   "lead": "Berin left the farm at harvest three years ago."
+  }
+ },
+ "persuaded_by": "being seen for what he's done; the truth",
+ "style": "Clipped and cold; long silences.",
+ "mood": "angry",
+ "voice": {
+  "samples": [
+   "I stayed. He didn't.",
+   "You don't know what this farm costs.",
+   "Ask him where he's been.",
+   "...He said that? Father said that?"
+  ],
+  "habits": "Folds his arms; won't look at Berin; grips the table edge.",
+  "never": "admits he's hurt",
+  "greeting": "Nods stiffly: 'We've company. Mind your tongue, Berin.'"
+ },
+ "goals": [
+  "Keep the farm whole",
+  "Be thanked, just once"
+ ],
+ "secrets": [],
+ "likes": "hard work, order, his mother's cooking",
+ "dislikes": "Berin's charm, idleness, debts",
+ "opinions": {
+  "npc_hild_widow": {
+   "text": "his mother, worn to a thread",
+   "warmth": 0.8
+  },
+  "npc_berin_younger": {
+   "text": "a wastrel who ran off and came back for his share",
+   "warmth": -0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "table_w",
+   "place": "table_w",
+   "activity": "wait",
+   "dwell_s": 120,
+   "doing": "standing at the near end of the table, arms folded"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Aldo would want to know how it works."
+ }
+}

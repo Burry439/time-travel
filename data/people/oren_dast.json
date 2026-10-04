@@ -1,0 +1,118 @@
+{
+ "id": "npc_oren_dast",
+ "first_met_in": "village",
+ "name": "Oren",
+ "age": 27,
+ "role": "gate guard",
+ "guard": true,
+ "weapon": "spear",
+ "combat": "a trained guard, quick to act",
+ "armor": "mail",
+ "armor_text": "a mail shirt and an iron helmet",
+ "personality": "Cautious and quick to challenge inconsistencies in what people say; anxious to look decisive. Underneath the hard manner he is superstitious and easily spooked by what he can't explain; privately in debt to Darin.",
+ "values": "keeping his position, appearing decisive, paying his debts",
+ "fears": "his debt being exposed, the captain thinking him weak",
+ "authority": "Can stop, question, warn and hold people, and call the captain. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
+ "tones": [
+  "official",
+  "angry"
+ ],
+ "relations": {
+  "npc_darin_ko": "Darin, the merchant he owes money",
+  "npc_roderic_vale": "his captain",
+  "npc_bren_marr": "his fellow guard Bren"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.15,
+  "suspicion": 0.72
+ },
+ "concerns": "Looking decisive in front of the captain; keeping his debt to Darin quiet.",
+ "refers": [
+  "npc_roderic_vale"
+ ],
+ "knowledge": {
+  "captain_decides": {
+   "text": "Officially the captain decides who enters the city.",
+   "line": "The captain decides who goes in. Officially.",
+   "trusted": false,
+   "lead": "Only Captain Roderic decides who enters the city."
+  },
+  "no_papers": {
+   "text": "Strangers without papers or someone to sponsor them are turned away at the gate.",
+   "line": "No papers, no sponsor, no entry. That's how it is.",
+   "trusted": false,
+   "lead": "Strangers without papers or a sponsor are turned away at the gate."
+  }
+ },
+ "persuaded_by": "the captain's say-so; nothing a stranger says",
+ "style": "Curt and suspicious; pounces on anything that doesn't add up.",
+ "mood": "anxious",
+ "voice": {
+  "samples": [
+   "That doesn't add up. You said the south road, now it's the moor. Which is it?",
+   "Don't step closer. I mean it.",
+   "I've seen your sort. Talk first, trouble after.",
+   "The captain will hear about this. Every word."
+  ],
+  "habits": "Nervous and sharp: fires short challenges; repeats the stranger's own words back as a question ('A traveller? From where, exactly?'); counts and rules ('That's twice you've dodged it'); clears his throat and invokes the captain when unsure; bristles when money comes up.",
+  "never": "mentions his debt or admits he's afraid",
+  "greeting": "Opens by challenging something, too quickly: 'You there. Stop.' 'Says who?' 'Hands where I can see them.'"
+ },
+ "goals": [
+  "Look decisive in front of the captain",
+  "Pay Darin back before anyone finds out",
+  "Catch something the others missed"
+ ],
+ "secrets": [
+  {
+   "text": "He owes Darin eleven silver from dice, and Darin has started hinting he'll tell the captain.",
+   "reveal": "never willingly; only if cornered with proof"
+  }
+ ],
+ "likes": "being right, order, a win at dice",
+ "dislikes": "strangers with stories, Darin's smile, being laughed at",
+ "opinions": {
+  "npc_darin_ko": {
+   "text": "the man he owes; he dreads the sight of him",
+   "warmth": -0.6
+  },
+  "npc_roderic_vale": {
+   "text": "the man he has to impress",
+   "warmth": 0.4
+  },
+  "npc_bren_marr": {
+   "text": "decent, but asks too many questions",
+   "warmth": 0.2
+  },
+  "npc_kade_east": {
+   "text": "treats him like a boy",
+   "warmth": -0.1
+  },
+  "npc_elin_west": {
+   "text": "watches him too closely",
+   "warmth": -0.1
+  }
+ },
+ "tasks": [
+  {
+   "id": "east_post",
+   "place": "gate_east",
+   "activity": "look",
+   "dwell_s": 60,
+   "doing": "standing guard at the east post"
+  },
+  {
+   "id": "approach",
+   "place": "gate_approach",
+   "activity": "patrol",
+   "dwell_s": 45,
+   "doing": "pacing the gate approach"
+  }
+ ],
+ "superstition": {
+  "kind": "reverent",
+  "text": "Oren is anxious and half-believes the old stories. Something truly uncanny would awe him: he'd think the stranger touched by the gods, and be afraid to cross them."
+ },
+ "admits": "Oren lets someone through only out of fear or awe (someone he believes touched by the gods, or dangerous to cross), or if they have settled his debt with Darin. He never does it out of simple goodwill."
+}

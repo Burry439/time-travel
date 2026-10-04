@@ -1,0 +1,87 @@
+{
+ "id": "npc_tam_drover",
+ "first_met_in": "patched_up",
+ "name": "Tam",
+ "age": 34,
+ "role": "drover",
+ "look": "A lean, sunburnt drover in his thirties with a short black beard, a sheepskin vest over a grey shirt, a red bandana round his neck, and dusty boots.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "a strong drover, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Easy-going and clumsy; laughs at his own scrapes.",
+ "values": "his cattle, a dry bed, an honest wage",
+ "fears": "being laid up while the herd moves on",
+ "authority": "None.",
+ "tones": [
+  "frightened",
+  "angry"
+ ],
+ "relations": {
+  "npc_brea_healer": "Mother Brea"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "His herd is waiting at the ford; he wants to be on the road by noon.",
+ "refers": [],
+ "knowledge": {
+  "ford": {
+   "text": "The ford below the mill is safe to cross in the morning, before the mill opens the race.",
+   "line": "Cross at the ford before the mill opens the race, or you'll swim.",
+   "trusted": false,
+   "lead": "The ford below the mill is safe in the mornings."
+  }
+ },
+ "persuaded_by": "a joke",
+ "style": "Cheerful grumbling; makes light of pain.",
+ "mood": "cheerful",
+ "voice": {
+  "samples": [
+   "Ah, it's nothing. It's a lot of nothing.",
+   "Brea'll have my hide for this.",
+   "Twenty head of cattle and I trip over a stove.",
+   "Thank you kindly. That's better already."
+  ],
+  "habits": "Laughs off pain; thanks people warmly.",
+  "never": "complains for long",
+  "greeting": "Waves with his good hand: 'Morning! Don't mind me.'"
+ },
+ "goals": [
+  "Get back to the herd",
+  "Not lose a finger"
+ ],
+ "secrets": [],
+ "likes": "his cattle, ale, a good story",
+ "dislikes": "stoves, being fussed over",
+ "opinions": {
+  "npc_brea_healer": {
+   "text": "scary, and kind",
+   "warmth": 0.7
+  }
+ },
+ "tasks": [
+  {
+   "id": "stove",
+   "place": "stove",
+   "activity": "look",
+   "dwell_s": 30,
+   "doing": "warming his hands at the stove"
+  },
+  {
+   "id": "bench",
+   "place": "door",
+   "activity": "look",
+   "dwell_s": 20,
+   "doing": "looking out of the door"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Tam would want to know how it works."
+ }
+}

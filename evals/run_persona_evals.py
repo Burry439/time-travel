@@ -68,19 +68,19 @@ def main(argv: list[str]) -> int:
     people = state["npcs"]
     names = [n["name"] for n in people]
     # The judge knows each person as a townsfolk would: who they are and how they talk (the same in both conditions).
-    cast = "\n".join(f"- {n['name']}, {cast.card(n)['role']}: {cast.card(n)['personality']} Talks: "
-                     f"{cast.card(n)['style']}" for n in people)
+    who = "\n".join(f"- {n['name']}, {cast.card(n)['role']}: {cast.card(n)['personality']} Talks: "
+                    f"{cast.card(n)['style']}" for n in people)
     jobs = [(n, text) for n in people for text in LINES]
     with ThreadPoolExecutor(max_workers=8) as pool:
         lines = list(pool.map(lambda job: line_for(world(), job[0], job[1]), jobs))
-        guesses = list(pool.map(lambda pair: judge(cast, names, pair[0][1], pair[1]), zip(jobs, lines)))
+        guesses = list(pool.map(lambda pair: judge(who, names, pair[0][1], pair[1]), zip(jobs, lines)))
     rows = [{"npc": n["name"], "stranger": text, "line": line, "guess": guess, "right": guess == n["name"]}
             for (n, text), line, guess in zip(jobs, lines, guesses)]
     right = sum(r["right"] for r in rows)
     openings = Counter(" ".join(r["line"].lower().split()[:2]) for r in rows)
     shared = sum(1 for r in rows if openings[" ".join(r["line"].lower().split()[:2])] > 1)
     by_person = {name: sum(r["right"] for r in rows if r["npc"] == name) for name in names}
-    label = f"character sheets ({voice.SCENE_VERSION})"
+    label = f"character sheets ({voice.PERSON_VERSION}, one call per person)"
     print(f"{label}: speaker identified {right}/{len(rows)} ({100 * right / len(rows):.0f}%) · lines sharing their "
           f"first two words with another: {shared}/{len(rows)}")
     print("  per person: " + ", ".join(f"{k} {v}/{len(LINES)}" for k, v in by_person.items()))

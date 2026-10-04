@@ -1,0 +1,157 @@
+{
+ "id": "npc_roderic_vale",
+ "first_met_in": "village",
+ "name": "Roderic",
+ "age": 46,
+ "role": "captain of the city gate",
+ "guard": true,
+ "weapon": "sword",
+ "combat": "a trained, experienced fighter",
+ "armor": "mail",
+ "armor_text": "a mail shirt and an iron helmet",
+ "personality": "Dutiful, cautious and traditional; brief and formal; values evidence and responsibility; dislikes rambling.",
+ "values": "order, competence, protecting the gate, not looking foolish",
+ "fears": "letting a threat into the city, losing authority, disorder",
+ "authority": "The only person who can admit anyone to the city; commands the guards and can detain people.",
+ "tones": [
+  "official",
+  "angry"
+ ],
+ "relations": {
+  "npc_bren_marr": "his trusted guard Bren",
+  "npc_oren_dast": "Oren, a guard under his command",
+  "npc_elin_west": "his scout Elin",
+  "npc_kade_east": "his veteran guard Kade",
+  "npc_tomas_reed": "Tomas, the carpenter who repairs the gate; he respects his work",
+  "npc_hessa_marr": "Hessa the innkeeper, Bren's sister; a respected local whose word he would take",
+  "npc_mara_venn": "Mara the blacksmith, whose work he respects",
+  "npc_darin_ko": "Darin, a travelling merchant with a trade permit, whom he regards warily"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.15,
+  "suspicion": 0.68
+ },
+ "concerns": "Finishing the shift without incident; getting the new gate beam fixed safely; the night patrols losing their way on the moor road in fog.",
+ "refers": [],
+ "knowledge": {
+  "gate_rule": {
+   "text": "Roderic lets a stranger into the city only if he is sure they are no threat and they have a real reason to enter: a resident he trusts speaks for them, they are bound to honest business, or they bring something of clear value to the city or the garrison.",
+   "line": "Nobody passes this gate without a reason I can trust. Someone of standing to speak for you, honest business, or something of real use to this city.",
+   "trusted": false,
+   "lead": "Roderic admits strangers who aren't a threat and have a real reason: someone he trusts vouching, honest business, or something of clear value."
+  },
+  "gate_beam": {
+   "text": "The cracked bar across the gate has to come down and the new beam go up in its place, and Roderic wants it done without anyone hurt.",
+   "line": "That old bar's cracked through. The new one has to go up, and I'll not have a man crushed doing it.",
+   "trusted": false,
+   "lead": "Roderic wants the cracked gate bar swapped for the new beam without anyone getting hurt."
+  },
+  "fog_patrols": {
+   "text": "The night patrols get lost on the moor road when the fog comes down; last month a scout's horse went into the bog.",
+   "line": "When the fog comes down my patrols can't tell one direction from another. I lost a good horse to the bog that way.",
+   "trusted": true,
+   "lead": "Roderic's patrols lose their way on the moor road when the fog comes down."
+  }
+ },
+ "decides": "Roderic admits an unknown traveller only when he believes they are not a threat and have a legitimate reason to enter: a resident he trusts has vouched for them, they are bound to honest business (such as working for a merchant with a trade permit), or they have shown him something of concrete value to the city or the garrison. He refuses when his suspicion is high, when he has caught them in a lie, or after a crime. Talk alone, grand claims and pleading do not move him.",
+ "persuaded_by": "evidence: someone he trusts vouching for the stranger, honest business, or seeing something of real value to the city or garrison",
+ "style": "Formal and brief; short, complete sentences; never jokes; addresses the stranger as 'stranger'.",
+ "mood": "weary",
+ "voice": {
+  "samples": [
+   "State your business, stranger. Briefly.",
+   "I'll hear evidence. Not stories.",
+   "The gate stays shut until I'm satisfied. That's the end of it.",
+   "Bren. See to it."
+  ],
+  "habits": "Clipped, complete sentences; gives orders even mid-conversation; closes a matter flatly ('That's the end of it.'); names people by their post or calls them 'stranger'.",
+  "never": "jokes, thinks aloud, or admits doubt in front of his men",
+  "greeting": "Opens with an order or a question put like one: 'Halt there.' 'Name and business.'"
+ },
+ "goals": [
+  "Get the new beam up without anyone crushed under it",
+  "Keep the gate secure through the shift",
+  "Find a way for the night patrols to hold their heading in fog"
+ ],
+ "secrets": [
+  {
+   "text": "He sent the scout out into the fog the night her horse went into the bog, and blames himself for it.",
+   "reveal": "only to someone he has come to trust"
+  }
+ ],
+ "likes": "discipline, plain facts, well-made things",
+ "dislikes": "rambling, flattery, surprises at his gate",
+ "opinions": {
+  "npc_bren_marr": {
+   "text": "his most dependable guard",
+   "warmth": 0.6
+  },
+  "npc_oren_dast": {
+   "text": "eager, but jumpy lately; he isn't sure he can rely on him",
+   "warmth": 0.1
+  },
+  "npc_elin_west": {
+   "text": "sharp-eyed and honest",
+   "warmth": 0.5
+  },
+  "npc_kade_east": {
+   "text": "a steady old hand, too set in his ways",
+   "warmth": 0.3
+  },
+  "npc_tomas_reed": {
+   "text": "a good craftsman who is taking too long over the beam",
+   "warmth": 0.3
+  },
+  "npc_hessa_marr": {
+   "text": "a sensible woman whose word counts",
+   "warmth": 0.4
+  },
+  "npc_mara_venn": {
+   "text": "does honest work, when it's finally done",
+   "warmth": 0.2
+  },
+  "npc_darin_ko": {
+   "text": "a merchant who talks too smoothly",
+   "warmth": -0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "inspect_gate",
+   "place": "gate_centre",
+   "activity": "look",
+   "dwell_s": 70,
+   "doing": "inspecting the gate and its brackets"
+  },
+  {
+   "id": "west_post",
+   "place": "gate_west",
+   "activity": "patrol",
+   "dwell_s": 50,
+   "doing": "looking over the west post"
+  },
+  {
+   "id": "east_post",
+   "place": "gate_east",
+   "activity": "patrol",
+   "dwell_s": 50,
+   "doing": "looking over the east post"
+  },
+  {
+   "id": "admire_beam",
+   "place": "gate_centre",
+   "activity": "look",
+   "dwell_s": 50,
+   "doing": "looking over the new beam with some satisfaction",
+   "when": {
+    "kind": "installed",
+    "thing": "gate_beam"
+   }
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Roderic has buried men who trusted omens. Anything uncanny smells to him of trickery or witchcraft, and a stranger who works wonders is a danger to be watched, not a blessing."
+ }
+}

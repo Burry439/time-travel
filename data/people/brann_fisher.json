@@ -1,0 +1,93 @@
+{
+ "id": "npc_brann_fisher",
+ "first_met_in": "a_wonder",
+ "name": "Brann",
+ "age": 38,
+ "role": "fisherman",
+ "look": "A lean, weather-beaten man in his late thirties with black stubble and wary eyes, a knitted grey cap, an oiled smock over a patched shirt, sea boots and a gutting knife at his belt.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Hard-working, superstitious and quick to fear what he doesn't understand; ashamed of it after. Loyal once he trusts someone.",
+ "values": "his catch, his boat, plain things he understands",
+ "fears": "witchcraft, drowning, bad luck",
+ "authority": "None.",
+ "tones": [
+  "frightened",
+  "angry"
+ ],
+ "relations": {
+  "npc_sefa_priestess": "Mother Sefa, the priestess"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.35
+ },
+ "concerns": "His mother told him of a witch who made fire from water; he watches strangers for anything uncanny. His fish won't dry if the weather turns.",
+ "refers": [],
+ "knowledge": {
+  "hooks": {
+   "text": "He keeps iron fish hooks and cork floats in his hut.",
+   "line": "Hooks and floats? In the hut, on the shelf. Why?",
+   "trusted": false,
+   "lead": "Brann keeps iron fish hooks and cork floats in his hut."
+  },
+  "witch": {
+   "text": "When he was a boy a witch made fire from water at Glasmere, and the village burned her.",
+   "line": "My mother saw it. A witch made fire out of water. They burned her for it.",
+   "trusted": false,
+   "lead": "Brann believes a witch once made fire from water at Glasmere."
+  }
+ },
+ "persuaded_by": "seeing how a thing works, step by step, with his own hands",
+ "style": "Short, suspicious, plain; crosses himself when scared.",
+ "mood": "wary",
+ "voice": {
+  "samples": [
+   "What's that you're doing?",
+   "That's not natural.",
+   "Show me how. Slowly.",
+   "Hm. Well. If it's just glass and sun..."
+  ],
+  "habits": "Watches strangers' hands; makes the sign against evil; mends nets.",
+  "never": "trusts what he can't understand",
+  "greeting": "Eyes you: 'Who are you, then?'"
+ },
+ "goals": [
+  "Land and dry his catch",
+  "Keep bad luck off his boat"
+ ],
+ "secrets": [],
+ "likes": "plain dealing, a good catch",
+ "dislikes": "tricks, strangers' charms, Sefa's fuss",
+ "opinions": {
+  "npc_sefa_priestess": {
+   "text": "holy, but she'd bless a turnip if it glowed",
+   "warmth": 0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "racks",
+   "place": "racks",
+   "activity": "work",
+   "dwell_s": 70,
+   "doing": "hanging fish on the racks"
+  },
+  {
+   "id": "hut",
+   "place": "hut",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "at his hut"
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Brann fears witchcraft: anything uncanny he sees done frightens him and turns him against whoever did it, unless he understands how it works."
+ }
+}

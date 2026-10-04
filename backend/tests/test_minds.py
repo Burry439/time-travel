@@ -328,7 +328,9 @@ def test_close_witnesses_see_clearly_and_distant_ones_see_a_scuffle():
     assert memories["npc_darin_ko"]["severity"] < memories["npc_jory_venn"]["severity"]
 
 
-def test_everyone_deciding_shares_one_request():
+def test_everyone_deciding_has_a_request_of_their_own():
+    """D-59: each person is their own agent. Everyone who saw the stranger wound Tomas decides in their own request,
+    which holds only their own brief: never a section for anyone else."""
     state = unit_state()
     state["player"].update(x=40, y=40)
     place(state, "npc_tomas_reed", 41, 40)
@@ -339,12 +341,14 @@ def test_everyone_deciding_shares_one_request():
     wounding = killing("npc_tomas_reed")
     wounding["harm"]["result"] = "wounded"
     perception.apply_perceptions(state, perception.perceive(state, wounding))
-    text, questions, prefixes = routes_minds.batch_request(state, state["pending_minds"])
-    assert set(prefixes) == {"npc_tomas_reed", "npc_jory_venn", "npc_darin_ko"}
-    assert all(f"{prefix}action" in questions for prefix in prefixes.values())
-    assert "=== JORY" in text and "=== DARIN" in text
-    reply = {f"{prefixes['npc_jory_venn']}action": {"choice": "watch"}, f"{prefixes['npc_darin_ko']}fear": {"score": 1}}
-    assert routes_minds.answers_for(reply, prefixes["npc_jory_venn"]) == {"action": {"choice": "watch"}}
+    deciding = {p["npc_id"]: p for p in state["pending_minds"]}
+    assert set(deciding) == {"npc_tomas_reed", "npc_jory_venn", "npc_darin_ko"}
+    for npc_id, pending in deciding.items():
+        text, questions = routes_minds.decision_request(state, pending)
+        name = cast.find(state["npcs"], npc_id)["name"]
+        assert "action" in questions and text.startswith(f"{name} is ")  # Their own brief...
+        others = [cast.find(state["npcs"], other)["name"] for other in deciding if other != npc_id]
+        assert not any(f"{other} is the" in text for other in others)  # ...and nobody else's.
 
 
 def test_voices_fit_the_person_and_never_repeat():

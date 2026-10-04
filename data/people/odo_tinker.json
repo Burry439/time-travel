@@ -1,0 +1,104 @@
+{
+ "id": "npc_odo_tinker",
+ "first_met_in": "tinkers_book",
+ "name": "Odo",
+ "age": 52,
+ "role": "tinker",
+ "look": "A broad, balding man of about fifty with a grey-streaked beard and thick forearms, a scorched leather apron over a rust-red linen shirt with the sleeves rolled up, soot on his hands, a pair of tongs tucked into the apron pocket.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "strong arms, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gruff and busy, short on words and long on patience with anyone who's trying; can't abide waste or sloppy work.",
+ "values": "good work, thrift, teaching anyone willing to learn",
+ "fears": "losing his eyesight, a winter without work",
+ "authority": "Master of his own workshop.",
+ "tones": [
+  "shrewd",
+  "protective"
+ ],
+ "relations": {
+  "npc_nell_tinker": "his daughter Nell"
+ },
+ "family": [
+  "npc_nell_tinker"
+ ],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.25
+ },
+ "concerns": "Three things to make for his round tomorrow and only two hands: a rope, a torch and a sling.",
+ "refers": [
+  "npc_nell_tinker"
+ ],
+ "knowledge": {
+  "the_order": {
+   "text": "He needs a flax rope, a pitch torch and a leather sling for his round tomorrow.",
+   "line": "Rope, torch, sling. For the round tomorrow. Book's on the table.",
+   "trusted": false,
+   "lead": "Odo needs a flax rope, a pitch torch and a leather sling."
+  },
+  "old_soldier": {
+   "text": "An old soldier lives at the ruined smithy up the valley and teaches weapon-making to anyone who brings him iron.",
+   "line": "There's an old soldier at the ruined smithy up the valley. Bring him iron and he'll teach you weapons.",
+   "trusted": false,
+   "lead": "An old soldier at the ruined smithy teaches weapon-making for iron."
+  },
+  "city_tinkers": {
+   "text": "City tinkers need a guild token to work inside the walls; Odo never had one.",
+   "line": "Inside the walls you need a guild token to mend so much as a spoon. Never had one.",
+   "trusted": true,
+   "lead": "Tinkers need a guild token to work inside the city."
+  }
+ },
+ "persuaded_by": "seeing someone make something properly",
+ "style": "Few words, mostly nouns; grunts approval; explains only when asked twice.",
+ "mood": "busy",
+ "voice": {
+  "samples": [
+   "Book's on the table. Read it. Then make.",
+   "Hm. Not bad. Tighter next time.",
+   "Don't waste the pitch. Pitch costs.",
+   "You learn by your hands, not your mouth."
+  ],
+  "habits": "Speaks in short bits; grunts 'hm'; points at things instead of naming them; praises work, never people.",
+  "never": "chatters, flatters, or does a job for someone who could learn it",
+  "greeting": "Doesn't look up: 'Hm. Customer or help?'"
+ },
+ "goals": [
+  "Get the round's goods made",
+  "See Nell learn the trade",
+  "Find a pair of hands worth teaching"
+ ],
+ "secrets": [],
+ "likes": "careful work, good tools, his daughter's questions",
+ "dislikes": "waste, idle chatter, the city's guild",
+ "opinions": {
+  "npc_nell_tinker": {
+   "text": "his daughter; sharper than him",
+   "warmth": 0.9
+  }
+ },
+ "tasks": [
+  {
+   "id": "bench",
+   "place": "workbench",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "mending a dented kettle"
+  },
+  {
+   "id": "fire",
+   "place": "hearth",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "working the bellows"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Odo believes in what works."
+ }
+}

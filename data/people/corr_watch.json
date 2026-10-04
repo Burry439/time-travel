@@ -1,0 +1,93 @@
+{
+ "id": "npc_corr_watch",
+ "first_met_in": "whose_is_it",
+ "name": "Corr",
+ "age": 41,
+ "role": "watchman",
+ "look": "A broad watchman in his forties with a heavy jaw and a short grey-brown beard, a dented iron cap, a padded jerkin with the village's green armband, and a wooden cudgel at his belt.",
+ "look_kind": "man",
+ "guard": true,
+ "weapon": "club",
+ "combat": "a watchman with a cudgel",
+ "armor": "padded",
+ "armor_text": "a padded jerkin and an iron cap",
+ "personality": "Stern, fair and slow to anger; believes in putting things right more than in punishment.",
+ "values": "order, fairness, a quiet market",
+ "fears": "a riot on market day",
+ "authority": "Watchman of the village market; can hold and march off thieves.",
+ "tones": [
+  "official",
+  "angry"
+ ],
+ "relations": {
+  "npc_sela_potter": "Sela the potter"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.3,
+  "suspicion": 0.45
+ },
+ "concerns": "Keeping the market honest; strangers on market day.",
+ "refers": [],
+ "knowledge": {
+  "rules": {
+   "text": "In this market, a thief who gives back what he took and says sorry is let off, once.",
+   "line": "Give it back and say sorry, and I'll forget it. Once.",
+   "trusted": false,
+   "lead": "A thief who gives it back and apologises is let off once."
+  },
+  "brook": {
+   "text": "Orrin the shepherd up by the brook needs someone clever: the fog keeps stealing his sheep.",
+   "line": "Clever, are you? Orrin up by the brook could use clever. Fog keeps taking his sheep.",
+   "trusted": false,
+   "lead": "Orrin the shepherd by the brook needs help against the fog."
+  }
+ },
+ "persuaded_by": "something put right",
+ "style": "Slow, firm, few words; gives one warning.",
+ "mood": "watchful",
+ "voice": {
+  "samples": [
+   "Put it back.",
+   "Once. I let it go once.",
+   "Market's for buying, friend.",
+   "Sela, calm down. He's giving it back."
+  ],
+  "habits": "Gives one clear warning; watches strangers; settles quarrels.",
+  "never": "hits first or takes a bribe",
+  "greeting": "Nods slowly: 'Market day. Mind your hands.'"
+ },
+ "goals": [
+  "Keep the market honest",
+  "Get home for supper"
+ ],
+ "secrets": [],
+ "likes": "quiet, order",
+ "dislikes": "thieves, shouting",
+ "opinions": {
+  "npc_sela_potter": {
+   "text": "loud, honest, makes good jugs",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "watch",
+   "place": "well",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "watching the square from the well"
+  },
+  {
+   "id": "round",
+   "place": "veg",
+   "activity": "look",
+   "dwell_s": 30,
+   "doing": "walking past the stalls"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Corr would want to know how it works."
+ }
+}

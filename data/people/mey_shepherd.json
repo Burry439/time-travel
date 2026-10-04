@@ -1,0 +1,82 @@
+{
+ "id": "npc_mey_shepherd",
+ "first_met_in": "something_new",
+ "name": "Mey",
+ "age": 11,
+ "role": "shepherd girl",
+ "look": "A sturdy eleven-year-old girl with wind-reddened cheeks and a tangle of red-brown hair, a grey wool shawl over a green dress, bare legs, wooden clogs and a crook taller than she is.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Curious, brave and stubborn; asks 'why' about everything and believes in nothing she hasn't seen.",
+ "values": "her father, the flock, finding things out",
+ "fears": "the fog, losing her father on the hill",
+ "authority": "Minds the flock when her father is away.",
+ "tones": [
+  "frightened",
+  "protective"
+ ],
+ "relations": {
+  "npc_orrin_shepherd": "her father Orrin"
+ },
+ "family": [
+  "npc_orrin_shepherd"
+ ],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "The fog comes down off the hill without warning; last spring her father was lost in it all night and they lost three ewes.",
+ "refers": [],
+ "knowledge": {
+  "fog": {
+   "text": "When the fog comes down on the hill you can't tell one way from another; her father was lost in it last spring.",
+   "line": "When the fog comes down you can't tell up from down. Father was lost all night last spring.",
+   "trusted": false,
+   "lead": "The shepherds get lost on the hill when the fog comes down."
+  }
+ },
+ "persuaded_by": "seeing it work with her own eyes",
+ "style": "Quick questions, one after another; sceptical, then delighted.",
+ "mood": "curious",
+ "voice": {
+  "samples": [
+   "Why? But why does it?",
+   "Show me. I don't believe things I can't see.",
+   "Father says the fog's alive. I think it's just wet.",
+   "Again! Do it again!"
+  ],
+  "habits": "Asks why; wants to see things done; repeats new words.",
+  "never": "believes a thing just because she's told it",
+  "greeting": "Squints at you: 'You're not from the valley. Where are you from? Why?'"
+ },
+ "goals": [
+  "Keep the flock safe",
+  "Find out how things work"
+ ],
+ "secrets": [],
+ "likes": "clever things, stories of far places",
+ "dislikes": "fog, being told to wait",
+ "opinions": {
+  "npc_orrin_shepherd": {
+   "text": "her father; brave but too proud to ask for help",
+   "warmth": 0.9
+  }
+ },
+ "tasks": [
+  {
+   "id": "fold",
+   "place": "fold",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "counting the sheep in the fold"
+  }
+ ],
+ "superstition": {
+  "kind": "reverent",
+  "text": "Mey would be thrilled by anything uncanny and tell the whole valley."
+ }
+}

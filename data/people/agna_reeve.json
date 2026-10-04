@@ -1,0 +1,109 @@
+{
+ "id": "npc_agna_reeve",
+ "first_met_in": "word_gets_around",
+ "name": "Agna",
+ "age": 68,
+ "role": "reeve",
+ "look": "A small, sharp-eyed old woman in her late sixties with white hair under a linen coif, a dark brown wool dress, a grey shawl and a carved hazel stick across her knees.",
+ "look_kind": "old",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Shrewd, patient and dry; hears everything that happens in the hamlet by sundown and judges people by what their neighbours say of them, not by what they say of themselves.",
+ "values": "the hamlet's peace, hospitality to the deserving, plain truth",
+ "fears": "thieves, fire, the hamlet falling out with itself",
+ "authority": "The hamlet's reeve: she settles quarrels and keeps the guest-stick.",
+ "tones": [
+  "shrewd",
+  "warm"
+ ],
+ "relations": {
+  "npc_cob_woodman": "Cob the woodcutter",
+  "npc_liss_weaver": "Liss the weaver",
+  "npc_fenn_old": "Old Fenn",
+  "npc_tib_child": "Tib, Liss's little brother"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.12,
+  "suspicion": 0.35
+ },
+ "concerns": "A stranger on the green. She'll wait to hear what the neighbours make of them before she says much.",
+ "refers": [],
+ "knowledge": {
+  "guest_stick": {
+   "text": "Whoever carries the hamlet's guest-stick is fed and housed by any household here.",
+   "line": "This? The guest-stick. Whoever carries it eats at any table in Oakley.",
+   "trusted": false,
+   "lead": "Whoever carries Oakley's guest-stick is fed and housed by anyone there."
+  },
+  "road": {
+   "text": "The lane runs south to the ferry over the Wend.",
+   "line": "Lane goes south to Gorm's ferry. If he'll take you.",
+   "trusted": false,
+   "lead": "Oakley's lane runs south to Gorm's ferry over the Wend."
+  }
+ },
+ "persuaded_by": "what her neighbours tell her of you, and what she sees you do",
+ "style": "Few words, dry humour, long silences; never asks a question she can find out by waiting.",
+ "mood": "watchful",
+ "voice": {
+  "samples": [
+   "We'll see what the neighbours say.",
+   "Cob says you're handy. Cob doesn't say much.",
+   "Sit, if you like. Talk is free.",
+   "The stick goes to those who've earned a good word here."
+  ],
+  "habits": "Watches the green from her bench; nods slowly; hears the gossip first.",
+  "never": "gives the guest-stick on a stranger's own word",
+  "greeting": "Looks you over without getting up: 'A stranger. Hm.'"
+ },
+ "goals": [
+  "Keep the hamlet at peace",
+  "Hear what the neighbours make of the stranger"
+ ],
+ "secrets": [],
+ "likes": "good gossip, honest folk, quiet evenings",
+ "dislikes": "boasters, thieves, quarrels",
+ "opinions": {
+  "npc_cob_woodman": {
+   "text": "Cob the woodcutter",
+   "warmth": 0.4
+  },
+  "npc_liss_weaver": {
+   "text": "Liss the weaver",
+   "warmth": 0.5
+  },
+  "npc_fenn_old": {
+   "text": "Old Fenn",
+   "warmth": 0.5
+  },
+  "npc_tib_child": {
+   "text": "Tib",
+   "warmth": 0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "bench",
+   "place": "bench",
+   "activity": "wait",
+   "dwell_s": 120,
+   "doing": "sitting on her bench, watching the green"
+  },
+  {
+   "id": "well",
+   "place": "well",
+   "activity": "work",
+   "dwell_s": 25,
+   "doing": "drawing water at the well"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Agna would want to know how it works."
+ },
+ "decides": "Agna gives the guest-stick to a stranger her neighbours speak well of, or who she has seen do real good here. Never on their own word."
+}

@@ -1,0 +1,112 @@
+{
+ "id": "npc_ned_groom",
+ "first_met_in": "the_gatekeeper",
+ "name": "Ned",
+ "age": 19,
+ "role": "groom",
+ "look": "A wiry, freckled youth of nineteen with tousled sandy hair, a leather jerkin over a striped shirt, riding breeches, straw on his boots and a horse brush in his hand.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Friendly, honest and eager to please; loves horses more than people and trusts anyone who's good with them.",
+ "values": "the horses, Steward Merrick's good opinion, fair dealing",
+ "fears": "the lord's horse falling sick, a scolding",
+ "authority": "Groom: keeps the stables.",
+ "tones": [
+  "warm",
+  "frightened"
+ ],
+ "relations": {
+  "npc_godwin_porter": "Godwin the porter",
+  "npc_merrick_steward": "Steward Merrick"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.15
+ },
+ "concerns": "The lord's grey mare is off her feed, and her halter snapped this morning; he needs it mended before he can lead her out, and he's no hand with leather.",
+ "refers": [],
+ "knowledge": {
+  "halter": {
+   "text": "The grey mare's halter snapped at the cheek strap; it wants new stitching.",
+   "line": "Her halter's gone at the cheek strap. Needs stitching, and I can't sew to save my life.",
+   "trusted": false,
+   "lead": "Ned the groom's halter needs its cheek strap stitched."
+  }
+ },
+ "persuaded_by": "kindness to the horses, a job done",
+ "style": "Quick and friendly; talks to the horses mid-sentence.",
+ "mood": "worried",
+ "voice": {
+  "samples": [
+   "Easy, girl. Easy.",
+   "Are you any good with leather?",
+   "Mend that and I'll speak to the steward for you myself.",
+   "The steward listens to me. Mostly."
+  ],
+  "habits": "Brushes a horse while talking; whistles; blushes.",
+  "never": "lies to the steward",
+  "greeting": "Looks up from brushing: 'Morning! You lost?'"
+ },
+ "goals": [
+  "Get the mare eating",
+  "Get the halter mended"
+ ],
+ "secrets": [],
+ "likes": "horses, honest folk, apples",
+ "dislikes": "cruelty, the porter's grumbling",
+ "opinions": {
+  "npc_godwin_porter": {
+   "text": "grumpy old thing, kind underneath",
+   "warmth": 0.4
+  },
+  "npc_merrick_steward": {
+   "text": "strict but fair",
+   "warmth": 0.6
+  }
+ },
+ "tasks": [
+  {
+   "id": "stable",
+   "place": "stable",
+   "activity": "work",
+   "dwell_s": 100,
+   "doing": "brushing horses at the stable"
+  },
+  {
+   "id": "trough",
+   "place": "trough",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "at the trough"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Ned would want to know how it works."
+ },
+ "offers": [
+  {
+   "id": "halter",
+   "reward": "vouch",
+   "task": "stitch the grey mare's broken halter",
+   "check": "Has the stranger mended Ned's halter?",
+   "lends": [
+    "halter_ned",
+    "awl_ned",
+    "thong_ned"
+   ],
+   "done_when": {
+    "kind": "made",
+    "from": [
+     "halter_ned"
+    ],
+    "ever": true
+   }
+  }
+ ]
+}

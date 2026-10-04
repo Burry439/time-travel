@@ -1,0 +1,93 @@
+{
+ "id": "npc_aldric_cellarer",
+ "first_met_in": "a_secret_kept",
+ "name": "Aldric",
+ "age": 54,
+ "role": "monk and cellarer",
+ "look": "A tall, stooped monk in his fifties with a grey fringe of tonsured hair, a lined, tired face, a black Benedictine habit with the sleeves tied back, and a bee veil pushed up on his head.",
+ "look_kind": "old",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gentle, careful and tired; kind to anything small and helpless, closed as a shut door to anyone he doesn't know. Lies badly, so says nothing.",
+ "values": "his bees, his brother, the poor",
+ "fears": "the abbot finding out, his brother dying alone",
+ "authority": "Cellarer of St Ebba's: keeps the stores, the cellar keys and the bees.",
+ "tones": [
+  "frightened",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_wystan_laybrother": "Brother Wystan, the lay brother"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.12,
+  "suspicion": 0.4
+ },
+ "concerns": "The wind knocked a hive over and the bees stung his hand; he cut it on the split frame too. He's tired from going out every night, and frightened someone will notice. He longs to tell someone he can trust: carrying it alone is breaking him.",
+ "refers": [],
+ "knowledge": {
+  "bees": {
+   "text": "The knocked-over skep needs setting upright on the stand before the bees will settle.",
+   "line": "The skep must go back on its stand, gently, or they'll swarm off.",
+   "trusted": false,
+   "lead": "Brother Aldric's knocked-over beehive needs setting back on its stand."
+  },
+  "secret": {
+   "text": "Every night he takes bread and honey to his brother Wil, a leper who lives in the old charcoal-burner's hut in Ashwood; the abbot would have Wil driven off if he knew.",
+   "line": "My brother. Wil. He has the leprosy; he lives in the old charcoal hut in Ashwood. I take him bread and honey every night. If the abbot knew, he'd have him driven out of the valley.",
+   "trusted": true,
+   "lead": "Brother Aldric takes bread to his leper brother Wil in Ashwood every night, in secret."
+  }
+ },
+ "persuaded_by": "kindness he sees with his own eyes, Brother Wystan's word, and a promise to keep it from the abbot",
+ "style": "Quiet and careful; long pauses; changes the subject when pressed.",
+ "mood": "weary",
+ "voice": {
+  "samples": [
+   "The bees are cross today. So am I, I think.",
+   "Where I go is between me and God.",
+   "Wystan talks too much.",
+   "You're kind. I'd forgotten what that was like from a stranger."
+  ],
+  "habits": "Rubs his stung hand; glances at the cellar door; changes the subject.",
+  "never": "tells his secret to someone he doesn't yet trust, or lies outright",
+  "greeting": "Looks up warily: 'Peace be with you. Can I help you?'"
+ },
+ "goals": [
+  "Keep his brother safe and fed",
+  "Keep his bees"
+ ],
+ "secrets": [],
+ "likes": "bees, quiet, small kindnesses",
+ "dislikes": "prying, gossip, the abbot's temper",
+ "opinions": {
+  "npc_wystan_laybrother": {
+   "text": "a good lad with a loose tongue",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "hives",
+   "place": "hives",
+   "activity": "work",
+   "dwell_s": 80,
+   "doing": "trying to calm the bees at the hives"
+  },
+  {
+   "id": "cellar",
+   "place": "cellar",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "at the cellar door"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Aldric would want to know how it works."
+ }
+}

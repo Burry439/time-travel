@@ -1,0 +1,123 @@
+{
+ "id": "npc_tib_child",
+ "first_met_in": "word_gets_around",
+ "name": "Tib",
+ "age": 10,
+ "role": "boy",
+ "look": "A skinny, scruffy boy of about ten with a mop of red hair, a dirty face, a too-big tunic belted with string and bare muddy feet.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Nosy, quick and fearless; runs between houses all day and carries every bit of news.",
+ "values": "news, sweets, being first to tell",
+ "fears": "Agna's frown, the dark",
+ "authority": "None.",
+ "tones": [
+  "warm"
+ ],
+ "relations": {
+  "npc_agna_reeve": "Agna, the reeve",
+  "npc_cob_woodman": "Cob the woodcutter",
+  "npc_liss_weaver": "Liss the weaver",
+  "npc_fenn_old": "Old Fenn"
+ },
+ "family": [
+  "npc_liss_weaver"
+ ],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.2
+ },
+ "concerns": "Finding out who the stranger is before anyone else does.",
+ "refers": [],
+ "knowledge": {
+  "stick": {
+   "text": "Agna gives her guest-stick to strangers the neighbours speak well of.",
+   "line": "If you want Agna's stick, get people saying nice things about you. That's how.",
+   "trusted": false,
+   "lead": "Agna gives her guest-stick to strangers the neighbours speak well of."
+  }
+ },
+ "persuaded_by": "being told something first",
+ "style": "Breathless questions, all at once.",
+ "mood": "excited",
+ "voice": {
+  "samples": [
+   "Who are you? Where are you from? Is that a sword?",
+   "I'll tell Agna!",
+   "Liss cut her hand. There was loads of blood.",
+   "Can I carry that?"
+  ],
+  "habits": "Runs everywhere; listens at doors; reports to Agna.",
+  "never": "keeps news to himself",
+  "greeting": "Skids to a stop: 'Who are you?'"
+ },
+ "goals": [
+  "Know everything first"
+ ],
+ "secrets": [],
+ "likes": "news, running, sweets",
+ "dislikes": "being sent home",
+ "opinions": {
+  "npc_agna_reeve": {
+   "text": "Agna",
+   "warmth": 0.5
+  },
+  "npc_cob_woodman": {
+   "text": "Cob the woodcutter",
+   "warmth": 0.4
+  },
+  "npc_liss_weaver": {
+   "text": "Liss the weaver",
+   "warmth": 0.8
+  },
+  "npc_fenn_old": {
+   "text": "Old Fenn",
+   "warmth": 0.4
+  }
+ },
+ "tasks": [
+  {
+   "id": "green",
+   "place": "green",
+   "activity": "walk",
+   "dwell_s": 20,
+   "doing": "running about the green"
+  },
+  {
+   "id": "bench",
+   "place": "bench",
+   "activity": "wait",
+   "dwell_s": 20,
+   "doing": "pestering Agna"
+  },
+  {
+   "id": "cob",
+   "place": "cob",
+   "activity": "wait",
+   "dwell_s": 20,
+   "doing": "watching Cob"
+  },
+  {
+   "id": "liss",
+   "place": "liss",
+   "activity": "wait",
+   "dwell_s": 20,
+   "doing": "at Liss's door"
+  },
+  {
+   "id": "well",
+   "place": "well",
+   "activity": "wait",
+   "dwell_s": 20,
+   "doing": "hanging round the well"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Tib would want to know how it works."
+ }
+}

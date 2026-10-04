@@ -1,0 +1,164 @@
+{
+ "id": "npc_tomas_reed",
+ "first_met_in": "village",
+ "name": "Tomas",
+ "age": 36,
+ "role": "carpenter",
+ "guard": false,
+ "weapon": "carpenter's hammer",
+ "combat": "sturdy but no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Methodical and proud of his craft; likes clear explanations and measurements; wary of thieves around his tools. But the stuck gate beam has worn his pride thin: with the captain watching, he'd gladly take a capable pair of hands.",
+ "values": "good workmanship, efficiency, respect for skill",
+ "fears": "tool theft, unsafe structures being blamed on him",
+ "authority": "Owns his tools and timber; does repair work at the gate.",
+ "tones": [
+  "angry",
+  "frightened"
+ ],
+ "relations": {
+  "npc_mara_venn": "Mara, a trusted trading partner"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.3,
+  "suspicion": 0.32
+ },
+ "concerns": "Getting the cracked bar down off the gate and the 60 kg replacement beam lifted two metres up into the same iron brackets, safely; getting nails from Mara; getting paid.",
+ "refers": [
+  "npc_mara_venn",
+  "npc_roderic_vale"
+ ],
+ "knowledge": {
+  "beam_problem": {
+   "text": "The old bar across the gate is cracked and must come down, and the 60 kg replacement lifted two metres up into the same iron brackets; two men have struggled with it and the captain wants it done safely.",
+   "line": "Sixty kilos of oak, two metres up into the brackets, and the captain watching. Two of us couldn't manage it safely.",
+   "trusted": false,
+   "lead": "Tomas needs a safe way to swap the cracked gate bar for the new 60 kg beam."
+  },
+  "lives_inside": {
+   "text": "Tomas lives inside the city and does repair work on the gate.",
+   "line": "I live inside, and the gate's my work.",
+   "trusted": false,
+   "lead": "Tomas lives inside the city and works on the gate."
+  },
+  "tools": {
+   "text": "Tomas has a 3 m ladder, 6 m of rope, planks and a fulcrum stone in his yard.",
+   "line": "I've a ladder, three metres, and six metres of good rope. Planks too.",
+   "trusted": false,
+   "lead": "Tomas has a 3 m ladder, 6 m of rope, planks and a fulcrum stone."
+  }
+ },
+ "offers": [
+  {
+   "id": "beam_help",
+   "reward": "vouch",
+   "task": "get the cracked bar down off the gate and the new 60 kg gate beam safely up into its iron brackets",
+   "check": "Did the stranger get the gate beam up into its brackets, safely?",
+   "done_when": {
+    "kind": "installed",
+    "thing": "gate_beam"
+   },
+   "lends": [
+    "gate_beam",
+    "rope_tomas",
+    "ladder_tomas",
+    "fulcrum_tomas",
+    "trestles_gate",
+    "hammer_tomas"
+   ]
+  }
+ ],
+ "persuaded_by": "someone showing real skill with wood, or a safe way to lift heavy things",
+ "style": "Measured and precise; talks in measurements and how things are built.",
+ "mood": "weary",
+ "voice": {
+  "samples": [
+   "Sixty kilos of oak, two metres up. That's not a job for wishing.",
+   "Measure twice. I've cut once and paid for it.",
+   "Mind the trestles; they're square and I'd like them to stay square.",
+   "If you've a way to lift it safely, I'm listening. Properly listening."
+  ],
+  "habits": "Speaks in measurements and materials; goes step by step; sighs about the beam; tests ideas aloud ('if the fulcrum's here, then...').",
+  "never": "exaggerates, or trusts a plan he can't picture",
+  "greeting": "Opens with the work in front of him: 'Mind the timber.' 'Hold that end, would you? No, never mind.'"
+ },
+ "goals": [
+  "Get the gate beam up safely before the captain loses patience",
+  "Get nails from Mara",
+  "Get paid for the gate work"
+ ],
+ "secrets": [
+  {
+   "text": "He cracked the first beam by rushing it, which is why there's a replacement at all.",
+   "reveal": "someone who helps with the beam"
+  }
+ ],
+ "likes": "good timber, careful work, clear plans",
+ "dislikes": "thieves, sloppy work, being rushed",
+ "opinions": {
+  "npc_mara_venn": {
+   "text": "a trusted partner who keeps her word",
+   "warmth": 0.6
+  },
+  "npc_roderic_vale": {
+   "text": "watches him like a hawk about that beam",
+   "warmth": 0.1
+  },
+  "npc_jory_venn": {
+   "text": "an eager lad with fingers everywhere",
+   "warmth": 0.3
+  },
+  "npc_hessa_marr": {
+   "text": "kind; always saves him a bowl",
+   "warmth": 0.5
+  },
+  "npc_darin_ko": {
+   "text": "sells good rope and charges too much for it",
+   "warmth": 0.0
+  }
+ },
+ "tasks": [
+  {
+   "id": "bench",
+   "place": "carpenter_bench",
+   "activity": "work",
+   "dwell_s": 70,
+   "doing": "working at his bench"
+  },
+  {
+   "id": "timber",
+   "place": "carpenter_yard",
+   "activity": "work",
+   "dwell_s": 50,
+   "doing": "sorting timber in the yard"
+  },
+  {
+   "id": "measure_beam",
+   "place": "gate_approach",
+   "activity": "look",
+   "dwell_s": 45,
+   "doing": "measuring the gate beam again",
+   "unless": {
+    "kind": "installed",
+    "thing": "gate_beam"
+   }
+  },
+  {
+   "id": "celebrate",
+   "place": "inn_door",
+   "activity": "wait",
+   "dwell_s": 60,
+   "doing": "celebrating the raised beam at the inn",
+   "when": {
+    "kind": "installed",
+    "thing": "gate_beam"
+   }
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Tomas wants to know how a thing works. A wonder is a puzzle to him until he understands it."
+ }
+}

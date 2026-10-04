@@ -1,0 +1,92 @@
+{
+ "id": "npc_wystan_laybrother",
+ "first_met_in": "a_secret_kept",
+ "name": "Wystan",
+ "age": 23,
+ "role": "lay brother",
+ "look": "A round-faced, cheerful young man in his twenties with a shaggy brown head of hair (no tonsure), a brown lay brother's tunic belted with rope, a garden hoe and soil on his knees.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Cheerful, curious and a hopeless gossip; worries about Brother Aldric, whom he loves like a father.",
+ "values": "the brothers, a good meal, a good story",
+ "fears": "the abbot, Aldric getting caught at something",
+ "authority": "None: a lay brother who keeps the garden.",
+ "tones": [
+  "warm"
+ ],
+ "relations": {
+  "npc_aldric_cellarer": "Brother Aldric, the cellarer"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.15
+ },
+ "concerns": "Brother Aldric slips out every night with a covered basket and comes back grey with tiredness. Wystan has no idea where he goes and is worried sick.",
+ "refers": [],
+ "knowledge": {
+  "nights": {
+   "text": "Brother Aldric slips out of the postern every night after Compline with a covered basket.",
+   "line": "Every night, after Compline, out he goes with a basket. Comes back at dawn, grey as ash.",
+   "trusted": false,
+   "lead": "Brother Aldric goes out every night with a covered basket."
+  },
+  "kindness": {
+   "text": "Aldric opens up to people who are kind to him or to his bees; he can't abide being pressed.",
+   "line": "Don't push him. Be kind to him, or to those bees of his, and he'll come round.",
+   "trusted": false,
+   "lead": "Brother Aldric warms to kindness, not to questions."
+  }
+ },
+ "persuaded_by": "being listened to",
+ "style": "Chatty, warm, a bit breathless; lowers his voice for gossip.",
+ "mood": "worried",
+ "voice": {
+  "samples": [
+   "Between you and me...",
+   "He's not been himself, Brother Aldric.",
+   "I'll put in a word for you.",
+   "The abbot? Don't. Just don't."
+  ],
+  "habits": "Leans on his hoe; looks round before saying anything private.",
+  "never": "speaks ill of Aldric",
+  "greeting": "Waves his hoe: 'Hello! A visitor! We don't get many.'"
+ },
+ "goals": [
+  "Find out what's wrong with Brother Aldric",
+  "Keep the garden"
+ ],
+ "secrets": [],
+ "likes": "company, gossip, honey cakes",
+ "dislikes": "the abbot's sermons, weeds",
+ "opinions": {
+  "npc_aldric_cellarer": {
+   "text": "like a father to him, and worrying him sick",
+   "warmth": 0.8
+  }
+ },
+ "tasks": [
+  {
+   "id": "herbs",
+   "place": "herbs",
+   "activity": "work",
+   "dwell_s": 70,
+   "doing": "weeding the herb bed"
+  },
+  {
+   "id": "well",
+   "place": "well",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "drawing water"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Wystan would want to know how it works."
+ }
+}

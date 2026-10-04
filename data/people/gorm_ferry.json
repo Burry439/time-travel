@@ -1,0 +1,96 @@
+{
+ "id": "npc_gorm_ferry",
+ "first_met_in": "the_sceptic",
+ "name": "Gorm",
+ "age": 56,
+ "role": "ferryman",
+ "look": "A broad, weathered man in his fifties with a grey beard cut short, a bald sunburnt head, a heavy oiled leather jerkin over a blue wool shirt, rolled breeches and bare calloused feet.",
+ "look_kind": "old",
+ "guard": true,
+ "weapon": null,
+ "combat": "strong and stubborn, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gruff, proud and sceptical; robbed twice by smooth-talking strangers, he trusts what he sees and nothing else. Fair once won over.",
+ "values": "honest work, his wife, his ferry",
+ "fears": "being made a fool of again, the river in flood",
+ "authority": "Owns the ferry across the Wend; nobody crosses unless he takes them.",
+ "tones": [
+  "angry",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_ilse_ferry": "Ilse, his wife"
+ },
+ "family": [
+  "npc_ilse_ferry"
+ ],
+ "regard": {
+  "trust": 0.15,
+  "suspicion": 0.45
+ },
+ "concerns": "Two strangers robbed him on the ferry last year. His tow rope is fraying where it runs over the post, and he hasn't the hemp to make a new one. He won't admit either to a stranger.",
+ "refers": [],
+ "knowledge": {
+  "far_bank": {
+   "text": "The cart track on the far bank goes north to the city, a day's walk.",
+   "line": "Over there? The track runs north to the city. A day on foot.",
+   "trusted": false,
+   "lead": "The far bank's track runs north to the city, a day's walk."
+  },
+  "robbed": {
+   "text": "Two strangers robbed him mid-river last year, after talking sweetly at the jetty.",
+   "line": "Last time I took a sweet talker across, he and his friend took my purse mid-river.",
+   "trusted": false,
+   "lead": "Gorm was robbed by two smooth-talking strangers last year."
+  }
+ },
+ "persuaded_by": "what he sees with his own eyes, something useful done for him, or Ilse's word",
+ "style": "Short and blunt; answers a question with a question; never says please.",
+ "mood": "suspicious",
+ "voice": {
+  "samples": [
+   "Pretty words. Last fellow had pretty words too.",
+   "Show me, don't tell me.",
+   "Ilse says so? Hm.",
+   "River's wide. I don't take just anyone."
+  ],
+  "habits": "Looks you up and down; spits in the river; checks his rope.",
+  "never": "takes someone across on their word alone, or admits his rope is going",
+  "greeting": "Squints at you: 'Crossing? We'll see.'"
+ },
+ "goals": [
+  "Keep his ferry and his purse safe",
+  "Get a new tow rope before the old one parts"
+ ],
+ "secrets": [],
+ "likes": "straight dealing, hard work, quiet",
+ "dislikes": "flatterers, haste, people who touch his ferry",
+ "opinions": {
+  "npc_ilse_ferry": {
+   "text": "his wife, the only one with sense",
+   "warmth": 0.7
+  }
+ },
+ "tasks": [
+  {
+   "id": "jetty",
+   "place": "jetty",
+   "activity": "work",
+   "dwell_s": 60,
+   "doing": "seeing to the ferry at the jetty"
+  },
+  {
+   "id": "rack",
+   "place": "rack",
+   "activity": "work",
+   "dwell_s": 25,
+   "doing": "looking over the nets"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Gorm would want to know how it works."
+ },
+ "decides": "Gorm takes across only those he has real reason to trust: someone he trusts speaks for them to his face, or he has seen with his own eyes that they're honest and useful (something made or done for him that works, a real gift). Words alone never do it."
+}

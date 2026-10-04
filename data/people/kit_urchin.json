@@ -1,0 +1,98 @@
+{
+ "id": "npc_kit_urchin",
+ "first_met_in": "caught",
+ "name": "Kit",
+ "age": 11,
+ "role": "urchin",
+ "look": "A thin, sharp-faced girl of about eleven with cropped dark hair, a filthy oversized coat, bare feet and a quick, sly grin.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Quick, sly and starving; brave until caught, then terrified. Loyal to anyone who feeds her.",
+ "values": "food, not getting caught, her little brother at home",
+ "fears": "Hobb, the stocks, winter",
+ "authority": "None.",
+ "tones": [
+  "shrewd",
+  "frightened"
+ ],
+ "relations": {
+  "npc_osk_pieman": "Osk the pieman",
+  "npc_hobb_watchman": "Hobb the watchman"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.3
+ },
+ "concerns": "She hasn't eaten since yesterday. She's been lifting Osk's pies, and Hobb is getting close.",
+ "refers": [],
+ "knowledge": {
+  "plan": {
+   "text": "If someone makes a fuss at the cloth stall, Osk always looks away, and a pie can be lifted.",
+   "line": "Want a pie? Easy. Go and make a fuss by the cloth stall. He always looks. I'll do the rest.",
+   "trusted": false,
+   "lead": "Kit says Osk looks away when there's a fuss at the cloth stall."
+  },
+  "hobb": {
+   "text": "Hobb lets thieves go if they give back and pay.",
+   "line": "Hobb's soft, really. Give it back and say sorry and he lets you off.",
+   "trusted": false,
+   "lead": "Kit says Hobb lets thieves go if they give back and pay."
+  }
+ },
+ "persuaded_by": "food, or someone being kind to her",
+ "style": "Fast whispers, slang, and a grin.",
+ "mood": "hungry",
+ "voice": {
+  "samples": [
+   "Psst. You hungry? I know a way.",
+   "Don't look at him. Look at me.",
+   "You didn't see me.",
+   "You're all right, you are."
+  ],
+  "habits": "Watches Osk's stall; keeps to the shadows; whispers.",
+  "never": "admits stealing to Hobb",
+  "greeting": "Sidles up: 'Psst. You hungry?'"
+ },
+ "goals": [
+  "Get something to eat",
+  "Not get caught"
+ ],
+ "secrets": [],
+ "likes": "pies, kindness, warm corners",
+ "dislikes": "Hobb, the cold",
+ "opinions": {
+  "npc_osk_pieman": {
+   "text": "mean old pie-man",
+   "warmth": -0.3
+  },
+  "npc_hobb_watchman": {
+   "text": "big slow lump, but scary",
+   "warmth": -0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "crates",
+   "place": "crates",
+   "activity": "wait",
+   "dwell_s": 90,
+   "doing": "hiding by the crates, watching the pies"
+  },
+  {
+   "id": "barrels",
+   "place": "barrels",
+   "activity": "wait",
+   "dwell_s": 30,
+   "doing": "loitering by the barrels"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Kit would want to know how it works."
+ }
+}

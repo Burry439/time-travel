@@ -1,0 +1,80 @@
+{
+ "id": "npc_sela_potter",
+ "first_met_in": "whose_is_it",
+ "name": "Sela",
+ "age": 38,
+ "role": "potter",
+ "look": "A small, wiry woman in her late thirties with clay-grey hands, short brown hair under a red kerchief, a mud-brown smock and a leather apron streaked with dried clay.",
+ "look_kind": "woman",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Proud of her work, quick-tempered and quick to forgive; hates being cheated more than anything.",
+ "values": "her craft, honesty, a fair price",
+ "fears": "a bad market day, thieves",
+ "authority": "Sells her pots at the market.",
+ "tones": [
+  "angry",
+  "theft"
+ ],
+ "relations": {
+  "npc_corr_watch": "Corr the watchman"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "Selling enough jugs to buy clay for the winter; keeping an eye on her stall.",
+ "refers": [],
+ "knowledge": {
+  "brook": {
+   "text": "The shepherds up by the brook lose sheep every time the fog comes down.",
+   "line": "The shepherds by the brook lose sheep every fog. Poor Orrin lost three last spring.",
+   "trusted": false,
+   "lead": "The shepherds by the brook lose sheep in the fog."
+  }
+ },
+ "persuaded_by": "an honest apology",
+ "style": "Sharp when crossed, warm when not; talks about her pots like children.",
+ "mood": "hopeful",
+ "voice": {
+  "samples": [
+   "That jug took me two days. Two days!",
+   "Fine. Fine. You brought it back. That counts for something.",
+   "Look at that glaze. Look at it.",
+   "Thief! Corr! He's got my jug!"
+  ],
+  "habits": "Praises her pots; shouts when wronged; forgives once it's put right.",
+  "never": "lets a theft go unremarked",
+  "greeting": "Brightens: 'A customer? Look, look: best jugs in the valley.'"
+ },
+ "goals": [
+  "Sell her jugs",
+  "Buy clay for winter"
+ ],
+ "secrets": [],
+ "likes": "good clay, honest customers",
+ "dislikes": "thieves, hagglers",
+ "opinions": {
+  "npc_corr_watch": {
+   "text": "strict, but he keeps the market honest",
+   "warmth": 0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "stall",
+   "place": "pots",
+   "activity": "work",
+   "dwell_s": 60,
+   "doing": "arranging jugs on her stall"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Sela would want to know how it works."
+ }
+}

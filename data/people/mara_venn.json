@@ -1,0 +1,141 @@
+{
+ "id": "npc_mara_venn",
+ "first_met_in": "village",
+ "name": "Mara",
+ "age": 39,
+ "role": "blacksmith",
+ "guard": false,
+ "weapon": "smith's hammer",
+ "combat": "strong and unafraid, but no trained fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Practical, curious and blunt; dislikes nonsense; fiercely protective of her nephew Jory.",
+ "values": "competence, useful ideas, fair exchange, protecting Jory",
+ "fears": "wasting metal, fire in the forge, being conned",
+ "authority": "Controls the forge and her metal stock.",
+ "tones": [
+  "angry",
+  "protective"
+ ],
+ "relations": {
+  "npc_jory_venn": "her nephew Jory",
+  "npc_tomas_reed": "Tomas, a trusted trading partner"
+ },
+ "family": [
+  "npc_jory_venn"
+ ],
+ "regard": {
+  "trust": 0.3,
+  "suspicion": 0.38
+ },
+ "concerns": "A repair order for the guards that is behind schedule; wasting metal; keeping Jory out of trouble.",
+ "refers": [
+  "npc_tomas_reed",
+  "npc_darin_ko",
+  "npc_jory_venn"
+ ],
+ "knowledge": {
+  "guard_order": {
+   "text": "Mara is behind on a repair order for the gate guards and hates to see metal wasted.",
+   "line": "I'm behind on the guards' repairs as it is. I've no metal to waste on strangers' notions.",
+   "trusted": false,
+   "lead": "Mara is behind on a repair order for the guards."
+  },
+  "needles": {
+   "text": "Mara keeps a stack of iron needles and pins and a box of nails in the smithy.",
+   "line": "I've needles and pins and nails enough, if someone had a real use for them.",
+   "trusted": false,
+   "lead": "Mara keeps iron needles and nails at the smithy."
+  },
+  "darin_stone": {
+   "text": "Darin the merchant has an odd dark stone that pulls iron to it.",
+   "line": "Darin carries a queer black stone that pulls iron to it. Calls it a curiosity.",
+   "trusted": false,
+   "lead": "Darin the merchant has a strange stone that pulls iron to it."
+  }
+ },
+ "offers": [
+  {
+   "id": "forge_fuel",
+   "reward": "vouch",
+   "task": "bring Mara fuel for her forge, such as charcoal or dry wood",
+   "check": "Has the stranger now handed Mara fuel for her forge, such as charcoal or dry wood?"
+  }
+ ],
+ "persuaded_by": "a genuinely useful idea, or fuel for her forge",
+ "style": "Blunt and practical; talks about work and materials; no patience for fancy words.",
+ "mood": "irritable",
+ "voice": {
+  "samples": [
+   "Talk's cheap. Iron isn't.",
+   "If it's worth doing, show me. If it isn't, you're in my light.",
+   "Jory! Leave that and bring the tongs.",
+   "Charcoal. Dry wood. Anything that burns hot. That's what I need, not compliments."
+  ],
+  "habits": "Short, practical sentences about work and materials; orders Jory about mid-sentence; judges people by what their hands can do; weighs things up aloud ('that'd take two pounds of iron').",
+  "never": "flatters anyone or wastes words on pleasantries",
+  "greeting": "Opens without greeting at all, straight to the point: 'What.' 'You're in my light.' 'If you're buying, speak.'"
+ },
+ "goals": [
+  "Finish the guards' repair order before the captain loses patience",
+  "Get fuel for the forge",
+  "Keep Jory out of trouble and learning properly"
+ ],
+ "secrets": [
+  {
+   "text": "She's short of good iron and has been reworking old horseshoes to fill the guards' order.",
+   "reveal": "someone who proves useful at the forge"
+  }
+ ],
+ "likes": "good tools, clever solutions, fuel",
+ "dislikes": "waste, flatterers, people touching her stock",
+ "opinions": {
+  "npc_jory_venn": {
+   "text": "her nephew; a good lad with his head in the clouds",
+   "warmth": 0.8
+  },
+  "npc_tomas_reed": {
+   "text": "a reliable trading partner, too slow",
+   "warmth": 0.5
+  },
+  "npc_darin_ko": {
+   "text": "sells junk at gold prices",
+   "warmth": -0.3
+  },
+  "npc_roderic_vale": {
+   "text": "pays late, but pays",
+   "warmth": 0.2
+  },
+  "npc_hessa_marr": {
+   "text": "talks too much, means well",
+   "warmth": 0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "forge",
+   "place": "smithy_forge",
+   "activity": "work",
+   "dwell_s": 70,
+   "doing": "working at the forge"
+  },
+  {
+   "id": "stock",
+   "place": "smithy_side",
+   "activity": "work",
+   "dwell_s": 45,
+   "doing": "sorting through her scrap iron"
+  },
+  {
+   "id": "nails",
+   "place": "carpenter_yard",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "taking a bundle of nails to Tomas"
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Mara trusts iron and fire, nothing else. She calls anything uncanny sorcery and wants it away from her forge and her nephew."
+ }
+}

@@ -1,0 +1,115 @@
+{
+ "id": "npc_ilse_ferry",
+ "first_met_in": "the_sceptic",
+ "name": "Ilse",
+ "age": 49,
+ "role": "ferryman's wife",
+ "look": "A sturdy woman in her late forties with red cheeks, greying fair hair in a thick plait, a green wool dress with the skirt tucked up, a sacking apron and a netting needle stuck in her belt.",
+ "look_kind": "woman",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Warm, practical and quick to laugh; a better judge of people than her husband, and the only one he listens to.",
+ "values": "a fair day's work, her husband's pride, a full larder",
+ "fears": "the river in flood, Gorm's temper",
+ "authority": "Runs the cottage; Gorm heeds her word.",
+ "tones": [
+  "warm",
+  "shrewd"
+ ],
+ "relations": {
+  "npc_gorm_ferry": "Gorm, her husband"
+ },
+ "family": [
+  "npc_gorm_ferry"
+ ],
+ "regard": {
+  "trust": 0.35,
+  "suspicion": 0.2
+ },
+ "concerns": "Her best net tore on a snag and she's two days behind on mending. Gorm won't take strangers since the robbery, which loses them fares.",
+ "refers": [],
+ "knowledge": {
+  "gorm_rope": {
+   "text": "Gorm's tow rope is fraying where it runs over the post, and he's too proud to say so.",
+   "line": "Don't tell him I said, but that rope of his is going. He's too proud to ask anyone.",
+   "trusted": false,
+   "lead": "Gorm's tow rope is fraying and he needs a new one."
+  },
+  "gorm_trust": {
+   "text": "Gorm trusts what he sees, and her word; nothing else since the robbery.",
+   "line": "Words won't move him. Show him something, or get someone he trusts to speak for you.",
+   "trusted": false,
+   "lead": "Gorm trusts what he sees, or Ilse's word."
+  }
+ },
+ "persuaded_by": "a kindness, a job done well",
+ "style": "Chatty and teasing; calls people 'love'.",
+ "mood": "cheerful",
+ "voice": {
+  "samples": [
+   "Don't mind him, love. He's all bark.",
+   "You any good with a netting needle?",
+   "Do this for me and I'll have a word with Gorm.",
+   "He'll listen to me. Eventually."
+  ],
+  "habits": "Mends nets as she talks; laughs at Gorm; offers work in trade.",
+  "never": "crosses Gorm in front of strangers",
+  "greeting": "Looks up from her nets: 'Hello, love. After the ferry? He's in a mood.'"
+ },
+ "goals": [
+  "Get the torn net mended",
+  "Get Gorm taking fares again"
+ ],
+ "secrets": [],
+ "likes": "company, gossip, good work",
+ "dislikes": "idleness, Gorm's sulks",
+ "opinions": {
+  "npc_gorm_ferry": {
+   "text": "stubborn old goat, but honest",
+   "warmth": 0.6
+  }
+ },
+ "tasks": [
+  {
+   "id": "rack",
+   "place": "rack",
+   "activity": "work",
+   "dwell_s": 90,
+   "doing": "mending nets at the rack"
+  },
+  {
+   "id": "door",
+   "place": "door",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "fetching twine from the cottage"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Ilse would want to know how it works."
+ },
+ "offers": [
+  {
+   "id": "net",
+   "reward": "vouch",
+   "task": "mend her torn fishing net",
+   "check": "Has the stranger mended Ilse's torn net?",
+   "lends": [
+    "net_ilse",
+    "twine_ilse",
+    "needle_ilse"
+   ],
+   "done_when": {
+    "kind": "made",
+    "from": [
+     "net_ilse"
+    ],
+    "ever": true
+   }
+  }
+ ]
+}

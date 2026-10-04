@@ -1,13 +1,14 @@
 """Voice role: characters' words, and (in conversation) what they do.
 
-In conversation the role writes the group's moment (scene, D-48): the person addressed answers, and others in the
-conversation or near enough to hear may add a line, talk to each other or ask the stranger something. Each line
-comes from that person's character sheet (persona.py), what they know, why they're there and the conversation so
-far; each speaker reads the moment themselves (D-46) and picks one move from those code offers them. Code checks
-every line and applies it as that person's exchange; free text never flows back into world state. speak() puts an
-already decided reply into words (used by the persona eval). The same role keeps memory prose (recollect: a
-finished conversation becomes an episode, D-36) and phrases two villagers talking to each other (chatter, D-37).
-If the model is unavailable, the person addressed says an authored fallback line instead.
+Each person is their own agent (D-59). In conversation the person addressed answers in a call of their own, which
+holds only their own sheet (persona.py), memory, knowledge and secrets, what anyone there could see and hear, and the
+rules that apply to them: a short core (person_v1) plus a module for each thing they are (a guard, a robber), have
+(an open deal, a story beat) or are in (a fight, a group). Then everyone else there decides, each in their own call
+and in parallel, whether to say something, having heard that answer. Each reads the moment themselves (D-46) and
+picks one move from those code offers them; code checks every line and applies it as that person's exchange. Free
+text never flows back into world state. The same role keeps memory prose (recollect, D-36), phrases two villagers
+talking (chatter, D-37: each side in its own call) and someone coming to tell someone something (hearing, D-54:
+each side in its own call). If the model is unavailable, the person addressed says an authored fallback line.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -33,15 +35,24 @@ SUSPICION = [
     "Much more suspicious",
 ]
 ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
-SCENE_VERSION = "scene_v8"  # D-51: errands, promises kept. D-53: things change hands only by moves. v4: a deal's reward waits for the deal. v7: story beats; v8: they may keep a beat back (D-59).
-_SCENE = (_PROMPTS / f"{SCENE_VERSION}.txt").read_text(encoding="utf-8")
+PERSON_VERSION = "person_v1"  # D-59: each person their own agent: a core and the rules that apply to them.
 SCENE_LINES = 3
+
+
+def _modules(text: str) -> dict[str, str]:
+    """The person prompt's parts, each under a line "=== name ===": the core, and the rules only some people need."""
+    parts = re.split(r"^=== (\w+) ===\n", text, flags=re.M)
+    return {name: body.strip() for name, body in zip(parts[1::2], parts[2::2])}
+
+
+MODULES = _modules((_PROMPTS / f"{PERSON_VERSION}.txt").read_text(encoding="utf-8"))
 DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).
 _DEVICE = (_PROMPTS / f"{DEVICE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
-_CHATTER = (_PROMPTS / "chatter_v1.txt").read_text(encoding="utf-8")
-HEARING_VERSION = "hearing_v1"  # Someone comes to tell someone something; the listener decides (D-54).
-_HEARING = (_PROMPTS / f"{HEARING_VERSION}.txt").read_text(encoding="utf-8")
+CHATTER_VERSION = "chatter_v2"  # D-59: each side of a chat in its own call.
+CHATTER = _modules((_PROMPTS / f"{CHATTER_VERSION}.txt").read_text(encoding="utf-8"))
+HEARING_VERSION = "hearing_v2"  # Someone comes to tell someone something; the listener decides (D-54). v2: each in their own call (D-59).
+HEARING = _modules((_PROMPTS / f"{HEARING_VERSION}.txt").read_text(encoding="utf-8"))
 MAX_CHARS = 360
 
 
@@ -56,10 +67,11 @@ class FeelingShift(BaseModel):
     change: Literal["Much worse", "A little worse", "A little better", "Much better"]
 
 
-class SceneLine(BaseModel):
-    """One person's line in a group moment: who speaks, what they say and do, how they read it (D-48)."""
+class PersonLine(BaseModel):
+    """One person's turn in a moment of conversation, written by their own call (D-59): whether they speak, what
+    they say and do, how they read it."""
 
-    speaker_id: str
+    speaks: bool
     text: str
     brought_up_story_beat: bool  # The line gets the speaker's story beat across (D-59).
     move: str
@@ -82,10 +94,6 @@ class SceneLine(BaseModel):
     errand_message: str
     promised_later: str
     remember: str
-
-
-class Scene(BaseModel):
-    lines: list[SceneLine]
     stranger_name: str
 
 
@@ -94,17 +102,15 @@ class Episode(BaseModel):
     long_memory: str
 
 
-class Hearing(BaseModel):
-    teller_line: str
-    listener_line: str
-    listener_move: str
+class Said(BaseModel):
+    line: str
+
+
+class Heard(BaseModel):
+    line: str
+    move: str
     pass_on_message: str
     remember: str
-
-
-class Chatter(BaseModel):
-    first_line: str
-    reply_line: str
 
 
 @dataclass
@@ -112,7 +118,7 @@ class VoiceCall:
     status: str  # "ok", "fallback" (no model, capped or failed: the authored line was used)
     text: str
     model: str | None = None
-    prompt_version: str = SCENE_VERSION
+    prompt_version: str = PERSON_VERSION
     latency_ms: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -121,14 +127,15 @@ class VoiceCall:
     stranger_name: str = ""  # A name the stranger gave, if any (code checks it against their words).
     answers: dict = field(default_factory=dict)  # Their reading of the moment, in the typed-answer shape code uses.
     lines: list = field(default_factory=list)  # A group moment (scene): [{speaker_id, text, move, answers, remember}].
+    turns: list = field(default_factory=list)  # Each person's own call in a moment: [{speaker_id, status, ms, tokens}].
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
 def system_prompt() -> str:
-    """The prompt the game's conversations use (the group scene, D-48)."""
-    return _SCENE
+    """The core of every person's prompt in conversation (D-59: the rules some people need are added to theirs)."""
+    return MODULES["core"]
 
 
 def tidy(text: str) -> str:
@@ -212,7 +219,7 @@ def _unavailable(fallback: str, allowed: bool, version: str) -> VoiceCall | None
     return None
 
 
-def reading(parsed: SceneLine) -> dict:
+def reading(parsed: PersonLine) -> dict:
     """The person's reading of the moment, in the typed-answer shape the rest of the code reads."""
     yes = lambda value: {"type": "noul", "noul": 0.9 if value else 0.1}  # noqa: E731
     return {
@@ -228,41 +235,86 @@ def reading(parsed: SceneLine) -> dict:
 
 
 def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
-    """A group moment (D-48): up to three lines, in order, each by a person in or near the conversation, with
-    what they do and how they read it. Code checks every line. If the model can't be used: no lines (the caller
-    has the addressed person say the authored fallback)."""
-    skipped = _unavailable(fallback, allowed, SCENE_VERSION)
+    """A moment of conversation, one person at a time (D-59: each person is their own agent). The person addressed
+    answers in their own call, which holds only their own sheet, memory and knowledge and what anyone could see and
+    hear; then everyone else here decides in a call of their own, in parallel, whether to say something, having heard
+    that answer. Nobody's sheet or secrets are ever in anyone else's call. Up to three lines, addressed first. If the
+    model can't be used: no lines (the caller has the addressed person say the authored fallback)."""
+    skipped = _unavailable(fallback, allowed, PERSON_VERSION)
     if skipped:
         return skipped
-    call, parsed = _parse(_SCENE, context, Scene, SCENE_VERSION)
-    call.text = fallback
-    lines = []
-    for line in (parsed.lines if parsed is not None else [])[:SCENE_LINES]:
-        spoken = tidy(line.text)
-        if spoken:
-            lines.append(
-                {
-                    "speaker_id": line.speaker_id.strip(),
-                    "text": spoken,
-                    "move": line.move.strip(),
-                    "story_beat": line.brought_up_story_beat,
-                    "answers": reading(line),
-                    "remember": " ".join(line.remember.split())[:300],
-                    "errand_to": line.errand_to.strip()[:60],
-                    "errand_message": " ".join(line.errand_message.split())[:240],
-                    "promised_later": " ".join(line.promised_later.split())[:240],
-                    "feelings": [
-                        {"person_id": f.person_id.strip()[:60], "change": f.change}
-                        for f in line.feelings_toward_others[:3]
-                    ],
-                }
-            )
-    if lines:
-        call.status, call.lines, call.text = "ok", lines, lines[0]["text"]
-        call.stranger_name = " ".join(parsed.stranger_name.split())[:40]
-    elif call.error is None:
-        call.error = "The model returned no lines."
-    return call
+    people = context["people"]
+    shared = {key: value for key, value in context.items() if key != "people"}
+    started = time.perf_counter()
+    first_call, first = _turn(shared, people[0], people, [])
+    turns = [(people[0], first_call)]
+    lines = [first] if first else []
+    if first and len(people) > 1:
+        heard = [f"{people[0]['name']}: \u201c{first['text']}\u201d"]
+        with ThreadPoolExecutor(max_workers=len(people) - 1) as pool:
+            others = list(pool.map(lambda person: _turn(shared, person, people, heard), people[1:]))
+        turns += list(zip(people[1:], (call for call, _ in others)))
+        lines += [line for _, line in others if line][: SCENE_LINES - 1]
+    result = VoiceCall(status="fallback", text=fallback, model=first_call.model, prompt_version=PERSON_VERSION)
+    result.latency_ms = round((time.perf_counter() - started) * 1000)
+    result.input_tokens = sum(call.input_tokens for _, call in turns)
+    result.output_tokens = sum(call.output_tokens for _, call in turns)
+    result.turns = [
+        {"speaker_id": person["id"], "status": call.status, "ms": call.latency_ms, "tokens": call.input_tokens}
+        for person, call in turns
+    ]
+    if first:
+        result.status, result.lines, result.text = "ok", lines, first["text"]
+        result.stranger_name = first.pop("stranger_name")
+        for line in lines[1:]:
+            line.pop("stranger_name", None)
+    else:
+        result.error = first_call.error or "The model returned no line."
+    return result
+
+
+def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> tuple[VoiceCall, dict | None]:
+    """One person's own call: their sheet, what anyone here could see and hear, and the rules that apply to them."""
+    you = {key: value for key, value in person.items() if not key.startswith("_") and key != "in_the_conversation"}
+    rules = ["core", *person.get("_rules", [])]
+    if shared.get("fight_now") and shared["fight_now"] != "No one is fighting.":
+        rules.append("fight")
+    if len(people) > 1:
+        rules.append("feelings")
+    payload = {
+        "your_part": person["in_the_conversation"],
+        **{key: value for key, value in shared.items() if key != "fight_now" or "fight" in rules},
+        "said_just_now": heard,
+        "others_here": [
+            {"id": other["id"], "name": other["name"], "where": other["in_the_conversation"]}
+            for other in people
+            if other is not person
+        ],
+        "you": you,
+    }
+    prompt = "\n\n".join(MODULES[rule] for rule in rules)
+    call, parsed = _parse(prompt, payload, PersonLine, PERSON_VERSION)
+    if parsed is None:
+        return call, None
+    call.status = "ok"
+    spoken = tidy(parsed.text)
+    if not spoken or not (parsed.speaks or person["in_the_conversation"] == "addressed"):
+        return call, None  # They stay quiet: a turn well taken.
+    return call, {
+        "speaker_id": person["id"],
+        "text": spoken,
+        "move": parsed.move.strip(),
+        "story_beat": parsed.brought_up_story_beat,
+        "answers": reading(parsed),
+        "remember": " ".join(parsed.remember.split())[:300],
+        "errand_to": parsed.errand_to.strip()[:60],
+        "errand_message": " ".join(parsed.errand_message.split())[:240],
+        "promised_later": " ".join(parsed.promised_later.split())[:240],
+        "feelings": [
+            {"person_id": f.person_id.strip()[:60], "change": f.change} for f in parsed.feelings_toward_others[:3]
+        ],
+        "stranger_name": " ".join(parsed.stranger_name.split())[:40],
+    }
 
 
 def device(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
@@ -296,31 +348,87 @@ def recollect(context: dict, fallback: dict, allowed: bool = True) -> tuple[Voic
 
 
 def chatter(context: dict, fallback: tuple[str, str], allowed: bool = True) -> tuple[VoiceCall, tuple[str, str]]:
-    """Two villagers talking to each other, in their own voices (only when the stranger can hear it)."""
-    skipped = _unavailable("", allowed, "chatter_v1")
+    """Two villagers talking to each other, in their own voices (only when the stranger can hear it): the speaker in
+    a call of their own, then the listener in theirs, having heard them (D-59: neither sees the other's sheet)."""
+    skipped = _unavailable("", allowed, CHATTER_VERSION)
     if skipped:
         return skipped, fallback
-    call, parsed = _parse(_CHATTER, context, Chatter, "chatter_v1")
-    if parsed is None or not parsed.first_line.strip() or not parsed.reply_line.strip():
-        return call, fallback
+    speaker, listener = context["speaker"], context["listener"]
+    start_call, start = _parse(
+        CHATTER["start"],
+        {"you": speaker, "talking_to": _public(listener), "topic": context["topic"]},
+        Said,
+        CHATTER_VERSION,
+    )
+    if start is None or not start.line.strip():
+        return start_call, fallback
+    opening = tidy(start.line)
+    reply_call, reply = _parse(
+        CHATTER["reply"],
+        {
+            "you": listener,
+            "talking_to": _public(speaker),
+            "they_said": opening,
+            "how_you_take_it": context["listener_reaction"],
+        },
+        Said,
+        CHATTER_VERSION,
+    )
+    call = _both(start_call, reply_call)
+    if reply is None or not reply.line.strip():
+        return call, (opening, fallback[1])
     call.status = "ok"
-    return call, (tidy(parsed.first_line), tidy(parsed.reply_line))
+    return call, (opening, tidy(reply.line))
 
 
 def hearing(context: dict, fallback: dict, allowed: bool = True) -> tuple[VoiceCall, dict]:
-    """Someone arrives to tell someone something (D-54): both their lines, and what the listener does about it
-    (one of the listener's options; code checks it). The written fallback: the message, a nod, and carry on."""
+    """Someone arrives to tell someone something (D-54): the teller says it in a call of their own, then the listener
+    answers in theirs and decides what to do about it (one of their options; code checks it). Neither sees the
+    other's sheet (D-59). The written fallback: the message, a nod, and carry on."""
     skipped = _unavailable("", allowed, HEARING_VERSION)
     if skipped:
         return skipped, fallback
-    call, parsed = _parse(_HEARING, context, Hearing, HEARING_VERSION)
-    if parsed is None or not parsed.teller_line.strip() or not parsed.listener_line.strip():
-        return call, fallback
+    teller, listener = context["teller"], context["listener"]
+    tell_call, told = _parse(
+        HEARING["tell"],
+        {"you": teller, "telling": _public(listener), "message": context["message"]},
+        Said,
+        HEARING_VERSION,
+    )
+    teller_line = tidy(told.line) if told is not None and told.line.strip() else fallback["teller_line"]
+    hear_call, heard = _parse(
+        HEARING["hear"],
+        {
+            "you": listener,
+            "told_by": _public(teller),
+            "they_said": teller_line,
+            "your_options": context["listener_options"],
+        },
+        Heard,
+        HEARING_VERSION,
+    )
+    call = _both(tell_call, hear_call)
+    if heard is None or not heard.line.strip():
+        return call, {**fallback, "teller_line": teller_line}
     call.status = "ok"
     return call, {
-        "teller_line": tidy(parsed.teller_line),
-        "listener_line": tidy(parsed.listener_line),
-        "move": parsed.listener_move.strip(),
-        "pass_on_message": " ".join(parsed.pass_on_message.split())[:240],
-        "remember": " ".join(parsed.remember.split())[:300],
+        "teller_line": teller_line,
+        "listener_line": tidy(heard.line),
+        "move": heard.move.strip(),
+        "pass_on_message": " ".join(heard.pass_on_message.split())[:240],
+        "remember": " ".join(heard.remember.split())[:300],
     }
+
+
+def _public(person: dict) -> dict:
+    """What anyone can see of someone else: their name and what they do. Never their sheet."""
+    return {"name": person["name"], "role": person.get("role", "")}
+
+
+def _both(first: VoiceCall, second: VoiceCall) -> VoiceCall:
+    """Two people's calls as one record: their time and tokens together."""
+    first.latency_ms += second.latency_ms
+    first.input_tokens += second.input_tokens
+    first.output_tokens += second.output_tokens
+    first.error = first.error or second.error
+    return first

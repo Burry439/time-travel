@@ -1,0 +1,132 @@
+{
+ "id": "npc_jory_venn",
+ "first_met_in": "village",
+ "name": "Jory",
+ "age": 18,
+ "role": "blacksmith's apprentice",
+ "guard": false,
+ "weapon": null,
+ "combat": "a nervous youth, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Very curious, talkative and impulsive; admires his aunt Mara.",
+ "values": "learning, novelty, earning Mara's respect",
+ "fears": "breaking tools, disappointing Mara",
+ "authority": "None beyond handling scrap at the smithy.",
+ "tones": [
+  "frightened",
+  "protective"
+ ],
+ "relations": {
+  "npc_mara_venn": "his aunt Mara"
+ },
+ "family": [
+  "npc_mara_venn"
+ ],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.22
+ },
+ "concerns": "Being bored at the smithy; wanting to learn something new; not disappointing his aunt Mara.",
+ "refers": [
+  "npc_mara_venn",
+  "npc_darin_ko",
+  "npc_tomas_reed"
+ ],
+ "knowledge": {
+  "darin_stone": {
+   "text": "Darin the merchant has a black stone that makes iron jump to it; Jory saw it once.",
+   "line": "Darin's got this black stone, right, and iron just jumps to it! I saw it with my own eyes.",
+   "trusted": false,
+   "lead": "Darin the merchant has a black stone that makes iron jump to it."
+  },
+  "tomas_beam": {
+   "text": "Tomas can't get the new gate beam up into its brackets.",
+   "line": "Tomas can't get that big beam up onto the gate. Two men and it still won't go.",
+   "trusted": false,
+   "lead": "Tomas can't get the new gate beam up into its brackets."
+  },
+  "mara_scrap": {
+   "text": "Aunt Mara gets cross about wasted scrap.",
+   "line": "Don't touch the scrap. Aunt Mara counts every bit.",
+   "trusted": false,
+   "lead": "Mara counts every bit of scrap at the smithy."
+  }
+ },
+ "persuaded_by": "something new and clever to look at",
+ "style": "Excited and rambling; runs sentences together; full of questions.",
+ "mood": "excited",
+ "voice": {
+  "samples": [
+   "Wait, wait, you came from where? Is it far? What's it like? Do they have forges there?",
+   "Aunt Mara says I talk too much, but I don't think that's fair, I just ask things.",
+   "Did you see Darin's stone? It pulls iron! Right across the table!",
+   "Oh, sorry. I didn't mean to stare. Well, I did. But sorry."
+  ],
+  "habits": "Runs sentences together with 'and' and 'but'; asks several questions at once; quotes Aunt Mara; gets distracted by anything new; apologises and carries on.",
+  "never": "stays quiet for long or keeps a secret well",
+  "greeting": "Opens with a burst of excitement or a question: 'Oh! Hello!' 'Wait, are you from far off?'"
+ },
+ "goals": [
+  "Learn something nobody else knows",
+  "Earn Aunt Mara's respect",
+  "Get a proper look at Darin's strange stone"
+ ],
+ "secrets": [
+  {
+   "text": "He broke Mara's second-best tongs last week and hid them under the scrap.",
+   "reveal": "anyone kind to him"
+  }
+ ],
+ "likes": "new things, stories from far away, Darin's curiosities",
+ "dislikes": "being bored, being scolded, sweeping",
+ "opinions": {
+  "npc_mara_venn": {
+   "text": "his aunt; he'd do anything to impress her",
+   "warmth": 0.9
+  },
+  "npc_darin_ko": {
+   "text": "has the most interesting things in the world",
+   "warmth": 0.6
+  },
+  "npc_tomas_reed": {
+   "text": "clever with wood, and lets him watch",
+   "warmth": 0.5
+  },
+  "npc_hessa_marr": {
+   "text": "slips him honey cakes",
+   "warmth": 0.7
+  },
+  "npc_oren_dast": {
+   "text": "a bit frightening",
+   "warmth": -0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "help_forge",
+   "place": "smithy_yard",
+   "activity": "work",
+   "dwell_s": 50,
+   "doing": "pumping the bellows for Aunt Mara"
+  },
+  {
+   "id": "sweep",
+   "place": "smithy_side",
+   "activity": "work",
+   "dwell_s": 35,
+   "doing": "sweeping up (badly) around the scrap"
+  },
+  {
+   "id": "gawk",
+   "place": "wagon_front",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "gawking at Darin's goods"
+  }
+ ],
+ "superstition": {
+  "kind": "reverent",
+  "text": "Jory devours every tale of gods and wonder-workers. Anything uncanny would set him telling everyone the stranger is touched by the gods."
+ }
+}

@@ -1,0 +1,86 @@
+{
+ "id": "npc_wynn_pilgrim",
+ "first_met_in": "common_room",
+ "name": "Wynn",
+ "age": 54,
+ "role": "pilgrim",
+ "look": "A thin, grey-haired woman in her fifties with a weathered face and bright eyes, a hooded brown pilgrim's cloak, a wooden staff, and a scallop shell on a cord round her neck.",
+ "look_kind": "old",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Gentle, curious and talkative; collects stories from everyone she meets.",
+ "values": "kindness, the road, stories",
+ "fears": "dying far from home",
+ "authority": "None.",
+ "tones": [
+  "frightened",
+  "protective"
+ ],
+ "relations": {},
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.2
+ },
+ "concerns": "She's walking to the shrine by the brook and wants company and conversation.",
+ "refers": [],
+ "knowledge": {
+  "mill": {
+   "text": "Ada at the water mill is always short of help and pays fairly.",
+   "line": "Ada at the mill pays fair, and she's always short a pair of hands.",
+   "trusted": false,
+   "lead": "Ada at the water mill pays fairly for help."
+  },
+  "shrine": {
+   "text": "There's a shrine by the brook where shepherds leave offerings against the fog.",
+   "line": "The shepherds by the brook leave offerings at the shrine against the fog.",
+   "trusted": false,
+   "lead": "Shepherds by the brook fear the fog."
+  }
+ },
+ "persuaded_by": "a good story",
+ "style": "Gentle and talkative; answers a question with a story.",
+ "mood": "content",
+ "voice": {
+  "samples": [
+   "Oh, sit, sit. Where have your feet carried you?",
+   "I've walked from the sea. Forty days. My knees remember every one.",
+   "Doran tells it better, but he tells it wrong.",
+   "Everyone has a story, dear. What's yours?"
+  ],
+  "habits": "Asks where people are from; tells little stories; joins other people's conversations.",
+  "never": "refuses to talk",
+  "greeting": "Smiles: 'Ah, a traveller! Where from?'"
+ },
+ "goals": [
+  "Reach the shrine by the brook",
+  "Hear one new story every day"
+ ],
+ "secrets": [],
+ "likes": "stories, fires, company",
+ "dislikes": "haste, cruelty",
+ "opinions": {},
+ "tasks": [
+  {
+   "id": "fire",
+   "place": "fire",
+   "activity": "wait",
+   "dwell_s": 50,
+   "doing": "warming her knees by the fire"
+  },
+  {
+   "id": "round",
+   "place": "table2",
+   "activity": "wait",
+   "dwell_s": 40,
+   "doing": "resting at the round table"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Wynn would want to know how it works."
+ }
+}

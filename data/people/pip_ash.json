@@ -1,0 +1,97 @@
+{
+ "id": "npc_pip_ash",
+ "first_met_in": "cup_of_water",
+ "name": "Pip",
+ "age": 9,
+ "role": "Wenna's grandson",
+ "look": "A skinny nine-year-old boy with a mop of sandy hair and freckles, a too-big undyed linen tunic belted with a length of rope, rolled-up brown trousers, bare feet, grass stains on his knees.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "a small boy, no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Restless, cheeky and easily distracted; means well but forgets everything the moment a hen runs past.",
+ "values": "fun, his gran, being thought brave",
+ "fears": "the dark down the well, Gran's stick, the city guards",
+ "authority": "None.",
+ "tones": [
+  "frightened"
+ ],
+ "relations": {
+  "npc_wenna_ash": "his gran"
+ },
+ "family": [
+  "npc_wenna_ash"
+ ],
+ "regard": {
+  "trust": 0.5,
+  "suspicion": 0.15
+ },
+ "concerns": "Catching the brown hen that keeps escaping; not getting told off for forgetting Gran's water.",
+ "refers": [
+  "npc_wenna_ash"
+ ],
+ "knowledge": {
+  "cup_on_well": {
+   "text": "He left his gran's wooden cup on the edge of the well.",
+   "line": "Gran's cup? It's on the well. I put it there. I was going to fill it. Then the hen.",
+   "trusted": false,
+   "lead": "Wenna's cup is on the edge of the well."
+  },
+  "well_deep": {
+   "text": "The well is very deep and cold; you wind the bucket up on the rope.",
+   "line": "The well's SO deep. You wind the handle and the bucket comes up all cold and dripping.",
+   "trusted": false,
+   "lead": "Wind the handle at the well to bring the bucket up."
+  }
+ },
+ "persuaded_by": "a dare, or anything to do with the hens",
+ "style": "Fast and breathless; jumps from one thing to the next; asks the stranger questions back.",
+ "mood": "excited",
+ "voice": {
+  "samples": [
+   "Have you seen a brown hen? Fat, cross-looking? She bites.",
+   "I was GOING to get Gran's water. I just. The hen.",
+   "Where are you from? Is it further than the mill? Is it further than the city?",
+   "Gran says I've got a head like a sieve. I don't know what a sieve is."
+  ],
+  "habits": "Talks fast; asks questions back; mentions the hens; owns up when caught.",
+  "never": "lies about his gran or talks back to her face",
+  "greeting": "Skids to a stop: 'Who are you? Have you seen a hen?'"
+ },
+ "goals": [
+  "Catch the brown hen",
+  "Not get told off",
+  "See the city one day"
+ ],
+ "secrets": [],
+ "likes": "hens, frogs, stories, climbing the apple trees",
+ "dislikes": "chores, being called little",
+ "opinions": {
+  "npc_wenna_ash": {
+   "text": "his gran, the best and the crossest",
+   "warmth": 0.9
+  }
+ },
+ "tasks": [
+  {
+   "id": "hens",
+   "place": "coop",
+   "activity": "look",
+   "dwell_s": 25,
+   "doing": "trying to catch the brown hen"
+  },
+  {
+   "id": "apples",
+   "place": "apple_tree",
+   "activity": "look",
+   "dwell_s": 20,
+   "doing": "looking for windfall apples"
+  }
+ ],
+ "superstition": {
+  "kind": "reverent",
+  "text": "Pip would think anything uncanny was magic, and tell everyone."
+ }
+}

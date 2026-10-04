@@ -1,0 +1,120 @@
+{
+ "id": "npc_osk_pieman",
+ "first_met_in": "caught",
+ "name": "Osk",
+ "age": 46,
+ "role": "pieman",
+ "look": "A round, red-faced man in his forties with floury forearms, a white baker's cap, a stained apron over a brown tunic and a big wooden pie-paddle under his arm.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Jolly with customers and a terror to thieves; generous to anyone who works, mean to anyone who takes.",
+ "values": "his pies, honest trade, a hard day's work",
+ "fears": "thieves, a cold oven, a bad market",
+ "authority": "Owns the pie stall.",
+ "tones": [
+  "warm",
+  "angry"
+ ],
+ "relations": {
+  "npc_hobb_watchman": "Hobb the watchman",
+  "npc_kit_urchin": "Kit, the little thief"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.3
+ },
+ "concerns": "The oven needs kindling split for the morning bake, and he's dead on his feet. Street children have been lifting his pies all week.",
+ "refers": [],
+ "knowledge": {
+  "price": {
+   "text": "A pie costs a copper, or a bit of honest work.",
+   "line": "A copper a pie. Or work for it: there's always something wants doing.",
+   "trusted": false,
+   "lead": "Osk sells a pie for a copper, or for a bit of honest work."
+  },
+  "kit": {
+   "text": "Kit, the urchin by the crates, has been stealing his pies all week.",
+   "line": "See that one by the crates? Little thief. Had three pies off me this week.",
+   "trusted": false,
+   "lead": "Osk says Kit the urchin has been stealing his pies."
+  }
+ },
+ "persuaded_by": "honest work, a fair trade",
+ "style": "Loud and jolly; calls everyone 'friend' until they cross him.",
+ "mood": "tired",
+ "voice": {
+  "samples": [
+   "Pies! Last pies of the day!",
+   "No copper? Then there's work, friend.",
+   "Thief! Hobb!",
+   "That's a fair trade. Done."
+  ],
+  "habits": "Wipes his hands on his apron; counts his pies; shouts for Hobb.",
+  "never": "gives a pie to a thief",
+  "greeting": "Beams: 'Last pies of the day, friend!'"
+ },
+ "goals": [
+  "Sell the last pies",
+  "Get kindling split for the morning"
+ ],
+ "secrets": [],
+ "likes": "customers, a hot oven",
+ "dislikes": "thieves, waste",
+ "opinions": {
+  "npc_hobb_watchman": {
+   "text": "slow, but honest",
+   "warmth": 0.4
+  },
+  "npc_kit_urchin": {
+   "text": "a little thief",
+   "warmth": -0.5
+  }
+ },
+ "tasks": [
+  {
+   "id": "pies",
+   "place": "pies",
+   "activity": "work",
+   "dwell_s": 90,
+   "doing": "at his stall, counting pies"
+  },
+  {
+   "id": "oven",
+   "place": "oven",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "seeing to the oven"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Osk would want to know how it works."
+ },
+ "offers": [
+  {
+   "id": "kindling",
+   "reward": "pay",
+   "pays": [
+    "pie_reward"
+   ],
+   "task": "split the logs by the oven into kindling for the morning bake",
+   "check": "Has the stranger split the logs into kindling?",
+   "lends": [
+    "hatchet_osk",
+    "logs_osk"
+   ],
+   "done_when": {
+    "kind": "made",
+    "from": [
+     "logs_osk"
+    ],
+    "ever": true
+   }
+  }
+ ]
+}

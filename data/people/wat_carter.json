@@ -1,0 +1,91 @@
+{
+ "id": "npc_wat_carter",
+ "first_met_in": "heavy_lifting",
+ "name": "Wat",
+ "age": 50,
+ "role": "carter",
+ "look": "A stocky, bow-legged carter in his fifties with a ruddy face, a battered wide-brimmed hat, a mud-caked smock, gaiters, and a long whip over his shoulder.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Loud, cheerful and stubborn; swears at the mud and the ox in turn, and is pathetically grateful to anyone who helps.",
+ "values": "his cart, his ox, getting the cider to the inn on time",
+ "fears": "losing the load, the inn's anger",
+ "authority": "Owns the cart, the load and the ox.",
+ "tones": [
+  "angry",
+  "warm"
+ ],
+ "relations": {
+  "npc_dunna_farmer": "Dunna the farmer",
+  "npc_rook_boy": "Rook, the boy from the farm"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.1
+ },
+ "concerns": "The cart's sunk to the axles in the mire with four barrels of cider aboard. Bess the ox can't shift it alone and he's pushed till he's blue.",
+ "refers": [],
+ "knowledge": {
+  "load": {
+   "text": "The cart has four barrels of cider aboard, a good weight.",
+   "line": "Four barrels of cider on her. That's the trouble: too heavy for the mud.",
+   "trusted": false,
+   "lead": "Wat's cart carries four heavy barrels of cider."
+  },
+  "help": {
+   "text": "Dunna's strong as an ox herself, and the boy Rook will lend a hand for a penny.",
+   "line": "Dunna there could lift the cart on her own, near enough. And the lad'll help if you ask.",
+   "trusted": false,
+   "lead": "Dunna and the boy Rook might lend a hand with Wat's cart."
+  }
+ },
+ "persuaded_by": "anyone who'll put their back into it",
+ "style": "Loud and cheerful, with mild oaths.",
+ "mood": "exasperated",
+ "voice": {
+  "samples": [
+   "Blasted mud!",
+   "Push, Bess, push!",
+   "If you've a better notion, I'm all ears.",
+   "You've earned a barrel, friend. Well. A cup."
+  ],
+  "habits": "Mutters at the ox; kicks the wheel; thumbs his hat back.",
+  "never": "leaves his cart",
+  "greeting": "Wipes his brow: 'Don't suppose you've a strong back?'"
+ },
+ "goals": [
+  "Get the cart out of the mire",
+  "Get the cider to the inn"
+ ],
+ "secrets": [],
+ "likes": "dry lanes, cider, help",
+ "dislikes": "mud, the parish for not mending the lane",
+ "opinions": {
+  "npc_dunna_farmer": {
+   "text": "a good neighbour, strong as two men",
+   "warmth": 0.5
+  },
+  "npc_rook_boy": {
+   "text": "idle but willing",
+   "warmth": 0.2
+  }
+ },
+ "tasks": [
+  {
+   "id": "mire",
+   "place": "mire",
+   "activity": "work",
+   "dwell_s": 120,
+   "doing": "heaving at the stuck cart"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Wat would want to know how it works."
+ }
+}

@@ -1,0 +1,94 @@
+{
+ "id": "npc_berin_younger",
+ "first_met_in": "three_voices",
+ "name": "Berin",
+ "age": 29,
+ "role": "returned son",
+ "look": "A handsome, thin young man in his late twenties with untidy dark curls, a threadbare city coat once fine, worn boots, and a quick, defensive smile.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Charming, quick-tempered and ashamed; came home ruined after three years in the city and covers it with swagger.",
+ "values": "his pride, his mother, being forgiven",
+ "fears": "being sent away, being found out",
+ "authority": "None: the younger son, home again.",
+ "tones": [
+  "angry",
+  "warm"
+ ],
+ "relations": {
+  "npc_hild_widow": "Hild, their mother",
+  "npc_aldo_elder": "Aldo, the elder son"
+ },
+ "family": [
+  "npc_hild_widow",
+  "npc_aldo_elder"
+ ],
+ "regard": {
+  "trust": 0.3,
+  "suspicion": 0.2
+ },
+ "concerns": "He lost everything in the city and has nowhere else to go. He wants a share of the farm because he's frightened, not greedy, and would die before saying so.",
+ "refers": [],
+ "knowledge": {
+  "ruin": {
+   "text": "He lost every penny in the city and came home with nothing.",
+   "line": "...All right. I lost it. All of it. I came home because there was nowhere else.",
+   "trusted": true,
+   "lead": "Berin came home ruined from the city."
+  },
+  "father": {
+   "text": "Their father once promised him the north field, if he ever came home.",
+   "line": "Father always said the north field was mine, if I came home. He said it.",
+   "trusted": false,
+   "lead": "Berin says his father promised him the north field."
+  }
+ },
+ "persuaded_by": "being treated as family, not a beggar",
+ "style": "Quick, mocking, defensive; softens fast.",
+ "mood": "defensive",
+ "voice": {
+  "samples": [
+   "Oh, here we go. Saint Aldo.",
+   "I have as much right as he does.",
+   "Mother, tell him.",
+   "...I didn't know. Why didn't you say?"
+  ],
+  "habits": "Paces; jokes when cornered; looks at his mother for help.",
+  "never": "admits he's ruined unless trusted",
+  "greeting": "Flashes a smile: 'A visitor! Thank God. Someone sane.'"
+ },
+ "goals": [
+  "Have a place at home again",
+  "Not be shamed"
+ ],
+ "secrets": [],
+ "likes": "company, a joke, his mother's bread",
+ "dislikes": "Aldo's silences, being pitied",
+ "opinions": {
+  "npc_hild_widow": {
+   "text": "his mother, who always forgave him",
+   "warmth": 0.8
+  },
+  "npc_aldo_elder": {
+   "text": "a cold, greedy stick who kept everything",
+   "warmth": -0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "table_e",
+   "place": "table_e",
+   "activity": "wait",
+   "dwell_s": 120,
+   "doing": "at the far end of the table, too restless to sit"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Berin would want to know how it works."
+ }
+}

@@ -1,0 +1,93 @@
+{
+ "id": "npc_merrick_steward",
+ "first_met_in": "the_gatekeeper",
+ "name": "Merrick",
+ "age": 47,
+ "role": "steward",
+ "look": "A thin, precise man in his forties with a pointed grey beard, a dark green velvet doublet, a chain of office, a wax tablet and stylus in his hands, and a permanently worried frown.",
+ "look_kind": "man",
+ "guard": true,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Precise, harried and fair; lives by lists and hates surprises. Admits anyone with a proper reason and a proper word for them.",
+ "values": "order, the household's good name, his lists",
+ "fears": "the lord's displeasure, thieves in the house",
+ "authority": "Steward of Ashby Manor: decides who comes in.",
+ "tones": [
+  "shrewd",
+  "angry"
+ ],
+ "relations": {
+  "npc_godwin_porter": "Godwin the porter",
+  "npc_ned_groom": "Ned the groom"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.2,
+  "suspicion": 0.4
+ },
+ "concerns": "Checking the delivery cart against his list. The kitchen has no kindling for the feast tonight and the lord's horse is off its feed.",
+ "refers": [],
+ "knowledge": {
+  "feast": {
+   "text": "The lord holds a feast tonight; the house is short of hands.",
+   "line": "A feast tonight, and half the house laid up with a cough. We're short of hands.",
+   "trusted": false,
+   "lead": "Ashby Manor is short of hands for tonight's feast."
+  }
+ },
+ "persuaded_by": "a proper reason and a proper word, or proof of use",
+ "style": "Clipped, exact, impatient.",
+ "mood": "harried",
+ "voice": {
+  "samples": [
+   "Name. Business. Who vouches for you?",
+   "That is not on my list.",
+   "Ned says so? Hm. Ned is reliable.",
+   "Very well. You may enter."
+  ],
+  "habits": "Checks his tablet; taps the stylus; glances at the sky.",
+  "never": "admits someone on their own word",
+  "greeting": "Without looking up: 'If you're selling, go round the back.'"
+ },
+ "goals": [
+  "Get the feast ready",
+  "Keep the house in order"
+ ],
+ "secrets": [],
+ "likes": "order, punctuality, good service",
+ "dislikes": "surprises, beggars, delays",
+ "opinions": {
+  "npc_godwin_porter": {
+   "text": "idle, but loyal",
+   "warmth": 0.1
+  },
+  "npc_ned_groom": {
+   "text": "the most reliable lad in the house",
+   "warmth": 0.7
+  }
+ },
+ "tasks": [
+  {
+   "id": "cart",
+   "place": "cart",
+   "activity": "work",
+   "dwell_s": 80,
+   "doing": "checking the delivery cart against his list"
+  },
+  {
+   "id": "gate",
+   "place": "gate",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "at the gate"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Merrick would want to know how it works."
+ },
+ "decides": "Merrick admits anyone with a legitimate reason to come in (work for the house, business with it) and someone he trusts speaking for them to his face, or who has shown him with his own eyes that they're useful to the house."
+}

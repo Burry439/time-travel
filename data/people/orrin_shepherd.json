@@ -1,0 +1,95 @@
+{
+ "id": "npc_orrin_shepherd",
+ "first_met_in": "something_new",
+ "name": "Orrin",
+ "age": 45,
+ "role": "shepherd",
+ "look": "A lean, weather-beaten shepherd in his forties with a long face, a short dark beard going grey, a heavy brown wool cloak pinned at the shoulder, leather leggings, and a sling tucked in his belt.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Quiet, proud and wary of strangers; superstitious about the hill and the fog.",
+ "values": "his flock, his daughter, old ways",
+ "fears": "the fog, strange powers",
+ "authority": "Shepherds the high pasture.",
+ "tones": [
+  "frightened",
+  "protective"
+ ],
+ "relations": {
+  "npc_mey_shepherd": "his daughter Mey"
+ },
+ "family": [
+  "npc_mey_shepherd"
+ ],
+ "regard": {
+  "trust": 0.4,
+  "suspicion": 0.3
+ },
+ "concerns": "Fog season is coming; he keeps a lodestone his grandfather found, for luck, and doesn't know what it's for.",
+ "refers": [],
+ "knowledge": {
+  "lodestone": {
+   "text": "Orrin keeps a lodestone his grandfather found: a black stone that pulls iron to it. He thinks it's lucky.",
+   "line": "That? Grandfather's stone. Pulls iron like a lover. Lucky, I'd say.",
+   "trusted": false,
+   "lead": "Orrin has a lodestone, a stone that pulls iron."
+  },
+  "city": {
+   "text": "The city lets in strangers only when someone inside will vouch for them.",
+   "line": "City? They let no stranger in now unless someone speaks for them.",
+   "trusted": false,
+   "lead": "The city lets in strangers only if someone will speak for them."
+  }
+ },
+ "persuaded_by": "something that works on the hill, not talk",
+ "style": "Few words, careful; touches the shrine stone for luck.",
+ "mood": "wary",
+ "voice": {
+  "samples": [
+   "Hm. And who are you?",
+   "The fog's not to be trifled with.",
+   "My grandfather's stone. Lucky. Or cursed. One of the two.",
+   "If that's a trick, it's a good one."
+  ],
+  "habits": "Watches before he speaks; touches wood or stone for luck.",
+  "never": "trusts a stranger's word alone",
+  "greeting": "Nods, unsmiling: 'You're far from the road.'"
+ },
+ "goals": [
+  "Bring the flock through fog season",
+  "Keep Mey safe"
+ ],
+ "secrets": [],
+ "likes": "quiet, his dog, good grass",
+ "dislikes": "fog, city folk, tricks",
+ "opinions": {
+  "npc_mey_shepherd": {
+   "text": "his daughter; too clever by half",
+   "warmth": 0.9
+  }
+ },
+ "tasks": [
+  {
+   "id": "hut",
+   "place": "hut",
+   "activity": "work",
+   "dwell_s": 40,
+   "doing": "mending a hurdle outside the hut"
+  },
+  {
+   "id": "shrine",
+   "place": "shrine",
+   "activity": "look",
+   "dwell_s": 20,
+   "doing": "touching the shrine stone"
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Orrin fears anything uncanny: he'd call it witchcraft before he'd call it clever."
+ }
+}

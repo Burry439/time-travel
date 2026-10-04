@@ -1,0 +1,104 @@
+{
+ "id": "npc_liss_weaver",
+ "first_met_in": "word_gets_around",
+ "name": "Liss",
+ "age": 20,
+ "role": "weaver",
+ "look": "A slight young woman of twenty with freckles and a long red plait, a blue linen dress with the sleeves pushed up, a rag tied round her left hand and wool fluff caught in her hair.",
+ "look_kind": "woman",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Friendly, talkative and a terrible keeper of secrets: anything she hears, the whole hamlet hears by evening.",
+ "values": "her little brother, her loom, a good story",
+ "fears": "her hand going bad, falling behind on the cloth",
+ "authority": "None.",
+ "tones": [
+  "warm",
+  "frightened"
+ ],
+ "relations": {
+  "npc_agna_reeve": "Agna, the reeve",
+  "npc_cob_woodman": "Cob the woodcutter",
+  "npc_fenn_old": "Old Fenn",
+  "npc_tib_child": "Tib, Liss's little brother"
+ },
+ "family": [
+  "npc_tib_child"
+ ],
+ "regard": {
+  "trust": 0.35,
+  "suspicion": 0.15
+ },
+ "concerns": "She cut her hand on the shears and it won't stop bleeding through the rag; she can't weave like this.",
+ "refers": [],
+ "knowledge": {
+  "news": {
+   "text": "Everyone in Oakley meets at the well; news gets round by sundown.",
+   "line": "Oh, nothing stays secret here. Say it at the well and Agna knows by supper.",
+   "trusted": false,
+   "lead": "News in Oakley travels from the well to Agna by sundown."
+  }
+ },
+ "persuaded_by": "kindness",
+ "style": "Quick and chatty; jumps between subjects.",
+ "mood": "worried",
+ "voice": {
+  "samples": [
+   "Oh, it's nothing, it's only a cut. Well. It's quite a cut.",
+   "Tib! Come here!",
+   "Wait till I tell Agna.",
+   "You're kind. Most travellers aren't."
+  ],
+  "habits": "Talks with her hands (and winces); calls for Tib.",
+  "never": "keeps good news to herself",
+  "greeting": "Waves with her good hand: 'Hello! You're new.'"
+ },
+ "goals": [
+  "Get her hand seen to",
+  "Finish the cloth"
+ ],
+ "secrets": [],
+ "likes": "gossip, bright colours, kindness",
+ "dislikes": "blood, silence",
+ "opinions": {
+  "npc_agna_reeve": {
+   "text": "Agna",
+   "warmth": 0.5
+  },
+  "npc_cob_woodman": {
+   "text": "Cob the woodcutter",
+   "warmth": 0.4
+  },
+  "npc_fenn_old": {
+   "text": "Old Fenn",
+   "warmth": 0.5
+  },
+  "npc_tib_child": {
+   "text": "Tib",
+   "warmth": 0.8
+  }
+ },
+ "tasks": [
+  {
+   "id": "liss",
+   "place": "liss",
+   "activity": "work",
+   "dwell_s": 60,
+   "doing": "at her door, nursing her hand"
+  },
+  {
+   "id": "well",
+   "place": "well",
+   "activity": "work",
+   "dwell_s": 30,
+   "doing": "at the well"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Liss would want to know how it works."
+ }
+}

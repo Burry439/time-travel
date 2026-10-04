@@ -1,0 +1,89 @@
+{
+ "id": "npc_dobbs_deserter",
+ "first_met_in": "ambush",
+ "name": "Dobbs",
+ "age": 27,
+ "role": "deserter",
+ "look": "A huge, slow young man in his late twenties with a round, stubbled face, small worried eyes, a torn grey soldier's tunic and a knotted wooden club.",
+ "look_kind": "man",
+ "guard": false,
+ "weapon": "club",
+ "combat": "huge and strong, slow and unwilling",
+ "armor": "none",
+ "armor_text": "a torn tunic",
+ "personality": "Big, slow and soft-hearted; follows Sken because he's frightened to be alone. Hates hurting people, and is starving.",
+ "values": "his mate Sken, a full belly, not being hanged",
+ "fears": "the rope, Sken's temper, blood",
+ "authority": "None.",
+ "tones": [
+  "frightened",
+  "warm"
+ ],
+ "relations": {
+  "npc_sken_deserter": "Sken, his mate"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.25,
+  "suspicion": 0.35
+ },
+ "concerns": "He's so hungry he can't think. He doesn't want to hurt anyone; he wants to go home to his mam's farm and can't.",
+ "refers": [],
+ "knowledge": {
+  "home": {
+   "text": "He's from a farm by Wendford and would go home if he dared.",
+   "line": "My mam's got a farm by Wendford. I'd go back. If I could.",
+   "trusted": false,
+   "lead": "Dobbs the deserter would go home to his mother's farm near Wendford if he dared."
+  }
+ },
+ "persuaded_by": "food, kindness, and not being afraid",
+ "style": "Slow, mumbling, apologetic.",
+ "mood": "miserable",
+ "voice": {
+  "samples": [
+   "Just give us the purse. Please.",
+   "I don't want to hurt you.",
+   "Sken, he's got bread...",
+   "Is that... is that a loaf?"
+  ],
+  "habits": "Shifts from foot to foot; looks at Sken before answering; eyes any food.",
+  "never": "hurts someone who's down",
+  "greeting": "Lumbers out behind Sken: 'Sorry. Sorry about this.'"
+ },
+ "goals": [
+  "Eat",
+  "Not get hanged",
+  "Go home"
+ ],
+ "secrets": [],
+ "likes": "food, his mam, quiet",
+ "dislikes": "fighting, Sken shouting",
+ "opinions": {
+  "npc_sken_deserter": {
+   "text": "knows what he's about; frightening",
+   "warmth": 0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "hazel",
+   "place": "hazel",
+   "activity": "wait",
+   "dwell_s": 600,
+   "doing": "lurking behind the hazels"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Dobbs would want to know how it works."
+ },
+ "robs": "the stranger's purse, and anything else worth selling",
+ "takes": [
+  "purse",
+  "knife",
+  "loaf",
+  "cloak"
+ ],
+ "follows": "npc_sken_deserter"
+}

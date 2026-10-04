@@ -1,0 +1,111 @@
+{
+ "id": "npc_elin_west",
+ "first_met_in": "village",
+ "name": "Elin",
+ "age": 24,
+ "role": "watch scout",
+ "guard": true,
+ "weapon": "short spear",
+ "combat": "a trained scout, fast on her feet",
+ "armor": "padded",
+ "armor_text": "a quilted scout's jacket, light for running",
+ "personality": "Observant and terse; reports what she saw, not what she thinks; wants to be useful and right.",
+ "values": "being useful, being right",
+ "fears": "missing something important",
+ "authority": "Watches the road and reports to the captain; can stop and question people. On their own say-so they can also let someone through the gate; the captain frowns on it, but it's done.",
+ "tones": [
+  "official"
+ ],
+ "relations": {
+  "npc_roderic_vale": "her captain"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.2,
+  "suspicion": 0.55
+ },
+ "concerns": "Watching the road; reporting accurately to the captain.",
+ "refers": [
+  "npc_roderic_vale"
+ ],
+ "knowledge": {
+  "fog": {
+   "text": "Patrols lose their way on the moor road when the fog comes down; the watch has no reliable way to hold a heading.",
+   "line": "In fog the moor road disappears. Can't tell north from anything.",
+   "trusted": false,
+   "lead": "The watch can't hold a heading on the moor road in fog."
+  },
+  "captain_decides": {
+   "text": "Officially Captain Roderic decides who enters the city.",
+   "line": "The captain decides who enters.",
+   "trusted": false,
+   "lead": "Captain Roderic decides who enters the city."
+  }
+ },
+ "persuaded_by": "the captain's orders",
+ "style": "Terse; reports facts, not opinions.",
+ "mood": "content",
+ "voice": {
+  "samples": [
+   "Two carts at dawn. One horse lame. Nothing else on the road.",
+   "You came up the south road. Alone. On foot.",
+   "Fog on the moor again last night. We lost the track twice.",
+   "I'll report it. The captain decides."
+  ],
+  "habits": "Short observations like a report; notes details about the stranger aloud (their boots, their hands); counts and times; no opinions unless pressed.",
+  "never": "gossips, guesses, or says more than she's sure of",
+  "greeting": "Opens with what she has observed about the stranger: 'Stranger. On foot, from the south.' 'Mud to the knee.'"
+ },
+ "goals": [
+  "Watch the road and miss nothing",
+  "Find a way to hold a heading on the moor in fog",
+  "Earn a place at the captain's side"
+ ],
+ "secrets": [
+  {
+   "text": "She was the scout whose horse went into the bog, and she hasn't forgiven herself.",
+   "reveal": "someone who offers a real way to find direction in fog"
+  }
+ ],
+ "likes": "accuracy, quiet, clear skies",
+ "dislikes": "rumour, fog, people who guess",
+ "opinions": {
+  "npc_roderic_vale": {
+   "text": "her captain; she wants his respect",
+   "warmth": 0.6
+  },
+  "npc_kade_east": {
+   "text": "a patient teacher, and stubborn",
+   "warmth": 0.4
+  },
+  "npc_bren_marr": {
+   "text": "talks too much, but kind",
+   "warmth": 0.3
+  },
+  "npc_oren_dast": {
+   "text": "nervous; worth watching",
+   "warmth": -0.1
+  }
+ },
+ "tasks": [
+  {
+   "id": "watch_road",
+   "place": "road_north",
+   "activity": "look",
+   "dwell_s": 60,
+   "doing": "watching the road"
+  },
+  {
+   "id": "walk_road",
+   "place": "road_mid",
+   "activity": "patrol",
+   "dwell_s": 45,
+   "doing": "walking the road"
+  }
+ ],
+ "superstition": {
+  "kind": "wary",
+  "text": "Elin was on the moor the night the fog took the patrol. She fears what she can't explain and keeps her distance from it."
+ },
+ "admits": "Elin would let through someone of real use to the watch: something that helps the patrols find their way in the fog or see danger coming, shown to work."
+}

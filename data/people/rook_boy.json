@@ -1,0 +1,91 @@
+{
+ "id": "npc_rook_boy",
+ "first_met_in": "heavy_lifting",
+ "name": "Rook",
+ "age": 13,
+ "role": "farm boy",
+ "look": "A gangly boy of thirteen with a shock of black hair, a torn shirt, too-short breeches, bare muddy feet and a willow switch.",
+ "look_kind": "child",
+ "guard": false,
+ "weapon": null,
+ "combat": "no fighter",
+ "armor": "none",
+ "armor_text": "no armour",
+ "personality": "Lazy, cheeky and eager to show off his strength when someone's watching.",
+ "values": "pennies, showing off, an easy life",
+ "fears": "Dunna's tongue",
+ "authority": "None.",
+ "tones": [
+  "warm"
+ ],
+ "relations": {
+  "npc_wat_carter": "Wat the carter",
+  "npc_dunna_farmer": "Dunna, who he works for"
+ },
+ "family": [],
+ "regard": {
+  "trust": 0.45,
+  "suspicion": 0.1
+ },
+ "concerns": "Dunna wants him to mind the gate; he'd rather watch the cart, or help if it's exciting.",
+ "refers": [],
+ "knowledge": {
+  "ox": {
+   "text": "Bess the ox will pull if someone leads her by the nose rope.",
+   "line": "Bess'll pull for anyone who holds her nose rope and talks nice.",
+   "trusted": false,
+   "lead": "Wat's ox Bess pulls if led by her nose rope."
+  }
+ },
+ "persuaded_by": "a chance to show off",
+ "style": "Cheeky, quick, boastful.",
+ "mood": "bored",
+ "voice": {
+  "samples": [
+   "I could shift that.",
+   "What's in it for me?",
+   "Watch this!",
+   "Easy."
+  ],
+  "habits": "Swishes his switch; boasts; does things the moment Dunna looks away.",
+  "never": "admits he's tired",
+  "greeting": "Grins: 'Stuck, isn't it?'"
+ },
+ "goals": [
+  "Get out of minding the gate",
+  "Show off"
+ ],
+ "secrets": [],
+ "likes": "pennies, mud, attention",
+ "dislikes": "chores",
+ "opinions": {
+  "npc_wat_carter": {
+   "text": "funny when he swears",
+   "warmth": 0.4
+  },
+  "npc_dunna_farmer": {
+   "text": "bossy, but fair",
+   "warmth": 0.3
+  }
+ },
+ "tasks": [
+  {
+   "id": "field",
+   "place": "field",
+   "activity": "wait",
+   "dwell_s": 40,
+   "doing": "minding the gate"
+  },
+  {
+   "id": "mire",
+   "place": "mire",
+   "activity": "look",
+   "dwell_s": 40,
+   "doing": "watching the cart"
+  }
+ ],
+ "superstition": {
+  "kind": "none",
+  "text": "Rook would want to know how it works."
+ }
+}
