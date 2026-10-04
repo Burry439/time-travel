@@ -1,0 +1,269 @@
+<title>City Beyond Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: a field guide in one column; a surveyor's map up top, then routes and storylines as reference cards. */
+:root {
+  --bg: #eef1ef; --panel: #fbfcfb; --fg: #1c2421; --muted: #56625d; --rule: #d3dad6;
+  --accent: #1f5f73; --accent-soft: #dde9ed; --road: #c9bfa9; --wall: #b7beba; --pin: #9a3b2f;
+  --display: "Alegreya", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131917; --panel: #1b2321; --fg: #e3e9e6; --muted: #9eaba5; --rule: #2c3734;
+  --accent: #7fc0d4; --accent-soft: #1d3138; --road: #5a5444; --wall: #3b4542; --pin: #e08a7c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #131917; --panel: #1b2321; --fg: #e3e9e6; --muted: #9eaba5; --rule: #2c3734;
+  --accent: #7fc0d4; --accent-soft: #1d3138; --road: #5a5444; --wall: #3b4542; --pin: #e08a7c; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 17px/1.6 var(--body); padding-inline: 20px; padding-block: 40px 72px; }
+main { max-width: 780px; margin: 0 auto; display: grid; gap: 52px; }
+header, section { display: grid; gap: 16px; }
+h1 { font: 700 2.4rem/1.1 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 700 1.55rem/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 1.05rem/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 66ch; }
+.lede { font-size: 1.15rem; color: var(--muted); }
+.stamp { font: 0.82rem/1.5 var(--mono); color: var(--muted); }
+code, kbd { font: 0.86em var(--mono); background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+.start { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; gap: 8px; }
+.start ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+.figure { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; overflow-x: auto; }
+.figure svg { display: block; width: 100%; min-width: 560px; max-width: 700px; height: auto; margin: 0 auto; }
+svg .ground { fill: var(--panel); }
+svg .wall { fill: var(--wall); }
+svg .road { stroke: var(--road); stroke-width: 12; stroke-linecap: round; fill: none; }
+svg .pin { fill: var(--pin); }
+svg .lab { font: 12px var(--body); fill: var(--fg); }
+svg .lab-strong { font: 600 13px var(--body); fill: var(--fg); }
+svg .lab-dim { font: 12px var(--body); fill: var(--muted); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; min-width: 480px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 0.76rem var(--body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card .who { font: 0.8rem var(--body); color: var(--accent); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+.card ol, .card ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.say { color: var(--accent); font-style: italic; }
+.tag { display: inline-block; font: 600 0.75rem var(--body); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--muted); color: var(--muted); }
+.tag.good { border-color: var(--accent); color: var(--accent); }
+.story { display: grid; gap: 6px; padding-block: 14px; border-top: 1px solid var(--rule); }
+.story:first-of-type { border-top: 0; padding-top: 0; }
+.story dl { margin: 0; display: grid; grid-template-columns: 6.5rem 1fr; gap: 4px 12px; }
+.story dt { font-weight: 600; color: var(--muted); font-size: 0.92rem; }
+.story dd { margin: 0; min-width: 0; }
+.stories { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; }
+ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+@media (max-width: 560px) { .story dl { grid-template-columns: 1fr; } h1 { font-size: 1.9rem; } }
+</style>
+
+<main>
+<header>
+  <h1>City Beyond Walkthrough</h1>
+  <p class="lede">You arrive from the future with nothing but what you know. The city gate to the north is shut to strangers. Get inside, any way you can.</p>
+  <div class="start">
+    <h3>Starting a game</h3>
+    <ol>
+      <li>From the project folder run <code>.\tools\run_demo.ps1</code>. It starts the backend and opens the game.</li>
+      <li>Choose <strong>New journey</strong>. Saves from before today's changes can't be continued.</li>
+      <li>You stand on the south road. Everything below is one way to play; any other way you can describe also counts.</li>
+    </ol>
+  </div>
+  <p class="stamp">Current as of 4 Oct 2026 · main at 6890218</p>
+</header>
+
+<section id="rules">
+  <h2>How it works</h2>
+  <ul class="plain">
+    <li><strong>Win:</strong> someone with the right to let you in agrees (the captain, or any gate guard by their own rule), then you walk north through the gate.</li>
+    <li><strong>Say and Do in plain words.</strong> There are no magic phrases. <span class="say">"Fill the gourd at the trough"</span> and <span class="say">"dip the gourd in the water"</span> both work. The lines below are examples, not passwords.</li>
+    <li><strong>People decide for themselves.</strong> They remember what you did, tell each other, and can say no. If someone refuses, ask what would change their mind.</li>
+    <li><strong>The world follows physics.</strong> The judge rules on whether a deed can work with what's at hand, and says why when it can't.</li>
+    <li><strong>Things belong to people.</strong> Taking something that isn't yours shows "Steal" in red. Witnesses remember it.</li>
+  </ul>
+</section>
+
+<section id="controls">
+  <h2>Controls</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Input</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Left click</td><td>Talk to someone, pick something up, or point at it. You walk there first.</td></tr>
+      <tr><td>Right click</td><td>Look closely at a person or thing.</td></tr>
+      <tr><td><kbd>T</kbd> or <kbd>Enter</kbd></td><td>Open the line to type what you say or do.</td></tr>
+      <tr><td><kbd>Tab</kbd> in the line</td><td>Switch between SAY (spoken, blue) and DO (an action, red).</td></tr>
+      <tr><td>Drag from the pack</td><td>Onto a person, thing or the ground. It writes the line; press <kbd>Enter</kbd>.</td></tr>
+      <tr><td><kbd>E</kbd></td><td>Act on the nearest thing, as a click would.</td></tr>
+      <tr><td><kbd>WASD</kbd>, <kbd>Shift</kbd></td><td>Move, run.</td></tr>
+      <tr><td><kbd>Space</kbd> / <kbd>F</kbd></td><td>Use your right / left hand: a blow, a pour. Hold <kbd>F</kbd> with a shield to raise it.</td></tr>
+      <tr><td><kbd>X</kbd> / <kbd>Q</kbd></td><td>Swap hands / throw.</td></tr>
+      <tr><td><kbd>I</kbd> / <kbd>J</kbd></td><td>Pack and gear / the journal (leads, people, Stories, map).</td></tr>
+      <tr><td><kbd>H</kbd></td><td>Ask the device: your coach from the future. It only knows what you know.</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Walk away from a conversation, close, or open the menu.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="map">
+  <h2>The village</h2>
+  <div class="figure">
+  <svg viewBox="0 0 680 510" role="img" aria-labelledby="mt md"><title id="mt">Village map</title><desc id="md">The city wall and gate at the top, the road running south to where you start. Hessa's inn is to the west of the road, the smithy to the north-west, Tomas's yard to the north-east, Darin's wagon to the east and the wainwright's yard to the south-east.</desc>
+    <rect class="ground" x="0" y="0" width="680" height="510"/>
+    <rect class="wall" x="0" y="0" width="680" height="56"/>
+    <rect class="ground" x="322" y="0" width="28" height="56"/>
+    <text class="lab-strong" x="24" y="34">The city, behind its wall</text>
+    <path class="road" d="M336 506 L336 40"/>
+    <circle class="pin" cx="336" cy="80" r="5"/><text class="lab" x="352" y="84">Roderic, Bren and Oren at the gate</text>
+    <circle class="pin" cx="350" cy="112" r="4"/><text class="lab-dim" x="364" y="116">Gate trough</text>
+    <circle class="pin" cx="329" cy="161" r="5"/><text class="lab" x="345" y="165">Elin, below the gate</text>
+    <circle class="pin" cx="126" cy="175" r="6"/><text class="lab-strong" x="126" y="157" text-anchor="middle">Smithy: Mara, Jory</text>
+    <circle class="pin" cx="77" cy="189" r="4"/><text class="lab-dim" x="77" y="210" text-anchor="middle">Charcoal</text>
+    <circle class="pin" cx="189" cy="189" r="4"/><text class="lab-dim" x="189" y="210" text-anchor="middle">Bent nail</text>
+    <circle class="pin" cx="448" cy="182" r="6"/><text class="lab-strong" x="448" y="164" text-anchor="middle">Tomas's yard</text>
+    <circle class="pin" cx="560" cy="210" r="6"/><text class="lab-strong" x="560" y="192" text-anchor="middle">Darin's wagon</text>
+    <circle class="pin" cx="364" cy="245" r="5"/><text class="lab" x="380" y="249">Kade's patrol</text>
+    <circle class="pin" cx="280" cy="238" r="4"/><text class="lab-dim" x="266" y="242" text-anchor="end">Old horseshoe</text>
+    <circle class="pin" cx="238" cy="357" r="6"/><text class="lab-strong" x="222" y="361" text-anchor="end">Hessa's inn and trough</text>
+    <circle class="pin" cx="315" cy="371" r="4"/><text class="lab-dim" x="300" y="390" text-anchor="end">Dried gourd</text>
+    <circle class="pin" cx="560" cy="413" r="6"/><text class="lab-strong" x="560" y="440" text-anchor="middle">Wainwright's yard</text><text class="lab-dim" x="560" y="456" text-anchor="middle">free iron, rope, tools</text>
+    <circle class="pin" cx="322" cy="441" r="4"/><text class="lab-dim" x="306" y="445" text-anchor="end">Sticks, flint, reeds, herbs</text>
+    <circle class="pin" cx="336" cy="476" r="6"/><text class="lab-strong" x="352" y="480">You start here</text>
+  </svg>
+  </div>
+</section>
+
+<section id="routes">
+  <h2>Ways into the city</h2>
+  <p>Each guard has a rule of their own. Any one of them agreeing is enough. The first three are tested end to end; the rest follow each person's own rule.</p>
+  <div class="cards">
+    <article class="card">
+      <span class="who">Hessa vouches · easiest</span>
+      <h3>Carry water for the innkeeper</h3>
+      <ol>
+        <li>Pick up the dried gourd by the inn.</li>
+        <li>Ask Hessa for work: <span class="say">"Can I help with anything?"</span> She asks for water for her kitchen.</li>
+        <li>Agree, fill the gourd at her trough (drag it onto the trough), and give it to her.</li>
+        <li>She walks to the gate to speak for you. Wait until she has (her label shows where she's going).</li>
+        <li>Tell Roderic who you are and that Hessa spoke for you. Then walk north.</li>
+      </ol>
+      <span class="tag good">Tested</span>
+    </article>
+    <article class="card">
+      <span class="who">Darin hires you</span>
+      <h3>Show the merchant something new to sell</h3>
+      <ol>
+        <li>At the start area, pick up the hollow reeds and the flint.</li>
+        <li><span class="say">"Cut a short length of reed with the flint and carve a notch to make a whistle."</span></li>
+        <li>Offer Darin something new he could sell. Agree to his deal, then blow the whistle for him.</li>
+        <li>He takes you on under his trade permit. Tell Roderic you're Darin's hired hand.</li>
+      </ol>
+      <span class="tag good">Tested</span>
+    </article>
+    <article class="card">
+      <span class="who">Tomas vouches</span>
+      <h3>Raise the new gate beam</h3>
+      <ol>
+        <li>Offer Tomas help with the beam; agree to his job.</li>
+        <li>Borrow his rope and ladder (you can carry 20 kg, so not everything at once).</li>
+        <li>At the gate, take the cracked bar down first, then raise the new beam into its brackets.</li>
+        <li>Tell Tomas it's done. He speaks for you to the captain.</li>
+      </ol>
+      <span class="tag good">Tested</span>
+    </article>
+    <article class="card">
+      <span class="who">Elin, or the captain</span>
+      <h3>A compass for the watch</h3>
+      <ol>
+        <li>Ask Elin what's hardest about the watch: the fog.</li>
+        <li>Borrow Darin's lodestone. Pick up the bent nail and stroke it on the stone. Give the stone back.</li>
+        <li>Float the nail on bark in a bowl that isn't iron (cut the dried gourd into one); an iron pot pulls the needle off north.</li>
+        <li>Show Roderic and Elin it points north, then give it to them.</li>
+      </ol>
+      <span class="tag">Judge varies on a weak magnet</span>
+    </article>
+    <article class="card">
+      <span class="who">Mara vouches</span>
+      <h3>Fuel for the forge</h3>
+      <p>Mara asks for fuel. There's charcoal west of the smithy and a sack in the wainwright's yard.</p>
+    </article>
+    <article class="card">
+      <span class="who">Bren</span>
+      <h3>A friend at the gate</h3>
+      <p>Bren bends the rule for someone he trusts, or someone his sister Hessa has vouched for. Never for a stranger.</p>
+    </article>
+    <article class="card">
+      <span class="who">Oren</span>
+      <h3>Awe, fear or his debt</h3>
+      <p>Oren lets in someone he's in awe of, or someone who has settled his debt with Darin. See "Oren's debt" below.</p>
+    </article>
+    <article class="card">
+      <span class="who">Kade</span>
+      <h3>Honest work, seen</h3>
+      <p>Kade respects only practical work he has watched with his own eyes. Talk and tricks count for nothing.</p>
+    </article>
+  </div>
+  <p>You can also take the bar off the gate yourself. It's a crime, the guards will see it, and they will deal with you.</p>
+</section>
+
+<section id="stories">
+  <h2>The village storylines</h2>
+  <p>People have troubles of their own. You come into them by listening. Each has several endings and none is required to win. Your journal's Stories page tracks what you've learned.</p>
+  <div class="stories">
+    <div class="story"><h3>The trough water <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Hessa's guests keep falling sick. Ask her how they are.</dd>
+      <dt>Nudge</dt><dd>What kills what you can't see in water?</dd>
+      <dt>One way</dt><dd>Boil trough water in the iron pot from the wainwright's yard on her cooking fire, show her, and ask her to do the same. She can't see what boiling does, so she goes on your explanation.</dd></dl></div>
+    <div class="story"><h3>The lodging money <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Once Hessa trusts you (help her first), ask whether her lodgers pay their way.</dd>
+      <dt>One way</dt><dd>She confides that Darin owes three weeks. Tell Darin his good name in town is worth more than the rent. He goes and pays her.</dd></dl></div>
+    <div class="story"><h3>Oren's debt <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Ask Bren why Oren is so jumpy.</dd>
+      <dt>Nudge</dt><dd>Darin wants a fair bargain, never pity.</dd>
+      <dt>One way</dt><dd>Give Darin something he can sell, then ask him to call the debt square. He walks over and tells Oren himself. Or tell the captain, and see who forgives you.</dd></dl></div>
+    <div class="story"><h3>Mara's iron <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Ask Mara whether she has iron enough for the guards' order.</dd>
+      <dt>One way</dt><dd>Bring her an iron bar from the wainwright's yard.</dd></dl></div>
+    <div class="story"><h3>Jory's tongs <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Jory looks worried. Be kind to him.</dd>
+      <dt>One way</dt><dd>He confides he broke Mara's tongs. Replace them, or tell Mara. Either has consequences.</dd></dl></div>
+    <div class="story"><h3>Something nobody knows <span class="tag good">Tested</span></h3><dl>
+      <dt>Starts</dt><dd>Jory loves wonders.</dd>
+      <dt>One way</dt><dd>Show him something nobody here knows how to do, like the floating compass.</dd></dl></div>
+    <div class="story"><h3>The gate beam <span class="tag">Partly tested</span></h3><dl>
+      <dt>Starts</dt><dd>Tomas can't get the new beam up.</dd>
+      <dt>One way</dt><dd>Raise it for him. Once he trusts you, ask how the first one cracked. Keep his secret, or tell the captain.</dd></dl></div>
+    <div class="story"><h3>Lost in the fog <span class="tag">Not yet completed</span></h3><dl>
+      <dt>Starts</dt><dd>Ask Elin or the captain about the night patrols.</dd>
+      <dt>One way</dt><dd>Give the watch a compass that has been seen to point north. A strong magnet helps.</dd></dl></div>
+    <div class="story"><h3>Kade's knees <span class="tag">Not yet completed</span></h3><dl>
+      <dt>Starts</dt><dd>Kade's knees ache. He hides it.</dd>
+      <dt>Nudge</dt><dd>A wound poultice won't help a joint. What eases an ache?</dd>
+      <dt>One way</dt><dd>Make a remedy for aching joints and treat him. Telling the captain about his knees ends it differently.</dd></dl></div>
+  </div>
+</section>
+
+<section id="try">
+  <h2>Worth trying</h2>
+  <ul class="plain">
+    <li><strong>Win over a superstitious guard.</strong> Show Roderic or Mara the compass and they'll take it for witchcraft. Explain how it truly works and watch their fear turn to wonder. "It's a gift from the gods" won't do it.</li>
+    <li><strong>Lie at the gate.</strong> Tell a guard Hessa vouched for you before she has. They check.</li>
+    <li><strong>Pass on a secret.</strong> Tell someone what another person confided. Whoever hears it, or overhears it, now knows it, and the news travels.</li>
+    <li><strong>Watch news travel.</strong> People walk over to tell each other what they saw. A label over their head shows where they're going.</li>
+    <li><strong>Get hurt and treat it.</strong> Wounds bleed and fester. Make a bandage or poultice from what you find.</li>
+    <li><strong>Ask the device.</strong> Press <kbd>H</kbd> when stuck. It coaches from what you know, never from secrets.</li>
+  </ul>
+</section>
+
+<section id="edges">
+  <h2>Rough edges to expect</h2>
+  <ul class="plain">
+    <li>Replies take about 4 to 8 seconds; a group at the gate can take up to 12.</li>
+    <li>People sometimes say no. That's their choice. Try another angle, or ask what would change their mind.</li>
+    <li>Pictures of new things are painted in the background and can take a little while to appear.</li>
+    <li>If you die, you can rewind to the last calm moment.</li>
+    <li>Note anything confusing, unfair or slow, with what you typed. That's what the next round of fixes is for.</li>
+  </ul>
+</section>
+</main>
