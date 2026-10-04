@@ -55,6 +55,15 @@ def seed_npcs(state: State) -> list[Npc]:
     return seeded
 
 
+def _route(start: tuple[int, int], goal: tuple[int, int], blocked: paths.Grid) -> list[list[int]]:
+    """The walk to the next place on their round; none if something put across the way shuts it off (D-65): they
+    stay where they are until it's cleared."""
+    try:
+        return paths.route(start, goal, blocked)
+    except ValueError:
+        return []
+
+
 def choose_routine_plan(state: State, npc: Npc, blocked: paths.Grid) -> None:
     """Current planner. The decider can replace this choice with another valid plan."""
     controller = npc["controller"]
@@ -63,7 +72,7 @@ def choose_routine_plan(state: State, npc: Npc, blocked: paths.Grid) -> None:
     x, y, _, _ = round_[next_index]
     controller["anchor_index"] = next_index
     controller["destination"] = [x, y]
-    controller["path"] = paths.route((npc["x"], npc["y"]), (x, y), blocked)
+    controller["path"] = _route((npc["x"], npc["y"]), (x, y), blocked)
     controller["activity"] = "walk"
     controller["step_carry_ms"] = 0
 
@@ -83,6 +92,12 @@ def advance_npcs(state: State, npcs: list[Npc], elapsed_ms: int, now_ms: int) ->
             continue
         controller["step_carry_ms"] += elapsed_ms
         while controller["step_carry_ms"] >= controller["step_ms"] and controller["path"]:
+            if tuple(controller["path"][0]) in blocked:  # Something was put across the way (D-65): go around.
+                goal = controller["path"][-1]
+                around = _route((npc["x"], npc["y"]), tuple(goal), blocked)
+                controller["path"] = around
+                if not around:
+                    break
             controller["step_carry_ms"] -= controller["step_ms"]
             npc["x"], npc["y"] = controller["path"].pop(0)
         if not controller["path"]:

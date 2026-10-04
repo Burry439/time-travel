@@ -460,7 +460,8 @@ def fallback_line(state: State, npc: Npc, key: str) -> str:
 def world_as_seen(state: State, npc: Npc) -> dict:
     """What this person knows of the world by being in it (D-65): how they themselves are (soaked, tied up, fed),
     and what's plain to see near them: the stranger's and others' states, writing and marks on things close by
-    (they can read a forged permit and judge it themselves). Only what's there to see; empty parts are left out."""
+    (they can read a forged permit and judge it themselves), and what's plain to see further off (a broken seal, a log
+    across the road). Not what's hidden or shut away. Only what's there to see; empty parts are left out."""
     seen: dict = {}
     if mine := effects.how_they_are(npc):
         seen["how_you_are"] = mine
@@ -475,20 +476,18 @@ def world_as_seen(state: State, npc: Npc) -> dict:
             continue
         lines += [f"{label}: {line}" for line in effects.how_they_are(other)]
     for obj in state["objects"].values():
-        if (
-            not obj.get("attributes")
-            or obj.get("holder_id") in ("used",)
-            or str(obj.get("holder_id", "")).startswith("in:")
-        ):
+        if not (obj.get("attributes") or obj.get("blocks") or obj.get("rests_on")) or effects.gone(obj):
             continue
-        where = (
-            state["player"]
-            if obj.get("holder_id") == "player"
-            else cast.find(state["npcs"], obj.get("holder_id") or "")
-        )
-        spot = where if where is not None else obj
-        if "x" in spot and cast.distance(npc, spot) <= tuning.READ_CELLS:
+        if effects.unseen_by(obj, npc["id"]) or effects.shut_in(state, obj):
+            continue  # Hidden, or shut in something (D-65): not there to see.
+        spot = effects.spot(state, obj)
+        if "x" not in spot:
+            continue
+        far = cast.distance(npc, spot)
+        if far <= tuning.READ_CELLS:
             lines += effects.readable(obj)
+        if far <= tuning.SIGHT_CELLS and paths.line_of_sight(state, here, cast.cell(spot)):
+            lines += effects.plain_to_see(obj)  # Damage, a broken seal, wet, a log across the way.
     if lines:
         seen["what_you_can_see"] = lines[:10]
     return seen

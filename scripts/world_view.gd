@@ -200,10 +200,17 @@ func _sync_now() -> void:
 			if ring:
 				sprite.remove_child(ring)
 				ring.queue_free()
-		sprite.visible = obj["holder_id"] == null
-		# A fire that has burnt out, or been put out, goes grey.
-		sprite.self_modulate = Color(0.45, 0.43, 0.42) if str(obj.get("condition", "usable")) in ["burnt out", "put out"] else Color.WHITE
+		# Not drawn when carried, inside something, or hidden by someone else (D-65).
+		var hidden = obj.get("hidden")
+		var inside = obj.get("inside")
+		var unseen: bool = typeof(hidden) == TYPE_DICTIONARY and str(hidden.get("by", "")) != "player"
+		sprite.visible = obj["holder_id"] == null and (inside == null or str(inside).is_empty()) and not unseen
+		# A fire that has burnt out, or been put out, goes grey; so does a thing smashed (D-65).
+		var spent := str(obj.get("condition", "usable")) in ["burnt out", "put out", "destroyed"]
+		sprite.self_modulate = Color(0.45, 0.43, 0.42) if spent else Color.WHITE
+		sprite.rotation = -0.35 if obj.get("rests_on") == "wall" else (0.5 if str(obj.get("condition", "")) == "destroyed" else 0.0)
 		sprite.position = game.cell_center(int(obj["x"]), int(obj["y"]))
+		_place_blocker(str(object_id), obj)
 		var fixture: Dictionary = game.run_state["objects"].get(str(obj.get("installed_in", "")), {})
 		if not fixture.is_empty() and not fixture.get("no_sprite", false):
 			sprite.position.y -= 36.0 # Up in its fixture (a bar in its brackets), not stuck in ground art like a mire.
@@ -390,6 +397,30 @@ func _place_bubble(bubble: PanelContainer) -> void:
 			lean = (bubble.size.x * 0.5 + 6.0) * (1.0 if actor.position.x >= partner.position.x else -1.0)
 	bubble.position = Vector2(-bubble.size.x * 0.5 + lean, -150.0 - bubble.size.y)
 	(bubble.get_node("Tail") as Polygon2D).position = Vector2(bubble.size.x * 0.5 - lean, bubble.size.y - 2)
+
+
+## Something put across a way (D-65) is solid where it lies, as the server treats its cell.
+func _place_blocker(object_id: String, obj: Dictionary) -> void:
+	var holder := game.get_node_or_null("BuildingCollision")
+	if holder == null:
+		return
+	var body := holder.get_node_or_null("Placed_" + object_id) as StaticBody2D
+	var standing := str(obj.get("condition", "usable")) != "destroyed"
+	var blocking: bool = obj.get("blocks", false) == true and obj["holder_id"] == null and standing
+	if not blocking:
+		if body:
+			body.queue_free()
+		return
+	if body == null:
+		body = StaticBody2D.new()
+		body.name = "Placed_" + object_id
+		var shape := CollisionShape2D.new()
+		var box := RectangleShape2D.new()
+		box.size = Vector2(game.CELL, game.CELL)
+		shape.shape = box
+		body.add_child(shape)
+		holder.add_child(body)
+	body.position = game.cell_center(int(obj["x"]), int(obj["y"]))
 
 
 ## Map trees are authored scene art; hide the felled ones and let the player walk through.

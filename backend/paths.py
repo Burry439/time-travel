@@ -63,16 +63,30 @@ def cleared_obstacles(state: State) -> set[str]:
     }
 
 
+def placed_blocks(state: State) -> frozenset[Cell]:
+    """Cells something has been put across (the log rolled over the road, D-65): nobody walks through them."""
+    return frozenset(
+        (o["x"], o["y"])
+        for o in (state.get("objects") or {}).values()
+        if o.get("blocks") and o.get("holder_id") is None and o.get("condition") != "destroyed"
+    )
+
+
+def _with_blocks(state: State, base: Grid) -> Grid:
+    placed = placed_blocks(state)
+    return Grid(base.blocked | placed, base.walk) if placed else base
+
+
 def grid(state: State, cleared: Iterable[str] | None = None) -> Grid:
-    """Buildings, and obstacles (trees, rocks) not cleared away: nobody walks through them. By default those this
-    journey has cleared (felled trees no longer block)."""
+    """Buildings, obstacles (trees, rocks) not cleared away, and things put across a way: nobody walks through
+    them. By default those this journey has cleared (felled trees no longer block)."""
     gone = cleared_obstacles(state) if cleared is None else cleared
-    return _grid(content.level(state)["map"], frozenset(gone))
+    return _with_blocks(state, _grid(content.level(state)["map"], frozenset(gone)))
 
 
 def standing_grid(state: State) -> Grid:
-    """Every obstacle as the map was made: what people's routines are planned around."""
-    return _grid(content.level(state)["map"], frozenset())
+    """Every obstacle as the map was made, and anything since put across a way: what people's rounds go around."""
+    return _with_blocks(state, _grid(content.level(state)["map"], frozenset()))
 
 
 def walkable(cell: Cell, blocked: Grid) -> bool:

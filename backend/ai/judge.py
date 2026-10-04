@@ -21,7 +21,8 @@ from . import config
 
 # v21 (D-64): reachable work, existing bindings and already held prerequisites (v20 was discarded).
 # v22 (D-65): the world's building blocks (effects on any step), seen_as, and words typed as a deed.
-PROMPT_VERSION = "judge_v22"
+# v23 (D-65 phase 2): place and structure, containers and mixtures, matter.
+PROMPT_VERSION = "judge_v23"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -83,6 +84,24 @@ EffectKind = Literal[
     "mark",
     "touch",
     "gesture",
+    # Phase 2: place and structure, containers and mixtures, matter.
+    "move",
+    "block",
+    "place",
+    "support",
+    "open",
+    "close",
+    "hide",
+    "put_in",
+    "take_out",
+    "transfer",
+    "mix",
+    "contaminate",
+    "soak",
+    "seal",
+    "damage",
+    "repair",
+    "destroy",
 ]
 
 
@@ -99,6 +118,10 @@ class PhysicalEffect(BaseModel):
     limits: list[Literal["move", "see", "speak", "hands"]] = []  # What a condition stops them doing.
     text: str | None = None  # What is written, or what a mark shows.
     as_if_from: str | None = None  # Whom a piece of writing claims to come from.
+    cell: list[int] | None = None  # [x, y]: where a thing is moved to, put across the way, or leant.
+    relation: Literal["on", "under", "beside", "over", "into"] | None = None  # place; transfer over / into someone.
+    amount: float | None = None  # Litres poured or soaked up; kilograms of an ingredient mixed in.
+    flags: list[Flag] = []  # Qualities a thing loses to damage, or gets back by repair.
 
 
 class SayInstead(BaseModel):

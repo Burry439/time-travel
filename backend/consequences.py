@@ -339,9 +339,14 @@ def _harmed(state: State, verdict: dict, step: dict) -> dict:
 def _filled(state: State, verdict: dict, step: dict) -> dict:
     fill = verdict["fill"]
     container, source = state["objects"][fill["container_id"]], state["objects"][fill["source_id"]]
-    return {
+    carried = [m for m in source.get("mixture") or [] if m not in (container.get("mixture") or [])]
+    return {  # What's in the source's water comes with it: a fouled trough fills a fouled gourd (D-65).
         "water": [
-            {"id": container["id"], "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3)},
+            {
+                "id": container["id"],
+                "water_l": round(container.get("water_l", 0.0) + fill["litres"], 3),
+                **({"mixture": (container.get("mixture") or []) + carried} if carried else {}),
+            },
             {"id": source["id"], "water_l": round(source["water_l"] - fill["litres"], 3)},
         ]
     }
@@ -421,6 +426,13 @@ CHANGES = {
 }
 
 
+def _out_of_its_box(obj: dict) -> None:
+    """Taken, given, dropped or fitted somewhere by hand: no longer inside a container (D-65). Set, never deleted:
+    a saved world merges object fields, so a deleted key would come back."""
+    if obj.get("inside"):
+        obj["inside"] = None
+
+
 def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
     actor = state["player"] if actor_id == "player" else cast.find(state["npcs"], actor_id)
 
@@ -437,6 +449,7 @@ def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
             state["objects"][landed["id"]].update(holder_id="used", condition="used up")
             continue
         state["objects"][landed["id"]].update(x=landed["x"], y=landed["y"], holder_id=None)
+        _out_of_its_box(state["objects"][landed["id"]])
     new_objects = deltas.get("new_objects") or []
     if new_objects:
         for item_id in deltas["consumed_ids"]:
@@ -445,14 +458,20 @@ def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
         for obj in new_objects:
             state["objects"][obj["id"]] = obj
             heat.rename(obj)
-    for item_id in deltas.get("taken_ids", []):
+    for item_id in deltas.get("taken_ids", []):  # Taken out of whatever it was in, if anything (D-65).
         state["objects"][item_id]["holder_id"] = actor_id
+        _out_of_its_box(state["objects"][item_id])
     for change in deltas.get("water", []):  # Water moved, heated, poured; any change of state in place.
         if change["id"] == "__player__":  # The stranger's own body and kit (D-49).
             actor.update(copy.deepcopy({k: v for k, v in change.items() if k != "id"}))
             continue
         state["objects"][change["id"]].update({k: v for k, v in change.items() if k != "id"})
         if not state["objects"][change["id"]].get("water_l"):
+            if (
+                state["objects"][change["id"]].get("mixture")
+                and "water_source" not in state["objects"][change["id"]]["capabilities"]
+            ):
+                state["objects"][change["id"]]["mixture"] = []  # Emptied: what was in the water went with it (D-65).
             state["objects"][change["id"]].update(
                 temperature=state["objects"][change["id"]].get("temperature", "cold")
                 if not state["objects"][change["id"]].get("capacity_l")
@@ -479,11 +498,13 @@ def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
         state["objects"][placed["id"]].update(
             installed_in=placed["into"], x=placed["x"], y=placed["y"], holder_id=None, condition="installed"
         )
+        _out_of_its_box(state["objects"][placed["id"]])
     if deltas.get("trade"):
         state.setdefault("trades", {})[deltas["trade"]["id"]] = dict(deltas["trade"])
     given = deltas.get("given")
     for item_id in (given or {}).get("ids", []):
         state["objects"][item_id].update(holder_id=given["to"], owner_id=given["owners"][item_id], given_by=actor_id)
+        _out_of_its_box(state["objects"][item_id])
         if given["owners"][item_id] == given["to"]:
             state["objects"][item_id].pop("lent_to", None)  # Back in its owner's hands: the loan is over.
     transformed = deltas.get("transformed")
@@ -512,6 +533,7 @@ def apply_step(state: State, deltas: dict, actor_id: str = "player") -> None:
                 npc["mind"]["job"] = None
             if npc.get("controller"):
                 npc["controller"].update(activity="down", path=[], source="down")
+    effects.settle(state)  # Contents follow their container; a thing picked up is no longer in the way (D-65).
 
 
 _REFERENCE = re.compile(r"^made_by_step_(\d+)$")

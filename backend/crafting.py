@@ -256,32 +256,78 @@ def _with_effects(state: State, judged: dict, available: dict, verdict: dict) ->
     if verdict["category"] != "success":
         return verdict
     proposed = copy.deepcopy(judged.get("effects") or [])
+    own = [
+        e
+        for e in proposed
+        if str(e.get("target_id") or "").startswith("made_by_step_") and e["target_id"] not in available
+    ]
+    if own:  # Effects on the thing this very step makes (live: a stake "with a pointed end"): part of what's made.
+        proposed = [e for e in proposed if e not in own]
+        made = verdict.get("new_spec")
+        for effect in own:
+            facts = (
+                _checked_attributes(
+                    {"attributes": [effect["attribute"]]}, verdict["consumed_ids"] + verdict["tool_ids"]
+                )
+                if made is not None and effect["kind"] == "attribute" and effect.get("attribute")
+                else None
+            )
+            if facts:
+                made["attributes"] = [a for a in made["attributes"] if a["name"] != facts[0]["name"]] + facts
+            else:
+                verdict["notes"].append(f"Dropped a {effect['kind']} effect on the thing being made: it's in the make.")
     for effect in proposed:  # Only a real test asserts observed; writing is plainly there to see.
         if (effect.get("attribute") or {}).get("status") == "observed":
             effect["attribute"]["status"] = "expected"
     water = {w["id"]: state["objects"][w["id"]] for w in judge_view.water_sources(state, judge_view.walk_costs(state))}
-    problem = effects.check(state, proposed, {"available": available, "water": water, "actor_id": "player"})
+    ctx = {"available": available, "water": water, "actor_id": "player", "helpers": judged.get("helper_ids", [])}
+    problem = effects.check(state, proposed, ctx)
     if problem:
         return unresolved(verdict["notes"], f"an effect breaks a law: {problem}")
     if proposed:
         verdict["effects"] = verdict.get("effects", []) + [e for e in proposed if e not in verdict.get("effects", [])]
-        claimed = {c["id"] for c in verdict.get("property", [])}
-        eaten = [e["target_id"] for e in proposed if e["kind"] == "consume" and e["target_id"] not in claimed]
-        marked = [
-            e["target_id"]
-            for e in proposed
-            if e["kind"] in ("write", "mark", "attribute", "connect", "disconnect")
-            and e.get("target_id") in available
-            and e["target_id"] not in claimed | set(eaten)
-        ]  # Someone else's thing eaten, written on or altered: theirs, used (a witness may call it theft).
-        verdict["property"] = (
-            verdict.get("property", [])
-            + _property(state, eaten, "used up")
-            + _property(state, list(dict.fromkeys(marked)), "used")
-        )
+        # Someone else's thing eaten, smashed, taken out of a box, written on or shifted: theirs, and how (a witness
+        # may call it theft or damage; using isn't taking, D-46).
+        claims: dict[str, str] = {}
+        for effect in proposed:  # The gravest thing done to each (moved, then smashed: smashed).
+            for role, thing_id in (("target", effect.get("target_id")), ("other", effect.get("other_id"))):
+                how = EFFECT_PROPERTY.get((effect["kind"], role), "used" if role == "target" else None)
+                if how and (thing_id in available or thing_id in water):
+                    if GRAVITY.index(how) < GRAVITY.index(claims.get(thing_id, "used")) or thing_id not in claims:
+                        claims[thing_id] = how
+        # An effect's claim replaces the action's own when it's graver (live: a bowl smashed was only "used").
+        kept = [
+            c
+            for c in verdict.get("property", [])
+            if c["id"] not in claims
+            or GRAVITY.index(c["how"] if c["how"] in GRAVITY else "used") <= GRAVITY.index(claims[c["id"]])
+        ]
+        held = {c["id"] for c in kept}
+        verdict["property"] = kept + [
+            c
+            for how in dict.fromkeys(claims.values())
+            for c in _property(state, [i for i, h in claims.items() if h == how and i not in held], how)
+        ]
     if (judged.get("seen_as") or "").strip():
         verdict["seen_as"] = " ".join(judged["seen_as"].split())[:300]
     return verdict
+
+
+# What an effect does to someone else's thing, for its owner and witnesses: (kind, target or other) -> how. Anything
+# else an effect touches as its target is "used"; a thing named as other_id is untouched unless listed.
+EFFECT_PROPERTY = {
+    ("consume", "target"): "used up",
+    ("destroy", "target"): "destroyed",
+    ("damage", "target"): "damaged",
+    ("take_out", "target"): "taken",
+    ("hide", "target"): "hid",
+    ("contaminate", "target"): "fouled",
+    ("mix", "other"): "used up",
+    ("seal", "other"): "used up",
+    ("soak", "other"): "used",
+    ("put_in", "other"): "used",
+}
+GRAVITY = ("destroyed", "damaged", "used up", "taken", "hid", "fouled", "used")
 
 
 def connected_items(state: State, ids: list[str]) -> list[str]:
@@ -351,7 +397,8 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
     harm = judged.get("harm") if action == "harm" else None
     if harm and harm.get("method", "melee") != "thrown" and harm.get("weapon_id"):
         ids = [harm["weapon_id"]]
-    ids += judged.get("resource_ids", []) + [e["target_id"] for e in judged.get("effects", [])]
+    deed = judged.get("effects") or []  # Whatever its effects work on: walk there first (D-65).
+    ids += judged.get("resource_ids", []) + [i for e in deed for i in (e.get("target_id"), e.get("other_id")) if i]
     cells = [
         (available[i]["x"], available[i]["y"])
         for i in _dedupe(ids)
@@ -361,6 +408,13 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
     source = state["objects"].get((judged.get("fill") or {}).get("source_id") or "") if action == "fill" else None
     if source is not None:
         cells.append(cast.nearest(source, here))
+    for i in _dedupe([i for e in deed for i in (e.get("target_id"), e.get("other_id")) if i]):
+        someone = cast.find(state["npcs"], i)
+        water = state["objects"].get(i)
+        if someone is not None and someone.get("alive", True):
+            cells.append((someone["x"], someone["y"]))
+        elif water is not None and "water_source" in water["capabilities"]:
+            cells.append(cast.nearest(water, here))
     if action == "demonstrate":  # Showing something in a trough or other water source: go to it.
         cells += [
             cast.nearest(o, here) for i in ids if (o := state["objects"].get(i)) and "water_source" in o["capabilities"]
@@ -1124,6 +1178,8 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
         return unresolved(notes, f"not a water source: {plan['source_id']}")
     if "container" not in container.get("flags", []) or not container.get("capacity_l"):
         return ruling("blocked", f"The {container['name']} can't hold water.", notes, action="fill", precedent_key=key)
+    if container.get("closed"):  # D-65: shut or sealed.
+        return ruling("blocked", f"The {container['name']} is closed.", notes, action="fill", precedent_key=key)
     if cast.distance(state["player"], cast.nearest(source, state["player"])) > tuning.REACH_CELLS:
         return ruling("blocked", f"The {source['name']} is too far away.", notes, action="fill", precedent_key=key)
     room = round(container["capacity_l"] - container.get("water_l", 0.0), 3)

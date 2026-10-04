@@ -13,6 +13,9 @@ import cast
 import clock
 import crafting
 import effects
+import judge_view
+import npc_sim
+import paths
 import rounds
 from ai import judge
 
@@ -65,6 +68,7 @@ def test_a_state_ends_when_its_time_is_up():
         ({"kind": "condition", "target_id": BREN, "name": "trust"}, "not something a deed can set"),
         ({"kind": "condition", "target_id": BREN, "name": "x", "limits": ["fly"]}, "limits only"),
         ({"kind": "touch", "target_id": "player"}, "someone else"),
+        ({"kind": "touch", "target_id": "made_up_thing"}, "someone or something"),
         ({"kind": "write", "target_id": "made_up_bark", "text": "hello"}, "surface within reach"),
         ({"kind": "consume", "target_id": "gate_brackets"}, "something loose"),
         (
@@ -207,3 +211,276 @@ def test_water_poured_over_someone_leaves_them_soaked_until_they_dry():
     bren = cast.find(state["npcs"], BREN)
     assert bren["states"][0]["name"] == "soaked" and bren["states"][0]["until"]
     assert state["objects"]["gourd_a"]["water_l"] == 0.0
+
+
+# --- Phase 2: place and structure, containers and mixtures, matter ---------------------------------------------------
+
+
+def deed(state, *effects_list, seen_as="The stranger does something.", **fields):
+    commit(state, other(list(effects_list), seen_as, **fields))
+    return state["last_action"]
+
+
+def refused(state, *effects_list, **fields):
+    verdict = crafting.validate(state, other(list(effects_list), "x", **fields))
+    assert verdict["category"] == "unresolved", verdict
+    return " ".join(verdict["notes"])
+
+
+def test_water_tipped_over_bren_leaves_the_gourd_and_soaks_him():
+    """Phase 1 left the water in the gourd when a step soaked Bren with a condition: liquid is now conserved."""
+    state = beside(BREN)
+    state["objects"]["gourd_a"].update(holder_id="player", water_l=1.0)
+    deed(state, {"kind": "transfer", "target_id": "gourd_a", "other_id": BREN, "relation": "over"})
+    bren = cast.find(state["npcs"], BREN)
+    assert bren["states"][0]["name"] == "soaked" and "water" in bren["states"][0]["value"]
+    assert state["objects"]["gourd_a"]["water_l"] == 0.0 and state["water_spilled_l"] == 1.0
+
+
+def test_poured_from_pot_to_pot_nothing_is_lost():
+    state = fresh_state(34, 53)
+    state["objects"]["bucket_hessa"]["water_l"] = 5.0
+    deed(state, {"kind": "transfer", "target_id": "bucket_hessa", "other_id": "gourd_a", "amount": 0.4})
+    assert state["objects"]["gourd_a"]["water_l"] == 0.4 and state["objects"]["bucket_hessa"]["water_l"] == 4.6
+    deed(state, {"kind": "transfer", "target_id": "bucket_hessa", "other_id": "cup_hessa"})  # All: the cup overflows.
+    assert state["objects"]["cup_hessa"]["water_l"] == 0.3 and state["water_spilled_l"] == 4.3
+
+
+def test_honey_stirred_into_water_is_what_the_drinker_drank():
+    state = fresh_state(34, 53)
+    state["objects"]["bucket_hessa"]["water_l"] = 2.0
+    mix = {"kind": "mix", "target_id": "bucket_hessa", "other_id": "honey_hessa", "amount": 0.2, "value": "sweet"}
+    deed(state, mix)
+    assert state["objects"]["honey_hessa"]["mass_kg"] == 0.4 and state["objects"]["honey_hessa"]["holder_id"] is None
+    assert "pot of honey: sweet" in judge_view._placement(state, state["objects"]["bucket_hessa"])["mixed_in"]
+    drink = {"kind": "transfer", "target_id": "bucket_hessa", "other_id": "player", "relation": "into", "amount": 0.5}
+    deed(state, drink)
+    drank = state["player"]["states"][0]
+    assert drank["name"] == "drank" and "honey" in drank["value"] and state["objects"]["bucket_hessa"]["water_l"] == 1.5
+    assert "bucket_hessa" in {c["id"] for c in state["last_action"]["property"]}  # Hessa's water, used.
+
+
+def test_a_fouled_trough_fouls_what_is_filled_from_it_and_nobody_can_see_it():
+    state = fresh_state(37, 53)
+    deed(state, {"kind": "contaminate", "target_id": "trough_hessa", "value": "the stranger pissed in it"})
+    assert state["objects"]["trough_hessa"]["mixture"][0]["name"] == "fouled"
+    hessa = cast.find(state["npcs"], HESSA)
+    assert not any("piss" in line for line in briefing.world_as_seen(state, hessa).get("what_you_can_see", []))
+    view = {w["id"]: w for w in judge_view.water_sources(state, judge_view.walk_costs(state))}
+    assert "pissed" in view["trough_hessa"]["mixed_in"]  # The judge knows the truth.
+    state["objects"]["gourd_a"].update(holder_id="player")
+    commit(state, judged("fill", fill={"container_id": "gourd_a", "source_id": "trough_hessa", "litres": 0.5}))
+    assert state["objects"]["gourd_a"]["mixture"][0]["name"] == "fouled"
+
+
+def test_a_log_rolled_across_a_way_blocks_it_until_it_is_moved():
+    state = fresh_state(69, 60)
+    deed(state, {"kind": "block", "target_id": "log_a", "cell": [70, 62]})
+    log = state["objects"]["log_a"]
+    assert (log["x"], log["y"]) == (70, 62) and log["blocks"]
+    assert not paths.grid(state).walkable((70, 62)) and not paths.standing_grid(state).walkable((70, 62))
+    deed(state, {"kind": "move", "target_id": "log_a", "cell": [68, 61]})
+    assert not state["objects"]["log_a"]["blocks"] and paths.grid(state).walkable((70, 62))
+
+
+def test_people_on_their_rounds_go_around_a_blocked_way():
+    state = fresh_state()
+    npc = cast.find(state["npcs"], HESSA)
+    npc["controller"].update(activity="walk", source="routine", path=[[35, 51], [36, 51], [37, 51]], step_ms=100)
+    state["objects"]["log_a"].update(x=35, y=51, blocks=True)
+    moved = npc_sim.advance_npcs(state, [npc], 300, state["sim_time_ms"])
+    hessa = cast.find(moved, HESSA)
+    assert (hessa["x"], hessa["y"]) != (35, 51)
+    assert (35, 51) not in {tuple(c) for c in hessa["controller"]["path"]}
+
+
+def test_a_plank_on_a_stone_falls_when_the_stone_is_moved():
+    state = fresh_state(65, 28)
+    deed(state, {"kind": "place", "target_id": "wood_tomas", "other_id": "fulcrum_tomas", "relation": "on"})
+    plank = state["objects"]["wood_tomas"]
+    assert plank["rests_on"] == "fulcrum_tomas" and (plank["x"], plank["y"]) == (66, 27)
+    deed(state, {"kind": "move", "target_id": "fulcrum_tomas", "cell": [67, 29]})
+    assert plank["rests_on"] is None
+
+
+def test_a_ladder_leans_against_the_nearest_wall():
+    state = fresh_state(62, 28)
+    deed(state, {"kind": "support", "target_id": "ladder_tomas"})
+    ladder = state["objects"]["ladder_tomas"]
+    assert ladder["rests_on"] == "wall" and (ladder["x"], ladder["y"]) == (62, 26)
+    tomas = cast.find(state["npcs"], "npc_tomas_reed")
+    assert any("propped against the wall" in line for line in briefing.world_as_seen(state, tomas)["what_you_can_see"])
+
+
+def test_garlic_in_a_sealed_bucket_is_out_of_reach_until_the_seal_is_broken():
+    state = fresh_state(34, 52)
+    deed(state, {"kind": "put_in", "target_id": "garlic_hessa", "other_id": "bucket_hessa"})
+    assert state["objects"]["garlic_hessa"]["inside"] == "bucket_hessa"
+    deed(state, {"kind": "seal", "target_id": "bucket_hessa", "other_id": "thread_hessa", "value": "lid lashed shut"})
+    bucket = state["objects"]["bucket_hessa"]
+    assert bucket["sealed"] and state["objects"]["thread_hessa"]["holder_id"] == "in:bucket_hessa"
+    assert "garlic_hessa" not in {o["id"] for o in judge_view.available_items(state)}
+    assert "sealed" in refused(state, {"kind": "contaminate", "target_id": "bucket_hessa", "value": "dirt"})
+    commit(state, judged("take", take_ids=["bucket_hessa"]))
+    assert state["objects"]["garlic_hessa"]["holder_id"] == "player"  # It goes where the bucket goes.
+    deed(state, {"kind": "open", "target_id": "bucket_hessa"})
+    assert any(a["value"] == "the seal is broken" for a in bucket["attributes"])
+    deed(state, {"kind": "take_out", "target_id": "garlic_hessa"})
+    assert state["objects"]["garlic_hessa"].get("inside") is None
+    assert any(c["id"] == "garlic_hessa" and c["how"] == "taken" for c in state["last_action"]["property"])
+
+
+def test_writing_hidden_away_cannot_be_read():
+    state = fresh_state(52, 64)
+    deed(state, {"kind": "write", "target_id": "bark_a", "text": "Meet me at the well"})
+    deed(state, {"kind": "hide", "target_id": "bark_a", "other_id": "clay_a", "value": "under the lump of clay"})
+    kade = cast.find(state["npcs"], "npc_kade_east")
+    kade.update(x=53, y=64)
+    assert not briefing.world_as_seen(state, kade).get("what_you_can_see")
+    assert "bark_a" in {o["id"] for o in judge_view.available_items(state)}  # The stranger knows where it is.
+    commit(state, judged("take", take_ids=["bark_a"]))
+    assert state["objects"]["bark_a"]["hidden"] is None
+
+
+def test_a_holed_bucket_leaks_drops_what_it_held_and_can_be_mended():
+    state = fresh_state(34, 52)
+    state["objects"]["bucket_hessa"]["water_l"] = 4.0
+    deed(state, {"kind": "put_in", "target_id": "garlic_hessa", "other_id": "bucket_hessa"})
+    hole = {"kind": "damage", "target_id": "bucket_hessa", "name": "holed", "flags": ["container", "watertight"]}
+    deed(state, hole)
+    bucket = state["objects"]["bucket_hessa"]
+    assert bucket["water_l"] == 0.0 and bucket["capacity_l"] == 0.0 and state["water_spilled_l"] == 4.0
+    assert state["objects"]["garlic_hessa"].get("inside") is None
+    assert any(c["id"] == "bucket_hessa" and c["how"] == "damaged" for c in state["last_action"]["property"])
+    fill = judged("fill", fill={"container_id": "bucket_hessa", "source_id": "trough_hessa", "litres": 1})
+    assert crafting.validate(state, fill)["category"] == "blocked"
+    deed(state, {"kind": "repair", "target_id": "bucket_hessa", "other_id": "honey_hessa", "flags": []})
+    assert {"container", "watertight"} <= set(bucket["flags"]) and bucket["capacity_l"] == 10.0
+    assert not bucket["damage"]
+
+
+def test_a_cup_smashed_is_gone_and_its_owner_lost_it():
+    state = fresh_state(34, 52)
+    shift = {"kind": "move", "target_id": "cup_hessa", "cell": [36, 54]}  # Moved, then smashed: smashed (live).
+    deed(state, shift, {"kind": "destroy", "target_id": "cup_hessa", "value": "stamped flat"})
+    assert state["objects"]["cup_hessa"]["condition"] == "destroyed"
+    assert "cup_hessa" not in {o["id"] for o in judge_view.available_items(state)}
+    assert any(c["id"] == "cup_hessa" and c["how"] == "destroyed" for c in state["last_action"]["property"])
+
+
+def test_a_graver_claim_replaces_the_actions_own():
+    """Live: a bowl smashed as physical work was recorded as only "used"."""
+    state = fresh_state(34, 52)
+    smash = {"kind": "destroy", "target_id": "bowl_hessa"}
+    commit(state, judged("physical", effects=[smash], resource_ids=["bowl_hessa"], seen_as="x"))
+    assert [c["how"] for c in state["last_action"]["property"] if c["id"] == "bowl_hessa"] == ["destroyed"]
+
+
+def test_a_log_rolled_over_blocks_where_it_lies():
+    """Live: the judge can't see where the path runs, so a block with no cell is where the thing lies."""
+    state = fresh_state(69, 60)
+    deed(state, {"kind": "block", "target_id": "log_a"}, {"kind": "open", "target_id": "log_a"})  # Open: no harm.
+    assert state["objects"]["log_a"]["blocks"] and not paths.grid(state).walkable((70, 60))
+
+
+@pytest.mark.parametrize(
+    "at, effect, problem",
+    [
+        ((38, 66), {"kind": "move", "target_id": "sapling_a", "cell": [38, 64]}, "rooted"),
+        ((37, 53), {"kind": "move", "target_id": "trough_hessa", "cell": [38, 54]}, "a thing within reach"),
+        ((53, 13), {"kind": "move", "target_id": "gate_beam", "cell": [55, 15]}, "too heavy"),
+        ((48, 10), {"kind": "destroy", "target_id": "gate_bar"}, "fitted in place"),
+        ((48, 10), {"kind": "damage", "target_id": "gate_brackets", "name": "bent"}, "fitted in place"),
+        ((44, 52), {"kind": "block", "target_id": "gourd_a", "cell": [44, 54]}, "bigger than"),
+        ((62, 28), {"kind": "hide", "target_id": "ladder_tomas"}, "only small things"),
+        ((34, 52), {"kind": "transfer", "target_id": "bucket_hessa", "other_id": "gourd_a"}, "empty"),
+        ((34, 52), {"kind": "repair", "target_id": "cup_hessa", "flags": ["sharp_edge"]}, "isn't damaged"),
+        ((34, 52), {"kind": "damage", "target_id": "cup_hessa", "name": "dull", "flags": ["sharp_edge"]}, "begin with"),
+        ((34, 52), {"kind": "put_in", "target_id": "bucket_hessa", "other_id": "cup_hessa"}, "hasn't room"),
+        ((34, 52), {"kind": "move", "target_id": "bucket_hessa"}, "where it goes"),
+    ],
+)
+def test_the_phase_two_laws_refuse_what_the_world_cannot_do(at, effect, problem):
+    state = fresh_state(*at)
+    assert problem in refused(state, effect)
+
+
+def test_drinking_more_than_a_body_holds_is_refused():
+    state = beside(BREN)
+    state["objects"]["bucket_hessa"].update(holder_id="player", water_l=6.0)
+    drink = {"kind": "transfer", "target_id": "bucket_hessa", "other_id": BREN, "relation": "into", "amount": 5}
+    assert "nobody drinks more" in refused(state, drink)
+
+
+def test_honey_tipped_from_its_pot_goes_in_as_a_mix():
+    """Live: the judge poured honey into the bucket with transfer; the pot holds no water, so it's a mix."""
+    state = fresh_state(34, 53)
+    state["objects"]["bucket_hessa"]["water_l"] = 2.0
+    deed(
+        state,
+        {
+            "kind": "transfer",
+            "target_id": "honey_hessa",
+            "other_id": "bucket_hessa",
+            "relation": "into",
+            "amount": 0.05,
+        },
+    )
+    assert state["objects"]["bucket_hessa"]["mixture"][0]["name"] == "pot of honey"
+    assert state["objects"]["honey_hessa"]["mass_kg"] == 0.55
+
+
+def test_a_mix_named_the_other_way_round_still_goes_into_the_container():
+    state = fresh_state(34, 53)
+    state["objects"]["bucket_hessa"]["water_l"] = 2.0
+    deed(state, {"kind": "mix", "target_id": "honey_hessa", "other_id": "bucket_hessa", "amount": 0.1})
+    assert state["objects"]["bucket_hessa"]["mixture"][0]["name"] == "pot of honey"
+
+
+def test_an_effect_on_the_thing_being_made_is_part_of_it():
+    """Live (craft evals, judge_v23): a stake made with an attribute effect on made_by_step_1 was refused."""
+    state = fresh_state(47, 67)
+    for i in ("branch_a", "flint_a"):
+        state["objects"][i]["holder_id"] = "player"
+    point = {
+        "name": "pointed end",
+        "value": "shaved to a point",
+        "status": "expected",
+        "basis_ids": ["branch_a", "flint_a"],
+    }
+    spec = {
+        "name": "stake",
+        "description": "A sharpened branch.",
+        "materials": ["wood"],
+        "consumes": ["branch_a"],
+        "tools_used": ["flint_a"],
+        "mass_kg": 1.1,
+        "length_m": 1.0,
+        "capacity_l": None,
+        "rated_load_kg": None,
+        "flags": ["rigid"],
+        "capabilities": [],
+        "gear": None,
+        "attributes": [],
+    }
+    step = judged(
+        "make", new_object=spec, effects=[{"kind": "attribute", "target_id": "made_by_step_1", "attribute": point}]
+    )
+    verdict = crafting.validate(state, step)
+    assert verdict["category"] == "success", verdict["notes"]
+    assert verdict["new_spec"]["attributes"][0]["name"] == "pointed end"
+
+
+def test_honey_stirred_into_a_full_bucket_slops_a_little_over():
+    state = fresh_state(34, 53)
+    state["objects"]["bucket_hessa"]["water_l"] = 10.0
+    deed(state, {"kind": "mix", "target_id": "bucket_hessa", "other_id": "honey_hessa", "amount": 0.2})
+    assert state["objects"]["bucket_hessa"]["water_l"] == 9.8 and state["water_spilled_l"] == 0.2
+
+
+def test_water_consumed_is_drunk_not_used_up():
+    """Live: "drink from the trough" came back as consume of the trough, refused as not loose."""
+    state = fresh_state(37, 53)
+    deed(state, {"kind": "consume", "target_id": "trough_hessa"})
+    assert state["objects"]["trough_hessa"]["water_l"] == 79.7 and state["objects"]["trough_hessa"]["holder_id"] is None
+    assert state["player"]["states"][0]["name"] == "drank"

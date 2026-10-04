@@ -37,6 +37,8 @@ def act(route: Route, text: str, mode: str = "do") -> dict:
         note(f"  DO: {text}\n    [round] {lines}")
     else:
         note(f"  DO: {text}\n    [{entry.get('category')}] {entry.get('reason', '')[:220]}")
+        if entry.get("category") == "unresolved":
+            note(f"    notes: {entry.get('notes')}")
     return data
 
 
@@ -82,8 +84,9 @@ def water_on_bren() -> bool:
     act(route, "dump the water on Bren's head")
     bren = person(route, "npc_bren_marr")
     wet = bren.get("states", []) or [m for m in (bren.get("mind") or {}).get("memories", []) if "water" in m.get("summary", "").lower()]
-    note(f"  Bren: states {bren.get('states')} | remembers {[m['summary'][:90] for m in memories(route, 'npc_bren_marr', 'water')]}")
-    return bool(wet)
+    left = route.state["objects"]["gourd_a"].get("water_l", 0.0)
+    note(f"  Bren: states {bren.get('states')} | remembers {[m['summary'][:90] for m in memories(route, 'npc_bren_marr', 'water')]} | gourd {left} L")
+    return bool(wet) and left < 0.5  # Phase 2: the water left the gourd (conservation).
 
 
 def pee_in_trough() -> bool:
@@ -91,8 +94,8 @@ def pee_in_trough() -> bool:
     route.walk(50, 17)
     act(route, "I pee into the water trough")
     trough = route.state["objects"]["trough_gate"]
-    note(f"  trough: {trough.get('attributes')}")
-    return bool(trough.get("attributes")) or refused(route)
+    note(f"  trough: {trough.get('attributes')} | in its water: {trough.get('mixture')}")
+    return bool(trough.get("attributes") or trough.get("mixture")) or refused(route)
 
 
 def till_sundown() -> bool:
@@ -147,6 +150,85 @@ def forged_permit() -> bool:
     writing = [a for a in route.state["objects"]["birchbark_a"].get("attributes", []) if a["name"] == "writing"]
     note(f"  pass: {writing}")
     return bool(writing) and not route.state.get("admitted")
+
+
+# --- Phase 2: place and structure, containers and mixtures, matter --------------------------------------------------
+
+
+def honey_water() -> bool:
+    route = Route("stir honey into a bucket of water")
+    route.walk(34, 53)
+    route.attempt("fill the wooden bucket from the trough")
+    act(route, "tip a little honey from the pot into the bucket of water and stir it in with my hand")
+    bucket = route.state["objects"]["bucket_hessa"]
+    note(f"  bucket: {bucket.get('water_l')} L, mixture {bucket.get('mixture')}")
+    return any("honey" in (m["name"] + m["value"]).lower() for m in bucket.get("mixture") or [])
+
+
+def drink_from_trough() -> bool:
+    route = Route("drink from the trough")
+    route.walk(37, 53)
+    before = route.state["objects"]["trough_hessa"]["water_l"]
+    act(route, "cup my hands and drink some water from the trough")
+    drank = [s for s in route.state["player"].get("states", []) if "drank" in s["name"] or "drink" in s["name"]]
+    after = route.state["objects"]["trough_hessa"]["water_l"]
+    note(f"  states {route.state['player'].get('states')} | trough {before} -> {after}")
+    return bool(drank) and after < before
+
+
+def log_across_the_path() -> bool:
+    route = Route("roll the log across the path")
+    route.walk(69, 61)
+    act(route, "roll the fallen log a couple of steps so it lies across the path")
+    log = route.state["objects"]["log_a"]
+    note(f"  log at ({log['x']}, {log['y']}) blocks={log.get('blocks')}")
+    return bool(log.get("blocks")) or (log["x"], log["y"]) != (70, 60) or refused(route)
+
+
+def crates_under_bracket() -> bool:
+    route = Route("drag the crates under the gate brackets")
+    route.walk(53, 14)
+    act(route, "drag the empty crates over to just below the gate brackets")
+    crates = route.state["objects"]["crates_gate"]
+    note(f"  crates at ({crates['x']}, {crates['y']})")
+    return abs(crates["x"] - 48) + abs(crates["y"] - 9) < abs(52 - 48) + abs(13 - 9)
+
+
+def ladder_on_the_wall() -> bool:
+    route = Route("lean the ladder against the wall")
+    route.walk(62, 28)
+    act(route, "lean Tomas's ladder up against the workshop wall")
+    ladder = route.state["objects"]["ladder_tomas"]
+    note(f"  ladder rests_on={ladder.get('rests_on')} at ({ladder['x']}, {ladder['y']})")
+    return ladder.get("rests_on") == "wall"
+
+
+def garlic_in_the_cup() -> bool:
+    route = Route("put the garlic in the cup")
+    route.walk(34, 53)
+    act(route, "put the garlic bulbs into the wooden cup")
+    garlic = route.state["objects"]["garlic_hessa"]
+    note(f"  garlic inside={garlic.get('inside')} holder={garlic.get('holder_id')}")
+    return garlic.get("inside") == "cup_hessa"
+
+
+def smash_the_bowl() -> bool:
+    route = Route("smash Hessa's bowl")
+    route.walk(33, 53)
+    act(route, "throw Hessa's clay bowl down hard on the stones so it smashes")
+    bowl = route.state["objects"]["bowl_hessa"]
+    claims = (route.state.get("last_action") or {}).get("property") or []
+    note(f"  bowl condition={bowl.get('condition')} holder={bowl.get('holder_id')} claims={claims}")
+    return bowl.get("condition") in ("destroyed", "broken") or bowl.get("holder_id") == "used"
+
+
+def hide_the_bark() -> bool:
+    route = Route("hide the bark under a stone")
+    route.walk(51, 64)
+    act(route, "hide the strip of bark under the flat stone")
+    bark = route.state["objects"]["bark_a"]
+    note(f"  bark hidden={bark.get('hidden')}")
+    return bool(bark.get("hidden"))
 
 
 CASES = {name: fn for name, fn in globals().items() if callable(fn) and fn.__module__ == __name__ and name not in ("act", "person", "memories", "refused", "main")}

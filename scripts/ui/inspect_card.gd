@@ -130,6 +130,7 @@ func _object(obj: Dictionary) -> void:
 		_text("Qualities: " + feel + ".")
 	for attribute in obj.get("attributes", []):
 		_text("• " + str(attribute.value) + str(ui.CAPABILITY_NOTES.get(str(attribute.status), "")))
+	_placement(obj)
 	if obj.get("created_by") == "player":
 		_text(ui.provenance(obj)).add_theme_color_override("font_color", UITheme.ACCENT)
 		for capability in obj.get("known_capabilities", []):
@@ -146,6 +147,41 @@ func _object(obj: Dictionary) -> void:
 		("Left-click: " + str(hover.get("verb", "")) if hover.get("reachable", false) else "Walk closer to reach it.")
 	_text(hint, "Small").add_theme_color_override("font_color",
 		UITheme.STEAL if hover.get("tone", "") == "steal" else UITheme.INK_SOFT)
+
+
+## Where it is and what's in it, as the world's blocks left it (D-65): closed, sealed, across the way, propped,
+## hidden, its contents, what's mixed into its water.
+func _placement(obj: Dictionary) -> void:
+	var objects: Dictionary = game.run_state.get("objects", {})
+	var where := PackedStringArray()
+	if obj.get("closed", false) == true:
+		where.append("sealed" if obj.get("sealed", false) == true else "closed")
+	if obj.get("blocks", false) == true:
+		where.append("lying across the way")
+	var under = obj.get("rests_on")
+	if under == "wall":
+		where.append("propped against the wall")
+	elif under != null and objects.has(str(under)):
+		where.append("resting on the " + str(objects[str(under)].name))
+	var box = obj.get("inside")
+	if box != null and objects.has(str(box)):
+		where.append("inside the " + str(objects[str(box)].name))
+	var hidden = obj.get("hidden")
+	if typeof(hidden) == TYPE_DICTIONARY:
+		where.append("hidden " + str(hidden.get("where", "")))
+	if not where.is_empty():
+		_text(", ".join(where).capitalize() + ".", "Small")
+	var held := PackedStringArray()
+	for other in objects.values():
+		if other.get("inside") == obj.get("id") and str(other.get("condition", "usable")) != "used up":
+			held.append(str(other.name))
+	if not held.is_empty():
+		_text("Something is inside." if obj.get("closed", false) == true else "Inside: " + ", ".join(held) + ".")
+	var mixed := PackedStringArray()
+	for note in obj.get("mixture", []) if typeof(obj.get("mixture")) == TYPE_ARRAY else []:
+		mixed.append("%s (%s)" % [str(note.name), str(note.value)])
+	if not mixed.is_empty():
+		_text("In it: " + "; ".join(mixed) + ".")
 
 
 func _person(npc: Dictionary) -> void:

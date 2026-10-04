@@ -9,6 +9,16 @@ from __future__ import annotations
 SIGHT_CELLS = 20.0  # D-55: doubled (was 10).
 READ_CELLS = 3.0  # Close enough to read writing or make out a mark on something (D-65).
 SOAKED_MINUTES = 30  # Water poured over someone: how long until they dry (D-65).
+SOAK_MIN_L = 0.3  # Less than this poured over someone splashes them; this much soaks them (D-65).
+DRANK_MINUTES = 120  # What someone drank stays with them (in their own call) this long (D-65).
+DRINK_MAX_L = 2.0  # Nobody drinks more than this at once (D-65).
+DRINK_SIP_L = 0.3  # Water drunk when nobody says how much (D-65).
+SOAK_DEFAULT_L = 0.25  # What a thing soaked in water takes up, unless the judge says (D-65).
+MOVE_LIMIT_KG = 50.0  # What one person can drag, push or roll along the ground; helpers add as much each (D-65).
+MOVE_CELLS = 8.0  # How far a thing is shifted in one step (D-65).
+BLOCK_MIN_KG = 5.0  # Big enough to stand in anyone's way (or 1.5 m long) (D-65).
+HIDE_LOOSE_KG = 1.0  # Small enough to tuck away with nothing to hide it under (D-65).
+SEALANT_MAX_KG = 1.0  # A stopper, a lump of resin or clay (D-65).
 CLEAR_VIEW_CELLS = (
     10.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle (D-55: was 5).
 )

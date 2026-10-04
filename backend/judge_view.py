@@ -76,7 +76,8 @@ def fallen_holders(state: State) -> dict[str, dict]:
 
 def available_items(state: State, costs: dict | None = None) -> list[dict]:
     """Carried items plus anything intact the player can walk to nearby, whoever owns it (including what someone
-    down or dead has on them). A fire put out or burnt out is still there to touch, stir or light again (D-59)."""
+    down or dead has on them). A fire put out or burnt out is still there to touch, stir or light again (D-59).
+    Not what's shut inside something closed, or hidden by someone else (D-65)."""
     costs = walk_costs(state) if costs is None else costs
     fallen = fallen_holders(state)
     return [
@@ -86,6 +87,8 @@ def available_items(state: State, costs: dict | None = None) -> list[dict]:
         and (obj["holder_id"] in (None, "player") or obj["holder_id"] in fallen)
         and "water_source" not in obj["capabilities"]
         and obj["condition"] in ("usable", "installed", "put out", "burnt out")
+        and not effects.shut_in(state, obj)
+        and not effects.unseen_by(obj, "player")
     ]
 
 
@@ -108,6 +111,7 @@ def people_nearby(state: State, costs: dict | None = None) -> list[dict]:
                     "name": npc["name"],
                     "role": npc["role"],
                     "distance_cells": round(distance, 1),
+                    "cell": [npc["x"], npc["y"]],
                     "within_reach": distance <= tuning.REACH_CELLS,
                     "walk_steps": costs.get(npc["id"]),
                     "condition": (
@@ -156,6 +160,7 @@ def _judge_view(state: State, obj: Thing, costs: dict) -> dict:
         "kind": obj.get("feature", "item"),
         "walk_steps": costs.get(obj["id"], 0),
         "distance_cells": 0 if obj["holder_id"] == "player" else round(cast.distance(state["player"], obj), 1),
+        **({"cell": [obj["x"], obj["y"]]} if obj["holder_id"] is None else {}),
         "description": obj.get("description", ""),
         "materials": obj.get("materials", []),
         "mass_kg": obj["mass_kg"],
@@ -178,7 +183,33 @@ def _judge_view(state: State, obj: Thing, costs: dict) -> dict:
         **({"burning": True} if obj.get("burning") else {}),
         **({"installed_in": obj["installed_in"]} if obj.get("installed_in") else {}),
         **({"known_capabilities": obj["known_capabilities"]} if obj.get("known_capabilities") else {}),
+        **_placement(state, obj),
     }
+
+
+def _placement(state: State, obj: Thing) -> dict:
+    """Where a thing is and what's in it, as D-65's blocks left it: inside, resting on, closed, sealed, hidden,
+    across the way, what's mixed into its water, damage it took."""
+    seen: dict = {}
+    if obj.get("inside"):
+        seen["inside"] = obj["inside"]
+    held = effects.contents(state, obj["id"])
+    if held:
+        seen["contains"] = [o["id"] for o in held]
+    if obj.get("rests_on"):
+        seen["rests_on"] = obj["rests_on"]
+    if obj.get("placed"):
+        seen["placed"] = obj["placed"]
+    for flag in ("closed", "sealed", "blocks"):
+        if obj.get(flag):
+            seen["blocking_the_way" if flag == "blocks" else flag] = True
+    if obj.get("hidden"):
+        seen["hidden"] = obj["hidden"]["where"]
+    if obj.get("mixture"):
+        seen["mixed_in"] = effects.mixture_words(obj)
+    if obj.get("damage"):
+        seen["lost_to_damage"] = obj["damage"]["lost_flags"]
+    return seen
 
 
 def water_sources(state: State, costs: dict) -> list[dict]:
@@ -189,6 +220,8 @@ def water_sources(state: State, costs: dict) -> list[dict]:
             "water_l": o["water_l"],
             "walk_steps": costs[o["id"]],
             "belongs_to": owner_label(state, o),
+            **({"mixed_in": effects.mixture_words(o)} if o.get("mixture") else {}),
+            **({"attributes": o["attributes"]} if o.get("attributes") else {}),
         }
         for o in state["objects"].values()
         if "water_source" in o["capabilities"] and o["id"] in costs
