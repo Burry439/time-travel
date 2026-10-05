@@ -59,6 +59,18 @@
    "line": "Two of my sister's guests took sick this week. Bad for an inn, that.",
    "trusted": false,
    "lead": "Two of Hessa's guests took sick this week."
+  },
+  "kade_limps_bren": {
+   "text": "Kade's knees are troubling him; he takes the stairs to the wall like an old man.",
+   "line": "Old Kade takes the wall stairs like a man twice his age these days.",
+   "trusted": false,
+   "lead": "Kade's knees are troubling him."
+  },
+  "mail_at_forge": {
+   "text": "The guards' mail is at Mara's forge for mending, and the captain is impatient for it.",
+   "line": "Half our mail's at Mara's forge. The captain's chewing his moustache over it.",
+   "trusted": false,
+   "lead": "The guards' mail is at Mara's forge, and late."
   }
  },
  "persuaded_by": "the captain's say-so, and a straight answer",

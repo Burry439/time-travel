@@ -2320,6 +2320,42 @@
     "combustible"
    ],
    "description": "Two soft, blackened boards under the trough's spout, with something dead wedged beneath them."
+  },
+  {
+   "id": "tongs_mara",
+   "name": "smith's tongs",
+   "x": 16,
+   "y": 26,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "flags": [
+    "ferromagnetic"
+   ],
+   "owner_id": "npc_mara_venn",
+   "description": "A pair of smith's tongs with one jaw snapped clean off.",
+   "hidden": {
+    "by": "npc_jory_venn",
+    "where": "under the scrap heap",
+    "holder": null
+   },
+   "damage": {
+    "lost_flags": [
+     "rigid"
+    ],
+    "capacity_l": 0.0
+   },
+   "attributes": [
+    {
+     "name": "damaged",
+     "value": "one jaw snapped clean off",
+     "status": "observed",
+     "basis_ids": [
+      "tongs_mara"
+     ]
+    }
+   ]
   }
  ]
 }

@@ -18,6 +18,7 @@ from run_routes_live import ROOT, Route, note
 
 import cast  # noqa: E402  (run_routes_live put backend on the path)
 
+ELIN, KADE, MARA, TOMAS = "npc_elin_west", "npc_kade_east", "npc_mara_venn", "npc_tomas_reed"
 HESSA, BREN, DARIN, OREN, JORY, RODERIC = (
     "npc_hessa_marr",
     "npc_bren_marr",
@@ -166,7 +167,122 @@ def debts() -> bool:
         route, "darin_permit")
 
 
-CASES = {"greetings": greetings, "inn": inn, "debts": debts}
+def fog() -> bool:
+    """Lost in the Fog: Elin's ask, a north-finder made from Darin's lodestone and a nail, proven in front of the
+    watch and put in their hands; then the captain's own call on Elin."""
+    route = Route("lost in the fog")
+    greet(route, ELIN)
+    route.say(ELIN, "How does the fog beat the patrols? What would help?")
+    leave(route)
+    route.ask_until(DARIN, ["Good day. Is that a lodestone? Lend it to me for an hour and I'll show you how to turn it "
+                            "into a direction-finder you could sell.",
+                            "A needle stroked on your stone and floated on water points the same way every time. You "
+                            "keep the stone and the idea."],
+                    lambda: route.state["objects"]["lodestone_darin"].get("lent_to") == "player")
+    leave(route)
+    route.attempt("pick up the lodestone")
+    route.walk(27, 28)
+    route.attempt("pick up the bent iron nail")
+    route.attempt("stroke the bent iron nail many times in one direction with the lodestone to magnetise it")
+    route.walk(52, 64)
+    route.attempt("pick up the strip of bark")
+    route.walk(45, 66)
+    route.attempt("pick up the flint shard")
+    route.walk(45, 54)
+    route.attempt("pick up the dried gourd and cut the top off it with the flint shard to make a shallow bowl")
+    route.walk(50, 17)
+    route.attempt("fill the gourd bowl with water from the gate trough")
+    route.near(ELIN)
+    route.attempt("float the magnetised nail on the strip of bark in the gourd bowl and show Elin and the captain "
+                  "that it always swings back to point north, even when I turn the bowl")
+    route.attempt("give Elin the magnetised nail and the strip of bark so the patrols can find north in fog")
+    route.ask_until(RODERIC, ["Captain, the watch can find north in fog now. Elin knows how it works. Will you let "
+                              "her lead the next fog patrol?",
+                              "Elin's the one to lead with it. Will you have her at your side?"],
+                    lambda: "elin_trusted" in endings(route, "fog"))
+    report(route, "fog", "kade_knees")
+    note(f"  Elin's side: {sides(route, ELIN).get('fog', {}).get('text', '')[:200]}")
+    return {"problem", "heading", "proven"} <= set(stages(route, "fog"))
+
+
+def knees() -> bool:
+    """The Old Soldier, and its crossing: Kade's knees eased with a warm compress, his truth about Aldo, carried to
+    Hessa, whose side of him changes."""
+    route = Route("the old soldier")
+    greet(route, ELIN)
+    route.say(ELIN, "What's wrong with Kade? He's limping.")
+    leave(route)
+    route.walk(51, 66)
+    route.attempt("pick up the flat stone")
+    route.walk(60, 59)
+    route.attempt("pick up the tuft of sheep's wool")
+    route.walk(37, 53)
+    route.attempt("set the flat stone in the edge of Hessa's cooking fire until it's hot, then wrap it in the wool")
+    route.near(KADE)
+    route.attempt("hold the wool-wrapped warm stone to Kade's aching knee to ease it")
+    route.ask_until(KADE, ["Better? Warmth helps a joint that's worn. How did your knees go, Kade?",
+                           "There's a story in those knees. You can tell me, if you want."],
+                    lambda: "why" in stages(route, "kade_knees"))
+    leave(route)
+    route.near(HESSA)
+    route.say(HESSA, "Hessa, there's something you should know about Kade. The night Aldo was lost, Kade went back "
+                     "into the fog for him, twice, and broke his knees on the rocks looking. He's carried Aldo's horn "
+                     "ever since.")
+    report(route, "kade_knees", "trough_water", "fog")
+    note(f"  Hessa's side of the inn: {sides(route, HESSA).get('trough_water', {}).get('text', '')[:220]}")
+    note(f"  Kade's side: {sides(route, KADE).get('kade_knees', {}).get('text', '')[:200]}")
+    return {"limp", "why", "hessa_hears"} <= set(stages(route, "kade_knees")) and "old_grief" in stages(
+        route, "trough_water")
+
+
+def forge() -> bool:
+    """The Guards' Order: Mara's ask, fuel from the ash heap, iron from the wainwright's yard, and the crossing: Mara
+    sends Tomas his nails, a step of the gate beam."""
+    route = Route("the guards' order")
+    greet(route, MARA)
+    route.say(MARA, "What's the trouble with the guards' order?")
+    leave(route)
+    route.walk(12, 27)
+    route.attempt("pick up the lump of charcoal")
+    route.near(MARA)
+    deed(route, "give Mara the lump of charcoal for her forge")
+    route.walk(76, 52)
+    route.attempt("pick up the iron bar")
+    route.near(MARA)
+    deed(route, "give Mara the iron bar for the guards' order")
+    route.ask_until(MARA, ["Tomas needs nails and iron straps for the gate brackets. Could you spare him some now "
+                           "you've iron again?",
+                           "Would you send Tomas the nails for his brackets? He can't raise the beam without them."],
+                    lambda: "nails" in stages(route, "gate_beam"))
+    report(route, "forge_iron", "gate_beam", "jory")
+    note(f"  Tomas's side of the beam: {sides(route, TOMAS).get('gate_beam', {}).get('text', '')[:200]}")
+    return {"order", "fuel", "good_iron"} <= set(stages(route, "forge_iron"))
+
+
+def apprentice() -> bool:
+    """The Apprentice: a wonder for Jory, the tongs he broke, dug out from under the scrap, and owning up to Mara."""
+    route = Route("the apprentice")
+    route.walk(51, 65)
+    route.attempt("pick up the hollow reeds and the flint shard")
+    route.attempt("cut a short length of reed with the flint and carve a notch to make a whistle")
+    greet(route, JORY)
+    route.attempt("blow the reed whistle for Jory and show him how the notch makes the note")
+    route.ask_until(JORY, ["You look like something's weighing on you, Jory. What's wrong?",
+                           "Whatever it is, I won't run to your aunt. What happened?"],
+                    lambda: "broken" in stages(route, "jory"))
+    route.ask_until(JORY, ["Dig the tongs out from under the scrap and let's see how bad it is. Maybe we can mend them.",
+                           "Show me where you hid them. Broken iron can be mended."],
+                    lambda: "found" in stages(route, "jory"))
+    route.ask_until(JORY, ["Your aunt will think more of you if you tell her yourself than if she finds out. Go on, "
+                           "I'll stand with you.",
+                           "Owning up beats being found out, Jory. Tell her."],
+                    lambda: "mara_knows" in stages(route, "jory"))
+    report(route, "jory", "forge_iron")
+    note(f"  Mara's side of Jory: {sides(route, MARA).get('jory', {}).get('text', '')[:200]}")
+    return {"broken", "found"} <= set(stages(route, "jory"))
+
+
+CASES = {"greetings": greetings, "inn": inn, "debts": debts, "fog": fog, "knees": knees, "forge": forge, "apprentice": apprentice}
 
 
 def main() -> None:

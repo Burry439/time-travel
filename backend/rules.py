@@ -406,8 +406,13 @@ def _gave_made(state, spec, ctx):
 
 @condition("thing_with", "flag")
 def _thing_with(state, spec, ctx):
-    """Something in the world now has this property (a needle magnetised, a cloth soaked): however it came to."""
-    return any(spec["flag"] in (o.get("flags") or []) for o in state["objects"].values())
+    """Something in the world now has this property (a needle magnetised, a cloth soaked): however it came to, as a
+    flag or as an attribute of that name not found false (D-67: a stroked nail is "magnetized" as an attribute)."""
+    return any(
+        spec["flag"] in (o.get("flags") or [])
+        or any(a.get("name") == spec["flag"] and a.get("status") != "failed" for a in o.get("attributes") or [])
+        for o in state["objects"].values()
+    )
 
 
 @condition("cleared", "thing")

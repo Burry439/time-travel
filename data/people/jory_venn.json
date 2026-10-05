@@ -69,6 +69,12 @@
    "line": "Darin's permit's got a seal so rubbed you can't read the date. Must be ancient.",
    "trusted": false,
    "lead": "Darin's trade permit is old; its seal is nearly worn away."
+  },
+  "horseshoe_scrap": {
+   "text": "Aunt Mara has been melting down old horseshoes lately; she calls it thrift.",
+   "line": "Aunt Mara's been melting down old horseshoes. Thrift, she says.",
+   "trusted": false,
+   "lead": "Mara has been melting down old horseshoes at the forge."
   }
  },
  "persuaded_by": "something new and clever to look at",

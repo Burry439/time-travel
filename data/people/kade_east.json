@@ -35,6 +35,12 @@
    "line": "Strangers keep clear of the gate unless the captain says so.",
    "trusted": false,
    "lead": "Guards keep strangers away from the gate unless the captain says otherwise."
+  },
+  "moor_fog": {
+   "text": "Kade knows the moor road from twenty years of patrols, and how the fog takes men.",
+   "line": "Twenty years on that moor road. Fog doesn't lose you; it takes you.",
+   "trusted": false,
+   "lead": "Kade knows the moor road and how the fog takes men."
   }
  },
  "persuaded_by": "the captain's orders",

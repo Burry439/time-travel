@@ -40,6 +40,12 @@
    "line": "The captain decides who enters.",
    "trusted": false,
    "lead": "Captain Roderic decides who enters the city."
+  },
+  "kade_limps": {
+   "text": "Kade has been limping on the long patrol and won't admit it.",
+   "line": "Kade's limping on the long patrol. Don't tell him I said so; he'd bite my head off.",
+   "trusted": false,
+   "lead": "Kade has been limping on patrol and won't admit it."
   }
  },
  "persuaded_by": "the captain's orders",

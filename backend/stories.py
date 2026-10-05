@@ -300,6 +300,13 @@ def _clean(state, spec, ctx):
     return bool(obj) and spec["of"] not in there
 
 
+@rules.condition("mended", "thing")
+def _mended(state, spec, ctx):
+    """This thing is whole again: nothing lost to damage any more (D-67: Mara's tongs, repaired)."""
+    obj = state["objects"].get(spec["thing"]) or {}
+    return bool(obj) and not (obj.get("damage") or {}).get("lost_flags") and obj.get("condition") != "destroyed"
+
+
 @rules.condition("given", "npc")
 def _given(state, spec, ctx):
     """The stranger gave one of these people something (of this material, with these flags, by this name)."""
@@ -513,6 +520,14 @@ def _side(state: State, spec: dict, story: dict | None = None) -> None:
     }
 
 
+def _reveal(state: State, spec: dict, story: dict | None = None) -> None:
+    """A thing someone hid is out in the open now (D-67: Jory digs Mara's tongs out from under the scrap)."""
+    obj = state["objects"].get(spec["thing"])
+    if obj is not None and obj.get("hidden"):
+        obj["hidden"] = None
+        obj["revision"] = obj.get("revision", 0) + 1
+
+
 def _need(state: State, spec: dict, story: dict | None = None) -> None:
     """What this person would ask of someone now, for this quest (D-67): they bring it up themselves. Empty: answered."""
     npc = cast.find(state["npcs"], spec["npc"])
@@ -531,6 +546,7 @@ EFFECTS = {
     "teach": _teach,
     "side": _side,
     "need": _need,
+    "reveal": _reveal,
 }
 NEEDS = {
     "shift_regard": ("npc",),
@@ -538,6 +554,7 @@ NEEDS = {
     "teach": ("npc",),
     "side": ("npc", "text"),
     "need": ("npc",),
+    "reveal": ("npc", "thing"),
 }
 
 

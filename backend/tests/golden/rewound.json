@@ -244,12 +244,39 @@
     },
     "job": null,
     "memories": [],
+    "needs": {
+     "gate_beam": {
+      "at": 0,
+      "text": "That gate beam should have been up a week ago.",
+      "title": "The Gate Beam"
+     }
+    },
     "said": null,
     "sides": {
      "darin_permit": {
       "at": 0,
       "text": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again.",
       "title": "The Merchant's Permit"
+     },
+     "fog": {
+      "at": 0,
+      "text": "The night patrols lose their way when the fog comes down, and the watch pays for it. You'd give a great deal for a way to hold a heading without stars.",
+      "title": "Lost in the Fog"
+     },
+     "forge_iron": {
+      "at": 0,
+      "text": "Mara's slow with the guards' mail, but her work holds. You'd like it done before the next muster.",
+      "title": "The Guards' Order"
+     },
+     "gate_beam": {
+      "at": 0,
+      "text": "Tomas is taking too long over the beam. You want it up, and safely.",
+      "title": "The Gate Beam"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Kade's slowing on the long patrol. Twenty years; he's earned better than pasture, but the watch needs legs.",
+      "title": "The Old Soldier"
      }
     },
     "standing_plan": {
@@ -435,6 +462,34 @@
    "health": 100,
    "id": "npc_mara_venn",
    "injuries": [],
+   "mind": {
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "needs": {
+     "forge_iron": {
+      "at": 0,
+      "text": "The guards' order won't wait and her forge is starved: she'd welcome good fuel, charcoal or dry wood.",
+      "title": "The Guards' Order"
+     }
+    },
+    "said": null,
+    "sides": {
+     "forge_iron": {
+      "at": 0,
+      "text": "The guards' order is late and Roderic wants miracles at a smith's wage. Your forge eats fuel faster than you can buy it, and good iron is scarce.",
+      "title": "The Guards' Order"
+     },
+     "jory": {
+      "at": 0,
+      "text": "Jory's been jumpy and keeping out of your way. He's a good lad, but he has to learn that a smith owns her mistakes.",
+      "title": "The Apprentice"
+     }
+    }
+   },
    "name": "Mara",
    "role": "Blacksmith",
    "x": 18,
@@ -459,6 +514,29 @@
    "health": 100,
    "id": "npc_jory_venn",
    "injuries": [],
+   "mind": {
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "needs": {
+     "jory": {
+      "at": 0,
+      "text": "He'd love to see something nobody here has ever seen: a real wonder.",
+      "title": "The Apprentice"
+     }
+    },
+    "said": null,
+    "sides": {
+     "jory": {
+      "at": 0,
+      "text": "Aunt Mara's been short with you lately and you've a weight on your mind. You'd give anything to see something nobody's ever seen.",
+      "title": "The Apprentice"
+     }
+    }
+   },
    "name": "Jory",
    "role": "Smith apprentice",
    "x": 21,
@@ -486,6 +564,29 @@
    "health": 100,
    "id": "npc_tomas_reed",
    "injuries": [],
+   "mind": {
+    "feelings": {
+     "anger": 0.0,
+     "fear": 0.0
+    },
+    "job": null,
+    "memories": [],
+    "needs": {
+     "gate_beam": {
+      "at": 0,
+      "text": "Sixty kilos of beam to raise two metres into the brackets: he could use a clever pair of hands.",
+      "title": "The Gate Beam"
+     }
+    },
+    "said": null,
+    "sides": {
+     "gate_beam": {
+      "at": 0,
+      "text": "Sixty kilos of oak, two metres up, and the captain watching you like a hawk. You'll get this one right.",
+      "title": "The Gate Beam"
+     }
+    }
+   },
    "name": "Tomas",
    "role": "Carpenter",
    "x": 64,
@@ -576,7 +677,26 @@
     },
     "job": null,
     "memories": [],
+    "needs": {
+     "fog": {
+      "at": 0,
+      "text": "The watch loses its way on the moor road in fog: she'd welcome any way to hold a heading without stars.",
+      "title": "Lost in the Fog"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Kade's limping on patrol and won't admit it: she'd be glad if someone helped him without shaming him.",
+      "title": "The Old Soldier"
+     }
+    },
     "said": null,
+    "sides": {
+     "fog": {
+      "at": 0,
+      "text": "The fog on the moor road has beaten the watch, and there's a night you'd rather forget. You want to be the scout who never loses her way again.",
+      "title": "Lost in the Fog"
+     }
+    },
     "standing_plan": {
      "defend": true
     }
@@ -625,6 +745,18 @@
     "job": null,
     "memories": [],
     "said": null,
+    "sides": {
+     "fog": {
+      "at": 0,
+      "text": "You know the moor from the bad nights. The young ones think fog is weather; you know it kills.",
+      "title": "Lost in the Fog"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Twenty years under Roderic, and the patrol gets longer every year. You'll not be pitied, and you'll not be put out to pasture.",
+      "title": "The Old Soldier"
+     }
+    },
     "standing_plan": {
      "defend": true
     }
@@ -2859,6 +2991,57 @@
    "water_l": 0.0,
    "x": 33,
    "y": 51
+  },
+  "tongs_mara": {
+   "attributes": [
+    {
+     "basis_ids": [
+      "tongs_mara"
+     ],
+     "name": "damaged",
+     "status": "observed",
+     "value": "one jaw snapped clean off"
+    }
+   ],
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "damage": {
+    "capacity_l": 0.0,
+    "lost_flags": [
+     "rigid"
+    ]
+   },
+   "description": "A pair of smith's tongs with one jaw snapped clean off.",
+   "flags": [
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": "hand_stone",
+    "covers": [],
+    "kind": "weapon",
+    "quality": "crude"
+   },
+   "hidden": {
+    "by": "npc_jory_venn",
+    "holder": null,
+    "where": "under the scrap heap"
+   },
+   "holder_id": null,
+   "id": "tongs_mara",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "name": "smith's tongs",
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 16,
+   "y": 26
   },
   "tree_00": {
    "bound_to": [],

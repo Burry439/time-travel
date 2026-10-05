@@ -52,6 +52,18 @@
    "line": "When the fog comes down my patrols can't tell one direction from another. I lost a good horse to the bog that way.",
    "trusted": true,
    "lead": "Roderic's patrols lose their way on the moor road when the fog comes down."
+  },
+  "kade_went_back": {
+   "text": "The night Aldo was lost, Kade went back into the fog alone to look for him; he never speaks of it.",
+   "line": "The night Aldo was lost, Kade went back for him. Alone. He never speaks of it, and neither do I.",
+   "trusted": true,
+   "lead": "Kade went back into the fog alone for Aldo the night he was lost."
+  },
+  "mail_mending": {
+   "text": "Mara the smith is mending the guards' mail and spear-heads, and the order is late.",
+   "line": "Mara has the guards' mail at her forge. Late, as ever.",
+   "trusted": false,
+   "lead": "Mara is mending the guards' mail, and it's late."
   }
  },
  "decides": "Roderic admits an unknown traveller only when he believes they are not a threat and have a legitimate reason to enter: a resident he trusts has vouched for them, they are bound to honest business (such as working for a merchant with a trade permit), or they have shown him something of concrete value to the city or the garrison. He refuses when his suspicion is high, when he has caught them in a lie, or after a crime. Talk alone, grand claims and pleading do not move him.",

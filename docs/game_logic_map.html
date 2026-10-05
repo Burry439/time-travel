@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 5 Oct 2026 · claude/quests · decisions up to D-67 (cluster A)</p>
+  <p class="stamp">Current as of 5 Oct 2026 · claude/quests · decisions up to D-67 (all eight quests)</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -110,7 +110,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>The client</strong> (Godot) moves the player and draws the world. It never decides outcomes; it sends requests and shows the state that comes back.</li>
     <li><strong>A backend command</strong> takes the journey's lock, checks the request, and asks the models outside the lock. Speech has a 12-second model budget, deeds 15 seconds.</li>
-    <li><strong>Models</strong> only propose: the judge (<code>judge_v26</code>) for deeds and physics, and each person's own call (<code>person_v7</code>) for what they say and choose.</li>
+    <li><strong>Models</strong> only propose: the judge (<code>judge_v27</code>) for deeds and physics, and each person's own call (<code>person_v7</code>) for what they say and choose.</li>
     <li><strong>The reducer</strong> checks every proposal against the world and the rules, then commits it as an event (<code>consequences.py</code>, <code>rounds.py</code>, <code>talk.py</code>). Journeys replay exactly from <code>store.py</code>.</li>
     <li><strong>The clock</strong> runs between your actions: routines, errands, fights, and stories checking whether something new has happened (<code>clock.py</code>, <code>stories.py</code>).</li>
   </ul>
@@ -194,19 +194,18 @@ tr:last-child td { border-bottom: 0; }
 
 <section id="stories">
   <h2>The village quests</h2>
-  <p>Since D-67 the village's troubles are quests: five or more steps each, every step reachable several ways, and intertwined (one deed can move two quests, and doing one shows you its people's side of another). A step is a result in the world, checked by code; any way you find counts. Each step reaches a person when they come to know it, with their side of it and what they'd now ask of someone. People bring their trouble up themselves when you walk up to them. Being rebuilt in three clusters; the first is done (<code>evals/run_quest_web_live.py</code>), the rest are still the older storylines (<code>evals/run_quests_live.py</code>).</p>
+  <p>Since D-67 the village's troubles are quests: five or more steps each, every step reachable several ways, and intertwined (one deed can move two quests, and doing one shows you its people's side of another). A step is a result in the world, checked by code; any way you find counts. Each step reaches a person when they come to know it, with their side of it and what they'd now ask of someone. People bring their trouble up themselves when you walk up to them. All eight are quests now, each played live (<code>evals/run_quest_web_live.py</code>).</p>
   <div class="table-wrap"><table>
     <thead><tr><th>Story</th><th>Status</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td>The Wayside Inn (Hessa, 6 steps)</td><td><span class="pill ok">Quest, played live</span></td><td>Sick guests, the rot under the boards, clean water, the lodging, Bren's secret, Kade's truth about Aldo.</td></tr>
       <tr><td>Dice and Debts (Oren; Bren asks)</td><td><span class="pill ok">Quest, played live</span></td><td>Oren's trouble, the debt, Darin's squeeze, Bren's risk, the debt answered. Crosses into Darin's permit.</td></tr>
       <tr><td>The Merchant's Permit (Darin, 6 steps)</td><td><span class="pill part">Quest, partly played</span></td><td>Something to sell, the seal, a clean name in town, the captain's seal, hired.</td></tr>
-      <tr><td>Mara's iron</td><td><span class="pill ok">Completed</span></td><td>Give her good iron.</td></tr>
-      <tr><td>Jory's tongs</td><td><span class="pill ok">Completed</span></td><td>Jory confides; telling Mara counts.</td></tr>
-      <tr><td>Something nobody knows</td><td><span class="pill ok">Completed</span></td><td>Jory amazed by the compass.</td></tr>
-      <tr><td>The gate beam</td><td><span class="pill part">Partly</span></td><td>Beam raised, Tomas confides; "kept quiet" not yet reached in one run.</td></tr>
-      <tr><td>Lost in the fog</td><td><span class="pill not">Not yet</span></td><td>The judge varies on whether a weakly magnetised nail finds north.</td></tr>
-      <tr><td>Kade's knees</td><td><span class="pill not">Not yet</span></td><td>Needs a remedy for aching joints, not a wound poultice.</td></tr>
+      <tr><td>The Guards' Order (Mara)</td><td><span class="pill ok">Quest, played live</span></td><td>The order, fuel, short of iron, good iron, her tongs; delivered. Sends Tomas his nails (crosses into the beam).</td></tr>
+      <tr><td>The Apprentice (Jory)</td><td><span class="pill ok">Quest, played live</span></td><td>A wonder, the broken tongs, found (hidden under the scrap), mended, Mara knows.</td></tr>
+      <tr><td>The Gate Beam (Tomas)</td><td><span class="pill part">Quest, partly played</span></td><td>The problem, nails, the bar down, the beam up, the first beam's truth; paid, owned up, kept quiet.</td></tr>
+      <tr><td>Lost in the Fog (Elin, 6 steps)</td><td><span class="pill ok">Quest, played live</span></td><td>The fog; two who blame themselves; a heading without stars; proven; in the watch's hands; the blame shared. Ending reached for the first time.</td></tr>
+      <tr><td>The Old Soldier (Kade; Elin asks)</td><td><span class="pill ok">Quest, played live</span></td><td>The limp; eased (warmth counts now); why the knees went (the night Aldo was lost); Hessa hears it; fit for the watch. Crosses into the Inn.</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -215,6 +214,8 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">5 Oct 2026 · D-67</span><p>Claude: cluster C quests (The Guards' Order, The Apprentice, The Gate Beam); Mara's broken tongs hidden under the scrap until Jory digs them out. All eight quests done.</p></div>
+    <div><span class="stamp">5 Oct 2026 · D-67</span><p>Claude: cluster B quests (Lost in the Fog, The Old Soldier); a soothe block eases an aching joint. Prompt judge_v27.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-67</span><p>Claude: quests of five or more intertwined steps (cluster A: Oren, Darin, Hessa); people speak first when you walk up; each person's side of a quest travels with what they know. Prompts judge_v26, person_v7.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 4 (cooking, drying, firing clay, smoke, processes the clock finishes, fire that spreads); waiting with nobody near passes time. Prompt judge_v25.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 3 (sounds and signs that carry, disguise, digging, barriers, bridges and traps that spring as people walk). Prompt judge_v24.</p></div>
