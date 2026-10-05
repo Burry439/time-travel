@@ -155,7 +155,7 @@ def _coach(state: State) -> dict:
         for o in state["objects"].values()
         if o.get("lent_to") == "player"
     ]
-    quests = [  # The quests the stranger has come into: only what they've reached and been told (D-69).
+    quests = [  # The quests the stranger has come into: only what they've reached and been told (D-70).
         {
             "quest": story["title"],
             "what_you_know": [s["text"] for s in story["steps"]][-4:],

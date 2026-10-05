@@ -52,6 +52,12 @@
    "line": "Darin carries a queer black stone that pulls iron to it. Calls it a curiosity.",
    "trusted": false,
    "lead": "Darin the merchant has a strange stone that pulls iron to it."
+  },
+  "tongs_missing": {
+   "text": "Mara's second-best tongs have gone missing; she thinks she mislaid them.",
+   "line": "My second-best tongs have walked off somewhere. Mislaid, I suppose.",
+   "trusted": false,
+   "lead": "Mara's second-best tongs have gone missing."
   }
  },
  "offers": [

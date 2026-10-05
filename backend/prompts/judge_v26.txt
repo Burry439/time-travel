@@ -148,7 +148,7 @@ THE WORLD'S BUILDING BLOCKS (D-65): step.effects says what a deed changes, on an
 - cook (target_id, other_id, value, minutes, text): cook, roast or boil food on a fire (other_id); it's done after its minutes (about 20) if left on the fire. text is its name cooked ("roast garlic").
 - fire_clay (target_id, other_id): fire shaped clay hard in a forge or a big fire (other_id): about three hours left in the heat; a clay vessel comes out watertight.
 - smoke (other_id, value): raise smoke from a fire (other_id) to be seen far off.
-- clean (target_id, name): clean away what fouls a thing or water (name: what goes, as its attribute or what's mixed into its water says, such as fouled): scrubbed, rinsed, the rot dug out, the trough bailed and refilled.
+- clean (target_id, name): clean away what fouls a thing or water (name: what goes, as its attribute or what's mixed into its water says, such as fouled): scrubbed, rinsed, the rot dug out, the trough bailed and refilled. What fouls a water source (its mixed_in says what and where, under its boards or in its silt) is cleaned by working on the source itself: target_id is the water source, even when the cause isn't listed as a thing of its own.
 Fire spreads by itself to anything combustible left lying right beside it, unless it's wet.
 Effects never set what anyone thinks or feels, or trust, ownership, permission or health: people decide those themselves. Every successful step also has seen_as: what an onlooker sees, one plain sentence in the third person beginning "The stranger" (no thoughts, no ids).
 

@@ -1,4 +1,4 @@
-"""The village's quests (D-69): many steps, many ways, intertwined. A step is a result in the world, checked by code;
+"""The village's quests (D-70): many steps, many ways, intertwined. A step is a result in the world, checked by code;
 it reaches each person when they know it, with their side of it and what they'd now ask of someone; quest-givers
 bring their trouble up themselves when the stranger comes up to them."""
 
@@ -185,7 +185,7 @@ def test_the_greeting_rule_rides_only_in_the_addressed_persons_call():
 
 # --- The quests' shape (the user's rules: 5 or more steps, several ways each, intertwined) ---------------------------
 
-QUESTS = ["oren_debt", "darin_permit", "trough_water"]  # D-69's quests so far (the rest join as they're rebuilt).
+QUESTS = [s["id"] for s in stories.running({"scenario": "village"})]  # Every quest the village runs.
 OPEN = ("given", "seen_demonstration", "treated", "installed", "clean", "made", "deal", "move", "reached", "told")
 
 
@@ -274,3 +274,18 @@ def test_every_quest_crosses_into_another():
         others = {o["people"]["owner"] for o in stories.STORIES.values() if o["id"] != quest_id}
         crossings += [s for s in _refs(quest) if s.get("kind") in ("side", "need") and s["npc"] in others]
         assert crossings, f"{quest_id} touches no other quest"
+
+
+def test_warmth_held_to_kades_knee_eases_it_and_he_feels_it():
+    """Live (D-70): a warm stone wrapped in wool, held to Kade's knee, counted for nothing; soothe eases an ache."""
+    state = fresh_state()
+    kade = cast.find(state["npcs"], KADE)
+    state["player"].update(x=kade["x"] + 1, y=kade["y"])
+    state["objects"]["stone_b"].update(holder_id="player", temperature="hot")
+    soothe = {"kind": "soothe", "target_id": KADE, "name": "ache", "other_id": "stone_b"}
+    commit(state, judged("other", effects=[soothe], seen_as="The stranger holds a warm stone to Kade's knee."))
+    assert any(c["kind"] == "ache" and c["treated"] for c in kade["conditions"])
+    stories.tick(state)
+    assert "eased" in state["stories"]["stages"]["kade_knees"]
+    assert "eased" in state["stories"]["milestones"]["kade_knees"]
+    assert any("eased your knees" in line for line in persona.sides(kade))

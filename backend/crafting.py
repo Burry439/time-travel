@@ -527,7 +527,9 @@ def _make(state, judged, available, notes, reason, effort, key) -> dict:
     if capacity and "container" not in flags:
         notes.append("Dropped capacity_l: the object is not flagged as a container.")
         capacity = None
-    attributes = _checked_attributes(spec, consumes + tools)
+    attributes = _checked_attributes(
+        spec, consumes + tools + list(available)
+    )  # The fire that heated it is a cause too (D-70).
     if attributes is None:
         return unresolved(notes, "physical attributes need bounded values, real resources and unprotected names")
     new_spec = {

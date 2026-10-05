@@ -214,7 +214,7 @@ def resolve(
         note("player", "say", f"You: “{conversation.clean(text)}”")
     elif kind == "wait":
         note("player", "wait", "You wait and say nothing.", "The stranger waits and says nothing.")
-    elif kind == "greet":  # Walking up to someone: they speak first (D-69).
+    elif kind == "greet":  # Walking up to someone: they speak first (D-70).
         whom = cast.find(draft["npcs"], action.get("target_id") or "")
         name = whom["name"] if whom else "them"
         note("player", "greet", f"You come up to {name}.", f"The stranger has come up to speak with {name}.")

@@ -1,446 +1,7 @@
 {
  "version": 2,
- "notes": "The village's quests (D-56, D-61, D-62, D-63, D-69). Each quest is a set of steps (stages) and endings (outcomes), every one a result in the world checked by code, never a method: any way the stranger finds counts. A step or ending reaches each person when they come to know it, from what they hold themselves; then its effects for that person apply once: shift_regard, shift_opinion, teach (a card's later fact or secret is now theirs to tell), side (how they now see the quest, in their own calls) and need (what they'd ask of someone now; they bring it up themselves). A quest's sides and needs are how its people start out. Steps may name another quest's step (reached); from is whose side a step's line is. moves are things a person may choose to do in conversation, in their own call: description says what; would_agree_if is their own price, which they weigh; tells is whom they then go and tell.",
+ "notes": "The village's quests (D-56, D-61, D-62, D-63, D-70). Each quest is a set of steps (stages) and endings (outcomes), every one a result in the world checked by code, never a method: any way the stranger finds counts. A step or ending reaches each person when they come to know it, from what they hold themselves; then its effects for that person apply once: shift_regard, shift_opinion, teach (a card's later fact or secret is now theirs to tell), side (how they now see the quest, in their own calls) and need (what they'd ask of someone now; they bring it up themselves). A quest's sides and needs are how its people start out. Steps may name another quest's step (reached); from is whose side a step's line is. moves are things a person may choose to do in conversation, in their own call: description says what; would_agree_if is their own price, which they weigh; tells is whom they then go and tell.",
  "stories": [
-  {
-   "id": "gate_beam",
-   "title": "The gate beam",
-   "people": {
-    "owner": "npc_tomas_reed",
-    "helps": [
-     "npc_roderic_vale"
-    ],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "problem",
-     "summary": "The cracked bar across the gate must come down and a 60 kg beam go up into its brackets. Tomas can't manage it, and the captain is losing patience.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "fact:beam_problem",
-       "fact:gate_beam",
-       "fact:tomas_beam"
-      ]
-     }
-    },
-    {
-     "id": "raised",
-     "summary": "The new beam is up in its brackets.",
-     "when": {
-      "kind": "installed",
-      "thing": "gate_beam"
-     }
-    },
-    {
-     "id": "cracked",
-     "summary": "Tomas cracked the first beam himself, by rushing it.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "secret:tomas_cracked"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "told_roderic",
-     "summary": "You told Roderic that Tomas cracked the first beam. Roderic knows; Tomas will react if he learns of the disclosure.",
-     "when": {
-      "kind": "told",
-      "npc": "npc_roderic_vale",
-      "secrets": [
-       "tomas_cracked"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_roderic_vale",
-       "respect": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_tomas_reed",
-       "trust": -0.4,
-       "suspicion": 0.3
-      },
-      {
-       "kind": "shift_opinion",
-       "npc": "npc_roderic_vale",
-       "of": "npc_tomas_reed",
-       "warmth": -0.3
-      }
-     ]
-    },
-    {
-     "id": "kept_quiet",
-     "summary": "The beam is up. You have kept Tomas's secret from Roderic so far.",
-     "when": {
-      "kind": "all",
-      "of": [
-       {
-        "kind": "installed",
-        "thing": "gate_beam"
-       },
-       {
-        "kind": "learned",
-        "any": [
-         "secret:tomas_cracked"
-        ]
-       },
-       {
-        "kind": "not",
-        "of": {
-         "kind": "told",
-         "npc": "npc_roderic_vale",
-         "secrets": [
-          "tomas_cracked"
-         ]
-        }
-       }
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_tomas_reed",
-       "trust": 0.25
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "fog",
-   "title": "Lost in the fog",
-   "people": {
-    "owner": "npc_elin_west",
-    "helps": [
-     "npc_roderic_vale"
-    ],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "problem",
-     "summary": "The night patrols lose their way on the moor when the fog comes down. Last month a scout's horse went into the bog.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "fact:fog_patrols",
-       "fact:fog"
-      ]
-     }
-    },
-    {
-     "id": "shown",
-     "summary": "You showed the watch something that holds a heading without stars.",
-     "when": {
-      "kind": "seen_demonstration",
-      "npcs": [
-       "npc_elin_west",
-       "npc_roderic_vale",
-       "npc_kade_east"
-      ],
-      "flags": [
-       "indicates_direction",
-       "magnetized"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "in_the_watchs_hands",
-     "summary": "The watch has a way to find north in the fog now, and they know whom to thank.",
-     "when": {
-      "kind": "given",
-      "npc": [
-       "npc_elin_west",
-       "npc_roderic_vale"
-      ],
-      "flags": [
-       "indicates_direction",
-       "magnetized"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_roderic_vale",
-       "respect": 0.2,
-       "trust": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_elin_west",
-       "trust": 0.3,
-       "respect": 0.2
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_kade_east",
-       "respect": 0.1
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "forge_iron",
-   "title": "Mara's iron",
-   "people": {
-    "owner": "npc_mara_venn",
-    "helps": [
-     "npc_jory_venn"
-    ],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "known",
-     "summary": "Mara is short of good iron and has been reworking old horseshoes for the guards' order.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "secret:mara_horseshoes"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "found_iron",
-     "summary": "You found Mara some iron for the guards' order.",
-     "when": {
-      "kind": "given",
-      "npc": [
-       "npc_mara_venn"
-      ],
-      "material": "iron"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_mara_venn",
-       "trust": 0.3,
-       "respect": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_jory_venn",
-       "trust": 0.1
-      }
-     ]
-    },
-    {
-     "id": "reported",
-     "summary": "You told the captain that Mara has been reworking old horseshoes. He thinks better of you; Mara doesn't.",
-     "when": {
-      "kind": "told",
-      "npc": "npc_roderic_vale",
-      "secrets": [
-       "mara_horseshoes"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_roderic_vale",
-       "respect": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_mara_venn",
-       "trust": -0.5,
-       "suspicion": 0.3
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_jory_venn",
-       "trust": -0.2
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "jory_tongs",
-   "title": "Jory's tongs",
-   "people": {
-    "owner": "npc_jory_venn",
-    "helps": [],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "known",
-     "summary": "Jory broke Mara's second-best tongs and hid them under the scrap.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "secret:jory_tongs"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "replaced",
-     "summary": "You got Jory a pair of tongs before Mara missed hers.",
-     "when": {
-      "kind": "given",
-      "npc": [
-       "npc_jory_venn",
-       "npc_mara_venn"
-      ],
-      "name_has": "tong"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_jory_venn",
-       "trust": 0.4
-      }
-     ]
-    },
-    {
-     "id": "told_mara",
-     "summary": "You told Mara about her tongs. She respects your honesty; Jory feels betrayed.",
-     "when": {
-      "kind": "told",
-      "npc": "npc_mara_venn",
-      "secrets": [
-       "jory_tongs"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_mara_venn",
-       "trust": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_jory_venn",
-       "trust": -0.4
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "kade_knees",
-   "title": "Kade's knees",
-   "people": {
-    "owner": "npc_kade_east",
-    "helps": [],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "known",
-     "summary": "Kade's knees are failing, and he dreads being pensioned off.",
-     "when": {
-      "kind": "any",
-      "of": [
-       {
-        "kind": "learned",
-        "any": [
-         "secret:kade_knees"
-        ]
-       },
-       {
-        "kind": "treated",
-        "npc": "npc_kade_east",
-        "condition": "ache"
-       }
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "eased",
-     "summary": "You eased Kade's knees. The one guard who can't stand cleverness respects you for it.",
-     "when": {
-      "kind": "treated",
-      "npc": "npc_kade_east",
-      "condition": "ache"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_kade_east",
-       "trust": 0.3,
-       "respect": 0.25
-      }
-     ]
-    },
-    {
-     "id": "told_roderic",
-     "summary": "You told the captain about Kade's knees. Kade won't forget it.",
-     "when": {
-      "kind": "told",
-      "npc": "npc_roderic_vale",
-      "secrets": [
-       "kade_knees"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_kade_east",
-       "trust": -0.5,
-       "suspicion": 0.2
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "jory_wonder",
-   "title": "Something nobody knows",
-   "people": {
-    "owner": "npc_jory_venn",
-    "helps": [],
-    "opposes": [
-     "npc_mara_venn"
-    ]
-   },
-   "stages": [],
-   "outcomes": [
-    {
-     "id": "amazed",
-     "summary": "Jory saw you do something nobody here knows how to do. He'll tell everyone, and Mara isn't sure she likes it.",
-     "when": {
-      "kind": "seen_demonstration",
-      "npcs": [
-       "npc_jory_venn"
-      ],
-      "wonder": [
-       "clever",
-       "uncanny"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_jory_venn",
-       "trust": 0.2
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_mara_venn",
-       "suspicion": 0.1
-      }
-     ]
-    }
-   ]
-  },
   {
    "id": "oren_debt",
    "title": "Dice and Debts",
@@ -454,9 +15,9 @@
     ]
    },
    "sides": {
-    "npc_oren_dast": "Eleven silver lost to Darin at dice, and now he wants you to wave his cart through unchecked. If the captain hears, you're finished, and Bren with you. Nobody must know.",
-    "npc_darin_ko": "Oren lost fair at dice and swore he'd pay by harvest; now he looks straight through you. You're not cruel, but your permit is running out, and a gate guard who owes you is the one key you hold.",
-    "npc_bren_marr": "Oren's young and scared of something. You've been standing his late watches so the captain won't notice. You'd like to know what's eating him before it eats you both."
+    "npc_oren_dast": "You're carrying something you can't speak of, and every time Darin comes near the gate your stomach turns. You'd give anything for it to go away quietly.",
+    "npc_darin_ko": "Oren owes you and has stopped meeting your eye. You're not cruel, but a debt is a debt, and you have troubles of your own before the month is out.",
+    "npc_bren_marr": "Oren's young and scared of something, and it's wearing on you too. You'd like to know what's eating him before it gets you both in trouble."
    },
    "needs": {
     "npc_bren_marr": "Oren's not been himself: jumpy, pale, hiding from somebody. You'd like someone to find out what's eating him."
@@ -753,7 +314,7 @@
     ]
    },
    "sides": {
-    "npc_darin_ko": "Your permit runs out at the month's end. One good deal inside the walls and you're made; without it you're back on the road. Something new to sell would change everything.",
+    "npc_darin_ko": "You need one good deal inside the walls, and soon. Something new to sell would change everything.",
     "npc_roderic_vale": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again."
    },
    "needs": {
@@ -983,7 +544,7 @@
     ]
    },
    "sides": {
-    "npc_hessa_marr": "Your inn is your life and your guests are falling sick. Bren's tired and short with you, Darin's three weeks behind, and you still can't look at Kade."
+    "npc_hessa_marr": "Your inn is your life and your guests are falling sick. Bren's tired and short with you lately, and some old griefs never quite heal."
    },
    "needs": {
     "npc_hessa_marr": "Two of her guests fell sick after drinking from the trough: she'd be grateful to anyone who found out why."
@@ -1216,6 +777,1250 @@
        "npc": "npc_kade_east",
        "of": "npc_hessa_marr",
        "warmth": 0.3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fog",
+   "title": "Lost in the Fog",
+   "people": {
+    "owner": "npc_elin_west",
+    "helps": [
+     "npc_roderic_vale",
+     "npc_kade_east"
+    ],
+    "opposes": []
+   },
+   "sides": {
+    "npc_elin_west": "The fog on the moor road has beaten the watch, and there's a night you'd rather forget. You want to be the scout who never loses her way again.",
+    "npc_roderic_vale": "The night patrols lose their way when the fog comes down, and the watch pays for it. You'd give a great deal for a way to hold a heading without stars.",
+    "npc_kade_east": "You know the moor from the bad nights. The young ones think fog is weather; you know it kills."
+   },
+   "needs": {
+    "npc_elin_west": "The watch loses its way on the moor road in fog: she'd welcome any way to hold a heading without stars."
+   },
+   "stages": [
+    {
+     "id": "problem",
+     "summary": "The night patrols lose their way on the moor when the fog comes down.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:fog",
+       "fact:fog_patrols",
+       "fact:moor_fog"
+      ]
+     }
+    },
+    {
+     "id": "blame",
+     "summary": "Last month a scout's horse went into the bog in the fog, and two people blame themselves for it.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:elin_bog",
+       "secret:roderic_fog"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_elin_west",
+       "text": "You've told the stranger about the bog. Saying it aloud didn't make it worse."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "You've told the stranger you sent Elin out that night. It sits no lighter for the telling."
+      }
+     ]
+    },
+    {
+     "id": "heading",
+     "summary": "There's a thing in the world now that holds a heading without stars.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "thing_with",
+        "flag": "indicates_direction"
+       },
+       {
+        "kind": "thing_with",
+        "flag": "magnetized"
+       },
+       {
+        "kind": "made",
+        "named": [
+         "compass",
+         "needle"
+        ],
+        "ever": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "proven",
+     "summary": "The watch has seen it find north.",
+     "when": {
+      "kind": "seen_demonstration",
+      "npcs": [
+       "npc_elin_west",
+       "npc_roderic_vale",
+       "npc_kade_east"
+      ],
+      "flags": [
+       "indicates_direction",
+       "magnetized"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_elin_west",
+       "text": "She's seen the thing find north; she'd want it in the watch's hands, and someone to show her how to trust it in the dark."
+      },
+      {
+       "kind": "need",
+       "npc": "npc_roderic_vale",
+       "text": "He's seen it find north: the watch should have one before the next fog."
+      }
+     ]
+    },
+    {
+     "id": "in_hands",
+     "summary": "The watch has a way to find north in the fog now.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_elin_west",
+       "npc_roderic_vale",
+       "npc_kade_east"
+      ],
+      "flags": [
+       "indicates_direction",
+       "magnetized"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_elin_west",
+       "text": ""
+      },
+      {
+       "kind": "need",
+       "npc": "npc_roderic_vale",
+       "text": ""
+      }
+     ]
+    },
+    {
+     "id": "blame_shared",
+     "summary": "Elin and the captain each know the other blames themselves for the bog.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "told",
+        "npc": "npc_elin_west",
+        "secrets": [
+         "roderic_fog"
+        ]
+       },
+       {
+        "kind": "told",
+        "npc": "npc_roderic_vale",
+        "secrets": [
+         "elin_bog"
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "roderic_tells_elin"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_elin_west",
+       "of": "npc_roderic_vale",
+       "warmth": 0.3
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_elin_west",
+       "warmth": 0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_elin_west",
+       "text": "The captain blames himself for the bog, not you. You'd carried it alone for a month."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Elin has carried the bog as her own fault. It was your order. She should hear that from you."
+      }
+     ]
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "in_the_watchs_hands",
+     "summary": "The watch has a way to find north in the fog now, and they know whom to thank.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_elin_west",
+       "npc_roderic_vale",
+       "npc_kade_east"
+      ],
+      "flags": [
+       "indicates_direction",
+       "magnetized"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.2,
+       "trust": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_elin_west",
+       "trust": 0.3,
+       "respect": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "respect": 0.1
+      },
+      {
+       "kind": "side",
+       "npc": "npc_elin_west",
+       "text": "The watch has a way to find north now. Next fog, you'll lead them home."
+      }
+     ]
+    },
+    {
+     "id": "elin_trusted",
+     "summary": "The captain wants Elin at his side on the fog patrol.",
+     "when": {
+      "kind": "move",
+      "id": "elin_at_my_side"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_elin_west",
+       "trust": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_elin_west",
+       "text": "The captain wants you at his side on the fog patrol. After the bog. You'd not dared hope it."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Elin leads the fog patrol at your side now. You should have trusted her sooner."
+      }
+     ]
+    },
+    {
+     "id": "kade_teaches",
+     "summary": "Old Kade is going to walk the moor road with Elin and teach her every rock.",
+     "when": {
+      "kind": "move",
+      "id": "teach_elin"
+     },
+     "effects": [
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_elin_west",
+       "of": "npc_kade_east",
+       "warmth": 0.3
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_kade_east",
+       "of": "npc_elin_west",
+       "warmth": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_elin_west",
+       "text": "Old Kade's going to walk the moor road with you and show you every rock. You never thought he rated you."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "You're teaching Elin the moor road, every rock of it. The moor took Aldo; it won't take her."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "kade_knees",
+   "title": "The Old Soldier",
+   "people": {
+    "owner": "npc_kade_east",
+    "helps": [
+     "npc_elin_west",
+     "npc_hessa_marr"
+    ],
+    "opposes": [
+     "npc_roderic_vale"
+    ]
+   },
+   "sides": {
+    "npc_kade_east": "Twenty years under Roderic, and the patrol gets longer every year. You'll not be pitied, and you'll not be put out to pasture.",
+    "npc_roderic_vale": "Kade's slowing on the long patrol. Twenty years; he's earned better than pasture, but the watch needs legs."
+   },
+   "needs": {
+    "npc_elin_west": "Kade's limping on patrol and won't admit it: she'd be glad if someone helped him without shaming him."
+   },
+   "stages": [
+    {
+     "id": "limp",
+     "summary": "Kade's knees are failing, and he dreads being pensioned off.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:kade_knees",
+       "fact:kade_limps",
+       "fact:kade_limps_bren"
+      ]
+     }
+    },
+    {
+     "id": "eased",
+     "summary": "Kade's knees are eased.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "treated",
+        "npc": "npc_kade_east",
+        "condition": "ache"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_kade_east"
+        ],
+        "name_has": "brace"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_kade_east"
+        ],
+        "name_has": "salve"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "Someone eased your knees without making a show of it. You owe them more than you'll say."
+      }
+     ]
+    },
+    {
+     "id": "why",
+     "summary": "Kade went back into the fog for Aldo the night he was lost, and wrecked his knees on the rocks.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:kade_aldo",
+       "fact:kade_went_back"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "You've told the stranger about the night Aldo was lost. Twelve winters you kept that, and it's out."
+      }
+     ]
+    },
+    {
+     "id": "hessa_hears",
+     "summary": "Hessa knows Kade went back for Aldo.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "told",
+        "npc": "npc_hessa_marr",
+        "secrets": [
+         "kade_aldo"
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "kade_tells_hessa"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_hessa_marr"
+        ],
+        "name_has": "horn"
+       }
+      ]
+     }
+    },
+    {
+     "id": "fit",
+     "summary": "Kade has a place in the watch still.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "keep_kade_on"
+       },
+       {
+        "kind": "move",
+        "id": "teach_elin"
+       }
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "eased",
+     "summary": "You eased Kade's knees. The one guard who can't stand cleverness respects you for it.",
+     "when": {
+      "kind": "treated",
+      "npc": "npc_kade_east",
+      "condition": "ache"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": 0.3,
+       "respect": 0.25
+      }
+     ]
+    },
+    {
+     "id": "kept_on",
+     "summary": "The captain is keeping Kade on.",
+     "when": {
+      "kind": "move",
+      "id": "keep_kade_on"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "The captain's keeping you on. The watch needs what's in your head more than your knees, he says. Maybe he's right."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "You've kept Kade on. Twenty years of the moor in one man's head is worth more than his knees."
+      }
+     ]
+    },
+    {
+     "id": "told_roderic",
+     "summary": "You told the captain about Kade's knees. Kade won't forget it.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "kade_knees"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": -0.5,
+       "suspicion": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "The stranger told the captain about your knees. Pasture, then, and pity."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "forge_iron",
+   "title": "The Guards' Order",
+   "people": {
+    "owner": "npc_mara_venn",
+    "helps": [
+     "npc_jory_venn",
+     "npc_tomas_reed"
+    ],
+    "opposes": []
+   },
+   "sides": {
+    "npc_mara_venn": "The guards' order is late and Roderic wants miracles at a smith's wage. Your forge eats fuel faster than you can buy it, and good iron is scarce.",
+    "npc_roderic_vale": "Mara's slow with the guards' mail, but her work holds. You'd like it done before the next muster."
+   },
+   "needs": {
+    "npc_mara_venn": "The guards' order won't wait and her forge is starved: she'd welcome good fuel, charcoal or dry wood."
+   },
+   "stages": [
+    {
+     "id": "order",
+     "summary": "Mara is behind on a repair order for the gate guards.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:guard_order",
+       "fact:mail_mending",
+       "fact:mail_at_forge"
+      ]
+     }
+    },
+    {
+     "id": "fuel",
+     "summary": "Mara's forge has fuel again.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "given",
+        "npc": [
+         "npc_mara_venn"
+        ],
+        "material": "charcoal"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_mara_venn"
+        ],
+        "material": "wood"
+       },
+       {
+        "kind": "deal",
+        "npc": "npc_mara_venn",
+        "status": "fulfilled"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_mara_venn",
+       "text": "Fuel's in hand; good iron is what she's short of now."
+      }
+     ]
+    },
+    {
+     "id": "short_of_iron",
+     "summary": "Mara has been reworking old horseshoes to fill the guards' order.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:mara_horseshoes",
+       "fact:horseshoe_scrap"
+      ]
+     }
+    },
+    {
+     "id": "good_iron",
+     "summary": "Mara has good iron for the guards' order.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "given",
+        "npc": [
+         "npc_mara_venn"
+        ],
+        "material": "iron"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_mara_venn"
+        ],
+        "material": "steel"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_mara_venn",
+       "text": "Her second-best tongs have gone missing, and the fine work on the guards' order needs them."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_mara_venn",
+       "text": "Good iron at last, from a stranger of all people. No more horseshoes in the guards' mail."
+      }
+     ]
+    },
+    {
+     "id": "tongs",
+     "summary": "Mara has tongs to work with again.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "reached",
+        "story": "jory",
+        "stage": "mended"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_mara_venn"
+        ],
+        "name_has": "tong"
+       },
+       {
+        "kind": "move",
+        "id": "lend_pincers"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_mara_venn",
+       "text": ""
+      }
+     ]
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "found_iron",
+     "summary": "You found Mara good iron for the guards' order.",
+     "when": {
+      "kind": "given",
+      "npc": [
+       "npc_mara_venn"
+      ],
+      "material": "iron"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": 0.3,
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.1
+      }
+     ]
+    },
+    {
+     "id": "delivered",
+     "summary": "The guards' order is done, and done well.",
+     "when": {
+      "kind": "move",
+      "id": "deliver_order"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": 0.2,
+       "respect": 0.2
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_mara_venn",
+       "warmth": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Mara's delivered the guards' order, every ring sound. You'll pay her on time, this once."
+      }
+     ]
+    },
+    {
+     "id": "nails_sent",
+     "summary": "Mara sent Tomas the nails and straps for his brackets.",
+     "when": {
+      "kind": "move",
+      "id": "send_nails"
+     },
+     "effects": [
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_tomas_reed",
+       "of": "npc_mara_venn",
+       "warmth": 0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_tomas_reed",
+       "text": "Mara sent the nails for the brackets without being asked twice. She always did look out for you, in her way."
+      }
+     ]
+    },
+    {
+     "id": "reported",
+     "summary": "You told the captain Mara has been reworking horseshoes for his order.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "mara_horseshoes"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": -0.5,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": -0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_mara_venn",
+       "text": "The stranger told the captain about the horseshoes. Your name, at the forge you built. You won't forget it."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "jory",
+   "title": "The Apprentice",
+   "people": {
+    "owner": "npc_jory_venn",
+    "helps": [
+     "npc_hessa_marr"
+    ],
+    "opposes": [
+     "npc_mara_venn"
+    ]
+   },
+   "sides": {
+    "npc_jory_venn": "Aunt Mara's been short with you lately and you've a weight on your mind. You'd give anything to see something nobody's ever seen.",
+    "npc_mara_venn": "Jory's been jumpy and keeping out of your way. He's a good lad, but he has to learn that a smith owns her mistakes."
+   },
+   "needs": {
+    "npc_jory_venn": "He'd love to see something nobody here has ever seen: a real wonder."
+   },
+   "stages": [
+    {
+     "id": "wonder",
+     "summary": "You showed Jory something nobody here has ever seen.",
+     "when": {
+      "kind": "seen_demonstration",
+      "npcs": [
+       "npc_jory_venn"
+      ],
+      "wonder": [
+       "clever",
+       "uncanny"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_jory_venn",
+       "text": ""
+      },
+      {
+       "kind": "side",
+       "npc": "npc_jory_venn",
+       "text": "The stranger showed you something nobody's ever seen! You're telling everyone."
+      }
+     ]
+    },
+    {
+     "id": "broken",
+     "summary": "Jory broke Mara's second-best tongs and hid them.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:jory_tongs",
+       "fact:tongs_missing"
+      ]
+     }
+    },
+    {
+     "id": "found",
+     "summary": "The broken tongs are out from under the scrap.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "held_by",
+        "thing": "tongs_mara",
+        "npc": "player"
+       },
+       {
+        "kind": "move",
+        "id": "fetch_tongs"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "reveal",
+       "npc": "npc_jory_venn",
+       "thing": "tongs_mara"
+      }
+     ]
+    },
+    {
+     "id": "mended",
+     "summary": "Mara's tongs are whole again, or new ones made.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "mended",
+        "thing": "tongs_mara"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_jory_venn",
+         "npc_mara_venn"
+        ],
+        "name_has": "tong"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mara_knows",
+     "summary": "Mara knows what happened to her tongs.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "jory_confesses"
+       },
+       {
+        "kind": "told",
+        "npc": "npc_mara_venn",
+        "secrets": [
+         "jory_tongs"
+        ]
+       },
+       {
+        "kind": "held_by",
+        "thing": "tongs_mara",
+        "npc": "npc_mara_venn"
+       }
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "amazed",
+     "summary": "Jory has seen a wonder, and he's telling everyone.",
+     "when": {
+      "kind": "seen_demonstration",
+      "npcs": [
+       "npc_jory_venn"
+      ],
+      "wonder": [
+       "clever",
+       "uncanny"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "suspicion": 0.1
+      }
+     ]
+    },
+    {
+     "id": "owned_up",
+     "summary": "Jory owned up to Mara himself.",
+     "when": {
+      "kind": "move",
+      "id": "jory_confesses"
+     },
+     "effects": [
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_mara_venn",
+       "of": "npc_jory_venn",
+       "warmth": 0.4
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_mara_venn",
+       "text": "Jory told you himself he broke the tongs. That took more nerve than the forge. You'll make a smith of him yet."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_jory_venn",
+       "text": "You told Aunt Mara. She didn't shout. She said it took nerve."
+      }
+     ]
+    },
+    {
+     "id": "found_out",
+     "summary": "You told Mara about the tongs before Jory could.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_mara_venn",
+      "secrets": [
+       "jory_tongs"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": -0.4
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_mara_venn",
+       "trust": 0.1
+      },
+      {
+       "kind": "side",
+       "npc": "npc_mara_venn",
+       "text": "The stranger told you Jory broke your tongs and hid them. You'd rather have heard it from him."
+      }
+     ]
+    },
+    {
+     "id": "quietly_mended",
+     "summary": "The tongs are whole again, and Mara never knew.",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "mended",
+        "thing": "tongs_mara"
+       },
+       {
+        "kind": "not",
+        "of": {
+         "kind": "told",
+         "npc": "npc_mara_venn",
+         "secrets": [
+          "jory_tongs"
+         ]
+        }
+       },
+       {
+        "kind": "not",
+        "of": {
+         "kind": "move",
+         "id": "jory_confesses"
+        }
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_jory_venn",
+       "trust": 0.4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gate_beam",
+   "title": "The Gate Beam",
+   "people": {
+    "owner": "npc_tomas_reed",
+    "helps": [
+     "npc_roderic_vale",
+     "npc_mara_venn"
+    ],
+    "opposes": []
+   },
+   "sides": {
+    "npc_tomas_reed": "Sixty kilos of oak, two metres up, and the captain watching you like a hawk. You'll get this one right.",
+    "npc_roderic_vale": "Tomas is taking too long over the beam. You want it up, and safely."
+   },
+   "needs": {
+    "npc_tomas_reed": "Sixty kilos of beam to raise two metres into the brackets: he could use a clever pair of hands.",
+    "npc_roderic_vale": "That gate beam should have been up a week ago."
+   },
+   "stages": [
+    {
+     "id": "problem",
+     "summary": "The cracked bar has to come down and the new 60 kg beam go up two metres into the brackets.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:beam_problem",
+       "fact:gate_beam",
+       "fact:tomas_beam"
+      ]
+     }
+    },
+    {
+     "id": "nails",
+     "summary": "Tomas has the iron he needs for the brackets.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "send_nails"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_tomas_reed"
+        ],
+        "material": "iron"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_tomas_reed"
+        ],
+        "name_has": "nail"
+       }
+      ]
+     }
+    },
+    {
+     "id": "bar_down",
+     "summary": "The cracked bar is down off the gate, as work, not a breach.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "all",
+        "of": [
+         {
+          "kind": "deal",
+          "npc": "npc_tomas_reed",
+          "status": "accepted"
+         },
+         {
+          "kind": "not",
+          "of": {
+           "kind": "installed",
+           "thing": "gate_bar"
+          }
+         }
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "lend_guards"
+       }
+      ]
+     }
+    },
+    {
+     "id": "raised",
+     "summary": "The new beam is up in the brackets.",
+     "when": {
+      "kind": "installed",
+      "thing": "gate_beam"
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_tomas_reed",
+       "text": ""
+      },
+      {
+       "kind": "need",
+       "npc": "npc_roderic_vale",
+       "text": ""
+      },
+      {
+       "kind": "side",
+       "npc": "npc_tomas_reed",
+       "text": "The beam's up, and it's sound, and nobody's crushed. You can breathe."
+      }
+     ]
+    },
+    {
+     "id": "truth",
+     "summary": "The first beam cracked because it was rushed, and the captain half-suspects sabotage.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:tomas_cracked",
+       "secret:roderic_sabotage"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_tomas_reed",
+       "text": "You've told the stranger you rushed the first beam. Said out loud, it sounds smaller."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "You've told the stranger you wonder whether the first beam was cracked on purpose."
+      }
+     ]
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "owned_up",
+     "summary": "Tomas told the captain himself that he rushed the first beam.",
+     "when": {
+      "kind": "move",
+      "id": "tomas_tells_roderic"
+     },
+     "effects": [
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_tomas_reed",
+       "warmth": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_tomas_reed",
+       "trust": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Tomas told you himself he rushed the first beam. No sabotage, then: a proud man. You can work with that."
+      }
+     ]
+    },
+    {
+     "id": "told_roderic",
+     "summary": "You told the captain Tomas cracked the first beam himself.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "tomas_cracked"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_tomas_reed",
+       "trust": -0.4,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_tomas_reed",
+       "warmth": -0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_tomas_reed",
+       "text": "The stranger told the captain you cracked the first beam. He'll watch every nail you drive."
+      }
+     ]
+    },
+    {
+     "id": "kept_quiet",
+     "summary": "The new beam is up and you kept Tomas's secret.",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "installed",
+        "thing": "gate_beam"
+       },
+       {
+        "kind": "learned",
+        "any": [
+         "secret:tomas_cracked"
+        ]
+       },
+       {
+        "kind": "not",
+        "of": {
+         "kind": "told",
+         "npc": "npc_roderic_vale",
+         "secrets": [
+          "tomas_cracked"
+         ]
+        }
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_tomas_reed",
+       "trust": 0.25
+      }
+     ]
+    },
+    {
+     "id": "paid",
+     "summary": "The captain has paid Tomas for the gate work.",
+     "when": {
+      "kind": "move",
+      "id": "pay_tomas"
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_tomas_reed",
+       "text": "Paid in full for the gate, and the captain said good work. First time in a month he's looked at you without suspicion."
       }
      ]
     }
@@ -1528,6 +2333,248 @@
    "tells": {
     "to": "npc_roderic_vale",
     "message": "The stranger is my hired hand this season, captain. They come in on my business, under the permit you sealed."
+   }
+  },
+  {
+   "id": "roderic_tells_elin",
+   "npc": "npc_roderic_vale",
+   "story": "fog",
+   "description": "Roderic agrees to tell Elin the bog was his doing, not hers.",
+   "when": {
+    "kind": "told",
+    "npc": "npc_roderic_vale",
+    "secrets": [
+     "elin_bog"
+    ]
+   },
+   "would_agree_if": "the stranger shows him she's carrying blame that's his, and he can do it without shaming her",
+   "tells": {
+    "to": "npc_elin_west",
+    "message": "The bog was my doing, Elin. I sent you out. Put it down."
+   }
+  },
+  {
+   "id": "elin_at_my_side",
+   "npc": "npc_roderic_vale",
+   "story": "fog",
+   "description": "Roderic agrees to take Elin as his second on the fog patrol.",
+   "when": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "reached",
+      "story": "fog",
+      "stage": "in_hands"
+     },
+     {
+      "kind": "reached",
+      "story": "fog",
+      "stage": "proven"
+     }
+    ]
+   },
+   "would_agree_if": "the watch has a way through the fog and he's sure she can lead with it, perhaps once he knows she's carried the bog alone",
+   "tells": {
+    "to": "npc_elin_west",
+    "message": "Next fog, you ride at my side. Bring that north-finder."
+   }
+  },
+  {
+   "id": "teach_elin",
+   "npc": "npc_kade_east",
+   "story": "fog",
+   "description": "Kade agrees to walk the moor road with Elin and teach her every rock and turning.",
+   "when": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "reached",
+      "story": "kade_knees",
+      "stage": "eased"
+     },
+     {
+      "kind": "learned",
+      "any": [
+       "secret:kade_aldo"
+      ]
+     }
+    ]
+   },
+   "would_agree_if": "his knees will carry him again and the stranger shows him she's worth the teaching; or he comes to see that the moor that took Aldo shouldn't take anyone else",
+   "tells": {
+    "to": "npc_elin_west",
+    "message": "Tomorrow at first light we walk the moor road, you and me. Every rock."
+   }
+  },
+  {
+   "id": "keep_kade_on",
+   "npc": "npc_roderic_vale",
+   "story": "kade_knees",
+   "description": "Roderic agrees to keep Kade on in the watch.",
+   "when": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "reached",
+      "story": "kade_knees",
+      "stage": "eased"
+     },
+     {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "kade_knees"
+      ]
+     },
+     {
+      "kind": "move",
+      "id": "teach_elin"
+     }
+    ]
+   },
+   "would_agree_if": "he's satisfied Kade can still do the work, or there's work worth keeping him for: teaching the young ones the moor",
+   "tells": {
+    "to": "npc_kade_east",
+    "message": "You're staying on, Kade. The watch needs what's in your head more than your knees."
+   }
+  },
+  {
+   "id": "send_nails",
+   "npc": "npc_mara_venn",
+   "story": "forge_iron",
+   "description": "Mara agrees to send Tomas the nails and iron straps for the gate brackets.",
+   "when": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "reached",
+      "story": "forge_iron",
+      "stage": "good_iron"
+     },
+     {
+      "kind": "reached",
+      "story": "forge_iron",
+      "stage": "fuel"
+     }
+    ]
+   },
+   "would_agree_if": "she has iron and fuel enough again, and the stranger asks it for Tomas's sake (she's fond of him, though she'd never say so)",
+   "tells": {
+    "to": "npc_tomas_reed",
+    "message": "Mara sent these: nails and straps for your brackets. She says don't thank her."
+   }
+  },
+  {
+   "id": "deliver_order",
+   "npc": "npc_mara_venn",
+   "story": "forge_iron",
+   "description": "Mara agrees she can finish the guards' order and sends word to the captain.",
+   "when": {
+    "kind": "reached",
+    "story": "forge_iron",
+    "stage": "good_iron"
+   },
+   "would_agree_if": "she has fuel, good iron and tongs to work with, and her pride in the work is back",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "Your order's done, captain. Every ring sound. I'll have my pay this week."
+   }
+  },
+  {
+   "id": "lend_pincers",
+   "npc": "npc_tomas_reed",
+   "story": "forge_iron",
+   "description": "Tomas agrees to lend Mara his pincers until her tongs turn up.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:jory_tongs",
+     "fact:tongs_missing"
+    ]
+   },
+   "would_agree_if": "the stranger asks it for Mara's sake, and he can spare them from the beam",
+   "tells": {
+    "to": "npc_mara_venn",
+    "message": "Heard your tongs went missing. Use my pincers till they turn up."
+   }
+  },
+  {
+   "id": "jory_confesses",
+   "npc": "npc_jory_venn",
+   "story": "jory",
+   "description": "Jory agrees to tell Mara himself that he broke her tongs and hid them.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:jory_tongs"
+    ]
+   },
+   "would_agree_if": "the stranger gives him the nerve: owning up beats being found out, and Mara is fairer than he fears",
+   "tells": {
+    "to": "npc_mara_venn",
+    "message": "Aunt Mara, I broke your tongs and hid them under the scrap. I'm sorry."
+   }
+  },
+  {
+   "id": "fetch_tongs",
+   "npc": "npc_jory_venn",
+   "story": "jory",
+   "description": "Jory agrees to dig the broken tongs out from under the scrap heap.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:jory_tongs"
+    ]
+   },
+   "would_agree_if": "the stranger promises to help him mend them, or not to tell Mara before he's ready"
+  },
+  {
+   "id": "lend_guards",
+   "npc": "npc_roderic_vale",
+   "story": "gate_beam",
+   "description": "Roderic agrees to have two of his guards help take the cracked bar down for Tomas.",
+   "when": {
+    "kind": "deal",
+    "npc": "npc_tomas_reed",
+    "status": "accepted"
+   },
+   "would_agree_if": "he's satisfied the work is Tomas's and done safely, and two guards stay at the gate",
+   "tells": {
+    "to": "npc_bren_marr",
+    "message": "Help get that cracked bar down for Tomas's beam. Carefully."
+   }
+  },
+  {
+   "id": "pay_tomas",
+   "npc": "npc_roderic_vale",
+   "story": "gate_beam",
+   "description": "Roderic agrees to pay Tomas for the gate work.",
+   "when": {
+    "kind": "installed",
+    "thing": "gate_beam"
+   },
+   "would_agree_if": "the beam is up and sound, and he has no doubt left about the first one, or he chooses to let it lie",
+   "tells": {
+    "to": "npc_tomas_reed",
+    "message": "Good work on the beam. Your pay's at the gatehouse."
+   }
+  },
+  {
+   "id": "tomas_tells_roderic",
+   "npc": "npc_tomas_reed",
+   "story": "gate_beam",
+   "description": "Tomas agrees to tell the captain himself that he rushed the first beam.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:tomas_cracked",
+     "secret:roderic_sabotage"
+    ]
+   },
+   "would_agree_if": "the stranger persuades him that owning up beats being suspected, above all once the new beam is up to show he's learned",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "Captain, the first beam cracked because I rushed it. My fault, no one else's. This one's sound."
    }
   }
  ]

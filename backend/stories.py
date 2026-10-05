@@ -28,7 +28,7 @@ AXES = ("trust", "suspicion", "respect", "awe")
 
 def running(state: State) -> list[dict]:
     """The stories this journey's level runs (its "stories": ids). A journey whose book was kept the older way (before
-    D-69's quests) runs none: its stories stay as they were."""
+    D-70's quests) runs none: its stories stay as they were."""
     if (state.get("stories") or {}).get("version", BOOK_VERSION) != BOOK_VERSION:
         return []
     return [STORIES[story_id] for story_id in content.level(state).get("stories", []) if story_id in STORIES]
@@ -284,7 +284,7 @@ def _gifts(state: State, spec: dict) -> set[str]:
         and (o.get("holder_id") in people or o.get("owner_id") in people)
         and _flags_match(o, spec)
         and (not spec.get("flags") or any(c.get("status") == "observed" for c in o.get("known_capabilities", [])))
-        and (spec.get("water") != "clean" or _clean_water(o))  # Clean water, handed over (D-69).
+        and (spec.get("water") != "clean" or _clean_water(o))  # Clean water, handed over (D-70).
     }
 
 
@@ -294,10 +294,17 @@ def _clean_water(obj: Thing) -> bool:
 
 @rules.condition("clean", "thing", "of")
 def _clean(state, spec, ctx):
-    """Nothing named so is fouling this thing or its water any more (D-69: the trough set right)."""
+    """Nothing named so is fouling this thing or its water any more (D-70: the trough set right)."""
     obj = state["objects"].get(spec["thing"]) or {}
     there = [m["name"] for m in obj.get("mixture") or []] + [a["name"] for a in obj.get("attributes", [])]
     return bool(obj) and spec["of"] not in there
+
+
+@rules.condition("mended", "thing")
+def _mended(state, spec, ctx):
+    """This thing is whole again: nothing lost to damage any more (D-70: Mara's tongs, repaired)."""
+    obj = state["objects"].get(spec["thing"]) or {}
+    return bool(obj) and not (obj.get("damage") or {}).get("lost_flags") and obj.get("condition") != "destroyed"
 
 
 @rules.condition("given", "npc")
@@ -337,7 +344,7 @@ def make_move(state: State, move_id: str, event_id: int) -> dict:
 # it: their share of its effects applies once (how they see the stranger and others, what they now know and can tell,
 # how they see the quest, what they'd ask of someone), and an ending's fact goes into their own context. Who knows is
 # worked out from what each person holds (`knowers`), never guessed. One read-only check (`_due`) says what's due;
-# `pending` asks it every beat, `tick` carries it out until nothing more is (D-69: a step in one quest can reach a step
+# `pending` asks it every beat, `tick` carries it out until nothing more is (D-70: a step in one quest can reach a step
 # in another in the same beat, and someone who learns of it later still gets it, once).
 
 BOOK_VERSION = 2
@@ -407,7 +414,7 @@ def tick(state: State) -> bool:
 
 
 def start(state: State) -> None:
-    """A new journey: each quest's people start out with their side of it and what they'd ask of someone (D-69: they
+    """A new journey: each quest's people start out with their side of it and what they'd ask of someone (D-70: they
     bring it up themselves when the stranger comes up to them)."""
     for story in running(state):
         _open(state, story)
@@ -491,7 +498,7 @@ def _shift_opinion(state: State, spec: dict, story: dict | None = None) -> None:
 
 
 def _teach(state: State, spec: dict, story: dict | None = None) -> None:
-    """This person now knows a fact or secret their card holds for later (D-69): theirs to tell, or keep."""
+    """This person now knows a fact or secret their card holds for later (D-70): theirs to tell, or keep."""
     npc = cast.find(state["npcs"], spec["npc"])
     if npc is None:
         return
@@ -502,7 +509,7 @@ def _teach(state: State, spec: dict, story: dict | None = None) -> None:
 
 
 def _side(state: State, spec: dict, story: dict | None = None) -> None:
-    """How this person now sees the quest (D-69): their side of it, in their own calls."""
+    """How this person now sees the quest (D-70): their side of it, in their own calls."""
     npc = cast.find(state["npcs"], spec["npc"])
     if npc is None or story is None:
         return
@@ -513,8 +520,16 @@ def _side(state: State, spec: dict, story: dict | None = None) -> None:
     }
 
 
+def _reveal(state: State, spec: dict, story: dict | None = None) -> None:
+    """A thing someone hid is out in the open now (D-70: Jory digs Mara's tongs out from under the scrap)."""
+    obj = state["objects"].get(spec["thing"])
+    if obj is not None and obj.get("hidden"):
+        obj["hidden"] = None
+        obj["revision"] = obj.get("revision", 0) + 1
+
+
 def _need(state: State, spec: dict, story: dict | None = None) -> None:
-    """What this person would ask of someone now, for this quest (D-69): they bring it up themselves. Empty: answered."""
+    """What this person would ask of someone now, for this quest (D-70): they bring it up themselves. Empty: answered."""
     npc = cast.find(state["npcs"], spec["npc"])
     if npc is None or story is None:
         return
@@ -531,6 +546,7 @@ EFFECTS = {
     "teach": _teach,
     "side": _side,
     "need": _need,
+    "reveal": _reveal,
 }
 NEEDS = {
     "shift_regard": ("npc",),
@@ -538,10 +554,11 @@ NEEDS = {
     "teach": ("npc",),
     "side": ("npc", "text"),
     "need": ("npc",),
+    "reveal": ("npc", "thing"),
 }
 
 
-# --- Who knows that a condition came true (D-63, D-69) ------------------------------------------------------------
+# --- Who knows that a condition came true (D-63, D-70) ------------------------------------------------------------
 
 
 def _held(npc: Npc) -> list[dict]:
@@ -570,7 +587,7 @@ def knowing(kind: str):
 def knowers(state: State, spec: dict) -> set[str] | None:
     """Who knows that this condition came true, from what each of them holds: never guessed from distance or from
     anything else they once saw. None for a kind nobody can be said to know (a regard, a "not"): inside an "all" it
-    is a constraint, not knowledge, and is left out (D-69: kept_quiet never reached Tomas)."""
+    is a constraint, not knowledge, and is left out (D-70: kept_quiet never reached Tomas)."""
     fn = KNOWERS.get(spec["kind"])
     return fn(state, spec) if fn else None
 
@@ -664,7 +681,7 @@ def _knowers_reached(state, spec):  # Whoever knows the step or ending it names.
 
 @rules.condition("reached", "story")
 def _reached(state, spec, ctx):
-    """A step or ending of a story has been reached; with known, only if this rule's own person knows it (D-69)."""
+    """A step or ending of a story has been reached; with known, only if this rule's own person knows it (D-70)."""
     kind = "stage" if spec.get("stage") else "outcome"
     if not _is_reached(_record(state), spec["story"], kind, spec.get("stage") or spec.get("outcome")):
         return False

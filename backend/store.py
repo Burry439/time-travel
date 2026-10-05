@@ -31,7 +31,7 @@ GEOMETRY_VERSION = content.MAPS["village"]["version"]  # Recorded with each jour
 # fellable trees and saplings, and NPC health; 6 adds people's own stock (Darin's lodestone, Mara's
 # needles, Hessa's bowls) and the gate trough; 7 adds the gate beam and its brackets, and Tomas's rope,
 # ladder and fulcrum stone.
-SEED_VERSION = 15  # D-69: the quests' things (Aldo's horn, the rot in Hessa's trough). 14: Open-ended physical facts and personal evidence/agreements (D-62). 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
+SEED_VERSION = 15  # D-70: the quests' things (Aldo's horn, the rot in Hessa's trough). 14: Open-ended physical facts and personal evidence/agreements (D-62). 8: the forge and the inn's cooking fire (heat). 9: the cracked bar holds the gate shut. 10: gear (D-49).
 # 11: the old wainwright's yard, a free stock of materials for weapons and armour (D-51).
 # 12: the wainwright's notebook, a readable recipe book (D-52).
 # 13: Hessa's bucket holds ten litres, not one.
@@ -189,7 +189,7 @@ def initial_state(run: sqlite3.Row) -> dict:
         scenario.setup(state)
     import stories  # Late: stories reads people's cards, which come after the store.
 
-    stories.start(state)  # The quests' people start out with their side and what they'd ask (D-69).
+    stories.start(state)  # The quests' people start out with their side and what they'd ask (D-70).
     return state
 
 

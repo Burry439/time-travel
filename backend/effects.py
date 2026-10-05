@@ -244,6 +244,41 @@ def _overpowered(state: State, ctx: dict, someone: dict) -> bool:
     return any(c.get("status") == "accepted" for c in (someone.get("mind") or {}).get("commitments", []))
 
 
+SOOTHABLE = ("ache",)  # Old complaints eased by warmth, rest or rubbing; wounds are treated with remedies (gear).
+
+
+@block(
+    "soothe",
+    "bodies",
+    ("target_id", "name"),
+    "their own body (the complaint eased) and their own call; whoever eased it",
+)
+def _check_soothe(state, effect, ctx):
+    """Ease an old complaint in someone's body (an aching joint): a warm stone or cloth held to it, rest, a rub with
+    something soothing. name: the complaint (ache). other_id: what soothes it, within reach (D-70: a warm compress
+    on Kade's knee counted for nothing)."""
+    someone = person(state, effect["target_id"])
+    if someone is None or not in_reach(state, ctx, someone):
+        return "a living person within reach"
+    kind = effect["name"].strip().lower()
+    if kind not in SOOTHABLE:
+        return f"only {', '.join(SOOTHABLE)} eases that way; wounds need remedies"
+    if not any(c.get("kind") == kind and not c.get("treated") for c in someone.get("conditions", [])):
+        return f"{someone.get('name', 'they')} has no {kind} to ease"
+    if effect.get("other_id") and thing(state, ctx, effect["other_id"]) is None:
+        effect["other_id"] = None  # Only says what soothed it: a stale name is dropped, not held against the deed.
+    return None
+
+
+@reducer("soothe")
+def _apply_soothe(state, effect, now, actor_id, repaint):
+    someone = person(state, effect["target_id"])
+    kind = effect["name"].strip().lower()
+    for condition in someone.get("conditions", []):
+        if condition.get("kind") == kind and not condition.get("treated"):
+            condition["treated"] = max(1, now)
+
+
 @block("end_condition", "bodies", ("target_id", "name"), "their own call; what they could not do, they can again")
 def _check_end_condition(state, effect, ctx):
     """A state ends: untied, woken, dried off, the blindfold taken off."""
@@ -1101,7 +1136,7 @@ def _apply_contaminate(state, effect, now, actor_id, repaint):
 )
 def _check_clean(state, effect, ctx):
     """Clean away something fouling a thing or water: name is what goes (fouled, wet, a mark, the rot in the trough).
-    Only what's actually there (D-69: nothing could set a fouled trough right)."""
+    Only what's actually there (D-70: nothing could set a fouled trough right)."""
     found = thing(state, ctx, effect["target_id"])
     if found is None:
         return "a thing or water within reach"

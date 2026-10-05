@@ -336,9 +336,9 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
         context["the_stranger_told_you"] = told
     if settled := stories.how_things_stand(state, npc):
         context["how_things_stand"] = settled
-    if mine := persona.sides(npc):  # How they see the quests they're part of (D-69).
+    if mine := persona.sides(npc):  # How they see the quests they're part of (D-70).
         context["your_side_of_things"] = mine
-    if asks := persona.needs(npc):  # What they'd ask of someone now: they bring it up themselves (D-69).
+    if asks := persona.needs(npc):  # What they'd ask of someone now: they bring it up themselves (D-70).
         context["what_you_would_ask_of_someone"] = asks
     if cast.card(npc).get("persuaded_by"):
         context["what_would_change_their_mind"] = cast.card(npc)["persuaded_by"]
@@ -382,7 +382,7 @@ def scene_context(
     conversation so far, and for each person (addressed first, then those taking part, then those nearby)
     their sheet, purpose, regard, open deals and legal moves, and any story beat due in their reply (D-59)."""
     encounter = state.get("encounter") or {}
-    opening = ((encounter.get("log") or [{}])[-1]).get("kind") == "greet"  # They speak first (D-69).
+    opening = ((encounter.get("log") or [{}])[-1]).get("kind") == "greet"  # They speak first (D-70).
     people = []
     order = ([addressed] if addressed else []) + [p for p in participants if p is not addressed] + nearby
     for npc in order:

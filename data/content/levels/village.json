@@ -18,9 +18,8 @@
   "darin_permit",
   "trough_water",
   "forge_iron",
-  "jory_tongs",
   "kade_knees",
-  "jory_wonder"
+  "jory"
  ],
  "cast": {
   "npc_roderic_vale": {

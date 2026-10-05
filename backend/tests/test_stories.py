@@ -59,7 +59,7 @@ def test_a_secret_is_its_owners_to_confide_when_they_choose_to():
     assert stories.pending(state) and stories.tick(state)
     assert state["stories"]["stages"] == {"oren_debt": ["brens_risk"]} and state["journal"][-1]["kind"] == "story"
     assert stories.page(state)[0]["title"] == "Dice and Debts" and stories.page(state)[0]["ended"] is None
-    assert stories.page(state)[0]["steps"][0]["from"] == "Bren"  # Whose side it came from (D-69).
+    assert stories.page(state)[0]["steps"][0]["from"] == "Bren"  # Whose side it came from (D-70).
 
 
 def test_someone_who_knows_of_a_crime_by_the_stranger_confides_nothing():
@@ -151,7 +151,7 @@ def test_what_the_stranger_tells_someone_is_theirs_to_know_and_stories_react():
     )
     assert stories.tick(state)
     assert reputation.regard(tomas)["trust"] == round(max(0.0, trust_before - 0.4), 3)
-    assert any("Roderic" in line for line in stories.how_things_stand(state, tomas))
+    assert any("captain" in line for line in stories.how_things_stand(state, tomas))
 
 
 def test_nobody_learns_an_outcome_by_standing_near_or_having_once_seen_something():
@@ -257,7 +257,7 @@ def test_kade_s_knees_ache_from_the_start_and_a_poultice_eases_them():
     poultice = {"id": "p1", "name": "willow poultice", "gear": {"kind": "remedy", "class": "poultice", "covers": []}}
     assert gear.treat(kade, 0, poultice, 1000)["ok"]
     assert stories.tick(state) and state["stories"]["outcomes"]["kade_knees"] == "eased"
-    assert state["stories"]["stages"]["kade_knees"] == ["known"]
+    assert state["stories"]["stages"]["kade_knees"] == ["eased"]
     assert "confide:kade_knees" in conversation.replies(state, kade)  # Someone who noticed and was kind.
 
 
@@ -307,7 +307,7 @@ def test_a_demonstration_remembers_what_was_shown_so_a_story_can_ask_what_it_was
             "severity": 1,
         }
     )
-    assert stories.tick(state) and state["stories"]["stages"]["fog"] == ["shown"]
+    assert stories.tick(state) and state["stories"]["stages"]["fog"] == ["heading", "proven"]
 
 
 def test_an_errand_across_the_village_arrives():

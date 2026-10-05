@@ -24,8 +24,9 @@ from . import config
 # v23 (D-65 phase 2): place and structure, containers and mixtures, matter.
 # v24 (D-65 phase 3): signals and terrain.
 # v25 (D-65 phase 4): fire and heat, processes over time.
-# v26 (D-69): clean (something fouling a thing or water cleaned away).
-PROMPT_VERSION = "judge_v26"
+# v26 (D-70): clean (something fouling a thing or water cleaned away).
+# v27 (D-70): soothe (an old complaint eased: warmth on an aching joint).
+PROMPT_VERSION = "judge_v27"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -119,7 +120,8 @@ EffectKind = Literal[
     "cook",
     "fire_clay",
     "smoke",
-    "clean",  # D-69: a fouled trough set right.
+    "clean",  # D-70: a fouled trough set right.
+    "soothe",  # D-70: an aching joint eased by warmth.
 ]
 
 

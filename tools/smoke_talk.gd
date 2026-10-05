@@ -80,7 +80,9 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.bar.visible and scene.ui.bar.target == "npc_hessa_marr", "Dialogue bar did not open"):
 		return
-	# D-69: approaching starts her greeting before the player's first spoken line.
+	# D-69: approaching starts her greeting before the player's first spoken line; D-70: a beat after the bar opens,
+	# unless the player types first.
+	await create_timer(scene.ui.bar.GREET_DELAY + 0.3).timeout
 	if not check(await settle(), "The automatic greeting did not finish"):
 		return
 	var greeted: Array = scene.ui.npc_record("npc_hessa_marr").get("mind", {}).get("talk", [])

@@ -46,7 +46,7 @@ def clean(text: str) -> str:
 
 
 def knowledge(npc: Npc) -> dict[str, dict]:
-    """What they know and could tell: a card's "later" facts only once something has taught them (D-69)."""
+    """What they know and could tell: a card's "later" facts only once something has taught them (D-70)."""
     taught = set((npc.get("mind") or {}).get("taught", []))
     return {k: f for k, f in cast.card(npc).get("knowledge", {}).items() if not f.get("later") or k in taught}
 

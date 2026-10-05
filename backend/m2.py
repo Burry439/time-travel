@@ -108,6 +108,7 @@ def authored(spec: dict) -> dict:
         "mixture",
         "hidden",
         "damage",
+        "attributes",
     ):  # Fires, building art, gear, books, an obstacle it stands for and its art (brambles in a gap, D-59).
         if spec.get(extra):
             record[extra] = copy.deepcopy(spec[extra])  # The world's own copy, never the content's.

@@ -206,7 +206,7 @@ func _stories_page(body: VBoxContainer) -> void:
 	for story in known:
 		var ended := str(story.get("ended", "")) if story.get("ended") != null else ""
 		var parts := PackedStringArray()
-		for step in story.get("steps", []): # Every step and ending reached, in order, and whose side (D-69).
+		for step in story.get("steps", []): # Every step and ending reached, in order, and whose side (D-70).
 			var side := ("%s's side: " % str(step.from)) if not str(step.get("from", "")).is_empty() else ""
 			parts.append(("✓ " if step.kind == "outcome" else "• ") + side + str(step.text))
 		var whose := str(story.get("whose", ""))

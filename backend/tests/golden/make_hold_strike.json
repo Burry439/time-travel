@@ -330,12 +330,39 @@
     "job": null,
     "memories": [],
     "mood": "weary",
+    "needs": {
+     "gate_beam": {
+      "at": 0,
+      "text": "That gate beam should have been up a week ago.",
+      "title": "The Gate Beam"
+     }
+    },
     "said": null,
     "sides": {
      "darin_permit": {
       "at": 0,
       "text": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again.",
       "title": "The Merchant's Permit"
+     },
+     "fog": {
+      "at": 0,
+      "text": "The night patrols lose their way when the fog comes down, and the watch pays for it. You'd give a great deal for a way to hold a heading without stars.",
+      "title": "Lost in the Fog"
+     },
+     "forge_iron": {
+      "at": 0,
+      "text": "Mara's slow with the guards' mail, but her work holds. You'd like it done before the next muster.",
+      "title": "The Guards' Order"
+     },
+     "gate_beam": {
+      "at": 0,
+      "text": "Tomas is taking too long over the beam. You want it up, and safely.",
+      "title": "The Gate Beam"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Kade's slowing on the long patrol. Twenty years; he's earned better than pasture, but the watch needs legs.",
+      "title": "The Old Soldier"
      }
     },
     "standing": "unknown",
@@ -411,7 +438,7 @@
     "sides": {
      "oren_debt": {
       "at": 0,
-      "text": "Oren's young and scared of something. You've been standing his late watches so the captain won't notice. You'd like to know what's eating him before it eats you both.",
+      "text": "Oren's young and scared of something, and it's wearing on you too. You'd like to know what's eating him before it gets you both in trouble.",
       "title": "Dice and Debts"
      }
     },
@@ -481,7 +508,7 @@
     "sides": {
      "oren_debt": {
       "at": 0,
-      "text": "Eleven silver lost to Darin at dice, and now he wants you to wave his cart through unchecked. If the captain hears, you're finished, and Bren with you. Nobody must know.",
+      "text": "You're carrying something you can't speak of, and every time Darin comes near the gate your stomach turns. You'd give anything for it to go away quietly.",
       "title": "Dice and Debts"
      }
     },
@@ -537,7 +564,7 @@
     "sides": {
      "trough_water": {
       "at": 0,
-      "text": "Your inn is your life and your guests are falling sick. Bren's tired and short with you, Darin's three weeks behind, and you still can't look at Kade.",
+      "text": "Your inn is your life and your guests are falling sick. Bren's tired and short with you lately, and some old griefs never quite heal.",
       "title": "The Wayside Inn"
      }
     },
@@ -584,7 +611,26 @@
     "job": null,
     "memories": [],
     "mood": "irritable",
+    "needs": {
+     "forge_iron": {
+      "at": 0,
+      "text": "The guards' order won't wait and her forge is starved: she'd welcome good fuel, charcoal or dry wood.",
+      "title": "The Guards' Order"
+     }
+    },
     "said": null,
+    "sides": {
+     "forge_iron": {
+      "at": 0,
+      "text": "The guards' order is late and Roderic wants miracles at a smith's wage. Your forge eats fuel faster than you can buy it, and good iron is scarce.",
+      "title": "The Guards' Order"
+     },
+     "jory": {
+      "at": 0,
+      "text": "Jory's been jumpy and keeping out of your way. He's a good lad, but he has to learn that a smith owns her mistakes.",
+      "title": "The Apprentice"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -625,6 +671,13 @@
     "job": null,
     "memories": [],
     "mood": "excited",
+    "needs": {
+     "jory": {
+      "at": 0,
+      "text": "He'd love to see something nobody here has ever seen: a real wonder.",
+      "title": "The Apprentice"
+     }
+    },
     "opinions": {
      "npc_darin_ko": {
       "text": "has the most interesting things in the world",
@@ -648,6 +701,13 @@
      }
     },
     "said": null,
+    "sides": {
+     "jory": {
+      "at": 0,
+      "text": "Aunt Mara's been short with you lately and you've a weight on your mind. You'd give anything to see something nobody's ever seen.",
+      "title": "The Apprentice"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -687,7 +747,21 @@
     "job": null,
     "memories": [],
     "mood": "weary",
+    "needs": {
+     "gate_beam": {
+      "at": 0,
+      "text": "Sixty kilos of beam to raise two metres into the brackets: he could use a clever pair of hands.",
+      "title": "The Gate Beam"
+     }
+    },
     "said": null,
+    "sides": {
+     "gate_beam": {
+      "at": 0,
+      "text": "Sixty kilos of oak, two metres up, and the captain watching you like a hawk. You'll get this one right.",
+      "title": "The Gate Beam"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -759,12 +833,12 @@
     "sides": {
      "darin_permit": {
       "at": 0,
-      "text": "Your permit runs out at the month's end. One good deal inside the walls and you're made; without it you're back on the road. Something new to sell would change everything.",
+      "text": "You need one good deal inside the walls, and soon. Something new to sell would change everything.",
       "title": "The Merchant's Permit"
      },
      "oren_debt": {
       "at": 0,
-      "text": "Oren lost fair at dice and swore he'd pay by harvest; now he looks straight through you. You're not cruel, but your permit is running out, and a gate guard who owes you is the one key you hold.",
+      "text": "Oren owes you and has stopped meeting your eye. You're not cruel, but a debt is a debt, and you have troubles of your own before the month is out.",
       "title": "Dice and Debts"
      }
     },
@@ -837,7 +911,26 @@
     "job": null,
     "memories": [],
     "mood": "content",
+    "needs": {
+     "fog": {
+      "at": 0,
+      "text": "The watch loses its way on the moor road in fog: she'd welcome any way to hold a heading without stars.",
+      "title": "Lost in the Fog"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Kade's limping on patrol and won't admit it: she'd be glad if someone helped him without shaming him.",
+      "title": "The Old Soldier"
+     }
+    },
     "said": null,
+    "sides": {
+     "fog": {
+      "at": 0,
+      "text": "The fog on the moor road has beaten the watch, and there's a night you'd rather forget. You want to be the scout who never loses her way again.",
+      "title": "Lost in the Fog"
+     }
+    },
     "standing": "unknown",
     "standing_plan": {
      "defend": true
@@ -915,6 +1008,18 @@
     "memories": [],
     "mood": "irritable",
     "said": null,
+    "sides": {
+     "fog": {
+      "at": 0,
+      "text": "You know the moor from the bad nights. The young ones think fog is weather; you know it kills.",
+      "title": "Lost in the Fog"
+     },
+     "kade_knees": {
+      "at": 0,
+      "text": "Twenty years under Roderic, and the patrol gets longer every year. You'll not be pitied, and you'll not be put out to pasture.",
+      "title": "The Old Soldier"
+     }
+    },
     "standing": "unknown",
     "standing_plan": {
      "defend": true
@@ -3198,6 +3303,57 @@
    "x": 33,
    "y": 51
   },
+  "tongs_mara": {
+   "attributes": [
+    {
+     "basis_ids": [
+      "tongs_mara"
+     ],
+     "name": "damaged",
+     "status": "observed",
+     "value": "one jaw snapped clean off"
+    }
+   ],
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "damage": {
+    "capacity_l": 0.0,
+    "lost_flags": [
+     "rigid"
+    ]
+   },
+   "description": "A pair of smith's tongs with one jaw snapped clean off.",
+   "flags": [
+    "ferromagnetic"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "hidden": {
+    "by": "npc_jory_venn",
+    "holder": null,
+    "where": "under the scrap heap"
+   },
+   "holder_id": null,
+   "id": "tongs_mara",
+   "length_m": null,
+   "mass_kg": 0.8,
+   "materials": [
+    "iron"
+   ],
+   "name": "smith's tongs",
+   "owner_id": "npc_mara_venn",
+   "water_l": 0.0,
+   "x": 16,
+   "y": 26
+  },
   "tree_00": {
    "bound_to": [],
    "capabilities": [],
@@ -3723,6 +3879,36 @@
    "water_l": 0.0,
    "x": 56,
    "y": 13
+  },
+  "trough_boards": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Two soft, blackened boards under the trough's spout, with something dead wedged beneath them.",
+   "flags": [
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "trough_boards",
+   "length_m": null,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "rotten boards by the trough spout",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 36,
+   "y": 53
   },
   "trough_gate": {
    "bound_to": [],
@@ -5467,7 +5653,7 @@
   },
   "health": 100.0,
   "ready_at": {
-   "right": 12300
+   "right": 0
   },
   "swings": {},
   "x": 47,
