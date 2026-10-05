@@ -1097,6 +1097,33 @@ def _apply_contaminate(state, effect, now, actor_id, repaint):
 
 
 @block(
+    "clean", "containers", ("target_id", "name"), "inspect and the judge; whoever drinks from it now; its owner sees it"
+)
+def _check_clean(state, effect, ctx):
+    """Clean away something fouling a thing or water: name is what goes (fouled, wet, a mark, the rot in the trough).
+    Only what's actually there (D-69: nothing could set a fouled trough right)."""
+    found = thing(state, ctx, effect["target_id"])
+    if found is None:
+        return "a thing or water within reach"
+    wanted = effect["name"].strip().lower()
+    there = [m["name"] for m in found.get("mixture") or []] + [a["name"] for a in found.get("attributes", [])]
+    if not any(wanted == n.lower() for n in there):
+        return f"the {found['name']} isn't {wanted}"
+    return None
+
+
+@reducer("clean")
+def _apply_clean(state, effect, now, actor_id, repaint):
+    obj = state["objects"][effect["target_id"]]
+    wanted = effect["name"].strip().lower()
+    obj["mixture"] = [m for m in obj.get("mixture") or [] if m["name"].lower() != wanted]
+    obj["attributes"] = [a for a in obj.get("attributes", []) if a["name"].lower() != wanted]
+    obj["revision"] = obj.get("revision", 0) + 1
+    if "water_source" not in obj.get("capabilities", []):
+        repaint(obj)
+
+
+@block(
     "soak",
     "containers",
     ("target_id", "other_id"),

@@ -57,8 +57,9 @@ def test_a_secret_is_its_owners_to_confide_when_they_choose_to():
     state.setdefault("learned", []).extend(payload["learned"])
     assert "confide:bren_covers_oren" not in conversation.replies(state, bren)  # Told once.
     assert stories.pending(state) and stories.tick(state)
-    assert state["stories"]["stages"] == {"oren_debt": ["noticed"]} and state["journal"][-1]["kind"] == "story"
-    assert stories.page(state)[0]["title"] == "Oren's debt" and stories.page(state)[0]["ended"] is None
+    assert state["stories"]["stages"] == {"oren_debt": ["brens_risk"]} and state["journal"][-1]["kind"] == "story"
+    assert stories.page(state)[0]["title"] == "Dice and Debts" and stories.page(state)[0]["ended"] is None
+    assert stories.page(state)[0]["steps"][0]["from"] == "Bren"  # Whose side it came from (D-69).
 
 
 def test_someone_who_knows_of_a_crime_by_the_stranger_confides_nothing():
@@ -96,7 +97,7 @@ def test_a_story_move_is_theirs_to_make_and_settles_the_story():
         state, "npc_darin_ko", "Let Oren's debt go.", said("x"), "story:forgive_oren_debt", "Fine. It's forgotten.", []
     )
     assert payload["learned"][0]["story"] == "forgive_oren_debt" and state["stories"]["moves"] == ["forgive_oren_debt"]
-    assert stories.tick(state) and state["stories"]["outcomes"] == {"oren_debt": "cleared"}
+    assert stories.tick(state) and state["stories"]["outcomes"] == {"oren_debt": "cleared_quietly"}
     assert reputation.regard(oren)["trust"] == trust_before
     assert persona.opinions(oren)["npc_darin_ko"]["warmth"] == warmth_before
     assert "story:forgive_oren_debt" not in conversation.replies(state, darin)  # Settled.

@@ -22,6 +22,14 @@ func check(ok: bool, reason: String) -> bool:
 	return ok
 
 
+func wait_for_commands() -> void:
+	# Two serialized requests each have a 5 s HTTP budget. Cold rendered runs must finish
+	# transport before assertions; anticipation is still checked on the input frame above.
+	var deadline := Time.get_ticks_msec() + 11000
+	while scene.fight.busy and Time.get_ticks_msec() < deadline:
+		await create_timer(.025).timeout
+
+
 func _run() -> void:
 	scene = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
@@ -45,12 +53,9 @@ func _run() -> void:
 	scene.fight.strike("left")
 	if not check(scene.player_visual.attacks.size() == 2, "simultaneous hand animation was lost"):
 		return
-	for _i in 80:
-		await create_timer(.025).timeout
-		if not scene.fight.busy:
-			break
+	await wait_for_commands()
 	if not check(slow.sent.size() == 2 and slow.sent[1].body.expected_version > slow.sent[0].body.expected_version,
-			"queued commands used stale versions"):
+			"queued commands used stale versions: %s" % str(slow.sent)):
 		return
 	# The server writes ready_at at contact, not at acceptance. Active swings must retain their recovery.
 	scene.fight.sync()
@@ -81,10 +86,7 @@ func _run() -> void:
 	scene.run_state.player.ready_at = {} # Deliberately stale readiness, while the server still has recovery.
 	scene.run_state.player.swings = {}
 	scene.fight.strike("right") # Server recovery rejects it; only a smooth return is shown.
-	for _i in 80:
-		await create_timer(.025).timeout
-		if not scene.fight.busy:
-			break
+	await wait_for_commands()
 	await process_frame # The command's waiting caller resumes after the lane finishes.
 	if not check(scene.player_visual.attacks.get("right", {}).has("cancel_at"), "rejected attack did not reconcile"):
 		return
@@ -105,10 +107,7 @@ func _run() -> void:
 		return
 	scene.enter_run(fresh.data, false)
 	scene.fight.strike("right")
-	for _i in 80:
-		await create_timer(.025).timeout
-		if not scene.fight.busy:
-			break
+	await wait_for_commands()
 	await process_frame
 	if not check(not scene.player_visual.attacks.get("right", {}).has("cancel_at")
 			and not scene.run_state.player.get("swings", {}).is_empty(), "old journey's rejection cancelled the new attack"):

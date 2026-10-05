@@ -379,6 +379,13 @@
     },
     "rethinks": 0,
     "said": null,
+    "sides": {
+     "darin_permit": {
+      "at": 0,
+      "text": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again.",
+      "title": "The Merchant's Permit"
+     }
+    },
     "standing": "hostile",
     "standing_plan": {
      "defend": true
@@ -477,6 +484,13 @@
     ],
     "met": true,
     "mood": "content",
+    "needs": {
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren's not been himself: jumpy, pale, hiding from somebody. You'd like someone to find out what's eating him.",
+      "title": "Dice and Debts"
+     }
+    },
     "opinions": {
      "npc_darin_ko": {
       "text": "smiles too much for an honest man",
@@ -524,6 +538,13 @@
      "at": 3000,
      "key": "npc_bren_marr:talk:7",
      "text": "(voiced) Just a traveller."
+    },
+    "sides": {
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren's young and scared of something. You've been standing his late watches so the captain won't notice. You'd like to know what's eating him before it eats you both.",
+      "title": "Dice and Debts"
+     }
     },
     "standing": "hostile",
     "standing_plan": {
@@ -662,6 +683,13 @@
     },
     "rethinks": 0,
     "said": null,
+    "sides": {
+     "oren_debt": {
+      "at": 0,
+      "text": "Eleven silver lost to Darin at dice, and now he wants you to wave his cart through unchecked. If the captain hears, you're finished, and Bren with you. Nobody must know.",
+      "title": "Dice and Debts"
+     }
+    },
     "standing": "hostile",
     "standing_plan": {
      "defend": true
@@ -702,8 +730,22 @@
     "job": null,
     "memories": [],
     "mood": "cheerful",
+    "needs": {
+     "trough_water": {
+      "at": 0,
+      "text": "Two of her guests fell sick after drinking from the trough: she'd be grateful to anyone who found out why.",
+      "title": "The Wayside Inn"
+     }
+    },
     "next_agenda_at": 31500,
     "said": null,
+    "sides": {
+     "trough_water": {
+      "at": 0,
+      "text": "Your inn is your life and your guests are falling sick. Bren's tired and short with you, Darin's three weeks behind, and you still can't look at Kade.",
+      "title": "The Wayside Inn"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -907,7 +949,26 @@
     "job": null,
     "memories": [],
     "mood": "content",
+    "needs": {
+     "darin_permit": {
+      "at": 0,
+      "text": "Goods nobody here wants, and a city he can't sell in yet: he'd like to be shown something new that would sell.",
+      "title": "The Merchant's Permit"
+     }
+    },
     "said": null,
+    "sides": {
+     "darin_permit": {
+      "at": 0,
+      "text": "Your permit runs out at the month's end. One good deal inside the walls and you're made; without it you're back on the road. Something new to sell would change everything.",
+      "title": "The Merchant's Permit"
+     },
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren lost fair at dice and swore he'd pay by harvest; now he looks straight through you. You're not cruel, but your permit is running out, and a gate guard who owes you is the one key you hold.",
+      "title": "Dice and Debts"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -1081,6 +1142,37 @@
  ],
  "objective": "Get inside the city",
  "objects": {
+  "aldos_horn": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A battered cow-horn signal horn on a cracked leather strap, an A scratched into its rim.",
+   "flags": [
+    "sound_loud"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": "npc_kade_east",
+   "id": "aldos_horn",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "horn",
+    "leather"
+   ],
+   "name": "battered signal horn",
+   "owner_id": "npc_kade_east",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
   "bark_a": {
    "bound_to": [],
    "capabilities": [
@@ -3844,6 +3936,12 @@
    "materials": [
     "wood"
    ],
+   "mixture": [
+    {
+     "name": "fouled",
+     "value": "something dead rotting under the soft boards by the spout"
+    }
+   ],
    "name": "water trough",
    "owner_id": "npc_hessa_marr",
    "water_l": 80.0,
@@ -5596,7 +5694,7 @@
  "run_id": "<run0>",
  "safe_seq": 0,
  "scenario": "village",
- "seed_version": 14,
+ "seed_version": 15,
  "sim_time_ms": 15500,
  "tick": 15,
  "trades": {},

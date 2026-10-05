@@ -149,7 +149,9 @@ def legal_actions(state: State, npc: Npc) -> dict[str, str]:
     return {key: option["description"] for key, option in options_for(state, npc).items()}
 
 
-def situation(state: State, npc: Npc) -> str:
+def situation(state: State, npc: Npc, sheet: bool = True) -> str:
+    """Who they are, where things stand and what they remember. sheet=False leaves out their character sheet for a
+    call that sends it on its own (D-69: the decide call sent it twice)."""
     me, my_mind = cast.card(npc), cast.mind(npc)
     here = cast.player_cell(state)
     known_as = persona.knows(npc).get("name") or persona.knows(npc).get("heard_name")
@@ -163,7 +165,7 @@ def situation(state: State, npc: Npc) -> str:
         f"Armed with a {armed}; {me['combat']}."
         if (armed := cast.armed_with(state, npc))
         else f"Unarmed; {me['combat']}.",
-        *persona.sheet_lines(state, npc),
+        *(persona.sheet_lines(state, npc) if sheet else []),
         f"{me['name']} is {cast.condition(npc.get('health', 100), npc.get('alive', True))} and was "
         f"{ACTIVITY_WORDS.get((npc.get('controller') or {}).get('activity'), 'standing about')}.",
         (

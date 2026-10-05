@@ -189,7 +189,8 @@ func reply_problem(reply: Dictionary) -> String:
 func encounter_act(kind: String, text: String, target: String) -> void:
 	if not await game.claim():
 		return
-	game.ui.bar.wait({"leave": "You walk away.", "wait": "You wait.", "yield": "You give up."}.get(kind, text))
+	var greeting := "You come up to %s." % str(game.ui.npc_record(target).get("name", "them"))
+	game.ui.bar.wait({"leave": "You walk away.", "wait": "You wait.", "yield": "You give up.", "greet": greeting}.get(kind, text))
 	var body := {"kind": kind, "text": text, "selected_ids": [], "expected_version": game.run_state.event_seq,
 		"request_id": game.request_id("round")}
 	if not target.is_empty():

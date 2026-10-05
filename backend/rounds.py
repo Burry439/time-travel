@@ -70,7 +70,7 @@ def _talk_problem(state: State, npc_id: str) -> tuple[dict, list[list[int]]]:
 
 class EncounterAct(BaseModel):
     model_config = {"extra": "forbid"}
-    kind: Literal["say", "do", "wait", "leave", "yield"]
+    kind: Literal["say", "do", "wait", "leave", "yield", "greet"]  # greet: walking up to someone; they speak first.
     text: str = Field(default="", max_length=600)
     target_id: str | None = Field(default=None, max_length=60)
     selected_ids: list[str] = Field(default_factory=list, max_length=12)
@@ -107,7 +107,7 @@ def _round_setup(state: State, request: EncounterAct) -> list[list[int]]:
         raise HTTPException(422, "Say something")
     current = encounter.active(state)
     if current is None:
-        if request.kind not in ("say", "do") or not request.target_id:
+        if request.kind not in ("say", "do", "greet") or not request.target_id:
             raise HTTPException(409, {"reason": "no_encounter", "message": "Nobody is face to face with you."})
         return _talk_problem(state, request.target_id)[1]  # Speaking or showing something to someone.
     if request.target_id and request.target_id not in current["participants"]:

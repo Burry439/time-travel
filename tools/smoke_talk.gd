@@ -80,6 +80,13 @@ func _run() -> void:
 	await process_frame
 	if not check(scene.ui.bar.visible and scene.ui.bar.target == "npc_hessa_marr", "Dialogue bar did not open"):
 		return
+	# D-69: approaching starts her greeting before the player's first spoken line.
+	if not check(await settle(), "The automatic greeting did not finish"):
+		return
+	var greeted: Array = scene.ui.npc_record("npc_hessa_marr").get("mind", {}).get("talk", [])
+	if not check(greeted.size() == 2 and "come up" in str(greeted[0].text) and greeted[1].who == "them",
+			"No personal greeting when approached: " + str(greeted)):
+		return
 	scene.ui.bar.line.text = "“Good day. Is this your inn?”"
 	scene.ui.bar.submit()
 	await process_frame
@@ -88,7 +95,7 @@ func _run() -> void:
 	await settle()
 	var hessa: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	var turns: Array = hessa.get("mind", {}).get("talk", [])
-	if not check(turns.size() == 2 and turns[0].text == "Good day. Is this your inn?", "Exchange not recorded: " + str(turns)):
+	if not check(turns.size() == 4 and turns[2].text == "Good day. Is this your inn?", "Exchange not recorded: " + str(turns)):
 		return
 	if not check(scene.ui.bar.showing_encounter() and not scene.ui.bar.waiting and scene.ui.bar.line.editable
 			and scene.in_encounter(), "Bar did not come back ready for the next line"):
@@ -99,7 +106,7 @@ func _run() -> void:
 	if not check(typeof(scene.last_trace) == TYPE_DICTIONARY and scene.last_trace.kind == "talk", "No developer trace"):
 		return
 	var bubble := scene.get_node_or_null("NPCs/npc_hessa_marr/Speech/Words") as Label
-	if not check(bubble != null and str(turns[1].text).begins_with(bubble.text.trim_suffix("…")), "No speech bubble for the reply"):
+	if not check(bubble != null and str(turns[3].text).begins_with(bubble.text.trim_suffix("…")), "No speech bubble for the reply"):
 		return
 	await screenshot("encounter-talk")
 

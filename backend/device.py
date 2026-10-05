@@ -13,6 +13,7 @@ import gatekeeping
 import gear
 import reputation
 import rules
+import stories
 import tuning
 from shapes import Deal, State
 
@@ -154,8 +155,17 @@ def _coach(state: State) -> dict:
         for o in state["objects"].values()
         if o.get("lent_to") == "player"
     ]
+    quests = [  # The quests the stranger has come into: only what they've reached and been told (D-69).
+        {
+            "quest": story["title"],
+            "what_you_know": [s["text"] for s in story["steps"]][-4:],
+            "open_leads": [state["learned"][i]["lead"] for i in story["threads"] if state["learned"][i].get("lead")],
+        }
+        for story in (stories.page(state) or [])
+    ][:6]
     return {
         "leads_newest_first": leads[:12],
+        "quests": quests,
         "people_met": people,
         "deals": deals,
         "things_you_made": made,

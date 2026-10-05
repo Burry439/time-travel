@@ -109,3 +109,21 @@ gear; prompt changes and live A/B work belong with Claude. The demo should be pl
 Keep movement-based evasion, existing keys, and individual model decisions. Defer stamina, a dodge key,
 automatic loot selection and a broader armour-weight redesign. Motion families are presentation tools for
 arbitrary objects, not a list of allowed inventions. No paid development image generation or new mind prompts.
+
+## Accepted main integration — 5 October 2026
+
+The user accepted this pass and requested the combined demo on the existing server. Main contains the combat
+handoff plus a preserved snapshot of Claude's 32 modified files and four new quest source files. Claude's
+original `claude/quests` checkout is unchanged. Its quest decision references are D-69 here, avoiding the combat
+D-67 numbering collision. The existing judge_v26/person_v7 files come from Claude. Seed 15 requires a fresh
+journey; both original databases and the last-run pointer were backed up before restarting the shared service.
+
+Final combined `CHECK_PORT=8768 tools/check.ps1 -Full` passed: **638 backend tests**, **70 scripts compile**,
+**20/20 rendered smokes**, including training. Reaction checks cover private quest context once, concealed gear,
+and both decide/told reactions. Conversation checks explicitly verify the new greeting and subsequent player
+reply; closing before a deferred greeting cancels it and permits reading a held book. A cold response check
+initially exceeded its old two-second wait, then passed on rerun; its bounded completion wait now covers both
+requests' existing HTTP budgets, retaining the same input-frame anticipation and ordering assertions.
+
+The combat/equipment grades remain **82/100** and **85/100** under the rubric above. This integration did not
+repeat paid live evaluations or the 90-second combat profile. Their recorded limits still apply.

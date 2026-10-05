@@ -231,11 +231,11 @@ def _grievance(npc: Npc) -> dict | None:
     return max(serious, key=lambda m: m["severity"], default=None)
 
 
-def agenda_brief(state: State, npc: Npc, prefix: str = "") -> tuple[str, dict]:
+def agenda_brief(state: State, npc: Npc, prefix: str = "", sheet: bool = True) -> tuple[str, dict]:
     name = npc["name"]
     minutes = state.get("sim_time_ms", 0) // 60_000
     text = (
-        minds.situation(state, npc) + f"\nIt is {minutes} minutes into the day. {name} is free to decide "
+        minds.situation(state, npc, sheet) + f"\nIt is {minutes} minutes into the day. {name} is free to decide "
         f"what to do next: carry on, see to something that matters to them, look up someone they know, or rest."
     )
     questions = {
@@ -524,10 +524,10 @@ def chosen_topic(state: State, a: dict, b: dict, answers: dict) -> str:
     return choice if choice in options else "small_talk"
 
 
-def meet_brief(state: State, a: dict, b: dict, prefix: str = "") -> tuple[str, dict]:
+def meet_brief(state: State, a: dict, b: dict, prefix: str = "", sheet: bool = True) -> tuple[str, dict]:
     view_ab, view_ba = persona.opinions(a).get(b["id"]), persona.opinions(b).get(a["id"])
     text = (
-        minds.situation(state, a) + f"\n\n{a['name']} has fallen into conversation with {b['name']}, the "
+        minds.situation(state, a, sheet) + f"\n\n{a['name']} has fallen into conversation with {b['name']}, the "
         f"{cast.card(b)['role']}. "
         + (
             f"{a['name']} {persona.warmth_words(view_ab['warmth'])} {b['name']} ({view_ab['text']}). "

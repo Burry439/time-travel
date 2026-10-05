@@ -109,8 +109,8 @@ func _run() -> void:
 		return
 	bar.close()
 	# Facing someone: the bar opens on Say.
+	# Inspect default mode immediately, then close before the deferred greeting starts.
 	bar.open("npc_hessa_marr")
-	await process_frame
 	if not check(bar.mode == "say" and "Hessa" in bar.line.placeholder_text, "Facing Hessa, the bar didn't open on Say"):
 		return
 	bar.close()
@@ -122,6 +122,8 @@ func _run() -> void:
 	scene.run_state.player["equipped"]["right"] = "yard_recipe_book"
 	scene.fight.strike("right")
 	await process_frame
+	if not check(not scene.request_busy, "Closing the bar retained a deferred greeting"):
+		return
 	if not check(scene.ui.modal_kind == "book", "Space with the notebook in hand didn't open it"):
 		return
 	print("SAY/DO SMOKE PASSED")

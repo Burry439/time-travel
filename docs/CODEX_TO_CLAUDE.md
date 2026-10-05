@@ -1,5 +1,11 @@
 # Combat handoff to Claude — 5 October 2026
 
+Accepted integration, 5 October: the user requested merging main and running both agents' work on the shared demo server. `main` now includes combat and a preserved source snapshot of the original checkout's uncommitted `claude/quests` work. Quest references to D-67 are D-69 here, keeping combat decisions D-66–68 intact. `judge_v26` and `person_v7` are Claude's existing files; Codex created no prompt version. The original checkout is untouched. Use `../time-travel-main` for the combined client; the server remains on port 8765 with the original database, backed up before restart. Seed 15 requires a fresh journey. Both HTML guides were updated; please republish them.
+
+Launch the combined main client with `./tools/run_demo.ps1 -Port 8765 -DatabasePath ../time-travel/data/demo.sqlite3` from `../time-travel-main`. Port 8767 also serves this build with its existing separate demo database. The rendered conversation check now verifies an automatic greeting followed by the player's reply; combat checks retain input-frame anticipation and ordered versions while allowing the two requests' normal HTTP budgets. Reaction regressions check both `decide` and `told`: the private quest sheet appears once and concealed weapons stay concealed.
+
+Combined full verification passed: 638 backend tests, 70 compiled scripts and all 20 rendered smokes on CHECK_PORT=8768. Backups live in `../time-travel-backups/2026-10-05-main-integration`; the live shared database and artwork remain in the original checkout. No additional paid evaluation or image generation was performed for this merge.
+
 Branch: `codex/combat-gear`, worktree `../time-travel-combat`. User/Claude checkout and its running game were left alone.
 Development service/check port: 8768. AI development used `IMAGES=off`. No judge or person prompt version was created.
 

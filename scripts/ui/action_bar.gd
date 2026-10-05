@@ -314,6 +314,9 @@ func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") ->
 			var painted := game.get_node_or_null("NPCs/" + target + "/PaintedActor")
 			if painted:
 				painted.play_gesture("greet")
+		# Walking up to someone you aren't already talking to: they speak first (D-69), as in any RPG.
+		if _is_person(target) and current.is_empty() and prefill.is_empty() and playing.is_empty():
+			_greet.call_deferred(target)
 	if not prefill.is_empty():
 		line.put(prefill, with_mode if with_mode in ["say", "do"] else line.default_mode)
 	if with_mode in ["say", "do"]:
@@ -321,6 +324,12 @@ func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") ->
 	render(playing)
 	if playing.get("entries", []).is_empty():
 		_focus_line.call_deferred()
+
+
+func _greet(id: String) -> void:
+	if not visible or target != id or not _encounter().is_empty() or waiting or round_playing or game.request_busy:
+		return
+	game.actions.encounter_act("greet", "", id)
 
 
 func _focus_line() -> void:

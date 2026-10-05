@@ -272,7 +272,8 @@ def test_individual_reconsideration_keeps_or_ends_their_fight(move, keeps_fighti
     assert combat.fighting(state, npc(state, "npc_oren_dast"))
 
 
-def test_reconsideration_receives_own_fight_and_only_visible_carried_equipment(monkeypatch):
+@pytest.mark.parametrize("kind", ["decide", "told"])
+def test_reconsideration_receives_own_fight_and_only_visible_carried_equipment(monkeypatch, kind):
     import routes_minds
     from ai import voice
 
@@ -280,6 +281,11 @@ def test_reconsideration_receives_own_fight_and_only_visible_carried_equipment(m
     combat.start(state, ["npc_bren_marr"], 0, "test")
     hidden = arm(state, "secret", "a concealed clockwork dagger", ["iron"], 0.3, "knife", length=0.25)
     hidden["hidden"] = {"by": "player"}
+    cast.mind(npc(state, "npc_bren_marr")).setdefault("needs", {})["test_quest"] = {
+        "title": "Test quest",
+        "text": "a private quest request",
+        "at": 0,
+    }
     seen = {}
 
     def read(context):
@@ -287,10 +293,12 @@ def test_reconsideration_receives_own_fight_and_only_visible_carried_equipment(m
         return voice.VoiceCall(status="fallback", text="", model="stub"), None
 
     monkeypatch.setattr(voice, "react", read)
-    routes_minds._personal_reaction(state, {"npc_id": "npc_bren_marr", "kind": "decide", "why": "hurt badly"})
+    routes_minds._personal_reaction(state, {"npc_id": "npc_bren_marr", "kind": kind, "why": "hurt badly"})
     assert "fight" in seen["_rules"] and "fighting" in seen["fight_now"]
     assert seen["what_just_happened"] == "hurt badly"
     assert "concealed clockwork dagger" not in seen["situation"]
+    assert sum("a private quest request" in line for line in seen["you"]) == 1
+    assert "a private quest request" not in seen["situation"]
 
 
 def test_extinguishing_a_brand_removes_burn_damage_at_contact():

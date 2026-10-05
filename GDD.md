@@ -2,7 +2,7 @@
 
 **Version 1.11 · 4 October 2026 · Scope: the first playable demo** (1.1: conversations, showing, deals and the gate, D-22 to D-27; 1.2: encounters in simultaneous rounds, D-28; 1.3: refinement pass, D-29 to D-33; 1.4: one way to act and the UI makeover, D-34 and D-35; 1.5: a living village, D-36 to D-38; 1.6: reactions at once, things that change, real-time fights and no dice, the gate bar, reputation and any guard's word, conversations led by the voice, one mind per reply and a fair baseline, one model for every mind, D-39 to D-47; 1.7: group conversations and one conversation system, D-48; 1.8: gear, real health and finished real-time combat, D-49; 1.9: the tutorial and the device, D-50)
 
-D-62 through D-64 update the CURRENT gameplay and EXPERIMENT AI implementation below. Earlier decisions and retros remain historical; the LOCKED vision and core loop remain in force.
+D-62 through D-69 update the CURRENT gameplay and EXPERIMENT AI implementation below. Earlier decisions and retros remain historical; the LOCKED vision and core loop remain in force.
 
 This is the single working design document. It replaces `GAME_DESIGN_GUIDE.md` (v1.0, 26 Sep) and the long `docs/Time_Travel_RPG_GDD_v0_8.docx`. Those remain as reference material only; where they disagree with this file, this file wins.
 
@@ -378,6 +378,8 @@ An automatic memory aid, never an omniscient codex. It opens on **Goals** (J, or
 
 It never reveals hidden NPC beliefs, trust scores, or events the player couldn't know about.
 
+**CURRENT, D-69:** Stories shows reached steps with their source and endings the stranger knows. The device receives that same known progress; neither shows future steps or another person's private understanding.
+
 ### Inspect
 
 Right click opens a parchment **inspect card** beside the cursor (D-35). It shows visible facts: name, what it's made of, rough size and weight, condition, who it belongs to, and whether you're carrying it. It ends with what a left click would do (in red for stealing). For created objects it adds **provenance** ("Made by you at the inn from an iron needle, a wood sliver, a bowl, and water") and **known/untested capabilities** ("Points the same direction every time: observed", "Might work at night: untested").
@@ -474,7 +476,9 @@ How the player satisfies these is open. None of it is a required step.
 
 **Status: CURRENT**
 
-Authored needs create reasons to act. They are **not quests**: nothing marks them, no reward is pre-scripted, several solutions exist, and players can ignore them completely. NPCs mention them when relevant, based on their own goals.
+Authored needs create reasons to act. Story steps check results in the world, with several ways to reach them; rewards and admission remain each person's decisions. Players can ignore them. NPCs mention their current needs when relevant, based on their own goals.
+
+**CURRENT, D-69:** Claude's quest work and D-66–68 combat run together on main. Dice and Debts, The Merchant's Permit and The Wayside Inn have several linked steps and endings; the other six stories retain their existing content. Each person starts with their own side and need, then receives a reached step's consequences only once they know it. Later facts and secrets become available only when taught. Walking up to someone opens their own greeting; their model chooses whether to raise a need. Story results are checked by code, never by required phrases or recipes. Cleaning removes an actual fouling fact or mixture within reach; it cannot create trust or cure a person. New journeys start on seed 15; older saves remain on disk and require the earlier build to play.
 
 | Who | Need | Why it matters |
 | --- | --- | --- |
@@ -955,7 +959,7 @@ Each potential witness receives a **perceived projection** of the event, meaning
 
 ### 8.2 Event store
 
-**D-62 baseline:** seed 14 and save format 2. Older seed journeys are retired with HTTP 410; their database is not deleted. Repeated request IDs resolve to the command's final saved event sequence, including commands that save multiple events. Save/reload remains deterministic and never calls a model.
+**D-69 baseline:** seed 15 and save format 2. Older seed journeys are retired with HTTP 410; their database is not deleted. Seed 15 adds the quest objects and initial private perspectives. Repeated request IDs resolve to the command's final saved event sequence, including commands that save multiple events. Save/reload remains deterministic and never calls a model.
 
 **Built (D-58):**
 
@@ -1185,7 +1189,7 @@ Content rules (`tests/test_beats.py`) keep stories reading as people answering w
 
 ### 9.1 Roles
 
-**EXPERIMENT, D-64:** `judge_v21` reasons about physical feasibility and extensible attributes, with reachable inputs, existing bindings and carried prerequisites made explicit; `person_v5` is the common private NPC decision contract, carrying the purpose of a recommendation and following through on requests (building on D-63's feared-wonder explanation). Existing model configuration remains swappable; implementation does not require a new provider or a catalog of authored inventions. The image role remains asynchronous.
+**EXPERIMENT, D-69:** Claude's `judge_v26` adds cleaning to D-65's physical building blocks; `person_v7` carries private quest perspectives, current needs and greetings. Reachable inputs, existing bindings, carried prerequisites and recommendation purpose remain explicit. During a fight, individual reactions receive the fight rules and triggering event while concealed equipment is excluded. The character sheet is sent once per reaction. Model configuration remains swappable, with no catalog of authored inventions; the image role remains asynchronous.
 
 | Role | Job | Input → output | Called when |
 | --- | --- | --- | --- |
@@ -1776,6 +1780,7 @@ Newest first. Each entry has a date, the decision, and why.
 
 | ID | Date | Decision | Why |
 | --- | --- | --- | --- |
+| D-69 | 2026-10-05 | **Combined main demo: combat and Claude's quest work.** Main includes D-66–68 and a source snapshot of Claude's uncommitted `claude/quests` work: linked result-based stories, personal sides/needs, delayed private facts, greetings and cleaning. Use Claude's judge_v26 and person_v7. Quest comments formerly labeled D-67 are renumbered here; the original checkout is preserved. Seed 15, save format 2; existing databases are backed up before restarting the player's server. | The user accepted combat and asked to test both sets of changes on the same server. Keep each person's decisions and arbitrary physical solutions, preserve concealed gear filtering, and avoid overwriting Claude's active checkout. |
 | D-68 | 2026-10-05 | **Physical contact and deterministic opponent positioning.** Committed facing, reach and obstruction at contact; directional shield guarding and 180 ms parries; current damage and body limits at start and impact; spacing, available approach cells and visible defense. Significant injury, disarm and ally falls ask the person's existing model again, and its chosen job is honored. | Confirmed behind-player hits, bound-hand attacks, recovery-skipping throws and obsolete damage profiles; preserve D-65 restraint and individual motives. No stamina or dodge button this pass. |
 | D-67 | 2026-10-05 | **Equipment attached to articulated wrists.** Cached grip/axis geometry, supporting-arm constraints, per-view anatomy, procedural pending art and NPC equipment synchronization. Backend-derived profiles and words in `state.view.gear`; heavy blunt inventions resolve to suitable two-hand classes with their real names. | The player's 7.9 kg flanged mace became weak generic gear; held thrusts separated from the hand and NPC kit never reached the rig. No new paid development art or prompt versions. |
 | D-66 | 2026-10-05 | **Immediate combat anticipation and one timeline per hand.** Ordered hand commands between bounded movement requests, 100 ms active clock, 180 ms input buffer, accepted/rejected anticipation reconciliation, contact and recovery on backend timestamps. Melee/throw/pour wind-ups ×0.65 and recovery ×0.5, minimum 180 ms; bow/sling draws preserved. | Combat waited for HTTP and 500 ms batches, while visual recovery disagreed with the server. Work isolated on `codex/combat-gear`, port 8768, copied save only. Combat review uses the same before/after rubric. |

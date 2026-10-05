@@ -3,10 +3,18 @@ param(
     [switch]$Stub,
     [switch]$BackendOnly,
     [int]$Port = 8767,
+    [string]$DatabasePath,
     [string]$GodotPath = $env:GODOT
 )
 $ErrorActionPreference = 'Stop'
 $demoRoot = Split-Path -Parent $PSScriptRoot
+$savePath = Join-Path $demoRoot 'data/open-ended-demo.sqlite3'
+if ($DatabasePath) {
+    $requestedSave = if ([IO.Path]::IsPathRooted($DatabasePath)) { $DatabasePath } else {
+        Join-Path $demoRoot $DatabasePath
+    }
+    $savePath = [IO.Path]::GetFullPath($requestedSave)
+}
 $python = Join-Path $demoRoot 'backend/.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) {
     throw 'Backend dependencies are missing. Run: uv sync --native-tls --project backend'
@@ -20,14 +28,14 @@ if (-not $BackendOnly -and -not (Test-Path -LiteralPath $GodotPath)) {
 $server = "http://127.0.0.1:$Port"
 $health = $null
 try { $health = Invoke-RestMethod "$server/health" -TimeoutSec 2 } catch {}
-if ($health -and ($health.seed_version -ne 14 -or $health.rules_revision -ne 'D-64')) {
+if ($health -and ($health.seed_version -ne 15 -or $health.rules_revision -ne 'D-69')) {
     throw "Port $Port is running a different simulation. Choose another port with -Port."
 }
 if (-not $health) {
     $savedDatabase = $env:DATABASE_PATH
     $savedMode = $env:AI_MODE
     try {
-        $env:DATABASE_PATH = Join-Path $demoRoot 'data/open-ended-demo.sqlite3'
+        $env:DATABASE_PATH = $savePath
         $env:AI_MODE = if ($Stub) { 'stub' } else { 'live' }
         Remove-Item Env:SSLKEYLOGFILE -ErrorAction SilentlyContinue
         $backend = Join-Path $demoRoot 'backend'
@@ -57,8 +65,8 @@ if (-not $Stub) {
         throw "Live AI is unavailable: $($readiness.reason). Update backend/.env and restart this launcher-owned backend. Use -Stub for offline verification."
     }
 }
-Write-Output "Demo backend ready at $server ($wantedMode, rules D-64, seed 14)."
-Write-Output 'Demo saves: data/open-ended-demo.sqlite3; your original data/demo.sqlite3 is preserved.'
+Write-Output "Demo backend ready at $server ($wantedMode, rules $($health.rules_revision), seed $($health.seed_version))."
+Write-Output "Save database selected for this launcher: $savePath"
 if (-not $BackendOnly) {
     # The game is the interactive application the user requested.
     Start-Process -FilePath $GodotPath -WorkingDirectory $demoRoot `

@@ -123,7 +123,13 @@
     "watertight"
    ],
    "water_l": 80.0,
-   "art": "scene"
+   "art": "scene",
+   "mixture": [
+    {
+     "name": "fouled",
+     "value": "something dead rotting under the soft boards by the spout"
+    }
+   ]
   },
   {
    "id": "wood_tomas",
@@ -2282,6 +2288,23 @@
     "combustible"
    ],
    "readable": "recipe_book"
+  },
+  {
+   "id": "aldos_horn",
+   "name": "battered signal horn",
+   "carried_by": "npc_kade_east",
+   "mass_kg": 0.4,
+   "materials": [
+    "horn",
+    "leather"
+   ],
+   "flags": [
+    "sound_loud"
+   ],
+   "owner_id": "npc_kade_east",
+   "description": "A battered cow-horn signal horn on a cracked leather strap, an A scratched into its rim.",
+   "x": 0,
+   "y": 0
   }
  ]
 }

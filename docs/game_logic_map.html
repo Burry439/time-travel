@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 5 Oct 2026 · codex/combat-gear · decisions up to D-68</p>
+  <p class="stamp">Current as of 5 Oct 2026 · main · decisions up to D-69</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -110,7 +110,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>The client</strong> (Godot) moves the player and draws the world. It never decides outcomes; it sends requests and shows the state that comes back.</li>
     <li><strong>A backend command</strong> takes the journey's lock, checks the request, and asks the models outside the lock. Speech has a 12-second model budget, deeds 15 seconds.</li>
-    <li><strong>Models</strong> only propose: the judge (<code>judge_v25</code>) for deeds and physics, and each person's own call (<code>person_v6</code>) for what they say and choose.</li>
+    <li><strong>Models</strong> only propose: the judge (<code>judge_v26</code>) for deeds and physics, and each person's own call (<code>person_v7</code>) for what they say and choose.</li>
     <li><strong>The reducer</strong> checks every proposal against the world and the rules, then commits it as an event (<code>consequences.py</code>, <code>rounds.py</code>, <code>talk.py</code>). Journeys replay exactly from <code>store.py</code>.</li>
     <li><strong>The clock</strong> runs between your actions: routines, errands, fights, and stories checking whether something new has happened (<code>clock.py</code>, <code>stories.py</code>).</li>
   </ul>
@@ -195,13 +195,13 @@ tr:last-child td { border-bottom: 0; }
 <section id="combat"><h2>Fighting and equipment</h2><p>The client shows anticipation immediately. The backend decides every hit from current gear, direction, reach and obstruction, on a 100 ms active clock. Each hand has its own recovery and a short input buffer. Weapons stay attached to articulated wrists; NPCs show their actual kit. The pack reads backend profiles, including damage and heavy two-hand handling.</p><p>Opponents position and defend deterministically; their movement can spring world traps. Their own model still chooses why to fight, flee, help or stop after significant changes. Shields guard toward your facing; a newly raised shield can parry. Walking remains evasion; no stamina or dodge key was added.</p></section>
 <section id="stories">
   <h2>The village storylines</h2>
-  <p>Nine stories run in the village. Each has goals, never methods: any way you find counts. Status from the live play-through of 4 Oct 2026 (<code>evals/run_quests_live.py</code>).</p>
+  <p>Nine stories run in the village. Each checks results, with any plausible way to reach them. Three now have linked steps, private perspectives and changing needs. People choose their own greetings and requests; consequences reach them only when they know what happened. The other six retain their earlier content and 4 Oct live results. Seed 15 needs a fresh journey; older saves remain on disk.</p>
   <div class="table-wrap"><table>
     <thead><tr><th>Story</th><th>Status</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td>The trough water</td><td><span class="pill ok">Completed</span></td><td>Hessa boils her water once she's convinced.</td></tr>
-      <tr><td>The lodging money</td><td><span class="pill ok">Completed</span></td><td>Hessa confides; Darin pays and tells her himself.</td></tr>
-      <tr><td>Oren's debt</td><td><span class="pill ok">Completed</span></td><td>Darin's price is a real gift; he walks over and tells Oren.</td></tr>
+      <tr><td>The Wayside Inn</td><td><span class="pill part">Updated</span></td><td>Find the fouling source, restore clean water, uncover lodging debts and personal history. Results connect to Darin and Kade.</td></tr>
+      <tr><td>The Merchant's Permit</td><td><span class="pill part">Updated</span></td><td>New trade, debts, the captain's decision and hiring; Darin weighs his own bargain.</td></tr>
+      <tr><td>Dice and Debts</td><td><span class="pill part">Updated</span></td><td>Oren's gambling debt, Darin's pressure and Bren's risk allow quiet help, confession or disclosure.</td></tr>
       <tr><td>Mara's iron</td><td><span class="pill ok">Completed</span></td><td>Give her good iron.</td></tr>
       <tr><td>Jory's tongs</td><td><span class="pill ok">Completed</span></td><td>Jory confides; telling Mara counts.</td></tr>
       <tr><td>Something nobody knows</td><td><span class="pill ok">Completed</span></td><td>Jory amazed by the compass.</td></tr>
@@ -216,6 +216,7 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">5 Oct 2026 · D-69</span><p>Codex combined combat with Claude's quest source on main. Personal sides/needs, linked steps, greetings and cleaning; judge_v26/person_v7, seed 15. Claude should republish both guides.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-68 integration</span><p>Codex merged Claude's committed D-65 phase 4 into the combat branch, preserving judge_v25, both guides and trap-aware combat movement. Claude should republish.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-66–68</span><p>Codex: responsive combat, attached player/NPC gear, current damage, directional contact/parries and opponent spacing. Prompt versions unchanged. Claude should republish.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 4 (cooking, drying, firing clay, smoke, processes the clock finishes, fire that spreads); waiting with nobody near passes time. Prompt judge_v25.</p></div>

@@ -71,7 +71,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
       <li>You stand on the south road. Everything below is one way to play; any other way you can describe also counts.</li>
     </ol>
   </div>
-  <p class="stamp">Current as of 5 Oct 2026 · codex/combat-gear · D-68</p>
+  <p class="stamp">Current as of 5 Oct 2026 · main · D-69</p>
 </header>
 
 <section id="rules">
@@ -140,15 +140,15 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <div class="cards">
     <article class="card">
       <span class="who">Hessa vouches · easiest</span>
-      <h3>Carry water for the innkeeper</h3>
+      <h3>Help the innkeeper with clean water</h3>
       <ol>
         <li>Pick up the dried gourd by the inn.</li>
-        <li>Ask Hessa for work: <span class="say">"Can I help with anything?"</span> She asks for water for her kitchen.</li>
-        <li>Agree, fill the gourd at her trough (drag it onto the trough), and give it to her.</li>
+        <li>Approach Hessa. She greets you and may explain what she needs; ask about her guests or offer help.</li>
+        <li>The trough starts fouled. Investigate the cause and describe how you would remove it or provide safe water with the things you have. Ordinary water hauling remains a favour, but foul water does not solve the inn's problem.</li>
         <li>She walks to the gate to speak for you. Wait until she has (her label shows where she's going).</li>
         <li>If you asked Hessa to help you get in, her recommendation carries that request. Roderic responds when she arrives; he may let you through or ask for a missing detail. Go to him if needed, then walk north once admitted.</li>
       </ol>
-      <span class="tag good">Tested</span>
+      <span class="tag">Updated for seed 15</span>
     </article>
     <article class="card">
       <span class="who">Darin hires you</span>
@@ -209,16 +209,16 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
 
 <section id="stories">
   <h2>The village storylines</h2>
-  <p>People have troubles of their own. You come into them by listening. Each has several endings and none is required to win. Your journal's Stories page tracks what you've learned.</p>
+  <p>People have troubles of their own. They greet you when approached and may bring up what they need. Each has several endings and none is required to win. Your journal's Stories page tracks reached steps and who told you. Start a fresh journey for the combined seed 15 demo; your older save remains on disk.</p>
   <div class="stories">
-    <div class="story"><h3>The trough water <span class="tag good">Tested</span></h3><dl>
-      <dt>Starts</dt><dd>Hessa's guests keep falling sick. Ask her how they are.</dd>
-      <dt>Nudge</dt><dd>What kills what you can't see in water?</dd>
-      <dt>One way</dt><dd>Boil trough water in the iron pot from the wainwright's yard on her cooking fire, show her, and ask her to do the same. She can't see what boiling does, so she goes on your explanation.</dd></dl></div>
-    <div class="story"><h3>The lodging money <span class="tag good">Tested</span></h3><dl>
-      <dt>Starts</dt><dd>Once Hessa trusts you (help her first), ask whether her lodgers pay their way.</dd>
-      <dt>One way</dt><dd>She confides that Darin owes three weeks. Tell Darin his good name in town is worth more than the rent. He goes and pays her.</dd></dl></div>
-    <div class="story"><h3>Oren's debt <span class="tag good">Tested</span></h3><dl>
+    <div class="story"><h3>The Wayside Inn <span class="tag">Updated</span></h3><dl>
+      <dt>Starts</dt><dd>Hessa's guests keep falling sick. Ask what she has noticed.</dd>
+      <dt>Nudge</dt><dd>Find what keeps fouling the trough; clean water and the cause both matter.</dd>
+      <dt>One way</dt><dd>Investigate the boards by the spout, describe a practical way to remove the rot and clean the trough, and tell Hessa what you found. The inn's money and old grief connect to Darin and Kade; each person decides what to share or do.</dd></dl></div>
+    <div class="story"><h3>The Merchant's Permit <span class="tag">Updated</span></h3><dl>
+      <dt>Starts</dt><dd>Darin needs trade worth taking into the city. Show him a new invention and ask about his plans.</dd>
+      <dt>One way</dt><dd>Help him find something to sell and resolve his debts in town, then seek the captain's renewal. Hiring and permission are personal decisions; Oren's debt can also expose Darin's pressure.</dd></dl></div>
+    <div class="story"><h3>Dice and Debts <span class="tag">Updated</span></h3><dl>
       <dt>Starts</dt><dd>Ask Bren why Oren is so jumpy.</dd>
       <dt>Nudge</dt><dd>Darin wants a fair bargain, never pity.</dd>
       <dt>One way</dt><dd>Give Darin something he can sell, then ask him to call the debt square. He walks over and tells Oren himself. Or tell the captain, and see who forgives you.</dd></dl></div>
@@ -282,6 +282,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <h2>Keeping this page current</h2>
   <p>Source: <code>docs/walkthrough.html</code>. Claude and Codex update it with gameplay changes; Claude republishes the saved source to the same address.</p>
   <ul class="plain">
+    <li>5 Oct 2026 · D-69: Codex combined combat and Claude's quest work on main; updated greetings, the inn, merchant and guard stories, and fresh-journey guidance. Claude should republish both guides.</li>
     <li>5 Oct 2026 · D-68 integration: Codex merged Claude's committed D-65 phase 4 into the combat branch, preserving both guides and adding trap-aware combat movement. Claude should republish.</li>
     <li>5 Oct 2026 · D-66–68: Codex updated hand controls, attached equipment, recovery, damage and directional defense. Claude should republish.</li>
     <li>4 Oct 2026: created for the main village game.</li>

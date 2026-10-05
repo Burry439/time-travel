@@ -202,16 +202,19 @@ func _stories_page(body: VBoxContainer) -> void:
 		return
 	ui.paragraph(body, "What's going on in town that you've come into. How it ends is up to you.").add_theme_color_override(
 		"font_color", UITheme.INK_SOFT)
+	var learned: Array = game.run_state.get("learned", [])
 	for story in known:
 		var ended := str(story.get("ended", "")) if story.get("ended") != null else ""
 		var parts := PackedStringArray()
-		for part in story.get("parts", []):
-			parts.append("• " + str(part))
-		if not ended.is_empty():
-			parts.append("✓ " + ended)
+		for step in story.get("steps", []): # Every step and ending reached, in order, and whose side (D-69).
+			var side := ("%s's side: " % str(step.from)) if not str(step.get("from", "")).is_empty() else ""
+			parts.append(("✓ " if step.kind == "outcome" else "• ") + side + str(step.text))
 		var whose := str(story.get("whose", ""))
 		_card(body, ui.bar.portrait_for(whose) if not whose.is_empty() else null, str(story.title), "\n".join(parts),
 			UITheme.INK_SOFT if not ended.is_empty() else UITheme.INK)
+		for index in story.get("threads", []): # What people have told you about it: yours to follow and pin.
+			if int(index) < learned.size():
+				_lead_card(body, learned[int(index)])
 
 
 # --- People -------------------------------------------------------------------------------------------------
