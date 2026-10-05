@@ -40,7 +40,7 @@ def test_every_block_has_a_law_a_reducer_and_a_consumer():
         assert block.family and block.noticed_by and block.check and block.apply, kind
         silent = block.apply is effects._no_change
         # Seen or heard, and nothing else: the people it reaches decide what it means (perception).
-        assert not silent or kind in ("touch", "gesture", "sound", "visual_signal"), f"{kind} changes nothing"
+        assert not silent or kind in ("touch", "gesture", "sound", "visual_signal", "smoke"), f"{kind} changes nothing"
 
 
 def test_water_over_bren_soaks_him_and_he_remembers_it():
@@ -631,7 +631,9 @@ def test_a_covered_pit_catches_someone_walking_their_round_but_not_whoever_dug_i
     moved = cast.find(npc_sim.advance_npcs(state, [hessa], 500, state["sim_time_ms"]), HESSA)
     assert (moved["x"], moved["y"]) == (37, 51) and moved["states"][0]["name"] == "fallen into a pit"
     assert "move" in moved["states"][0]["limits"] and moved["mind"]["memories"][-1]["kind"] == "trap"
+    pit = state["objects"][pit["id"]]  # Copy-on-write, as the clock's changes are.
     assert pit["trap"]["sprung"] and pit["blocks"] and not pit["hidden"]
+    assert state["objects_changed"][pit["id"]]["trap"]["sprung"]
 
 
 @pytest.mark.parametrize(
@@ -657,3 +659,150 @@ def test_a_thing_placed_with_nothing_named_goes_on_the_ground_where_you_stand():
     deed(state, {"kind": "place", "target_id": "cord_a", "relation": "on"})
     cord = state["objects"]["cord_a"]
     assert cord["holder_id"] is None and (cord["x"], cord["y"]) == (49, 67)
+
+
+# --- Phase 4: fire and heat, processes over time ---------------------------------------------------------------------
+
+
+def later(state, minutes):
+    """Time passes on the clock, as waiting or exploring does: the object changes it brings, applied."""
+    payload = clock.advance_people(state, minutes * 60_000)
+    for object_id, fields in payload["objects_changed"].items():
+        state["objects"][object_id].update(fields)
+    state["sim_time_ms"] += minutes * 60_000
+    return payload
+
+
+def test_clay_left_alone_dries_hard_and_moved_too_soon_it_stops():
+    state = fresh_state(51, 59)
+    dry = {
+        "kind": "process",
+        "target_id": "clay_a",
+        "name": "dried hard",
+        "minutes": 60,
+        "needs": ["undisturbed"],
+        "flags": ["rigid"],
+        "loses": ["flexible", "adhesive"],
+        "value": "hard and pale",
+    }
+    deed(state, dry)
+    assert state["objects"]["clay_a"]["process"]["name"] == "dried hard"
+    assert "being dried hard" in judge_view._placement(state, state["objects"]["clay_a"])["under_way"]
+    later(state, 30)
+    assert "rigid" not in state["objects"]["clay_a"]["flags"]  # Not yet.
+    later(state, 31)
+    clay = state["objects"]["clay_a"]
+    assert "rigid" in clay["flags"] and "flexible" not in clay["flags"] and not clay["process"]
+    assert any(a["name"] == "dried hard" and a["value"] == "hard and pale" for a in clay["attributes"])
+    again = fresh_state(51, 59)
+    deed(again, dry)
+    commit(again, judged("take", take_ids=["clay_a"]))  # Picked up part-way.
+    later(again, 61)
+    assert "rigid" not in again["objects"]["clay_a"]["flags"]
+    assert any("stopped part-way" in a["value"] for a in again["objects"]["clay_a"]["attributes"])
+
+
+def test_garlic_roasted_on_hessas_fire_is_roast_garlic_unless_the_fire_goes_out():
+    state = fresh_state(37, 53)
+    deed(state, {"kind": "cook", "target_id": "garlic_hessa", "other_id": "cookfire_hessa", "text": "roast garlic"})
+    garlic = state["objects"]["garlic_hessa"]
+    assert (garlic["x"], garlic["y"]) == (38, 52)  # On the fire.
+    later(state, tuning.COOK_MINUTES + 1)
+    garlic = state["objects"]["garlic_hessa"]
+    assert garlic["name"] == "roast garlic" and any(a["name"] == "cooked" for a in garlic["attributes"])
+    cold = fresh_state(37, 53)
+    deed(cold, {"kind": "cook", "target_id": "garlic_hessa", "other_id": "cookfire_hessa"})
+    cold["objects"]["cookfire_hessa"].update(burning=False, condition="put out")
+    later(cold, tuning.COOK_MINUTES + 1)
+    assert cold["objects"]["garlic_hessa"]["name"] == "garlic bulbs"
+
+
+def test_wet_wool_dries_by_the_fire_and_is_light_again():
+    state = fresh_state(37, 53)
+    wool = state["objects"]["wool_a"]
+    wool.update(
+        holder_id="player",
+        mass_kg=0.4,
+        absorbed_l=0.3,
+        attributes=[{"name": "wet", "value": "sodden", "status": "observed", "basis_ids": ["wool_a"]}],
+    )
+    deed(state, {"kind": "dry", "target_id": "wool_a", "other_id": "cookfire_hessa"})
+    later(state, tuning.DRY_FIRE_MINUTES + 1)
+    wool = state["objects"]["wool_a"]
+    assert wool["mass_kg"] == 0.1 and not wool["absorbed_l"] and not any(a["name"] == "wet" for a in wool["attributes"])
+
+
+def test_a_clay_cup_fired_in_the_hearth_comes_out_hard_and_watertight():
+    state = fresh_state(37, 53)
+    state["objects"]["clay_a"].update(holder_id="player", flags=["flexible", "adhesive", "container"], capacity_l=0.3)
+    deed(state, {"kind": "fire_clay", "target_id": "clay_a", "other_id": "cookfire_hessa"})
+    later(state, tuning.FIRE_CLAY_MINUTES + 1)
+    clay = state["objects"]["clay_a"]
+    assert {"rigid", "watertight", "container"} <= set(clay["flags"]) and "flexible" not in clay["flags"]
+
+
+def test_straw_by_the_fire_catches_and_a_burnt_barricade_no_longer_blocks():
+    state = fresh_state(37, 53)
+    state["objects"]["straw_a"].update(x=39, y=52)
+    damp = state["objects"]["grass_a"]
+    damp.update(
+        x=37, y=52, attributes=[{"name": "wet", "value": "soaked", "status": "observed", "basis_ids": ["grass_a"]}]
+    )
+    later(state, 1)
+    assert not state["objects"]["straw_a"].get("burning")  # Not yet.
+    later(state, 2)
+    assert state["objects"]["straw_a"]["burning"] and not damp.get("burning")
+    barricade = fresh_state(63, 29)
+    deed(
+        barricade,
+        {
+            "kind": "build",
+            "name": "barricade",
+            "ids": ["ladder_tomas", "fulcrum_tomas"],
+            "structure": "barrier",
+            "cell": [63, 30],
+        },
+    )
+    built = next(o for o in barricade["objects"].values() if o.get("feature") == "structure")
+    built.update(burning=True, burns_until=barricade["sim_time_ms"] + 60_000)
+    assert not paths.grid(barricade).walkable((63, 30))
+    later(barricade, 2)
+    assert paths.grid(barricade).walkable((63, 30))  # Burnt out.
+
+
+def test_smoke_from_a_fire_is_seen_far_off():
+    state = fresh_state(37, 53)
+    deed(state, {"kind": "smoke", "other_id": "cookfire_hessa", "value": "a thick column of white smoke"})
+    seen = [n["name"] for n in state["npcs"] if heard(state, n["id"])]
+    assert seen and all(
+        cast.distance(n, state["player"]) <= tuning.FAR_SIGNAL_CELLS for n in state["npcs"] if heard(state, n["id"])
+    )
+
+
+@pytest.mark.parametrize(
+    "at, effect, problem",
+    [
+        (
+            (51, 59),
+            {"kind": "process", "target_id": "clay_a", "name": "x", "minutes": 10, "flags": ["magnetized"]},
+            "time alone gives only",
+        ),
+        (
+            (51, 59),
+            {"kind": "process", "target_id": "clay_a", "name": "x", "minutes": 10, "needs": ["heat"]},
+            "a fire beside it",
+        ),
+        (
+            (51, 59),
+            {"kind": "process", "target_id": "clay_a", "name": "x", "minutes": 10, "loses": ["sharp_edge"]},
+            "to begin with",
+        ),
+        ((51, 59), {"kind": "process", "target_id": "clay_a", "name": "x", "minutes": 99999}, "minutes between"),
+        ((37, 53), {"kind": "fire_clay", "target_id": "garlic_hessa", "other_id": "cookfire_hessa"}, "isn't clay"),
+        ((51, 59), {"kind": "cook", "target_id": "clay_a", "other_id": "stone_b"}, "a fire within reach"),
+        ((37, 53), {"kind": "dry", "target_id": "garlic_hessa"}, "isn't wet"),
+        ((51, 59), {"kind": "smoke", "other_id": "clay_a", "value": "x"}, "a fire within reach"),
+    ],
+)
+def test_the_phase_four_laws_refuse_what_the_world_cannot_do(at, effect, problem):
+    assert problem in refused(fresh_state(*at), effect)

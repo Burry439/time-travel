@@ -169,6 +169,10 @@ func _placement(obj: Dictionary) -> void:
 	var hidden = obj.get("hidden")
 	if typeof(hidden) == TYPE_DICTIONARY:
 		where.append("hidden " + str(hidden.get("where", "")))
+	var under_way = obj.get("process")
+	if typeof(under_way) == TYPE_DICTIONARY: # Cooking, drying, setting (D-65): done if left as it needs.
+		var left := maxi(0, int((float(under_way.done_at) - float(game.run_state.get("sim_time_ms", 0))) / 60000.0))
+		where.append("being %s, about %d min to go" % [str(under_way.name), left])
 	if not where.is_empty():
 		_text(", ".join(where).capitalize() + ".", "Small")
 	var held := PackedStringArray()

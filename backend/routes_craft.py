@@ -161,9 +161,10 @@ def act(run_id: str, request: ActRequest, background: BackgroundTasks):
             ),
             background,
         )
-    elif kind in ("wait", "yield", "leave"):
+    elif kind in ("yield", "leave"):
         return {"state": state, "duplicate": False, "intent": heard, "notice": "Nothing happens."}
-    else:  # A deed (or a deed with words) with nobody face to face: Try Something.
+    else:  # A deed (or a deed with words) with nobody face to face: Try Something. Waiting is one: time passes (D-65:
+        # "wait here for five minutes" by the fire was "Nothing happens", and the straw beside it never caught).
         reply = craft(
             run_id,
             CraftRequest(

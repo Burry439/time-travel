@@ -249,9 +249,7 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
     Returns (npcs, journal lines, player). May queue thinking in state["pending_minds"].
     """
     held = {n["id"]: (n["x"], n["y"]) for n in state["npcs"] if effects.limited(n, "move")}  # Tied up (D-65).
-    npcs = npc_sim.advance_npcs(state, state["npcs"], elapsed_ms, now)
     working = copy.copy(state)
-    working["npcs"] = npcs
     working["player"] = copy.deepcopy(state["player"])
     working["encounter"] = copy.deepcopy(state.get("encounter"))
     working["fight"] = copy.deepcopy(state.get("fight"))
@@ -259,6 +257,8 @@ def advance_world(state: State, elapsed_ms: int, now: int) -> tuple[list[dict], 
     working["projectiles"] = copy.deepcopy(state.get("projectiles") or [])
     working.pop("objects_changed", None)
     working.pop("objects_added", None)
+    npcs = npc_sim.advance_npcs(working, state["npcs"], elapsed_ms, now)  # A trap sprung is a working change.
+    working["npcs"] = npcs
     journal: list[dict] = []
     blocked = paths.grid(state)
     end = now + elapsed_ms
@@ -339,7 +339,7 @@ def _walk(
         if step is None:
             break
         npc["x"], npc["y"] = step
-        if effects.spring(state, npc, step, state["sim_time_ms"]):
+        if effects.spring(state, npc, step, state["sim_time_ms"], record=True):
             break
     controller["step_carry_ms"] = carry if cast.distance(npc, goal) > stop else 0
     return cast.distance(npc, goal) <= stop
@@ -480,6 +480,10 @@ def advance_people(state: State, elapsed_ms: int) -> dict:
     npcs, heard, player = advance_world(probe, elapsed_ms, state["sim_time_ms"])
 
     changed = heat.age_objects(state, elapsed_ms, state["sim_time_ms"])
+    end = state["sim_time_ms"] + elapsed_ms
+    for more in (effects.spreading(state, elapsed_ms, state["sim_time_ms"]), effects.processes(state, end)):
+        for object_id, fields in more.items():  # Fire spreading, processes done or stopped (D-65).
+            changed.setdefault(object_id, {}).update(fields)
     for object_id, fields in (probe.get("people_objects_changed") or {}).items():  # Arrows landing, shields worn.
         changed.setdefault(object_id, {}).update(fields)
     payload = {

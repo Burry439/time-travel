@@ -23,7 +23,8 @@ from . import config
 # v22 (D-65): the world's building blocks (effects on any step), seen_as, and words typed as a deed.
 # v23 (D-65 phase 2): place and structure, containers and mixtures, matter.
 # v24 (D-65 phase 3): signals and terrain.
-PROMPT_VERSION = "judge_v24"
+# v25 (D-65 phase 4): fire and heat, processes over time.
+PROMPT_VERSION = "judge_v25"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -111,6 +112,12 @@ EffectKind = Literal[
     "fill_in",
     "build",
     "trap",
+    # Phase 4: fire and heat, processes over time.
+    "process",
+    "dry",
+    "cook",
+    "fire_clay",
+    "smoke",
 ]
 
 
@@ -133,6 +140,8 @@ class PhysicalEffect(BaseModel):
     flags: list[Flag] = []  # Qualities a thing loses to damage, or gets back by repair.
     ids: list[str] = []  # What something is built from, or a trap made of (all used in it).
     structure: Literal["barrier", "bridge", "other"] | None = None  # What a built thing does to passage.
+    needs: list[Literal["undisturbed", "dry", "heat", "water"]] = []  # What a process needs until it's done.
+    loses: list[Flag] = []  # Qualities a process takes away (clay drying stops being flexible).
 
 
 class SayInstead(BaseModel):

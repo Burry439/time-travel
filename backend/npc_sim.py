@@ -101,7 +101,7 @@ def advance_npcs(state: State, npcs: list[Npc], elapsed_ms: int, now_ms: int) ->
                     break
             controller["step_carry_ms"] -= controller["step_ms"]
             npc["x"], npc["y"] = controller["path"].pop(0)
-            if effects.spring(state, npc, (npc["x"], npc["y"]), arrival_time):  # A hidden trap (D-65): caught.
+            if effects.spring(state, npc, (npc["x"], npc["y"]), arrival_time, record=True):  # A hidden trap (D-65).
                 controller["path"] = []
                 break
         if not controller["path"]:

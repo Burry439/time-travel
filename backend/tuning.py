@@ -31,6 +31,16 @@ STRUCTURE_MIN_KG = 10.0  # A barrier needs at least this much stuff in it (D-65)
 SPAN_M = 1.5  # A plank bridge over a pit needs something rigid this long (D-65).
 TRAP_CLIMB_MINUTES = 10  # Climbing out of a pit trap (D-65).
 SNARE_FREE_MINUTES = 30  # Working free of a snare alone (D-65).
+HEAT_CELLS = 1.5  # Close enough to a fire to cook, dry or fire something by it (D-65).
+MAX_PROCESS_MINUTES = 20160  # The longest a process runs: two weeks (live: clay left ten days to dry, D-65).
+DRY_FIRE_MINUTES = 20  # Something wet, dried by a fire (D-65).
+DRY_AIR_MINUTES = 240  # Something wet, dried in the open air (D-65).
+COOK_MINUTES = 20  # Food cooked on a fire, unless the judge says (D-65).
+COOK_MAX_KG = 5.0  # The most one cooks on a fire at once (D-65).
+KILN_MIN_KG = 20.0  # A fire big enough to fire clay in (a forge, a hearth, a bonfire banked high) (D-65).
+FIRE_CLAY_MINUTES = 180  # Clay fired hard (D-65).
+SPREAD_CELLS = 1.5  # A fire catches combustible things this close (D-65).
+SPREAD_MS = 120_000  # How long beside a fire before something catches (D-65).
 CLEAR_VIEW_CELLS = (
     10.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle (D-55: was 5).
 )

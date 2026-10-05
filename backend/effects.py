@@ -9,8 +9,8 @@ lets an effect write into anyone's mind. A block isn't done until all three part
 holds every registered kind to that.
 
 Families (GDD D-65): F bodies, H information, J touch and gesture and the open attribute (phase 1); B place and
-structure, C containers and mixtures, A matter (phase 2); G signals and I terrain (phase 3). Fire and processes
-follow.
+structure, C containers and mixtures, A matter (phase 2); G signals and I terrain (phase 3); D fire and heat and E
+processes over time (phase 4).
 """
 
 from __future__ import annotations
@@ -1354,6 +1354,13 @@ def signal_of(state: State, effect: dict) -> dict | None:
     if effect["kind"] == "sound":
         cells = tuning.LOUD_CELLS if "sound_loud" in flags else tuning.KNOCK_CELLS if used else tuning.SHOUT_CELLS
         return {"kind": "sound", "text": effect["value"].strip()[:200], "cells": cells, "sight": False}
+    if effect["kind"] == "smoke":
+        return {
+            "kind": "visual_signal",
+            "text": effect["value"].strip()[:200],
+            "cells": tuning.FAR_SIGNAL_CELLS,
+            "sight": True,
+        }
     if effect["kind"] == "visual_signal":
         bright = flags & {"reflective", "light_source", "heat_source"} or used.get("burning")
         cells = tuning.FAR_SIGNAL_CELLS if bright else tuning.SIGNAL_CELLS
@@ -1686,20 +1693,29 @@ def _apply_trap(state, effect, now, actor_id, repaint):
     pit["revision"] = pit.get("revision", 0) + 1
 
 
-def spring(state: State, someone: dict, cell: tuple[int, int], now: int) -> dict | None:
+def spring(state: State, someone: dict, cell: tuple[int, int], now: int, record: bool = False) -> dict | None:
     """Someone steps into a cell: a hidden trap there (not their own) catches them. Their state holds them for its
-    minutes; a pit trap is plain to see again and in the way. Returns the trap, or None."""
+    minutes; a pit trap is plain to see again and in the way. Returns the trap, or None. record: on the clock's
+    working state, copy-on-write and listed in objects_changed (as combat's changes are)."""
     who = someone.get("id", "player")
     for obj in (state.get("objects") or {}).values():
         trap = obj.get("trap")
         if not trap or trap.get("sprung") or trap.get("by") == who or (obj["x"], obj["y"]) != tuple(cell) or gone(obj):
             continue
-        trap["sprung"] = True
         put_state(
             someone, trap["name"], trap["value"] or trap["name"], trap["limits"], trap["minutes"], now, trap["by"]
         )
-        obj.update(hidden=None, blocks=obj.get("feature") == "pit" and obj.get("depth_m", 0) >= tuning.PIT_BLOCKS_M)
-        obj["revision"] = obj.get("revision", 0) + 1
+        fields = {
+            "trap": {**trap, "sprung": True},
+            "hidden": None,
+            "blocks": obj.get("feature") == "pit" and obj.get("depth_m", 0) >= tuning.PIT_BLOCKS_M,
+            "revision": obj.get("revision", 0) + 1,
+        }
+        if record:
+            obj = state["objects"][obj["id"]] = {**obj, **fields}
+            state.setdefault("objects_changed", {}).setdefault(obj["id"], {}).update(fields)
+        else:
+            obj.update(fields)
         if someone is not state["player"]:
             memory = {
                 "kind": "trap",
@@ -1719,6 +1735,313 @@ def spring(state: State, someone: dict, cell: tuple[int, int], now: int) -> dict
                 cast.add_pending(state, who, "decide", "victim")
         return obj
     return None
+
+
+# --- Phase 4: fire and heat (D), processes over time (E) -------------------------------------------------------------
+# A process is a change that completes after its minutes if what it needs still holds: left alone (undisturbed),
+# kept dry, kept by the heat of a fire, kept in water. The clock completes or cancels it (`processes`). Cooking, drying
+# and firing clay are processes with their own laws; smoke is a sign seen far off; fire spreading is the clock's
+# (`spreading`, beside heat.age_objects).
+
+NEEDS = ("undisturbed", "dry", "heat", "water")
+GAINS = ("rigid", "watertight", "combustible")  # What time alone can give a thing (drying, setting, firing).
+
+
+def is_fire(obj: dict | None) -> bool:
+    """Burning now, or a hearth or forge that is a fire."""
+    return (
+        bool(obj)
+        and (bool(obj.get("burning")) or obj.get("feature") == "fire" and "heat_source" in obj.get("flags", []))
+        and obj.get("condition") not in ("put out", "burnt out", "destroyed")
+    )
+
+
+def _by_fire(state: State, at: dict) -> dict | None:
+    """A fire close enough to cook, dry or fire something set beside it."""
+    return next(
+        (
+            o
+            for o in state["objects"].values()
+            if is_fire(o) and o.get("holder_id") is None and cast.distance(o, at) <= tuning.HEAT_CELLS
+        ),
+        None,
+    )
+
+
+def _wet(obj: dict) -> bool:
+    return any(a["name"] == "wet" for a in obj.get("attributes", [])) or obj.get("absorbed_l", 0.0) > 0
+
+
+def _in_water(state: State, obj: dict) -> bool:
+    box = state["objects"].get(obj.get("inside") or "")
+    return bool(box) and box.get("water_l", 0.0) > 0
+
+
+def _start(obj: dict, spec: dict, now: int, minutes: int, actor_id: str) -> None:
+    obj["process"] = {
+        **spec,
+        "minutes": minutes,
+        "started": now,
+        "done_at": now + minutes * 60_000,
+        "where": [obj.get("x"), obj.get("y")],
+        "holder": obj.get("holder_id"),
+        "by": actor_id,
+    }
+    obj["revision"] = obj.get("revision", 0) + 1
+
+
+@block(
+    "process",
+    "processes",
+    ("target_id", "name", "minutes"),
+    "the clock: done after its minutes if what it needs held; inspect and the judge show it under way",
+)
+def _check_process(state, effect, ctx):
+    """Something that takes time by itself: glue setting, clay drying hard, a poultice drawing, food spoiling, a hide
+    curing. name: what it is ("set", "dried hard"); value: what it's like when done; minutes: how long; needs: what
+    must hold until then (undisturbed, dry, heat, water); flags: what it gains (only rigid, watertight, combustible);
+    loses: what it loses (only what it has)."""
+    obj = thing(state, ctx, effect["target_id"])
+    if obj is None or "water_source" in obj.get("capabilities", []):
+        return "a thing within reach"
+    if not 1 <= int(effect["minutes"]) <= tuning.MAX_PROCESS_MINUTES:
+        return f"minutes between 1 and {tuning.MAX_PROCESS_MINUTES}"
+    if any(n not in NEEDS for n in effect.get("needs") or []):
+        return f"needs only from {', '.join(NEEDS)}"
+    if any(f not in GAINS for f in effect.get("flags") or []):
+        return f"time alone gives only {', '.join(GAINS)}"
+    lost = [f for f in effect.get("loses") or [] if f not in obj.get("flags", [])]
+    if lost:
+        return f"the {obj['name']} isn't {', '.join(lost)} to begin with"
+    if "heat" in (effect.get("needs") or []) and _by_fire(state, spot(state, obj)) is None:
+        return "a fire beside it"
+    return _named(effect["name"], set(), 40)
+
+
+@reducer("process")
+def _apply_process(state, effect, now, actor_id, repaint):
+    spec = {
+        "name": effect["name"].strip(),
+        "value": (effect.get("value") or "").strip()[:200],
+        "needs": list(dict.fromkeys(effect.get("needs") or [])),
+        "gains": list(dict.fromkeys(effect.get("flags") or [])),
+        "loses": list(dict.fromkeys(effect.get("loses") or [])),
+        "becomes": (effect.get("text") or "").strip().lower()[:60] or None,
+    }
+    _start(state["objects"][effect["target_id"]], spec, now, int(effect["minutes"]), actor_id)
+
+
+@block(
+    "dry",
+    "processes",
+    ("target_id",),
+    "the clock: dry after its time (soon by a fire, slowly in the air); lighter, and it burns again",
+)
+def _check_dry(state, effect, ctx):
+    """Dry something wet: by a fire (other_id, or any fire beside it) it's soon done, in the open air slowly."""
+    obj = thing(state, ctx, effect["target_id"])
+    if obj is None:
+        return "a thing within reach"
+    if not _wet(obj):
+        return f"the {obj['name']} isn't wet"
+    if effect.get("other_id") and not is_fire(thing(state, ctx, effect["other_id"])):
+        return "a fire within reach to dry it by"
+    return None
+
+
+@reducer("dry")
+def _apply_dry(state, effect, now, actor_id, repaint):
+    obj = state["objects"][effect["target_id"]]
+    fire = state["objects"].get(effect.get("other_id") or "")
+    if fire is not None and obj.get("holder_id") is None:  # Set down by the fire to dry.
+        _loose(obj, x=fire["x"], y=fire["y"])
+    by_fire = _by_fire(state, spot(state, obj)) is not None
+    minutes = tuning.DRY_FIRE_MINUTES if by_fire else tuning.DRY_AIR_MINUTES
+    spec = {"name": "dried", "value": "dry again", "needs": ["dry"] + (["heat"] if by_fire else []), "dries": True}
+    _start(obj, {**spec, "gains": [], "loses": [], "becomes": None}, now, minutes, actor_id)
+
+
+@block(
+    "cook",
+    "processes",
+    ("target_id",),
+    "the clock: cooked after its time at the fire; whoever eats it has it in their own call",
+)
+def _check_cook(state, effect, ctx):
+    """Cook, roast or boil food over a fire (other_id: the fire, within reach); it's set at the fire until done.
+    value: what it's like cooked; text: its name then ("roast garlic"); minutes: how long (default about 20)."""
+    obj, fire = _available(ctx, effect["target_id"]), thing(state, ctx, effect.get("other_id"))
+    if obj is None:
+        return "the food within reach"
+    if not is_fire(fire):
+        return "a fire within reach to cook it on"
+    if "carry" not in obj.get("capabilities", []) or obj["mass_kg"] > tuning.COOK_MAX_KG:
+        return f"something small enough to cook on a fire (at most {tuning.COOK_MAX_KG:g} kg)"
+    if not 1 <= int(effect.get("minutes") or tuning.COOK_MINUTES) <= 600:
+        return "minutes between 1 and 600"
+    return None
+
+
+@reducer("cook")
+def _apply_cook(state, effect, now, actor_id, repaint):
+    obj, fire = state["objects"][effect["target_id"]], state["objects"][effect["other_id"]]
+    if obj.get("holder_id") is None or obj.get("holder_id") == actor_id:  # On the fire, not in the hand.
+        _loose(obj, x=fire["x"], y=fire["y"])
+    spec = {
+        "name": "cooked",
+        "value": (effect.get("value") or f"cooked over the {fire['name']}").strip()[:200],
+        "needs": ["heat", "undisturbed"],
+        "gains": [],
+        "loses": [],
+        "becomes": (effect.get("text") or "").strip().lower()[:60] or f"cooked {obj['name']}",
+    }
+    _start(obj, spec, now, int(effect.get("minutes") or tuning.COOK_MINUTES), actor_id)
+
+
+@block(
+    "fire_clay",
+    "processes",
+    ("target_id", "other_id"),
+    "the clock: hard, fired clay after hours in a forge's heat; it holds water if it's a vessel",
+)
+def _check_fire_clay(state, effect, ctx):
+    """Fire shaped clay hard in a fire hot enough (other_id: a forge or a fire banked high, within reach): hours in the
+    heat, left alone. A vessel comes out watertight."""
+    obj, fire = _available(ctx, effect["target_id"]), thing(state, ctx, effect["other_id"])
+    if obj is None:
+        return "the clay within reach"
+    if not any("clay" in m.lower() for m in obj.get("materials", [])):
+        return f"the {obj['name']} isn't clay"
+    if not is_fire(fire) or fire.get("mass_kg", 0) < tuning.KILN_MIN_KG:
+        return "a fire hot enough to fire clay (a forge, or a big fire banked high)"
+    return None
+
+
+@reducer("fire_clay")
+def _apply_fire_clay(state, effect, now, actor_id, repaint):
+    obj, fire = state["objects"][effect["target_id"]], state["objects"][effect["other_id"]]
+    _loose(obj, x=fire["x"], y=fire["y"])
+    vessel = "container" in obj.get("flags", [])
+    spec = {
+        "name": "fired",
+        "value": (effect.get("value") or "fired hard in the heat: rings when tapped").strip()[:200],
+        "needs": ["heat", "undisturbed"],
+        "gains": ["rigid"] + (["watertight"] if vessel else []),
+        "loses": [f for f in ("flexible", "adhesive") if f in obj.get("flags", [])],
+        "becomes": (effect.get("text") or "").strip().lower()[:60] or None,
+    }
+    _start(obj, spec, now, tuning.FIRE_CLAY_MINUTES, actor_id)
+
+
+@block(
+    "smoke", "signals", ("value", "other_id"), "everyone in sight of it, far off, sees it and decides in their own call"
+)
+def _check_smoke(state, effect, ctx):
+    """Smoke raised from a fire (other_id: the fire, within reach; green leaves or wet stuff make it thick), seen far
+    off: a column, puffs under a cloth. value: what it shows."""
+    return None if is_fire(thing(state, ctx, effect["other_id"])) else "a fire within reach to raise smoke from"
+
+
+def processes(state: State, end: int) -> dict[str, dict]:
+    """Processes under way at time end (by code, no model): each completes when its time is up if what it needs held
+    all along, or stops the moment it doesn't (moved, wet, the fire out, out of the water). {object_id: fields}."""
+    changes: dict[str, dict] = {}
+    for obj in state.get("objects", {}).values():
+        spec = obj.get("process")
+        if not spec or gone(obj):
+            continue
+        needs = spec.get("needs") or []
+        broken = (
+            "undisturbed" in needs
+            and ([obj.get("x"), obj.get("y")] != spec["where"] or obj.get("holder_id") != spec["holder"])
+            or "dry" in needs
+            and not spec.get("dries")
+            and _wet(obj)
+            or "heat" in needs
+            and _by_fire(state, spot(state, obj)) is None
+            or "water" in needs
+            and not _in_water(state, obj)
+        )
+        attributes = list(obj.get("attributes", []))
+        if broken:
+            note = {"name": spec["name"], "value": f"not {spec['name']}: stopped part-way", "status": "observed"}
+            changes[obj["id"]] = {
+                "process": None,
+                "attributes": [a for a in attributes if a["name"] != spec["name"]]
+                + [{**note, "basis_ids": [obj["id"]]}],
+            }
+            continue
+        if end < spec["done_at"]:
+            continue
+        flags = [f for f in obj.get("flags", []) if f not in spec.get("loses", [])]
+        flags += [f for f in spec.get("gains", []) if f not in flags]
+        if "rigid" in spec.get("gains", []):  # Set hard is no longer pliable, whether or not the judge said so.
+            flags = [f for f in flags if f != "flexible"]
+        done = {
+            "name": spec["name"],
+            "value": spec["value"] or spec["name"],
+            "status": "observed",
+            "basis_ids": [obj["id"]],
+        }
+        fields = {
+            "process": None,
+            "flags": flags,
+            "attributes": [a for a in attributes if a["name"] != spec["name"]] + [done],
+            "revision": obj.get("revision", 0) + 1,
+        }
+        if spec.get("dries"):
+            fields.update(
+                attributes=[a for a in fields["attributes"] if a["name"] not in ("wet", "dried")],
+                mass_kg=round(max(0.01, obj["mass_kg"] - obj.get("absorbed_l", 0.0)), 3),
+                absorbed_l=0.0,
+            )
+        if spec.get("becomes"):
+            fields.update(name=spec["becomes"], base_name=spec["becomes"])
+        changes[obj["id"]] = fields
+    return changes
+
+
+def spreading(state: State, elapsed_ms: int, now: int) -> dict[str, dict]:
+    """Fire spreading (by code, no model): something combustible lying beside a fire for a while catches (a barricade
+    by a bonfire, straw by the hearth), unless it's wet. Carried things and things inside others don't. Returns
+    {object_id: fields}."""
+    end = now + elapsed_ms
+    fires = [
+        o for o in state.get("objects", {}).values() if o.get("burning") and o.get("holder_id") is None and not gone(o)
+    ]
+    changes: dict[str, dict] = {}
+    for obj in state.get("objects", {}).values():
+        if (
+            obj.get("burning")
+            or "combustible" not in obj.get("flags", [])
+            or obj.get("holder_id") is not None
+            or obj.get("inside")
+            or gone(obj)
+            or obj.get("condition") in ("put out", "burnt out")
+            or _wet(obj)
+        ):
+            continue
+        near = [f for f in fires if f is not obj and cast.distance(f, obj) <= tuning.SPREAD_CELLS]
+        if not near:
+            if obj.get("catching_at") is not None:
+                changes[obj["id"]] = {"catching_at": None}
+            continue
+        catching = obj.get("catching_at")
+        if catching is None:
+            catching = now + tuning.SPREAD_MS
+            changes[obj["id"]] = {"catching_at": catching}
+        if end >= catching:
+            span = max(
+                tuning.FIRE_MS_RANGE[0], min(tuning.FIRE_MS_RANGE[1], int(obj["mass_kg"] * tuning.FIRE_MS_PER_KG))
+            )
+            changes[obj["id"]] = {
+                "catching_at": None,
+                "burning": True,
+                "burns_until": catching + span,
+                "flags": list(dict.fromkeys(obj.get("flags", []) + ["heat_source", "light_source"])),
+                "blocks": obj.get("blocks", False),
+            }
+    return changes
 
 
 def settle(state: State) -> None:
@@ -1763,6 +2086,14 @@ def plain_to_see(obj: dict) -> list[str]:
         lines.append(f"the {obj['name']} lies across the way")
     if obj.get("rests_on") == "wall":
         lines.append(f"the {obj['name']} is propped against the wall")
+    if obj.get("burning") and obj.get("feature") != "fire":
+        lines.append(f"the {obj['name']} is on fire")
+    if obj.get("process"):
+        lines.append(
+            f"the {obj['name']} is being {obj['process']['name']}"
+            if obj["process"]["name"] in ("cooked", "dried", "fired")
+            else f"the {obj['name']} is left to be {obj['process']['name']}"
+        )
     return lines
 
 
