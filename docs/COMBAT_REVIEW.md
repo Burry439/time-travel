@@ -69,7 +69,7 @@ recovery and buffers; shorter shared timings; articulated grips and supporting a
 backend profiles/descriptions; heavy blunt handling; current damage/repairs/body limits; directional contact,
 projectile obstruction, parries, spacing and individual reconsideration.
 
-Evidence so far:
+Verification evidence:
 
 - Expanded regressions cover recovery-skipping throws, bound hands, backwards targets, heavy inventions,
   damaged/repaired gear and damage at contact, both hands, directional parries, buildings, concealed equipment,
@@ -78,17 +78,26 @@ Evidence so far:
   and a fallback character, both primary hands and two-handed support; grip errors below 0.1 px in the tested
   geometry. Independent hands, accepted anticipation and rejected return are checked. Response smoke adds
   250 ms delayed replies, dispatch-time versions, pre-contact recovery, stale/out-of-order state rejection and buffer clearing.
-- Rendered 90-second cached-art soak: final windows median 13.8 ms, p95 about 16.0–16.1 ms (roughly 74 rendered
-  frames/s); zero orphans. Nodes settled at 2,402, peak 2,404; memory about 118.7–119.4 MB. Immediate anticipation
-  CPU work peaked at 2.383 ms. Some individual frames exceed 16.7 ms, so this is not a worst-frame guarantee.
+- Final merged build's rendered 90-second cached-art soak (`data/combat-profile-handoff.log`): median 13.6–13.8 ms,
+  window p95 15.8–18.5 ms (roughly 72–74 rendered frames/s); zero orphans. Nodes settled at 2,400–2,402, transient
+  peak 2,404; memory 118.9–119.9 MB. Immediate anticipation CPU work peaked at 2.215 ms. One frame reached 103.4 ms;
+  the typical frame-rate target is met, with occasional stalls rather than a constant-60-fps guarantee.
+  The prior merged soak had p95 15.8–16.5 ms and maximum 30.1 ms. Godot still reports a texture RID during shutdown, also seen before;
+  no continuing node/orphan growth occurred during the run. Shutdown resource cleanup remains a follow-up.
   The fixture keeps three opponents and high-health sparring alive; individual motives are held constant.
 - Baseline rendered 20-second run: p95 16.6–18.2 ms, stable nodes/orphans, but only 500 ms state updates and a
   fight that did not stay active. It is not a like-for-like performance comparison. Early new-clock soaks
   exposed repeated font/label creation; caching/reuse and off-thread JSON decoding fixed that churn.
 - Live gear suite: **15/18**. Combat judge/person scenarios verify physical refusals and legal individual
-  choices; saved reports remain ignored. The legal-choice score does not establish convincing dialogue.
+  choices: **5/5** after merging Claude's `judge_v25` (`combat_20261005_121801.json`). Saved reports remain ignored.
+  The legal-choice score does not establish convincing dialogue or correct narration.
   See `CODEX_TO_CLAUDE.md` for the three gear failures and prompt suggestions.
-- Fast/full checks and latest-upstream merge: final result to be added at handoff.
+- Final `CHECK_PORT=8768 tools/check.ps1 -Full`: **623 backend tests**, **70 scripts compile**, and **20/20 Godot
+  smoke tests**, including combat, gear, crafting, conversations, responsiveness and training. The full check
+  was repeated after merging Claude's latest committed branch (`44f17bf`) into this branch and after the
+  trap integration. The commit hook repeats fast checks; the handoff is committed only on `codex/combat-gear`.
+  No golden files were re-recorded; defaults/expired cooldowns are normalized, and the changed arrest replay
+  explicitly asserts its new hit, health and spacing while retaining the original unrelated fields.
 
 Remaining: procedural cutout seams and unusual art/grip conventions need visual polish; front/back strikes have
 less visual depth than side strikes. NPC tactics are a deterministic first pass, with motives still dependent on

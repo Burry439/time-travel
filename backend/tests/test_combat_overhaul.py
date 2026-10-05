@@ -375,3 +375,39 @@ def test_a_broken_supporting_arm_prevents_two_handed_attacks_and_guarding():
     assert combat.guard(state, True, facing(state, "npc_bren_marr"), 2)["ok"]
     state["player"]["conditions"][0]["treated"] = 0
     assert not combat._can_block(state, state["player"], npc(state, "npc_bren_marr"))
+
+
+def test_a_reclassified_heavy_weapon_cannot_use_the_hand_still_holding_a_shield():
+    state = unit_state()
+    arm(state, "mace", "flanged mace", ["wood", "iron"], 7.9, "mace", length=0.8, flags=("rigid",))
+    arm(state, "shield", "shield", ["wood"], 2, "round", kind="shield", hand="left")
+    # Legacy saves can hold a formerly generic mace alongside a shield; its new class needs both hands.
+    state["objects"]["mace"]["gear"] = {"kind": "none", "class": None, "quality": "fair"}
+    assert not combat.strike(state, "right", None, 0)["ok"]
+    assert gear.equip(state, state["player"], state["objects"]["mace"], "right")["ok"]
+    assert combat.strike(state, "right", None, 1)["ok"]
+
+
+def test_a_fighting_npc_springs_the_worlds_traps_and_obeys_the_new_limits():
+    state = open_ground(unit_state(), "npc_bren_marr")
+    bren = npc(state, "npc_bren_marr")
+    bren.update(x=48, y=56)
+    state["objects"]["snare"] = {
+        "id": "snare",
+        "name": "cord snare",
+        "x": 48,
+        "y": 57,
+        "holder_id": None,
+        "mass_kg": 0.5,
+        "condition": "usable",
+        "flags": [],
+        "trap": {"by": "player", "name": "bound", "value": "caught in cord", "limits": ["move", "hands"], "minutes": 1},
+    }
+    combat.start(state, [bren["id"]], 0, "test")
+    beat(state, 1000)
+    caught = npc(state, bren["id"])
+    assert cast.cell(caught) == (48, 57)
+    assert effects.limited(caught, "move") and effects.limited(caught, "hands")
+    assert state["objects"]["snare"]["trap"]["sprung"]
+    assert bren["id"] not in state["fight"]["swings"]
+    assert any(p["npc_id"] == bren["id"] and p["kind"] == "decide" for p in state["pending_minds"])

@@ -209,6 +209,12 @@ def _placement(state: State, obj: Thing) -> dict:
         seen["mixed_in"] = effects.mixture_words(obj)
     if obj.get("damage"):
         seen["lost_to_damage"] = obj["damage"]["lost_flags"]
+    if obj.get("process"):  # Under way (D-65): done at its time if what it needs holds.
+        spec = obj["process"]
+        left = max(0, (spec["done_at"] - state["sim_time_ms"]) // 60000)
+        seen["under_way"] = (
+            f"being {spec['name']}: done in about {left} min if it keeps {', '.join(spec['needs']) or 'as it is'}"
+        )
     return seen
 
 

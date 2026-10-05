@@ -104,6 +104,10 @@ def hand_free(state: State, hand: str, person: dict | None = None) -> str | None
     if obj is not None and not gear.functional(obj, shield=gear.of(obj)["kind"] == "shield"):
         return f"The {obj['name']} can't be used in its current condition."
     right = gear.held(state, player, "right")
+    if hand == "right" and right is not None and gear.weapon(right)["hands"] == 2:
+        left = gear.held(state, player, "left")
+        if left is not None and left["id"] != right["id"]:
+            return "You need both hands free to use that weapon."
     if right is not None and gear.weapon(right)["hands"] == 2 and gear.limb_useless(player, "arm"):
         return "You can't hold that weapon with both arms."
     if hand == "left" and right is not None and gear.weapon(right)["hands"] == 2:
@@ -614,6 +618,8 @@ def _tick_slice(
                 if step is None:
                     break
                 npc["x"], npc["y"] = step
+                if effects.spring(state, npc, step, end, record=True):
+                    break  # Use D-65's world law for combat steps too; newly bound hands cannot wind up.
             controller["step_carry_ms"] = carry
         hand = _npc_hand(state, npc)
         if (

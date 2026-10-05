@@ -109,4 +109,6 @@ static func hand_pose(animation: String, t: float, windup: float, recovery: floa
 		angle += sin(t / maxf(.001, windup * .65) * TAU * float(spec.spins)) * .6
 	if animation in ["stab", "thrust", "two_hand_thrust", "draw_shoot", "bash"]:
 		angle = 0.0
-	return {"offset": offset, "angle": angle, "lean": torso_lean(animation, minf(t, windup), windup) * (1.0 - _ease(returning))}
+	var lean := float(spec.get("torso", 0))
+	lean = lerpf(-lean * .5 * _ease(preparation), lean, _ease(contact)) if t <= windup else lean * (1.0 - _ease(returning))
+	return {"offset": offset, "angle": angle, "lean": lean}

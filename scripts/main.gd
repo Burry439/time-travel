@@ -337,6 +337,7 @@ func enter_run(state: Dictionary, save_pointer := true) -> void:
 	view.spawn_people()
 	$M2Objects.visible = not run_state.get("objects", {}).is_empty()
 	view.sync()
+	fight.sync() # Reset hand timelines and buffers immediately when changing journeys.
 	ui.enter_run(state)
 	if state["inside_city"]:
 		show_victory()

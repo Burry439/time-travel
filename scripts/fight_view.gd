@@ -119,6 +119,7 @@ func strike(hand: String, throw := false) -> void:
 	if not game.gameplay_active or game.sync_error or limited("hands") or game.run_state.player.get("down", false):
 		return
 	var held := in_hand(game.run_state.player, hand)
+	var run_id := str(game.run_state.run_id)
 	if held.get("readable") != null and not throw:
 		game.ui.open_book(held)
 		return
@@ -138,6 +139,8 @@ func strike(hand: String, throw := false) -> void:
 	game.player_visual.play_attack("throw" if throw else str(spec.get("animation", "punch")), windup, hand,
 		recovery, 0.0, "predicted:" + game.request_id("pose"), facing_vector())
 	var reply: Dictionary = await _command("/strike", {"hand": hand, "throw": throw})
+	if str(game.run_state.get("run_id", "")) != run_id:
+		return # A rejection from a departed journey cannot cancel the new journey's anticipation.
 	if not _result(reply, "strike").get("ok", false):
 		local_ready.erase(hand)
 		game.player_visual.cancel_attack(hand)
@@ -148,6 +151,7 @@ func guard(raised: bool, turn := false) -> void:
 	if (raised == guarding and not turn) or not game.gameplay_active:
 		return
 	var hand := shield_hand()
+	var run_id := str(game.run_state.run_id)
 	if raised and hand.is_empty():
 		return
 	guarding = raised
@@ -159,6 +163,8 @@ func guard(raised: bool, turn := false) -> void:
 			command.body.raised = raised
 			return
 	var reply: Dictionary = await _command("/guard", {"raised": raised})
+	if str(game.run_state.get("run_id", "")) != run_id:
+		return
 	if not _result(reply, "guard").get("ok", false):
 		guarding = false
 		game.player_visual.set_guard(false)

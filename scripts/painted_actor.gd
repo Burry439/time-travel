@@ -366,7 +366,7 @@ func play_attack(animation: String, windup_ms: float, hand := "right", recover_m
 
 func reconcile_attack(swing: Dictionary, elapsed_ms: float) -> void:
 	var hand := str(swing.get("hand", "right"))
-	var key := str(swing.get("started", 0))
+	var key := str(int(swing.get("started", 0))) # JSON numbers arrive as floats; clock keys are milliseconds.
 	if attacks.has(hand) and str(attacks[hand].get("key", "")).begins_with("predicted:"):
 		attacks[hand].key = key
 		attacks[hand].windup = maxf(.05, (float(swing.lands_at) - float(swing.started)) / 1000.0)

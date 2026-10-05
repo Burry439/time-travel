@@ -322,6 +322,52 @@ def barricade() -> bool:
     return bool(built) or bool(log.get("blocks")) or refused(route)
 
 
+
+# --- Phase 4: fire and heat, processes over time ----------------------------------------------------------------------
+
+
+def roast_garlic() -> bool:
+    route = Route("roast garlic on Hessa's fire")
+    route.walk(37, 53)
+    act(route, "roast Hessa's garlic bulbs on her cooking fire")
+    act(route, "sit by the fire and wait half an hour")
+    garlic = route.state["objects"]["garlic_hessa"]
+    note(f"  garlic: {garlic['name']} | process {garlic.get('process')} | {[a['name'] for a in garlic.get('attributes', [])]}")
+    return any(a["name"] == "cooked" for a in garlic.get("attributes", [])) or refused(route)
+
+
+def clay_dries() -> bool:
+    route = Route("leave clay to dry")
+    route.walk(51, 59)
+    act(route, "shape the lump of wet clay into a flat tablet and leave it lying here to dry hard")
+    act(route, "wait here for three hours")
+    made = [o for o in route.state["objects"].values() if "clay_a" in (o.get("components") or [])]
+    clays = [route.state["objects"]["clay_a"], *made]
+    note(f"  clay: {[(o['name'], o.get('flags'), o.get('process'), [a['name'] for a in o.get('attributes', [])]) for o in clays]}")
+    return any("rigid" in o.get("flags", []) or o.get("process") for o in clays)
+
+
+def smoke_signal() -> bool:
+    route = Route("smoke signal from Hessa's fire")
+    route.walk(37, 53)
+    act(route, "pile green leaves and damp grass on Hessa's cooking fire to send up a thick column of smoke the gate guards will see")
+    who = signalled(route)
+    note(f"  seen by: {who}")
+    return bool(who) or refused(route)
+
+
+def straw_by_the_fire() -> bool:
+    route = Route("straw left beside the fire")
+    route.walk(52, 45)
+    route.attempt("pick up the bundle of straw")
+    route.walk(37, 53)
+    act(route, "drop the straw on the ground right next to the cooking fire")
+    act(route, "wait here for five minutes")
+    straw = route.state["objects"]["straw_a"]
+    note(f"  straw at ({straw['x']}, {straw['y']}) burning={straw.get('burning')} holder={straw.get('holder_id')}")
+    return bool(straw.get("burning")) or straw.get("condition") == "burnt out" or straw.get("holder_id") == "used"
+
+
 CASES = {name: fn for name, fn in globals().items() if callable(fn) and fn.__module__ == __name__ and name not in ("act", "person", "memories", "refused", "main", "signalled", "pits")}
 
 

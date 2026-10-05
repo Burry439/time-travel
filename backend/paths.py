@@ -68,7 +68,7 @@ def placed_blocks(state: State) -> frozenset[Cell]:
     return frozenset(
         (o["x"], o["y"])
         for o in (state.get("objects") or {}).values()
-        if o.get("blocks") and o.get("holder_id") is None and o.get("condition") != "destroyed"
+        if o.get("blocks") and o.get("holder_id") is None and o.get("condition") not in ("destroyed", "burnt out")
     )
 
 

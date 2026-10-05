@@ -85,6 +85,7 @@ func _run() -> void:
 		await create_timer(.025).timeout
 		if not scene.fight.busy:
 			break
+	await process_frame # The command's waiting caller resumes after the lane finishes.
 	if not check(scene.player_visual.attacks.get("right", {}).has("cancel_at"), "rejected attack did not reconcile"):
 		return
 	var other: Dictionary = scene.run_state.duplicate(true)
@@ -92,6 +93,25 @@ func _run() -> void:
 	other.event_seq = version + 100
 	scene.accept_state(other)
 	if not check(str(scene.run_state.run_id) == str(old_state.run_id), "late reply from another journey was accepted"):
+		return
+	# Depart while a rejected old command is in flight, then anticipate in a real new journey.
+	scene.player_visual.attacks.clear()
+	scene.fight.local_ready.clear()
+	scene.run_state.player.ready_at = {}
+	scene.run_state.player.swings = {}
+	scene.fight.strike("right")
+	var fresh: Dictionary = await scene.net.api(HTTPClient.METHOD_POST, "/runs", {"mode": "developer"})
+	if not check(fresh.ok, "could not create the second journey"):
+		return
+	scene.enter_run(fresh.data, false)
+	scene.fight.strike("right")
+	for _i in 80:
+		await create_timer(.025).timeout
+		if not scene.fight.busy:
+			break
+	await process_frame
+	if not check(not scene.player_visual.attacks.get("right", {}).has("cancel_at")
+			and not scene.run_state.player.get("swings", {}).is_empty(), "old journey's rejection cancelled the new attack"):
 		return
 	print("RESPONSE SMOKE PASSED: input-frame anticipation with 250 ms delay, ordered hands, stale replies, buffer and rejection")
 	quit(0)
