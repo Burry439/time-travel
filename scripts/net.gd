@@ -32,10 +32,21 @@ func api(method: HTTPClient.Method, path: String, body: Dictionary = {}, timeout
 	var parse_started := Time.get_ticks_usec()
 	var text := (completed[3] as PackedByteArray).get_string_from_utf8()
 	# Only JSON is parsed: an error page ("Internal Server Error") is a failed reply, not something to parse.
-	var data = JSON.parse_string(text) if text.strip_edges().left(1) in ["{", "["] else null
+	var parsed := {"data": null}
+	if text.strip_edges().left(1) in ["{", "["]:
+		# Full world replies can be large. Decode off the render thread, then accept on it in event order.
+		var job := WorkerThreadPool.add_task(_parse_payload.bind(text, parsed), false, "world JSON")
+		while not WorkerThreadPool.is_task_completed(job):
+			await get_tree().process_frame
+		WorkerThreadPool.wait_for_task_completion(job)
+	var data = parsed.data
 	game._prof("parse " + path.get_slice("?", 0).get_file(), parse_started, (completed[3] as PackedByteArray).size())
 	return {"ok": status >= 200 and status < 300 and typeof(data) == TYPE_DICTIONARY,
 		"status": status, "data": data}
+
+
+static func _parse_payload(payload: String, parsed: Dictionary) -> void:
+	parsed.data = JSON.parse_string(payload)
 
 
 ## A POST that may have been lost: tried once more when there was no answer or the service stumbled (the same

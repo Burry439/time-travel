@@ -19,6 +19,7 @@ var corner: HBoxContainer
 var condition_box: VBoxContainer
 var notices: VBoxContainer
 var history: Array[Dictionary] = [] # Every notice this session, for the journal.
+var condition_cursor := 0
 var tip: PanelContainer
 var tip_title: Label
 var tip_note: Label
@@ -272,10 +273,9 @@ func refresh() -> void:
 	if ",".join(signature) != _signature:
 		_signature = ",".join(signature)
 		_rebuild_slots(carried)
-	for child in condition_box.get_children():
-		child.queue_free()
+	condition_cursor = 0
 	var player: Dictionary = state.get("player", {})
-	var health := float(player.get("health", 100))
+	var health := clampf(float(player.get("health", 100)), 0.0, 100.0)
 	if player.get("alive", true) and (health < 100.0 or typeof(state.get("fight")) == TYPE_DICTIONARY):
 		var bar := "▮".repeat(ceili(health / 10.0)) + "▯".repeat(10 - ceili(health / 10.0))
 		_condition("Health  %s  %d" % [bar, floori(health)], UITheme.BAD if health <= 40 else UITheme.INK)
@@ -289,9 +289,19 @@ func refresh() -> void:
 	var barred := int(state.get("barred_until") if state.get("barred_until") != null else 0) - int(state.get("sim_time_ms", 0))
 	if barred > 0:
 		_condition("Barred from the gate  ·  about %d min" % maxi(1, ceili(barred / 60000.0)), UITheme.ACCENT)
+	while condition_box.get_child_count() > condition_cursor:
+		var extra := condition_box.get_child(condition_cursor)
+		condition_box.remove_child(extra)
+		extra.queue_free()
 
 
 func _condition(text: String, colour: Color) -> void:
+	if condition_cursor < condition_box.get_child_count():
+		var existing: Label = condition_box.get_child(condition_cursor).get_child(0)
+		existing.text = text
+		existing.add_theme_color_override("font_color", colour)
+		condition_cursor += 1
+		return
 	var chip := PanelContainer.new()
 	chip.theme_type_variation = "PaperPanel"
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -302,6 +312,7 @@ func _condition(text: String, colour: Color) -> void:
 	words.add_theme_font_size_override("font_size", 14)
 	chip.add_child(words)
 	condition_box.add_child(chip)
+	condition_cursor += 1
 
 
 ## What's in the pack or hands (not what's worn: clothes and armour are on the body, D-49).

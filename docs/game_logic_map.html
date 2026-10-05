@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 4 Oct 2026 · codex/player-run-flow-fixes · decisions up to D-65 (phase 3)</p>
+  <p class="stamp">Current as of 5 Oct 2026 · codex/combat-gear · decisions up to D-68</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -192,6 +192,7 @@ tr:last-child td { border-bottom: 0; }
   </table></div>
 </section>
 
+<section id="combat"><h2>Fighting and equipment</h2><p>The client shows anticipation immediately. The backend decides every hit from current gear, direction, reach and obstruction, on a 100 ms active clock. Each hand has its own recovery and a short input buffer. Weapons stay attached to articulated wrists; NPCs show their actual kit. The pack reads backend profiles, including damage and heavy two-hand handling.</p><p>Opponents position and defend deterministically. Their own model still chooses why to fight, flee, help or stop after significant changes. Shields guard toward your facing; a newly raised shield can parry. Walking remains evasion; no stamina or dodge key was added.</p></section>
 <section id="stories">
   <h2>The village storylines</h2>
   <p>Nine stories run in the village. Each has goals, never methods: any way you find counts. Status from the live play-through of 4 Oct 2026 (<code>evals/run_quests_live.py</code>).</p>
@@ -215,6 +216,7 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">5 Oct 2026 · D-66–68</span><p>Codex: responsive combat, attached player/NPC gear, current damage, directional contact/parries and opponent spacing. Prompt versions unchanged. Claude should republish.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 3 (sounds and signs that carry, disguise, digging, barriers, bridges and traps that spring as people walk). Prompt judge_v24.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 2 (moving and placing things, ways blocked so people walk around, containers and mixtures with liquid conserved, sealing, damage and mending). Prompt judge_v23.</p></div>
     <div><span class="stamp">4 Oct 2026 · D-65</span><p>Claude: the world's building blocks, phase 1 (bodies, writing, touch, eating, any named fact), every deed seen, words as a deed go to talk, the gap log. Prompts judge_v22 and person_v6.</p></div>

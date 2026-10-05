@@ -88,7 +88,7 @@ func _run() -> void:
 	# The bar open (typing) doesn't stop the fight: the clock still runs.
 	scene.ui.bar.open()
 	var clock_before := int(scene.run_state.sim_time_ms)
-	await create_timer(1.6).timeout
+	await create_timer(0.35).timeout # Several active 100 ms ticks; standing through four blows is now dangerous.
 	if not check(int(scene.run_state.sim_time_ms) > clock_before, "The clock stopped while the bar was open mid-fight"):
 		return
 	scene.ui.bar.close()
@@ -99,8 +99,9 @@ func _run() -> void:
 			break
 		var toward: Vector2 = hessa.position - scene.player.position
 		scene.facing_row = scene.facing_for(toward.normalized()) if toward.length() > 1.0 else scene.facing_row
-		await scene.fight.strike("right" if attempt % 2 == 0 else "left") # Both fists (D-49).
-		await create_timer(0.75).timeout
+		scene.fight.strike("right")
+		await scene.fight.strike("left") # Both hands can act concurrently and recover independently.
+		await create_timer(0.65).timeout
 	var her: Dictionary = scene.ui.npc_record("npc_hessa_marr")
 	if not check(scene.run_state.player.get("alive", true), "The stranger died to Hessa's fists"):
 		return
@@ -108,7 +109,9 @@ func _run() -> void:
 		return
 	if not check(scene.get_node("NPCs/npc_hessa_marr/PaintedActor").dead, "Hessa isn't shown on the ground"):
 		return
-	if not check((scene.get_node("NPCs/npc_hessa_marr/Nameplate") as Label).text.ends_with("(down)"), "Nameplate doesn't say down"):
+	var ending := "(down)" if her.get("alive", true) else "(dead)"
+	if not check((scene.get_node("NPCs/npc_hessa_marr/Nameplate") as Label).text.ends_with(ending),
+			"Nameplate doesn't match the fight's outcome"):
 		return
 	await screenshot("fight_down")
 	print("FIGHT SMOKE PASSED: %d fight lines, player health %d" % [fight_lines().size(), int(scene.run_state.player.health)])

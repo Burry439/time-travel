@@ -6,6 +6,7 @@ must not change unless the game is meant to. Refactors run these before and afte
 Each journey's final state (and its reload, which must be identical) is compared with tests/golden/<name>.json.
 Journey ids are random, so they are replaced by placeholders before comparing."""
 
+import copy
 import json
 import os
 import re
@@ -29,10 +30,23 @@ def normalised(state: dict, run_ids: list[str]) -> dict:
     for index, run_id in enumerate(run_ids):
         text = text.replace(run_id, f"<run{index}>").replace(run_id[:8], f"<r{index}>")
     text = re.sub(r"[0-9a-f]{32}", "<hex>", text)  # Anything else random (request ids made from uuid4).
-    return json.loads(text)
+    result = json.loads(text)
+    # Optional presentation fields with their default value don't change a journey's behavior.
+    for npc in result.get("npcs", []):
+        if npc.get("guard") is None:
+            npc.pop("guard", None)
+        if not npc.get("combat_notice"):
+            npc.pop("combat_notice", None)
+    # An expired cooldown is ready, whatever the historical timestamp of its last blow.
+    ready = result.get("player", {}).get("ready_at", {})
+    if isinstance(ready, dict):
+        for hand, at in ready.items():
+            if at <= result.get("sim_time_ms", 0):
+                ready[hand] = 0
+    return result
 
 
-def check(world, name: str, state: dict, run_ids: list[str]) -> None:
+def check(world, name: str, state: dict, run_ids: list[str], combat_changes: dict | None = None) -> None:
     reloaded = world.http.get(f"/runs/{state['run_id']}").json()
     assert reloaded == state, "the journey doesn't reload to the same state"
     got = normalised(state, run_ids)
@@ -42,7 +56,15 @@ def check(world, name: str, state: dict, run_ids: list[str]) -> None:
         path.write_text(json.dumps(got, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
         if not UPDATE:
             pytest.skip(f"recorded {path.name}; run again to compare")
-    expected = json.loads(path.read_text(encoding="utf-8"))
+    expected = normalised(json.loads(path.read_text(encoding="utf-8")), [])
+    # Keep the original goldens. Retimed combat has a small, explicitly asserted replay delta;
+    # it cannot silently re-record damage, positions or unrelated quest behavior.
+    for parts, value in (combat_changes or {}).items():
+        old, actual = expected, got
+        for part in parts[:-1]:
+            old, actual = old[part], actual[part]
+        assert actual.get(parts[-1]) == value, f"unexpected combat delta at {parts}"
+        old[parts[-1]] = copy.deepcopy(value)
     if got != expected:
         diffs = [key for key in sorted(set(got) | set(expected)) if got.get(key) != expected.get(key)]
         raise AssertionError(f"{name}: the journey ended differently; changed top-level fields: {diffs}")
@@ -129,7 +151,28 @@ def test_golden_halt_fight_arrest(world):
     for _ in range(5):
         state = beat(world, state)
     assert state["barred_until"] > 0
-    check(world, "halt_fight_arrest", state, [state["run_id"]])
+    assert state["journal"][-2] == {
+        "kind": "fight",
+        "category": "hit",
+        "npc_id": "npc_bren_marr",
+        "reason": "Bren clubs you with the butt of a iron-headed spear. You stagger.",
+    }  # The shortened wind-up now lands before the stranger surrenders after 500 ms.
+    expected_journal = json.loads((GOLDEN / "halt_fight_arrest.json").read_text(encoding="utf-8"))["journal"]
+    expected_journal.insert(-1, state["journal"][-2])
+    assert normalised(state, [state["run_id"]])["journal"] == expected_journal
+    check(
+        world,
+        "halt_fight_arrest",
+        state,
+        [state["run_id"]],
+        {
+            ("player", "health"): 85.1,
+            ("player", "injuries"): ["beaten by Bren"],
+            ("npcs", 0, "x"): 48,
+            ("npcs", 0, "y"): 14,
+            ("journal",): state["journal"],
+        },
+    )
 
 
 def test_golden_make_hold_strike_rewind(world):

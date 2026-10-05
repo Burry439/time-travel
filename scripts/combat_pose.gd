@@ -90,3 +90,23 @@ static func hold_angle(animation: String) -> float:
 static func _ease(x: float) -> float:
 	x = clampf(x, 0.0, 1.0)
 	return x * x * (3.0 - 2.0 * x)
+
+
+## Contact is at the end of anticipation, not 150 ms after the authoritative impact.
+static func hand_pose(animation: String, t: float, windup: float, recovery: float) -> Dictionary:
+	var spec: Dictionary = ATTACKS.get(animation, ATTACKS["punch"])
+	var preparation := minf(1.0, t / maxf(.001, windup * .65))
+	var contact := clampf((t - windup * .65) / maxf(.001, windup * .35), 0.0, 1.0)
+	var returning := clampf((t - windup) / maxf(.001, recovery), 0.0, 1.0)
+	var back := Vector2(-6, -8) * _ease(preparation)
+	var hit := Vector2(18 + float(spec.get("reach", 0)) * .5, -5)
+	var offset := back.lerp(hit, _ease(contact)) if t <= windup else hit.lerp(Vector2.ZERO, _ease(returning))
+	var winding := float(spec.get("wind", -.5)) * .55
+	var striking := float(spec.get("strike", 1.0)) * .4
+	var angle := winding * _ease(preparation)
+	angle = lerpf(angle, striking, _ease(contact)) if t <= windup else lerpf(striking, 0.0, _ease(returning))
+	if spec.has("spins") and t < windup * .65:
+		angle += sin(t / maxf(.001, windup * .65) * TAU * float(spec.spins)) * .6
+	if animation in ["stab", "thrust", "two_hand_thrust", "draw_shoot", "bash"]:
+		angle = 0.0
+	return {"offset": offset, "angle": angle, "lean": torso_lean(animation, minf(t, windup), windup) * (1.0 - _ease(returning))}

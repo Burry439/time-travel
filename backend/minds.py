@@ -51,6 +51,9 @@ def options_for(state: State, npc: Npc) -> dict[str, dict]:
         ("watch", f"{name} stays where they are and keeps a wary eye on the stranger.", None, None),
         ("flee", f"{name} runs away from the stranger to somewhere safe.", "flee", None),
     ]
+    if combat.fighting(state, npc):
+        bases[0] = ("carry_on", f"{name} continues their current fight.", None, None)
+        bases.append(("stop_fighting", f"{name} stops fighting and backs off.", None, None))
     if gatekeeping.can_admit(state, npc):
         bases.append(("admit", f"{name} {gatekeeping.words(state)['admit']}.", None, None))
     if not me.get("guard"):
@@ -369,8 +372,10 @@ def apply_decision(state: State, npc: Npc, answers: dict, now: int, journal: lis
     # agreed to go and pay Hessa sent him back to his stall). Any other choice may still replace the errand.
     on_errand = (my_mind.get("job") or {}).get("kind") in cast.ERRAND_JOBS
     if action == "carry_on":
-        if not on_errand:
+        if not on_errand and not combat.fighting(state, npc):
             cast.set_job(npc, None, now)
+    elif action == "stop_fighting":
+        combat.stop_fighting(state, npc, now)
     elif action == "admit":
         if conversation.admits_now(state, npc, reading):
             agreements.execute(

@@ -394,12 +394,13 @@ func _physics_process(delta: float) -> void:
 			and ui.modal_kind != "death":
 		ui.close_modal_now()
 		ui.bar.open()
-	if in_fight() and gameplay_active and not sync_error and ((request_busy and not intent_pending) or ui.blocks_movement()) \
+	if fight.needs_active_clock() and gameplay_active and not sync_error \
+			and ((request_busy and not intent_pending) or ui.blocks_movement()) \
 			and not ui.guide.is_open(): # The tutorial's cards stop even a fight (D-52).
 		# A fight doesn't wait while you type or think: the clock and the blows run on (D-41).
 		view.animate_people(delta)
 		clock_pending_ms += delta * 1000.0
-		if not movement_sync_active and clock_pending_ms >= 500.0:
+		if not movement_sync_active and clock_pending_ms >= fight.clock_interval_ms():
 			_flush_moves()
 	if not gameplay_active or (request_busy and not intent_pending) or ui.blocks_movement() or sync_error:
 		if scripted_walk: # _walk_along is moving the player.
@@ -414,6 +415,9 @@ func _physics_process(delta: float) -> void:
 	if int(run_state.get("seed_version", 1)) >= 3 and (not in_encounter() or intent_pending):
 		clock_pending_ms += delta * 1000.0 # Face to face, rounds move time instead.
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if fight.limited("move") or run_state.player.get("down", false):
+		direction = Vector2.ZERO
+		player.velocity = Vector2.ZERO
 	var is_running := Input.is_action_pressed("run")
 	if move_queue.size() >= 16:
 		_prof("movement_stalled_frames", Time.get_ticks_usec())
@@ -449,18 +453,18 @@ func _physics_process(delta: float) -> void:
 		ui.note_cell(cell)
 		if not movement_sync_active:
 			_flush_moves()
-	if not movement_sync_active and int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0:
+	if not movement_sync_active and int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= fight.clock_interval_ms():
 		_flush_moves()
 
 
 ## Movement lane: the player's steps (batched) and the clock, one request at a time.
 ## People's thinking runs separately in _flush_minds, so a model never holds up walking or time.
-func _flush_moves() -> void:
-	if movement_sync_active:
+func _flush_moves(for_command := false) -> void:
+	if movement_sync_active or (fight.busy and not for_command):
 		return
 	movement_sync_active = true
 	while gameplay_active and (not move_queue.is_empty() or
-		(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= 500.0)):
+		(int(run_state.get("seed_version", 1)) >= 3 and clock_pending_ms >= fight.clock_interval_ms())):
 		var sending_move := not move_queue.is_empty()
 		var elapsed_ms := 0
 		var body: Dictionary
@@ -476,7 +480,7 @@ func _flush_moves() -> void:
 			body = {"cells": cells, "expected_version": run_state["event_seq"], "running": running,
 				"request_id": request_id("move")}
 		else:
-			elapsed_ms = mini(floori(clock_pending_ms), 1000)
+			elapsed_ms = mini(floori(clock_pending_ms), int(fight.clock_interval_ms()))
 			clock_pending_ms -= float(elapsed_ms)
 			path = "/explore"
 			body = {"elapsed_ms": elapsed_ms, "expected_version": run_state["event_seq"],
@@ -504,6 +508,8 @@ func _flush_moves() -> void:
 				(str(said) if typeof(said) == TYPE_STRING and "gateway" in str(said) else "That path is blocked.")
 				if sending_move else "The clock is reconnecting.")
 			break
+		# One bounded request gives queued hand commands a turn before more movement.
+		break
 	movement_sync_active = false
 
 
@@ -534,12 +540,18 @@ func accept_state(new_state: Dictionary) -> void:
 	last_state_usec = Time.get_ticks_usec()
 	var before := run_state
 	run_state = new_state
+	var sync_at := Time.get_ticks_usec()
 	view.sync()
+	_prof("state world", sync_at)
+	sync_at = Time.get_ticks_usec()
 	fight.sync()
+	_prof("state fight", sync_at)
+	sync_at = Time.get_ticks_usec()
 	ui.device.refresh()
 	ui.guide.refresh()
 	ui.layers.refresh()
 	view.react_to(before)
+	_prof("state panels", sync_at)
 
 
 func toggle_gate() -> void:

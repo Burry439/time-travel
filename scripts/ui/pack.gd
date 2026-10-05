@@ -23,6 +23,7 @@ const BODY_SLOTS := ["head", "body", "arms", "legs", "hands", "feet"]
 func open() -> void:
 	if game.run_state.is_empty() or game.request_busy:
 		return
+	game.fight.clear_buffers()
 	var body: VBoxContainer = ui.begin_modal("Pack & gear", "inventory", Vector2(760, 620))
 	ui.guide.report("pack")
 	if not gear_note.is_empty(): # What the last change let go of, and why (D-57): never silently.
@@ -75,7 +76,10 @@ func open() -> void:
 		row.add_theme_constant_override("separation", 10)
 		body.add_child(row)
 		row.add_child(ui.object_icon(obj, 48))
-		var words: Label = ui.label("%s: %s\n%s" % [SLOT_WORDS[slot], str(obj.name), gear_words(obj)], 15)
+		var slot_name: String = SLOT_WORDS[slot]
+		if slot == "right" and int(game.fight.weapon_spec(obj).get("hands", 1)) == 2:
+			slot_name = "Both hands"
+		var words: Label = ui.label("%s: %s\n%s" % [slot_name, str(obj.name), gear_words(obj)], 15)
 		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(words)
 		var id := str(obj.id)
@@ -133,48 +137,21 @@ func _section(text: String) -> Label:
 
 ## Where a thing can go: worn things where they cover, ammunition in the quiver, anything else in a hand.
 func _slots_for(obj: Dictionary) -> Array:
-	var record = obj.get("gear")
-	if typeof(record) == TYPE_DICTIONARY:
-		match str(record.get("kind", "")):
-			"armour", "clothing":
-				var covers: Array = record.get("covers", [])
-				return covers.filter(func(c) -> bool: return c in BODY_SLOTS).slice(0, 1)
-			"ammo":
-				return ["ammo"]
-			"remedy":
-				return []
-	return ["right", "left"]
+	return game.fight.gear_view(obj).get("slots", [])
 
 
-## How a thing strikes someone who handles it, in plain words (numbers only in developer mode).
+## Backend descriptions include current damage, resolved hand requirements and actual handling.
 func gear_words(obj: Dictionary) -> String:
-	var record = obj.get("gear")
-	if typeof(record) != TYPE_DICTIONARY:
-		return ""
-	var table: Dictionary = game.fight.table
-	var kind := str(record.get("kind", ""))
-	var cls := str(record.get("class", ""))
-	if kind == "weapon" and table.get("weapons", {}).has(cls):
-		var spec: Dictionary = table.weapons[cls]
-		var base := float(spec.get("base", 0))
-		var level := "Deadly" if base >= 45 else "Dangerous" if base >= 28 else "Painful" if base >= 12 else "Feeble"
-		var how: String = {"cut": "cuts", "pierce": "stabs", "blunt": "clubs", "burn": "burns"}.get(str(spec.type), "hits")
-		var reach := "shoots far" if spec.has("range") else "reaches far" if float(spec.reach) >= 2.2 else "close work"
-		var dev := "  [%s: %d, reach %.1f, wind-up %d ms]" % [cls, int(base), float(spec.reach), int(spec.windup_ms)] \
-			if game.run_state.get("mode", "") == "developer" else ""
-		return "%s %s: %s, %s, %s.%s" % [level, spec.name, how, reach, "two hands" if int(spec.hands) == 2 else "one hand", dev]
-	if kind in ["armour", "clothing"] and table.get("armour", {}).has(cls):
-		var spec: Dictionary = table.armour[cls]
-		var cuts := "stops cuts well" if float(spec.cut) >= 0.8 else "turns some cuts" if float(spec.cut) >= 0.35 else "little against a blade"
-		var blows := "blunt blows still get through" if float(spec.blunt) < 0.4 else "softens blows"
-		return "%s: %s; %s." % [str(spec.name).capitalize(), cuts, blows]
-	if kind == "shield":
-		return "A shield: hold its key to raise it against blows from the front."
-	if kind == "remedy" and table.get("remedies", {}).has(cls):
-		return "Treats %s." % ", ".join(PackedStringArray(table.remedies[cls].treats.keys()))
-	if kind == "ammo":
-		return "%d left." % int(obj.get("count", 1))
-	return ""
+	var view: Dictionary = game.fight.gear_view(obj)
+	var words := str(view.get("words", ""))
+	var profile: Dictionary = view.get("profile", {})
+	if profile.get("usable") == false:
+		words += " Needs repair before you can use it."
+	if game.run_state.get("mode", "") == "developer" and not profile.is_empty():
+		words += " [damage %.1f, reach %.1f, wind-up %d ms, recovery %d ms]" % [
+			float(profile.get("damage", 0)), float(profile.get("reach", 0)),
+			int(profile.get("windup_ms", 0)), int(profile.get("recover_ms", 0))]
+	return words
 
 
 func condition_words(condition: Dictionary) -> String:

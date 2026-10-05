@@ -13,3 +13,4 @@ backend/.env
 # Generated sprites for player-created objects (per save)
 data/assets/
 parked/
+evals/results/

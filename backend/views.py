@@ -13,7 +13,9 @@ from fastapi import HTTPException
 from fastapi.routing import APIRoute
 
 import cast
+import effects
 import gatekeeping
+import gear
 import reputation
 import rules
 import stories
@@ -26,6 +28,20 @@ def of(state: State) -> dict:
         "deeds": deeds(state),
         "stories": stories.page(state),
         "standing_words": reputation.STANDING_WORDS,
+        "gear": {
+            obj["id"]: {
+                "profile": gear.weapon(obj),
+                "record": gear.of(obj),
+                "words": gear.words(obj),
+                "slots": gear.slots_for(obj),
+                "equip_seconds": {slot: gear.equip_seconds(obj, slot) for slot in gear.slots_for(obj)},
+            }
+            for obj in state.get("objects", {}).values()
+            if obj.get("holder_id")
+            and not effects.gone(obj)
+            and not effects.unseen_by(obj, "player")
+            and not effects.shut_in(state, obj)
+        },
     }
 
 

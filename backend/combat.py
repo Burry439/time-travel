@@ -15,6 +15,8 @@ import copy
 import math
 
 import cast
+import content
+import effects
 import gear
 import paths
 import perception
@@ -25,24 +27,25 @@ import tuning
 from shapes import Npc, State, Thing
 
 LOG_KEPT = 12
-SHIELD_BASH = {
-    "class": "shield_bash",
-    "type": "blunt",
-    "damage": 10.0,
-    "reach": 1.3,
-    "windup_ms": 450,
-    "recover_ms": 600,
-    "animation": "bash",
-    "edge_hardness": 0.0,
-    "mass": 3.0,
-    "hands": 1,
-    "name": "shield",
-}
+SHIELD_BASH = gear.GEAR["shield_bash"]
+COMBAT = gear.GEAR["combat"]
 # Kept for older callers and tests.
 
 
 def active(state: State) -> dict | None:
     return state.get("fight") or None
+
+
+def stop_fighting(state: State, npc: Npc, now: int) -> None:
+    """Carry out the person's own choice to stop, without changing anyone else's intention."""
+    fight = active(state)
+    if fight:
+        fight["attackers"] = [oid for oid in fight["attackers"] if oid != npc["id"]]
+        fight["swings"].pop(npc["id"], None)
+    npc["guard"] = None
+    cast.watch(npc, now, tuning.WATCH_MS)
+    if fight and not fight["attackers"]:
+        finish(state, now)
 
 
 def fighting(state: State, npc: Npc) -> bool:
@@ -87,13 +90,23 @@ def hand_use(state: State, hand: str) -> tuple[dict, dict | None]:
     return gear.weapon(obj), obj
 
 
-def hand_free(state: State, hand: str) -> str | None:
+def hand_free(state: State, hand: str, person: dict | None = None) -> str | None:
     """Why this hand can't strike now, or None."""
-    player = state["player"]
+    player = state["player"] if person is None else person
     if not player.get("alive", True) or player.get("down"):
         return "You can't: you're on the ground."
+    if effects.limited(player, "hands"):
+        return "Your hands aren't free."
+    obj = gear.held(state, player, hand)
+    kit_id = gear.equipped(player).get(hand)
+    if kit_id and obj is None:
+        return "That equipment is no longer available to your hand."
+    if obj is not None and not gear.functional(obj, shield=gear.of(obj)["kind"] == "shield"):
+        return f"The {obj['name']} can't be used in its current condition."
     right = gear.held(state, player, "right")
-    if hand == "left" and right is not None and gear.of(right)["kind"] == "weapon" and gear.weapon(right)["hands"] == 2:
+    if right is not None and gear.weapon(right)["hands"] == 2 and gear.limb_useless(player, "arm"):
+        return "You can't hold that weapon with both arms."
+    if hand == "left" and right is not None and gear.weapon(right)["hands"] == 2:
         return "Both hands are on your weapon: use Space."
     if hand == "left" and gear.limb_useless(player, "arm"):
         return "Your left arm is useless."
@@ -154,6 +167,7 @@ def start(state: State, npc_ids: list[str], now: int, why: str, lethal: bool | N
         if npc["id"] in fight["attackers"]:
             continue
         fight["attackers"].append(npc["id"])
+        fight.setdefault("gear_seen", {})[npc["id"]] = npc_weapon(state, npc).get("object_id")
         fight.setdefault("lethal", {})[npc["id"]] = reputation.knows_a_crime(npc) if lethal is None else lethal
         cast.set_job(npc, {"kind": "fight", "target": "player", "speed": "run"}, now)
         cast.mind(npc)["facing_player"] = True
@@ -232,6 +246,8 @@ def finish(state: State, now: int) -> None:
         return
     for npc_id in fight["attackers"]:
         npc = cast.find(state["npcs"], npc_id)
+        if npc:
+            npc["guard"] = None
         if npc and not down(npc):
             cast.watch(npc, now, tuning.WATCH_MS)
     state["fight"] = None
@@ -279,12 +295,14 @@ def strike(state: State, hand: str, target_id: str | None, now: int, facing: lis
         "target": npc["id"] if npc else None,
         "started": now,
         "lands_at": now + int(profile["windup_ms"]),
+        "recover_until": now + int(profile["windup_ms"]) + int(profile["recover_ms"]),
         "animation": profile["animation"],
         "object_id": (obj or {}).get("id"),
         "profile": dict(profile),
         "ranged": ranged,
+        "thrown": bool(profile.get("thrown")),
         "aim": aim,
-        "facing": list(facing or [0.0, 1.0]),
+        "facing": _direction(player, npc) if facing is None and npc else list(facing or [0.0, 1.0]),
     }
     fight = active(state) or {}
     if fight.get("spar"):  # A practice bout: the blow is meant for the partner and nobody else (D-57).
@@ -301,6 +319,12 @@ def throw(state: State, hand: str, target_id: str | None, now: int, facing: list
     """Throw what's in a hand (a stone, a knife, a javelin): at someone, or as far as it goes the way the stranger
     faces. It leaves the hand."""
     player = state["player"]
+    problem = hand_free(state, hand)
+    if problem:
+        return {"ok": False, "reason": problem}
+    ready = player.get("ready_at") or {}
+    if hand in (player.get("swings") or {}) or now < (ready.get(hand, 0) if isinstance(ready, dict) else ready):
+        return {"ok": False, "reason": "You're still recovering from the last swing."}
     obj = gear.held(state, player, hand)
     npc = cast.find(state["npcs"], target_id) if target_id else None
     if obj is None:
@@ -316,14 +340,16 @@ def throw(state: State, hand: str, target_id: str | None, now: int, facing: list
         "target": npc["id"] if npc else None,
         "started": now,
         "lands_at": now + int(profile["windup_ms"]),
+        "recover_until": now + int(profile["windup_ms"]) + int(profile["recover_ms"]),
         "animation": "throw",
         "object_id": obj["id"],
         "ranged": True,
         "profile": dict(profile),
         "thrown": True,
         "aim": aim,
+        "facing": _direction(player, npc) if facing is None and npc else list(facing or [0.0, 1.0]),
     }
-    return {"ok": True}
+    return {"ok": True, "swing": player["swings"][hand]}
 
 
 def withdraw(state: State, npc_id: str, now: int) -> None:
@@ -352,14 +378,31 @@ def guard(state: State, raised: bool, facing: list[float] | None, now: int) -> d
     """Hold a shield up (in whichever hand has one), facing a direction; or lower it."""
     player = state["player"]
     shield = next(
-        (h for h in gear.HAND_SLOTS if (o := gear.held(state, player, h)) and gear.of(o)["kind"] == "shield"), None
+        (
+            h
+            for h in gear.HAND_SLOTS
+            if (o := gear.held(state, player, h)) and gear.of(o)["kind"] == "shield" and gear.functional(o, shield=True)
+        ),
+        None,
     )
     if raised and shield is None:
         return {"ok": False, "reason": "You have no shield in hand."}
     if raised and gear.limb_useless(player, "arm"):
         return {"ok": False, "reason": "Your arm is too hurt to hold a shield up."}
+    if raised and (effects.limited(player, "hands") or player.get("down")):
+        return {"ok": False, "reason": "Your hands aren't free to guard."}
+    if raised and shield in (player.get("swings") or {}):
+        return {"ok": False, "reason": "That hand is committed to a blow."}
+    before = player.get("guard") or {}
     player["guard"] = (
-        {"raised": bool(raised), "hand": shield, "facing": list(facing or [0, 1]), "at": now} if raised else None
+        {
+            "raised": bool(raised),
+            "hand": shield,
+            "facing": list(facing or [0, 1]),
+            "at": before.get("at", now) if before.get("raised") else now,
+        }
+        if raised
+        else None
     )
     return {"ok": True}
 
@@ -370,11 +413,122 @@ def _facing_blow(guard_state: dict, defender: tuple[float, float], attacker: tup
     return fx * dx + fy * dy > 0  # The blow comes from the half the shield faces.
 
 
+def _direction(actor: dict, target: dict) -> list[float]:
+    dx, dy = target["x"] - actor["x"], target["y"] - actor["y"]
+    length = math.hypot(dx, dy) or 1.0
+    return [dx / length, dy / length]
+
+
+def _within_arc(actor: dict, target: dict, facing: list | None) -> bool:
+    if facing is None:
+        return True  # Old saved swings have no direction.
+    toward = _direction(actor, target)
+    length = math.hypot(*facing) or 1.0
+    return (
+        cast.distance(actor, target) <= 0.5
+        or sum(a * b for a, b in zip(toward, facing)) / length >= COMBAT["facing_dot"]
+    )
+
+
+def _can_block(state: State, person: dict, attacker: dict) -> bool:
+    guard_state = person.get("guard") or {}
+    shield = gear.held(state, person, guard_state.get("hand", "left"))
+    return bool(
+        guard_state.get("raised")
+        and not person.get("down")
+        and not effects.limited(person, "hands")
+        and not effects.limited(person, "see")
+        and not gear.limb_useless(person, "arm")
+        and shield
+        and gear.of(shield)["kind"] == "shield"
+        and gear.functional(shield, shield=True)
+        and _facing_blow(guard_state, cast.cell(person), cast.cell(attacker))
+    )
+
+
+def _parried(person: dict, at: int) -> bool:
+    return 0 <= at - (person.get("guard") or {}).get("at", -(10**9)) <= COMBAT["parry_ms"]
+
+
 # --- On the clock ----------------------------------------------------------------------------------------------
 
 
 def busy(state: State) -> bool:
     return bool(active(state) or (state["player"].get("swings")) or state.get("projectiles"))
+
+
+def _npc_hand(state: State, npc: Npc) -> str:
+    for hand in gear.HAND_SLOTS:
+        obj = gear.held(state, npc, hand)
+        if obj and gear.of(obj)["kind"] == "weapon":
+            return hand
+    return next((h for h in gear.HAND_SLOTS if gear.held(state, npc, h) is None), "right")
+
+
+def _npc_guard(state: State, fight: dict, npc: Npc, now: int) -> None:
+    """A physical response to a seen wind-up, never private knowledge of a concealed weapon."""
+    shield = gear.shield_of(state, npc)
+    if not shield or not cast.aware(state, npc) or effects.limited(npc, "hands") or effects.limited(npc, "see"):
+        npc["guard"] = None
+        return
+    threat = next(
+        (
+            s
+            for s in (state["player"].get("swings") or {}).values()
+            if s["lands_at"] >= now
+            and _within_arc(state["player"], npc, s.get("facing"))
+            and cast.distance(npc, state["player"]) <= s["profile"]["reach"]
+            and not (s.get("object_id") and effects.unseen_by(state["objects"].get(s["object_id"], {}), npc["id"]))
+            and paths.line_of_sight(state, cast.cell(npc), cast.player_cell(state))
+        ),
+        None,
+    )
+    notices = npc.setdefault("combat_notice", {})
+    if threat is None or npc["id"] in fight["swings"]:
+        notices.pop(npc["id"], None)
+        npc["guard"] = None
+        return
+    stamp = threat["started"]
+    noticed = notices.setdefault(npc["id"], {"swing": stamp, "at": now})
+    if noticed["swing"] != stamp:
+        noticed.update(swing=stamp, at=now)
+    if now - noticed["at"] >= COMBAT["npc_guard_reaction_ms"]:
+        hand = next(h for h in gear.HAND_SLOTS if gear.held(state, npc, h) is shield)
+        old = npc.get("guard") or {}
+        npc["guard"] = {
+            "raised": True,
+            "hand": hand,
+            "facing": _direction(npc, state["player"]),
+            "at": old.get("at", now) if old.get("raised") else now,
+        }
+
+
+def _combat_step(state: State, npc: Npc, here: tuple, reach: float, blocked: paths.Grid) -> tuple | None:
+    """Choose an available approach or spacing cell. The model already chose the fight's purpose."""
+    occupied = {cast.cell(n) for n in state["npcs"] if n["id"] != npc["id"] and not down(n)} | {here}
+    x, y = cast.cell(npc)
+    neighbors = [(x + dx, y + dy) for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1))]
+    choices = [c for c in neighbors if c not in occupied and paths.walkable(c, blocked)]
+    distance = cast.distance(npc, here)
+    desired = max(1.0, reach * COMBAT["spacing_share"])
+    if choices and (distance <= reach or _can_block(state, state["player"], npc)):
+
+        def score(c):
+            front = _facing_blow(state["player"].get("guard") or {}, here, c)
+            side = 1 if (state["player"].get("guard") or {}).get("raised") and front else 0
+            return (side, abs(math.dist(c, here) - desired), c)
+
+        best = min(choices, key=score)
+        if score(best)[:2] < score(cast.cell(npc))[:2]:
+            return best
+        return None
+    avoid = paths.Grid(blocked.blocked | frozenset(occupied - {here}), blocked.walk)
+    return paths.next_step(cast.cell(npc), here, desired, avoid)
+
+
+def _reconsider(state: State, npc: Npc, why: str, now: int) -> None:
+    cast.add_pending(state, npc["id"], "decide", why)
+    cast.mind(npc)["combat_reconsider_at"] = now
 
 
 def _tick_slice(
@@ -384,6 +538,10 @@ def _tick_slice(
     land or miss."""
     end = now + elapsed_ms
     fight_before = active(state)
+    if state["player"].get("swings"):
+        for npc in npcs:
+            if not down(npc):
+                _npc_guard(state, fight_before or {"swings": {}}, npc, end)
     due = [
         (npc, dict(swing), dict(swing.get("profile") or npc_weapon(state, npc)))
         for oid, swing in list((fight_before or {}).get("swings", {}).items())
@@ -393,7 +551,7 @@ def _tick_slice(
     down_before = bool(state["player"].get("down"))
     for npc, swing, profile in due:
         if _bound_weapon(state, npc, swing):
-            _npc_lands(state, fight_before, npc, swing, profile, journal)
+            _npc_lands(state, fight_before, npc, swing, _current_profile(state, npc, swing, profile), journal)
         fight_before["swings"].pop(npc["id"], None)
     alive_after = state["player"].get("alive", True)
     down_after = bool(state["player"].get("down"))
@@ -414,7 +572,17 @@ def _tick_slice(
             fight["attackers"].remove(npc_id)
             fight["swings"].pop(npc_id, None)
             continue
+        job = cast.mind(npc).get("job") or {}
+        if job.get("kind") not in ("fight", "attack"):
+            fight["attackers"].remove(npc_id)
+            fight["swings"].pop(npc_id, None)
+            npc["guard"] = None
+            continue  # Their own decision to flee, fetch help or stop is authoritative.
         profile = npc_weapon(state, npc)
+        prior_gear = fight.setdefault("gear_seen", {}).get(npc_id)
+        if prior_gear and profile.get("object_id") != prior_gear:
+            _reconsider(state, npc, "lost their weapon during the fight", end)
+        fight["gear_seen"][npc_id] = profile.get("object_id")
         reach = profile["reach"]
         distance = cast.distance(npc, here)
         if distance > tuning.GIVE_UP_CELLS:
@@ -432,22 +600,38 @@ def _tick_slice(
             continue
         if swing:
             continue  # Mid wind-up: they're committed to the blow.
-        if distance > reach:  # Close in at a run.
-            controller = npc.get("controller") or {}
+        _npc_guard(state, fight, npc, end)
+        visible = not effects.limited(npc, "see") and paths.line_of_sight(state, cast.cell(npc), here)
+        if visible:
+            fight.setdefault("last_seen", {})[npc_id] = list(here)
+        goal = tuple(fight.get("last_seen", {}).get(npc_id) or cast.cell(npc))
+        if not effects.limited(npc, "move") and visible:
+            controller = npc.setdefault("controller", {})
             carry = controller.get("step_carry_ms", 0) + elapsed_ms
-            while carry >= tuning.RUN_STEP_MS and cast.distance(npc, here) > reach:
+            while carry >= tuning.RUN_STEP_MS:
                 carry -= tuning.RUN_STEP_MS
-                step = paths.next_step(cast.cell(npc), here, reach, blocked)
+                step = _combat_step(state, npc, goal, reach, blocked)
                 if step is None:
                     break
                 npc["x"], npc["y"] = step
-            controller["step_carry_ms"] = carry if cast.distance(npc, here) > reach else 0
-        if cast.distance(npc, here) <= reach and end >= fight.get("recover", {}).get(npc_id, 0):
+            controller["step_carry_ms"] = carry
+        hand = _npc_hand(state, npc)
+        if (
+            cast.distance(npc, goal) <= reach
+            and (visible or npc_id in fight.get("last_seen", {}))
+            and end >= fight.get("recover", {}).get(npc_id, 0)
+            and not hand_free(state, hand, npc)
+            and not (npc.get("guard") or {}).get("raised")
+        ):
+            direction = _direction(npc, {"x": goal[0], "y": goal[1]})
             fight["swings"][npc_id] = {
                 "profile": dict(profile),
-                "object_id": (gear.held(state, npc, "right") or {}).get("id"),
+                "object_id": (gear.held(state, npc, hand) or {}).get("id"),
+                "hand": hand,
+                "facing": direction,
                 "started": end,
                 "lands_at": end + profile["windup_ms"],
+                "recover_until": end + profile["windup_ms"] + profile["recover_ms"],
                 "animation": profile["animation"],
             }
     if active(state) and (not fight["attackers"] or not state["player"].get("alive", True)):
@@ -461,13 +645,29 @@ def _npc_lands(state: State, fight: dict, npc: Npc, swing: dict, profile: dict, 
     arm = _their(state, npc)
     at = swing["lands_at"]
     here, there = cast.player_cell(state), cast.cell(npc)
-    if math.dist(there, here) > profile["reach"] + 0.01:
+    if (
+        math.dist(there, here) > profile["reach"] + 0.01
+        or not _within_arc(npc, player, swing.get("facing"))
+        or not paths.line_of_sight(state, there, here)
+    ):
         _log(state, npc["id"], "miss", f"You step out of reach and {npc['name']}'s blow cuts the air.", at, journal)
         return
     guarding = player.get("guard") or {}
-    if guarding.get("raised") and _facing_blow(guarding, here, there):
-        worn = _wear_shield(state, gear.held(state, player, guarding["hand"]), profile)
-        _log(state, npc["id"], "blocked", f"{npc['name']}'s blow slams into your shield." + worn, at, journal)
+    if _can_block(state, player, npc):
+        parry = _parried(player, at)
+        worn = _wear_shield(state, gear.held(state, player, guarding["hand"]), profile, parry)
+        if parry:
+            fight["recover"][npc["id"]] += COMBAT["parry_recovery_ms"]
+        _log(
+            state,
+            npc["id"],
+            "parried" if parry else "blocked",
+            f"You turn {npc['name']}'s blow aside." + worn
+            if parry
+            else f"{npc['name']}'s blow slams into your shield." + worn,
+            at,
+            journal,
+        )
         return
     if not fight.get("lethal", {}).get(npc["id"], True):  # To subdue, not to kill (D-44).
         blow = min(
@@ -491,6 +691,7 @@ def _npc_lands(state: State, fight: dict, npc: Npc, swing: dict, profile: dict, 
             )
             return
         _log(state, npc["id"], "subdued", f"{npc['name']} knocks you to the ground and pins you there.", at, journal)
+        player["down"] = True  # Pinning follows being down; D-65's restraint law.
         state["subdued_by"] = npc["id"]  # store.advance_people carries out the arrest (it touches the world).
         finish(state, at)
         return
@@ -518,12 +719,14 @@ def _npc_lands(state: State, fight: dict, npc: Npc, swing: dict, profile: dict, 
     )
 
 
-def _wear_shield(state: State, shield: dict | None, profile: dict) -> str:
+def _wear_shield(state: State, shield: dict | None, profile: dict, parry: bool = False) -> str:
     """A blow on a shield wears it; at nothing it splits."""
     if shield is None:
         return ""
     spec = gear.SHIELDS.get(gear.of(shield).get("class") or "improvised", gear.SHIELDS["improvised"])
     wear = profile.get("damage", 10) * gear.GEAR["shield_wear"].get(profile.get("type", "blunt"), 0.5)
+    if parry:
+        wear *= COMBAT["parry_wear"]
     if any("iron" in m for m in shield.get("materials", [])):
         wear /= gear.GEAR["shield_wear"]["iron_rim"]
     left = round(shield.get("shield_hp", spec["hp"]) - wear, 1)
@@ -548,13 +751,16 @@ def _player_swings(state: State, npcs: list[Npc], end: int, journal: list[dict])
         player["swings"].pop(hand)
         if not player.get("alive", True) or not _bound_weapon(state, player, swing):
             continue
+        current = _current_profile(state, player, swing, swing.get("profile") or hand_use(state, hand)[0])
+        swing = {**swing, "profile": current}
         if swing.get("ranged"):
             _launch(state, swing)
         else:
             _player_lands(state, npcs, swing, journal)
         current_profile, _ = hand_use(state, hand)
         profile = swing.get("profile") or current_profile
-        player.setdefault("ready_at", {})[hand] = swing["lands_at"] + int(profile.get("recover_ms", 600))
+        ready = player.setdefault("ready_at", {})
+        ready[hand] = max(ready.get(hand, 0), swing["lands_at"] + int(profile.get("recover_ms", 600)))
 
 
 def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict]) -> None:
@@ -579,7 +785,11 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
     swing["victim_awake"] = not npc.get("down")
     _spar_instead(state, npc, at)
     distance = cast.distance(npc, state["player"])
-    if distance > profile["reach"] + 0.01:
+    if (
+        distance > profile["reach"] + 0.01
+        or not _within_arc(state["player"], npc, swing.get("facing"))
+        or not paths.line_of_sight(state, cast.player_cell(state), cast.cell(npc))
+    ):
         _log(state, "player", "miss", f"You swing at {npc['name']} and hit nothing but air.", at, journal)
         _react(state, npc, "missed", swing, at)
         return
@@ -587,13 +797,32 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
     shield = gear.shield_of(state, npc)
     fight = active(state) or {}
     mid_swing = npc["id"] in (fight.get("swings") or {}) or at < (fight.get("recover") or {}).get(npc["id"], 0)
-    if shield is not None and aware and not npc.get("down") and not mid_swing and profile["class"] != "container":
-        worn = _wear_shield(state, shield, profile)
-        _log(state, "player", "blocked", f"{npc['name']} takes your blow on the {shield['name']}." + worn, at, journal)
+    if (
+        shield is not None
+        and aware
+        and not mid_swing
+        and _can_block(state, npc, state["player"])
+        and profile["class"] != "container"
+    ):
+        parry = _parried(npc, at)
+        worn = _wear_shield(state, shield, profile, parry)
+        if parry:
+            ready = state["player"].setdefault("ready_at", {})
+            ready[swing["hand"]] = at + int(profile["recover_ms"]) + COMBAT["parry_recovery_ms"]
+        _log(
+            state,
+            "player",
+            "parried" if parry else "blocked",
+            f"{npc['name']} takes your blow on the {shield['name']}." + worn,
+            at,
+            journal,
+        )
         _react(state, npc, "deflected", swing, at)
         return
     if profile["class"] == "container":
         outcome = gear.hit(state, npc, profile, family="pour", liquid=obj or {})
+        if (obj or {}).get("water_l", 0) > 0:
+            effects.put_state(npc, "soaked", "wet from the poured water", [], 30, at, "player")
         change_object(state, obj["id"], water_l=0.0)
     else:
         outcome = gear.hit(state, npc, profile, aware=aware)
@@ -608,7 +837,10 @@ def _player_lands(state: State, npcs: list[Npc], swing: dict, journal: list[dict
         )
         if outcome["result"] in ("killed", "knocked_out", "disabled"):
             outcome["result"] = "wounded"
+    health_before = npc.get("health", 100)
     result = gear.apply(npc, outcome, at)
+    if not sparring and not down(npc) and health_before - npc.get("health", 100) >= COMBAT["reconsider_health_step"]:
+        _reconsider(state, npc, "hurt in the fight; decide whether to continue, get help or leave", at)
     if sparring and npc.get("health", 100) <= tuning.SPAR_ENOUGH_AT:
         _log(state, "player", "hit", _blow_words(npc, profile, result, outcome), at, journal)
         end_spar(
@@ -741,6 +973,14 @@ def _react(state: State, npc: Npc, result: str, swing: dict, now: int) -> None:
         if down(npc):
             fight["attackers"] = [a for a in fight["attackers"] if a != npc["id"]]
             fight["swings"].pop(npc["id"], None)
+            for other_id in fight["attackers"]:
+                other = cast.find(state["npcs"], other_id)
+                if (
+                    other
+                    and paths.line_of_sight(state, cast.cell(other), cast.cell(npc))
+                    and not effects.limited(other, "see")
+                ):
+                    _reconsider(state, other, "saw a person fall in the fight", now)
             if cast.card(npc).get("robs"):
                 _robbers_run(state, npc, now)
             if not fight["attackers"]:
@@ -784,7 +1024,7 @@ def _launch(state: State, swing: dict) -> None:
     hand, obj_id = swing["hand"], swing.get("object_id")
     if swing.get("thrown"):
         obj = state["objects"].get(obj_id)
-        profile = gear.thrown(obj) if obj else gear.weapon(None)
+        profile = swing.get("profile") or (gear.thrown(obj) if obj else gear.weapon(None))
         player.setdefault("equipped", {}).pop(hand, None)
         change_object(state, obj_id, holder_id="in_flight")
         flying = obj_id
@@ -792,8 +1032,8 @@ def _launch(state: State, swing: dict) -> None:
         current_profile, _ = hand_use(state, hand)
         profile = swing.get("profile") or current_profile
         ammo_id = gear.equipped(player).get("ammo")
-        ammo = state["objects"].get(ammo_id or "")
-        if ammo is None:
+        ammo = gear.worn(state, player, "ammo")
+        if ammo is None or ammo.get("count", 1) <= 0 or gear.of(ammo).get("class") != profile.get("ammo"):
             return
         left = ammo.get("count", 1) - 1
         change_object(state, ammo_id, count=left)
@@ -803,7 +1043,7 @@ def _launch(state: State, swing: dict) -> None:
         flying = None
         profile = {**profile, "ammo_from": ammo_id}
     start = cast.player_cell(state)
-    aim = tuple(swing["aim"])
+    aim = _flight_end(state, start, tuple(swing["aim"]))
     flight_ms = int(1000 * math.dist(start, aim) / max(1.0, profile.get("speed") or 15))
     state.setdefault("projectiles", []).append(
         {
@@ -820,6 +1060,20 @@ def _launch(state: State, swing: dict) -> None:
             },
         }
     )
+
+
+def _flight_end(state: State, start: tuple, aim: tuple) -> tuple:
+    """The shot lands before the first building, rather than teleporting through it."""
+    if paths.line_of_sight(state, tuple(map(round, start)), tuple(map(round, aim))):
+        return aim
+    last = start
+    steps = max(1, math.ceil(math.dist(start, aim) * 2))
+    for i in range(1, steps + 1):
+        point = tuple(round(a + (b - a) * i / steps) for a, b in zip(start, aim))
+        if point in paths.walls(content.level(state)["map"]):
+            return last
+        last = point
+    return last
 
 
 def _missiles(state: State, npcs: list[Npc], end: int, journal: list[dict]) -> None:
@@ -843,7 +1097,12 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
             default=None,
         )
     )  # Thrown at nobody: whoever is there.
-    hit = npc is not None and npc.get("alive", True) and cast.distance(npc, tuple(shot["to"])) <= tuning.HIT_RADIUS
+    hit = (
+        npc is not None
+        and npc.get("alive", True)
+        and cast.distance(npc, tuple(shot["to"])) <= tuning.HIT_RADIUS
+        and paths.line_of_sight(state, tuple(map(round, shot["from"])), cast.cell(npc))
+    )
     landing = tuple(shot["to"])
     if hit:
         victim_awake = not npc.get("down")
@@ -852,6 +1111,7 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
         aware = cast.aware(state, npc)
         if (
             shield is not None
+            and _can_block(state, npc, {"x": shot["from"][0], "y": shot["from"][1]})
             and aware
             and gear.SHIELDS.get(gear.of(shield).get("class") or "", {}).get("block_ranged")
         ):
@@ -890,10 +1150,31 @@ def _missile_lands(state: State, npcs: list[Npc], shot: dict, journal: list[dict
 
 
 def _bound_weapon(state, actor, swing):
+    if effects.limited(actor, "hands") or actor.get("down"):
+        return False
     if "object_id" not in swing:
         return True  # Compatibility with a hand-built event in old fixtures.
     obj = gear.held(state, actor, swing.get("hand", "right"))
-    return (obj or {}).get("id") == swing["object_id"]
+    bound = (obj or {}).get("id") == swing["object_id"] and (
+        obj is None or gear.functional(obj, shield=gear.of(obj)["kind"] == "shield")
+    )
+    if not bound and actor is not state["player"] and fighting(state, actor):
+        _reconsider(state, actor, "lost the weapon committed to the blow", swing["lands_at"])
+    return bound
+
+
+def _current_profile(state: State, actor: dict, swing: dict, committed: dict) -> dict:
+    """Damage may weaken a committed blow; a repair or replacement never strengthens it midway."""
+    obj = gear.held(state, actor, swing.get("hand", "right"))
+    if obj is None:
+        return committed
+    current = gear.thrown(obj) if swing.get("thrown") else gear.weapon(obj)
+    return {
+        **committed,
+        "damage": min(committed["damage"], current["damage"]),
+        "type": "blunt" if current["type"] == "blunt" else committed["type"],
+        "edge_hardness": min(committed.get("edge_hardness", 0), current.get("edge_hardness", 0)),
+    }
 
 
 def tick(state: State, npcs: list[Npc], elapsed_ms: int, now: int, blocked: paths.Grid, journal: list[dict]) -> None:

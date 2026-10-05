@@ -89,7 +89,7 @@ def arm(state, oid, name, materials, mass, cls, hand="right", length=None, flags
 def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
     stay = open_ground(unit_state(), "npc_bren_marr")
     combat.start(stay, ["npc_bren_marr"], 0, "test", lethal=True)
-    beat(stay)  # In reach: he winds up.
+    beat(stay, 100)  # Observe the wind-up before this faster spear lands.
     started = stay["fight"]["swings"]["npc_bren_marr"]
     spear = combat.npc_weapon(stay, npc(stay, "npc_bren_marr"))
     assert spear["class"] == "short_spear" and started["lands_at"] - started["started"] == spear["windup_ms"]
@@ -100,9 +100,10 @@ def test_a_swing_lands_if_you_stay_and_misses_if_you_step_out_of_reach():
     assert any(c["kind"] == "bleeding" for c in stay["player"]["conditions"])  # ...and it bleeds.
     dodge = open_ground(unit_state(), "npc_bren_marr")
     combat.start(dodge, ["npc_bren_marr"], 0, "test", lethal=True)
-    beat(dodge)
+    beat(dodge, 100)
+    lands_at = dodge["fight"]["swings"]["npc_bren_marr"]["lands_at"]
     dodge["player"].update(x=44)  # Step away while he's winding up.
-    heard = beat(dodge) + beat(dodge)
+    heard = beat(dodge, lands_at - dodge["sim_time_ms"])
     assert dodge["player"].get("health", 100) == 100 and any(h["category"] == "miss" for h in heard)
 
 
@@ -131,7 +132,7 @@ def test_the_same_fight_always_goes_the_same_way():
 
 def test_fists_do_nothing_to_mail_a_little_to_padding_and_hurt_the_unarmoured():
     state = open_ground(unit_state(), "npc_bren_marr", "npc_kade_east")
-    swing(state, "npc_bren_marr")
+    swing(state, "npc_bren_marr", ms=gear.weapon(None)["windup_ms"])
     assert npc(state, "npc_bren_marr").get("health", 100) == 100  # Mail: a fist does nothing.
     assert not combat.strike(state, "right", "npc_kade_east", state["sim_time_ms"])["ok"]  # Still recovering.
     state = open_ground(unit_state(), "npc_kade_east")

@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 
 import content
+import effects
 from shapes import Person, State, Thing
 
 GEAR = content.GEAR
@@ -56,12 +57,15 @@ def edge(obj: Thing | None) -> tuple[str | None, float]:
 
 def _fits(requires: dict, obj: Thing) -> bool:
     flags = set(obj.get("flags") or [])
+    lost = set((obj.get("damage") or {}).get("lost_flags") or [])
     length, mass = obj.get("length_m") or 0.0, obj.get("mass_kg") or 0.0
     if requires.get("sharp") and "sharp_edge" not in flags:
         return False
     if requires.get("hard_edge") and edge(obj)[1] < 2.0:
         return False
-    if requires.get("rigid") and "rigid" not in flags and not _has(obj, ["stone", "iron", "wood", "bone", "bronze"]):
+    if requires.get("rigid") and (
+        "rigid" in lost or "rigid" not in flags and not _has(obj, ["stone", "iron", "wood", "bone", "bronze"])
+    ):
         return False
     if requires.get("flexible") and "flexible" not in flags and "tieable" not in flags:
         return False
@@ -145,6 +149,7 @@ def classify(obj: Thing) -> dict:
         ("dagger", ("weapon", "knife")),
         ("hammer", ("weapon", "hammer")),
         ("club", ("weapon", "club")),
+        ("mace", ("weapon", "mace")),
         ("jerkin", ("armour", "leather")),
         ("gambeson", ("armour", "padded")),
         ("arrow", ("ammo", "arrow")),
@@ -155,6 +160,8 @@ def classify(obj: Thing) -> dict:
     ):
         if word in name:
             guesses.append(guess)
+            if guess in (("weapon", "mace"), ("weapon", "hammer"), ("weapon", "club")):
+                guesses.append(("weapon", "sledge"))
     if obj.get("burning") and length:
         guesses.append(("weapon", "brand"))
     if "container" in flags:
@@ -195,9 +202,9 @@ KIN = {
     "long_spear": ["short_spear"],
     "stake": ["short_spear"],
     "javelin": ["short_spear"],
-    "club": ["mace", "staff", "hand_stone"],
-    "mace": ["club", "hammer"],
-    "hammer": ["mace", "club"],
+    "club": ["mace", "staff", "hand_stone", "sledge"],
+    "mace": ["club", "hammer", "sledge"],
+    "hammer": ["mace", "club", "sledge"],
     "staff": ["club"],
     "hand_stone": ["club"],
     "padded": ["thick", "clothes"],
@@ -247,12 +254,35 @@ def checked(proposed: dict | None, obj: Thing, notes: list[str] | None = None) -
 def of(obj: Thing | None) -> dict:
     if not obj:
         return {"kind": "none", "class": None, "covers": [], "quality": "fair"}
-    return obj.get("gear") or classify(obj)
+    record = obj.get("gear")
+    return record if record and record.get("kind") != "none" else classify(obj)
+
+
+def functional(obj: Thing | None, shield: bool = False) -> bool:
+    """Read D-65's current matter, without rewriting its original class (repair restores that same thing)."""
+    if effects.gone(obj) or obj.get("condition") == "broken":
+        return False
+    lost = (obj.get("damage") or {}).get("lost_flags") or []
+    requires = WEAPONS.get(of(obj).get("class"), {}).get("requires", {})
+    lost_function = "rigid" in lost or requires.get("flexible") and "flexible" in lost
+    lost_function = lost_function or requires.get("container") and "container" in lost
+    return not lost_function and not (shield and obj.get("damage"))
 
 
 def weapon(obj: Thing | None) -> dict:
     """The fighting profile of what's in a hand (None or a non-weapon: fists, or something swung)."""
     record = of(obj)
+    if record["kind"] == "shield":
+        return {
+            **GEAR["shield_bash"],
+            "object_id": obj["id"],
+            "name": obj["name"],
+            "range": None,
+            "ammo": None,
+            "speed": None,
+            "thrown": False,
+            "usable": functional(obj, shield=True),
+        }
     cls = (
         record["class"]
         if record["kind"] == "weapon" and record.get("class") in WEAPONS
@@ -261,7 +291,13 @@ def weapon(obj: Thing | None) -> dict:
     spec = dict(WEAPONS[cls])
     quality = QUALITY.get(record.get("quality", "fair"), 1.0) if obj else 1.0
     damage_type, damage = spec["type"], float(spec["base"])
+    if damage_type == "burn" and spec.get("requires", {}).get("burning") and not obj.get("burning"):
+        damage_type = "blunt"  # An extinguished brand is still a stick; it cannot burn anyone.
     material, hardness = edge(obj)
+    lost = (obj or {}).get("damage") or {}
+    blunted = "sharp_edge" in (lost.get("lost_flags") or []) and damage_type in ("cut", "pierce")
+    if blunted:
+        damage_type, damage = "blunt", damage * 0.5
     if obj is not None and damage_type in ("cut", "pierce"):
         if hardness < 1.0 and damage_type == "cut" or material is None:
             damage_type, damage = "blunt", damage * 0.5  # A wooden "blade" is a club.
@@ -272,14 +308,14 @@ def weapon(obj: Thing | None) -> dict:
         damage *= max(0.5, min(1.6, math.sqrt(ratio)))
     return {
         "class": cls,
-        "name": spec["name"],
+        "name": obj.get("name", spec["name"]) if obj else spec["name"],
         "hands": spec["hands"],
         "type": damage_type,
         "damage": round(damage * quality, 1),
         "reach": spec["reach"],
         "windup_ms": spec["windup_ms"],
         "recover_ms": spec["recover_ms"],
-        "animation": spec["animation"],
+        "animation": "bash" if blunted else spec["animation"],
         "range": spec.get("range"),
         "speed": spec.get("speed"),
         "ammo": spec.get("ammo"),
@@ -287,6 +323,7 @@ def weapon(obj: Thing | None) -> dict:
         "edge_hardness": hardness if damage_type in ("cut", "pierce") else 0.0,
         "mass": (obj or {}).get("mass_kg", 0.5),
         "object_id": (obj or {}).get("id"),
+        "usable": obj is None or functional(obj),
     }
 
 
@@ -331,7 +368,11 @@ def worn(state: State, person: Person, slot: str) -> dict | None:
     obj = state["objects"].get(oid) if oid else None
     return (
         obj
-        if obj is not None and obj.get("holder_id") == owner_key(person) and obj.get("condition") != "broken"
+        if obj is not None
+        and obj.get("holder_id") == owner_key(person)
+        and not effects.gone(obj)
+        and obj.get("condition") != "broken"
+        and not effects.shut_in(state, obj)
         else None
     )
 
@@ -386,7 +427,7 @@ def armour_profile(obj: Thing | None, record: dict) -> dict:
 def shield_of(state: State, person: Person) -> dict | None:
     for hand in HAND_SLOTS:
         obj = held(state, person, hand)
-        if obj and of(obj)["kind"] == "shield":
+        if obj and of(obj)["kind"] == "shield" and functional(obj, shield=True):
             return obj
     return None
 
@@ -836,6 +877,10 @@ def equip(state: State, person: Person, obj: Thing, slot: str | None, fighting: 
             if current[0] in BODY_SLOTS
             else f"You put away the {obj['name']}.",
         }
+    if not functional(obj) or effects.shut_in(state, obj):
+        return {"ok": False, "reason": f"The {obj['name']} can't be used in its current condition."}
+    if effects.limited(person, "hands"):
+        return {"ok": False, "reason": "Your hands aren't free to equip that."}
     if slot not in slots_for(obj):
         return {"ok": False, "reason": f"The {obj['name']} doesn't go there."}
     if fighting and slot in BODY_SLOTS:
@@ -880,6 +925,8 @@ def equip(state: State, person: Person, obj: Thing, slot: str | None, fighting: 
 
 
 def swap_hands(state: State, person: Person) -> dict:
+    if effects.limited(person, "hands"):
+        return {"ok": False, "reason": "Your hands aren't free to change grips."}
     kit = person.setdefault("equipped", {})
     right, left = worn(state, person, "right"), worn(state, person, "left")
     if right is not None and left is not None and right["id"] == left["id"]:

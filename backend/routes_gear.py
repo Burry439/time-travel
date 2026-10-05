@@ -15,6 +15,7 @@ import cast
 import clock
 import combat
 import commands
+import effects
 import gear
 import library
 import perception
@@ -30,7 +31,7 @@ class Strike(BaseModel):
     hand: str = Field(default="right", pattern="^(right|left)$")
     target_id: str | None = Field(default=None, max_length=60)  # Whoever the stranger faces; else the nearest.
     throw: bool = False
-    facing: list[float] = Field(default_factory=lambda: [0.0, 1.0], min_length=2, max_length=2)
+    facing: list[float] | None = Field(default=None, min_length=2, max_length=2)
     expected_version: int = Field(ge=0)
     request_id: str = Field(min_length=1, max_length=100)
 
@@ -183,8 +184,15 @@ def treat(run_id: str, request: Treat):
     with commands.open(run_id, request) as cmd:
         state = cmd.state
         # Allowed mid-fight too (D-51): it takes the hands for as long as it takes, and blows keep coming.
+        if state["player"].get("down") or effects.limited(state["player"], "hands"):
+            return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "Your hands aren't free."}}
         remedy = state["objects"].get(request.object_id)
-        if remedy is None or remedy.get("holder_id") != "player":
+        if (
+            remedy is None
+            or remedy.get("holder_id") != "player"
+            or not gear.functional(remedy)
+            or effects.shut_in(state, remedy)
+        ):
             return {"state": state, "duplicate": False, "treat": {"ok": False, "reason": "You don't have that."}}
         patient = state["player"] if request.patient_id == "player" else cast.find(state["npcs"], request.patient_id)
         if patient is None or not patient.get("alive", True):

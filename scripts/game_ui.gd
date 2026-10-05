@@ -302,6 +302,7 @@ func save_visited() -> void:
 # --- Modal panels -----------------------------------------------------------------------------------
 
 func begin_modal(title: String, kind: String, dims := Vector2(680, 520), scrolling := true) -> VBoxContainer:
+	game.fight.clear_buffers()
 	for child in modal_box.get_children():
 		modal_box.remove_child(child)
 		child.queue_free()

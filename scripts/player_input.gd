@@ -99,8 +99,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			game.ui.card.show_for(str(hover.id))
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventKey and not event.pressed and event.keycode == KEY_F and game.fight.guarding:
-		game.fight.guard(false) # Let go of F: the shield comes down.
+	if event is InputEventKey and not event.pressed and game.fight.guarding and \
+			((event.keycode == KEY_F and game.fight.shield_hand() == "left") or \
+			(event.keycode == KEY_SPACE and game.fight.shield_hand() == "right")):
+		game.fight.guard(false)
 		get_viewport().set_input_as_handled()
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
@@ -138,13 +140,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				_interact()
 		KEY_SPACE:
 			if hands_free:
-				game.fight.strike("right") # Whatever is in the right hand: a blow, a shot, a pour (D-49).
+				if game.fight.shield_hand() == "right":
+					game.fight.guard(true)
+				else:
+					game.fight.strike("right")
 			else:
 				return
 		KEY_F:
 			if not hands_free:
 				return
-			if not game.fight.shield_hand().is_empty():
+			if game.fight.shield_hand() == "left":
 				game.fight.guard(true) # Held: the shield stays up until F is let go.
 			else:
 				game.fight.strike("left")

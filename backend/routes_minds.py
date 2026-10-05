@@ -21,8 +21,10 @@ import actors
 import attempts
 import briefing
 import cast
+import combat
 import commands
 import conversation
+import effects
 import evidence
 import gatekeeping
 import judge_view
@@ -422,8 +424,16 @@ def _personal_reaction(state, pending):
             output_tokens=call.output_tokens,
             error=call.error,
         )
+    visible_state = {
+        **state,
+        "objects": {
+            oid: obj
+            for oid, obj in state["objects"].items()
+            if not effects.unseen_by(obj, npc["id"]) and not effects.shut_in(state, obj)
+        },
+    }
     situation, questions = (
-        _brief(state, npc, pending)
+        _brief(visible_state, npc, pending)
         if pending["kind"] != "told"
         else (minds.situation(state, npc) + "\n" + str(pending.get("message", "")), minds.questions(state, npc))
     )
@@ -433,7 +443,12 @@ def _personal_reaction(state, pending):
         {
             "your_part": pending["kind"],
             "you": persona.sheet_lines(state, npc),
-            "_rules": ["guard"] if cast.card(npc).get("guard") else [],
+            "_rules": (["guard"] if cast.card(npc).get("guard") else [])
+            + (["fight"] if combat.fighting(state, npc) else []),
+            "fight_now": f"{npc['name']} is fighting the stranger right now."
+            if combat.fighting(state, npc)
+            else "No fight of your own.",
+            "what_just_happened": pending.get("why"),
             "can_let_the_stranger_through": gatekeeping.can_admit(state, npc),
             "who_they_would_let_through": gatekeeping.admission_rule(npc),
             "evidence": evidence.held(npc),

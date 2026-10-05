@@ -24,11 +24,18 @@ static var _textures: Dictionary = {}
 static var _cursors: Dictionary = {}
 
 
+static var serif_fonts := {}
+
+
 static func serif(bold := false, italic := false) -> SystemFont:
+	var key := str(bold) + ":" + str(italic)
+	if serif_fonts.has(key):
+		return serif_fonts[key]
 	var font := SystemFont.new()
 	font.font_names = PackedStringArray(["Palatino Linotype", "Book Antiqua", "Palatino", "Georgia", "Serif"])
 	font.font_weight = 700 if bold else 400
 	font.font_italic = italic
+	serif_fonts[key] = font
 	return font
 
 

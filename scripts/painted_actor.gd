@@ -33,6 +33,7 @@ const CAST_ART := {
 			_build()
 
 const CombatPose := preload("res://scripts/combat_pose.gd")
+const ArmRig := preload("res://scripts/arm_rig.gd")
 const PX_PER_METRE := 62.0 # The rig is about 1.75 m tall at 108 px.
 # Where worn things sit, as fractions of a view's painted box: (x, y, width, height).
 # A worn thing is fitted to the width of its part and hangs from the top of it (a mail shirt falls to the knee,
@@ -52,6 +53,8 @@ var hand_points: Array[Dictionary] = [] # Where each hand is, in its arm pivot's
 var held := {}
 var worn := {}
 var held_nodes: Array[Dictionary] = []
+var limbs: Array[Dictionary] = []
+var attacks := {} # One timeline per hand; left and right never replace each other.
 var attack := {} # {hand, animation, windup, t}
 var guarding := false
 var guard_hand := "left"
@@ -142,6 +145,7 @@ func _build() -> void:
 	joint_px.clear()
 	hand_points.clear()
 	held_nodes.clear()
+	limbs.clear()
 	var view_count := 8 if actor_id == "traveler" else 4
 	var sheet := sheet_for(actor_id)
 	for row in view_count:
@@ -159,6 +163,7 @@ func _build() -> void:
 		var rests: Dictionary = {}
 		var pivots_px: Dictionary = {}
 		var hands: Dictionary = {}
+		var arm_data := {}
 		boxes.append(box)
 		# Overlaps are intentional, keeping painted seams hidden at the rest pose.
 		# Anatomy differs by view; each part has its own shoulder/hip pivot.
@@ -191,6 +196,18 @@ func _build() -> void:
 				joint += Vector2(region.size.x * (0.82 if part_name == "left_arm" else 0.18 if part_name == "right_arm" else 0.5), region.size.y * 0.12)
 			pivot.position = joint - center
 			whole.add_child(pivot)
+			if part_name in ["left_arm", "right_arm"]:
+				var hand := "right" if part_name == "right_arm" else "left"
+				var points := ArmRig.anchors(actor_id, row, hand)
+				joint = Vector2(box.position) + points[0] * Vector2(box.size)
+				pivot.position = joint - center
+				arm_data[hand] = ArmRig.install(pivot, atlas, box, points)
+				pivot.z_index = 2 if row in [0, 4, 5] or (hand == "right" and row == 1) or (hand == "left" and row == 3) else -1
+				rig[part_name] = pivot
+				rests[part_name] = pivot.position
+				pivots_px[part_name] = joint
+				hands[part_name] = arm_data[hand].wrist - joint
+				continue
 			var section := Sprite2D.new()
 			section.name = "Art"
 			var texture := AtlasTexture.new()
@@ -205,6 +222,10 @@ func _build() -> void:
 			pivots_px[part_name] = joint
 			if part_name == "left_arm" or part_name == "right_arm":
 				hands[part_name] = Vector2(region.position) + Vector2(region.size.x * 0.5, region.size.y * 0.9) - joint
+		for part_name in ["torso", "hip_bridge", "left_leg", "right_leg"]:
+			(rig[part_name].get_node("Art") as Sprite2D).material = ArmRig.body_mask(atlas, arm_data.right,
+				arm_data.left, box, part_name in ["torso", "hip_bridge"])
+		limbs.append(arm_data)
 		joints.append(rig)
 		rest_positions.append(rests)
 		joint_px.append(pivots_px)
@@ -225,7 +246,7 @@ func set_gear(new_held: Dictionary, new_worn: Dictionary) -> void:
 		# Instance ids, never the texture itself: var_to_str() of a texture writes out every pixel (a 1024 px
 		# held picture took ~0.7 s on every world update, D-51).
 		held_key[hand] = [texture.get_instance_id() if texture else 0, new_held[hand].get("animation"),
-			new_held[hand].get("kind")]
+			new_held[hand].get("kind"), new_held[hand].get("length_m"), new_held[hand].get("hands"), new_held[hand].get("layout")]
 	var keys := str(held_key) + "|" + str(worn_key)
 	if keys == str(get_meta("gear_key", "")):
 		return
@@ -274,9 +295,12 @@ func _apply_gear() -> void:
 	for row in views.size():
 		var rig: Dictionary = joints[row]
 		for part_name in rig:
-			for child in rig[part_name].get_children():
+			var parent: Node = rig[part_name]
+			if part_name in ["right_arm", "left_arm"]:
+				parent = limbs[row]["right" if part_name == "right_arm" else "left"].socket
+			for child in parent.get_children():
 				if child.has_meta("gear"):
-					rig[part_name].remove_child(child)
+					parent.remove_child(child)
 					child.queue_free()
 		var box: Rect2i = boxes[row]
 		# Worn layers, each view from the matching side of its sheet (diagonals use the front or back).
@@ -305,33 +329,63 @@ func _apply_gear() -> void:
 			var spec: Dictionary = held[hand]
 			if spec.get("texture") == null:
 				continue
-			var arm := "right_arm" if hand == "right" else "left_arm"
 			var sprite := Sprite2D.new()
 			sprite.set_meta("gear", true)
 			sprite.texture = spec.texture
 			var size: Vector2 = spec.texture.get_size()
 			var shield := str(spec.get("kind", "")) == "shield"
-			var grip := Vector2.ZERO if shield else Vector2(-size.x * 0.4, size.y * 0.4)
-			sprite.offset = -grip
+			var layout: Dictionary = spec.get("layout", {"grip": size * .5, "axis": -PI / 4.0, "span": size.length()})
+			sprite.centered = false
+			sprite.offset = -(layout.grip as Vector2)
 			var length_px := maxf(18.0, float(spec.get("length_m", 0.4)) * PX_PER_METRE) if not shield else 34.0
-			var span := size.length() if not shield else maxf(size.x, size.y)
+			var span := float(layout.get("span", size.length())) if not shield else maxf(size.x, size.y)
 			var rig_scale: float = views[row].scale.x
 			sprite.scale = Vector2.ONE * (length_px / maxf(span, 1.0)) / maxf(rig_scale, 0.001)
-			sprite.position = hand_points[row].get(arm, Vector2.ZERO)
+			sprite.position = Vector2.ZERO
 			var away := row == 2 or row == 6 or row == 7
 			sprite.z_index = -1 if away else 2
 			if row == 1 or row == 5 or row == 6:
 				sprite.scale.x *= -1.0
-			rig[arm].add_child(sprite)
+			(limbs[row][hand].socket as Node2D).add_child(sprite)
 			nodes[hand] = sprite
 		held_nodes.append(nodes)
 
 
 ## Start a blow with whatever is in that hand, its wind-up stretched over windup_ms so it can be read.
-func play_attack(animation: String, windup_ms: float, hand := "right") -> void:
+func play_attack(animation: String, windup_ms: float, hand := "right", recover_ms := 250.0,
+		elapsed_ms := 0.0, key := "", direction := Vector2.ZERO) -> void:
 	if dead:
 		return
-	attack = {"hand": hand, "animation": animation, "windup": maxf(0.05, windup_ms / 1000.0), "t": 0.0}
+	if not key.is_empty() and str(attacks.get(hand, {}).get("key", "")) == key:
+		return
+	attacks[hand] = {"hand": hand, "animation": animation, "windup": maxf(.05, windup_ms / 1000.0),
+		"recovery": maxf(.05, recover_ms / 1000.0), "t": maxf(0.0, elapsed_ms / 1000.0), "key": key,
+		"direction": direction}
+	attack = attacks[hand] # Compatibility for the original gear smoke and developer probes.
+
+
+func reconcile_attack(swing: Dictionary, elapsed_ms: float) -> void:
+	var hand := str(swing.get("hand", "right"))
+	var key := str(swing.get("started", 0))
+	if attacks.has(hand) and str(attacks[hand].get("key", "")).begins_with("predicted:"):
+		attacks[hand].key = key
+		attacks[hand].windup = maxf(.05, (float(swing.lands_at) - float(swing.started)) / 1000.0)
+		var until := float(swing.get("recover_until", float(swing.lands_at) + float(swing.get("profile", {}).get("recover_ms", 250))))
+		attacks[hand].recovery = maxf(.05, (until - float(swing.lands_at)) / 1000.0)
+		var ahead: Array = swing.get("facing", [0, 1])
+		attacks[hand].direction = Vector2(float(ahead[0]), float(ahead[1]))
+		attacks[hand].anticipation_at = minf(float(attacks[hand].t), float(attacks[hand].windup) * .65)
+		attacks[hand].server_elapsed = maxf(0.0, elapsed_ms / 1000.0)
+		return
+	var forward: Array = swing.get("facing", [0, 1])
+	play_attack(str(swing.get("animation", "punch")), float(swing.lands_at) - float(swing.started), hand,
+		float(swing.get("profile", {}).get("recover_ms", 250)), elapsed_ms, key, Vector2(float(forward[0]), float(forward[1])))
+
+
+func cancel_attack(hand: String) -> void:
+	if attacks.has(hand):
+		attacks[hand].cancel_at = float(attacks[hand].t)
+		attacks[hand].cancel_elapsed = 0.0
 
 
 func set_guard(raised: bool, hand := "left") -> void:
@@ -404,52 +458,83 @@ func set_motion(row: int, mode: String, distance: float, delta: float) -> void:
 
 ## Blows, guarding and how held things sit (D-49), on top of walking and idling.
 func _pose_fighting(rig: Dictionary, delta: float) -> void:
-	# Forward is +x on right-facing views; a positive arm angle swings the hand forward.
-	var forward := -1.0 if facing in [1, 5, 6] else 1.0
+	var forward: Vector2 = ([Vector2.DOWN, Vector2.LEFT, Vector2.UP, Vector2.RIGHT,
+		Vector2(1, 1), Vector2(-1, 1), Vector2(-1, -1), Vector2(1, -1)][facing] as Vector2).normalized()
 	var nodes: Dictionary = held_nodes[facing] if facing < held_nodes.size() else {}
-	for hand in nodes:
-		var sprite: Sprite2D = nodes[hand]
+	var arm_data: Dictionary = limbs[facing]
+	var factor := maxf(views[facing].scale.x, .001)
+	var targets := {}
+	for hand in ["right", "left"]:
+		var info: Dictionary = arm_data[hand]
+		var root: Node2D = info.root
+		var rest: Vector2 = info.wrist - info.shoulder
+		targets[hand] = root.position + rest.rotated(root.rotation)
+	var axes := {}
+	for hand in ["right", "left"]:
 		var spec: Dictionary = held.get(hand, {})
-		var shield := str(spec.get("kind", "")) == "shield"
-		var carry := 0.0 if shield else CombatPose.hold_angle(str(spec.get("animation", "slash")))
-		if facing == 0 or facing == 2:
-			carry -= PI / 4.0 # Front and back views: held upright at the side.
-		sprite.rotation = carry * (1.0 if sprite.scale.x > 0 else -1.0)
-		sprite.position = hand_points[facing].get("right_arm" if hand == "right" else "left_arm", Vector2.ZERO)
-	if guarding:
-		var arm := "left_arm" if guard_hand == "left" else "right_arm"
-		rig[arm].rotation = -1.25 * forward
-		rig["torso"].rotation += 0.03 * forward
-	if attack.is_empty():
-		return
-	attack.t += delta
-	var windup: float = attack.windup
-	var animation: String = attack.animation
-	if attack.t > CombatPose.duration(windup):
-		attack = {}
-		return
-	var angle := CombatPose.arm_angle(animation, attack.t, windup)
-	var striking := "right_arm" if attack.hand == "right" else "left_arm"
-	rig[striking].rotation = -angle * forward
-	if CombatPose.both_arms(animation):
-		var other := "left_arm" if striking == "right_arm" else "right_arm"
-		rig[other].rotation = -angle * forward * 0.85
-	rig["torso"].rotation += CombatPose.torso_lean(animation, attack.t, windup) * forward
-	var sprite: Sprite2D = nodes.get(attack.hand)
-	if sprite:
-		# Thrusts, stabs and shots point the weapon straight where they face; swings carry it round with the arm.
-		var aimed := animation in ["thrust", "two_hand_thrust", "stab", "draw_shoot", "bash"]
-		var arm_turn: float = rig[striking].rotation
-		var target := 0.0 if forward > 0 else PI
-		if facing == 0:
-			target = PI / 2.0
-		elif facing == 2:
-			target = -PI / 2.0
-		var painted_axis := -PI / 4.0 if sprite.scale.x > 0 else -3.0 * PI / 4.0
-		if aimed:
-			sprite.rotation = target - arm_turn - painted_axis
-		var along := Vector2.from_angle((target if aimed else arm_turn + sprite.rotation + painted_axis) - arm_turn)
-		sprite.position += along * CombatPose.reach(animation, attack.t, windup) / maxf(views[facing].scale.x, 0.001)
+		var axis := -PI / 2.0 if facing in [0, 2] else forward.angle() - .45
+		if str(spec.get("kind", "")) == "shield":
+			axis = -PI / 4.0
+		if guarding and guard_hand == hand:
+			targets[hand] += (forward * 10.0 + Vector2(0, -10)) / factor
+		if attacks.has(hand):
+			var blow: Dictionary = attacks[hand]
+			if blow.has("cancel_at"):
+				blow.cancel_elapsed = float(blow.cancel_elapsed) + delta
+			else:
+				if str(blow.get("key", "")).begins_with("predicted:"):
+					blow.t = minf(float(blow.t) + delta, float(blow.windup) * .65)
+				elif blow.has("server_elapsed"):
+					blow.server_elapsed = float(blow.server_elapsed) + delta
+					var elapsed := float(blow.server_elapsed)
+					var start := float(blow.anticipation_at)
+					blow.t = maxf(float(blow.t), start + (float(blow.windup) - start) * elapsed / float(blow.windup)) \
+						if elapsed < float(blow.windup) else elapsed
+				else:
+					blow.t = float(blow.t) + delta
+			if float(blow.get("cancel_elapsed", 0)) >= .12 or float(blow.t) > float(blow.windup) + float(blow.recovery):
+				attacks.erase(hand)
+			else:
+				var aim: Vector2 = blow.get("direction", Vector2.ZERO)
+				if aim == Vector2.ZERO:
+					aim = forward
+				var pose := CombatPose.hand_pose(str(blow.animation), float(blow.t), float(blow.windup), float(blow.recovery))
+				if blow.has("cancel_at"):
+					var blend := 1.0 - clampf(float(blow.cancel_elapsed) / .12, 0.0, 1.0)
+					pose.offset *= blend
+					pose.angle *= blend
+					pose.lean *= blend
+				var offset: Vector2 = pose.offset
+				targets[hand] += (aim * offset.x + Vector2(0, offset.y)) / factor
+				axis = aim.angle() + float(pose.angle) * (-1.0 if facing in [1, 5, 6] else 1.0)
+				rig.torso.rotation += float(pose.lean) * (-1.0 if facing in [1, 5, 6] else 1.0)
+		axes[hand] = axis
+	# One rigid weapon, two wrists: constrain a common transform to both arms' reachable discs.
+	if nodes.has("right") and int(held.get("right", {}).get("hands", 1)) == 2:
+		var sprite: Sprite2D = nodes.right
+		var layout: Dictionary = held.right.get("layout", {})
+		var gap: float = (layout.get("support", Vector2.ZERO) as Vector2).distance_to(layout.get("grip", Vector2.ZERO))
+		var separation := Vector2.from_angle(float(axes.right)) * gap * absf(sprite.scale.y)
+		var primary: Vector2 = targets.right
+		for _pass in 24:
+			primary = ArmRig.constrain(arm_data.right, primary)
+			primary = ArmRig.constrain(arm_data.left, primary + separation) - separation
+		targets.right = primary
+		targets.left = primary + separation
+	for hand in ["right", "left"]:
+		var info: Dictionary = arm_data[hand]
+		# A supporting wrist reaches around the near side even when its shoulder is behind the torso.
+		(info.forearm as Node2D).z_index = 3 if facing in [1, 3] and int(held.get("right", {}).get("hands", 1)) == 2 else 0
+		ArmRig.solve(info, (targets[hand] as Vector2) - (info.root as Node2D).position)
+		if not nodes.has(hand):
+			continue
+		var sprite: Sprite2D = nodes[hand]
+		var layout: Dictionary = held.get(hand, {}).get("layout", {"axis": -PI / 4.0})
+		var painted := Vector2.from_angle(float(layout.get("axis", -PI / 4.0)))
+		if sprite.scale.x < 0:
+			painted.x *= -1.0
+		sprite.rotation = float(axes[hand]) - (info.socket as Node2D).global_rotation - painted.angle()
+	attack = attacks.get("right", attacks.get("left", {}))
 
 
 func play_gesture(kind: String) -> void:
@@ -473,6 +558,8 @@ func die(fall_direction := 1.0) -> void:
 	if dead:
 		return
 	dead = true
+	attacks.clear()
+	attack = {}
 	_hold_still()
 	var tween := create_tween()
 	tween.tween_property(self, "modulate", Color(1.0, 0.5, 0.45), 0.08)
@@ -487,6 +574,8 @@ func knock_down(fall_direction := 1.0, instant := false) -> void:
 	if dead:
 		return
 	dead = true
+	attacks.clear()
+	attack = {}
 	_hold_still()
 	if instant:
 		rotation = fall_direction * PI * 0.47
@@ -502,6 +591,8 @@ func knock_down(fall_direction := 1.0, instant := false) -> void:
 ## Restore a body that died earlier in the journey without replaying the fall.
 func lie_dead(fall_direction := 1.0) -> void:
 	dead = true
+	attacks.clear()
+	attack = {}
 	_hold_still()
 	rotation = fall_direction * PI * 0.47
 	modulate = Color(0.62, 0.6, 0.58)
