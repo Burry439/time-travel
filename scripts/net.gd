@@ -4,7 +4,9 @@ extends Node
 var game: Node2D # The game (scripts/main.gd), whose child this is.
 
 
-const DEFAULT_SERVER := "http://127.0.0.1:8765"
+# Where the game looks when started from the Godot editor (no --server): the demo backend (tools/run_demo.ps1,
+# D-70: 8765 is often another program's, and the editor run silently talked to it).
+const DEFAULT_SERVER := "http://127.0.0.1:8767"
 
 
 var server := DEFAULT_SERVER # --server=URL or GAME_SERVER (tools/check.ps1 runs a throwaway backend).

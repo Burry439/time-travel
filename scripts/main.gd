@@ -268,14 +268,15 @@ func start(mode: String, scenario := "village") -> void:
 	var reply := await net.api(HTTPClient.METHOD_POST, "/runs", {"mode": mode, "scenario": scenario})
 	request_busy = false
 	if not reply["ok"]:
-		message.text = "Backend unavailable. Run tools/run_m0.ps1, then try again."
+		message.text = "The game's backend isn't answering at %s. Start it (tools/run_demo.ps1), then try again." % net.server
 		return
 	enter_run(reply["data"])
 
 
 func _check_health() -> void:
 	var reply := await net.api(HTTPClient.METHOD_GET, "/health")
-	if reply["ok"] and typeof(reply["data"].get("ai")) == TYPE_DICTIONARY:
+	var ours: bool = reply["ok"] and reply["data"].has("seed_version") # Something else may answer on this port.
+	if ours and typeof(reply["data"].get("ai")) == TYPE_DICTIONARY:
 		ai_status = reply["data"]["ai"]
 	if menu.visible:
 		var settings := ConfigFile.new()
@@ -283,7 +284,8 @@ func _check_health() -> void:
 		message.text = ("Local simulation ready. Start or resume a run." + (
 			"" if tutorial_done else "\nNew here? Start with Training.") + (
 			"" if ai_ready() else "\nAI crafting is off: add OPENAI_API_KEY to backend/.env and restart the backend.")
-			) if reply["ok"] else "Start the local backend first: tools/run_m0.ps1"
+			) if ours else (("Something at %s answers, but it isn't this game's backend. " % net.server if reply["ok"] else
+				"The game's backend isn't answering at %s. " % net.server) + "Start it with tools/run_demo.ps1, or pass --server=URL.")
 
 
 func ai_ready() -> bool:
@@ -305,7 +307,7 @@ func resume() -> void:
 	var reply := await net.api(HTTPClient.METHOD_GET, "/runs/" + str(saved["run_id"]))
 	request_busy = false
 	if not reply["ok"]:
-		message.text = "Could not resume. Check that the backend and save database are available."
+		message.text = "Could not resume from %s. Check that the backend and save database are available." % net.server
 		return
 	enter_run(reply["data"])
 
