@@ -2,7 +2,8 @@
 #   ./tools/check.ps1          lint (ruff, gdlint), the game's references (check_refs.py), compile every GDScript,
 #                              backend tests. About a minute.
 #   ./tools/check.ps1 -Full    also every Godot smoke test, against a throwaway stub backend on port 8766 with its
-#                              own database (your game on 8765 and data/demo.sqlite3 are never touched).
+#                              own database (your game on 8765 and data/demo.sqlite3 are never touched). Set
+#                              CHECK_PORT to run a second check at the same time (Claude and Codex in parallel).
 # The pre-commit hook (.githooks/pre-commit) runs the fast part. Set GODOT to your Godot console executable if it
 # isn't at the default path below.
 param([switch]$Full)
@@ -31,7 +32,7 @@ try {
     finally { Pop-Location }
 
     if ($Full) {
-        $port = 8766
+        $port = if ($env:CHECK_PORT) { [int]$env:CHECK_PORT } else { 8766 }
         $db = Join-Path ([IO.Path]::GetTempPath()) "time-travel-check-$PID.sqlite3"
         $env:AI_MODE = 'stub'
         $env:DATABASE_PATH = $db
@@ -50,7 +51,7 @@ try {
             if (-not $ready) { throw "The stub backend on port $port didn't start." }
             foreach ($smoke in Get-ChildItem (Join-Path $root 'tools') -Filter 'smoke_*.gd' | Sort-Object Name) {
                 $name = $smoke.BaseName
-                $out = Join-Path ([IO.Path]::GetTempPath()) "check-$name.txt"
+                $out = Join-Path ([IO.Path]::GetTempPath()) "check-$port-$name.txt"
                 $proc = Start-Process -FilePath $godot -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $out `
                     -RedirectStandardError "$out.err" -ArgumentList @('--path', $root, '--script', "res://tools/$($smoke.Name)")
                 if ($proc.ExitCode -eq 0) { Write-Output "   $name passed" }
