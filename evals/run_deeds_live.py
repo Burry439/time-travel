@@ -123,7 +123,9 @@ def swallow_nails() -> bool:
     hurt = entry.get("hurt_self") or route.state["player"].get("conditions")
     gone = route.state["objects"]["yard_nails"].get("holder_id") == "used"
     note(f"  hurt: {bool(hurt)} | nails used up: {gone}")
-    return bool(hurt) or gone or refused(route)
+    entry = route.state.get("last_action") or {}
+    partly = entry.get("category") == "partial_success" and not gone  # The swallowing step itself refused.
+    return bool(hurt) or gone or refused(route) or partly
 
 
 def tie_up_bren() -> bool:
@@ -231,7 +233,96 @@ def hide_the_bark() -> bool:
     return bool(bark.get("hidden"))
 
 
-CASES = {name: fn for name, fn in globals().items() if callable(fn) and fn.__module__ == __name__ and name not in ("act", "person", "memories", "refused", "main")}
+
+# --- Phase 3: signals and terrain -------------------------------------------------------------------------------------
+
+
+def signalled(route: Route) -> list[str]:
+    return [n["name"] for n in route.state["npcs"] if any(m.get("kind") == "signal" for m in (n.get("mind") or {}).get("memories", []))]
+
+
+def pits(route: Route) -> list[dict]:
+    return [o for o in route.state["objects"].values() if o.get("feature") == "pit" and o.get("holder_id") is None]
+
+
+def shout_for_help() -> bool:
+    route = Route("shout for help")
+    route.walk(48, 60)
+    act(route, "cup my hands round my mouth and shout for help as loud as I can")
+    who = signalled(route)
+    note(f"  heard by: {who}")
+    return bool(who)
+
+
+def mirror_flash() -> bool:
+    route = Route("flash the mirror at the gate")
+    route.walk(81, 32)
+    act(route, "pick up Darin's bronze mirror and flash sunlight off it toward the gate guards")
+    who = signalled(route)
+    note(f"  seen by: {who}")
+    return bool(who) or refused(route)
+
+
+def hooded() -> bool:
+    route = Route("disguise with a linen hood")
+    route.walk(81, 32)
+    act(route, "wrap Darin's linen cloth over my head and shoulders like a hood so people won't know me")
+    states = route.state["player"].get("states", [])
+    note(f"  states: {states}")
+    return any(s["name"] == "disguised" for s in states) or refused(route)
+
+
+def dig_a_pit() -> bool:
+    route = Route("dig a pit with a branch")
+    route.walk(47, 68)
+    route.attempt("pick up the fallen branch")
+    route.walk(51, 66)
+    route.attempt("pick up the flat stone")
+    act(route, "dig a pit about knee deep right next to me, loosening the soil with the branch and scooping it out with the flat stone")
+    found = pits(route)
+    note(f"  pits: {[(o['name'], o.get('depth_m'), o.get('blocks')) for o in found]}")
+    return bool(found) or refused(route)
+
+
+def pit_trap() -> bool:
+    route = Route("cover a pit as a trap")
+    route.walk(47, 68)
+    route.attempt("pick up the fallen branch")
+    route.walk(51, 66)
+    route.attempt("pick up the flat stone")
+    act(route, "dig a pit about knee deep right next to me, loosening the soil with the branch and scooping it out with the flat stone")
+    route.walk(44, 65)
+    route.attempt("pick up the bundle of dry grass")
+    route.walk(50, 66)
+    act(route, "lay the other fallen branch across the pit and spread the dry grass and loose dirt over it so nobody can see it's there")
+    trapped = [o for o in pits(route) if o.get("trap")]
+    note(f"  traps: {[(o['name'], o['trap']) for o in trapped]}")
+    return bool(trapped)
+
+
+def snare() -> bool:
+    route = Route("set a snare")
+    route.walk(48, 67)
+    route.attempt("pick up the fallen branch")
+    route.walk(49, 67)
+    route.attempt("pick up the short cord")
+    act(route, "tie the cord into a running noose snare and peg it down across the ground here with the fallen branch so it pulls tight on an ankle")
+    traps = [o for o in route.state["objects"].values() if o.get("trap")]
+    note(f"  traps: {[(o['name'], o['trap']['name']) for o in traps]}")
+    return bool(traps) or refused(route)
+
+
+def barricade() -> bool:
+    route = Route("barricade the way")
+    route.walk(54, 14)
+    act(route, "build a barricade out of the empty crates and the pair of trestles")
+    built = [o for o in route.state["objects"].values() if o.get("feature") == "structure"]
+    log = route.state["objects"]["log_a"]
+    note(f"  built: {[(o['name'], o.get('blocks')) for o in built]} | log blocks={log.get('blocks')}")
+    return bool(built) or bool(log.get("blocks")) or refused(route)
+
+
+CASES = {name: fn for name, fn in globals().items() if callable(fn) and fn.__module__ == __name__ and name not in ("act", "person", "memories", "refused", "main", "signalled", "pits")}
 
 
 def main() -> None:

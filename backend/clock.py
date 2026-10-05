@@ -321,12 +321,15 @@ def _on_the_job(
         cast.set_job(npc, None, end)
         return
     stop = {"flee": 0.0, "report": 1.5, "attack": 1.5, "vouch": 1.5}.get(job["kind"], job.get("stop", 1.5))
-    if _walk(npc, goal, stop, elapsed_ms, job, blocked):
+    if _walk(npc, goal, stop, elapsed_ms, job, blocked, state):
         _arrived(state, npcs, npc, job, end, journal)
 
 
-def _walk(npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Job, blocked: paths.Grid) -> bool:
-    """Step toward the goal at their pace (running or walking) for this long; whether they're there now."""
+def _walk(
+    npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Job, blocked: paths.Grid, state: State
+) -> bool:
+    """Step toward the goal at their pace (running or walking) for this long; whether they're there now. A hidden trap
+    in the way catches them (D-65)."""
     controller = npc.get("controller") or {}
     carry = controller.get("step_carry_ms", 0) + elapsed_ms
     step_ms = tuning.RUN_STEP_MS if job.get("speed") == "run" else tuning.WALK_STEP_MS
@@ -336,6 +339,8 @@ def _walk(npc: Npc, goal: tuple[int, int], stop: float, elapsed_ms: int, job: Jo
         if step is None:
             break
         npc["x"], npc["y"] = step
+        if effects.spring(state, npc, step, state["sim_time_ms"]):
+            break
     controller["step_carry_ms"] = carry if cast.distance(npc, goal) > stop else 0
     return cast.distance(npc, goal) <= stop
 

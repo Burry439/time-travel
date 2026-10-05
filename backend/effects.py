@@ -9,7 +9,8 @@ lets an effect write into anyone's mind. A block isn't done until all three part
 holds every registered kind to that.
 
 Families (GDD D-65): F bodies, H information, J touch and gesture and the open attribute (phase 1); B place and
-structure, C containers and mixtures, A matter (phase 2). Signals, terrain, fire and processes follow.
+structure, C containers and mixtures, A matter (phase 2); G signals and I terrain (phase 3). Fire and processes
+follow.
 """
 
 from __future__ import annotations
@@ -439,7 +440,7 @@ def _apply_writing(state, effect, now, actor_id, repaint):
 # hidden or in the way are fields on the thing; `settle` keeps them true after every step (contents go where their
 # container goes, a thing picked up is no longer in the way).
 
-FIXED = ("fixture", "fire", "water")  # Features that stay where the map put them.
+FIXED = ("fixture", "fire", "water", "pit", "structure", "trap")  # Stay where the map or the work put them.
 
 
 def gone(obj: dict | None) -> bool:
@@ -644,20 +645,24 @@ def _bears(state: State, under: dict, obj: dict) -> str | None:
     return None
 
 
-@block(
-    "place", "place", ("target_id", "other_id", "relation"), "the judge's view (what's on, under or by what), inspect"
-)
+@block("place", "place", ("target_id",), "the judge's view (what's on, under or by what), inspect")
 def _check_place(state, effect, ctx):
     """Set a thing on, under or beside another thing, or beside a person (a stone under the log, the bowl on the
-    trestles). Into a container is put_in; propped against something is support."""
+    trestles). Into a container is put_in; propped against something is support. With nothing named, on the ground
+    where the actor stands (live: a cord loop "set low across the ground")."""
     obj = _available(ctx, effect["target_id"])
     if obj is None:
         return "a thing within reach"
-    if effect["relation"] not in ("on", "under", "beside"):
-        return "on, under or beside"
     problem = _movable(state, ctx, obj)
     if problem:
         return problem
+    if not effect.get("other_id"):
+        me = actor(state, ctx)
+        effect.update(cell=effect.get("cell") or [me["x"], me["y"]], relation="on")
+        cell = _cell(state, effect, me, tuning.REACH_CELLS + 1)
+        return cell if isinstance(cell, str) else None
+    if effect.get("relation") not in ("on", "under", "beside"):
+        return "on, under or beside"
     found = target(state, ctx, effect["other_id"])
     if found is None or found[1] is obj:
         return "something else within reach to put it by"
@@ -673,6 +678,9 @@ def _check_place(state, effect, ctx):
 
 @reducer("place")
 def _apply_place(state, effect, now, actor_id, repaint):
+    if not effect.get("other_id"):  # On the ground.
+        _loose(state["objects"][effect["target_id"]], x=int(effect["cell"][0]), y=int(effect["cell"][1]))
+        return
     there = person(state, effect["other_id"]) or state["objects"][effect["other_id"]]
     where = spot(state, there) if "x" not in there or there.get("holder_id") else there
     _loose(
@@ -1304,6 +1312,413 @@ def _apply_destroy(state, effect, now, actor_id, repaint):
             "basis_ids": [obj["id"]],
         },
     )
+
+
+# --- Phase 3: signals (G) and terrain (I) ---------------------------------------------------------------------------
+# A signal changes nothing in the world: it is heard or seen. Who notices it is perception's (`signal_of` gives its
+# reach). Terrain is things in the world like any other: a pit, a barrier, a plank bridge, a snare are objects with a
+# feature, a picture and an inspect card; a pit or a barrier is in the way (`blocks`), a bridge over a pit isn't, and a
+# hidden trap springs on whoever steps into its cell (`spring`, called wherever people walk).
+
+DISGUISED = "someone_in_disguise"  # Who did it, for witnesses fooled by a disguise: not the stranger, as they know it.
+
+
+@block("sound", "signals", ("value",), "everyone within earshot hears it, through walls, and decides in their own call")
+def _check_sound(state, effect, ctx):
+    """A shout, a whistle, a bell rung, iron banged on iron: value is what's heard. other_id: what makes it (a bell, a
+    pot and a stick); none: the actor's own voice, which a gag stops."""
+    if effect.get("other_id"):
+        return None if thing(state, ctx, effect["other_id"]) is not None else "what makes the sound, within reach"
+    me = actor(state, ctx)
+    gag = limited(me, "speak")
+    return f"{me.get('name', 'you')} can't cry out: {gag['name']}" if gag else None
+
+
+@block(
+    "visual_signal", "signals", ("value",), "everyone in sight of it, far off, sees it and decides in their own call"
+)
+def _check_visual_signal(state, effect, ctx):
+    """A sign meant to be seen from afar: a mirror's flash, a torch waved, a cloth flown, smoke raised. value: what it
+    shows. other_id: what's used (none: arms waved)."""
+    if effect.get("other_id") and thing(state, ctx, effect["other_id"]) is None:
+        return "what makes the sign, within reach"
+    return None
+
+
+def signal_of(state: State, effect: dict) -> dict | None:
+    """How far a signal carries (cells) and whether it needs a line of sight; None for any other effect. A thing
+    made for noise (sound_loud: a bell, a horn) carries furthest; a voice next; knocking least. A flash, a flame or
+    smoke is seen further than a cloth waved."""
+    used = state["objects"].get(effect.get("other_id") or "") or {}
+    flags = set(used.get("flags", []))
+    if effect["kind"] == "sound":
+        cells = tuning.LOUD_CELLS if "sound_loud" in flags else tuning.KNOCK_CELLS if used else tuning.SHOUT_CELLS
+        return {"kind": "sound", "text": effect["value"].strip()[:200], "cells": cells, "sight": False}
+    if effect["kind"] == "visual_signal":
+        bright = flags & {"reflective", "light_source", "heat_source"} or used.get("burning")
+        cells = tuning.FAR_SIGNAL_CELLS if bright else tuning.SIGNAL_CELLS
+        return {"kind": "visual_signal", "text": effect["value"].strip()[:200], "cells": cells, "sight": True}
+    return None
+
+
+@block(
+    "disguise", "signals", ("value", "other_id"), "whoever doesn't see through it takes the stranger for someone else"
+)
+def _check_disguise(state, effect, ctx):
+    """Look like someone else: a guard's cloak over your clothes, a hood up, mud on the face. value: how they look now
+    ("in a guard's cloak", "hooded like a pilgrim"); other_id: what disguises them, within reach. target_id: who
+    (none: the actor). Anyone who has met them sees through it at arm's reach."""
+    someone = person(state, effect.get("target_id") or ctx.get("actor_id", "player"))
+    if someone is None or not in_reach(state, ctx, someone):
+        return "a living person within reach"
+    if thing(state, ctx, effect["other_id"]) is None:
+        return "something to disguise them with, within reach"
+    if len(effect["value"]) > 120:
+        return "a description of at most 120 characters"
+    return None
+
+
+@reducer("disguise")
+def _apply_disguise(state, effect, now, actor_id, repaint):
+    someone = person(state, effect.get("target_id") or actor_id)
+    put_state(someone, "disguised", effect["value"], [], 0, now, actor_id)
+
+
+def disguise_of(someone: dict | None) -> str | None:
+    found = _state_named(someone or {}, "disguised")
+    return found["value"] if found else None
+
+
+def recognises(npc: dict, someone: dict) -> bool:
+    """Whether this person knows the stranger for who they are: no disguise, or they've met and stand close enough to
+    see the face under it (D-65)."""
+    if not disguise_of(someone):
+        return True
+    mind = npc.get("mind") or {}
+    met = mind.get("met") or ((mind.get("knows") or {}).get("talks") or 0) > 0
+    return bool(met) and cast.distance(npc, someone) <= tuning.READ_CELLS
+
+
+def _ground(state: State, effect: dict, ctx: dict, test=None) -> tuple[int, int] | str:
+    """The open cell a piece of earthwork goes in: the cell given, or the open cell nearest the actor (beside them,
+    not under their feet). Never in the city wall or its gate."""
+    me = actor(state, ctx)
+    if effect.get("cell"):
+        cell = _cell(state, effect, me, tuning.REACH_CELLS + 1)
+        if isinstance(cell, str):
+            return cell
+    else:
+        cell = _nearest_open(
+            state,
+            (me["x"], me["y"]),
+            tuning.REACH_CELLS + 1,
+            lambda c: c != cast.cell(me) and not _occupied(state, c) and (test is None or test(c)),
+        )
+        if cell is None:
+            return "open ground beside you"
+    if paths.in_wall(paths.gate(state), cell):
+        return "ground outside the city wall"
+    if cell != cast.cell(me) and _occupied(state, cell):  # Where you stand is yours to dig or set (live: "here").
+        return "a cell nobody else is standing on"
+    if test is not None and not test(cell):
+        return "ground with nothing dug or built on it"
+    effect["cell"] = [cell[0], cell[1]]
+    return cell
+
+
+def _works_at(state: State, cell: tuple[int, int]) -> list[dict]:
+    """Earthworks and structures in a cell: a pit, a barrier, a snare."""
+    return [
+        o
+        for o in state["objects"].values()
+        if o.get("feature") in ("pit", "structure", "trap") and not gone(o) and (o.get("x"), o.get("y")) == cell
+    ]
+
+
+def _new_thing(state: State, kind: str, name: str, description: str, cell, actor_id: str, now: int, repaint, **fields):
+    """A new thing in the world made by an effect (a pit, a barrier): a full record, painted like any made thing."""
+    import consequences
+
+    number = 1 + sum(1 for o in state["objects"].values() if o.get("feature") == kind)
+    new_id = f"{kind}_{number}_{now // 1000}"
+    while new_id in state["objects"]:
+        number += 1
+        new_id = f"{kind}_{number}_{now // 1000}"
+    materials = fields.pop("materials", ["earth"])
+    obj = {
+        "id": new_id,
+        "name": name.strip().lower()[:60],
+        "description": description.strip()[:400],
+        "x": int(cell[0]),
+        "y": int(cell[1]),
+        "mass_kg": round(fields.pop("mass_kg", 0.0), 3),
+        "owner_id": None,
+        "holder_id": None,
+        "capabilities": [],
+        "bound_to": [],
+        "water_l": 0.0,
+        "capacity_l": 0.0,
+        "condition": "usable",
+        "materials": materials,
+        "flags": fields.pop("flags", []),
+        "length_m": fields.pop("length_m", None),
+        "rated_load_kg": None,
+        "known_capabilities": [],
+        "attributes": [],
+        "revision": 0,
+        "components": fields.pop("components", []),
+        "tools_used": fields.pop("tools_used", []),
+        "feature": kind,
+        "created_by": actor_id,
+        "created_event_id": state.get("event_seq", 0) + 1,
+        "created_text": description.strip()[:200],
+        "placeholder": consequences.placeholder_category(materials),
+        **fields,
+    }
+    state["objects"][new_id] = obj
+    repaint(obj)
+    return obj
+
+
+@block(
+    "dig",
+    "terrain",
+    (),
+    "nobody walks through a pit or trench; the judge and inspect; it can be filled, bridged or hidden",
+)
+def _check_dig(state, effect, ctx):
+    """Dig a hole, pit or trench (name) in open ground: at a cell, or beside the actor. amount: its depth in metres.
+    Deeper than a scrape needs something to dig with (other_id: a spade, a stout stick, a bone)."""
+    depth = float(effect.get("amount") or (tuning.DIG_TOOL_M if effect.get("other_id") else tuning.DIG_HAND_M))
+    if depth <= 0 or depth > tuning.DIG_TOOL_M:
+        return f"a depth up to {tuning.DIG_TOOL_M:g} m"
+    if depth > tuning.DIG_HAND_M:
+        stout = [
+            o
+            for o in [thing(state, ctx, effect.get("other_id"))] + list(ctx["available"].values())
+            if o is not None
+            and (
+                o is not None
+                and o["id"] == effect.get("other_id")
+                or o.get("holder_id") == ctx.get("actor_id", "player")
+            )
+            and {"rigid", "sharp_edge"} & set(o.get("flags", []))
+        ]  # Named, or in hand (live: the branch and stone were held, the judge named neither).
+        if not stout:
+            return "something stout to dig with: hands only scrape a shallow hole"
+        effect["other_id"] = stout[0]["id"]
+    effect["amount"] = depth
+    cell = _ground(state, effect, ctx, lambda c: not _works_at(state, c))
+    return cell if isinstance(cell, str) else None
+
+
+@reducer("dig")
+def _apply_dig(state, effect, now, actor_id, repaint):
+    depth = float(effect["amount"])
+    kind = (effect.get("name") or "pit").strip().lower()[:40] or "pit"
+    _new_thing(
+        state,
+        "pit",
+        kind,
+        (effect.get("value") or f"A {kind} about {depth:g} m deep, the dug earth heaped beside it.").strip(),
+        effect["cell"],
+        actor_id,
+        now,
+        repaint,
+        depth_m=depth,
+        blocks=depth >= tuning.PIT_BLOCKS_M,
+        tools_used=[effect["other_id"]] if effect.get("other_id") else [],
+    )
+
+
+@block("fill_in", "terrain", ("target_id",), "the ground is walkable again")
+def _check_fill_in(state, effect, ctx):
+    """Fill a pit or trench back in with its own heaped earth."""
+    pit = thing(state, ctx, effect["target_id"])
+    if pit is None or pit.get("feature") != "pit":
+        return "a pit or trench within reach"
+    return None
+
+
+@reducer("fill_in")
+def _apply_fill_in(state, effect, now, actor_id, repaint):
+    pit = state["objects"][effect["target_id"]]
+    pit.update(holder_id="used", condition="filled in", blocks=False, hidden=None, trap=None)
+    for bridge in [o for o in state["objects"].values() if o.get("bridges") == pit["id"]]:
+        bridge["bridges"] = None
+
+
+@block(
+    "build",
+    "terrain",
+    ("name", "ids"),
+    "a barrier is in everyone's way; a bridge over a pit lets them cross; the judge and inspect",
+)
+def _check_build(state, effect, ctx):
+    """Put up something out of things at hand (ids, all used in it): a barrier across a way (structure barrier, at a
+    cell or beside other_id), a plank bridge over a pit or trench (structure bridge, other_id: the pit; one thing in
+    it rigid and long enough to span it), or anything else that stands where it's built (structure other)."""
+    ids = list(dict.fromkeys(effect["ids"]))
+    parts = [_available(ctx, i) for i in ids]
+    if any(p is None for p in parts):
+        return "everything it's built from, within reach"
+    for part in parts:
+        problem = _movable(state, ctx, part)
+        if problem:
+            return problem
+    mass = sum(_load(state, p) for p in parts)
+    structure = effect.get("structure") or "other"
+    if structure == "bridge":
+        pit = thing(state, ctx, effect.get("other_id"))
+        if pit is None or pit.get("feature") != "pit":
+            return "a pit or trench within reach to bridge"
+        if not any("rigid" in p.get("flags", []) and (p.get("length_m") or 0) >= tuning.SPAN_M for p in parts):
+            return f"something rigid at least {tuning.SPAN_M:g} m long to span it"
+        return None
+    if structure == "barrier" and mass < tuning.STRUCTURE_MIN_KG:
+        return f"more than {mass:g} kg of stuff to stand in anyone's way"
+    effect["structure"] = structure
+    if effect.get("other_id") and not effect.get("cell"):
+        found = state["objects"].get(effect["other_id"]) or person(state, effect["other_id"])
+        if found is None:
+            return "somewhere to build it"
+        at = spot(state, found)
+        cell = _nearest_open(
+            state, (at["x"], at["y"]), 2.5, lambda c: not _occupied(state, c) and not _works_at(state, c)
+        )
+        if cell is None:
+            return "open ground beside it"
+        effect["cell"] = [cell[0], cell[1]]
+        return None
+    cell = _ground(state, effect, ctx, lambda c: not _works_at(state, c))
+    return cell if isinstance(cell, str) else None
+
+
+@reducer("build")
+def _apply_build(state, effect, now, actor_id, repaint):
+    parts = [state["objects"][i] for i in dict.fromkeys(effect["ids"])]
+    pit = state["objects"].get(effect.get("other_id") or "") if effect.get("structure") == "bridge" else None
+    cell = (pit["x"], pit["y"]) if pit is not None else tuple(effect["cell"])
+    names = ", ".join(p["name"] for p in parts)
+    made = _new_thing(
+        state,
+        "structure",
+        effect["name"],
+        (effect.get("value") or f"A {effect['name']} put up from {names}.").strip(),
+        cell,
+        actor_id,
+        now,
+        repaint,
+        materials=list(dict.fromkeys(m for p in parts for m in p.get("materials", []))) or ["wood"],
+        mass_kg=sum(_load(state, p) for p in parts),
+        flags=sorted({f for p in parts for f in p.get("flags", []) if f in ("rigid", "combustible", "floats")}),
+        components=[p["id"] for p in parts],
+        blocks=effect.get("structure") == "barrier",
+        bridges=pit["id"] if pit is not None else None,
+    )
+    for part in parts:
+        _loose(part, x=cell[0], y=cell[1])
+        part.update(holder_id=f"in:{made['id']}", condition="used up")
+    if pit is not None:
+        pit["blocks"] = False
+
+
+@block(
+    "trap",
+    "terrain",
+    ("name",),
+    "whoever steps into it (not whoever set it) is caught: it holds them, and they remember it",
+)
+def _check_trap(state, effect, ctx):
+    """Set a trap: a pit covered over so nobody sees it (target_id: the pit; ids: what covers it, branches, leaves,
+    straw; its own dug earth needs no id), or a snare or tripwire at a cell or beside the actor (ids: a cord or rope,
+    something tieable). value: what it does to whoever's caught ("drops them into the pit", "catches an ankle")."""
+    effect["ids"] = [i for i in dict.fromkeys(effect.get("ids") or []) if i != effect.get("target_id")]
+    parts = [_available(ctx, i) for i in effect["ids"]]
+    if any(p is None for p in parts) or not (parts or effect.get("target_id")):
+        return "what the trap is made of, within reach"
+    for part in parts:
+        problem = _movable(state, ctx, part)
+        if problem:
+            return problem
+    if effect.get("target_id"):
+        pit = thing(state, ctx, effect["target_id"])
+        if pit is None or pit.get("feature") != "pit":
+            return "a pit within reach to cover"
+        if pit.get("bridges") or pit.get("trap"):
+            return f"the {pit['name']} is already covered"
+        return None
+    if not any({"tieable", "flexible"} & set(p.get("flags", [])) for p in parts):
+        return "a cord, rope or vine for a snare"
+    cell = _ground(state, effect, ctx, lambda c: not _works_at(state, c))
+    return cell if isinstance(cell, str) else None
+
+
+@reducer("trap")
+def _apply_trap(state, effect, now, actor_id, repaint):
+    parts = [state["objects"][i] for i in dict.fromkeys(effect["ids"])]
+    pit = state["objects"].get(effect.get("target_id") or "")
+    spec = {
+        "by": actor_id,
+        "name": effect["name"].strip()[:60],
+        "value": (effect.get("value") or "").strip()[:160],
+        "limits": ["move"],
+        "minutes": tuning.TRAP_CLIMB_MINUTES if pit is not None else tuning.SNARE_FREE_MINUTES,
+        "sprung": False,
+    }
+    if pit is None:
+        pit = _new_thing(
+            state,
+            "trap",
+            effect["name"],
+            (effect.get("value") or f"A {effect['name']} set low on the ground.").strip(),
+            effect["cell"],
+            actor_id,
+            now,
+            repaint,
+            materials=list(dict.fromkeys(m for p in parts for m in p.get("materials", []))),
+            components=[p["id"] for p in parts],
+        )
+    for part in parts:
+        _loose(part, x=pit["x"], y=pit["y"])
+        part.update(holder_id=f"in:{pit['id']}", condition="used up")
+    pit.update(trap=spec, blocks=False, hidden={"by": actor_id, "where": "covered over", "holder": None})
+    pit["revision"] = pit.get("revision", 0) + 1
+
+
+def spring(state: State, someone: dict, cell: tuple[int, int], now: int) -> dict | None:
+    """Someone steps into a cell: a hidden trap there (not their own) catches them. Their state holds them for its
+    minutes; a pit trap is plain to see again and in the way. Returns the trap, or None."""
+    who = someone.get("id", "player")
+    for obj in (state.get("objects") or {}).values():
+        trap = obj.get("trap")
+        if not trap or trap.get("sprung") or trap.get("by") == who or (obj["x"], obj["y"]) != tuple(cell) or gone(obj):
+            continue
+        trap["sprung"] = True
+        put_state(
+            someone, trap["name"], trap["value"] or trap["name"], trap["limits"], trap["minutes"], now, trap["by"]
+        )
+        obj.update(hidden=None, blocks=obj.get("feature") == "pit" and obj.get("depth_m", 0) >= tuning.PIT_BLOCKS_M)
+        obj["revision"] = obj.get("revision", 0) + 1
+        if someone is not state["player"]:
+            memory = {
+                "kind": "trap",
+                "actor_id": trap["by"],
+                "victim": who,
+                "item": obj["name"],
+                "summary": f"You were caught by a hidden {obj['name']}: {trap['value'] or trap['name']}. Someone set it.",
+                "short": f"was caught in a {obj['name']}",
+                "severity": 2,
+                "clarity": "clear",
+                "at": now,
+                "source": "victim",
+            }
+            cast.mind(someone).setdefault("memories", []).append(memory)
+            cast.mind(someone)["fresh"] = memory["short"]
+            if "pending_minds" in state:
+                cast.add_pending(state, who, "decide", "victim")
+        return obj
+    return None
 
 
 def settle(state: State) -> None:

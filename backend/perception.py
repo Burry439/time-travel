@@ -37,7 +37,34 @@ def _describe(state: State, entry: dict) -> list[dict]:
     views = [view for view in views if view]
     if not views and (entry.get("seen_as") or "").strip():  # Any other deed is still seen (D-65): a kiss, a soaking.
         views.append(_deed(entry))
-    return views
+    return views + [_signal(s) for s in entry.get("signals") or []]
+
+
+def _signal(signal: dict) -> dict:
+    """A sound or a sign (D-65): heard through walls within its reach, or seen far off in a line of sight. Whoever
+    can see the stranger knows who made it; everyone else only that it came from somewhere."""
+    heard = signal["kind"] == "sound"
+    text = signal["text"].rstrip(".")
+    return _view(
+        "signal",
+        None,
+        None,
+        (f"The stranger made a signal: {text}.", f"{'heard' if heard else 'saw'} the stranger: {text}"[:80], 1),
+        (f"You {'heard' if heard else 'saw'}: {text}.", f"{'heard' if heard else 'saw'} {text}"[:80], 1),
+        reach=signal["cells"],
+        sight=signal["sight"],
+        think=True,
+    )
+
+
+def _compass(frm, to) -> str:
+    """Which way something is, in words, from where someone stands (north is up the map)."""
+    dx, dy = to[0] - frm[0], to[1] - frm[1]
+    if abs(dx) < 1 and abs(dy) < 1:
+        return "right here"
+    ns = "north" if dy < -abs(dx) / 2 else "south" if dy > abs(dx) / 2 else ""
+    ew = "west" if dx < -abs(dy) / 2 else "east" if dx > abs(dy) / 2 else ""
+    return f"the {ns}{ew}"
 
 
 def _deed(entry: dict) -> dict:
@@ -293,6 +320,11 @@ def perceive(state: State, entry: dict, before: State | None = None) -> list[dic
             npc = observer
             views = []
             blind = effects.limited(npc, "see")  # Asleep or blindfolded: they see nothing (D-65).
+            if seen["kind"] == "signal":
+                memory = _signalled(state, entry, seen, npc, here, blind)
+                if memory:
+                    perceptions.append({"npc_id": npc["id"], "memory": memory, "think": True})
+                continue
             if blind and npc["id"] not in involved:
                 continue
             if (
@@ -335,6 +367,8 @@ def perceive(state: State, entry: dict, before: State | None = None) -> list[dic
                 doer = cast.find(state["npcs"], entry["actor_id"])
                 memory["summary"] = memory["summary"].replace("The stranger", doer["name"])
                 memory["short"] = memory["short"].replace("stranger", doer["name"])
+            else:
+                _unmasked(memory, (before or state)["player"], npc)
             if "works" in seen:
                 memory["works"] = seen["works"]
             if seen.get("wonder") and clarity == "clear":
@@ -350,6 +384,45 @@ def perceive(state: State, entry: dict, before: State | None = None) -> list[dic
             perceptions.append({"npc_id": npc["id"], "memory": memory, "think": seen.get("think", True)})
     evidence.record(state, entry, perceptions)
     return perceptions
+
+
+def _unmasked(memory: dict, stranger: dict, npc: dict) -> None:
+    """A disguised stranger (D-65): whoever doesn't see through it remembers someone else doing it, so it isn't held
+    against the stranger as they know them."""
+    mask = effects.disguise_of(stranger)
+    if mask and not effects.recognises(npc, stranger):
+        memory["summary"] = memory["summary"].replace("The stranger", f"Someone {mask}")
+        memory["short"] = memory["short"].replace("the stranger", f"someone {mask}")
+        memory["actor_id"] = effects.DISGUISED
+
+
+def _signalled(state: State, entry: dict, seen: dict, npc: dict, here: tuple, blind) -> dict | None:
+    """What one person makes of a sound or a sign: heard within its reach (walls don't stop it, and the blindfolded
+    hear too), or seen within its reach in a line of sight. Seeing the stranger at it, they know who; otherwise
+    only which way it came from."""
+    far = cast.distance(npc, here)
+    in_sight = not blind and paths.line_of_sight(state, cast.cell(npc), here)
+    if far > seen["reach"] or (seen["sight"] and not in_sight):
+        return None
+    knows = in_sight and far <= tuning.SIGHT_CELLS
+    view = dict(seen["clear" if knows else "vague"])
+    if not knows:
+        view["summary"] = view["summary"].rstrip(".") + f", from {_compass(cast.cell(npc), here)}."
+    memory = {
+        "kind": "signal",
+        "actor_id": entry.get("actor_id", "player") if knows else None,
+        "victim": None,
+        "item": None,
+        **view,
+        "clarity": "clear" if knows else "vague",
+        "at": entry.get("sim_time_ms", state["sim_time_ms"]),
+        "event": entry.get("event_id"),
+        "step_number": entry.get("step_number", 1),
+        "source": "witnessed",
+    }
+    if knows and entry.get("actor_id", "player") == "player":
+        _unmasked(memory, state["player"], npc)
+    return memory
 
 
 def apply_perceptions(state: State, perceptions: list[dict]) -> None:
@@ -382,7 +455,7 @@ def apply_perceptions(state: State, perceptions: list[dict]) -> None:
         p["npc_id"]
         for p in perceptions
         if p["memory"]["kind"] == "violence"
-        and p["memory"].get("actor_id", "player") == "player"
+        and p["memory"].get("actor_id", "player") in ("player", effects.DISGUISED)
         and (cast.mind(cast.find(state["npcs"], p["npc_id"])).get("standing_plan") or {}).get("defend")
         and not cast.find(state["npcs"], p["npc_id"]).get("down")
         and cast.find(state["npcs"], p["npc_id"]).get("alive", True)

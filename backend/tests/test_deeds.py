@@ -17,6 +17,7 @@ import judge_view
 import npc_sim
 import paths
 import rounds
+import tuning
 from ai import judge
 
 HESSA, BREN = "npc_hessa_marr", "npc_bren_marr"
@@ -38,7 +39,8 @@ def test_every_block_has_a_law_a_reducer_and_a_consumer():
     for kind, block in effects.REGISTRY.items():
         assert block.family and block.noticed_by and block.check and block.apply, kind
         silent = block.apply is effects._no_change
-        assert not silent or kind in ("touch", "gesture"), f"{kind} changes nothing in the world"
+        # Seen or heard, and nothing else: the people it reaches decide what it means (perception).
+        assert not silent or kind in ("touch", "gesture", "sound", "visual_signal"), f"{kind} changes nothing"
 
 
 def test_water_over_bren_soaks_him_and_he_remembers_it():
@@ -484,3 +486,174 @@ def test_water_consumed_is_drunk_not_used_up():
     deed(state, {"kind": "consume", "target_id": "trough_hessa"})
     assert state["objects"]["trough_hessa"]["water_l"] == 79.7 and state["objects"]["trough_hessa"]["holder_id"] is None
     assert state["player"]["states"][0]["name"] == "drank"
+
+
+# --- Phase 3: signals and terrain ------------------------------------------------------------------------------------
+
+MARA = "npc_mara_venn"
+
+
+def hidden_from(npc_id, near=12, far=20):
+    """A fresh world with the stranger out of sight of someone (a building between), near..far cells away."""
+    state = fresh_state()
+    who = cast.find(state["npcs"], npc_id)
+    grid = paths.grid(state)
+    for x in range(who["x"] - far, who["x"] + far + 1):
+        for y in range(who["y"] - far, who["y"] + far + 1):
+            d = ((x - who["x"]) ** 2 + (y - who["y"]) ** 2) ** 0.5
+            if near <= d <= far and grid.walkable((x, y)) and not paths.line_of_sight(state, (x, y), cast.cell(who)):
+                state["player"].update(x=x, y=y)
+                return state
+    raise AssertionError("no hidden cell")
+
+
+def heard(state, npc_id):
+    return [
+        m for m in (cast.find(state["npcs"], npc_id).get("mind") or {}).get("memories", []) if m["kind"] == "signal"
+    ]
+
+
+def test_a_shout_is_heard_through_walls_and_they_know_only_which_way_it_came_from():
+    state = hidden_from(MARA)
+    deed(state, {"kind": "sound", "value": "a long shout for help"})
+    memory = heard(state, MARA)[-1]
+    assert "shout for help" in memory["summary"] and "from the" in memory["summary"]
+    assert memory["actor_id"] is None  # Not seen: not known to be the stranger.
+    assert any(p["npc_id"] == MARA for p in state["pending_minds"])  # They decide what to do about it.
+    assert not heard(state, "npc_roderic_vale")  # Too far off.
+
+
+def test_a_gag_stops_a_shout_but_not_a_bell():
+    state = beside(BREN)
+    state["player"]["states"] = [
+        {"name": "gagged", "value": "", "limits": ["speak"], "since": 0, "until": None, "by": BREN}
+    ]
+    assert "can't cry out" in refused(state, {"kind": "sound", "value": "help!"})
+    state["objects"]["cup_hessa"].update(x=state["player"]["x"], y=state["player"]["y"], flags=["rigid", "sound_loud"])
+    deed(state, {"kind": "sound", "value": "a clanging", "other_id": "cup_hessa"})
+    assert heard(state, "npc_roderic_vale")
+
+
+def test_a_mirror_flash_is_seen_far_off_but_only_in_a_line_of_sight():
+    state = fresh_state(81, 32)  # Beside Darin's polished mirror.
+    deed(state, {"kind": "visual_signal", "value": "a bright flash of sunlight", "other_id": "mirror_darin"})
+    seen = {n["id"] for n in state["npcs"] if heard(state, n["id"])}
+    for npc in state["npcs"]:
+        far = cast.distance(npc, state["player"])
+        sight = paths.line_of_sight(state, cast.cell(npc), (81, 32))
+        assert (npc["id"] in seen) == (far <= tuning.FAR_SIGNAL_CELLS and sight), npc["id"]
+
+
+def test_in_disguise_a_deed_is_pinned_on_someone_else_except_by_those_who_know_your_face():
+    state = beside(HESSA)
+    state["objects"]["cloth_darin"].update(holder_id="player")
+    deed(state, {"kind": "disguise", "other_id": "cloth_darin", "value": "wrapped in a linen hood"})
+    assert effects.disguise_of(state["player"]) == "wrapped in a linen hood"
+    cast.mind(cast.find(state["npcs"], HESSA))["met"] = True
+    deed(state, {"kind": "touch", "target_id": HESSA}, seen_as="The stranger pinches Hessa's cheek.")
+    hessa = cast.find(state["npcs"], HESSA)
+    assert [m for m in hessa["mind"]["memories"] if m["kind"] == "deed"][-1]["summary"].startswith("The stranger")
+    unmet = cast.find(state["npcs"], "npc_darin_ko")
+    unmet.update(x=state["player"]["x"] + 4, y=state["player"]["y"])
+    commit(state, other([{"kind": "gesture"}], "The stranger makes a rude sign."))
+    rude = [m for m in unmet["mind"]["memories"] if m["kind"] == "deed"][-1]
+    assert rude["summary"].startswith("Someone wrapped in a linen hood") and rude["actor_id"] == effects.DISGUISED
+    assert any(
+        "Someone wrapped in a linen hood" in line for line in briefing.world_as_seen(state, unmet)["what_you_can_see"]
+    )
+
+
+def test_a_pit_dug_with_a_stick_is_in_the_way_until_it_is_filled_in():
+    state = fresh_state(48, 68)
+    assert "something stout" in refused(state, {"kind": "dig", "amount": 1.0})  # Bare hands only scrape.
+    state["objects"]["branch_a"]["holder_id"] = "player"
+    deed(state, {"kind": "dig", "name": "pit", "amount": 1.0, "cell": [49, 68]})  # The branch in hand (live).
+    pit = next(o for o in state["objects"].values() if o.get("feature") == "pit")
+    assert (pit["x"], pit["y"]) == (49, 68) and pit["blocks"] and pit["sprite_asset_id"]
+    assert not paths.grid(state).walkable((49, 68))
+    deed(state, {"kind": "fill_in", "target_id": pit["id"]})
+    assert paths.grid(state).walkable((49, 68)) and pit["condition"] == "filled in"
+
+
+def test_a_plank_bridges_a_pit_and_a_barrier_closes_a_way():
+    state = fresh_state(64, 29)
+    state["objects"]["branch_a"].update(holder_id="player")
+    deed(state, {"kind": "dig", "amount": 1.0, "other_id": "branch_a", "cell": [65, 30]})
+    pit = next(o for o in state["objects"].values() if o.get("feature") == "pit")
+    assert "rigid at least" in refused(
+        state, {"kind": "build", "name": "bridge", "ids": ["rope_tomas"], "structure": "bridge", "other_id": pit["id"]}
+    )
+    deed(
+        state,
+        {"kind": "build", "name": "plank bridge", "ids": ["wood_tomas"], "structure": "bridge", "other_id": pit["id"]},
+    )
+    assert paths.grid(state).walkable((65, 30)) and state["objects"]["wood_tomas"]["holder_id"].startswith("in:")
+    assert "more than" in refused(
+        state, {"kind": "build", "name": "fence", "ids": ["rope_tomas"], "structure": "barrier"}
+    )
+    deed(
+        state,
+        {
+            "kind": "build",
+            "name": "barricade",
+            "ids": ["ladder_tomas", "fulcrum_tomas"],
+            "structure": "barrier",
+            "cell": [63, 29],
+        },
+    )
+    assert not paths.grid(state).walkable((63, 29))
+    assert any(c["id"] == "ladder_tomas" and c["how"] == "used up" for c in state["last_action"]["property"])
+
+
+def test_a_covered_pit_catches_someone_walking_their_round_but_not_whoever_dug_it():
+    state = fresh_state(36, 53)
+    state["objects"]["branch_a"].update(holder_id="player")
+    state["objects"]["leaves_a"].update(holder_id="player")
+    deed(state, {"kind": "dig", "amount": 1.0, "other_id": "branch_a", "cell": [37, 51]})
+    pit = next(o for o in state["objects"].values() if o.get("feature") == "pit")
+    deed(
+        state,
+        {
+            "kind": "trap",
+            "name": "fallen into a pit",
+            "ids": ["leaves_a"],
+            "target_id": pit["id"],
+            "value": "drops them into the pit",
+        },
+    )
+    assert pit["hidden"] and not pit["blocks"] and paths.grid(state).walkable((37, 51))
+    hessa = cast.find(state["npcs"], HESSA)
+    assert all("covered" not in line for line in briefing.world_as_seen(state, hessa).get("what_you_can_see", []))
+    assert effects.spring(state, state["player"], (37, 51), 0) is None  # The one who set it knows where it is.
+    hessa["controller"].update(
+        activity="walk", source="routine", path=[[35, 51], [36, 51], [37, 51], [38, 51]], step_ms=100
+    )
+    moved = cast.find(npc_sim.advance_npcs(state, [hessa], 500, state["sim_time_ms"]), HESSA)
+    assert (moved["x"], moved["y"]) == (37, 51) and moved["states"][0]["name"] == "fallen into a pit"
+    assert "move" in moved["states"][0]["limits"] and moved["mind"]["memories"][-1]["kind"] == "trap"
+    assert pit["trap"]["sprung"] and pit["blocks"] and not pit["hidden"]
+
+
+@pytest.mark.parametrize(
+    "at, effect, problem",
+    [
+        ((48, 68), {"kind": "dig", "amount": 3, "other_id": "branch_a"}, "depth up to"),
+        ((48, 68), {"kind": "trap", "name": "snare", "ids": ["stone_a"]}, "cord, rope or vine"),
+        ((48, 68), {"kind": "visual_signal", "value": "x", "other_id": "mirror_darin"}, "within reach"),
+        ((48, 68), {"kind": "disguise", "value": "as a guard", "other_id": "mail_bren"}, "to disguise them with"),
+        ((48, 68), {"kind": "fill_in", "target_id": "stone_a"}, "a pit or trench"),
+    ],
+)
+def test_the_phase_three_laws_refuse_what_the_world_cannot_do(at, effect, problem):
+    state = fresh_state(*at)
+    state["objects"]["branch_a"]["holder_id"] = "player"
+    assert problem in refused(state, effect)
+
+
+def test_a_thing_placed_with_nothing_named_goes_on_the_ground_where_you_stand():
+    """Live: a cord loop "set low across the ground" came back as place with no other_id."""
+    state = fresh_state(49, 67)
+    state["objects"]["cord_a"]["holder_id"] = "player"
+    deed(state, {"kind": "place", "target_id": "cord_a", "relation": "on"})
+    cord = state["objects"]["cord_a"]
+    assert cord["holder_id"] is None and (cord["x"], cord["y"]) == (49, 67)

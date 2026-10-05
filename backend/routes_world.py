@@ -200,6 +200,10 @@ def move(run_id: str, request: Move):
             accepted.append([x, y])
             if paths.arrived(state, (x, y)):
                 break  # Inside the city.
+            caught = effects.spring(state, state["player"], (x, y), state["sim_time_ms"])
+            if caught:  # A hidden trap (D-65): the stranger is caught where they stepped.
+                problem = (409, f"You're caught: {caught['name']}.")
+                break
         if not accepted:
             raise HTTPException(*problem)
         tick = state["sim_time_ms"] // 1000  # Walking takes no clock time: the exploration clock runs alongside.

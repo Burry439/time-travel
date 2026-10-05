@@ -19,6 +19,18 @@ MOVE_CELLS = 8.0  # How far a thing is shifted in one step (D-65).
 BLOCK_MIN_KG = 5.0  # Big enough to stand in anyone's way (or 1.5 m long) (D-65).
 HIDE_LOOSE_KG = 1.0  # Small enough to tuck away with nothing to hide it under (D-65).
 SEALANT_MAX_KG = 1.0  # A stopper, a lump of resin or clay (D-65).
+SHOUT_CELLS = 25.0  # How far a shout carries, through walls (D-65).
+LOUD_CELLS = 45.0  # A thing made for noise: a bell, a horn (D-65).
+KNOCK_CELLS = 15.0  # Banging or knocking on something (D-65).
+SIGNAL_CELLS = 30.0  # A cloth waved or arms flailed, seen in a line of sight (D-65).
+FAR_SIGNAL_CELLS = 45.0  # A flash, a flame or smoke, seen in a line of sight (D-65).
+DIG_HAND_M = 0.3  # Deepest scrape with bare hands (D-65).
+DIG_TOOL_M = 1.5  # Deepest pit one step digs, with something to dig with (D-65).
+PIT_BLOCKS_M = 0.5  # A pit this deep is in everyone's way (D-65).
+STRUCTURE_MIN_KG = 10.0  # A barrier needs at least this much stuff in it (D-65).
+SPAN_M = 1.5  # A plank bridge over a pit needs something rigid this long (D-65).
+TRAP_CLIMB_MINUTES = 10  # Climbing out of a pit trap (D-65).
+SNARE_FREE_MINUTES = 30  # Working free of a snare alone (D-65).
 CLEAR_VIEW_CELLS = (
     10.0  # Closer than this, a witness sees exactly what happened; further, only a scuffle (D-55: was 5).
 )

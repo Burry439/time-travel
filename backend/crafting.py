@@ -290,7 +290,9 @@ def _with_effects(state: State, judged: dict, available: dict, verdict: dict) ->
         # may call it theft or damage; using isn't taking, D-46).
         claims: dict[str, str] = {}
         for effect in proposed:  # The gravest thing done to each (moved, then smashed: smashed).
-            for role, thing_id in (("target", effect.get("target_id")), ("other", effect.get("other_id"))):
+            roles = [("target", effect.get("target_id")), ("other", effect.get("other_id"))]
+            roles += [("ids", i) for i in effect.get("ids") or []]
+            for role, thing_id in roles:
                 how = EFFECT_PROPERTY.get((effect["kind"], role), "used" if role == "target" else None)
                 if how and (thing_id in available or thing_id in water):
                     if GRAVITY.index(how) < GRAVITY.index(claims.get(thing_id, "used")) or thing_id not in claims:
@@ -326,6 +328,9 @@ EFFECT_PROPERTY = {
     ("seal", "other"): "used up",
     ("soak", "other"): "used",
     ("put_in", "other"): "used",
+    ("disguise", "other"): "used",
+    ("build", "ids"): "used up",
+    ("trap", "ids"): "used up",
 }
 GRAVITY = ("destroyed", "damaged", "used up", "taken", "hid", "fouled", "used")
 
@@ -398,7 +403,9 @@ def _walk_targets(state: State, action: str, judged: dict, available: dict) -> l
     if harm and harm.get("method", "melee") != "thrown" and harm.get("weapon_id"):
         ids = [harm["weapon_id"]]
     deed = judged.get("effects") or []  # Whatever its effects work on: walk there first (D-65).
-    ids += judged.get("resource_ids", []) + [i for e in deed for i in (e.get("target_id"), e.get("other_id")) if i]
+    ids += judged.get("resource_ids", []) + [
+        i for e in deed for i in (e.get("target_id"), e.get("other_id"), *(e.get("ids") or [])) if i
+    ]
     cells = [
         (available[i]["x"], available[i]["y"])
         for i in _dedupe(ids)

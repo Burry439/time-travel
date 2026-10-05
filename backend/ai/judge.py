@@ -22,7 +22,8 @@ from . import config
 # v21 (D-64): reachable work, existing bindings and already held prerequisites (v20 was discarded).
 # v22 (D-65): the world's building blocks (effects on any step), seen_as, and words typed as a deed.
 # v23 (D-65 phase 2): place and structure, containers and mixtures, matter.
-PROMPT_VERSION = "judge_v23"
+# v24 (D-65 phase 3): signals and terrain.
+PROMPT_VERSION = "judge_v24"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[
@@ -102,6 +103,14 @@ EffectKind = Literal[
     "damage",
     "repair",
     "destroy",
+    # Phase 3: signals and terrain.
+    "sound",
+    "visual_signal",
+    "disguise",
+    "dig",
+    "fill_in",
+    "build",
+    "trap",
 ]
 
 
@@ -122,6 +131,8 @@ class PhysicalEffect(BaseModel):
     relation: Literal["on", "under", "beside", "over", "into"] | None = None  # place; transfer over / into someone.
     amount: float | None = None  # Litres poured or soaked up; kilograms of an ingredient mixed in.
     flags: list[Flag] = []  # Qualities a thing loses to damage, or gets back by repair.
+    ids: list[str] = []  # What something is built from, or a trap made of (all used in it).
+    structure: Literal["barrier", "bridge", "other"] | None = None  # What a built thing does to passage.
 
 
 class SayInstead(BaseModel):

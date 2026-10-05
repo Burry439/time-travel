@@ -469,10 +469,16 @@ def world_as_seen(state: State, npc: Npc) -> dict:
         return seen
     lines = []
     here = cast.cell(npc)
-    for other, label in [(state["player"], "The stranger"), *[(n, n["name"]) for n in state["npcs"] if n is not npc]]:
+    stranger = "The stranger" if effects.recognises(npc, state["player"]) else None
+    for other, label in [(state["player"], stranger), *[(n, n["name"]) for n in state["npcs"] if n is not npc]]:
         if not other.get("alive", True) or cast.distance(npc, other) > tuning.SIGHT_CELLS:
             continue
         if not paths.line_of_sight(state, here, cast.cell(other)):
+            continue
+        if label is None:  # Disguised, and they don't see through it (D-65): someone else, as they look.
+            label = f"Someone {effects.disguise_of(other)} (a person you don't know)"
+            lines += [f"{label}: {line}" for line in effects.how_they_are(other) if not line.startswith("disguised")]
+            lines += [] if any(line.startswith(label) for line in lines) else [label]
             continue
         lines += [f"{label}: {line}" for line in effects.how_they_are(other)]
     for obj in state["objects"].values():

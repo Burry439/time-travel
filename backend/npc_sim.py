@@ -10,6 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 import content
+import effects
 import paths
 from shapes import Npc, State
 
@@ -100,6 +101,9 @@ def advance_npcs(state: State, npcs: list[Npc], elapsed_ms: int, now_ms: int) ->
                     break
             controller["step_carry_ms"] -= controller["step_ms"]
             npc["x"], npc["y"] = controller["path"].pop(0)
+            if effects.spring(state, npc, (npc["x"], npc["y"]), arrival_time):  # A hidden trap (D-65): caught.
+                controller["path"] = []
+                break
         if not controller["path"]:
             if controller["source"] == "agenda":
                 activity, dwell_ms = controller.get("arrive_activity", "look"), controller.get("dwell_ms", 30_000)

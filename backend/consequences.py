@@ -817,6 +817,12 @@ def _interrupted(state, actor_id):
     return not actor.get("alive", True) or actor.get("down", False) or state.get("subdued_by")
 
 
+def _signals(state, verdict) -> dict:
+    """Sounds and signs a step made, with how far they carry, for perception (D-65); nothing when there are none."""
+    found = [s for e in verdict.get("effects", []) if (s := effects.signal_of(state, e))]
+    return {"signals": found} if found else {}
+
+
 def _step_entry(state, verdict, delta, event, number, text, actor_id):
     made = delta["new_objects"]
     return {
@@ -837,6 +843,7 @@ def _step_entry(state, verdict, delta, event, number, text, actor_id):
         **{k: verdict.get(k) for k in ("harm", "demonstration", "give", "install", "lift_out")},
         "treated": verdict.get("treat"),
         "seen_as": verdict.get("seen_as"),  # What onlookers see of a deed no specific view covers (D-65).
+        **_signals(state, verdict),
         "touched": list(
             dict.fromkeys(
                 e["target_id"]
