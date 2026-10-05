@@ -27,19 +27,26 @@ AXES = ("trust", "suspicion", "respect", "awe")
 
 
 def running(state: State) -> list[dict]:
-    """The stories this journey's level runs (its "stories": ids)."""
-    return [STORIES[story_id] for story_id in content.level(state).get("stories", [])]
+    """The stories this journey's level runs (its "stories": ids). A journey whose book was kept the older way (before
+    D-67's quests) runs none: its stories stay as they were."""
+    if (state.get("stories") or {}).get("version", BOOK_VERSION) != BOOK_VERSION:
+        return []
+    return [STORIES[story_id] for story_id in content.level(state).get("stories", []) if story_id in STORIES]
+
+
+def _empty() -> dict:
+    return {"version": BOOK_VERSION, "stages": {}, "outcomes": {}, "moves": [], "log": []}
 
 
 def _record(state: State) -> dict:
     """The book as it stands, read-only (conditions read it on every check)."""
-    return state.get("stories") or {"stages": {}, "outcomes": {}, "moves": [], "log": []}
+    return state.get("stories") or _empty()
 
 
 def book(state: State) -> dict:
-    """What has happened in the village's stories: stages reached, outcomes, moves made."""
+    """What has happened in the village's stories: steps reached, endings, moves made, who has been given what."""
     if not state.get("stories"):
-        state["stories"] = {"stages": {}, "outcomes": {}, "moves": [], "log": []}
+        state["stories"] = _empty()
     return state["stories"]
 
 
@@ -243,11 +250,6 @@ def _helped(state, spec, ctx):
     return bool(npc) and helped(state, npc)
 
 
-@rules.condition("knows_story", "story", "stage")
-def _knows_story(state, spec, ctx):
-    return spec["stage"] in _record(state)["stages"].get(spec["story"], [])
-
-
 def _shown(state: State, memory: dict, spec: dict) -> bool:
     """A memory of a working demonstration, seen clearly, that answers the spec (flags, wonder)."""
     if memory["kind"] != "demonstration" or not memory.get("works", True) or memory.get("clarity") != "clear":
@@ -282,7 +284,20 @@ def _gifts(state: State, spec: dict) -> set[str]:
         and (o.get("holder_id") in people or o.get("owner_id") in people)
         and _flags_match(o, spec)
         and (not spec.get("flags") or any(c.get("status") == "observed" for c in o.get("known_capabilities", [])))
+        and (spec.get("water") != "clean" or _clean_water(o))  # Clean water, handed over (D-67).
     }
+
+
+def _clean_water(obj: Thing) -> bool:
+    return obj.get("water_l", 0) > 0 and not any(m["name"] == "fouled" for m in obj.get("mixture") or [])
+
+
+@rules.condition("clean", "thing", "of")
+def _clean(state, spec, ctx):
+    """Nothing named so is fouling this thing or its water any more (D-67: the trough set right)."""
+    obj = state["objects"].get(spec["thing"]) or {}
+    there = [m["name"] for m in obj.get("mixture") or []] + [a["name"] for a in obj.get("attributes", [])]
+    return bool(obj) and spec["of"] not in there
 
 
 @rules.condition("given", "npc")
@@ -318,72 +333,143 @@ def make_move(state: State, move_id: str, event_id: int) -> dict:
 
 
 # --- The stories moving on -------------------------------------------------------------------------------------
+# A part of a story (a step or an ending) is reached when its condition holds, and reaches each person when they know
+# it: their share of its effects applies once (how they see the stranger and others, what they now know and can tell,
+# how they see the quest, what they'd ask of someone), and an ending's fact goes into their own context. Who knows is
+# worked out from what each person holds (`knowers`), never guessed. One read-only check (`_due`) says what's due;
+# `pending` asks it every beat, `tick` carries it out until nothing more is (D-67: a step in one quest can reach a step
+# in another in the same beat, and someone who learns of it later still gets it, once).
+
+BOOK_VERSION = 2
+MAX_PASSES = 8
+
+
+def _parts(story: dict):
+    for stage in story.get("stages", []):
+        yield "stage", stage
+    for outcome in story.get("outcomes", []):
+        yield "outcome", outcome
+
+
+def part(story_id: str, kind: str, part_id: str) -> dict | None:
+    """A story's step or ending by id."""
+    story = STORIES.get(story_id) or {}
+    return next((p for k, p in _parts(story) if k == kind and p["id"] == part_id), None)
+
+
+def _is_reached(record: dict, story_id: str, kind: str, part_id: str) -> bool:
+    if kind == "stage":
+        return part_id in record["stages"].get(story_id, [])
+    return part_id in record.get("milestones", {}).get(story_id, [])
+
+
+def _due(state: State):
+    """What tick would do now, touching nothing: ("reach", story, kind, part) for a part whose condition holds, and
+    ("deliver", story, kind, part, npc_id) for a reached part someone now knows and hasn't yet been given."""
+    record = _record(state)
+    delivered = record.get("delivered", {})
+    for story in running(state):
+        for kind, each in _parts(story):
+            if not _is_reached(record, story["id"], kind, each["id"]):
+                if rules.holds(state, each["when"]):
+                    yield ("reach", story, kind, each)
+                continue
+            if kind == "stage" and not each.get("effects"):
+                continue
+            given = set(delivered.get(f"{story['id']}/{each['id']}", []))
+            for npc_id in sorted(known_by(state, each["when"]) - given):
+                yield ("deliver", story, kind, each, npc_id)
 
 
 def pending(state: State) -> bool:
     """Whether tick would change anything now (checked without touching the world: the clock asks every beat)."""
-    record = _record(state)
-    if any(_arrived(state, waiting) for waiting in record.get("waiting", [])):
-        return True
-    for story in running(state):
-        reached = record["stages"].get(story["id"], [])
-        if any(s["id"] not in reached and rules.holds(state, s["when"]) for s in story.get("stages", [])):
-            return True
-        if any(
-            o["id"] not in record.get("milestones", {}).get(story["id"], []) and rules.holds(state, o["when"])
-            for o in story["outcomes"]
-        ):
-            return True
-    return False
+    return next(_due(state), None) is not None
 
 
 def tick(state: State) -> bool:
-    """Record newly reached stages and outcomes while leaving later consequences observable."""
+    """Carry out everything due, pass after pass, until nothing more is."""
     record = book(state)
     now = state.get("sim_time_ms", 0)
     changed = False
-    for story in running(state):
-        reached = record["stages"].setdefault(story["id"], [])
-        for stage in story.get("stages", []):
-            if stage["id"] not in reached and rules.holds(state, stage["when"]):
-                reached.append(stage["id"])
-                record["log"].append({"story": story["id"], "stage": stage["id"], "at": now})
-                _journal(state, story, "stage", stage["id"], stage["summary"])
-                changed = True
-        completed = record.setdefault("milestones", {}).setdefault(story["id"], [])
-        for outcome in story.get("outcomes", []):
-            if outcome["id"] not in completed and rules.holds(state, outcome["when"]):
-                record["outcomes"][story["id"]] = outcome["id"]
-                record["log"].append({"story": story["id"], "outcome": outcome["id"], "at": now})
-                completed.append(outcome["id"])
-                # It reaches each person concerned (and anyone who already knows) when they know it (D-63).
-                concerned = _concerned(story, outcome) | knowers(state, outcome["when"])
-                record.setdefault("waiting", []).extend(
-                    {"story": story["id"], "outcome": outcome["id"], "npc": npc_id} for npc_id in sorted(concerned)
-                )
-                _journal(state, story, "outcome", outcome["id"], outcome["summary"])
-                changed = True
-    changed = _deliver(state, now) or changed
+    for _ in range(MAX_PASSES):
+        due = list(_due(state))
+        if not due:
+            break
+        changed = True
+        for item in due:
+            if item[0] == "reach":
+                _reach(state, *item[1:], now)
+            else:
+                _deliver(state, *item[1:], now)
     for story_id in [k for k, v in record["stages"].items() if not v]:
         del record["stages"][story_id]  # Only stories the stranger has come into.
     return changed
 
 
-def _journal(state: State, story: dict, category: str, part: str, summary: str) -> None:
+def start(state: State) -> None:
+    """A new journey: each quest's people start out with their side of it and what they'd ask of someone (D-67: they
+    bring it up themselves when the stranger comes up to them)."""
+    for story in running(state):
+        _open(state, story)
+
+
+def _open(state: State, story: dict) -> None:
+    for npc_id, text in story.get("sides", {}).items():  # How each sees it at the start.
+        _side(state, {"npc": npc_id, "text": text}, story)
+    for npc_id, text in story.get("needs", {}).items():
+        _need(state, {"npc": npc_id, "text": text}, story)
+
+
+def _reach(state: State, story: dict, kind: str, each: dict, now: int) -> None:
+    record = book(state)
+    entry = {"story": story["id"], kind: each["id"], "at": now}
+    if kind == "stage":
+        record["stages"].setdefault(story["id"], []).append(each["id"])
+    else:
+        record.setdefault("milestones", {}).setdefault(story["id"], []).append(each["id"])
+        record["outcomes"][story["id"]] = each["id"]
+    record["log"].append(entry)
+    _journal(state, story, kind, each["id"], each["summary"])
+
+
+def _deliver(state: State, story: dict, kind: str, each: dict, npc_id: str, now: int) -> None:
+    """A part reaches one person who now knows it: their share of its effects applies once, an ending's fact goes into
+    their own context, and if it touched them they think again."""
+    delivered = book(state).setdefault("delivered", {}).setdefault(f"{story['id']}/{each['id']}", [])
+    delivered.append(npc_id)
+    npc = cast.find(state["npcs"], npc_id)
+    if npc is None or not npc.get("alive", True):
+        return
+    mine = [e for e in each.get("effects", []) if e.get("npc") == npc_id]
+    for effect in mine:
+        EFFECTS[effect["kind"]](state, effect, story)
+    if kind == "outcome":
+        summary = each["summary"].replace("You ", "The stranger ").replace(" you", " the stranger")
+        cast.mind(npc).setdefault("story_facts", []).append(
+            {"story": story["id"], "title": story["title"], "outcome": each["id"], "summary": summary, "at": now}
+        )
+    if mine:
+        cast.add_pending(state, npc_id, "decide", "a turn in a story they're part of")
+
+
+def _journal(state: State, story: dict, category: str, part_id: str, summary: str) -> None:
     state.setdefault("journal", []).append(
         {
             "kind": "story",
             "category": category,
             "story": story["id"],
             "title": story["title"],
-            "part": part,
+            "part": part_id,
             "reason": summary,
         }
     )
 
 
-def _shift_regard(state: State, spec: dict) -> None:
-    """How this person sees the stranger moves (a story's outcome)."""
+# --- What a story's step or ending does, for each person it reaches ----------------------------------------------
+
+
+def _shift_regard(state: State, spec: dict, story: dict | None = None) -> None:
+    """How this person sees the stranger moves."""
     npc = cast.find(state["npcs"], spec["npc"])
     if npc is None or not npc.get("alive", True):
         return
@@ -395,7 +481,7 @@ def _shift_regard(state: State, spec: dict) -> None:
     reputation.regard_cue(npc, before, view)
 
 
-def _shift_opinion(state: State, spec: dict) -> None:
+def _shift_opinion(state: State, spec: dict, story: dict | None = None) -> None:
     """How this person feels about someone else moves."""
     npc = cast.find(state["npcs"], spec["npc"])
     if npc is None:
@@ -404,12 +490,58 @@ def _shift_opinion(state: State, spec: dict) -> None:
     feeling["warmth"] = round(min(1.0, max(-1.0, feeling["warmth"] + spec["warmth"])), 2)
 
 
-# What a story's outcome does (its own two kinds: a story ends with how people see the stranger and each other).
-EFFECTS = {"shift_regard": _shift_regard, "shift_opinion": _shift_opinion}
-NEEDS = {"shift_regard": ("npc",), "shift_opinion": ("npc", "of", "warmth")}
+def _teach(state: State, spec: dict, story: dict | None = None) -> None:
+    """This person now knows a fact or secret their card holds for later (D-67): theirs to tell, or keep."""
+    npc = cast.find(state["npcs"], spec["npc"])
+    if npc is None:
+        return
+    taught = cast.mind(npc).setdefault("taught", [])
+    key = spec.get("fact") or spec.get("secret")
+    if key and key not in taught:
+        taught.append(key)
 
 
-# --- Who knows an outcome, and its reaching them (D-63) ------------------------------------------------------
+def _side(state: State, spec: dict, story: dict | None = None) -> None:
+    """How this person now sees the quest (D-67): their side of it, in their own calls."""
+    npc = cast.find(state["npcs"], spec["npc"])
+    if npc is None or story is None:
+        return
+    cast.mind(npc).setdefault("sides", {})[story["id"]] = {
+        "title": story["title"],
+        "text": spec["text"][:240],
+        "at": state.get("sim_time_ms", 0),
+    }
+
+
+def _need(state: State, spec: dict, story: dict | None = None) -> None:
+    """What this person would ask of someone now, for this quest (D-67): they bring it up themselves. Empty: answered."""
+    npc = cast.find(state["npcs"], spec["npc"])
+    if npc is None or story is None:
+        return
+    needs = cast.mind(npc).setdefault("needs", {})
+    if spec.get("text"):
+        needs[story["id"]] = {"title": story["title"], "text": spec["text"][:160], "at": state.get("sim_time_ms", 0)}
+    else:
+        needs.pop(story["id"], None)
+
+
+EFFECTS = {
+    "shift_regard": _shift_regard,
+    "shift_opinion": _shift_opinion,
+    "teach": _teach,
+    "side": _side,
+    "need": _need,
+}
+NEEDS = {
+    "shift_regard": ("npc",),
+    "shift_opinion": ("npc", "of", "warmth"),
+    "teach": ("npc",),
+    "side": ("npc", "text"),
+    "need": ("npc",),
+}
+
+
+# --- Who knows that a condition came true (D-63, D-67) ------------------------------------------------------------
 
 
 def _held(npc: Npc) -> list[dict]:
@@ -422,126 +554,197 @@ def _holders(state: State, holds) -> set[str]:
     return {n["id"] for n in state["npcs"] if n.get("alive", True) and any(holds(m) for m in _held(n))}
 
 
-def knowers(state: State, spec: dict) -> set[str]:
+KNOWERS: dict = {}
+
+
+def knowing(kind: str):
+    """Register who knows that a condition of this kind came true."""
+
+    def register(fn):
+        KNOWERS[kind] = fn
+        return fn
+
+    return register
+
+
+def knowers(state: State, spec: dict) -> set[str] | None:
     """Who knows that this condition came true, from what each of them holds: never guessed from distance or from
-    anything else they once saw. An "all" is known to those who know every part; an "any" to those who know a part
-    that holds. What the stranger learned is known to whoever told them."""
-    kind = spec["kind"]
-    if kind == "all":
-        parts = [knowers(state, part) for part in spec["of"]]
-        return set.intersection(*parts) if parts else set()
-    if kind == "any":
-        return set().union(*(knowers(state, part) for part in spec["of"] if rules.holds(state, part)))
-    if kind == "learned":
-        return {
-            entry["npc_id"]
-            for entry in state.get("learned", [])
-            if entry.get("npc_id")
-            and ({f"fact:{entry.get('fact')}", f"secret:{entry.get('secret')}"} & set(spec["any"]))
-        }
-    if kind == "told":  # Heard it passed on, overheard it, or were brought the news of it (the same event).
-        told = _holders(state, lambda m: m["kind"] == "disclosure" and m.get("object_id") in spec["secrets"])
-        events = {
-            m["event"]
-            for n in state["npcs"]
-            for m in _held(n)
-            if m["kind"] == "disclosure" and m.get("object_id") in spec["secrets"] and m.get("event") is not None
-        }
-        return told | _holders(state, lambda m: m.get("event") in events)
-    if kind == "given":
-        gifts = _gifts(state, spec)
-        return _holders(
-            state, lambda m: m["kind"] == "gift" and bool(set(m.get("object_ids") or [m.get("object_id")]) & gifts)
-        )
-    if kind == "installed":  # Seen going up (perception: an installation is shown, and anyone in sight sees it).
-        return _holders(state, lambda m: m["kind"] == "demonstration" and m.get("object_id") == spec["thing"])
-    if kind == "treated":
-        patient = spec.get("npc")
-        return ({patient} if patient else set()) | _holders(
-            state, lambda m: m["kind"] == "help" and m.get("victim") == patient
-        )
-    if kind == "seen_demonstration":
-        return _holders(state, lambda m: _shown(state, m, spec))
-    if kind == "move":  # The one who agreed, whoever overheard it, and whoever they told (the same event).
-        made = [e["event"] for e in _record(state)["log"] if e.get("move") == spec["id"] and e.get("event")]
-        mover = {MOVES[spec["id"]]["npc"]} if spec["id"] in MOVES and made else set()
-        return mover | _holders(state, lambda m: m.get("event") in made)
-    return set()
+    anything else they once saw. None for a kind nobody can be said to know (a regard, a "not"): inside an "all" it
+    is a constraint, not knowledge, and is left out (D-67: kept_quiet never reached Tomas)."""
+    fn = KNOWERS.get(spec["kind"])
+    return fn(state, spec) if fn else None
 
 
-def _concerned(story: dict, outcome: dict) -> set[str]:
-    """Whom an outcome concerns: the story's people and everyone its effects are about."""
-    people = story.get("people", {})
-    return (
-        {people.get("owner")}
-        | set(people.get("helps", []))
-        | set(people.get("opposes", []))
-        | {e["npc"] for e in outcome.get("effects", [])}
-    ) - {None}
+def known_by(state: State, spec: dict) -> set[str]:
+    return knowers(state, spec) or set()
 
 
-def _arrived(state: State, waiting: dict) -> bool:
-    outcome = next(o for o in STORIES[waiting["story"]]["outcomes"] if o["id"] == waiting["outcome"])
-    return waiting["npc"] in knowers(state, outcome["when"])
+@knowing("all")
+def _knowers_all(state, spec):
+    parts = [k for k in (knowers(state, p) for p in spec["of"]) if k is not None]
+    return set.intersection(*parts) if parts else None
 
 
-def _deliver(state: State, now: int) -> bool:
-    """Outcomes reach the people who now know them: the fact goes into their own context, their authored reaction
-    (the outcome's effects for them) applies once, and they think again. The rest keep waiting."""
-    record = book(state)
-    arrived = [w for w in record.get("waiting", []) if _arrived(state, w)]
-    for waiting in arrived:
-        record["waiting"].remove(waiting)
-        npc = cast.find(state["npcs"], waiting["npc"])
-        if npc is None or not npc.get("alive", True):
-            continue
-        story = STORIES[waiting["story"]]
-        outcome = next(o for o in story["outcomes"] if o["id"] == waiting["outcome"])
-        for effect in outcome.get("effects", []):
-            if effect["npc"] == npc["id"]:
-                EFFECTS[effect["kind"]](state, effect)
-        summary = outcome["summary"].replace("You ", "The stranger ").replace(" you", " the stranger")
-        cast.mind(npc).setdefault("story_facts", []).append(
-            {"story": story["id"], "outcome": outcome["id"], "summary": summary, "at": now}
-        )
-        cast.add_pending(state, npc["id"], "decide", "a story outcome they learned")
-    return bool(arrived)
+@knowing("any")
+def _knowers_any(state, spec):
+    parts = [k for p in spec["of"] if rules.holds(state, p) and (k := knowers(state, p)) is not None]
+    return set().union(*parts) if parts else None
+
+
+@knowing("learned")
+def _knowers_learned(state, spec):  # Whoever told the stranger.
+    return {
+        entry["npc_id"]
+        for entry in state.get("learned", [])
+        if entry.get("npc_id") and ({f"fact:{entry.get('fact')}", f"secret:{entry.get('secret')}"} & set(spec["any"]))
+    }
+
+
+@knowing("told")
+def _knowers_told(state, spec):  # Heard it passed on, overheard it, or were brought the news of it (the same event).
+    told = _holders(state, lambda m: m["kind"] == "disclosure" and m.get("object_id") in spec["secrets"])
+    events = {
+        m["event"]
+        for n in state["npcs"]
+        for m in _held(n)
+        if m["kind"] == "disclosure" and m.get("object_id") in spec["secrets"] and m.get("event") is not None
+    }
+    return told | _holders(state, lambda m: m.get("event") in events)
+
+
+@knowing("given")
+def _knowers_given(state, spec):
+    gifts = _gifts(state, spec)
+    return _holders(
+        state, lambda m: m["kind"] == "gift" and bool(set(m.get("object_ids") or [m.get("object_id")]) & gifts)
+    )
+
+
+@knowing("installed")
+def _knowers_installed(state, spec):  # Seen going up: an installation is shown, and anyone in sight sees it.
+    return _holders(state, lambda m: m["kind"] == "demonstration" and m.get("object_id") == spec["thing"])
+
+
+@knowing("treated")
+def _knowers_treated(state, spec):
+    patient = spec.get("npc")
+    return ({patient} if patient else set()) | _holders(
+        state, lambda m: m["kind"] == "help" and m.get("victim") == patient
+    )
+
+
+@knowing("seen_demonstration")
+def _knowers_seen(state, spec):
+    return _holders(state, lambda m: _shown(state, m, spec))
+
+
+@knowing("move")
+def _knowers_move(state, spec):  # The one who agreed, whoever overheard it, and whoever they told (the same event).
+    made = [e["event"] for e in _record(state)["log"] if e.get("move") == spec["id"] and e.get("event")]
+    mover = {MOVES[spec["id"]]["npc"]} if spec["id"] in MOVES and made else set()
+    return mover | _holders(state, lambda m: m.get("event") in made)
+
+
+@knowing("clean")
+def _knowers_clean(state, spec):  # Its owner sees it set right.
+    owner = cast.find(state["npcs"], (state["objects"].get(spec["thing"]) or {}).get("owner_id") or "")
+    return {owner["id"]} if owner and owner.get("alive", True) else set()
+
+
+@knowing("deal")
+def _knowers_deal(state, spec):  # The one whose deal it is.
+    return {spec["npc"]}
+
+
+@knowing("reached")
+def _knowers_reached(state, spec):  # Whoever knows the step or ending it names.
+    named = part(spec["story"], "stage" if spec.get("stage") else "outcome", spec.get("stage") or spec.get("outcome"))
+    return knowers(state, named["when"]) if named else None
+
+
+@rules.condition("reached", "story")
+def _reached(state, spec, ctx):
+    """A step or ending of a story has been reached; with known, only if this rule's own person knows it (D-67)."""
+    kind = "stage" if spec.get("stage") else "outcome"
+    if not _is_reached(_record(state), spec["story"], kind, spec.get("stage") or spec.get("outcome")):
+        return False
+    if not spec.get("known"):
+        return True
+    npc = _whose(state, spec, ctx)
+    return bool(npc) and npc["id"] in known_by(state, {"kind": "reached", **spec})
 
 
 # --- For the people involved, and the journal ------------------------------------------------------------------
 
 
-def how_things_stand(state: State, npc: Npc) -> list[str]:
-    """Stories this person is part of that have been settled, in plain words (for their character sheet)."""
-    return [
-        f"{STORIES[f['story']]['title']}: {f['summary']}"
-        for f in _mind(npc).get("story_facts", [])
-        if f["story"] in STORIES
+def _keys(spec) -> set[str]:
+    """Every fact and secret a condition names ("fact:id", "secret:id"): what a lead must be to belong to a quest."""
+    if isinstance(spec, list):
+        return set().union(*(_keys(s) for s in spec)) if spec else set()
+    if not isinstance(spec, dict):
+        return set()
+    found = set(spec.get("any", [])) if spec.get("kind") == "learned" else set()
+    found |= {f"secret:{s}" for s in spec.get("secrets", [])} if spec.get("kind") == "told" else set()
+    return found | _keys(spec.get("of", [])) | _keys(spec.get("when"))
+
+
+def _quest_keys(story: dict) -> set[str]:
+    parts = [p["when"] for _, p in _parts(story)] + [m["when"] for m in MOVES.values() if m["story"] == story["id"]]
+    return _keys(parts)
+
+
+def threads(state: State, story: dict) -> list[int]:
+    """The stranger's own leads that belong to this quest (what someone told them), newest last: indices into their
+    learned list, for the journal to show and pin. Only what they were told, never a step not yet reached."""
+    keys = _quest_keys(story)
+    found = [
+        i
+        for i, entry in enumerate(state.get("learned", []))
+        if f"fact:{entry.get('fact')}" in keys or f"secret:{entry.get('secret')}" in keys
     ]
+    return found[-3:]
+
+
+def how_things_stand(state: State, npc: Npc) -> list[str]:
+    """Endings of stories this person knows of, in plain words (for their own context)."""
+    return [
+        f"{f.get('title') or STORIES.get(f['story'], {}).get('title', f['story'])}: {f['summary']}"
+        for f in _mind(npc).get("story_facts", [])
+    ][-4:]
 
 
 def page(state: State) -> list[dict] | None:
-    """The journal's Stories page: the storylines the stranger has come into, each with what they've come to know or
-    seen happen (in the order it happened) and how it ended, if it has. None in a level that runs none."""
+    """The journal's Stories page: the quests the stranger has come into, each with every step and ending they've
+    reached, in the order it happened (whose side, if it came from someone). Never a step not yet reached. None in a
+    level that runs none."""
     here = running(state)
     if not here:
         return None
     record, out = _record(state), []
     for story in here:
-        reached = record["stages"].get(story["id"], [])
-        ended = record["outcomes"].get(story["id"])
-        if not reached and not ended:
+        steps = []
+        for entry in record["log"]:
+            if entry.get("story") != story["id"] or not (entry.get("stage") or entry.get("outcome")):
+                continue
+            kind = "stage" if entry.get("stage") else "outcome"
+            each = part(story["id"], kind, entry.get(kind))
+            if each is None:
+                continue
+            whose = cast.find(state["npcs"], each.get("from") or "")
+            steps.append({"text": each["summary"], "kind": kind, "from": whose["name"] if whose else ""})
+        if not steps:
             continue
-        stages = {s["id"]: s["summary"] for s in story.get("stages", [])}
-        outcome = next((o["summary"] for o in story["outcomes"] if o["id"] == ended), None)
         owner = cast.find(state["npcs"], story.get("people", {}).get("owner", ""))
+        ended = [s["text"] for s in steps if s["kind"] == "outcome"]
         out.append(
             {
                 "id": story["id"],
                 "title": story["title"],
                 "whose": owner["id"] if owner else "",
-                "parts": [stages[s] for s in reached if s in stages],
-                "ended": outcome,
+                "steps": steps,
+                "threads": threads(state, story),
+                "parts": [s["text"] for s in steps if s["kind"] == "stage"],
+                "ended": ended[-1] if ended else None,
             }
         )
     return out

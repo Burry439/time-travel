@@ -65,6 +65,25 @@
    "line": "Two of my guests took sick this week, and all they had was the trough water. I can't make sense of it.",
    "trusted": false,
    "lead": "Hessa's guests have been falling sick after drinking from the trough."
+  },
+  "oren_troubled": {
+   "text": "Oren the guard has been jumpy and pale for weeks; Hessa thinks something is troubling the boy.",
+   "line": "That Oren's been pale as milk for weeks. Something's troubling that boy.",
+   "trusted": false,
+   "lead": "Hessa thinks something is troubling Oren the guard."
+  },
+  "bren_double_watches": {
+   "text": "Bren has been standing double watches lately and won't say why.",
+   "line": "My brother's been standing double watches and won't tell me why.",
+   "trusted": true,
+   "lead": "Bren has been standing double watches and won't say why."
+  },
+  "trough_boards": {
+   "text": "The trough water has tasted off since the boards by the spout went soft.",
+   "line": "The water's tasted off ever since the boards by the spout went soft.",
+   "trusted": false,
+   "later": true,
+   "lead": "Hessa says the trough water has tasted off since the boards by the spout went soft."
   }
  },
  "offers": [

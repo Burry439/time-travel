@@ -51,6 +51,24 @@
    "line": "Don't touch the scrap. Aunt Mara counts every bit.",
    "trusted": false,
    "lead": "Mara counts every bit of scrap at the smithy."
+  },
+  "dice_at_the_inn": {
+   "text": "Jory saw Oren lose a lot at dice to Darin one night at the inn.",
+   "line": "Oren lost loads at dice to Darin one night at the inn! I saw the whole thing.",
+   "trusted": false,
+   "lead": "Jory saw Oren lose heavily at dice to Darin at the inn."
+  },
+  "trough_rat": {
+   "text": "Jory saw something dead, a rat maybe, wedged under the soft boards by the spout of Hessa's trough.",
+   "line": "There's something dead under the boards of Hessa's trough. A rat, I reckon. It stank!",
+   "trusted": false,
+   "lead": "Jory saw something dead under the boards by the spout of Hessa's trough."
+  },
+  "worn_seal": {
+   "text": "Darin's permit paper hangs in his wagon, its seal so worn the date is hard to read.",
+   "line": "Darin's permit's got a seal so rubbed you can't read the date. Must be ancient.",
+   "trusted": false,
+   "lead": "Darin's trade permit is old; its seal is nearly worn away."
   }
  },
  "persuaded_by": "something new and clever to look at",

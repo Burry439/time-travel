@@ -95,6 +95,22 @@
     ]
    },
    "lead": "Oren owes Darin eleven silver from dice, and Darin is threatening to tell the captain."
+  },
+  {
+   "id": "oren_squeeze",
+   "text": "Darin has told him to wave his cart through the gate unchecked when it comes, or the captain hears of the debt.",
+   "reveal": "someone who already knows about the debt",
+   "known_by": [
+    "npc_darin_ko"
+   ],
+   "unlock": {
+    "kind": "learned",
+    "any": [
+     "secret:oren_debt",
+     "secret:darin_collect"
+    ]
+   },
+   "lead": "Darin wants Oren to wave his cart through the gate unchecked, or he'll tell the captain."
   }
  ],
  "history": {

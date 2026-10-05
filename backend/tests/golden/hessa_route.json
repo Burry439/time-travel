@@ -530,6 +530,13 @@
      "key": "npc_roderic_vale:talk:54",
      "text": "(voiced) Hessa has spoken for me."
     },
+    "sides": {
+     "darin_permit": {
+      "at": 0,
+      "text": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again.",
+      "title": "The Merchant's Permit"
+     }
+    },
     "standing": "wary",
     "standing_plan": {
      "defend": true
@@ -662,6 +669,13 @@
      "npc_oren_dast": 35000
     },
     "mood": "content",
+    "needs": {
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren's not been himself: jumpy, pale, hiding from somebody. You'd like someone to find out what's eating him.",
+      "title": "Dice and Debts"
+     }
+    },
     "next_agenda_at": 72000,
     "opinions": {
      "npc_darin_ko": {
@@ -701,6 +715,13 @@
      "trust": 0.25
     },
     "said": null,
+    "sides": {
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren's young and scared of something, and it's wearing on you too. You'd like to know what's eating him before it gets you both in trouble.",
+      "title": "Dice and Debts"
+     }
+    },
     "standing": "wary",
     "standing_plan": {
      "defend": true
@@ -853,6 +874,13 @@
      "trust": 0.15
     },
     "said": null,
+    "sides": {
+     "oren_debt": {
+      "at": 0,
+      "text": "You're carrying something you can't speak of, and every time Darin comes near the gate your stomach turns. You'd give anything for it to go away quietly.",
+      "title": "Dice and Debts"
+     }
+    },
     "standing": "wary",
     "standing_plan": {
      "defend": true
@@ -991,6 +1019,13 @@
     ],
     "met": true,
     "mood": "cheerful",
+    "needs": {
+     "trough_water": {
+      "at": 0,
+      "text": "Two of her guests fell sick after drinking from the trough: she'd be grateful to anyone who found out why.",
+      "title": "The Wayside Inn"
+     }
+    },
     "opinions": {
      "npc_bren_marr": {
       "text": "her little brother; she worries about him",
@@ -1042,6 +1077,13 @@
      "at": 47000,
      "key": "npc_hessa_marr:47000:0",
      "text": "Captain, sir, I can speak for the stranger: they did what I asked of them, and did it honestly."
+    },
+    "sides": {
+     "trough_water": {
+      "at": 0,
+      "text": "Your inn is your life and your guests are falling sick. Bren's tired and short with you lately, and some old griefs never quite heal.",
+      "title": "The Wayside Inn"
+     }
     },
     "standing": "would_speak",
     "stranger_seen": true,
@@ -1349,7 +1391,26 @@
     "job": null,
     "memories": [],
     "mood": "content",
+    "needs": {
+     "darin_permit": {
+      "at": 0,
+      "text": "Goods nobody here wants, and a city he can't sell in yet: he'd like to be shown something new that would sell.",
+      "title": "The Merchant's Permit"
+     }
+    },
     "said": null,
+    "sides": {
+     "darin_permit": {
+      "at": 0,
+      "text": "You need one good deal inside the walls, and soon. Something new to sell would change everything.",
+      "title": "The Merchant's Permit"
+     },
+     "oren_debt": {
+      "at": 0,
+      "text": "Oren owes you and has stopped meeting your eye. You're not cruel, but a debt is a debt, and you have troubles of your own before the month is out.",
+      "title": "Dice and Debts"
+     }
+    },
     "standing": "unknown",
     "stranger_seen": false
    },
@@ -1522,6 +1583,37 @@
  ],
  "objective": "Get inside the city",
  "objects": {
+  "aldos_horn": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "A battered cow-horn signal horn on a cracked leather strap, an A scratched into its rim.",
+   "flags": [
+    "sound_loud"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": "npc_kade_east",
+   "id": "aldos_horn",
+   "length_m": null,
+   "mass_kg": 0.4,
+   "materials": [
+    "horn",
+    "leather"
+   ],
+   "name": "battered signal horn",
+   "owner_id": "npc_kade_east",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
   "bark_a": {
    "bound_to": [],
    "capabilities": [
@@ -2377,6 +2469,12 @@
    "mass_kg": 0.3,
    "materials": [
     "gourd"
+   ],
+   "mixture": [
+    {
+     "name": "fouled",
+     "value": "something dead rotting under the soft boards by the spout"
+    }
    ],
    "name": "dried gourd of water",
    "owner_id": "npc_hessa_marr",
@@ -4243,6 +4341,36 @@
    "x": 56,
    "y": 13
   },
+  "trough_boards": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Two soft, blackened boards under the trough's spout, with something dead wedged beneath them.",
+   "flags": [
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": null,
+   "id": "trough_boards",
+   "length_m": null,
+   "mass_kg": 6.0,
+   "materials": [
+    "wood"
+   ],
+   "name": "rotten boards by the trough spout",
+   "owner_id": "npc_hessa_marr",
+   "water_l": 0.0,
+   "x": 36,
+   "y": 53
+  },
   "trough_gate": {
    "bound_to": [],
    "capabilities": [
@@ -4289,6 +4417,12 @@
    "mass_kg": 80.0,
    "materials": [
     "wood"
+   ],
+   "mixture": [
+    {
+     "name": "fouled",
+     "value": "something dead rotting under the soft boards by the spout"
+    }
    ],
    "name": "water trough",
    "owner_id": "npc_hessa_marr",
@@ -6110,6 +6244,12 @@
      "materials": [
       "wood"
      ],
+     "mixture": [
+      {
+       "name": "fouled",
+       "value": "something dead rotting under the soft boards by the spout"
+      }
+     ],
      "name": "water trough",
      "owner_id": "npc_hessa_marr",
      "water_l": 80.0,
@@ -6172,6 +6312,12 @@
      "materials": [
       "gourd"
      ],
+     "mixture": [
+      {
+       "name": "fouled",
+       "value": "something dead rotting under the soft boards by the spout"
+      }
+     ],
      "name": "dried gourd of water",
      "owner_id": null,
      "water_l": 1.0,
@@ -6207,7 +6353,7 @@
  "run_id": "<run0>",
  "safe_seq": 53,
  "scenario": "village",
- "seed_version": 14,
+ "seed_version": 15,
  "sim_time_ms": 52000,
  "tick": 52,
  "trades": {},

@@ -43,7 +43,7 @@ ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 # moves. v3 (D-62): one decision contract for talk, reactions, news and plans. v4 (D-63): a feared wonder explained.
 # v5 (D-64): carry a request through a recommendation and finish the conversational handoff.
 # v6 (D-65): how you are and what you can see (your body, others, writing nearby) are facts you know.
-PERSON_VERSION = "person_v6"
+PERSON_VERSION = "person_v7"  # v7 (D-67): your side of things, and speaking first.
 SCENE_LINES = 3
 WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 

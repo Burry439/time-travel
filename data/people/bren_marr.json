@@ -53,6 +53,12 @@
    "line": "Oren's been jumpy as a cat lately. Owes somebody, if you ask me.",
    "trusted": true,
    "lead": "Oren the guard owes somebody money."
+  },
+  "inn_sickness": {
+   "text": "Two of Hessa's guests took sick this week; Bren is worried for the inn's name.",
+   "line": "Two of my sister's guests took sick this week. Bad for an inn, that.",
+   "trusted": false,
+   "lead": "Two of Hessa's guests took sick this week."
   }
  },
  "persuaded_by": "the captain's say-so, and a straight answer",

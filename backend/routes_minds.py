@@ -394,14 +394,14 @@ def _trace(connection, run_id: str, event_seq: int, npc_id: str, trace: dict) ->
 ANSWER_KEY = {"decide": "action", "agenda": "agenda", "meet": "topic"}  # Must be answered.
 
 
-def _brief(state: State, npc: Npc, pending: dict, prefix: str = "") -> tuple[str, dict]:
+def _brief(state: State, npc: Npc, pending: dict, prefix: str = "", sheet: bool = True) -> tuple[str, dict]:
     """A person's situation and questions: reacting to what they saw, what to do next with their day, or what to
     talk about with someone they've met (D-37)."""
     if pending["kind"] in ("agenda", "meet"):
         if pending["kind"] == "agenda":
-            return village.agenda_brief(state, npc, prefix)
-        return village.meet_brief(state, npc, cast.find(state["npcs"], pending["why"]), prefix)
-    return minds.situation(state, npc), minds.questions(state, npc, prefix)
+            return village.agenda_brief(state, npc, prefix, sheet)
+        return village.meet_brief(state, npc, cast.find(state["npcs"], pending["why"]), prefix, sheet)
+    return minds.situation(state, npc, sheet), minds.questions(state, npc, prefix)
 
 
 def decision_request(state: State, pending: dict) -> tuple[str, dict]:
@@ -422,10 +422,13 @@ def _personal_reaction(state, pending):
             output_tokens=call.output_tokens,
             error=call.error,
         )
-    situation, questions = (
-        _brief(state, npc, pending)
+    situation, questions = (  # Their sheet goes once, as "you" (D-67: it went twice).
+        _brief(state, npc, pending, sheet=False)
         if pending["kind"] != "told"
-        else (minds.situation(state, npc) + "\n" + str(pending.get("message", "")), minds.questions(state, npc))
+        else (
+            minds.situation(state, npc, sheet=False) + "\n" + str(pending.get("message", "")),
+            minds.questions(state, npc),
+        )
     )
     choice_key = {"agenda": "agenda", "meet": "topic"}.get(pending["kind"], "action")
     options = questions.get(choice_key, {}).get("criteria", minds.legal_actions(state, npc))

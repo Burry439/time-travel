@@ -76,6 +76,25 @@
     ]
    },
    "lead": "Kade's knees are failing, and he dreads being pensioned off."
+  },
+  {
+   "id": "kade_aldo",
+   "text": "The night Aldo was lost he went back into the fog twice looking for him and broke his knees on the rocks. He found Aldo's horn and has carried it since, never daring to give it to Hessa.",
+   "reveal": "someone who has eased his pain, or whom he trusts deeply",
+   "unlock": {
+    "kind": "any",
+    "of": [
+     {
+      "kind": "helped"
+     },
+     {
+      "kind": "regard",
+      "axis": "trust",
+      "at_least": 0.6
+     }
+    ]
+   },
+   "lead": "Kade went back into the fog for Aldo and wrecked his knees doing it; he still has Aldo's horn."
   }
  ],
  "history": {

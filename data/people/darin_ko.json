@@ -54,6 +54,13 @@
    "line": "Oren at the gate owes me more than he likes to admit.",
    "trusted": true,
    "lead": "Oren the guard owes Darin money."
+  },
+  "needs_seal": {
+   "text": "Darin's permit needs the captain's seal again, and Roderic asks around town before he renews one.",
+   "line": "My paper needs the captain's seal again, and Roderic asks around town before he renews anything.",
+   "trusted": true,
+   "later": true,
+   "lead": "Darin's permit needs Captain Roderic's seal again, and Roderic asks around town first."
   }
  },
  "offers": [

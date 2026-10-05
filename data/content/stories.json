@@ -1,6 +1,6 @@
 {
- "version": 1,
- "notes": "The village's storylines (D-56, D-61, D-62, D-63). Authored stories describe example goals, never the available methods: every stage and outcome is a result in the world, checked by code (the rule language, backend/rules.py, plus the kinds stories.py registers: learned, told, move, treated, given, seen_demonstration, regard, helped, knows_story). Outcomes are ongoing milestones: reaching one never closes the story. Each story has people (owner, helps, opposes). An outcome reaches each person when they come to know it, from what they hold themselves (they saw it, were told the secret, were in the conversation, or were brought the news); then its effects for that person apply once (shift_regard: trust, suspicion, respect, awe; shift_opinion: of another, warmth): their authored reaction, as a card's motives are. moves are things a person may choose to do in conversation, in their own call: description says what; would_agree_if is their own price, which they weigh, and name when it isn't met; tells is whom they then go and tell, and what (the news is how that person learns of it).",
+ "version": 2,
+ "notes": "The village's quests (D-56, D-61, D-62, D-63, D-67). Each quest is a set of steps (stages) and endings (outcomes), every one a result in the world checked by code, never a method: any way the stranger finds counts. A step or ending reaches each person when they come to know it, from what they hold themselves; then its effects for that person apply once: shift_regard, shift_opinion, teach (a card's later fact or secret is now theirs to tell), side (how they now see the quest, in their own calls) and need (what they'd ask of someone now; they bring it up themselves). A quest's sides and needs are how its people start out. Steps may name another quest's step (reached); from is whose side a step's line is. moves are things a person may choose to do in conversation, in their own call: description says what; would_agree_if is their own price, which they weigh; tells is whom they then go and tell.",
  "stories": [
   {
    "id": "gate_beam",
@@ -184,216 +184,6 @@
        "kind": "shift_regard",
        "npc": "npc_kade_east",
        "respect": 0.1
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "oren_debt",
-   "title": "Oren's debt",
-   "people": {
-    "owner": "npc_oren_dast",
-    "helps": [
-     "npc_bren_marr"
-    ],
-    "opposes": [
-     "npc_darin_ko"
-    ]
-   },
-   "stages": [
-    {
-     "id": "noticed",
-     "summary": "Oren is jumpy, and owes someone money.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "fact:oren_debt",
-       "secret:bren_covers_oren"
-      ]
-     }
-    },
-    {
-     "id": "known",
-     "summary": "Oren owes Darin eleven silver from dice, and Darin means to squeeze him for it.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "secret:oren_debt",
-       "secret:darin_collect"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "cleared",
-     "summary": "Darin has let Oren's debt go. Oren owes you now, and Darin is cooler towards you.",
-     "when": {
-      "kind": "move",
-      "id": "forgive_oren_debt"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_oren_dast",
-       "trust": 0.4,
-       "respect": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_bren_marr",
-       "trust": 0.15
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_darin_ko",
-       "trust": -0.1
-      },
-      {
-       "kind": "shift_opinion",
-       "npc": "npc_oren_dast",
-       "of": "npc_darin_ko",
-       "warmth": 0.3
-      }
-     ]
-    },
-    {
-     "id": "exposed",
-     "summary": "You told the captain about Oren's debt. Oren and Bren won't forget it; Darin is pleased.",
-     "when": {
-      "kind": "told",
-      "npc": "npc_roderic_vale",
-      "secrets": [
-       "oren_debt",
-       "bren_covers_oren",
-       "darin_collect"
-      ]
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_roderic_vale",
-       "respect": 0.1
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_oren_dast",
-       "trust": -0.5,
-       "suspicion": 0.3
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_bren_marr",
-       "trust": -0.3
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_darin_ko",
-       "trust": 0.1
-      },
-      {
-       "kind": "shift_opinion",
-       "npc": "npc_roderic_vale",
-       "of": "npc_oren_dast",
-       "warmth": -0.3
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "lodging",
-   "title": "The lodging money",
-   "people": {
-    "owner": "npc_hessa_marr",
-    "helps": [],
-    "opposes": [
-     "npc_darin_ko"
-    ]
-   },
-   "stages": [
-    {
-     "id": "known",
-     "summary": "Darin is three weeks behind on his lodging at Hessa's, and she hasn't pressed him.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "secret:hessa_darin_lodging"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "settled",
-     "summary": "Darin has paid Hessa what he owed. She knows who nudged him.",
-     "when": {
-      "kind": "move",
-      "id": "settle_lodging"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_hessa_marr",
-       "trust": 0.3
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_darin_ko",
-       "trust": -0.1
-      },
-      {
-       "kind": "shift_opinion",
-       "npc": "npc_hessa_marr",
-       "of": "npc_darin_ko",
-       "warmth": 0.2
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "trough_water",
-   "title": "The trough water",
-   "people": {
-    "owner": "npc_hessa_marr",
-    "helps": [
-     "npc_bren_marr"
-    ],
-    "opposes": []
-   },
-   "stages": [
-    {
-     "id": "problem",
-     "summary": "Hessa's guests keep falling sick after drinking from the trough.",
-     "when": {
-      "kind": "learned",
-      "any": [
-       "fact:sick_guests"
-      ]
-     }
-    }
-   ],
-   "outcomes": [
-    {
-     "id": "clean_water",
-     "summary": "Hessa makes her water safe now, the way you showed her, and her guests are well.",
-     "when": {
-      "kind": "move",
-      "id": "trust_clean_water"
-     },
-     "effects": [
-      {
-       "kind": "shift_regard",
-       "npc": "npc_hessa_marr",
-       "trust": 0.3,
-       "respect": 0.3
-      },
-      {
-       "kind": "shift_regard",
-       "npc": "npc_bren_marr",
-       "trust": 0.1
       }
      ]
     }
@@ -650,6 +440,786 @@
      ]
     }
    ]
+  },
+  {
+   "id": "oren_debt",
+   "title": "Dice and Debts",
+   "people": {
+    "owner": "npc_oren_dast",
+    "helps": [
+     "npc_bren_marr"
+    ],
+    "opposes": [
+     "npc_darin_ko"
+    ]
+   },
+   "sides": {
+    "npc_oren_dast": "You're carrying something you can't speak of, and every time Darin comes near the gate your stomach turns. You'd give anything for it to go away quietly.",
+    "npc_darin_ko": "Oren owes you and has stopped meeting your eye. You're not cruel, but a debt is a debt, and you have troubles of your own before the month is out.",
+    "npc_bren_marr": "Oren's young and scared of something, and it's wearing on you too. You'd like to know what's eating him before it gets you both in trouble."
+   },
+   "needs": {
+    "npc_bren_marr": "Oren's not been himself: jumpy, pale, hiding from somebody. You'd like someone to find out what's eating him."
+   },
+   "stages": [
+    {
+     "id": "troubled",
+     "summary": "Something's eating Oren the guard: he's jumpy and hiding from someone.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:oren_debt",
+       "fact:oren_troubled",
+       "fact:dice_at_the_inn"
+      ]
+     }
+    },
+    {
+     "id": "debt",
+     "summary": "Oren owes Darin eleven silver, lost at dice.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:oren_debt",
+       "secret:darin_collect",
+       "fact:dice_at_the_inn"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_oren_dast",
+       "text": "Someone else knows about the eleven silver now. You're sick with it, and half relieved."
+      }
+     ]
+    },
+    {
+     "id": "squeeze",
+     "summary": "Darin means to make Oren wave his cart through the gate unchecked, or the captain hears of the debt.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:darin_collect",
+       "secret:oren_squeeze"
+      ]
+     }
+    },
+    {
+     "id": "brens_risk",
+     "summary": "Bren has been standing Oren's watches behind the captain's back.",
+     "from": "npc_bren_marr",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:bren_covers_oren",
+       "fact:bren_double_watches"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_bren_marr",
+       "text": "Is there a way out of this for Oren that doesn't go through the captain? If Darin talks, you're both done."
+      }
+     ]
+    },
+    {
+     "id": "answered",
+     "summary": "Oren's debt has been answered, one way or another.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "forgive_oren_debt"
+       },
+       {
+        "kind": "move",
+        "id": "take_payment_for_oren"
+       },
+       {
+        "kind": "move",
+        "id": "oren_owns_up"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_bren_marr",
+       "text": ""
+      }
+     ]
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "cleared_quietly",
+     "summary": "Oren's debt is gone and the captain never heard. Oren owes you, and knows it.",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "any",
+        "of": [
+         {
+          "kind": "move",
+          "id": "forgive_oren_debt"
+         },
+         {
+          "kind": "move",
+          "id": "take_payment_for_oren"
+         }
+        ]
+       },
+       {
+        "kind": "not",
+        "of": {
+         "kind": "told",
+         "npc": "npc_roderic_vale",
+         "secrets": [
+          "oren_debt",
+          "bren_covers_oren",
+          "darin_collect",
+          "oren_squeeze"
+         ]
+        }
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": 0.4,
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": 0.15
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_oren_dast",
+       "of": "npc_darin_ko",
+       "warmth": 0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_oren_dast",
+       "text": "The debt's settled and the captain never heard. The stranger did that for you, and you won't forget it."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_darin_ko",
+       "text": "Oren's debt is settled and the captain never heard of it. One less thing anyone can hold against your name, and the boy can't look at you now without gratitude."
+      }
+     ]
+    },
+    {
+     "id": "owned_up",
+     "summary": "Oren went to the captain himself and owned up to the debt.",
+     "when": {
+      "kind": "move",
+      "id": "oren_owns_up"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": 0.2,
+       "respect": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_oren_dast",
+       "warmth": 0.1
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Oren came to you himself: eleven silver at dice, and Darin pressing him to let a cart through. A fool, but an honest one, and he chose you over Darin."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_oren_dast",
+       "text": "You told the captain yourself. Whatever he does, Darin has nothing on you now."
+      }
+     ]
+    },
+    {
+     "id": "kept_on",
+     "summary": "The captain kept Oren at the gate.",
+     "when": {
+      "kind": "move",
+      "id": "keep_oren_on"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": 0.1
+      },
+      {
+       "kind": "side",
+       "npc": "npc_oren_dast",
+       "text": "The captain kept you on. You'll never touch dice again, and you owe the stranger."
+      }
+     ]
+    },
+    {
+     "id": "exposed",
+     "summary": "You told the captain about Oren's debt. Oren and Bren won't forget it; Darin is pleased.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "oren_debt",
+       "bren_covers_oren",
+       "darin_collect",
+       "oren_squeeze"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_roderic_vale",
+       "respect": 0.1
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": -0.5,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": -0.3
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": 0.1
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_oren_dast",
+       "warmth": -0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "A gate guard owes a merchant at dice, and another's been covering for him. A guard in debt is a guard for sale."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_oren_dast",
+       "text": "The stranger went to the captain. Everything you feared."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_bren_marr",
+       "text": "The stranger told the captain about Oren, and about you covering. Hessa will hear of it."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_hessa_marr",
+       "text": "The captain knows Bren was covering Oren's watches. Your brother, risking his post for that boy, and now everyone knows."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "darin_permit",
+   "title": "The Merchant's Permit",
+   "people": {
+    "owner": "npc_darin_ko",
+    "helps": [
+     "npc_hessa_marr",
+     "npc_jory_venn"
+    ],
+    "opposes": [
+     "npc_roderic_vale"
+    ]
+   },
+   "sides": {
+    "npc_darin_ko": "You need one good deal inside the walls, and soon. Something new to sell would change everything.",
+    "npc_roderic_vale": "Darin talks too smoothly for an honest trader. You'd want to know he's square with the town before you seal anything of his again."
+   },
+   "needs": {
+    "npc_darin_ko": "Goods nobody here wants, and a city he can't sell in yet: he'd like to be shown something new that would sell."
+   },
+   "stages": [
+    {
+     "id": "wants",
+     "summary": "Darin wants a permit's worth of trade inside the walls.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:trade_sponsor",
+       "fact:darin_trade"
+      ]
+     }
+    },
+    {
+     "id": "something_to_sell",
+     "summary": "Darin has seen something new he could sell.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "seen_demonstration",
+        "npcs": [
+         "npc_darin_ko"
+        ]
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_darin_ko"
+        ]
+       },
+       {
+        "kind": "deal",
+        "npc": "npc_darin_ko",
+        "status": "accepted"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "teach",
+       "npc": "npc_darin_ko",
+       "fact": "needs_seal"
+      },
+      {
+       "kind": "need",
+       "npc": "npc_darin_ko",
+       "text": "His permit needs the captain's seal again before the month's out, and Roderic asks around town first: he needs a clean name."
+      }
+     ]
+    },
+    {
+     "id": "running_out",
+     "summary": "Darin's trade permit runs out at the month's end.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "secret:darin_permit",
+       "fact:needs_seal",
+       "fact:worn_seal"
+      ]
+     }
+    },
+    {
+     "id": "clean_name",
+     "summary": "Darin's debts in town are squared: nobody can sour his name with the captain.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "settle_lodging"
+       },
+       {
+        "kind": "reached",
+        "story": "oren_debt",
+        "stage": "answered"
+       },
+       {
+        "kind": "move",
+        "id": "speak_for_darin"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_darin_ko",
+       "text": "Your debts in town are squared. Nobody can sour your name with the captain now."
+      }
+     ]
+    },
+    {
+     "id": "sealed",
+     "summary": "The captain has sealed Darin's permit for another season.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "renew_darin_permit"
+       },
+       {
+        "kind": "move",
+        "id": "vouch_for_darin_trade"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_darin_ko",
+       "text": ""
+      }
+     ]
+    },
+    {
+     "id": "hired",
+     "summary": "Darin has taken you on as his hired hand.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "deal",
+        "npc": "npc_darin_ko",
+        "status": "fulfilled"
+       },
+       {
+        "kind": "move",
+        "id": "hire_on_renewal"
+       }
+      ]
+     }
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "renewed",
+     "summary": "Darin has his season inside the walls, and you helped him to it.",
+     "when": {
+      "kind": "move",
+      "id": "renew_darin_permit"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": 0.3,
+       "respect": 0.2
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_darin_ko",
+       "warmth": 0.3
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "You've sealed Darin's permit for the season. He settled his debts and came to you straight; maybe you misjudged him."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_darin_ko",
+       "text": "The captain's sealed your permit. A season inside the walls, and the stranger to thank."
+      }
+     ]
+    },
+    {
+     "id": "squeeze_exposed",
+     "summary": "You told the captain Darin meant to use Oren to slip his cart through.",
+     "when": {
+      "kind": "told",
+      "npc": "npc_roderic_vale",
+      "secrets": [
+       "darin_collect",
+       "oren_squeeze"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_darin_ko",
+       "trust": -0.4,
+       "suspicion": 0.3
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_roderic_vale",
+       "of": "npc_darin_ko",
+       "warmth": -0.4
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_oren_dast",
+       "trust": 0.2
+      },
+      {
+       "kind": "side",
+       "npc": "npc_darin_ko",
+       "text": "The stranger told the captain you meant to use Oren. Your permit's as good as dead, and you won't forget who did it."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_roderic_vale",
+       "text": "Darin meant to lean on one of your guards to slip his cart through. He'll get no seal from you."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "trough_water",
+   "title": "The Wayside Inn",
+   "people": {
+    "owner": "npc_hessa_marr",
+    "helps": [
+     "npc_bren_marr",
+     "npc_jory_venn"
+    ],
+    "opposes": [
+     "npc_darin_ko"
+    ]
+   },
+   "sides": {
+    "npc_hessa_marr": "Your inn is your life and your guests are falling sick. Bren's tired and short with you lately, and some old griefs never quite heal."
+   },
+   "needs": {
+    "npc_hessa_marr": "Two of her guests fell sick after drinking from the trough: she'd be grateful to anyone who found out why."
+   },
+   "stages": [
+    {
+     "id": "sick",
+     "summary": "Hessa's guests keep falling sick after drinking from the trough.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:sick_guests",
+       "fact:inn_sickness"
+      ]
+     },
+     "effects": [
+      {
+       "kind": "teach",
+       "npc": "npc_hessa_marr",
+       "fact": "trough_boards"
+      }
+     ]
+    },
+    {
+     "id": "cause",
+     "summary": "Something dead is rotting under the soft boards by the trough's spout.",
+     "when": {
+      "kind": "learned",
+      "any": [
+       "fact:trough_rat",
+       "fact:trough_boards"
+      ]
+     }
+    },
+    {
+     "id": "clean",
+     "summary": "The trough water is clean again.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "clean",
+        "thing": "trough_hessa",
+        "of": "fouled"
+       },
+       {
+        "kind": "move",
+        "id": "trust_clean_water"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_hessa_marr"
+        ],
+        "water": "clean"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_hessa_marr",
+       "text": "Money's tight at the inn; some who lodge with her are slow to pay, and she's never been one to press."
+      },
+      {
+       "kind": "side",
+       "npc": "npc_hessa_marr",
+       "text": "Your guests are well again and the water's sweet. The stranger did that, not luck."
+      }
+     ]
+    },
+    {
+     "id": "lodging",
+     "summary": "The lodging Darin owes Hessa is out in the open.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "move",
+        "id": "settle_lodging"
+       },
+       {
+        "kind": "move",
+        "id": "press_darin"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "need",
+       "npc": "npc_hessa_marr",
+       "text": ""
+      }
+     ]
+    },
+    {
+     "id": "brens_secret",
+     "summary": "Hessa knows Bren has been covering Oren's watches.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "told",
+        "npc": "npc_hessa_marr",
+        "secrets": [
+         "bren_covers_oren"
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "bren_tells_hessa"
+       },
+       {
+        "kind": "reached",
+        "story": "oren_debt",
+        "stage": "answered",
+        "known": true,
+        "npc": "npc_hessa_marr"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_hessa_marr",
+       "text": "Bren's been standing Oren's watches behind the captain's back, risking his post for that boy. You don't know whether to box his ears or hug him."
+      }
+     ]
+    },
+    {
+     "id": "old_grief",
+     "summary": "Hessa knows Kade went back into the fog for Aldo.",
+     "when": {
+      "kind": "any",
+      "of": [
+       {
+        "kind": "told",
+        "npc": "npc_hessa_marr",
+        "secrets": [
+         "kade_aldo"
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "kade_tells_hessa"
+       },
+       {
+        "kind": "given",
+        "npc": [
+         "npc_hessa_marr"
+        ],
+        "name_has": "horn"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "side",
+       "npc": "npc_hessa_marr",
+       "text": "Kade went back into the fog for Aldo. Twice. All these years you've hated him for coming home, and he broke his knees looking."
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_hessa_marr",
+       "of": "npc_kade_east",
+       "warmth": 0.6
+      },
+      {
+       "kind": "side",
+       "npc": "npc_kade_east",
+       "text": "Hessa knows now: the fog, the rocks, the horn. She didn't spit at you. Maybe that's something."
+      }
+     ]
+    }
+   ],
+   "outcomes": [
+    {
+     "id": "set_right",
+     "summary": "The inn is set right: clean water, and the lodging money out in the open.",
+     "when": {
+      "kind": "all",
+      "of": [
+       {
+        "kind": "reached",
+        "story": "trough_water",
+        "stage": "clean"
+       },
+       {
+        "kind": "reached",
+        "story": "trough_water",
+        "stage": "lodging"
+       }
+      ]
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_hessa_marr",
+       "trust": 0.3,
+       "respect": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_bren_marr",
+       "trust": 0.1
+      }
+     ]
+    },
+    {
+     "id": "forgiven",
+     "summary": "Hessa has made her peace with Kade.",
+     "when": {
+      "kind": "reached",
+      "story": "trough_water",
+      "stage": "old_grief"
+     },
+     "effects": [
+      {
+       "kind": "shift_regard",
+       "npc": "npc_hessa_marr",
+       "trust": 0.2
+      },
+      {
+       "kind": "shift_regard",
+       "npc": "npc_kade_east",
+       "trust": 0.2
+      },
+      {
+       "kind": "shift_opinion",
+       "npc": "npc_kade_east",
+       "of": "npc_hessa_marr",
+       "warmth": 0.3
+      }
+     ]
+    }
+   ]
   }
  ],
  "moves": [
@@ -703,15 +1273,24 @@
   {
    "id": "settle_lodging",
    "npc": "npc_darin_ko",
-   "story": "lodging",
+   "story": "trough_water",
    "description": "Darin agrees to pay Hessa the three weeks' lodging he owes her.",
    "when": {
     "kind": "all",
     "of": [
      {
-      "kind": "learned",
-      "any": [
-       "secret:hessa_darin_lodging"
+      "kind": "any",
+      "of": [
+       {
+        "kind": "learned",
+        "any": [
+         "secret:hessa_darin_lodging"
+        ]
+       },
+       {
+        "kind": "move",
+        "id": "press_darin"
+       }
       ]
      },
      {
@@ -726,8 +1305,13 @@
        {
         "kind": "learned",
         "any": [
-         "secret:darin_permit"
+         "secret:darin_permit",
+         "fact:needs_seal"
         ]
+       },
+       {
+        "kind": "move",
+        "id": "press_darin"
        }
       ]
      }
@@ -751,6 +1335,200 @@
     ]
    },
    "would_agree_if": "once she understands why boiling makes the water safe and has seen it done, or been given the means and shown how: you can't see what boiling kills, so it's the stranger's explanation and her own good sense she goes on"
+  },
+  {
+   "id": "take_payment_for_oren",
+   "npc": "npc_darin_ko",
+   "story": "oren_debt",
+   "description": "Darin agrees to call Oren's debt paid with what the stranger has given him in Oren's place.",
+   "when": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "secret:oren_debt",
+       "secret:darin_collect",
+       "fact:dice_at_the_inn"
+      ]
+     },
+     {
+      "kind": "given",
+      "npc": [
+       "npc_darin_ko"
+      ]
+     }
+    ]
+   },
+   "would_agree_if": "what the stranger has given him is worth eleven silver to a merchant: he weighs it as goods, not kindness, and haggles before he shakes on it",
+   "tells": {
+    "to": "npc_oren_dast",
+    "message": "Your debt's paid: the stranger settled it in goods. We're square, boy."
+   }
+  },
+  {
+   "id": "oren_owns_up",
+   "npc": "npc_oren_dast",
+   "story": "oren_debt",
+   "description": "Oren agrees to go to the captain himself and own up to the debt.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:oren_debt",
+     "secret:oren_squeeze",
+     "secret:bren_covers_oren",
+     "secret:darin_collect"
+    ]
+   },
+   "would_agree_if": "the stranger makes him see that owning up beats being found out, above all to spare Bren, and he believes someone will stand by him",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "Captain, I owe Darin eleven silver from dice. He wants me to wave his cart through unchecked for it. I'd rather you heard it from me."
+   }
+  },
+  {
+   "id": "keep_oren_on",
+   "npc": "npc_roderic_vale",
+   "story": "oren_debt",
+   "description": "Roderic agrees to keep Oren at the gate in spite of the debt.",
+   "when": {
+    "kind": "move",
+    "id": "oren_owns_up"
+   },
+   "would_agree_if": "he's satisfied Oren came clean of his own accord and that the debt gives Darin no hold over a gate guard any more",
+   "tells": {
+    "to": "npc_oren_dast",
+    "message": "You keep your post. Settle with Darin, and never dice on watch again."
+   }
+  },
+  {
+   "id": "bren_tells_hessa",
+   "npc": "npc_bren_marr",
+   "story": "trough_water",
+   "description": "Bren agrees to tell his sister he's been covering Oren's watches.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:bren_covers_oren"
+    ]
+   },
+   "would_agree_if": "the stranger persuades him Hessa would rather hear it from him than from gossip",
+   "tells": {
+    "to": "npc_hessa_marr",
+    "message": "I've been standing Oren's watches. He's in trouble, and I didn't want you fretting."
+   }
+  },
+  {
+   "id": "press_darin",
+   "npc": "npc_hessa_marr",
+   "story": "trough_water",
+   "description": "Hessa agrees to ask Darin outright for the three weeks' lodging he owes her.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:hessa_darin_lodging"
+    ]
+   },
+   "would_agree_if": "the stranger gives her the heart for it: someone standing by her, or a reason he can't wriggle out of",
+   "tells": {
+    "to": "npc_darin_ko",
+    "message": "Three weeks you owe me, Darin. I'll have it by the week's end."
+   }
+  },
+  {
+   "id": "speak_for_darin",
+   "npc": "npc_hessa_marr",
+   "story": "darin_permit",
+   "description": "Hessa agrees to tell the captain that Darin deals honestly.",
+   "when": {
+    "kind": "move",
+    "id": "settle_lodging"
+   },
+   "would_agree_if": "Darin has paid her what he owed, and the stranger asks it of her",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "Darin paid me every penny he owed. Whatever else he is, he settles up."
+   }
+  },
+  {
+   "id": "renew_darin_permit",
+   "npc": "npc_roderic_vale",
+   "story": "darin_permit",
+   "description": "Roderic agrees to seal Darin's trade permit for another season.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:darin_permit",
+     "fact:needs_seal",
+     "fact:worn_seal"
+    ]
+   },
+   "would_agree_if": "he's satisfied Darin is an honest trader with his debts squared in town (someone he respects speaks for him, or he's heard Darin settled what he owed) and that Darin isn't leaning on a gate guard to slip goods through",
+   "tells": {
+    "to": "npc_darin_ko",
+    "message": "Bring your permit to the gatehouse. I'll seal it for the season."
+   }
+  },
+  {
+   "id": "vouch_for_darin_trade",
+   "npc": "npc_bren_marr",
+   "story": "darin_permit",
+   "description": "Bren agrees to tell the captain Darin's cart has always come through the gate clean.",
+   "when": {
+    "kind": "all",
+    "of": [
+     {
+      "kind": "learned",
+      "any": [
+       "secret:darin_permit",
+       "fact:needs_seal",
+       "fact:worn_seal"
+      ]
+     },
+     {
+      "kind": "reached",
+      "story": "oren_debt",
+      "stage": "answered"
+     }
+    ]
+   },
+   "would_agree_if": "Oren's debt is settled so Darin has no hold on the gate, and the stranger asks it of him",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "Darin's cart has always come through clean, captain. I've checked it myself."
+   }
+  },
+  {
+   "id": "kade_tells_hessa",
+   "npc": "npc_kade_east",
+   "story": "trough_water",
+   "description": "Kade agrees to go to Hessa and tell her what happened the night Aldo was lost, and give her the horn.",
+   "when": {
+    "kind": "learned",
+    "any": [
+     "secret:kade_aldo"
+    ]
+   },
+   "would_agree_if": "the stranger makes him believe she'd want to know, and that it isn't pity he's after",
+   "tells": {
+    "to": "npc_hessa_marr",
+    "message": "I went back for him, Hessa. Twice. This is his horn. I should have brought it to you years ago."
+   }
+  },
+  {
+   "id": "hire_on_renewal",
+   "npc": "npc_darin_ko",
+   "story": "darin_permit",
+   "description": "Darin agrees to take the stranger on as his hired hand for the season, under his renewed permit.",
+   "when": {
+    "kind": "move",
+    "id": "renew_darin_permit"
+   },
+   "would_agree_if": "the stranger helped him to the captain's seal, or he can see they'd be worth their keep inside the walls",
+   "tells": {
+    "to": "npc_roderic_vale",
+    "message": "The stranger is my hired hand this season, captain. They come in on my business, under the permit you sealed."
+   }
   }
  ]
 }

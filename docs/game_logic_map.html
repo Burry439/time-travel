@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 4 Oct 2026 · codex/player-run-flow-fixes · decisions up to D-65 (complete)</p>
+  <p class="stamp">Current as of 5 Oct 2026 · claude/quests · decisions up to D-67 (cluster A)</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -110,7 +110,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>The client</strong> (Godot) moves the player and draws the world. It never decides outcomes; it sends requests and shows the state that comes back.</li>
     <li><strong>A backend command</strong> takes the journey's lock, checks the request, and asks the models outside the lock. Speech has a 12-second model budget, deeds 15 seconds.</li>
-    <li><strong>Models</strong> only propose: the judge (<code>judge_v25</code>) for deeds and physics, and each person's own call (<code>person_v6</code>) for what they say and choose.</li>
+    <li><strong>Models</strong> only propose: the judge (<code>judge_v26</code>) for deeds and physics, and each person's own call (<code>person_v7</code>) for what they say and choose.</li>
     <li><strong>The reducer</strong> checks every proposal against the world and the rules, then commits it as an event (<code>consequences.py</code>, <code>rounds.py</code>, <code>talk.py</code>). Journeys replay exactly from <code>store.py</code>.</li>
     <li><strong>The clock</strong> runs between your actions: routines, errands, fights, and stories checking whether something new has happened (<code>clock.py</code>, <code>stories.py</code>).</li>
   </ul>
@@ -193,14 +193,14 @@ tr:last-child td { border-bottom: 0; }
 </section>
 
 <section id="stories">
-  <h2>The village storylines</h2>
-  <p>Nine stories run in the village. Each has goals, never methods: any way you find counts. Status from the live play-through of 4 Oct 2026 (<code>evals/run_quests_live.py</code>).</p>
+  <h2>The village quests</h2>
+  <p>Since D-67 the village's troubles are quests: five or more steps each, every step reachable several ways, and intertwined (one deed can move two quests, and doing one shows you its people's side of another). A step is a result in the world, checked by code; any way you find counts. Each step reaches a person when they come to know it, with their side of it and what they'd now ask of someone. People bring their trouble up themselves when you walk up to them. Being rebuilt in three clusters; the first is done (<code>evals/run_quest_web_live.py</code>), the rest are still the older storylines (<code>evals/run_quests_live.py</code>).</p>
   <div class="table-wrap"><table>
     <thead><tr><th>Story</th><th>Status</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr><td>The trough water</td><td><span class="pill ok">Completed</span></td><td>Hessa boils her water once she's convinced.</td></tr>
-      <tr><td>The lodging money</td><td><span class="pill ok">Completed</span></td><td>Hessa confides; Darin pays and tells her himself.</td></tr>
-      <tr><td>Oren's debt</td><td><span class="pill ok">Completed</span></td><td>Darin's price is a real gift; he walks over and tells Oren.</td></tr>
+      <tr><td>The Wayside Inn (Hessa, 6 steps)</td><td><span class="pill ok">Quest, played live</span></td><td>Sick guests, the rot under the boards, clean water, the lodging, Bren's secret, Kade's truth about Aldo.</td></tr>
+      <tr><td>Dice and Debts (Oren; Bren asks)</td><td><span class="pill ok">Quest, played live</span></td><td>Oren's trouble, the debt, Darin's squeeze, Bren's risk, the debt answered. Crosses into Darin's permit.</td></tr>
+      <tr><td>The Merchant's Permit (Darin, 6 steps)</td><td><span class="pill part">Quest, partly played</span></td><td>Something to sell, the seal, a clean name in town, the captain's seal, hired.</td></tr>
       <tr><td>Mara's iron</td><td><span class="pill ok">Completed</span></td><td>Give her good iron.</td></tr>
       <tr><td>Jory's tongs</td><td><span class="pill ok">Completed</span></td><td>Jory confides; telling Mara counts.</td></tr>
       <tr><td>Something nobody knows</td><td><span class="pill ok">Completed</span></td><td>Jory amazed by the compass.</td></tr>
@@ -215,6 +215,7 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">5 Oct 2026 · D-67</span><p>Claude: quests of five or more intertwined steps (cluster A: Oren, Darin, Hessa); people speak first when you walk up; each person's side of a quest travels with what they know. Prompts judge_v26, person_v7.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 4 (cooking, drying, firing clay, smoke, processes the clock finishes, fire that spreads); waiting with nobody near passes time. Prompt judge_v25.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 3 (sounds and signs that carry, disguise, digging, barriers, bridges and traps that spring as people walk). Prompt judge_v24.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-65</span><p>Claude: building blocks phase 2 (moving and placing things, ways blocked so people walk around, containers and mixtures with liquid conserved, sealing, damage and mending). Prompt judge_v23.</p></div>

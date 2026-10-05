@@ -79,7 +79,30 @@ def doing(npc: Npc) -> str:
 
 
 def secrets(npc: Npc) -> list[dict]:
-    return cast.card(npc).get("secrets", [])
+    """Their secrets: a card's "later" ones only once something has happened to make them theirs (D-67)."""
+    taught = set((npc.get("mind") or {}).get("taught", []))
+    return [s for s in cast.card(npc).get("secrets", []) if not s.get("later") or s.get("id") in taught]
+
+
+def _latest(entries: dict, most: int) -> list[dict]:
+    return sorted(entries.values(), key=lambda e: e.get("at", 0))[-most:]
+
+
+def sides(npc: Npc) -> list[str]:
+    """How they see the quests they're part of, as things stand for them (D-67): their side, not anyone else's."""
+    return [f"{s['title']}: {s['text']}" for s in _latest((npc.get("mind") or {}).get("sides", {}), 3)]
+
+
+def needs(npc: Npc) -> list[str]:
+    """What they'd ask of someone now, quest by quest (D-67): never their secrets."""
+    return [f"{n['title']}: {n['text']}" for n in _latest((npc.get("mind") or {}).get("needs", {}), 3)]
+
+
+def story_facts(npc: Npc) -> list[str]:
+    """How the quests they know of have turned out."""
+    return [f"{f.get('title', f['story'])}: {f['summary']}" for f in (npc.get("mind") or {}).get("story_facts", [])][
+        -4:
+    ]
 
 
 def stranger_lines(state: State, npc: Npc) -> list[str]:
@@ -188,6 +211,9 @@ def sheet_lines(state: State, npc: Npc) -> list[str]:
     lines.append(f"{name}'s mood: {mood(npc)}. {name} is {doing(npc)}.")
     for secret in secrets(npc):
         lines.append(f"(Private) {secret['text']} {name} would only let this out to {secret['reveal']}.")
+    lines += [f"{name}'s side of {line}" for line in sides(npc)]  # The quests they're part of (D-67).
+    lines += [f"What {name} would ask of someone, about {line}" for line in needs(npc)]
+    lines += [f"How it turned out, {line}" for line in story_facts(npc)]
     lines += opinion_lines(state, npc)
     lines.append(f"Everyone in town, whom {name} knows: " + "; ".join(everyone_in_town(state, npc)) + ".")
     return lines

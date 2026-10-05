@@ -9,6 +9,7 @@ extends PanelContainer
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 const PaintedActor := preload("res://scripts/painted_actor.gd")
 const HEIGHT := 272.0
+const GREET_DELAY := 0.6 # Seconds before someone you walked up to speaks first, unless you type first (D-67).
 const SayDoLine := preload("res://scripts/ui/say_do_line.gd")
 const SAY_COLOUR := Color("1f5fa8") # Speech: blue.
 const DO_COLOUR := Color("b03a1a") # Deeds: brick red.
@@ -314,6 +315,9 @@ func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") ->
 			var painted := game.get_node_or_null("NPCs/" + target + "/PaintedActor")
 			if painted:
 				painted.play_gesture("greet")
+		# Walking up to someone you aren't already talking to: they speak first (D-67), as in any RPG.
+		if _is_person(target) and current.is_empty() and prefill.is_empty() and playing.is_empty():
+			get_tree().create_timer(GREET_DELAY).timeout.connect(_greet.bind(target))
 	if not prefill.is_empty():
 		line.put(prefill, with_mode if with_mode in ["say", "do"] else line.default_mode)
 	if with_mode in ["say", "do"]:
@@ -321,6 +325,15 @@ func open(id := "", prefill := "", playing: Dictionary = {}, with_mode := "") ->
 	render(playing)
 	if playing.get("entries", []).is_empty():
 		_focus_line.call_deferred()
+
+
+## A beat after the bar opens on someone: if you haven't started typing, they speak first (D-67).
+func _greet(id: String) -> void:
+	if not visible or target != id or not _encounter().is_empty() or waiting or round_playing or game.request_busy:
+		return
+	if not line.text.strip_edges().is_empty(): # Your own words open the conversation instead.
+		return
+	game.actions.encounter_act("greet", "", id)
 
 
 func _focus_line() -> void:

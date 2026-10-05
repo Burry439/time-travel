@@ -71,7 +71,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
       <li>You stand on the south road. Everything below is one way to play; any other way you can describe also counts.</li>
     </ol>
   </div>
-  <p class="stamp">Current as of 4 Oct 2026 · codex/player-run-flow-fixes · D-65</p>
+  <p class="stamp">Current as of 5 Oct 2026 · claude/quests · D-67 (first quests)</p>
 </header>
 
 <section id="rules">
@@ -208,20 +208,21 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
 </section>
 
 <section id="stories">
-  <h2>The village storylines</h2>
-  <p>People have troubles of their own. You come into them by listening. Each has several endings and none is required to win. Your journal's Stories page tracks what you've learned.</p>
+  <h2>The village quests</h2>
+  <p>People have troubles of their own, and when you walk up to them they'll often bring them up themselves. Each quest has five or more steps, each step can be done more than one way, and they cross: helping one person brings you back to another, and you'll hear their side of it. None is required to win. Your journal's Stories page shows every step you've reached, whose side it came from, and what people have told you, which you can pin.</p>
   <div class="stories">
-    <div class="story"><h3>The trough water <span class="tag good">Tested</span></h3><dl>
-      <dt>Starts</dt><dd>Hessa's guests keep falling sick. Ask her how they are.</dd>
-      <dt>Nudge</dt><dd>What kills what you can't see in water?</dd>
-      <dt>One way</dt><dd>Boil trough water in the iron pot from the wainwright's yard on her cooking fire, show her, and ask her to do the same. She can't see what boiling does, so she goes on your explanation.</dd></dl></div>
-    <div class="story"><h3>The lodging money <span class="tag good">Tested</span></h3><dl>
-      <dt>Starts</dt><dd>Once Hessa trusts you (help her first), ask whether her lodgers pay their way.</dd>
-      <dt>One way</dt><dd>She confides that Darin owes three weeks. Tell Darin his good name in town is worth more than the rent. He goes and pays her.</dd></dl></div>
-    <div class="story"><h3>Oren's debt <span class="tag good">Tested</span></h3><dl>
-      <dt>Starts</dt><dd>Ask Bren why Oren is so jumpy.</dd>
-      <dt>Nudge</dt><dd>Darin wants a fair bargain, never pity.</dd>
-      <dt>One way</dt><dd>Give Darin something he can sell, then ask him to call the debt square. He walks over and tells Oren himself. Or tell the captain, and see who forgives you.</dd></dl></div>
+    <div class="story"><h3>The Wayside Inn (Hessa) <span class="tag good">Quest · played live</span></h3><dl>
+      <dt>Starts</dt><dd>Walk up to Hessa: her guests keep falling sick from the trough.</dd>
+      <dt>Steps</dt><dd>What's wrong with the water; the cause (ask her, or Jory, who saw something dead); clean water (clean the trough, boil it, or teach her); the lodging money; what her brother's hiding; an old grief about Kade.</dd>
+      <dt>One way</dt><dd>Ask what changed at the trough, pry up the rotten boards with a stout stick, dig out the rot and bail it clean. She'll speak for you, and may confide that Darin owes her.</dd></dl></div>
+    <div class="story"><h3>Dice and Debts (Oren) <span class="tag good">Quest · played live</span></h3><dl>
+      <dt>Starts</dt><dd>Walk up to Bren: he'll ask you to find out what's eating Oren.</dd>
+      <dt>Steps</dt><dd>Something's wrong; the eleven silver (Oren, Darin or Jory can tell you); Darin's squeeze; Bren covering Oren's watches; the debt answered (forgiven, paid in goods, or Oren owns up to the captain).</dd>
+      <dt>One way</dt><dd>Jory saw the dice game. Show Darin something he can sell, learn his permit needs the captain's seal, and point out a squeezed guard sours the captain. He forgives it, and his own name in town comes clean.</dd></dl></div>
+    <div class="story"><h3>The Merchant's Permit (Darin) <span class="tag">Quest · partly played</span></h3><dl>
+      <dt>Starts</dt><dd>Walk up to Darin: he wants something new to sell.</dd>
+      <dt>Steps</dt><dd>What he wants; something to sell; the permit running out; a clean name in town (his debts squared, or Hessa speaking for him); the captain's seal; hired.</dd>
+      <dt>Crosses</dt><dd>Oren's debt and Hessa's lodging money both count toward his clean name.</dd></dl></div>
     <div class="story"><h3>Mara's iron <span class="tag good">Tested</span></h3><dl>
       <dt>Starts</dt><dd>Ask Mara whether she has iron enough for the guards' order.</dd>
       <dt>One way</dt><dd>Bring her an iron bar from the wainwright's yard.</dd></dl></div>
@@ -282,6 +283,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <p>Source: <code>docs/walkthrough.html</code>. Claude and Codex update it with gameplay changes; Claude republishes the saved source to the same address.</p>
   <ul class="plain">
     <li>4 Oct 2026: created for the main village game.</li>
+    <li>5 Oct 2026 · D-67: Claude turned the first troubles into quests (the Wayside Inn, Dice and Debts, the Merchant's Permit), and people now speak first when you walk up.</li>
     <li>5 Oct 2026 · D-65 phase 4: Claude added cooking, drying, firing clay, smoke and fire that spreads; waiting alone now passes time.</li>
     <li>5 Oct 2026 · D-65 phase 3: Claude added shouts and signals, disguise, digging, barricades, bridges and traps.</li>
     <li>5 Oct 2026 · D-65 phase 2: Claude added moving and hiding things, blocking a way, containers and mixtures, and breaking and mending.</li>

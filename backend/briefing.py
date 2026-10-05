@@ -336,6 +336,10 @@ def converse_context(state: State, npc: Npc, text: str, answers: dict, happened:
         context["the_stranger_told_you"] = told
     if settled := stories.how_things_stand(state, npc):
         context["how_things_stand"] = settled
+    if mine := persona.sides(npc):  # How they see the quests they're part of (D-67).
+        context["your_side_of_things"] = mine
+    if asks := persona.needs(npc):  # What they'd ask of someone now: they bring it up themselves (D-67).
+        context["what_you_would_ask_of_someone"] = asks
     if cast.card(npc).get("persuaded_by"):
         context["what_would_change_their_mind"] = cast.card(npc)["persuaded_by"]
     if cast.card(npc).get("guard") and gatekeeping.admission_rule(
@@ -378,6 +382,7 @@ def scene_context(
     conversation so far, and for each person (addressed first, then those taking part, then those nearby)
     their sheet, purpose, regard, open deals and legal moves, and any story beat due in their reply (D-59)."""
     encounter = state.get("encounter") or {}
+    opening = ((encounter.get("log") or [{}])[-1]).get("kind") == "greet"  # They speak first (D-67).
     people = []
     order = ([addressed] if addressed else []) + [p for p in participants if p is not addressed] + nearby
     for npc in order:
@@ -404,6 +409,8 @@ def scene_context(
                 ("confide", any(k.startswith("confide:") for k in person["moves_they_may_make"])),
                 ("story", any(k.startswith("story:") for k in person["moves_they_may_make"])),
                 ("wonder", "a_wonder_that_frightens_you" in person),
+                ("side", "your_side_of_things" in person),
+                ("greet", opening and npc is addressed),
             )
             if applies
         ]
@@ -411,7 +418,9 @@ def scene_context(
             "addressed" if npc is addressed else "nearby" if npc in nearby else "taking part"
         )
         people.append(person)
-    so_far = [e["text"] for e in encounter.get("log", [])[-12:] if e.get("kind") in ("say", "reply", "arrive", "do")]
+    so_far = [
+        e["text"] for e in encounter.get("log", [])[-12:] if e.get("kind") in ("say", "reply", "arrive", "do", "greet")
+    ]
     attackers = [
         n["name"] for i in ((state.get("fight") or {}).get("attackers") or []) if (n := cast.find(state["npcs"], i))
     ]
