@@ -30,6 +30,7 @@ var level: Dictionary = {}
 ## The game's parts (children of this node): the service, pictures, the world on screen, the player's input
 ## and actions. This script is the journey itself: its state, the movement and thinking lanes, the camera.
 var net: Net
+var busy: PanelContainer # What the game is waiting on, in words (scripts/ui/busy_indicator.gd, D-70).
 var art: ObjectArt
 var view: WorldView
 var controls: PlayerInput
@@ -234,6 +235,13 @@ func _build_ui() -> void:
 	ui = preload("res://scripts/game_ui.gd").new()
 	layer.add_child(ui)
 	ui.build(self)
+	# What the game is waiting on, over everything, the menu too (D-70: loading was silent and confusing).
+	var busy_layer := CanvasLayer.new()
+	busy_layer.layer = 50
+	add_child(busy_layer)
+	busy = preload("res://scripts/ui/busy_indicator.gd").new()
+	busy_layer.add_child(busy)
+	busy.build(net)
 	var edges := Gradient.new()
 	edges.set_color(0, Color(0.7, 0.05, 0.02, 0.0))
 	edges.set_color(1, Color(0.7, 0.05, 0.02, 0.85))
@@ -521,7 +529,8 @@ func _flush_minds(lane := "react") -> void:
 	thinking_lanes[lane] = true
 	while _minds_pending(lane):
 		var body := {"expected_version": run_state["event_seq"], "request_id": request_id("think"), "lane": lane}
-		var reply := await net.post(run_path("/think"), body, 40.0)
+		# Reactions to what the stranger just did are worth waiting on; the village's own day isn't (D-70).
+		var reply := await net.post(run_path("/think"), body, 40.0, true, "People are reacting…" if lane == "react" else net.QUIET)
 		if not reply["ok"]:
 			await get_tree().create_timer(1.0).timeout # e.g. another think still finishing; try again shortly.
 			continue

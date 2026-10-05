@@ -5,10 +5,10 @@ var scene: Node2D
 
 class SlowNet extends Net:
 	var sent: Array[Dictionary] = []
-	func post(path: String, body: Dictionary = {}, timeout := 5.0, retry_unavailable := true) -> Dictionary:
+	func post(path: String, body: Dictionary = {}, timeout := 5.0, retry_unavailable := true, busy := "") -> Dictionary:
 		await get_tree().create_timer(.25).timeout
 		sent.append({"path": path, "body": body.duplicate(true)})
-		return await super.post(path, body, timeout, retry_unavailable)
+		return await super.post(path, body, timeout, retry_unavailable, busy)
 
 
 func _initialize() -> void:

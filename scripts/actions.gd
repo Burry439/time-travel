@@ -75,7 +75,7 @@ func act(text: String, target: String, selected_ids: Array, mode := "") -> void:
 	if mode in ["say", "do"]: # The bar's Say / Do switch (D-55): the backend takes it as given.
 		body["mode"] = mode
 	game.intent_pending = true
-	var reply: Dictionary = await game.net.post(game.run_path("/act"), body, 16.0, false)
+	var reply: Dictionary = await game.net.post(game.run_path("/act"), body, 16.0, false, _waiting_on(target))
 	game.intent_pending = false
 	if not reply.ok:
 		await _act_failed(reply)
@@ -184,6 +184,17 @@ func reply_problem(reply: Dictionary) -> String:
 	return "The attempt couldn't be completed (HTTP %s). Your journey is safe." % reply.status
 
 
+## What the busy indicator says while this waits (D-70): the person you're facing thinking, or the world working
+## out a deed.
+func _waiting_on(target: String, face_to_face := false) -> String:
+	var person: Dictionary = game.ui.npc_record(target) if not target.is_empty() else {}
+	if not person.is_empty():
+		return "%s is thinking…" % str(person.get("name", "They"))
+	if face_to_face or game.in_encounter():
+		return "They're thinking…"
+	return "Working out what happens…"
+
+
 ## A plain round move without words: walking away (Esc), or waiting / giving up from the tools.
 ## Face to face, everyone else's committed actions resolve at the same moment on the server.
 func encounter_act(kind: String, text: String, target: String) -> void:
@@ -196,7 +207,7 @@ func encounter_act(kind: String, text: String, target: String) -> void:
 	if not target.is_empty():
 		body["target_id"] = target
 	game.intent_pending = true
-	var reply: Dictionary = await game.net.post(game.run_path("/encounter/act"), body, 16.0, false)
+	var reply: Dictionary = await game.net.post(game.run_path("/encounter/act"), body, 16.0, false, _waiting_on(target, true))
 	game.intent_pending = false
 	if reply.ok:
 		await _play_round_reply(reply.data, target)

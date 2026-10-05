@@ -219,5 +219,20 @@ func _run() -> void:
 	ui.ui_scale = 1.0
 	ui.apply_scale()
 	ui.close_modal()
+	# D-70: whatever the game waits on is said, a beat after it starts, and goes when it's done.
+	scene.net.waiting[-1] = {"label": "Hessa is thinking…", "since": Time.get_ticks_msec() - 1000}
+	await process_frame
+	await process_frame
+	if not check(scene.busy.visible and "Hessa is thinking" in scene.busy.label.text, "Waiting showed no busy indicator"):
+		return
+	scene.net.waiting.erase(-1)
+	await process_frame
+	if not check(not scene.busy.visible, "The busy indicator stayed after the wait ended"):
+		return
+	scene.net.waiting[-2] = {"label": "Loading your journey…", "since": Time.get_ticks_msec()}
+	await process_frame
+	if not check(not scene.busy.visible, "The busy indicator flickered for a quick reply"):
+		return
+	scene.net.waiting.erase(-2)
 	print("UI SMOKE PASSED")
 	quit(0)
