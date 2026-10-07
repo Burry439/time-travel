@@ -138,7 +138,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.store, "initial_state", seeded)
     replies, choices, rulings = [], [], []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, brief=""):
         if "impression" in questions:
             return decider.DeciderCall(provider="script", model="script", error="talk is the voice's now (D-46)")
         choice = choices.pop(0) if choices else "listen"  # A scripted reaction: one for everyone, or per person.

@@ -156,6 +156,20 @@ def calm(state: State) -> bool:
     )
 
 
+def want_word(npc: Npc, now: int, text: str = "") -> None:
+    """They'd like a word with the stranger (D-72): their request shows over their head and they wait to be spoken
+    to, going on with their day. Only someone hostile or urgent (a halt, a confrontation, an attack, help for the
+    hurt) walks up to the stranger uninvited. Cleared when the stranger speaks to them."""
+    mind(npc)["wants_word"] = {"key": f"{npc['id']}:{now}", "text": text or "Could I have a word?", "at": now}
+    mind(npc)["doing"] = "hoping for a word with the stranger"
+
+
+def said_just_now(npc: Npc, now: int) -> str:
+    """What they said aloud a moment ago, if anything (their request, when they decide they'd like a word)."""
+    said = mind(npc).get("said") or {}
+    return str(said.get("text", "")) if now - int(said.get("at", -(10**12))) <= 2000 else ""
+
+
 def set_job(npc: Npc, job: Job | None, now: int) -> None:
     mind(npc)["job"] = job
     controller = npc.get("controller")

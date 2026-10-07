@@ -84,7 +84,7 @@ def _object(
     tools: list[str],
     asset_id: str | None = None,
 ) -> dict:
-    portable = spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
+    portable = spec["mass_kg"] <= tuning.LIFT_LIMIT_KG
     caps = ["carry"] + [op for flag, op in OPERATION_CAPABILITIES.items() if flag in spec["flags"]] if portable else []
     return {
         "id": new_id,
@@ -161,17 +161,12 @@ def _step_deltas(
 
 
 def _made(state: State, verdict: dict, step: dict) -> dict:
-    """Something new, from what went into it: in hand if it can be carried with the rest, else at their feet."""
+    """Something new, from what went into it: in hand if one person can carry it, else at their feet."""
     spec = verdict["new_spec"]
     consumed = verdict["consumed_ids"]
-    carried_consumed = sum(
-        state["objects"][i]["mass_kg"] + state["objects"][i]["water_l"]
-        for i in consumed
-        if state["objects"][i]["holder_id"] == "player"
-    )
-    fits = m2.inventory_mass(state) - carried_consumed + spec["mass_kg"] <= tuning.CARRY_LIMIT_KG
+    fits = spec["mass_kg"] <= tuning.LIFT_LIMIT_KG  # One thing one person can carry (D-72: no pack limit).
     if not fits:
-        verdict["notes"].append("Too heavy to carry with the current load; left at the player's feet.")
+        verdict["notes"].append("Too heavy for one person to carry; left at the player's feet.")
     made = _object(
         f"made_{step['event_id']}{step['suffix']}",
         step["run_id"],
@@ -280,7 +275,6 @@ def _transformed(state: State, verdict: dict, step: dict) -> dict:
     target = state["objects"][plan["target_id"]]
     cleared = paths.cleared_obstacles(state) | ({target["geometry_name"]} if target.get("geometry_name") else set())
     in_hand = target["holder_id"] == "player"
-    load = [m2.inventory_mass(state) - (target["mass_kg"] if in_hand else 0)]
     total = sum(p["count"] for p in plan["pieces"])
     px, py = step["at"]
     cells = iter(
@@ -289,9 +283,7 @@ def _transformed(state: State, verdict: dict, step: dict) -> dict:
     owner = "player" if target["owner_id"] == "player" else target["owner_id"]
 
     def keep(piece: dict) -> bool:
-        kept = in_hand and load[0] + piece["mass_kg"] <= tuning.CARRY_LIMIT_KG
-        load[0] += piece["mass_kg"] if kept else 0
-        return kept
+        return in_hand and piece["mass_kg"] <= tuning.LIFT_LIMIT_KG
 
     made = []
     for piece in plan["pieces"]:  # Numbered across every kind of piece.

@@ -3404,6 +3404,39 @@
    "x": 52,
    "y": 44
   },
+  "survival_book": {
+   "bound_to": [],
+   "capabilities": [
+    "carry"
+   ],
+   "capacity_l": 0.0,
+   "condition": "usable",
+   "description": "Your own pocket notebook of survival basics, carried through with you: fire, water, wounds, tools. Whatever you make is added to it. Click it in your pack to read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "gear": {
+    "class": null,
+    "covers": [],
+    "kind": "none",
+    "quality": "fair"
+   },
+   "holder_id": "player",
+   "id": "survival_book",
+   "length_m": null,
+   "mass_kg": 0.3,
+   "materials": [
+    "leather",
+    "cloth"
+   ],
+   "name": "survival notes",
+   "owner_id": "player",
+   "readable": "survival_book",
+   "water_l": 0.0,
+   "x": 0,
+   "y": 0
+  },
   "sword_roderic": {
    "bound_to": [],
    "capabilities": [
@@ -5883,7 +5916,7 @@
  "run_id": "<run0>",
  "safe_seq": 0,
  "scenario": "village",
- "seed_version": 15,
+ "seed_version": 16,
  "sim_time_ms": 15500,
  "tick": 15,
  "trades": {},

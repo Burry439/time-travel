@@ -221,7 +221,9 @@ def test_arriving_with_news_stops_them_both_and_the_listener_reacts():
         0,
         state["journal"],
     )
-    assert record["move"] == "come_see" and kade["mind"]["job"]["kind"] == "approach"
+    # He'd like to see for himself: his request shows over his head and he waits to be spoken to (D-72).
+    assert record["move"] == "come_see" and not kade["mind"]["job"]
+    assert kade["mind"]["wants_word"]["text"] == "Fire? Show me."
     assert kade["mind"]["said"]["text"] == "Fire? Show me." and jory["mind"]["said"]["text"].startswith("Kade!")
 
 

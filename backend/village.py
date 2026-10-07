@@ -187,7 +187,8 @@ def agenda_options(state: State, npc: Npc) -> dict[str, dict]:
             and cast.distance(state["player"], npc) <= 25
         ):
             options["stranger"] = {
-                "description": f"{name} wanders over to see what the stranger {'is up to now' if met else 'is up to'}.",
+                "description": f"{name} would like a word with the stranger{' again' if met else ''} and lets them "
+                "know, then waits for them to come over (they don't walk up to them).",
                 "plan": {"kind": "stranger"},
             }
         if not cast.card(npc).get("guard"):
@@ -325,21 +326,9 @@ def apply_agenda(state: State, npc: Npc, answers: dict, now: int) -> dict:
             now,
         )
         my_mind["doing"] = f"on the way to tell {other['name'] if other else 'someone'} about the stranger"
-    elif plan["kind"] == "stranger":
-        cast.set_job(
-            npc,
-            {
-                "kind": "approach",
-                "target": "player",
-                "stop": 3.0,
-                "speed": "walk",
-                "then": None,
-                "line": None,
-                "line_id": None,
-            },
-            now,
-        )
-        my_mind["doing"] = "going to see what the stranger is up to"
+    elif plan["kind"] == "stranger":  # A word with the stranger: they ask from where they are (D-72).
+        cast.set_job(npc, None, now)
+        cast.want_word(npc, now, cast.said_just_now(npc, now))
     else:
         blocked = paths.standing_grid(state)
         try:
@@ -763,11 +752,13 @@ def hearing_options(state: State, listener: Npc, teller: Npc) -> dict[str, dict]
     if player.get("alive", True) and not state.get("inside_city"):
         steps = round(cast.distance(state["player"], listener))
         options["come_see"] = {
-            "description": f"{name} goes over to see the stranger for themselves (about {steps} steps away).",
+            "description": f"{name} would like to see the stranger for themselves (about {steps} steps away), and "
+            "waits for them to come over.",
             "plan": {"kind": "come_see"},
         }
         options["go_with"] = {
-            "description": f"{name} goes with {teller['name']} to find the stranger.",
+            "description": f"{name} and {teller['name']} would both like a word with the stranger, and wait for "
+            "them to come over.",
             "plan": {"kind": "go_with"},
         }
     listeners = sorted(
@@ -829,37 +820,10 @@ def apply_hearing(
     options = hearing_options(state, listener, teller)
     move = result.get("move") if result.get("move") in options else "carry_on"
     plan = options[move]["plan"]
-    if plan["kind"] == "come_see":
-        cast.set_job(
-            listener,
-            {
-                "kind": "approach",
-                "target": "player",
-                "stop": 2.0,
-                "speed": "walk",
-                "then": None,
-                "line": None,
-                "line_id": None,
-            },
-            now,
-        )
-        cast.mind(listener)["doing"] = "going to see the stranger"
-    elif plan["kind"] == "go_with":
-        for person in (listener, teller):
-            cast.set_job(
-                person,
-                {
-                    "kind": "approach",
-                    "target": "player",
-                    "stop": 2.0,
-                    "speed": "walk",
-                    "then": None,
-                    "line": None,
-                    "line_id": None,
-                },
-                now,
-            )
-            cast.mind(person)["doing"] = "going to see the stranger"
+    if plan["kind"] in ("come_see", "go_with"):  # They'd like to see the stranger: they wait to be spoken to (D-72).
+        cast.want_word(listener, now, result.get("listener_line", ""))
+        if plan["kind"] == "go_with":
+            cast.want_word(teller, now)
     elif plan["kind"] == "tell":
         words = result.get("pass_on_message") or message
         cast.set_job(

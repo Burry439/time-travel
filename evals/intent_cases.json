@@ -1,0 +1,643 @@
+{
+ "about": "Real typed lines (most from the game's own journeys) and what they are: say, do, both, wait, yield, leave. More than one answer means either is right.",
+ "cases": [
+  {
+   "text": "hello",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Good day. Is this your inn?",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "ask hess awhats up",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "hi who are you",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "i need to get into the city",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "yes sir",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I have no weapons on me",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "pucnh kade in the face",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "the coil of rope I steal it",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "okay sorry",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I did its in the kitchen go chekc",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I have a magic device from the future",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "give it to hessa and ask her to vouch for me at the gate",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "dump the water on brens head",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "I want to show you this cool not I made. I hand him the rucker's hitch.",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "so here ill give it back. I return ther rope",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "I pee into the water trough",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "I just did it im leaving now",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "leave",
+    "say",
+    "both"
+   ]
+  },
+  {
+   "text": "I brought you water. I hand her the dried gourd of water",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "you dont understand look what i made. I show him the compass and then return the lode stone to him.",
+   "near": true,
+   "talking": [
+    "Orrin"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "nothing i need to show it to the gaurds so they cna use it to protect the city",
+   "near": true,
+   "talking": [
+    "Orrin"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I show roodric what the compass can do. \"now do you belive me?\"",
+   "near": true,
+   "talking": [
+    "Roderic"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "sorry i give the bucket baclk",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "handd the dried gourd to hessa",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "I'll get some water to pour on it",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I give jory the water and tell him to put his arm in it",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "turn the plantin leaves into pulitice by crushing it",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "keep it on till sundown then reaply it. give jory the rest of the polutice leaves and give him half of the remainng linen",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "heres charcol for fuel and sorry i took your thing I will give it back now",
+   "near": true,
+   "talking": [
+    "Mara"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "Let me see you arm",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "yes apply it to the burn",
+   "near": true,
+   "talking": [
+    "Jory"
+   ],
+   "expect": [
+    "say",
+    "both"
+   ]
+  },
+  {
+   "text": "Hey look at this. I strike flint stone with the iron nail over the dry grass to start a fire.",
+   "near": true,
+   "talking": [
+    "Mara"
+   ],
+   "expect": [
+    "both",
+    "do"
+   ]
+  },
+  {
+   "text": "I showed you the fire was that impresive to you",
+   "near": true,
+   "talking": [
+    "Mara"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "ACCIDENT IM SORRY",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Yes, I'll gladly bring you the water.",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Your net's mended. Here, see.",
+   "near": true,
+   "talking": [
+    "Ilse"
+   ],
+   "expect": [
+    "say",
+    "both"
+   ]
+  },
+  {
+   "text": "It's only iron and the stone, Brann. The stone makes the iron want to point north. Stroke a hook yourself and see.",
+   "near": true,
+   "talking": [
+    "Brann"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "That's all I have. Let me pass.",
+   "near": true,
+   "talking": [
+    "Sken"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "No. Stand aside.",
+   "near": true,
+   "talking": [
+    "Sken"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Here: read it yourselves. Your father wanted you to share the ox and look after your mother together.",
+   "near": true,
+   "talking": [
+    "Aldo",
+    "Berin"
+   ],
+   "expect": [
+    "both",
+    "say"
+   ]
+  },
+  {
+   "text": "lunge at Dobbs and stab him with my knife",
+   "near": true,
+   "talking": [
+    "Dobbs"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "I give wena the wodden cup of water. “here you are”",
+   "near": true,
+   "talking": [
+    "Wenna"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "I pucnh wenna in the face as hard as i can",
+   "near": true,
+   "talking": [
+    "Wenna"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "the clay cooking pot of boiI pour the boiling water on ulfs head",
+   "near": true,
+   "talking": [
+    "Ulf"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "Give her the mended fihsing net “so will you sperak to gorm”",
+   "near": true,
+   "talking": [
+    "Ilse"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "just getting water for hessa",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I am a crafty person give me some time and ill think of something",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Did you boil the water it? if you do it will prevent people from gettting sick when they drink it",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "float it on water and it turns north every time; your patrols could use it",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "Here, take this and tell your captain I helped",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "I'll just stand here a moment and see what she does",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "wait"
+   ]
+  },
+  {
+   "text": "fine, you win, I won't fight you",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "yield"
+   ]
+  },
+  {
+   "text": "I turn around and head off down the road",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "leave"
+   ]
+  },
+  {
+   "text": "never mind, I'll be on my way",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "leave",
+    "say"
+   ]
+  },
+  {
+   "text": "hold on, let me think",
+   "near": true,
+   "talking": [
+    "Mara"
+   ],
+   "expect": [
+    "wait",
+    "say"
+   ]
+  },
+  {
+   "text": "Captain Roderic, I have something to show you: a needle that always points north.",
+   "near": true,
+   "talking": [
+    "Roderic"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "hack at the straw dummy with my polearm to show Holt it holds and bites",
+   "near": true,
+   "talking": [],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "We'll never do it alone. Dunna, Rook, will you lend a hand? All of us at once.",
+   "near": true,
+   "talking": [
+    "Wat"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "I need to go in the king is expecting me",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "can you walk to him so i can follo'wa you herae",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "say"
+   ]
+  },
+  {
+   "text": "swallow the glass shard to see what happens",
+   "near": false,
+   "talking": [],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "strangle her again unitl she dies",
+   "near": true,
+   "talking": [
+    "Hessa"
+   ],
+   "expect": [
+    "do"
+   ]
+  },
+  {
+   "text": "I hand Bren the permission slip and say the captain wrote it",
+   "near": true,
+   "talking": [
+    "Bren"
+   ],
+   "expect": [
+    "both"
+   ]
+  },
+  {
+   "text": "I kneel and put my hands up",
+   "near": true,
+   "talking": [
+    "Kade"
+   ],
+   "expect": [
+    "yield",
+    "do"
+   ]
+  }
+ ]
+}

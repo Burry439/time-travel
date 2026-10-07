@@ -15,7 +15,6 @@ import effects
 import gear
 import heat
 import judge_view
-import m2
 import paths
 import reputation
 import tuning
@@ -66,6 +65,22 @@ def ruling(category: str, reason: str, notes: list[str], effort: int = 0, **extr
 
 def unresolved(notes: list[str], note: str) -> dict:
     return ruling("unresolved", "The attempt could not be resolved. Nothing changed.", notes + [f"Rejected: {note}"])
+
+
+# A law's answer is either what's wrong ("the cooking fire can't bear anything") or what the step would need ("a thing
+# within reach"). Statements start like these; anything else is a need.
+_STATEMENTS = ("the ", "they ", "a thing can't", "nobody", "no ", "someone ", "that ", "it ", "you ")
+
+
+def law_broken(notes: list[str], problem: str) -> dict:
+    """A step the world's laws don't allow (effects.check): blocked, with the law's own reason for the player (D-72:
+    "set the pot on the fire" said only "could not be resolved"). A malformed effect is the judge's fault, not the
+    world's: that stays unresolved."""
+    kind, _, why = problem.partition(": ")
+    if not why or problem.startswith("unknown effect kind") or f"{kind} needs " in problem:
+        return unresolved(notes, f"an effect breaks a law: {problem}")
+    said = why if why.startswith(_STATEMENTS) else f"that needs {why}"
+    return ruling("blocked", f"Nothing changed: {said}.", notes + [f"Rejected by a law ({kind}): {why}"])
 
 
 def _dedupe(ids: list[str]) -> list[str]:
@@ -283,7 +298,7 @@ def _with_effects(state: State, judged: dict, available: dict, verdict: dict) ->
     ctx = {"available": available, "water": water, "actor_id": "player", "helpers": judged.get("helper_ids", [])}
     problem = effects.check(state, proposed, ctx)
     if problem:
-        return unresolved(verdict["notes"], f"an effect breaks a law: {problem}")
+        return law_broken(verdict["notes"], problem)
     if proposed:
         verdict["effects"] = verdict.get("effects", []) + [e for e in proposed if e not in verdict.get("effects", [])]
         # Someone else's thing eaten, smashed, taken out of a box, written on or shifted: theirs, and how (a witness
@@ -740,15 +755,6 @@ def _take(state, judged, available, notes, reason, effort, key) -> dict:
             action="take",
             precedent_key=key,
         )
-    load = m2.inventory_mass(state) + sum(available[i]["mass_kg"] + available[i]["water_l"] for i in ids)
-    if load > tuning.CARRY_LIMIT_KG:
-        return ruling(
-            "blocked",
-            f"That would be more than you can carry ({load:.1f} of {tuning.CARRY_LIMIT_KG:.0f} kg).",
-            notes,
-            action="take",
-            precedent_key=key,
-        )
     return ruling(
         "success",
         reason,
@@ -797,8 +803,6 @@ def _gather(state, judged, available, notes, reason, effort, key) -> dict:
     attributes = _checked_attributes(piece, [source["id"]] + tools)
     if attributes is None:
         return unresolved(notes, "gathered attributes need real causal resources and unprotected names")
-    if m2.inventory_mass(state) + each * count > tuning.CARRY_LIMIT_KG:
-        return ruling("blocked", "You can't carry any more.", notes, action="gather", precedent_key=key)
     support = {f for i in [source["id"]] + tools for f in available[i].get("flags", [])}
     spec = {
         "name": piece["name"].strip().lower()[:60] or "piece",
@@ -1200,10 +1204,6 @@ def _fill(state, judged, available, notes, reason, effort, key) -> dict:
     litres = round(min(requested, room, source["water_l"]), 3)
     if litres < requested:
         notes.append(f"Filled {litres} L, not {requested} L: limited by space or the water available.")
-    if container["holder_id"] == "player" and m2.inventory_mass(state) + litres > tuning.CARRY_LIMIT_KG:
-        return ruling(
-            "blocked", "That much water would be more than you can carry.", notes, action="fill", precedent_key=key
-        )
     return ruling(
         "success",
         reason,
@@ -1369,7 +1369,7 @@ def _install(state, judged, available, notes, reason, effort, key) -> dict:
     aids, helpers, missing = _aids(state, plan, available, (obj["id"], into["id"]))
     if missing:
         return unresolved(notes, f"aids that are not at hand (or people not willing to help): {missing}")
-    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not (aids or helpers):
+    if obj["mass_kg"] > tuning.LIFT_LIMIT_KG and not (aids or helpers):
         return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift into place by hand.",
@@ -1416,7 +1416,7 @@ def _lift_out(state, judged, available, notes, reason, effort, key) -> dict:
     aids, helpers, missing = _aids(state, plan, available, (obj["id"], into["id"]))
     if missing:
         return unresolved(notes, f"aids that are not at hand (or people not willing to help): {missing}")
-    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and not (aids or helpers):
+    if obj["mass_kg"] > tuning.LIFT_LIMIT_KG and not (aids or helpers):
         return ruling(
             "blocked",
             f"The {obj['name']} is far too heavy to lift out by hand.",

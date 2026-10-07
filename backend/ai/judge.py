@@ -26,7 +26,8 @@ from . import config
 # v25 (D-65 phase 4): fire and heat, processes over time.
 # v26 (D-70): clean (something fouling a thing or water cleaned away).
 # v27 (D-70): soothe (an old complaint eased: warmth on an aching joint).
-PROMPT_VERSION = "judge_v27"
+# v28 (D-72): fire from flint on steel only; the prompt defers to material_facts instead of stating its own rule.
+PROMPT_VERSION = "judge_v28"
 _PROMPT = (Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.txt").read_text(encoding="utf-8")
 
 Flag = Literal[

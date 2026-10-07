@@ -46,6 +46,7 @@ class Recorder:
             errand_message="",
             promised_later="",
             remember="",
+            lets_the_stranger_use="",
             stranger_name="",
         )
         return SimpleNamespace(usage=None, output_parsed=line)

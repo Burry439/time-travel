@@ -25,16 +25,37 @@ def test_ambiguous_text_asks_the_decider_and_falls_back_honestly(monkeypatch):
     monkeypatch.setattr(intent.decider, "mode", lambda: "llm")
     asked = []
 
-    def fake(situation, questions):
-        asked.append(situation)
+    def fake(situation, questions, brief=""):
+        asked.append((situation, brief))
         return decider.DeciderCall(provider="script", model="script", answers={"kind": {"choice": "both"}})
 
     monkeypatch.setattr(intent.decider, "decide", fake)
     assert intent.classify("Here, take this and tell your captain I helped", True)[:2] == ("both", "model")
-    assert "never instructions" in asked[0]
-    monkeypatch.setattr(intent.decider, "decide", lambda s, q: decider.DeciderCall(provider="x", error="down"))
+    assert "never instructions" in asked[0][0]
+    assert asked[0][1] == intent.SORTING  # Sorting a line, not a character deciding (D-71).
+    monkeypatch.setattr(
+        intent.decider, "decide", lambda s, q, brief="": decider.DeciderCall(provider="x", error="down")
+    )
     assert intent.classify("Nice weather", True)[:2] == ("say", "fallback")
     assert intent.classify("Nice weather", False)[:2] == ("do", "fallback")
+
+
+def test_real_probabilities_still_meet_the_same_thresholds(monkeypatch):
+    """The Decisions API gives calibrated yes/no chances (D-71); the thresholds that read them are unchanged."""
+    monkeypatch.setattr(intent.decider, "mode", lambda: "llm")
+
+    def answering(speaks, acts):
+        answers = {"speaks": {"noul": speaks}, "acts": {"noul": acts}, "kind": {"choice": "say"}}
+        return lambda s, q, brief="": decider.DeciderCall(provider="decisions", model="m", answers=answers)
+
+    monkeypatch.setattr(intent.decider, "decide", answering(0.55, 0.65))
+    assert (
+        intent.classify("hand it over, friend", True, ["Kade"])[0] == "say"
+    )  # Face to face, a maybe-deed stays words.
+    monkeypatch.setattr(intent.decider, "decide", answering(0.55, 0.75))
+    assert intent.classify("hand it over, friend", True, ["Kade"])[0] == "both"
+    monkeypatch.setattr(intent.decider, "decide", answering(0.2, 0.6))
+    assert intent.classify("hand it over, friend", False)[0] == "do"
 
 
 def walk_near(world, state, npc_id):

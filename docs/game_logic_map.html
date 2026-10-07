@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 5 Oct 2026 · main · decisions up to D-70</p>
+  <p class="stamp">Current as of 7 Oct 2026 · claude/decisions-api · decisions up to D-73 (one source of truth; deals settled by quests)</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -110,7 +110,7 @@ tr:last-child td { border-bottom: 0; }
   <ul>
     <li><strong>The client</strong> (Godot) moves the player and draws the world. It never decides outcomes; it sends requests and shows the state that comes back.</li>
     <li><strong>A backend command</strong> takes the journey's lock, checks the request, and asks the models outside the lock. Speech has a 12-second model budget, deeds 15 seconds.</li>
-    <li><strong>Models</strong> only propose: the judge (<code>judge_v27</code>) for deeds and physics, and each person's own call (<code>person_v7</code>) for what they say and choose.</li>
+    <li><strong>Models</strong> only propose: the judge (<code>judge_v28</code>) for deeds and physics, each person's own call (<code>person_v8</code>) for what they say and choose, and the decider (OpenAI's Decisions API, D-71) for quick typed questions: is a typed line words or a deed, and would someone not addressed cut in.</li>
     <li><strong>The reducer</strong> checks every proposal against the world and the rules, then commits it as an event (<code>consequences.py</code>, <code>rounds.py</code>, <code>talk.py</code>). Journeys replay exactly from <code>store.py</code>.</li>
     <li><strong>The clock</strong> runs between your actions: routines, errands, fights, and stories checking whether something new has happened (<code>clock.py</code>, <code>stories.py</code>).</li>
   </ul>
@@ -119,7 +119,7 @@ tr:last-child td { border-bottom: 0; }
 <section id="talking">
   <h2>When you talk to someone</h2>
   <div class="figure">
-  <svg viewBox="0 0 680 500" role="img" aria-labelledby="t2 d2"><title id="t2">A round of conversation</title><desc id="d2">You speak. The person addressed answers in their own private call while a separate reading checks whether you passed on a secret. Others nearby then decide in their own calls. Code checks every move, the world changes, and stories react when each person learns of an outcome.</desc>
+  <svg viewBox="0 0 680 500" role="img" aria-labelledby="t2 d2"><title id="t2">A round of conversation</title><desc id="d2">You speak. The person addressed answers in their own private call while a separate reading checks whether you passed on a secret. Each of the others nearby has a quick check of their own first; only those it concerns take a turn. Code checks every move, the world changes, and stories react when each person learns of an outcome.</desc>
   <defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" style="fill:none;stroke:var(--line);stroke-width:1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
   <rect class="n" x="60" y="20" width="300" height="56" rx="8"/><text class="tt n-t" x="210" y="42" text-anchor="middle">You speak</text><text class="st n-s" x="210" y="62" text-anchor="middle">To someone nearby</text>
   <line class="ar" x1="210" y1="76" x2="210" y2="114" marker-end="url(#a2)"/>
@@ -127,7 +127,7 @@ tr:last-child td { border-bottom: 0; }
   <rect class="m" x="60" y="116" width="300" height="56" rx="8"/><text class="tt m-t" x="210" y="138" text-anchor="middle">Their own call</text><text class="st m-s" x="210" y="158" text-anchor="middle">Own sheet, memory, secrets</text>
   <rect class="m" x="420" y="116" width="220" height="56" rx="8"/><text class="tt m-t" x="530" y="138" text-anchor="middle">Told reading</text><text class="st m-s" x="530" y="158" text-anchor="middle">Did you pass a secret on?</text>
   <line class="ar" x1="210" y1="172" x2="210" y2="210" marker-end="url(#a2)"/>
-  <rect class="m" x="60" y="212" width="300" height="56" rx="8"/><text class="tt m-t" x="210" y="234" text-anchor="middle">Others nearby decide</text><text class="st m-s" x="210" y="254" text-anchor="middle">Each in their own call</text>
+  <rect class="m" x="60" y="212" width="300" height="56" rx="8"/><text class="tt m-t" x="210" y="234" text-anchor="middle">Others: a quick check first</text><text class="st m-s" x="210" y="254" text-anchor="middle">Only those it concerns speak</text>
   <line class="ar" x1="210" y1="268" x2="210" y2="306" marker-end="url(#a2)"/>
   <path class="ar" d="M530 172 L530 336 L362 336" marker-end="url(#a2)"/>
   <rect class="c" x="60" y="308" width="300" height="56" rx="8"/><text class="tt c-t" x="210" y="330" text-anchor="middle">Code checks each move</text><text class="st c-s" x="210" y="350" text-anchor="middle">Legal now? Words match?</text>
@@ -139,8 +139,9 @@ tr:last-child td { border-bottom: 0; }
   </div>
   <ul>
     <li><strong>Each person is their own agent.</strong> Their call holds only their own sheet, memories, secrets and the rules that apply to them. Nobody's call contains anyone else's secrets.</li>
+    <li><strong>Nobody cuts in unless it's their business</strong> (D-71). Before their turn, each person not addressed gets a quick check of their own (about 0.3 s): would they speak up now, and does it give them reason to act? Only someone who would speak up gets a turn that can speak; someone with reason to act (a guard overhearing a confessed theft) thinks it over in silence; anyone else carries on. Measured: interruptions in quiet scenes 8 of 57 rounds before, 0 after.</li>
     <li><strong>Code builds the moves</strong> a person may choose: answer, share a fact, confide a secret, agree to a story move (Darin letting a debt go), lend, give, send you to someone, let you through the gate. The person picks one, or none.</li>
-    <li><strong>Words must match the move.</strong> A guard who reads you as a threat lets you in only if they're afraid (duress). Promises to go and tell someone become real errands. A recommendation carries the request its speaker heard; the recipient responds when it arrives and may decide entry then.</li>
+    <li><strong>Words must match the move, and words stand.</strong> A yes to using their thing is a lend. Doing what they asked completes their deal. If code refuses part of what someone decided, their words stay and a plain note says what didn't happen (D-72). A guard who reads you as a threat lets you in only if they're afraid (duress). Promises to go and tell someone become real errands. A recommendation carries the request its speaker heard; the recipient responds when it arrives and may decide entry then.</li>
     <li><strong>The told reading</strong> runs beside the conversation and says whether your words passed on someone's secret. Whoever heard it, or overheard it, now knows it. A secret is never news to the person it's about (<code>known_by</code>).</li>
   </ul>
 </section>
@@ -181,12 +182,17 @@ tr:last-child td { border-bottom: 0; }
     <thead><tr><th>Question</th><th>Decided by</th><th>How</th></tr></thead>
     <tbody>
       <tr><td>Is this deed physically possible?</td><td>Judge, then code</td><td>The judge proposes; the validator enforces the laws and refuses honestly.</td></tr>
+      <tr><td>Is what you typed words, a deed, or both?</td><td>Code, else the decider</td><td>Obvious lines by code; the rest by two yes/no chances and a choice (Decisions API, about 0.3 s), thresholds in code.</td></tr>
       <tr><td>What does this person say and do?</td><td>That person's own call</td><td>One move from the moves code offers; code checks it and carries it out.</td></tr>
+      <tr><td>Does someone not addressed speak up?</td><td>Their own quick check, then their own call</td><td>Only if it's their business; with reason to act, they decide in silence. The check can only keep them quiet.</td></tr>
       <tr><td>Does a wonder awe or frighten them?</td><td>Code, at first sight</td><td>Most people are awed (the reverent doubly); the superstitious are afraid instead.</td></tr>
       <tr><td>Does an explanation win them over?</td><td>That person's own call</td><td>If it makes sense to them, their fear turns to awe. Bluster explains nothing.</td></tr>
-      <tr><td>Can this deed change that thing or person?</td><td>Code, by the building block's law</td><td>Reach, no edits to feelings or ownership, tying someone needs them down, asleep or willing.</td></tr>
+      <tr><td>Can this deed change that thing or person?</td><td>Code, by the building block's law</td><td>Reach, no edits to feelings or ownership, tying someone needs them down, asleep or willing. A refusal says the law's reason (D-72).</td></tr>
+      <tr><td>How do materials and fire behave?</td><td>The material facts, once</td><td>The judge, the device and the survival notes all read the same facts: fire from flint on steel, never plain iron (D-72).</td></tr>
+      <tr><td>Who comes up to you?</td><td>Code</td><td>Only the hostile or urgent (a halt, a confrontation, an attack, help for the hurt). Anyone else who wants a word shows a request bubble and waits (D-72).</td></tr>
       <tr><td>Do they trust you now?</td><td>That person's own call</td><td>Their reading of each moment, within budgets: repeating a proof earns nothing new.</td></tr>
       <tr><td>Will they do what a story asks?</td><td>Their own feelings</td><td>Nothing from someone angry, afraid or hostile: scald Ulf and he asks for no tea.</td></tr>
+      <tr><td>Is a deal done?</td><td>The quest, or the person</td><td>A deal made for someone's quest need is settled when the quest step answering that need reaches them; otherwise they judge it themselves (D-73).</td></tr>
       <tr><td>Who knows that a story outcome happened?</td><td>Code, from evidence</td><td>Whoever saw it, heard it, overheard it, or was brought the news. Their reaction waits until then.</td></tr>
     </tbody>
   </table></div>
@@ -215,6 +221,9 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">7 Oct 2026 · D-73</span><p>Claude: a deal made for a quest need is settled by the quest step that answers it, and its rewards happen; gifts wait until you come to them.</p></div>
+    <div><span class="stamp">7 Oct 2026 · D-72</span><p>Claude: from the walkthrough's failures. One source of truth for materials and fire (judge_v28, device_v3); no pack weight limit; laws say why; words stand and a yes is a lend (person_v8); people who want a word wait with a request bubble; survival notes to start with.</p></div>
+    <div><span class="stamp">7 Oct 2026 · D-71</span><p>Claude: the decider on OpenAI's Decisions API (typed line p50 0.29 s, was 2.7 s), with the Responses way as fallback; a quick check before anyone not addressed takes a turn, so nobody cuts in unless it's their business. openai 3.26.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-70</span><p>Claude: a game started from the Godot editor now looks for the demo backend on port 8767 (it used 8765, which another program held), and the menu says which address it tried and when something else answers there.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-70</span><p>Claude: whatever the game waits on the backend for is said in a banner at the top (who's thinking, what's loading); background traffic stays silent.</p></div>
     <div><span class="stamp">5 Oct 2026 · D-70</span><p>Claude merged its finished quests onto main over D-69's snapshot: all eight troubles are quests of five or more intertwined steps (clusters A, B and C), with the later fixes (secrets kept out of sides, the rotten boards, the greeting waiting while you type, soothe). Prompt judge_v27.</p></div>

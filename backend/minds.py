@@ -307,6 +307,24 @@ def raise_alarm(state: State, npc: Npc, line: str, radius: float, now: int, guar
                 known["reported"] = True  # A guard heard: the caller has done their part.
 
 
+def carry_out(state, npc, line: dict, answers: dict) -> list[str]:
+    """A person's intentions and deal move from one decision, checked and carried out. Returns what didn't happen,
+    in words for the player (D-72: never in place of what they said: their words stand, and this says plainly
+    what didn't follow from them)."""
+    name, unmet = npc["name"], []
+    for intent in line.get("intents", []):
+        if intent.get("kind") == "admit" and not conversation.admits_now(state, npc, answers):
+            unmet.append(f"{name} doesn't actually let you through: by their own reading, not yet.")
+            continue
+        if not agreements.execute(state, npc, intent, state["event_seq"] + 1):
+            unmet.append(f"What {name} meant to do doesn't happen: they haven't the means or the right here.")
+    if line.get("agreement"):
+        valid, detail = agreements.apply(state, npc, line["agreement"], state["event_seq"] + 1)
+        if not valid:
+            unmet.append(f"{name}'s deal doesn't change: {detail[0].lower()}{detail[1:]}")
+    return unmet
+
+
 def apply_personal_decision(state, npc, decision, now, journal):
     """One contract for subjective judgments and resource-checked intentions in every lane."""
     import talk
@@ -314,25 +332,9 @@ def apply_personal_decision(state, npc, decision, now, journal):
     talk.update_regard(npc, decision["answers"])
     cast.mind(npc)["feelings"]["anger"] = float(decision["answers"]["anger"]["score"]) / 3
     cast.mind(npc)["standing_plan"] = {"defend": bool(decision.get("defend_if_attacked"))}
-    rejected = []
-    for intent in decision.get("intents", []):
-        if intent.get("kind") == "admit" and not conversation.admits_now(state, npc, decision["answers"]):
-            rejected.append("The permission disagrees with this guard's own judgment.")
-            continue
-        if not agreements.execute(state, npc, intent, state["event_seq"] + 1):
-            rejected.append("The intended action is unavailable with the resources here.")
-    if decision.get("agreement"):
-        valid, detail = agreements.apply(state, npc, decision["agreement"], state["event_seq"] + 1)
-        if not valid:
-            rejected.append(detail)
+    rejected = carry_out(state, npc, decision, decision["answers"])
     if decision.get("text"):
-        speech.say(
-            npc,
-            decision["text"] if not rejected else "I can't carry that out with what I have here.",
-            now,
-            state,
-            journal,
-        )
+        speech.say(npc, decision["text"], now, state, journal)
     cast.mind(npc)["decision_reason"] = decision.get("remember", "")[:400]
     if rejected:
         cast.mind(npc)["rejected_intents"] = rejected

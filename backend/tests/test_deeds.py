@@ -86,7 +86,8 @@ def test_a_state_ends_when_its_time_is_up():
 def test_the_laws_refuse_what_the_world_cannot_do(effect, problem):
     state = beside(BREN)
     verdict = crafting.validate(state, other([effect], "x"))
-    assert verdict["category"] == "unresolved"
+    # Blocked, saying which law and why, not "could not be resolved" (D-72).
+    assert verdict["category"] == "blocked" and problem in verdict["reason"], verdict["reason"]
     assert any(problem in n for n in verdict["notes"]), verdict["notes"]
 
 
@@ -190,7 +191,7 @@ def test_a_conscious_person_wont_stand_still_to_be_tied_up():
     state = beside(BREN)
     tie = {"kind": "condition", "target_id": BREN, "name": "tied up", "limits": ["hands", "move"]}
     verdict = crafting.validate(state, other([tie], "x"))
-    assert verdict["category"] == "unresolved" and any("won't stand still" in n for n in verdict["notes"])
+    assert verdict["category"] == "blocked" and "won't stand still" in verdict["reason"]
     cast.find(state["npcs"], BREN)["down"] = True
     assert crafting.validate(state, other([tie], "x"))["category"] == "success"
 
@@ -225,8 +226,9 @@ def deed(state, *effects_list, seen_as="The stranger does something.", **fields)
 
 def refused(state, *effects_list, **fields):
     verdict = crafting.validate(state, other(list(effects_list), "x", **fields))
-    assert verdict["category"] == "unresolved", verdict
-    return " ".join(verdict["notes"])
+    # Blocked, and the player is told the law's reason (D-72: once only "could not be resolved").
+    assert verdict["category"] == "blocked" and verdict["reason"].startswith("Nothing changed: "), verdict
+    return " ".join([verdict["reason"], *verdict["notes"]])
 
 
 def test_water_tipped_over_bren_leaves_the_gourd_and_soaks_him():

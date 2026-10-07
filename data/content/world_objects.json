@@ -1410,6 +1410,25 @@
    "no_sprite": true
   },
   {
+   "id": "survival_book",
+   "name": "survival notes",
+   "x": 0,
+   "y": 0,
+   "mass_kg": 0.3,
+   "materials": [
+    "leather",
+    "cloth"
+   ],
+   "description": "Your own pocket notebook of survival basics, carried through with you: fire, water, wounds, tools. Whatever you make is added to it. Click it in your pack to read it.",
+   "flags": [
+    "flexible",
+    "combustible"
+   ],
+   "owner_id": "player",
+   "carried_by": "player",
+   "readable": "survival_book"
+  },
+  {
    "id": "dressing_bren",
    "name": "roll of linen bandage",
    "x": 0,

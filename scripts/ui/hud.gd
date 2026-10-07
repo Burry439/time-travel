@@ -11,7 +11,6 @@ var game: Node2D
 var area: Label
 var status: Label
 var slots_box: HBoxContainer
-var weight: Label
 var inventory: PanelContainer
 var objective: PanelContainer
 var goal: Label
@@ -102,8 +101,6 @@ func build(owner_ui: Control, owner_game: Node2D) -> void:
 	var pack := _wood_label("PACK  ·  I", 11, UITheme.GOLD)
 	pack.add_theme_font_override("font", UITheme.serif(true))
 	side.add_child(pack)
-	weight = _wood_label("0 / 20 kg", 14)
-	side.add_child(weight)
 
 	condition_box = VBoxContainer.new()
 	condition_box.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -263,13 +260,9 @@ func refresh() -> void:
 	objective.visible = not (typeof(tutorial) == TYPE_DICTIONARY and not tutorial.get("done", false))
 	_track_goal(state)
 	var carried := carried_objects()
-	var mass := 0.0
 	var signature := PackedStringArray()
-	for obj in carried:
-		mass += float(obj.get("mass_kg", 0)) + float(obj.get("water_l", 0))
+	for obj in carried:  # No pack weight shown or enforced (D-72).
 		signature.append("%s:%s:%s" % [obj.id, game.art.sprite_status(obj), obj.get("water_l", 0)])
-	weight.text = "%s / 20 kg" % String.num(mass, 1) # m2.CARRY_LIMIT_KG
-	weight.add_theme_color_override("font_color", UITheme.STEAL.lightened(0.3) if mass > 18.0 else UITheme.CREAM)
 	if ",".join(signature) != _signature:
 		_signature = ",".join(signature)
 		_rebuild_slots(carried)

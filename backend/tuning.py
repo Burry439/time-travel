@@ -50,6 +50,12 @@ HEAR_SHOUT_CELLS = 30.0  # A shout for help carries across the open road.
 WARN_CELLS = 12.0
 WHISTLE_CELLS = 45.0
 HEAR_TALK_CELLS = 5.0  # GDD 7.3: normal speech carries 5 cells.
+# Before anyone not addressed takes their turn in a conversation, a quick check of their own (D-71): how sure it must
+# be that they'd speak up for them to take a turn that can speak, and that it gives them reason to act for them to
+# think it over in silence. Someone only in earshot needs more reason to cut in than someone taking part.
+SPEAK_UP_TAKING_PART = 0.5
+SPEAK_UP_NEARBY = 0.6
+TAKES_NOTE = 0.5
 OVERHEAR_CELLS = 5.0
 WITNESS_RADIUS = 20.0  # Cells within which people are recorded as witnesses (D-55: was 10).
 PEOPLE_RADIUS = 8.0  # Cells within which the judge is told about people.
@@ -71,7 +77,9 @@ WALK_STEP_MS = 400
 GIVE_UP_CELLS = 28.0
 THROW_RANGE = 8.0  # Cells.
 MAX_THROW_KG = 5.0
-CARRY_LIMIT_KG = 20.0
+# The most one person lifts and carries of a single thing on their own. There is no limit on how much the stranger
+# carries in all (D-72: a pack limit hid why things failed: a 0.4 L fill refused because of an iron bar in the pack).
+LIFT_LIMIT_KG = 20.0
 
 # --- The gate --------------------------------------------------------------------------------------------------------
 

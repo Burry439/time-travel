@@ -270,3 +270,52 @@ def test_every_map_scene_lets_clicks_through():
         for block in scene.read_text(encoding="utf-8").split("\n\n"):
             if 'type="ColorRect"' in block or 'type="TextureRect"' in block:
                 assert "mouse_filter = 2" in block, f"{scene.name}: {block.splitlines()[0]}"
+
+
+# Drawn by something else: the smithy's map art, the stranger's own body.
+DRAWN_ELSEWHERE = {"forge_mara", "clothes_player"}
+# Waiting for a picture (a Codex brief, as docs/CODEX_ART_D72.md was). Remove each as its picture lands: the test fails
+# if one already has art.
+AWAITING_ART: set[str] = set()  # D-72's four (boards, horn, tongs, survival notes) landed.
+
+
+def test_every_thing_in_the_village_has_a_picture():
+    """A thing with no picture shows as a "?" (D-72: the rotten boards by Hessa's trough did, from the start)."""
+    import json
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    objects = json.loads((root / "data/content/world_objects.json").read_text(encoding="utf-8"))
+    objects = objects if isinstance(objects, list) else objects["objects"]
+    authored = set()
+    for scene in (root / "scenes/maps").glob("*.tscn"):
+        text = scene.read_text(encoding="utf-8")
+        authored |= set(re.findall(r'\[node name="([^"]+)" type="Sprite2D" parent="M2Objects"\]', text))
+    pictured = {
+        o["id"]
+        for o in objects
+        if isinstance(o, dict)
+        and (
+            (root / f"assets/generated/materials/{o['id']}.png").exists()
+            or o["id"] in authored
+            or o.get("scene_node")
+            or o["id"] in DRAWN_ELSEWHERE
+        )
+    }
+    missing = {o["id"] for o in objects if isinstance(o, dict)} - pictured
+    assert missing <= AWAITING_ART, f"no picture: {sorted(missing - AWAITING_ART)}"
+    assert not AWAITING_ART & pictured, f"painted now, take off AWAITING_ART: {sorted(AWAITING_ART & pictured)}"
+
+
+def test_every_quest_need_can_be_answered():
+    """A deal made for a quest need settles when a step answers it (D-73): every need some step answers."""
+    for story in stories.STORIES.values():
+        for npc_id in story.get("needs", {}):
+            answering = [
+                part["id"]
+                for part in story.get("stages", []) + story.get("outcomes", [])
+                for effect in part.get("effects", [])
+                if effect["kind"] == "need" and effect.get("npc") == npc_id
+            ]
+            assert answering, f"{story['id']}: nothing answers {npc_id}'s need"

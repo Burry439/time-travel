@@ -10,6 +10,7 @@ send them to tell the person it concerns (a move's "tells")."""
 
 from __future__ import annotations
 
+import agreements
 import cast
 import content
 import evidence
@@ -534,10 +535,13 @@ def _need(state: State, spec: dict, story: dict | None = None) -> None:
     if npc is None or story is None:
         return
     needs = cast.mind(npc).setdefault("needs", {})
+    before = (needs.get(story["id"]) or {}).get("text")
     if spec.get("text"):
         needs[story["id"]] = {"title": story["title"], "text": spec["text"][:160], "at": state.get("sim_time_ms", 0)}
     else:
         needs.pop(story["id"], None)
+    if before and before != (needs.get(story["id"]) or {}).get("text"):  # Their need was answered (D-73).
+        agreements.settle_for_need(state, npc, story["id"], state.get("event_seq", 0) + 1, state.get("sim_time_ms", 0))
 
 
 EFFECTS = {

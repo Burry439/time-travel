@@ -1,13 +1,16 @@
 extends HBoxContainer
-## The wainwright's notebook (GDD D-52): a readable book found in the old wainwright's yard. Chapters and recipes
-## down the left, the page on the right in large type. Advice, not a recipe system: every attempt is still judged.
-## "Type it for me" puts the page's suggested words in the dialogue bar, to check and send.
+## A readable book: the wainwright's notebook (GDD D-52), found in the old wainwright's yard, or the stranger's own
+## survival notes (D-72). Chapters and recipes down the left, the page on the right in large type. Advice, not a
+## recipe system: every attempt is still judged. "Type it for me" puts the page's suggested words in the dialogue bar,
+## to check and send. A page's "facts" are printed from the world's own material facts (the same the judge rules
+## by), and a book with "made_chapter" ends with what the stranger has made on this journey.
 
 const UITheme := preload("res://scripts/ui/ui_theme.gd")
 
 var ui: Control
 var game: Node2D
 var content: Dictionary = {}
+var facts: Dictionary = {} # The world's material facts (data/content/materials.json), quoted by pages.
 var page: VBoxContainer
 
 
@@ -17,6 +20,9 @@ func build(owner_ui: Control, owner_game: Node2D, source: String) -> void:
 	var file := FileAccess.open("res://data/content/%s.json" % source, FileAccess.READ)
 	if file:
 		content = JSON.parse_string(file.get_as_text())
+	var materials := FileAccess.open("res://data/content/materials.json", FileAccess.READ)
+	if materials:
+		facts = (JSON.parse_string(materials.get_as_text()) as Dictionary).get("material_facts", {})
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 18)
@@ -36,6 +42,19 @@ func build(owner_ui: Control, owner_game: Node2D, source: String) -> void:
 		index.add_child(caption)
 		for recipe in chapter.get("recipes", []):
 			index.add_child(_link(str(recipe.name), _recipe.bind(recipe)))
+	if content.get("made_chapter", false):
+		var made_caption := Label.new()
+		made_caption.theme_type_variation = "Caption"
+		made_caption.text = "THINGS YOU'VE MADE"
+		index.add_child(made_caption)
+		var made := _made_things()
+		if made.is_empty():
+			var none := Label.new()
+			none.text = "Nothing yet."
+			none.add_theme_color_override("font_color", UITheme.INK_SOFT)
+			index.add_child(none)
+		for entry in made:
+			index.add_child(_link(str(entry.made_name).capitalize(), _made_page.bind(entry)))
 	var page_scroll := ScrollContainer.new()
 	page_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	page_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -98,12 +117,45 @@ func _recipe(recipe: Dictionary) -> void:
 	for step in recipe.get("steps", []):
 		_text("%d.  %s" % [number, str(step).replace("{", "").replace("}", "")], 20)
 		number += 1
+	if recipe.has("facts"):
+		_text("How it works here", 16, UITheme.INK_SOFT, true)
+		for key in recipe.get("facts", []):
+			if facts.has(key):
+				_text(str(facts[key]), 18, UITheme.INK, false, true)
 	_text("Good for", 16, UITheme.INK_SOFT, true)
 	_text(str(recipe.get("good_for", "")).replace("{", "").replace("}", ""), 20)
+	_try_saying(str(recipe.say), str(recipe.get("mode", "do")))
+
+
+## The things this journey has made, oldest first: each with what happened and the words that made it.
+func _made_things() -> Array:
+	var made := []
+	var seen := {}
+	for entry in game.run_state.get("journal", []):
+		if typeof(entry) != TYPE_DICTIONARY or entry.get("kind") != "craft" or entry.get("crafted") == null:
+			continue
+		if str(entry.get("category", "")) not in ["success", "partial_success"] or seen.has(entry.crafted):
+			continue
+		seen[entry.crafted] = true
+		made.append(entry)
+	return made
+
+
+func _made_page(entry: Dictionary) -> void:
+	_clear()
+	_text(str(entry.made_name).capitalize(), 30, UITheme.ACCENT, true)
+	_text("What happened", 16, UITheme.INK_SOFT, true)
+	_text(str(entry.get("reason", "")), 20)
+	_try_saying(str(entry.get("text", "")), "do")
+
+
+func _try_saying(words: String, mode: String) -> void:
+	if words.strip_edges().is_empty():
+		return
 	_text("Try saying", 16, UITheme.INK_SOFT, true)
-	_text("“%s”" % str(recipe.say), 22, UITheme.ACCENT, true, true)
+	_text("“%s”" % words, 22, UITheme.ACCENT, true, true)
 	var row := HBoxContainer.new()
 	page.add_child(row)
 	row.add_child(ui.button("Type it for me", func() -> void:
 		ui.close_modal_now()
-		ui.bar.open("", str(recipe.say), {}, "do")))
+		ui.bar.open("", words, {}, mode)))

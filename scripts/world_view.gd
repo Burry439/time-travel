@@ -22,6 +22,9 @@ var shown_speech: Dictionary = {} # npc id -> key of the last line shown in a bu
 var shown_cues: Dictionary = {} # npc id -> key of the last regard cue shown
 
 
+const WANT_SHOWN_MS := 300000.0 # A request for a word stays up this long (game time) unless answered (D-72).
+
+
 func spawn_people() -> void:
 	var old := game.get_node_or_null("NPCs")
 	if old:
@@ -232,10 +235,25 @@ func _sync_now() -> void:
 			if str(cue.get("kind", "")) in ["warmer", "trusting", "easier"]:
 				warm_until[str(npc["id"])] = Time.get_ticks_msec() / 1000.0 + 3.5
 			# Standing toasts (D-55) now say how someone's view of you changed; face to face, the round log shows it.
+		var npc_mind: Dictionary = npc.get("mind") if typeof(npc.get("mind")) == TYPE_DICTIONARY else {}
+		var want = npc_mind.get("wants_word")
+		var now_ms := float(game.run_state.get("sim_time_ms", 0))
+		var asks: bool = (
+			typeof(want) == TYPE_DICTIONARY
+			and npc.get("alive", true)
+			and not npc.get("down", false)
+			and now_ms - float(want.get("at", 0)) < WANT_SHOWN_MS
+		)
+		_show_want(str(npc["id"]), str(want.get("text", "")) if asks else "")
 		var plate := game.get_node_or_null("NPCs/%s/Nameplate" % npc["id"]) as Label
 		if plate:
 			var standing: bool = npc.get("alive", true) and not npc.get("down", false)
 			plate.text = str(npc["name"]) + ("" if standing else " (down)" if npc.get("alive", true) else " (dead)")
+			plate.text += "  ·  wants a word" if asks else ""
+			if asks:
+				plate.add_theme_color_override("font_color", game.UITheme.GOLD)
+			else:
+				plate.remove_theme_color_override("font_color")
 			plate.position.y = -115.0 if standing else -58.0 # Down beside a body.
 			plate.reset_size()
 	game.gate_button.text = "Close gate (test)" if game.run_state["gate_open"] else "Open gate (test)"
@@ -379,6 +397,42 @@ func show_bubble(npc_id: String, text: String) -> void:
 	var fade := bubble.create_tween()
 	fade.tween_interval(4.5)
 	fade.tween_property(bubble, "modulate:a", 0.0, 0.6)
+
+
+## Someone who'd like a word (D-72): their request stays over their head until the stranger speaks to them. They
+## don't walk up uninvited; the stranger goes to them. Hidden while they're saying something else.
+func _show_want(npc_id: String, text: String) -> void:
+	var actor := game.get_node_or_null("NPCs/" + npc_id) as Node2D
+	if actor == null:
+		return
+	var want := actor.get_node_or_null("Want") as PanelContainer
+	if text.is_empty():
+		if want:
+			want.queue_free()
+		return
+	if want == null:
+		want = PanelContainer.new()
+		want.name = "Want"
+		want.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		want.add_theme_stylebox_override("panel", game.UITheme.frame_box("paper", 10, 2))
+		var words := Label.new()
+		words.name = "Words"
+		words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		words.custom_minimum_size = Vector2(180, 0)
+		words.add_theme_font_override("font", game.UITheme.serif(false, true))
+		words.add_theme_font_size_override("font_size", 13)
+		words.add_theme_color_override("font_color", game.UITheme.INK)
+		want.add_child(words)
+		actor.add_child(want)
+	var shown := "“%s”" % (text if text.length() <= 90 else text.left(87).strip_edges() + "…")
+	var words_label := want.get_node("Words") as Label
+	if words_label.text != shown:
+		words_label.text = shown
+		want.reset_size()
+	var speaking := actor.get_node_or_null("Speech") as CanvasItem
+	want.visible = not (speaking != null and speaking.modulate.a > 0.05)
+	want.position = Vector2(-want.size.x * 0.5, -150.0 - want.size.y)
 
 
 func _place_bubble(bubble: PanelContainer) -> void:

@@ -280,17 +280,23 @@ def voice_context(
     }
 
 
+def _settles(deal: dict) -> str:
+    """A deal for a quest need settles itself when that need is answered (D-73)."""
+    need = deal.get("for_need") or {}
+    return f" (For {need['title']}: it settles itself once that's answered.)" if need.get("title") else ""
+
+
 def open_deals(state: State, npc: Npc) -> list[str]:
     """This person's deals with the stranger, for the voice to judge agreed or done (D-46)."""
     lines = [
-        f"Offered, not yet agreed: the stranger is to {d['task']}."
+        f"Offered, not yet agreed: the stranger is to {d['task']}.{_settles(d)}"
         for d in conversation.deals(state, npc["id"], "proposed")
     ]
     for deal in conversation.deals(state, npc["id"], "accepted"):
         if conversation.deal_possible(state, deal):
             lines.append(
                 f"Agreed, not yet done: the stranger is to {deal['task']}. Done only if {npc['name']} has "
-                f"seen it or been given it: {deal['check']}"
+                f"seen it or been given it: {deal['check']}{_settles(deal)}"
             )
         else:
             lines.append(f"Agreed, not yet done (it can't be done yet): the stranger is to {deal['task']}.")

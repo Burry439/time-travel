@@ -208,6 +208,13 @@ def unquote(text: str) -> str:
 
 
 ACTS_WITH_WORDS = 0.7  # With someone listening, words that only might be a deed stay words.
+# What this judgement is (D-71). The decider's usual brief, a character deciding what they do, misled the Decisions
+# API into reading commands as speech ("strangle her again" as words): 54 of 63 real lines against 59 with this one.
+SORTING = (
+    "You sort a line a player typed for their character in a text RPG: words the character says, a deed the "
+    "character does now, both, or waiting, giving up or leaving. Players often type deeds as bare commands or in the "
+    "first person; misspellings are common."
+)
 
 
 def classify(
@@ -261,6 +268,7 @@ def classify(
                 "instructions": "What did the stranger type: words, a deed, both, or waiting, giving up or leaving?",
             },
         },
+        SORTING,
     )
     if not call.ok:
         return ("say" if someone_near else "do"), "fallback", call

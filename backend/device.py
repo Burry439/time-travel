@@ -248,6 +248,9 @@ def context(state: State, question: str, moment: str | None = None) -> dict:
             for e in attempts
         ],
         "controls": CONTROLS,
+        # The same facts the judge rules by (D-72: the device once advised striking flint on iron, which the judge
+        # then refused, because it had only its own knowledge).
+        "how_things_work_here": content.MATERIALS["material_facts"],
     }
 
 

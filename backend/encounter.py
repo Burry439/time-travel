@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import copy
 
+import agreements
 import cast
 import combat
 import consequences
@@ -68,6 +69,8 @@ def join(state: State, npc: Npc, reason: str, line: str | None, now: int) -> dic
     encounter. While a fight is on the stranger can still speak to anyone (D-51), but nobody walks up to start a
     conversation of their own. A guard coming to halt a stranger who is already in a conversation joins it
     instead (D-48): the stranger is plainly being dealt with."""
+    cast.mind(npc).pop("wants_word", None)  # Spoken to, or come to speak: their request is answered (D-72).
+    agreements.hand_over_owed(state, npc, state.get("event_seq", 0) + 1)  # What a kept deal owed them (D-73).
     if reason == "attack":
         combat.start(state, [npc["id"]], now, "attack")
         return active(state)
@@ -346,6 +349,8 @@ def finish(draft: State, record: dict, now: int, reply: dict | list | None = Non
         record["entries"].append(
             _log(encounter, said["npc_id"], said.get("kind", "reply"), f"{said['name']}: “{said['line']}”")
         )
+        for unmet in said.get("unmet") or []:  # What didn't follow from their words, said plainly (D-72).
+            record["entries"].append(_log(encounter, said["npc_id"], "cue", unmet))
     for npc_id in encounter["participants"]:  # How someone's view of the stranger shifted, as they'd show it.
         cue = cast.mind(cast.find(draft["npcs"], npc_id)).get("cue") or {}
         if cue and cue.get("key") != record.get("cues_before", {}).get(npc_id):

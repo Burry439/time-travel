@@ -121,8 +121,9 @@ def remaining() -> float:
     return max(0.0, end - time.monotonic()) if end is not None else DEED_BUDGET_S  # No deadline: the longer one.
 
 
-def client():
-    seconds = remaining()
+def client(limit: float | None = None):
+    """A client bounded by what's left of the request's budget, and by `limit` when a call has its own ceiling."""
+    seconds = remaining() if limit is None else min(remaining(), limit)
     if seconds <= 0.05:
         raise TimeoutError("The request's model budget is exhausted.")
     return _client(api_key()).with_options(timeout=seconds, max_retries=0)

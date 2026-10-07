@@ -1135,6 +1135,11 @@
        "kind": "side",
        "npc": "npc_kade_east",
        "text": "Someone eased your knees without making a show of it. You owe them more than you'll say."
+      },
+      {
+       "kind": "need",
+       "npc": "npc_elin_west",
+       "text": ""
       }
      ]
     },

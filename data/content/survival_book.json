@@ -1,0 +1,200 @@
+{
+ "version": 1,
+ "notes": "The stranger's survival notes (D-72): a readable book they start with. Basics anyone from the future would know, written for this world. Each entry's 'facts' are keys of material_facts in materials.json; the book prints those facts themselves under 'How it works here', so the book, the judge and the device say the same thing. Advice, not recipes: every attempt is still judged, nothing is keyed to these words, and it covers no way into the city. The reader adds a last chapter, 'Things you've made', from the journey's own journal.",
+ "title": "Survival Notes",
+ "intro": [
+  "A pocket notebook that came through with you, its pages soft with handling. The basics you'd want in a world without matches, clean taps or a chemist's shop.",
+  "This world keeps its own laws. Where these notes quote how something works here, believe it over what you remember.",
+  "Whatever you make, the notes keep: the last chapter fills in as you go."
+ ],
+ "made_chapter": true,
+ "chapters": [
+  {
+   "title": "Fire",
+   "recipes": [
+    {
+     "name": "Fire from flint and steel",
+     "need": [
+      "a piece of flint",
+      "a piece of steel (a smith's file, a steel blade or a billet of steel; plain iron won't do)",
+      "fine dry tinder (dry grass, thistledown, shredded dry bark)",
+      "kindling (dry twigs)",
+      "fuel (sticks, then split wood)"
+     ],
+     "steps": [
+      "Loosen the tinder into a nest the size of your fist and set it where the wind can't reach it.",
+      "Hold the flint with a sharp edge up and strike down along it, hard and glancing, with the steel, so the sparks fall into the nest.",
+      "When a spark catches and smoulders, lift the nest and blow gently until it flames.",
+      "Lay the flaming nest down and feed it twigs, then bigger sticks, then wood."
+     ],
+     "facts": [
+      "flint",
+      "steel",
+      "iron",
+      "fire"
+     ],
+     "say": "strike the flint against the steel over the nest of dry grass, blow the spark into a flame and feed it twigs and then sticks",
+     "good_for": "Warmth, light, boiling water, cooking, hardening wood and clay. The first thing to have."
+    },
+    {
+     "name": "Borrowing a fire",
+     "need": [
+      "someone else's fire (a hearth, a cooking fire, a forge)",
+      "something to carry flame or heat (a torch, a stick, a pot)"
+     ],
+     "steps": [
+      "Ask first: a fire is someone's work and fuel.",
+      "Light a stick or torch at it, or heat what you need right there."
+     ],
+     "facts": [
+      "fire"
+     ],
+     "fire": true,
+     "say": "ask if I may light a torch at the fire",
+     "good_for": "When you have no steel. Most heating and cooking can simply be done at a fire that's already burning.",
+     "mode": "say"
+    }
+   ]
+  },
+  {
+   "title": "Water",
+   "recipes": [
+    {
+     "name": "Making water safe to drink",
+     "need": [
+      "a pot or kettle that can stand heat",
+      "water",
+      "a fire"
+     ],
+     "steps": [
+      "Fill the pot with water from the cleanest source you can find.",
+      "Set it over the fire and let it boil hard for several minutes.",
+      "Take it off and let it cool before you drink it or wash a wound with it."
+     ],
+     "facts": [
+      "water_heat",
+      "fire"
+     ],
+     "fire": true,
+     "say": "fill the pot with water and set it on the fire to boil",
+     "good_for": "Killing what sickens people in water. Dirty water stays dirty; boiled water is safe."
+    },
+    {
+     "name": "Carrying water",
+     "need": [
+      "something that holds water (a bucket, a gourd, a pot, a bowl)"
+     ],
+     "steps": [
+      "Fill it at a trough, a well or the river.",
+      "Carry it upright; pour it into another vessel or where it's needed."
+     ],
+     "facts": [
+      "water",
+      "gourd"
+     ],
+     "say": "fill the bucket with water from the trough",
+     "good_for": "Water goes where its container goes, and nowhere without one."
+    }
+   ]
+  },
+  {
+   "title": "Wounds",
+   "recipes": [
+    {
+     "name": "A clean bandage",
+     "need": [
+      "clean linen or cloth",
+      "boiled water, cooled (for washing)"
+     ],
+     "steps": [
+      "Wash the wound with boiled, cooled water.",
+      "Tear the linen into a strip.",
+      "Wrap it firm but not tight: fingers should stay warm and pink."
+     ],
+     "facts": [
+      "cloth"
+     ],
+     "say": "tear the clean linen into a strip and bind the cut with it",
+     "good_for": "Stopping bleeding and keeping dirt out of a cut."
+    },
+    {
+     "name": "A plantain poultice",
+     "need": [
+      "plantain leaves",
+      "something to crush them in or with (a bowl, a stone)",
+      "a strip of cloth to hold it on"
+     ],
+     "steps": [
+      "Crush the leaves into a wet green pulp.",
+      "Lay it on the burn, sting or cut.",
+      "Bind it on with the cloth and change it once a day."
+     ],
+     "facts": [
+      "leaf"
+     ],
+     "say": "crush the plantain leaves into a poultice and bind it on the burn with a strip of cloth",
+     "good_for": "Soothing burns and stings, and helping small wounds stay clean."
+    }
+   ]
+  },
+  {
+   "title": "Tools and work",
+   "recipes": [
+    {
+     "name": "A sharp edge from flint",
+     "need": [
+      "flint",
+      "a hard stone to strike with"
+     ],
+     "steps": [
+      "Strike the flint's edge with the stone, glancing, to knock off a thin flake.",
+      "Keep the flake with the sharpest edge; blunt the back on the stone so it's safe to hold."
+     ],
+     "facts": [
+      "flint",
+      "stone"
+     ],
+     "say": "knock a sharp flake off the flint with a hard stone",
+     "good_for": "Cutting cord, vine, bark, cloth and saplings."
+    },
+    {
+     "name": "Moving something too heavy to lift",
+     "need": [
+      "a long stout pole (a lever)",
+      "a solid stone or log (a fulcrum)",
+      "or rollers, or a rope and helpers"
+     ],
+     "steps": [
+      "One person lifts and carries about 20 kg on their own; past that, use a tool or other people.",
+      "Lever: put the pole under the load, over the fulcrum close to it, and press down on the far end.",
+      "Rollers: lever the load onto round logs and roll it, moving the back log to the front.",
+      "People: ask for help, and lift together on a count."
+     ],
+     "facts": [
+      "stone"
+     ],
+     "say": "lever it up with the long pole over the stone",
+     "good_for": "Anything stuck or too heavy: a cart in mud, a beam, a boulder."
+    },
+    {
+     "name": "Lashing things together",
+     "need": [
+      "cord, vine, rope, leather thongs or rawhide"
+     ],
+     "steps": [
+      "Wrap the joint tightly many times, crossing over itself.",
+      "Finish with a few turns between the two pieces to cinch it, and tie off.",
+      "Rawhide put on wet shrinks as it dries and holds hardest of all."
+     ],
+     "facts": [
+      "vine",
+      "leather",
+      "sinew"
+     ],
+     "say": "lash the two pieces together tightly with the cord",
+     "good_for": "Handles, frames, hafting a blade or a head to a shaft."
+    }
+   ]
+  }
+ ]
+}

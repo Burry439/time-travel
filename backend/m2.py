@@ -48,7 +48,7 @@ def object_record(
     capacity_l: float = 0.0,
     feature: str | None = None,
 ) -> dict:
-    portable = feature is None and mass <= tuning.CARRY_LIMIT_KG
+    portable = feature is None and mass <= tuning.LIFT_LIMIT_KG
     caps = (
         ["carry"] + (["tie"] if "tieable" in flags else []) + (["fill"] if "container" in flags else [])
         if portable

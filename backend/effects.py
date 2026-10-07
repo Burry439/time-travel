@@ -533,12 +533,9 @@ def _strength(ctx: dict) -> float:
 
 
 def _carries(state: State, ctx: dict, extra_kg: float) -> bool:
-    """Whether the stranger could carry this much more (people in the world aren't weighed)."""
-    if ctx.get("actor_id", "player") != "player":
-        return True
-    import m2
-
-    return m2.inventory_mass(state) + extra_kg <= tuning.CARRY_LIMIT_KG
+    """Whether one more thing this heavy can be carried: a single thing up to what one person lifts (D-72: there is
+    no limit on the pack as a whole)."""
+    return ctx.get("actor_id", "player") != "player" or extra_kg <= tuning.LIFT_LIMIT_KG
 
 
 def _movable(state: State, ctx: dict, obj: dict) -> str | None:
@@ -670,8 +667,12 @@ def _bears(state: State, under: dict, obj: dict) -> str | None:
     """Whether one thing can bear another resting on it."""
     if under.get("holder_id") is not None:
         return f"the {under['name']} has to be set down first"
-    if not {"rigid", "stable_support"} & set(under.get("flags", [])) and "water_source" not in under.get(
-        "capabilities", []
+    # A fire or hearth holds a pot over it, on its stones or a hook (D-72: "set the pot on the fire" was refused).
+    hearth = "heat_source" in under.get("flags", []) and (under.get("feature") or under.get("burning"))
+    if (
+        not {"rigid", "stable_support"} & set(under.get("flags", []))
+        and "water_source" not in under.get("capabilities", [])
+        and not hearth
     ):
         return f"the {under['name']} can't bear anything"
     rated = under.get("rated_load_kg")
@@ -1244,7 +1245,7 @@ def _breakable(state: State, ctx: dict, obj: dict | None, what: str) -> str | No
     if obj.get("holder_id") not in (None, ctx.get("actor_id", "player")) and not obj.get("on_person"):
         return f"someone is holding the {obj['name']}"
     tool = thing(state, ctx, ctx.get("other_id"))
-    if obj["mass_kg"] > tuning.CARRY_LIMIT_KG and tool is None and not ctx.get("helpers"):
+    if obj["mass_kg"] > tuning.LIFT_LIMIT_KG and tool is None and not ctx.get("helpers"):
         return f"something to {what} the {obj['name']} with"
     return None
 

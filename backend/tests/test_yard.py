@@ -44,3 +44,37 @@ def test_the_wainwrights_notebook_is_readable_and_names_real_things():
             assert need.split(" (")[0] in names, (recipe["name"], need)
         text = " ".join([recipe["say"], *recipe["steps"]]).lower()
         assert not any(w in text for w in ("gate", "compass", "magnet", "beam")), recipe["name"]  # No city routes.
+
+
+def test_the_stranger_starts_with_survival_notes_that_quote_the_worlds_own_facts():
+    """Basics for a world without matches (D-72). Each page's facts are the judge's own material facts, and the book
+    names no way into the city."""
+    import content as world_content
+
+    state = unit_state()
+    book = state["objects"]["survival_book"]
+    assert book["holder_id"] == "player" and book["readable"] == "survival_book" and book["owner_id"] == "player"
+    notes = json.loads((store.ROOT / "data" / "content" / "survival_book.json").read_text(encoding="utf-8"))
+    facts = world_content.MATERIALS["material_facts"]
+    pages = [page for chapter in notes["chapters"] for page in chapter["recipes"]]
+    assert notes["made_chapter"] and notes["intro"] and len(pages) >= 8
+    for page in pages:
+        assert page["steps"] and page["say"] and page["good_for"] and page["need"], page["name"]
+        assert page["facts"] and all(key in facts for key in page["facts"]), page["name"]
+        text = " ".join([page["say"], *page["steps"]]).lower()
+        assert not any(w in text for w in ("gate", "compass", "magnet", "beam", "city")), page["name"]
+
+
+def test_every_source_agrees_that_fire_needs_steel_not_plain_iron():
+    """The judge refused flint on iron while the device advised it and one material fact allowed it (D-72). The
+    judge's prompt, the material facts and the survival notes now say one thing."""
+    import content as world_content
+    from ai import judge
+
+    facts = world_content.MATERIALS["material_facts"]
+    for key in ("flint", "iron", "steel", "fire"):
+        assert "steel" in facts[key], key
+    assert "no spark" in facts["iron"] and "Plain iron or stone struck on flint will not light it" in facts["fire"]
+    assert "flint against iron" not in judge._PROMPT and "material_facts (flint, iron, steel, fire)" in judge._PROMPT
+    notes = (store.ROOT / "data" / "content" / "survival_book.json").read_text(encoding="utf-8")
+    assert "plain iron won't do" in notes

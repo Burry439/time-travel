@@ -17,6 +17,7 @@ fallback line.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -27,7 +28,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ValidationError
 
-from . import config
+import tuning
+
+from . import config, decider
 
 _PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
 IMPRESSION = ["Much worse", "A little worse", "Unchanged", "A little better", "Much better"]
@@ -43,7 +46,8 @@ ANGER = ["Calm", "Annoyed", "Angry", "Furious"]
 # moves. v3 (D-62): one decision contract for talk, reactions, news and plans. v4 (D-63): a feared wonder explained.
 # v5 (D-64): carry a request through a recommendation and finish the conversational handoff.
 # v6 (D-65): how you are and what you can see (your body, others, writing nearby) are facts you know.
-PERSON_VERSION = "person_v7"  # v7 (D-70): your side of things, and speaking first.
+# v7 (D-70): your side of things, and speaking first.
+PERSON_VERSION = "person_v8"  # v8 (D-72, D-73): a yes in words is a lend; a deal can be for a quest need (for_quest).
 SCENE_LINES = 3
 WEIGHTY_REASONING = "low"  # For a person's call that carries a secret they could tell or a story move (D-61).
 
@@ -55,7 +59,7 @@ def _modules(text: str) -> dict[str, str]:
 
 
 MODULES = _modules((_PROMPTS / f"{PERSON_VERSION}.txt").read_text(encoding="utf-8"))
-DEVICE_VERSION = "device_v2"  # The device from the future (D-50); a coach with a memory (D-55).
+DEVICE_VERSION = "device_v3"  # The device (D-50); a coach with a memory (D-55); the world's physical facts (D-72).
 _DEVICE = (_PROMPTS / f"{DEVICE_VERSION}.txt").read_text(encoding="utf-8")
 _RECOLLECT = (_PROMPTS / "recollect_v1.txt").read_text(encoding="utf-8")
 CHATTER_VERSION = "chatter_v2"  # D-59: each side of a chat in its own call.
@@ -92,6 +96,7 @@ class NegotiatedAgreement(BaseModel):
     check: str
     rewards: list[NpcIntent]
     evidence_ids: list[str]
+    for_quest: str  # The title of one of your what_you_would_ask_of_someone this deal is for, or "" (D-73).
 
 
 class PersonLine(BaseModel):
@@ -127,6 +132,7 @@ class PersonLine(BaseModel):
     errand_to: str
     errand_message: str
     promised_later: str
+    lets_the_stranger_use: str  # A thing of theirs they said yes to the stranger using (D-72).
     remember: str
     stranger_name: str
 
@@ -167,6 +173,10 @@ class VoiceCall:
     lines: list = field(default_factory=list)  # A group moment (scene): [{speaker_id, text, move, answers, remember}].
     decisions: list = field(default_factory=list)  # Silent NPC decisions still apply, without dialogue.
     turns: list = field(default_factory=list)  # Each person's own call in a moment: [{speaker_id, status, ms, tokens}].
+    # Each bystander's quick check before their turn (D-71): [{person_id, verdict, speaks_up, takes_note, ms}], and the
+    # decider calls themselves, for telemetry.
+    checks: list = field(default_factory=list)
+    check_calls: list = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -285,7 +295,11 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     answers in their own call, which holds only their own sheet, memory and knowledge and what anyone could see and
     hear; then everyone else here decides in a call of their own, in parallel, whether to say something, having heard
     that answer. Nobody's sheet or secrets are ever in anyone else's call. Up to three lines, addressed first. If the
-    model can't be used: no lines (the caller has the addressed person say the authored fallback)."""
+    model can't be used: no lines (the caller has the addressed person say the authored fallback).
+
+    D-71: before their turn, each of the others has a quick check of their own (_check): would they cut in, and does
+    it give them reason to act? Only someone who would speak up takes a turn that can speak; someone with reason to act
+    still thinks it over, in silence; anyone else carries on. The check can only keep someone quiet."""
     skipped = _unavailable(fallback, allowed, PERSON_VERSION)
     if skipped:
         return skipped
@@ -295,20 +309,23 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     first_call, first = _turn(shared, people[0], people, [])
     turns = [(people[0], first_call)]
     lines = [first] if first else []
+    checks: list[tuple[dict, str, decider.DeciderCall | None]] = []
     if first and len(people) > 1:
         heard = [f"{people[0]['name']}: \u201c{first['text']}\u201d"]
         with ThreadPoolExecutor(max_workers=len(people) - 1) as pool:
-            futures = [pool.submit(copy_context().run, _turn, shared, person, people, heard) for person in people[1:]]
+            futures = [pool.submit(copy_context().run, _other, shared, person, people, heard) for person in people[1:]]
             others = [f.result() for f in futures]
-        turns += list(zip(people[1:], (call for call, _ in others)))
+        for person, (verdict, check, call, line) in zip(people[1:], others):
+            checks.append((person, verdict, check))
+            if call is not None:
+                turns.append((person, call))
+            if line is not None:
+                lines.append(line)
         spoken_count = 1
-        for _, line in others:
-            if line is None:
-                continue
+        for line in lines[1:]:
             if line["speaks"] and spoken_count >= SCENE_LINES:
                 line["speaks"] = False
             spoken_count += int(line["speaks"])
-            lines.append(line)
     result = VoiceCall(status="fallback", text=fallback, model=first_call.model, prompt_version=PERSON_VERSION)
     result.latency_ms = round((time.perf_counter() - started) * 1000)
     result.input_tokens = sum(call.input_tokens for _, call in turns)
@@ -317,6 +334,17 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
         {"speaker_id": person["id"], "status": call.status, "ms": call.latency_ms, "tokens": call.input_tokens}
         for person, call in turns
     ]
+    result.checks = [
+        {
+            "person_id": person["id"],
+            "verdict": verdict,
+            "speaks_up": (check.answers.get("speaks_up") or {}).get("noul") if check and check.ok else None,
+            "takes_note": (check.answers.get("takes_note") or {}).get("noul") if check and check.ok else None,
+            "ms": check.latency_ms if check else 0,
+        }
+        for person, verdict, check in checks
+    ]
+    result.check_calls = [check for _, _, check in checks if check is not None]
     if first:
         result.status, result.text = "ok", first["text"]
         result.lines = [line for line in lines if line.get("speaks", True)]
@@ -329,15 +357,78 @@ def scene(context: dict, fallback: str, allowed: bool = True) -> VoiceCall:
     return result
 
 
-def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> tuple[VoiceCall, dict | None]:
-    """One person's own call: their sheet, what anyone here could see and hear, and the rules that apply to them."""
-    you = {key: value for key, value in person.items() if not key.startswith("_") and key != "in_the_conversation"}
+def gate_on() -> bool:
+    """BYSTANDER_GATE (D-71): off gives everyone not addressed a full turn, as before."""
+    return os.environ.get("BYSTANDER_GATE", "on").strip().lower() != "off"
+
+
+CHECK_BRIEF = (
+    "You judge, for one person in a premodern village, how they respond to a conversation they can hear but were not "
+    "spoken to in. Judge only from their own sheet, knowledge and feelings, and from what anyone there could see and "
+    "hear. Most people let others talk without cutting in."
+)
+
+
+def _check(shared: dict, person: dict, people: list[dict], heard: list[str]) -> decider.DeciderCall:
+    """Someone not addressed: their own quick check (D-71), holding only what their own turn would hold."""
+    name = person["name"]
+    talking_to = people[0]["name"]
+    questions = {
+        "speaks_up": {
+            "type": "noul",
+            "instructions": f"The stranger spoke to {talking_to}, who has just answered. Would {name}, a real person "
+            f"in their place, cut in to say something right now? Yes only if it is their business (the talk is about "
+            f"{name}, their work, family or post), the stranger put a question to everyone there, something was just "
+            f"said about {name} that they would answer or correct, or what was said or done demands a word from them. "
+            f"Small talk, trade and questions meant for someone else are not their business.",
+        },
+        "takes_note": {
+            "type": "noul",
+            "instructions": f"Does what the stranger just said or did give {name} reason to do something now or to "
+            f"change their plans: step in, go and tell someone, leave, or act? Ordinary talk between others does not.",
+        },
+    }
+    payload = _payload(shared, person, people, heard, _rules(shared, person, people))
+    return decider.decide(json.dumps(payload, ensure_ascii=False, default=str), questions, CHECK_BRIEF)
+
+
+def _other(
+    shared: dict, person: dict, people: list[dict], heard: list[str]
+) -> tuple[str, decider.DeciderCall | None, VoiceCall | None, dict | None]:
+    """Someone not addressed: (verdict, their check, their turn's call, their line or silent decision). Verdicts:
+    "speak" (a full turn), "think" (a full turn, in silence), "pass" (no turn), "unchecked" (no check: a full turn)."""
+    check = _check(shared, person, people, heard) if gate_on() else None
+    if check is None or not check.ok:
+        verdict = "unchecked"
+    else:
+        speak_up = tuning.SPEAK_UP_NEARBY if person["in_the_conversation"] == "nearby" else tuning.SPEAK_UP_TAKING_PART
+        if check.answers["speaks_up"]["noul"] >= speak_up:
+            verdict = "speak"
+        elif check.answers["takes_note"]["noul"] >= tuning.TAKES_NOTE:
+            verdict = "think"
+        else:
+            verdict = "pass"
+    if verdict == "pass":
+        return verdict, check, None, None
+    call, line = _turn(shared, person, people, heard)
+    if line is not None and verdict == "think":  # They take it in and may act on it; they don't cut in.
+        line["speaks"], line["text"] = False, ""
+    return verdict, check, call, line
+
+
+def _rules(shared: dict, person: dict, people: list[dict]) -> list[str]:
     rules = ["core", *person.get("_rules", [])]
     if shared.get("fight_now") and shared["fight_now"] != "No one is fighting.":
         rules.append("fight")
     if len(people) > 1:
         rules.append("feelings")
-    payload = {
+    return rules
+
+
+def _payload(shared: dict, person: dict, people: list[dict], heard: list[str], rules: list[str]) -> dict:
+    """What one person's own call holds: their sheet, what anyone here could see and hear, and where they stand."""
+    you = {key: value for key, value in person.items() if not key.startswith("_") and key != "in_the_conversation"}
+    return {
         "your_part": person["in_the_conversation"],
         **{key: value for key, value in shared.items() if key != "fight_now" or "fight" in rules},
         "said_just_now": heard,
@@ -348,6 +439,12 @@ def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> t
         ],
         "you": you,
     }
+
+
+def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> tuple[VoiceCall, dict | None]:
+    """One person's own call: their sheet, what anyone here could see and hear, and the rules that apply to them."""
+    rules = _rules(shared, person, people)
+    payload = _payload(shared, person, people, heard, rules)
     prompt = "\n\n".join(MODULES[rule] for rule in rules)
     # A secret they could confide or something a story lets them agree to is a decision to weigh, not just a line to
     # phrase: those calls get a moment's thought (D-61: with none, a merchant handed his price still said no).
@@ -374,6 +471,7 @@ def _turn(shared: dict, person: dict, people: list[dict], heard: list[str]) -> t
         "errand_to": parsed.errand_to.strip()[:60],
         "errand_message": " ".join(parsed.errand_message.split())[:240],
         "promised_later": " ".join(parsed.promised_later.split())[:240],
+        "lets_use": parsed.lets_the_stranger_use.strip()[:60],
         "feelings": [
             {"person_id": f.person_id.strip()[:60], "change": f.change} for f in parsed.feelings_toward_others[:3]
         ],

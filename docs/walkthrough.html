@@ -66,12 +66,13 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <div class="start">
     <h3>Starting a game</h3>
     <ol>
-      <li>From the project folder run <code>.\tools\run_demo.ps1</code>. It starts the backend and opens the game.</li>
+      <li>From the project folder run <code>.\tools\run_demo.ps1</code>. It starts the backend and opens the game. To play from the Godot editor instead, run <code>.\tools\run_demo.ps1 -BackendOnly</code> and press <kbd>F5</kbd> in the editor.</li>
       <li>Choose <strong>New journey</strong>. Saves from before today's changes can't be continued.</li>
+      <li>You start with your <strong>survival notes</strong>: open the pack (<kbd>I</kbd>) and click them to read basics like fire, safe water and wounds. Whatever you make is added to their last chapter.</li>
       <li>You stand on the south road. Everything below is one way to play; any other way you can describe also counts.</li>
     </ol>
   </div>
-  <p class="stamp">Current as of 5 Oct 2026 · main · D-70</p>
+  <p class="stamp">Current as of 7 Oct 2026 · claude/decisions-api · D-73 (survival notes; requests wait; fire needs steel; deals kept by quests)</p>
 </header>
 
 <section id="rules">
@@ -79,7 +80,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <ul class="plain">
     <li><strong>Win:</strong> someone with the right to let you in agrees (the captain, or any gate guard by their own rule), then you walk north through the gate.</li>
     <li><strong>Say and Do in plain words.</strong> There are no magic phrases. <span class="say">"Fill the gourd at the trough"</span> and <span class="say">"dip the gourd in the water"</span> both work. The lines below are examples, not passwords.</li>
-    <li><strong>People decide for themselves.</strong> They remember what you did, tell each other, and can say no. If someone refuses, ask what would change their mind.</li>
+    <li><strong>People decide for themselves.</strong> They remember what you did, tell each other, and can say no. If someone refuses, ask what would change their mind. Others standing near listen, and join in only when it concerns them: talk about Bren in front of Bren and he'll answer for himself. Someone who wants something from you shows it in a bubble over their head (their name reads "wants a word"); go to them. Only guards halting you, someone you've wronged, or attackers come to you.</li>
     <li><strong>The world follows physics.</strong> The judge rules on whether a deed can work with what's at hand, and says why when it can't. Nearby materials are walked to automatically. Retrying can use what you already carry. Existing bindings stay in an assembly.</li>
     <li><strong>Things belong to people.</strong> Taking something that isn't yours shows "Steal" in red. Witnesses remember it.</li>
   </ul>
@@ -166,7 +167,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
       <h3>Raise the new gate beam</h3>
       <ol>
         <li>Offer Tomas help with the beam; agree to his job.</li>
-        <li>Borrow his rope and ladder (you can carry 20 kg, so not everything at once).</li>
+        <li>Borrow his rope and ladder.</li>
         <li>At the gate, take the cracked bar down first, then raise the new beam into its brackets.</li>
         <li>Tell Tomas it's done. He speaks for you to the captain.</li>
       </ol>
@@ -209,7 +210,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
 
 <section id="stories">
   <h2>The village quests</h2>
-  <p>People have troubles of their own, and when you walk up to them they'll often bring them up themselves. Each quest has five or more steps, each step can be done more than one way, and they cross: helping one person brings you back to another, and you'll hear their side of it. None is required to win. Your journal's Stories page shows every step you've reached, whose side it came from, and what people have told you, which you can pin.</p>
+  <p>People have troubles of their own, and when you walk up to them they'll often bring them up themselves. Each quest has five or more steps, each step can be done more than one way, and they cross: helping one person brings you back to another, and you'll hear their side of it. None is required to win. Make a deal with someone about their trouble and they keep their word on their own once it's truly put right ("Hessa keeps her word"); anything they promised to hand over waits until you go to them. Your journal's Stories page shows every step you've reached, whose side it came from, and what people have told you, which you can pin.</p>
   <div class="stories">
     <div class="story"><h3>The Wayside Inn (Hessa) <span class="tag good">Quest · played live</span></h3><dl>
       <dt>Starts</dt><dd>Walk up to Hessa: her guests keep falling sick from the trough.</dd>
@@ -249,6 +250,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
 <section id="try">
   <h2>Worth trying</h2>
   <ul class="plain">
+    <li><strong>Make a fire.</strong> Flint only sparks on steel: plain iron won't do. There's a steel billet in the wainwright's yard. Or ask Hessa if you may use her cooking fire, and set a pot of water on it to boil.</li>
     <li><strong>Win over a superstitious guard.</strong> Show Roderic or Mara the compass and they'll take it for witchcraft. Explain how it truly works and watch their fear turn to wonder. "It's a gift from the gods" won't do it.</li>
     <li><strong>Forge a pass.</strong> Write on bark with chalk and show it to a guard. It's just writing; they decide whether to believe it.</li>
     <li><strong>Do something to someone.</strong> Tip water over a guard, kiss someone, tie up someone who's down. It really happens, everyone nearby sees it, and the person decides how they feel. A conscious, standing person won't let you tie them.</li>
@@ -271,10 +273,10 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
 <section id="edges">
   <h2>Rough edges to expect</h2>
   <ul class="plain">
-    <li>Replies take about 4 to 8 seconds; a group at the gate can take up to 12. While the game waits, a small banner at the top says what for ("Hessa is thinking…", "Working out what happens…", "Loading your journey…").</li>
+    <li>Replies take about 3 to 7 seconds; with others standing near, up to about 10. While the game waits, a small banner at the top says what for ("Hessa is thinking…", "Working out what happens…", "Loading your journey…").</li>
     <li>People sometimes say no. That's their choice. Try another angle, or ask what would change their mind.</li>
     <li>Pictures of new or changed things are painted in the background and can take a little while to appear. A carved grip or other change can keep the same item: its reveal and right-click card show its new attributes.</li>
-    <li>Heavy creations can be left at your feet when your pack is full. Cutting iron still needs a physically suitable method and tools.</li>
+    <li>Your pack has no weight limit, but one person carries one thing of at most 20 kg: anything heavier you make is left at your feet, and heavier things need a lever or helpers. Cutting iron still needs a physically suitable method and tools.</li>
     <li>If you die, you can rewind to the last calm moment.</li>
     <li>Note anything confusing, unfair or slow, with what you typed. That's what the next round of fixes is for.</li>
   </ul>
@@ -283,6 +285,9 @@ ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 6
   <h2>Keeping this page current</h2>
   <p>Source: <code>docs/walkthrough.html</code>. Claude and Codex update it with gameplay changes; Claude republishes the saved source to the same address.</p>
   <ul class="plain">
+    <li>7 Oct 2026 · D-73: Claude made deals about someone's trouble settle themselves when the trouble is put right.</li>
+    <li>7 Oct 2026 · D-72: Claude added your survival notes, made people who want a word wait with a bubble, made fire need steel everywhere it's explained, and removed the pack weight limit.</li>
+    <li>7 Oct 2026 · D-71: Claude stopped bystanders cutting into conversations that aren't theirs; replies are quicker.</li>
     <li>5 Oct 2026 · D-70: Claude made the game find the demo backend (port 8767) when started from the Godot editor, and the menu now names the address it tried.</li>
     <li>5 Oct 2026 · D-70: Claude added a banner that says what the game is waiting on.</li>
     <li>5 Oct 2026 · D-70: Claude merged all eight quests onto main: the fog, the old soldier, the guards' order, the apprentice and the gate beam join the inn, the debts and the permit.</li>

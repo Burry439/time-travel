@@ -222,6 +222,7 @@ def test_the_passing_on_is_read_beside_the_conversation_never_in_anyones_own_cal
                 errand_message="",
                 promised_later="",
                 remember="",
+                lets_the_stranger_use="",
                 stranger_name="",
             )
             return SimpleNamespace(usage=None, output_parsed=line)

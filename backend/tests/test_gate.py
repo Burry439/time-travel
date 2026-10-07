@@ -171,7 +171,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, rulings, _moves = [], [], []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, brief=""):
         if (
             "impression" not in questions
         ):  # People choosing what to do (not answering the stranger): they stay and listen.

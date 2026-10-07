@@ -1,4 +1,8 @@
-"""Negotiated commitments. NPC satisfaction and physical truth are separate records."""
+"""Negotiated commitments. NPC satisfaction and physical truth are separate records.
+
+A deal can be for one of the person's quest needs (D-73): then the quest settles it. When the quest step that answers
+that need reaches them, code fulfils the deal and carries out its rewards, whether or not anyone says "done". One
+result settles both records."""
 
 from __future__ import annotations
 
@@ -34,6 +38,7 @@ def apply(state: dict, npc: dict, proposal: dict, event: int) -> tuple[bool, str
                 "offered_event": event,
                 "evidence_ids": [],
                 "objective_evidence_ids": [],
+                **({"for_need": need} if (need := _need_named(npc, proposal.get("for_quest", ""))) else {}),
             },
         )
         return True, key
@@ -48,10 +53,13 @@ def apply(state: dict, npc: dict, proposal: dict, event: int) -> tuple[bool, str
         ):
             return True, deal["id"]
         return False, "That example agreement is decided by the conversation reading."
-    if action == "accept" and deal["status"] == "proposed":
-        deal.update(status="accepted", accepted_event=event)
+    if action == "accept" and deal["status"] in ("proposed", "accepted"):
+        deal.setdefault("accepted_event", event)
+        deal.update(status="accepted")
         return True, deal["id"]
-    if action == "satisfied" and deal["status"] == "accepted":
+    # Doing what was asked accepts the deal: nobody need say "agreed" first (D-72: Hessa's deal stayed "offered",
+    # so her judging the task done was refused and her words were replaced).
+    if action == "satisfied" and deal["status"] in ("proposed", "accepted"):
         known = (npc.get("mind") or {}).get("evidence", {})
         cited = proposal.get("evidence_ids", [])
         if any(i not in known for i in cited):
@@ -70,7 +78,7 @@ def apply(state: dict, npc: dict, proposal: dict, event: int) -> tuple[bool, str
             ],
         )
         return True, deal["id"]
-    return False, "That agreement has already moved on."
+    return False, f"That deal is already {deal['status']}; it can't be {action} now."
 
 
 def authorized(state, npc, intent, future=False):
@@ -104,6 +112,59 @@ def authorized(state, npc, intent, future=False):
         goal = intent.get("goal", [])
         return len(goal) == 2 and paths.grid(state).walkable(tuple(goal))
     return False
+
+
+def _need_named(npc: dict, named: str) -> dict | None:
+    """The quest need a deal is for, by the quest's title as the person sees it (or its id): {story, text}."""
+    named = " ".join(str(named or "").split()).lower().rstrip(":")
+    if not named:
+        return None
+    for story_id, need in ((npc.get("mind") or {}).get("needs") or {}).items():
+        if named in (story_id.lower(), str(need.get("title", "")).lower()):
+            return {"story": story_id, "title": need.get("title", ""), "text": need.get("text", "")}
+    return None
+
+
+HANDED = ("give", "lend")  # Rewards that change hands: only face to face.
+
+
+def settle_for_need(state: dict, npc: dict, story_id: str, event: int, now: int) -> list[dict]:
+    """The quest step that answers this person's need has reached them (D-73): every open deal of theirs for that
+    need is fulfilled and its rewards carried out, as if they'd said "done". What changes hands waits until the
+    stranger comes to them (they want a word: "I've what I promised you"). Returns the deals settled."""
+    settled = []
+    for deal in sorted(state.get("agreements", {}).values(), key=lambda d: d["id"]):
+        if (
+            deal.get("issuer") != npc["id"]
+            or deal.get("status") not in ("proposed", "accepted")
+            or (deal.get("for_need") or {}).get("story") != story_id
+            or any(not authorized(state, npc, r, future=r["kind"] in HANDED) for r in deal["rewards"])
+        ):
+            continue
+        owed = [r for r in deal["rewards"] if r["kind"] in HANDED and not authorized(state, npc, r)]
+        for reward in deal["rewards"]:
+            if reward not in owed:
+                execute(state, npc, reward, event)
+        deal.update(status="fulfilled", fulfilled_event=event, settled_by="quest", owed=owed)
+        if owed:
+            cast.want_word(npc, now, "Come and see me: I've what I promised you.")
+        state.setdefault("journal", []).append(
+            {
+                "kind": "npc",
+                "category": "deal_kept",
+                "npc_id": npc["id"],
+                "reason": f"{npc['name']} keeps their word: you were to {deal['task'].rstrip('.')}, and it's done.",
+            }
+        )
+        settled.append(deal)
+    return settled
+
+
+def hand_over_owed(state: dict, npc: dict, event: int) -> None:
+    """The stranger has come to them: what a settled deal owed them changes hands now, if it can (D-73)."""
+    for deal in state.get("agreements", {}).values():
+        if deal.get("issuer") == npc["id"] and deal.get("owed"):
+            deal["owed"] = [r for r in deal["owed"] if not execute(state, npc, r, event)]
 
 
 def execute(state, npc, intent, event):

@@ -145,7 +145,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script, heard, _moves = [], [], []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, brief=""):
         if "impression" not in questions:  # Reactions: they stay and listen.
             return decider.DeciderCall(
                 provider="script",

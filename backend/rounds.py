@@ -19,7 +19,6 @@ from typing import Literal
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
-import agreements
 import attempts
 import beats
 import briefing
@@ -255,6 +254,9 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             promised and key.split(":")[0] not in conversation.ERRANDS
         ):  # Said they'd do something: hold them to it (D-51).
             key, errand_to, errand_message, unkept = keep_promise(draft, npc, promised, errand_to, errand_message)
+        lets = line.get("lets_use", "")
+        if lets and key == "answer" and f"lend:{lets}" in conversation.replies(draft, npc):
+            key = f"lend:{lets}"  # They said yes to the stranger using it: that's a lend (D-72), as a promise is kept.
         moment_words = " ".join(heard) or None
         exchange = talk.exchange(
             draft,
@@ -270,24 +272,11 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
             errand_to=errand_to,
             errand_message=errand_message,
         )
-        rejected = []
-        for proposed_intent in line.get("intents", []):
-            if proposed_intent.get("kind") == "admit" and not conversation.admits_now(draft, npc, answers):
-                rejected.append("The permission disagrees with this guard's own judgment.")
-                continue
-            if not agreements.execute(draft, npc, proposed_intent, draft["event_seq"] + 1):
-                rejected.append("That action is no longer possible with the resources here.")
-        if line.get("agreement"):
-            valid, detail = agreements.apply(draft, npc, line["agreement"], draft["event_seq"] + 1)
-            if not valid:
-                rejected.append(detail)
+        rejected = minds.carry_out(draft, npc, line, answers)
         if "defend_if_attacked" in line:
             cast.mind(npc)["standing_plan"] = {"defend": bool(line["defend_if_attacked"])}
-        if rejected:
+        if rejected:  # Their words stand; what didn't follow from them is said plainly beside them (D-72).
             exchange["journal_entry"]["rejected_intents"] = rejected
-            exchange["journal_entry"]["reason"] = " ".join(rejected)
-            line["text"] = "I can't carry that out with what I have here."
-            exchange["journal_entry"]["reply"] = line["text"]
         if unkept:
             exchange["journal_entry"]["unkept_promise"] = unkept
         beat = (moment.get("beats") or {}).get(npc["id"])
@@ -314,6 +303,7 @@ def apply_scene(draft: State, moment: dict, text: str, happened: str | None, now
                 "line": line["text"],
                 "kind": "reply",
                 "key": key,
+                "unmet": rejected,
                 "trace": {
                     "kind": "talk",
                     "npc_id": npc["id"],
@@ -420,6 +410,9 @@ def play_round(run_id: str, request: EncounterAct, background: BackgroundTasks) 
                 telemetry.log(connection, run_id, "judge", judged)
             if spoken and spoken.model and spoken.model != "stub":
                 telemetry.log(connection, run_id, "voice", spoken)
+            for check in getattr(spoken, "check_calls", None) or []:  # Each bystander's quick check (D-71).
+                if check.model and check.model != "stub":
+                    telemetry.log(connection, run_id, "decider", check)
             told_call = moment.get("told_call") if moment else None
             if told_call and told_call.model and told_call.model != "stub":
                 telemetry.log(connection, run_id, "voice", told_call)

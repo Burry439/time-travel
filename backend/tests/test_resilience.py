@@ -86,6 +86,7 @@ def test_one_malformed_answer_is_asked_again(monkeypatch):
         errand_message="",
         promised_later="",
         remember="",
+        lets_the_stranger_use="",
         stranger_name="",
     )
     flaky = _Flaky(reply)
@@ -130,6 +131,7 @@ def test_a_whole_answer_with_stray_text_after_it_is_kept(monkeypatch):
         "errand_to": "",
         "errand_message": "",
         "promised_later": "",
+        "lets_the_stranger_use": "",
         "remember": "",
         "stranger_name": "",
     }

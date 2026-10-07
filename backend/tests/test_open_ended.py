@@ -161,7 +161,7 @@ def test_novel_physical_property_persists_and_is_available_for_a_second_use():
         ),
     )
     assert not state.get("admitted")
-    assert state["last_action"]["category"] == "unresolved"
+    assert state["last_action"]["category"] == "blocked"  # A law refuses it, and says why (D-72).
 
 
 def test_dynamic_agreement_rewards_once_and_requires_real_owned_resources():

@@ -132,7 +132,9 @@ def deal_possible(state: State, deal: Deal) -> bool:
 
 
 def lendable(state: State, npc: Npc) -> list[dict]:
-    """Things of this person's the stranger could be allowed to use (at most four, nearest first)."""
+    """Things of this person's the stranger could be allowed to use: the four nearest them, and any lying beside
+    the stranger, which is what they're likely asking about (D-72: Hessa's rotten boards, by the stranger at her
+    trough, weren't among her four nearest things, so her "aye, you may" couldn't lend them)."""
     things = [
         o
         for o in state["objects"].values()
@@ -142,7 +144,10 @@ def lendable(state: State, npc: Npc) -> list[dict]:
         and "carry" in o["capabilities"]
         and o["condition"] == "usable"
     ]
-    return sorted(things, key=lambda o: (cast.distance((o["x"], o["y"]), npc), o["id"]))[:4]
+    nearest = sorted(things, key=lambda o: (cast.distance((o["x"], o["y"]), npc), o["id"]))[:4]
+    here = cast.player_cell(state)
+    beside = [o for o in things if o not in nearest and o["holder_id"] is None and cast.distance(o, here) <= 2.5]
+    return nearest + sorted(beside, key=lambda o: o["id"])
 
 
 def helped_by_stranger(npc: Npc) -> bool:

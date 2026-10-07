@@ -160,7 +160,7 @@ def scripted(tmp_path, monkeypatch):
     monkeypatch.setattr(service.attempts, "ASSET_DIR", tmp_path / "assets")
     script = []
 
-    def fake_decide(situation, questions):
+    def fake_decide(situation, questions, brief=""):
         prefixes = sorted({key.split("__")[0] + "__" for key in questions if "__" in key}) or [""]
         replies = {}
         for prefix in prefixes:
