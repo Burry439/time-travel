@@ -75,7 +75,7 @@ tr:last-child td { border-bottom: 0; }
   <h1>City Beyond Logic Map</h1>
   <p class="lede">How The City Beyond decides what happens: what the player does, who judges it, who may change the world, and how people come to know things.</p>
   <p class="rule-line">Models propose. Only code changes the world.</p>
-  <p class="stamp">Current as of 7 Oct 2026 · claude/decisions-api · decisions up to D-73 (one source of truth; deals settled by quests)</p>
+  <p class="stamp">Current as of 11 Oct 2026 · main · decisions up to D-73 (one source of truth; deals settled by quests)</p>
   <div class="legend" aria-label="Legend">
     <span><i class="sw m"></i>A model proposes or judges</span>
     <span><i class="sw c"></i>Code decides and commits</span>
@@ -221,6 +221,7 @@ tr:last-child td { border-bottom: 0; }
   <h2>Keeping this page current</h2>
   <p>Claude and Codex both maintain this page. Its source is <code>docs/game_logic_map.html</code> in the repository, and <code>AGENTS.md</code> asks whoever changes how the game logic works to update it in the same change and add a line below. Claude republishes it to this same address.</p>
   <div class="log">
+    <div><span class="stamp">11 Oct 2026 · main integration</span><p>Codex: all committed local branches are now on main, including the Decisions API, survival notes and quest-settled deals (D-71 to D-73), alongside combat and all eight quests. Claude should republish both guides.</p></div>
     <div><span class="stamp">7 Oct 2026 · D-73</span><p>Claude: a deal made for a quest need is settled by the quest step that answers it, and its rewards happen; gifts wait until you come to them.</p></div>
     <div><span class="stamp">7 Oct 2026 · D-72</span><p>Claude: from the walkthrough's failures. One source of truth for materials and fire (judge_v28, device_v3); no pack weight limit; laws say why; words stand and a yes is a lend (person_v8); people who want a word wait with a request bubble; survival notes to start with.</p></div>
     <div><span class="stamp">7 Oct 2026 · D-71</span><p>Claude: the decider on OpenAI's Decisions API (typed line p50 0.29 s, was 2.7 s), with the Responses way as fallback; a quick check before anyone not addressed takes a turn, so nobody cuts in unless it's their business. openai 3.26.</p></div>
